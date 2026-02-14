@@ -1,0 +1,26 @@
+---
+description: Flame and Flutter component lifecycle conventions
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# Lifecycle Conventions
+
+## Flame components
+
+- **`onLoad()`** — One-time async init: load assets, add children. Use as “constructor-like” setup. Do not subscribe to streams/providers here if the component can be removed and re-added.
+- **`onMount()`** — Runs every time the component is added to the tree. Use for subscriptions (e.g. Riverpod, game state); ensures cleanup when removed.
+- **`onRemove()`** — Always pair with `onMount()`: cancel subscriptions, dispose controllers, release references.
+- **`update(dt)`** — Per-tick logic only; keep cheap (no heavy allocations). Defer heavy work to systems or services.
+- **`render()`** — No game logic; painting only. Prefer Flame built-in rendering (e.g. `SpriteComponent`) over custom `render()` when possible.
+
+## Flutter widgets (overlays, menus, HUD)
+
+- **`initState()`** — One-time init. If subscribing to game/state, cancel in `dispose()`.
+- **`dispose()`** — Cancel subscriptions and dispose any controllers.
+
+## Rule of thumb
+
+- **One-time init:** `onLoad()` (Flame) or `initState()` (Flutter).
+- **Subscribe:** `onMount()` (Flame).
+- **Clean up:** `onRemove()` (Flame) or `dispose()` (Flutter).

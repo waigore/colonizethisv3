@@ -1,0 +1,29 @@
+---
+description: Core principles for ColonizeThis Flutter/Dart/Flame project
+alwaysApply: true
+---
+
+# Core Principles
+
+## Stack
+
+- **Flutter** for UI and overlays (menus, HUD, screens).
+- **Flame** for game world, simulation, and entities.
+- **Dart** throughout. Keep UI and game-loop concerns **separated**.
+
+## Typing and null safety
+
+- Strict Dart; no implicit `dynamic`.
+- Explicit null handling; use `?` and `!` deliberately; prefer early returns over defensive `!`.
+- Guard clauses and early returns; avoid deep nesting (extract when beyond ~2 levels).
+
+## Single responsibility and delegation
+
+- **Thin screens/pages:** orchestrate only; delegate data, state, and logic to services, controllers, or Flame components.
+- One main concern per file/class. Extract when a pattern appears in 2+ places or logic can be tested in isolation.
+
+## Spec alignment
+
+- Game and AI behavior: follow the **GDD** (`SPEC/game/`).
+- Architecture and modules: follow the **TDD** (`SPEC/program/`).
+- See `colonizethis-spec-required.mdc` for SPEC structure and source-of-truth.
