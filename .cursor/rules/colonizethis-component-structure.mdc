@@ -21,6 +21,7 @@ alwaysApply: false
 - Extract when a pattern appears in **2+ places** or when logic is **testable in isolation**.
 - **Flame:** Compose small components; use mixins for behavior (e.g. `Tappable`, `DragCallbacks`). Keep rendering in components.
 - **Flutter:** Shared patterns (loading, error, empty, list item) as reusable widgets; thin screens that delegate to widgets and state/providers.
+- New Flutter widgets must be registered in the widget catalog and have a Widgetbook story (see UI design rule).
 
 ## Naming
 

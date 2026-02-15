@@ -10,6 +10,7 @@ alwaysApply: true
 - **Flutter** for UI and overlays (menus, HUD, screens).
 - **Flame** for game world, simulation, and entities.
 - **Dart** throughout. Keep UI and game-loop concerns **separated**.
+- For UI implementation (Widgetbook, catalog, style), see the UI design rule.
 
 ## Typing and null safety
 

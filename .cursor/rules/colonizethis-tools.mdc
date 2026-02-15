@@ -1,0 +1,47 @@
+---
+description: Tools are thin facades over library logic; orchestration in tools, implementation in packages.
+globs: "tool/**"
+alwaysApply: false
+---
+
+# Tools as Thin Facades
+
+## Principle
+
+Tools under **`tool/`** are **thin facades** (drivers) over library code. They do **orchestration only**: parse CLI args, load config or input files, call into packages (e.g. colonizethis_data, colonizethis_models), and print or write results. They must **not** contain core logic (e.g. map description, tile count computation, formatting of province detail).
+
+## Where logic lives
+
+Implementation belongs in the appropriate **package** (e.g. colonizethis_data for topology/tile map helpers, colonizethis_models for game state). If a tool needs behaviour that does not yet exist, **add the required helpers or types in the library** and have the tool call them.
+
+## Benefits
+
+- Library code is testable without running the CLI.
+- Logic is reused by the app or other tools.
+- Tools stay small and easy to reason about.
+
+## Run from root (requirement)
+
+All tools under **`tool/`** must be runnable from the **project root** via **Melos**. Do not require `cd` into `tool/<name>`.
+
+- **Command:** `melos run <tool_name> -- [args]` (or `dart run melos run <tool_name> -- [args]` if Melos is not on PATH).
+- **Paths:** File paths in args are **relative to the repo root** (e.g. `tool/describe_topology/example_topology.json`).
+- **Centralized CLI:** Melos is the single, CLI-friendly way to run these tools.
+
+## Tool usage (project tools doc)
+
+**What tools are available** and **how to invoke each** (command, args, options, examples) are documented in the **project tools** markdown file: **`docs/project-tools.md`**. Contributors and users should look there for the list of tools and invocation details.
+
+## Adding a new tool
+
+1. Add a new Dart package under **`tool/<name>`** (thin facade; logic in packages; see principle above).
+2. In the package: `pubspec.yaml` with `resolution: workspace`, and an **executable** whose name matches `<name>` (e.g. `executables: <name>: bin/<name>.dart`).
+3. In the **root** `pubspec.yaml`: add `tool/<name>` to the **`workspace:`** list.
+4. In the **root** `pubspec.yaml` under **`melos.scripts`**: add a script with the same name, e.g. `run: dart run <name>`. The executable name must match so the script stays trivial.
+5. **Update the project tools doc** (`docs/project-tools.md`): add a section for the new tool with name, description, invocation (`melos run <name> -- ...`), options, and an example.
+
+After that, the tool is run from root with `melos run <name> -- [args]`.
+
+## Apply to
+
+Any new or existing tool under `tool/` (e.g. describe_topology, future generate_tile_map or similar). When adding a tool, implement the minimal orchestration in the tool and the real logic in a package.
