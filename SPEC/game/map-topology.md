@@ -6,7 +6,7 @@
 
 ## Link types
 
-The map is an **undirected graph**. Nodes are **provinces (P)** or **sea zones (S)**; each has id and region id.
+The map is an **undirected graph**. Nodes are **provinces (P)** or **sea zones (S)**; each has id and region id. When generating maps, topology is **inferred** from the tile map (nodes = unique region ids from the grid, edges = adjacent region pairs). Topology format and ownership: [SPEC/program/map-data.md](../program/map-data.md).
 
 **Edges have two semantics:**
 
@@ -20,6 +20,12 @@ Optionally **S1 <-> S2** (sea–sea) for naval movement between sea zones (Phase
 ## Cross-region adjacency
 
 A province or sea zone in one region can be adjacent to a province or sea zone in **another** region (e.g. Europe and Asia). The **world** topology is one graph. **Tile maps** are still per region (one 2D grid per region); cross-region links are respected when generating or validating maps.
+
+---
+
+## Continents and tile map generation
+
+**Continents** are the connected components of the **land** subgraph (provinces and P–P edges only). Tile map generation places **land seeds** (one per continent) to define land shape; **province seeds** are placed on the land in a later pass. No path carving. Sea zones are **capped in size**: each sea zone is at most a configurable fraction (e.g. 5%) of total sea tiles; large water bodies are subdivided using Voronoi over sea seeds (Pass 11). See [SPEC/program/tile-map-generation.md](../program/tile-map-generation.md) § Pass 11 and § Voronoi assignment.
 
 ---
 

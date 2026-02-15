@@ -5,6 +5,46 @@ import 'map_topology.dart';
 import 'tile_map_result.dart';
 import 'topology_node.dart';
 
+/// Returns Graphviz DOT format for topology graph. SPEC/program/map-data.md § Topology graph visualization.
+/// Use with `neato -n -Tpng` when positions are provided; otherwise `dot -Tpng`.
+String topologyToDot(
+  MapTopology topology, {
+  Map<String, int>? tileCounts,
+  Map<String, (double x, double y)>? positions,
+  double posScale = 12.0,
+}) {
+  final buf = StringBuffer();
+  buf.writeln('graph topology {');
+  if (positions != null && positions.isNotEmpty) {
+    buf.writeln('  layout=neato;');
+  }
+  buf.writeln('  node [shape=circle, width=0.2, height=0.2, fixedsize=true, fontsize=8];');
+  for (final n in topology.nodes) {
+    final shape = n.type == TopologyNodeType.seaZone ? 'box' : 'circle';
+    final label = tileCounts != null && tileCounts.containsKey(n.id)
+        ? '${n.id} (${tileCounts[n.id]})'
+        : n.id;
+    final attrs = <String>['shape=$shape', 'label="$label"'];
+    if (positions != null && positions.containsKey(n.id)) {
+      final (x, y) = positions[n.id]!;
+      attrs.add('pos="${x * posScale},${y * posScale}!"');
+    }
+    buf.writeln('  ${_dotId(n.id)} [${attrs.join(", ")}];');
+  }
+  for (final e in topology.edges) {
+    buf.writeln('  ${_dotId(e.id1)} -- ${_dotId(e.id2)};');
+  }
+  buf.writeln('}');
+  return buf.toString();
+}
+
+/// Escape node id for DOT (quote if needed).
+String _dotId(String id) {
+  if (id.isEmpty) return '""';
+  if (RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$').hasMatch(id)) return id;
+  return '"${id.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
+}
+
 /// Returns a formatted string describing the topology graph (nodes and edges).
 String describeTopologyGraph(MapTopology topology) {
   final buf = StringBuffer();
@@ -31,6 +71,27 @@ Map<String, int> computeTileCountsPerRegion(TileMapResult result) {
     }
   }
   return counts;
+}
+
+/// Centroids (average x, y) per region id from the tile map. Used for map-aligned
+/// topology graph layout. Y is flipped (height - 1 - y) so graph Y matches tile
+/// map (top = small Y). SPEC/program/map-data.md § Topology graph visualization.
+Map<String, (double x, double y)> computeCentroidsPerRegion(TileMapResult result) {
+  final sumX = <String, double>{};
+  final sumY = <String, double>{};
+  final count = <String, int>{};
+  for (var y = 0; y < result.height; y++) {
+    final graphY = result.height - 1.0 - y;
+    for (var x = 0; x < result.width; x++) {
+      final id = result.cell(x, y);
+      sumX[id] = (sumX[id] ?? 0) + x;
+      sumY[id] = (sumY[id] ?? 0) + graphY;
+      count[id] = (count[id] ?? 0) + 1;
+    }
+  }
+  return {
+    for (final id in count.keys) id: (sumX[id]! / count[id]!, sumY[id]! / count[id]!),
+  };
 }
 
 /// Returns a formatted map summary: per node id, tile count.

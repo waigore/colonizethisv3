@@ -50,6 +50,8 @@ For each phase the **full dev workflow** is followed: **Design → Dev → Test 
 | **5** | Military victory check, small tech tree, 1–2 eras | Victory screen, research phase, one or two unlocks | Victory triggers correctly; tech unlocks apply; integration test to victory | Victory and tech match GDD |
 | **6** | Pixel-art canon, asset set, main menu per UXD | Asset pipeline, Flame/Flutter integration, main menu | Assets load; main menu flows; no regressions on prior phases | Style and structure match UXD |
 
+**Known issues:** Map-generation polish and other deferred items are listed in [known-issues.md](known-issues.md) and are to be tackled after the main development phases.
+
 ---
 
 ## Scope in/out

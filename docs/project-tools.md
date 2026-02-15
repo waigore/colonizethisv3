@@ -6,37 +6,50 @@ The list below is the single place for **what tools exist** and **how to invoke 
 
 ---
 
-## describe_topology
+## generate_map
 
-Load a region topology and describe the entire map (graph, optional tile map summary, optional interactive province detail). Used for inspection and debugging. Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).
+End-to-end map generation: generate tile map from province and continent count, infer topology from the grid, output graph description, map summary, tile map PNG, and topology graph (DOT + PNG when Graphviz installed). Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).
+
+**Mode**
+
+- Map-first only: input N provinces, C continents via `--provinces` and `--continents`. Generate map, infer topology, output both.
 
 **Invocation**
 
 ```bash
-melos run describe_topology -- <path_to_topology.json> [options]
+melos run generate_map -- [options]
 ```
 
 **Options**
 
-- **Required:** `<path_to_topology.json>` — path to topology JSON (relative to repo root).
-- `--interactive` — prompt for province id and show detail; type `q` to quit.
-- `--tile-map` — generate tile map and print map summary (tile counts per province/sea zone).
-- `--tile-map-image[=path]` — export tile map as PNG with legend (each color = region; P = province, S = sea zone). If path is given, write there; otherwise write to a temp file. Tries to open in the default image viewer; if that fails, prints "Saved to: &lt;path&gt;". Always prints the path.
-- `--world-state <path>` — load world state JSON so province detail shows owner (path relative to repo root).
+- `--provinces N` (default: 60)
+- `--continents M` (default: 3; must be 2–4)
+- `--region oldWorld|newWorld` (default: oldWorld)
+- `--tiles-per-province N` (default: 35)
+- `--sea-fraction F` (default: 0.6; sea fraction 0–1)
+- `--interactive` — prompt for province id and show detail; type `q` to quit
+- `--tile-map` — generate tile map and print map summary
+- `--tile-map-image[=path]` — export tile map as PNG. If path given, write there; otherwise temp file. Tries to open in default viewer.
+- `--seed <n>` — seed for map generation (default: random)
+- `--world-state <path>` — load world state JSON for owner in province detail (path relative to repo root)
+- `--join-continents` — enable join step (Pass 10); default off
+- `--seed-before-assignment` — use legacy land assignment; default off
+- `--skip-fill-lakes` — skip Pass 4 (fill lakes); default off
+- `--continent-buffer N` — minimum sea tiles between continents (default: 2)
 
 **Output**
 
 - Graph description: nodes (P = province, S = sea zone) with id and region; edges.
-- With `--tile-map`: tile count per province/sea zone.
-- With `--tile-map-image`: path to PNG; viewer opened if possible.
-- With `--interactive`: province list, then prompt; for each entered province id, formatted detail (region, owner or "no owner", tiles, improvements).
+- Tile count per province/sea zone.
+- Tile map PNG path (when `--tile-map-image`).
+- Topology graph: DOT file; PNG via neato (map-aligned) when Graphviz installed (otherwise warning).
+- With `--interactive`: province list, then prompt; for each entered province id, formatted detail.
 
 **Examples**
 
 ```bash
-melos run describe_topology -- tool/describe_topology/example_topology.json
-melos run describe_topology -- tool/describe_topology/example_topology.json --tile-map
-melos run describe_topology -- tool/describe_topology/example_topology.json --tile-map-image
-melos run describe_topology -- tool/describe_topology/example_topology.json --tile-map-image=./map.png
-melos run describe_topology -- tool/describe_topology/example_topology.json --interactive
+melos run generate_map --
+melos run generate_map -- --provinces 40 --continents 2 --region newWorld
+melos run generate_map -- --tile-map-image=./map.png
+melos run generate_map -- --interactive
 ```

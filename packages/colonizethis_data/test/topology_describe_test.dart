@@ -44,6 +44,65 @@ void main() {
     });
   });
 
+  final tileMapForCentroids = TileMapResult(
+    width: 3,
+    height: 2,
+    grid: [
+      ['p1', 'p1', 'p2'],
+      ['p1', 's1', 's1'],
+    ],
+  );
+
+  group('computeCentroidsPerRegion', () {
+    test('returns centroid per region with Y flipped', () {
+      final centroids = computeCentroidsPerRegion(tileMapForCentroids);
+      expect(centroids['p1']!.$1, closeTo(1 / 3, 0.01));
+      expect(centroids['p1']!.$2, closeTo(2 / 3, 0.01));
+      expect(centroids['p2']!.$1, 2);
+      expect(centroids['p2']!.$2, 1);
+      expect(centroids['s1']!.$1, 1.5);
+      expect(centroids['s1']!.$2, 0);
+    });
+  });
+
+  group('topologyToDot', () {
+    test('includes fixed node size attributes to prevent overlap', () {
+      final dot = topologyToDot(topology);
+      expect(dot, contains('width=0.2'));
+      expect(dot, contains('height=0.2'));
+      expect(dot, contains('fixedsize=true'));
+      expect(dot, contains('fontsize=8'));
+    });
+    test('without positions omits pos attributes', () {
+      final dot = topologyToDot(topology);
+      expect(dot, isNot(contains('pos=')));
+      expect(dot, contains('graph topology'));
+      expect(dot, contains('p1'));
+    });
+    test('with positions emits pos attributes for positioned nodes', () {
+      final positions = computeCentroidsPerRegion(tileMapForCentroids);
+      final dot = topologyToDot(topology, positions: positions);
+      expect(dot, contains('pos="'));
+      expect(dot, contains('layout=neato'));
+      expect(dot, contains('p1 -- p2'));
+    });
+    test('with positions and posScale 1 uses unscaled grid coordinates', () {
+      final positions = computeCentroidsPerRegion(tileMapForCentroids);
+      final dot = topologyToDot(topology, positions: positions, posScale: 1);
+      expect(dot, contains('pos="'));
+      expect(dot, contains('layout=neato'));
+      expect(dot, contains('p1 [shape=circle'));
+      expect(RegExp(r'pos="0\.33[0-9]*,').hasMatch(dot), isTrue);
+      expect(RegExp(r',0\.66[0-9]*!"').hasMatch(dot), isTrue);
+    });
+    test('with positions and default posScale applies scaling', () {
+      final positions = computeCentroidsPerRegion(tileMapForCentroids);
+      final dot = topologyToDot(topology, positions: positions);
+      expect(dot, contains('pos="'));
+      expect(dot, contains('4.0,8.0!')); // p1: 1/3*12=4, 2/3*12=8
+    });
+  });
+
   group('formatMapSummary', () {
     test('formats tile count per node', () {
       final counts = {'p1': 10, 'p2': 5, 's1': 3};

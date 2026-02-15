@@ -9,17 +9,17 @@
 **Turn state** is part of WorldState. It includes:
 
 - **Turn number** — Integer; increments each full resolution (e.g. after end-of-turn phase).
-- **Phase** — Enum indicating current step within resolution (e.g. orders, economy, combat, diplomacy, end-of-turn). Phase 1 stub may use a single “resolution” phase or a minimal sequence; full phase set aligns with GDD for Phase 2+.
+- **Phase** — Enum indicating current step within resolution (e.g. orders, economy, combat, diplomacy, end-of-turn). Stub may use a single “resolution” phase or a minimal sequence; full phase set in [turn-resolution-phases.md](turn-resolution-phases.md).
 
-Phase 1: at least one phase exists; resolver advances turn number (and optionally phase) so that “next turn” produces a new WorldState with incremented turn.
+At least one phase exists; resolver advances turn number so that “next turn” produces a new WorldState with incremented turn.
 
 ---
 
 ## Resolution Sequence
 
-**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (e.g. orders → economy → movement → combat → diplomacy → end-of-turn). Each phase is a step; resolver executes steps in order. The **movement** phase (Phase 2+) uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces).
+**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)). Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces).
 
-**Phase 1 stub:** Sequence and interfaces exist. Each phase is **no-op or minimal** (e.g. end-of-turn advances turn number only). No economy, combat, or diplomacy logic until Phase 2+.
+**Stub:** Sequence and interfaces exist. Each phase can be no-op or minimal (e.g. end-of-turn advances turn number only) until economy, movement, and other logic are implemented.
 
 ---
 
@@ -34,14 +34,14 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 
 ## Responsibilities
 
-- **colonizethis_logic** owns TurnResolver and phase sequence. No game rules beyond turn advance in Phase 1.
+- **colonizethis_logic** owns TurnResolver and phase sequence. Stub: no game rules beyond turn advance until full phases are implemented.
 - **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save.
 - **Load game** restores Game/WorldState from storage; “next turn” runs on that state and overwrites or replaces the saved state after resolve.
 
 ---
 
-## Stub Semantics (Phase 1)
+## Stub Semantics
 
 - Resolver has a **defined phase list** (e.g. list of enum values or named steps).
 - **At least one phase** performs a minimal change: e.g. increment turn number in WorldState.
-- Unit tests: resolve(currentState) returns new state; new state’s turn number is current + 1 (or equivalent); no other game logic required.
+- Unit tests: resolve(currentState) returns new state; new state’s turn number is current + 1 (or equivalent); no other game logic required until full phases are implemented.

@@ -11,13 +11,13 @@ workspace:
   - packages/colonizethis_save
   - packages/colonizethis_logic
   - packages/colonizethis_ai
-  - tool/describe_topology
+  - tool/generate_map
 
 dev_dependencies:
   melos: ^7.0.0
 
 melos:
   scripts:
-    describe_topology:
-      description: Load topology and describe graph (optionally tile map, interactive). SPEC/program/map-data.md.
-      run: dart run describe_topology
+    generate_map:
+      description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
+      run: dart run generate_map

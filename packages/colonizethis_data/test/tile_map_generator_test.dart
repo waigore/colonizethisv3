@@ -2,55 +2,146 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('computeGridSizeFromParams', () {
+    test('derives grid size from MapGenerationParams: 60 provinces, sea 0.6, target 35', () {
+      final params = MapGenerationParams(
+        targetTilesPerProvince: 35,
+        seaFraction: 0.6,
+        numContinents: 3,
+      );
+      final size = computeGridSizeFromParams(60, params);
+      final totalLandTiles = 60 * 35;
+      expect(totalLandTiles, 2100);
+      final totalTiles = (totalLandTiles / (1 - 0.6)).round();
+      expect(totalTiles, 5250);
+      expect(size.width * size.height, greaterThanOrEqualTo(totalTiles - size.height));
+      expect(size.width * size.height, lessThanOrEqualTo(totalTiles + size.height));
+      expect(size.width, greaterThanOrEqualTo(8));
+      expect(size.height, greaterThanOrEqualTo(8));
+    });
+
+    test('higher sea fraction yields larger total grid for same land', () {
+      final sizeLowSea = computeGridSizeFromParams(
+        20,
+        MapGenerationParams(seaFraction: 0.5, targetTilesPerProvince: 35),
+      );
+      final sizeHighSea = computeGridSizeFromParams(
+        20,
+        MapGenerationParams(seaFraction: 0.6, targetTilesPerProvince: 35),
+      );
+      expect(sizeHighSea.width * sizeHighSea.height,
+          greaterThan(sizeLowSea.width * sizeLowSea.height));
+    });
+
+    test('zero provinces returns default dimensions', () {
+      final size = computeGridSizeFromParams(
+        0,
+        const MapGenerationParams(),
+      );
+      expect(size.width, 32);
+      expect(size.height, 24);
+    });
+  });
+
+  group('buildProvinceToContinentMap', () {
+    test('partitions provinces evenly across continents', () {
+      final map = buildProvinceToContinentMap(6, 2);
+      expect(map.length, 6);
+      expect(map['p1'], 0);
+      expect(map['p2'], 0);
+      expect(map['p3'], 0);
+      expect(map['p4'], 1);
+      expect(map['p5'], 1);
+      expect(map['p6'], 1);
+    });
+
+    test('distributes remainder to first continents', () {
+      final map = buildProvinceToContinentMap(7, 3);
+      expect(map.length, 7);
+      expect(map['p1'], 0);
+      expect(map['p2'], 0);
+      expect(map['p3'], 0); // continent 0 gets 3
+      expect(map['p4'], 1);
+      expect(map['p5'], 1); // continent 1 gets 2
+      expect(map['p6'], 2);
+      expect(map['p7'], 2); // continent 2 gets 2
+    });
+  });
+
+  group('computeContinentMembership', () {
+    test('returns two components for 2 continents', () {
+      final topology = generateTopology(TopologyGeneratorParams(
+        numProvinces: 60,
+        numContinents: 2,
+        regionId: 'oldWorld',
+        seed: 1,
+      ));
+      final membership = computeContinentMembership(topology);
+      expect(membership.length, 60);
+      final indices = membership.values.toSet();
+      expect(indices.length, 2);
+      expect(membership['p1'], membership['p30']);
+      expect(membership['p31'], membership['p60']);
+      expect(membership['p1'], isNot(equals(membership['p31'])));
+    });
+  });
+
   group('TileMapGenerator', () {
     test('generates grid with correct dimensions', () {
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(id: 'p1', regionId: 'r1', type: TopologyNodeType.province),
-        ],
-        edges: [],
+      final params = TileMapParams(width: 20, height: 15, seed: 1, seaFraction: 0.6);
+      final (result, topology) = TileMapGenerator(params: params).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
       );
-      final params = TileMapParams(width: 20, height: 15, seed: 1);
-      final result = TileMapGenerator(params: params).generate(topology);
       expect(result.width, 20);
       expect(result.height, 15);
       expect(result.grid.length, 15);
       for (final row in result.grid) {
         expect(row.length, 20);
-        expect(row.every((id) => id == 'p1'), isTrue);
+        expect(
+          row.every((id) => id == 'p1' || RegExp(r'^s\d+$').hasMatch(id)),
+          isTrue,
+        );
       }
+      expect(topology.nodes.length, greaterThanOrEqualTo(2));
     });
 
     test('two adjacent regions touch in grid', () {
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(id: 'p1', regionId: 'r1', type: TopologyNodeType.province),
-          const TopologyNode(id: 'p2', regionId: 'r1', type: TopologyNodeType.province),
-        ],
-        edges: [const TopologyEdge(id1: 'p1', id2: 'p2')],
+      final params = TileMapParams(width: 30, height: 30, seed: 42, maxEnforceIterations: 5, seaFraction: 0.6);
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
       );
-      final params = TileMapParams(width: 30, height: 30, seed: 42, maxEnforceIterations: 5);
-      final result = TileMapGenerator(params: params).generate(topology);
       final pairs = result.adjacentRegionPairs();
       expect(pairs.contains('p1|p2'), isTrue);
     });
 
-    test('empty topology throws', () {
-      final topology = MapTopology(nodes: [], edges: []);
+    test('numProvinces 0 throws', () {
       final gen = TileMapGenerator(params: TileMapParams(width: 10, height: 10));
-      expect(() => gen.generate(topology), throwsArgumentError);
+      expect(
+        () => gen.generate(numProvinces: 0, numContinents: 1, regionId: 'r1'),
+        throwsArgumentError,
+      );
+    });
+
+    test('numContinents 0 throws', () {
+      final gen = TileMapGenerator(params: TileMapParams(width: 10, height: 10));
+      expect(
+        () => gen.generate(numProvinces: 1, numContinents: 0, regionId: 'r1'),
+        throwsArgumentError,
+      );
     });
 
     test('with resourceRules produces terrain and resource grids of same dimensions', () {
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: [],
+      final params = TileMapParams(width: 20, height: 15, seed: 2, seaFraction: 0.6);
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
       );
-      final params = TileMapParams(width: 20, height: 15, seed: 2);
-      final result = TileMapGenerator(params: params)
-          .generate(topology, resourceRules: ResourceRules.defaultRules);
       expect(result.terrainGrid, isNotNull);
       expect(result.resourceGrid, isNotNull);
       expect(result.terrainGrid!.length, result.height);
@@ -62,15 +153,13 @@ void main() {
     });
 
     test('terrain and resource respect region and terrain rules', () {
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: [],
+      final params = TileMapParams(width: 25, height: 25, seed: 3, seaFraction: 0.6);
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
       );
-      final params = TileMapParams(width: 25, height: 25, seed: 3);
-      final result = TileMapGenerator(params: params)
-          .generate(topology, resourceRules: ResourceRules.defaultRules);
       final rules = ResourceRules.defaultRules;
       for (var y = 0; y < result.height; y++) {
         for (var x = 0; x < result.width; x++) {
@@ -84,18 +173,359 @@ void main() {
       }
     });
 
+    test('two-phase sea fraction: land count matches (1 - seaFraction) * width * height', () {
+      const w = 20;
+      const h = 20;
+      const seaFraction = 0.6;
+      final params = TileMapParams(width: w, height: h, seed: 12345, seaFraction: seaFraction);
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+      );
+      var landCount = 0;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          if (!RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) landCount++;
+        }
+      }
+      final expectedLand = ((1 - seaFraction) * w * h).round();
+      expect(landCount, expectedLand);
+    });
+
+    test('onLog receives a line per pass', () {
+      final logLines = <String>[];
+      TileMapGenerator(params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6))
+          .generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      expect(logLines.any((s) => s.contains('Pass 1')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 2')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 3')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 4')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 5')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 6')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 8')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 9')), isTrue);
+      expect(logLines.any((s) => s.contains('Pass 11')), isTrue);
+    });
+
     test('without resourceRules leaves terrain and resource grids null', () {
+      final (result, _) = TileMapGenerator(
+        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6),
+      ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+      expect(result.terrainGrid, isNull);
+      expect(result.resourceGrid, isNull);
+    });
+
+    test('final grid has only province and sea zone ids (no land sentinel)', () {
+      final (result, topology) = TileMapGenerator(
+        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+      final validIds = topology.nodes.map((n) => n.id).toSet();
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          expect(validIds.contains(result.cell(x, y)), isTrue,
+              reason: 'cell ($x,$y) has id ${result.cell(x, y)}');
+        }
+      }
+    });
+
+    test('no enclosed sea after fill-lakes: all sea connected to grid edge', () {
+      final (result, _) = TileMapGenerator(
+        params: TileMapParams(width: 30, height: 30, seed: 11, seaFraction: 0.6),
+      ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+      final seaCells = <(int, int)>{};
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          if (RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) {
+            seaCells.add((x, y));
+          }
+        }
+      }
+      if (seaCells.isEmpty) return;
+      final queue = List<(int, int)>.from(
+        seaCells.where((p) =>
+            p.$1 == 0 || p.$1 == result.width - 1 || p.$2 == 0 || p.$2 == result.height - 1),
+      );
+      final reachable = queue.toSet();
+      while (queue.isNotEmpty) {
+        final (x, y) = queue.removeLast();
+        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx >= 0 && nx < result.width && ny >= 0 && ny < result.height) {
+            final nid = result.cell(nx, ny);
+            if (RegExp(r'^s\d+$').hasMatch(nid) && !reachable.contains((nx, ny))) {
+              reachable.add((nx, ny));
+              queue.add((nx, ny));
+            }
+          }
+        }
+      }
+      expect(reachable.length, seaCells.length,
+          reason: 'All sea cells should be reachable from edge (no lakes)');
+    });
+
+    test('Pass 11 subdivides sea: result has sea zone ids s1, s2, ...', () {
+      final (result, topology) = TileMapGenerator(
+        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+      final seaNodes = topology.nodes
+          .where((n) => n.type == TopologyNodeType.seaZone)
+          .map((n) => n.id)
+          .toSet();
+      expect(seaNodes, isNotEmpty);
+      for (final id in seaNodes) {
+        expect(RegExp(r'^s\d+$').hasMatch(id), isTrue);
+      }
+      final gridSeaIds = <String>{};
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          final id = result.cell(x, y);
+          if (RegExp(r'^s\d+$').hasMatch(id)) gridSeaIds.add(id);
+        }
+      }
+      expect(gridSeaIds, equals(seaNodes));
+    });
+
+    test('Pass 11 sea zone size cap: subdivision produces many zones when sea is large', () {
+      final (result, topology) = TileMapGenerator(
+        params: TileMapParams(
+          width: 40,
+          height: 40,
+          seed: 99,
+          seaFraction: 0.65,
+          maxSeaZoneFraction: 0.05,
+        ),
+      ).generate(numProvinces: 4, numContinents: 1, regionId: 'r1');
+      var totalSea = 0;
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          if (RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) totalSea++;
+        }
+      }
+      if (totalSea == 0) return;
+      final seaZoneCount = topology.nodes
+          .where((n) => n.type == TopologyNodeType.seaZone)
+          .length;
+      // With 5% cap, one ocean should be split into at least ~20 zones.
+      expect(seaZoneCount, greaterThanOrEqualTo(15),
+          reason: 'Expected many sea zones when cap is 5% of $totalSea sea tiles');
+    });
+
+    test('Pass 11 log mentions sea zones and cap', () {
+      final logLines = <String>[];
+      TileMapGenerator(
+        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+      ).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      final pass11 = logLines.where((s) => s.contains('Pass 11')).toList();
+      expect(pass11, isNotEmpty);
+      expect(pass11.first, contains('Sea zone subdivision'));
+      expect(pass11.first, contains('cap'));
+    });
+
+    test('terrain on land uses only map region allowed set (oldWorld)', () {
+      final (result, _) = TileMapGenerator(
+        params: TileMapParams(width: 25, height: 25, seed: 4, seaFraction: 0.6),
+      ).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
+      final allowed = allowedTerrainsForRegion('oldWorld').toSet();
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          final t = result.terrainAt(x, y);
+          if (t != null) expect(allowed.contains(t), isTrue, reason: 'terrain $t');
+        }
+      }
+    });
+
+    test('Pass 2 places continent seeds and clustered land seeds (log reports counts)', () {
+      final logLines = <String>[];
+      TileMapGenerator(params: TileMapParams(width: 24, height: 24, seed: 5, seaFraction: 0.6))
+          .generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      final pass2 = logLines.where((s) => s.contains('Pass 2')).single;
+      expect(pass2, contains('Continent seeds'));
+      expect(pass2, contains('land seeds'));
+      expect(pass2, contains('1')); // 1 continent
+    });
+
+    test('onLandSeedsPlaced is invoked with land seed positions and continent indices', () {
+      List<(int x, int y)>? capturedPositions;
+      List<int>? capturedIndices;
+      TileMapGenerator(params: TileMapParams(width: 20, height: 15, seed: 1, seaFraction: 0.6))
+          .generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        onLandSeedsPlaced: (positions, indices) {
+          capturedPositions = positions;
+          capturedIndices = indices;
+        },
+      );
+      expect(capturedPositions, isNotNull);
+      expect(capturedIndices, isNotNull);
+      expect(capturedPositions!.length, greaterThan(0));
+      expect(capturedIndices!.length, capturedPositions!.length);
+      for (final c in capturedIndices!) {
+        expect(c, inInclusiveRange(0, 0), reason: 'Single continent: all indices 0');
+      }
+    });
+
+    test('onContinentSeedsPlaced is invoked with one seed per continent', () {
+      List<(int x, int y)>? continentSeeds;
+      TileMapGenerator(params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6))
+          .generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+        onContinentSeedsPlaced: (s) => continentSeeds = s,
+      );
+      expect(continentSeeds, isNotNull);
+      expect(continentSeeds!.length, 1); // one continent
+    });
+
+    test('seedBeforeAssignment: true produces valid tile map with land count matching budget', () {
+      const w = 20;
+      const h = 20;
+      const seaFraction = 0.6;
+      final params = TileMapParams(
+        width: w,
+        height: h,
+        seed: 1,
+        seaFraction: seaFraction,
+        seedBeforeAssignment: true,
+      );
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+      );
+      var landCount = 0;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          if (!RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) landCount++;
+        }
+      }
+      final expectedLand = ((1 - seaFraction) * w * h).round();
+      expect(landCount, expectedLand);
+    });
+
+    test('seedBeforeAssignment: false (organic default) produces valid tile map with land', () {
+      final params = TileMapParams(
+        width: 30,
+        height: 30,
+        seed: 42,
+        seaFraction: 0.6,
+        seedBeforeAssignment: false,
+      );
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+      );
+      var landCount = 0;
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          if (!RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) landCount++;
+        }
+      }
+      expect(landCount, greaterThan(0));
+      expect(result.adjacentRegionPairs(), contains('p1|p2'));
+    });
+
+    test('organic mode logs Pass 2–3 (organic)', () {
+      final logLines = <String>[];
+      TileMapGenerator(
+        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6, seedBeforeAssignment: false),
+      ).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      expect(logLines.any((s) => s.contains('organic')), isTrue);
+    });
+
+    test('inferred topology matches grid adjacencies', () {
+      final (result, topology) = TileMapGenerator(
+        params: TileMapParams(width: 30, height: 30, seed: 42, seaFraction: 0.6),
+      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+      final validation = validateTileMapTopology(topology, result);
+      expect(validation.missing, isEmpty);
+      expect(validation.extra, isEmpty);
+      expect(validation.hasIssues, isFalse);
+    });
+
+    test('seed 125148772 with default buffer and fill lakes has no p6-p33 land bridge', () {
+      final mapGenParams = MapGenerationParams(
+        seed: 125148772,
+        numContinents: 3,
+        continentBufferTiles: 2,
+        skipFillLakes: false,
+      );
+      final size = computeGridSizeFromParams(60, mapGenParams);
+      final params = TileMapParams(
+        width: size.width,
+        height: size.height,
+        seed: mapGenParams.seed,
+        seaFraction: mapGenParams.seaFraction,
+        continentBufferTiles: mapGenParams.continentBufferTiles,
+        skipFillLakes: mapGenParams.skipFillLakes,
+      );
+      final (_, topology) = TileMapGenerator(params: params).generate(
+        numProvinces: 60,
+        numContinents: 3,
+        regionId: 'oldWorld',
+      );
+      final p6p33Key = 'p6|p33';
+      final hasBridge = topology.edges.any((e) {
+        final key = e.id1.compareTo(e.id2) < 0 ? '${e.id1}|${e.id2}' : '${e.id2}|${e.id1}';
+        return key == p6p33Key;
+      });
+      expect(hasBridge, isFalse);
+    });
+  });
+
+  group('validateTileMapTopology', () {
+    test('grid missing required adjacency yields missing non-empty', () {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(id: 'p1', regionId: 'r1', type: TopologyNodeType.province),
+          const TopologyNode(id: 'p2', regionId: 'r1', type: TopologyNodeType.province),
+          const TopologyNode(id: 's1', regionId: 'r1', type: TopologyNodeType.seaZone),
         ],
-        edges: [],
+        edges: [
+          const TopologyEdge(id1: 'p1', id2: 'p2'),
+          const TopologyEdge(id1: 'p1', id2: 's1'),
+          const TopologyEdge(id1: 'p2', id2: 's1'),
+        ],
       );
-      final result = TileMapGenerator(
-        params: TileMapParams(width: 10, height: 10, seed: 1),
-      ).generate(topology);
-      expect(result.terrainGrid, isNull);
-      expect(result.resourceGrid, isNull);
+      final grid = [
+        ['p1', 'p1', 's1'],
+        ['p1', 'p1', 's1'],
+        ['s1', 's1', 's1'],
+      ];
+      final result = TileMapResult(width: 3, height: 3, grid: grid);
+      final validation = validateTileMapTopology(topology, result);
+      expect(validation.missing, contains('p1|p2'));
+      expect(validation.hasIssues, isTrue);
     });
   });
 

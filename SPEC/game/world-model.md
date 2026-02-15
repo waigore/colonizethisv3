@@ -15,6 +15,12 @@ Each region has a fixed set of provinces and sea zones. Regions are identified b
 
 ---
 
+## New World and Colonies
+
+New World provinces can be **owned** by a player (same ownership model as Old World). Extraction and production work identically in both regions: owned province tiles produce resources that flow to the owner's stockpile. **Colonies** are simply owned New World provinces; there is no separate colony entity. Asia is post-MVP.
+
+---
+
 ## Map Topology (summary)
 
 The map is a graph. **Nodes:** provinces (P) and sea zones (S); each has id and region id. **Edges** are undirected links: **P1 <-> P2** (contiguous land; armies move only between adjacent provinces); **P1 <-> S1** (province next to sea). Provinces/sea zones can be adjacent **across regions** (e.g. Europe–Asia). World topology is one graph; tile maps are per region. See [map-topology.md](map-topology.md).
@@ -37,7 +43,7 @@ The map is a graph. **Nodes:** provinces (P) and sea zones (S); each has id and 
 | **SeaZone** | Water region. Id, region id. Adjacency from topology; naval movement Phase 2+. |
 | **Tile map** | Per-region 2D grid; each cell assigned to a province or sea zone; produced by map generation from topology. |
 | **Unit** | Military or civilian (Phase 2+). Id, type, owner, location (province id or sea zone id for naval), and later: strength, movement. |
-| **Player** | Great Power. Id, display name, human vs AI, treasury (Phase 2+), and later: relations, tech. |
+| **Player** | Great Power. Id, display name, human vs AI, treasury (Phase 2+), **stockpile** (centralized commodity repository; Phase 2+), and later: relations, tech. |
 | **Orders** | Per-player orders for the current turn (e.g. movement, build). Phase 1 may hold an empty or stub structure; full order types in Phase 2+. |
 
 No game logic in models; they are data and serialization only.
@@ -47,6 +53,8 @@ No game logic in models; they are data and serialization only.
 ## Relations and Containment
 
 - **Game** → one **WorldState** (current), many **Player**s.
+- **Player** → **Stockpile** (commodity quantities; Phase 2+). Extraction in provinces flows to owning player's stockpile. See [stockpiles-and-production.md](stockpiles-and-production.md).
+- **Player** → **WorkerPool** (or Population; Phase 2+). Per-player population for production; distinct from Unit. See [workers-and-population.md](workers-and-population.md). Civilian units: [civilian-units.md](civilian-units.md).
 - **WorldState** → two region blobs: Old World data, New World data. Each blob: list of **Province**s, list of **Unit**s (or embedded per province as needed for serialization).
 - **Province** → belongs to one region; has optional **owner** (player id); contains tiles (from static tile map + mutable improvement state). Each tile: terrain type, optional resource (region- and terrain-constrained), extraction level, road; effective yield = min(improvement level, owner's tech cap). Neighbours (P and S) from topology graph.
 - **SeaZone** → belongs to one region; neighbours from topology graph.
