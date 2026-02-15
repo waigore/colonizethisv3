@@ -79,7 +79,7 @@ Phase 1 is done when all design and dev tasks below are implemented, all test ta
 - [x] All Test tasks passing.
 - [ ] Code review checklist signed off.
 
-**Exit criteria:** World model and turn state exist; TurnResolver stub runs and advances turn; save/load round-trip works; topology generator implemented and tested; tile-based map generation implemented and tested per the algorithm spec (grid sizing from topology and target province size; terrain blob-like per spec); unified map generation tool (or expanded describe_topology) produces PNG with borders (and when implemented terrain, resources, improvements when data provided); map-data.md CLI/tool section updated; logic in shared packages; ready for Phase 2 (economy, units, movement).
+**Exit criteria:** World model and turn state exist; TurnResolver stub runs and advances turn; save/load round-trip works; topology generator implemented and tested; tile-based map generation implemented and tested per the algorithm spec (grid sizing from topology and target province size; terrain blob-like per spec); unified map generation tool (generate_map) produces PNG with borders (and when implemented terrain, resources, improvements when data provided); map-data.md CLI/tool section updated; logic in shared packages; ready for Phase 2 (economy, units, movement).
 
 ---
 
@@ -87,7 +87,7 @@ Phase 1 is done when all design and dev tasks below are implemented, all test ta
 
 - **Design** (world model spec, turn-resolution spec) must be done before Dev.
 - Design deliverables live in SPEC (game and program) so the team does not depend only on Obsidian; key structure and terms must be in-repo.
-- **Dev:** Models first (colonizethis_models), then save schema/adapter (colonizethis_save), then TurnResolver stub (colonizethis_logic), then app wiring, then topology generator (colonizethis_data) after topology format is available, then tile-based map generation (colonizethis_data or tool/) with grid sizing and blob terrain, then unified map generation tool (tool/describe_topology or tool/generate_map) after tile-based map generation and models (for world-state parsing).
+- **Dev:** Models first (colonizethis_models), then save schema/adapter (colonizethis_save), then TurnResolver stub (colonizethis_logic), then app wiring, then topology generator (colonizethis_data) after topology format is available, then tile-based map generation (colonizethis_data or tool/) with grid sizing and blob terrain, then unified map generation tool (tool/generate_map) after tile-based map generation and models (for world-state parsing).
 - **Test** and **Code review** after Dev.
 
 ---
@@ -114,7 +114,7 @@ Phase 1 is done when all design and dev tasks below are implemented, all test ta
 - [SPEC/program/turn-resolution.md](../program/turn-resolution.md) — Phase 1 design deliverable.
 - [SPEC/program/map-data.md](../program/map-data.md) — Topology format, topology generation, tile map format, unified map generation tool.
 - [SPEC/program/tile-map-generation.md](../program/tile-map-generation.md) — Tile-based map generation algorithm and contract.
-- **describe_topology expansion plan** — Full CLI interface, data sources, output content, implementation steps, SPEC change for map-data.md (see `.cursor/plans/describe_topology_tool_expansion_a8108dc0.plan.md` or project plan copy).
+- **generate_map / map tool expansion plan** — Full CLI interface, data sources, output content, implementation steps, SPEC change for map-data.md (see `.cursor/plans/describe_topology_tool_expansion_a8108dc0.plan.md` or project plan copy).
 - `.cursor/rules/colonizethis-core-principles.mdc` — Flutter vs Flame separation.
 - `.cursor/rules/colonizethis-spec-required.mdc` — SPEC-first, layout, max 500 words, authorizing spec for behavior.
 - `.cursor/rules/colonizethis-testing.mdc` — 80% per-package coverage, test layout, critical path (save/load).

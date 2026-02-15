@@ -25,7 +25,7 @@ Implementation belongs in the appropriate **package** (e.g. colonizethis_data fo
 All tools under **`tool/`** must be runnable from the **project root** via **Melos**. Do not require `cd` into `tool/<name>`.
 
 - **Command:** `melos run <tool_name> -- [args]` (or `dart run melos run <tool_name> -- [args]` if Melos is not on PATH).
-- **Paths:** File paths in args are **relative to the repo root** (e.g. `tool/describe_topology/example_topology.json`).
+- **Paths:** File paths in args are **relative to the repo root** (e.g. `path/to/topology.json` or generate_map output path).
 - **Centralized CLI:** Melos is the single, CLI-friendly way to run these tools.
 
 ## Tool usage (project tools doc)
@@ -44,4 +44,4 @@ After that, the tool is run from root with `melos run <name> -- [args]`.
 
 ## Apply to
 
-Any new or existing tool under `tool/` (e.g. describe_topology, future generate_tile_map or similar). When adding a tool, implement the minimal orchestration in the tool and the real logic in a package.
+Any new or existing tool under `tool/` (e.g. generate_map, future generate_tile_map or similar). When adding a tool, implement the minimal orchestration in the tool and the real logic in a package.
