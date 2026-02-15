@@ -8,6 +8,8 @@
 
 Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (base strength, difficulty modifiers, fort/terrain), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled).
 
+**Map:** **Adjacency** is defined by the topology graph ([world-model.md](world-model.md), [map-topology.md](map-topology.md)). **Terrain**, **resources**, and **improvements** may come from the tile map or config overlays.
+
 ---
 
 ## Layers

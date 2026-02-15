@@ -32,7 +32,7 @@ MVP must use **program-level config**: unit stats, map params, economy/combat mo
 
 ## Two-region model (MVP in scope)
 
-**Old World + New World** are both in MVP. The two-region dynamic is core: victory is decided in the Old World; the New World is the frontier for resources, riches, and colonies. MVP uses fixed maps for each region. Asia is post-MVP.
+**Old World + New World** are both in MVP. The two-region dynamic is core: victory is decided in the Old World; the New World is the frontier for resources, riches, and colonies. MVP uses fixed maps for each region. Map data (topology, tile maps) and tile map generation are in scope per [SPEC/program/map-data.md](../program/map-data.md) and [SPEC/program/tile-map-generation.md](../program/tile-map-generation.md). Asia is post-MVP.
 
 ---
 
@@ -62,6 +62,7 @@ For each phase the **full dev workflow** is followed: **Design → Dev → Test 
 | One victory (Military: 31+ provinces) | 7 powers, Asia region |
 | New World resources and colonies | Full tech tree, all victory types |
 | Program-level config; single source for stats/modifiers (no hardcoding) | JSON rulesets; layered overrides (difficulty/scenario); scenario files |
+| Map data (topology and tile maps per [map-data.md](../program/map-data.md)); tile-based map generation ([tile-map-generation.md](../program/tile-map-generation.md)) for fixed two-region maps | Procedural map generation; dynamic scenario map loading |
 
 ---
 

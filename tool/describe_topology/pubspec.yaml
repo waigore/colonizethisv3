@@ -1,0 +1,15 @@
+name: describe_topology
+description: CLI to load a region topology and describe it as a graph. SPEC/program/map-data.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  colonizethis_data:
+  colonizethis_models:
+
+executables:
+  describe_topology: bin/describe_topology.dart

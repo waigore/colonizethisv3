@@ -1,0 +1,29 @@
+name: colonizethis_app
+description: Colonize This — turn-based strategy game. Flutter app shell.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.18.0
+  flutter_riverpod: ^2.6.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  colonizethis_models:
+  colonizethis_data:
+  colonizethis_save:
+  colonizethis_logic:
+  colonizethis_ai:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

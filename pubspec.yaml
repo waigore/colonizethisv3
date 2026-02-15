@@ -1,0 +1,23 @@
+name: colonizethis
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+workspace:
+  - app
+  - packages/colonizethis_models
+  - packages/colonizethis_data
+  - packages/colonizethis_save
+  - packages/colonizethis_logic
+  - packages/colonizethis_ai
+  - tool/describe_topology
+
+dev_dependencies:
+  melos: ^7.0.0
+
+melos:
+  scripts:
+    describe_topology:
+      description: Load topology and describe graph (optionally tile map, interactive). SPEC/program/map-data.md.
+      run: dart run describe_topology

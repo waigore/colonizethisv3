@@ -1,0 +1,12 @@
+name: colonizethis_ai
+description: AI behavior, planning, personalities for Colonize This.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/colonizethisv3/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  colonizethis_logic:
