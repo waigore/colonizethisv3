@@ -4,12 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
-
-import 'map_topology.dart';
-import 'resource.dart';
-import 'terrain_type.dart';
-import 'tile_map_result.dart';
-import 'topology_node.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Deep blue for sea zones. SPEC/program/map-data.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
@@ -428,8 +423,8 @@ void _drawLegendSwatch(img.Image image, int y, int r, int g, int b) {
     image,
     x1: _legendPadding,
     y1: y,
-    x2: _legendPadding + _swatchSize - 1,
-    y2: y + _swatchSize - 1,
+    x2: _legendPadding + _swatchSize,
+    y2: y + _swatchSize,
     color: color,
   );
 }
@@ -471,7 +466,7 @@ String _resourceLabel(Resource r) {
   }
 }
 
-/// Encodes the tile map (with legend) to PNG and writes to [file].
+/// Writes the tile map image to [file].
 void writeTileMapImageToFile(
   File file,
   TileMapResult result,
@@ -481,7 +476,7 @@ void writeTileMapImageToFile(
   List<int>? landSeedContinentIndices,
   List<(int x, int y)>? continentSeedPositions,
 }) {
-  final bytes = renderTileMapToPng(
+  final png = renderTileMapToPng(
     result,
     topology,
     cellSize: cellSize,
@@ -489,7 +484,7 @@ void writeTileMapImageToFile(
     landSeedContinentIndices: landSeedContinentIndices,
     continentSeedPositions: continentSeedPositions,
   );
-  file.writeAsBytesSync(bytes);
+  file.writeAsBytesSync(png);
 }
 
 /// Writes the tile map image to a new file in the system temp directory.
@@ -502,8 +497,9 @@ String writeTileMapImageToTempFile(
   List<int>? landSeedContinentIndices,
   List<(int x, int y)>? continentSeedPositions,
 }) {
-  final dir = Directory.systemTemp;
-  final file = File('${dir.path}${Platform.pathSeparator}colonizethis_tilemap_${DateTime.now().millisecondsSinceEpoch}.png');
+  final tmp = Directory.systemTemp;
+  final name = 'tile_map_${DateTime.now().millisecondsSinceEpoch}.png';
+  final file = File('${tmp.path}/$name');
   writeTileMapImageToFile(
     file,
     result,
@@ -517,35 +513,25 @@ String writeTileMapImageToTempFile(
 }
 
 /// Tries to open [path] in the system default image viewer.
-/// Returns true if the launch command succeeded (exit code 0), false otherwise.
+/// Respects SUPPRESS_IMAGE_VIEWER=1 env var to skip opening in non-interactive contexts.
 bool openInDefaultViewer(String path) {
-  if (Platform.environment['SUPPRESS_IMAGE_VIEWER'] == '1' ||
-      Platform.environment['SUPPRESS_IMAGE_VIEWER'] == 'true' ||
-      Platform.environment['CI'] == 'true') {
+  if (Platform.environment['SUPPRESS_IMAGE_VIEWER'] == '1') {
     return false;
   }
-  final executable = _viewerExecutable;
-  if (executable == null) return false;
   try {
-    final result = Process.runSync(
-      executable,
-      _viewerArgs(path),
-      runInShell: true,
-    );
-    return result.exitCode == 0;
+    if (Platform.isMacOS) {
+      Process.runSync('open', [path]);
+      return true;
+    } else if (Platform.isLinux) {
+      Process.runSync('xdg-open', [path]);
+      return true;
+    } else if (Platform.isWindows) {
+      Process.runSync('explorer', [path]);
+      return true;
+    }
   } catch (_) {
     return false;
   }
+  return false;
 }
 
-String? get _viewerExecutable {
-  if (Platform.isMacOS) return 'open';
-  if (Platform.isLinux) return 'xdg-open';
-  if (Platform.isWindows) return 'start';
-  return null;
-}
-
-List<String> _viewerArgs(String path) {
-  if (Platform.isWindows) return [path];
-  return [path];
-}

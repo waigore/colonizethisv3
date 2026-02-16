@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -542,3 +543,4 @@ void main() {
     });
   });
 }
+

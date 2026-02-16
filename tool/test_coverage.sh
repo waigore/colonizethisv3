@@ -7,7 +7,7 @@ export SUPPRESS_IMAGE_VIEWER=1
 
 # Packages: run tests and generate coverage (skip if no test/ directory)
 # Then convert raw coverage to lcov.info so it can be merged.
-for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai; do
+for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
   if [ -d "$dir/test" ]; then
     (cd "$dir" && dart test --coverage=coverage)
     (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.) 2>/dev/null || true
@@ -21,7 +21,7 @@ done
 MERGE="$ROOT/coverage_merged"
 COVERAGE_FILES=()
 [ -f app/coverage/lcov.info ] && COVERAGE_FILES+=("$ROOT/app/coverage/lcov.info")
-for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai; do
+for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
   [ -f "$dir/coverage/lcov.info" ] && COVERAGE_FILES+=("$ROOT/$dir/coverage/lcov.info")
 done
 
@@ -33,7 +33,7 @@ if command -v lcov &>/dev/null; then
     echo "--- app ---"
     lcov --summary app/coverage/lcov.info 2>/dev/null | grep -E "lines|source" || true
   fi
-  for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai; do
+  for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
     if [ -f "$dir/coverage/lcov.info" ]; then
       echo "--- $dir ---"
       lcov --summary "$dir/coverage/lcov.info" 2>/dev/null | grep -E "lines|source" || true

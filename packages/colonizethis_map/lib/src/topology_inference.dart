@@ -1,8 +1,6 @@
 // SPEC/program/tile-map-generation.md § Topology inference.
 
-import 'map_topology.dart';
-import 'tile_map_result.dart';
-import 'topology_node.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Infers MapTopology from a tile map result. SPEC/program/tile-map-generation.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.
@@ -40,3 +38,4 @@ MapTopology inferTopologyFromTileMap(
 
 /// Ids matching s + digits (e.g. s1, s2) are sea zones. Others are provinces.
 bool _isSeaZoneId(String id) => RegExp(r'^s\d+$').hasMatch(id);
+

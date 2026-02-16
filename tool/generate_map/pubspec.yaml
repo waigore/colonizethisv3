@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   colonizethis_data:
+  colonizethis_map:
   colonizethis_models:
 
 dev_dependencies:

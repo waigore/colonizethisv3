@@ -83,7 +83,7 @@ When the map generation tool (CLI) runs, it MAY output **detailed per-pass logs*
 
 ## Ownership and consumers
 
-- **Implemented in:** colonizethis_data (Dart) or a dedicated tool under `tool/` that writes the grid to a file.
+- **Implemented in:** colonizethis_map (Dart). The `generate_map` CLI under `tool/` is a thin facade over colonizethis_map and does orchestration only.
 - **Consumed by:** App (at game load or scenario load); tools.
 - **Not persisted in game save** — Tile maps are static per map/scenario.
 

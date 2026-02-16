@@ -1,7 +1,6 @@
 // SPEC/program/map-data.md § Topology generation.
 
-import 'map_topology.dart';
-import 'topology_node.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Parameters for generating a region topology. CLI restricts numContinents to 2–4.
 class TopologyGeneratorParams {
@@ -73,3 +72,4 @@ MapTopology generateTopology(TopologyGeneratorParams params) {
 
   return MapTopology(nodes: nodes, edges: edges);
 }
+

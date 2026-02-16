@@ -47,11 +47,11 @@ When the tool (or colonizethis_data) exports a tile map as PNG:
 - **Resources:** When resource data is present (`result.resourceGrid != null`), each land cell that has a resource displays a single **lowercase letter** at cell center: `g` = grain, `t` = timber, `i` = iron. Letters are drawn **last** on the map (after borders and seed markers) so they remain visible. The legend includes a "Resources" section listing each letter and its resource name (e.g. "g  Grain").
 - **Land seeds:** Land seeds are drawn as **small circles** at cell centers, with a **black outline** (fill + outline), so they are clearly distinguishable from the square tile cells. Continent seeds remain the larger, distinct-style markers.
 - **Region id on tiles:** Each tile (cell) MAY display its **region id** (e.g. p1, s2) as text on the map for identification. The id is drawn in **red** so it stands out from terrain and borders. When resources are present, resource letters are drawn at cell center and remain visible; region id placement (e.g. top-left of cell) should avoid obscuring resource letters where possible.
-- **Tile size:** **Tile size** (pixels per cell, "cell size") is configurable so that tile details are easier to see. The default cell size is **24** pixels per tile (implementation may use a larger default than previously). The generate_map tool and colonizethis_data APIs accept an optional cell size parameter; when not specified, the default is used.
-- **Ownership:** Implemented in colonizethis_data (tile_map_visualization); consumed by the generate_map tool.
+- **Tile size:** **Tile size** (pixels per cell, "cell size") is configurable so that tile details are easier to see. The default cell size is **24** pixels per tile (implementation may use a larger default than previously). The generate_map tool and colonizethis_map APIs accept an optional cell size parameter; when not specified, the default is used.
+- **Ownership:** Implemented in colonizethis_map (tile_map_visualization); consumed by the generate_map tool.
 
 ---
 
 ## Tile-based map generation
 
-Implemented in colonizethis_data. Algorithm and contract: [tile-map-generation.md](tile-map-generation.md). Game-side semantics: [SPEC/game/tile-map-and-generation.md](../game/tile-map-and-generation.md). **Grid size** derived from N, C, target tiles per province, sea fraction. Input: province count (N), continent count (C), region id, map params. Output: per-region tile map (2D grid) and inferred MapTopology.
+Implemented in colonizethis_map. Algorithm and contract: [tile-map-generation.md](tile-map-generation.md). Game-side semantics: [SPEC/game/tile-map-and-generation.md](../game/tile-map-and-generation.md). **Grid size** derived from N, C, target tiles per province, sea fraction. Input: province count (N), continent count (C), region id, map params. Output: per-region tile map (2D grid) and inferred MapTopology.

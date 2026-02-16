@@ -12,7 +12,7 @@ Tools under **`tool/`** are **thin facades** (drivers) over library code. They d
 
 ## Where logic lives
 
-Implementation belongs in the appropriate **package** (e.g. colonizethis_data for topology/tile map helpers, colonizethis_models for game state). If a tool needs behaviour that does not yet exist, **add the required helpers or types in the library** and have the tool call them.
+Implementation belongs in the appropriate **package** (e.g. colonizethis_map for topology/tile map generation and visualization, colonizethis_data for static map data/helpers, colonizethis_models for game state). If a tool needs behaviour that does not yet exist, **add the required helpers or types in the library** and have the tool call them.
 
 ## Benefits
 

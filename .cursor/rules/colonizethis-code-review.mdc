@@ -1,0 +1,22 @@
+---
+description: Code review checklist — concrete thresholds and repo paths; principles in other rules
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# ColonizeThis Code Review
+
+When reviewing or generating Dart/Flutter/Flame code, run this checklist. Principles and details live in other rules; this rule adds concrete thresholds and repo paths.
+
+## Checklist
+
+- **Function length:** > 20 lines → refactor (extract helpers, move to service/component).
+- **Widget/screen size:** > ~60 lines → split; move business logic out of `build` (see core-principles, component-structure).
+- **UI vs data:** Class does both UI and domain logic → split; keep UI in widget/screen/component, logic in service/provider/Flame component (see core-principles).
+- **Hardcoded strings:** User-facing or repeated strings → move to constants. Use `app/lib/config/constants.dart`, `app/lib/config/routes.dart`, or feature constants (e.g. `HiveBoxNames`, `Routes`).
+- **Types:** Explicit types; no `dynamic` (see core-principles).
+- **Spec:** New/changed behavior must be authorized by GDD/TDD/UI spec (see colonizethis-spec-required).
+- **Flame/Flutter:** Respect division; no game logic in Flutter build (see core-principles, ui-design).
+- **Reuse:** Before new utils/widgets, check `app/lib/core/utils/`, `app/lib/widgets/`, `app/lib/config/`, `packages/*/lib/src/` (see reuse-before-new-code, component-structure).
+- **New Flutter widgets:** Register in catalog + Widgetbook (see component-structure, ui-design).
+- **Tests:** Critical paths and logic covered; test layout per colonizethis-testing.

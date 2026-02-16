@@ -22,7 +22,8 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 | Package | Contents (TDD 15) | Internal package deps |
 |---------|-------------------|------------------------|
 | **colonizethis_models** | Data models, schemas, serialization (Game, Player, Orders, WorldState, Province, Unit, etc.). Phase 2+: Stockpile, WorkerPool. | None |
-| **colonizethis_data** | Constants, tech tree, **static map data**: (1) **region topology** (nodes: provinces, sea zones; links P<->P, P<->S; cross-region); (2) **tile maps** (per region) or **tile-based map generator** from topology. Ruleset/config (e.g. `rules/` for JSON in later phases). | None |
+| **colonizethis_data** | Constants, tech tree, **static map data**: (1) **region topology** (nodes: provinces, sea zones; links P<->P, P<->S; cross-region); (2) **tile maps** (per region). Ruleset/config (e.g. `rules/` for JSON in later phases). Topology and tile map **formats** and loaders; topology/tile-map **describe** helpers. | None |
+| **colonizethis_map** | Topology and tile map **generation** (tile-based map generator), topology inference from tile map, tile map topology validation, and tile map **PNG visualization**. Implements TDD map generation algorithms; consumed by tools and loaders. | colonizethis_data |
 | **colonizethis_save** | Save format, schema, migrations | colonizethis_models |
 | **colonizethis_logic** | Turn resolution, combat, economy, diplomacy, victory checks, order validation (uses map topology for movement). Phase 2+: extraction, production, stockpile, worker models; tile map or terrain data for costs/combat. | colonizethis_models, colonizethis_data |
 | **colonizethis_ai** | AI behavior, planning, personalities | colonizethis_logic |

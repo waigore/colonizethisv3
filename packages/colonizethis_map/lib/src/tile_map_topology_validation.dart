@@ -1,7 +1,6 @@
 // SPEC/program/tile-map-generation.md § Topology verification.
 
-import 'map_topology.dart';
-import 'tile_map_result.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Result of comparing grid adjacencies to topology. SPEC/program/tile-map-generation.md § Topology verification.
 class TileMapTopologyValidationResult {
@@ -39,3 +38,4 @@ TileMapTopologyValidationResult validateTileMapTopology(
     extra: actual.difference(required),
   );
 }
+

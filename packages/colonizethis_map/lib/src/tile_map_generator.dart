@@ -2,15 +2,10 @@
 
 import 'dart:math';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+
 import 'grid_voronoi.dart';
-import 'map_topology.dart';
-import 'resource.dart';
-import 'resource_rules.dart';
-import 'terrain_region_rules.dart';
-import 'terrain_type.dart';
-import 'tile_map_result.dart';
 import 'topology_inference.dart';
-import 'topology_node.dart';
 
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
 const String _landSentinel = '_land';
@@ -852,8 +847,8 @@ class TileMapGenerator {
             dy = (sin(angle) * r).round();
             break;
         }
-        var x = (cx + dx).clamp(0, params.width - 1);
-        var y = (cy + dy).clamp(yLo, yHi - 1);
+        final x = (cx + dx).clamp(0, params.width - 1);
+        final y = (cy + dy).clamp(yLo, yHi - 1);
         landSeeds.add((x, y));
         continentBySeedIndex.add(c);
       }
@@ -1033,7 +1028,7 @@ class TileMapGenerator {
     }
     if (candidates.isEmpty) {
       final (cx, cy) = continentSeed;
-      final jitter = 2;
+      const jitter = 2;
       final jx = (cx + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(0, params.width - 1);
       final jy = (cy + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(0, params.height - 1);
       return (jx, jy);
@@ -1326,7 +1321,7 @@ class TileMapGenerator {
           var d2 = 0x7FFFFFFFFFFFFFFF;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
-            final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+            final dd = (x - sx) * (x - sy) * (x - sx) + (y - sy) * (y - sy);
             if (dd < d2) d2 = dd;
           }
           final noise = params.voronoiNoiseScale > 0
@@ -1471,7 +1466,7 @@ class TileMapGenerator {
           final nx = x + dx;
           final ny = y + dy;
           if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
-              next[ny][nx] == _landSentinel &&
+              next[ny][nx] == seaZoneId &&
               _oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
             coastalLandCandidates.add((nx, ny));
           }
@@ -1554,7 +1549,8 @@ class TileMapGenerator {
       final provinceIds = provinceToContinent.entries
           .where((e) => e.value == c)
           .map((e) => e.key)
-          .toList()..sort();
+          .toList()
+        ..sort();
       final used = <(int x, int y)>{};
       for (final provinceId in provinceIds) {
         final shuffled = List<(int x, int y)>.from(cells)..shuffle(rnd);
@@ -1629,3 +1625,4 @@ class TileMapGenerator {
     return next;
   }
 }
+

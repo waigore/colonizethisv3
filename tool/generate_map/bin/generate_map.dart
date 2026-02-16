@@ -1,11 +1,12 @@
 // ignore_for_file: avoid_print
 /// CLI: generate map from province/continent count, infer topology, output tile map and topology graph.
-/// SPEC/program/map-data.md. Thin facade over colonizethis_data.
+/// SPEC/program/map-data.md. Thin facade over colonizethis_map and colonizethis_data.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 const int _defaultProvinces = 60;
