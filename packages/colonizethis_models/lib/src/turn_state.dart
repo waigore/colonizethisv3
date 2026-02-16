@@ -1,10 +1,13 @@
 /// Turn phase in resolution sequence. SPEC/program/turn-resolution.
+/// SPEC/program/turn-resolution-phases.md
 enum TurnPhase {
   orders,
-  economy,
+  extraction,
+  richesToTreasury,
+  production,
+  consumption,
   movement,
-  combat,
-  diplomacy,
+  buildWork,
   endOfTurn,
 }
 

@@ -4,12 +4,21 @@ import 'package:test/test.dart';
 void main() {
   group('Unit', () {
     test('toJson/fromJson round-trip', () {
-      const u = Unit(id: 'u1', type: 'infantry', ownerId: 'p1', provinceId: 'prov1');
+      const u = Unit(
+        id: 'u1',
+        type: 'infantry',
+        ownerId: 'p1',
+        provinceId: 'prov1',
+        status: UnitStatus.working,
+        movementPoints: 2,
+      );
       final u2 = Unit.fromJson(u.toJson());
       expect(u2.id, 'u1');
       expect(u2.type, 'infantry');
       expect(u2.ownerId, 'p1');
       expect(u2.provinceId, 'prov1');
+      expect(u2.status, UnitStatus.working);
+      expect(u2.movementPoints, 2);
     });
     test('equality', () {
       const a = Unit(id: 'u1', type: 'inf', ownerId: 'p1', provinceId: 'prov1');

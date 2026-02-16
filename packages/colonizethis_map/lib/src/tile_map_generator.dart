@@ -138,6 +138,7 @@ Map<String, int> computeContinentMembership(MapTopology topology) {
 }
 
 /// Runtime parameters for tile-based map generation (grid dimensions and generator options).
+/// Pass 6 and Pass 10b terrain/jitter parameters are tunable here; see SPEC/program/tile-map-generation.md.
 class TileMapParams {
   const TileMapParams({
     this.width = 100,
@@ -153,10 +154,52 @@ class TileMapParams {
     this.joinContinents = true,
     this.seedBeforeAssignment = false,
     this.maxSeaZoneFraction = 0.05,
+    // Pass 6a — mountain ridges
+    this.mountainRangesFactor = 0.3,
+    this.mountainRangesMin = 1,
+    this.mountainRangesMax = 8,
+    this.mountainRangeMinLength = 10,
+    // Pass 6b — region-growing
+    this.terrainSeedsFactor = 0.35,
+    this.terrainSeedsMin = 1,
+    this.terrainSeedsMax = 48,
+    this.terrainMacroFraction = 0.7,
+    // Pass 6b — pattern refinement
+    this.patternMinBlobSize = 20,
+    this.patternMaxFractionPerBlob = 0.1,
+    this.patternSeedFactor = 0.3,
+    this.patternMaxSeedsPerBlob = 6,
+    this.patternMaxChangesPerSeed = 12,
+    this.patternMaxRadius = 4,
+    // Pass 10b — jitter
+    this.jitterHomogeneityThreshold = 0.85,
+    this.jitterMaxFraction = 0.1,
+    this.jitterProbability = 0.25,
+    this.jitterMinProvinceSize = 10,
+    this.jitterNeighborSupportThreshold = 2,
   })  : assert(seaFraction >= 0 && seaFraction < 1),
         assert(voronoiNoiseScale >= 0),
         assert(continentBufferTiles >= 0),
-        assert(maxSeaZoneFraction > 0 && maxSeaZoneFraction <= 1);
+        assert(maxSeaZoneFraction > 0 && maxSeaZoneFraction <= 1),
+        assert(mountainRangesFactor >= 0),
+        assert(mountainRangesMin >= 0),
+        assert(mountainRangesMax >= mountainRangesMin),
+        assert(mountainRangeMinLength >= 0),
+        assert(terrainSeedsFactor >= 0),
+        assert(terrainSeedsMin >= 0),
+        assert(terrainSeedsMax >= terrainSeedsMin),
+        assert(terrainMacroFraction >= 0 && terrainMacroFraction <= 1),
+        assert(patternMinBlobSize >= 0),
+        assert(patternMaxFractionPerBlob >= 0 && patternMaxFractionPerBlob <= 1),
+        assert(patternSeedFactor >= 0),
+        assert(patternMaxSeedsPerBlob >= 0),
+        assert(patternMaxChangesPerSeed >= 0),
+        assert(patternMaxRadius >= 0),
+        assert(jitterHomogeneityThreshold >= 0 && jitterHomogeneityThreshold <= 1),
+        assert(jitterMaxFraction >= 0 && jitterMaxFraction <= 1),
+        assert(jitterProbability >= 0 && jitterProbability <= 1),
+        assert(jitterMinProvinceSize >= 0),
+        assert(jitterNeighborSupportThreshold >= 0);
 
   final int width;
   final int height;
@@ -180,6 +223,33 @@ class TileMapParams {
   final bool seedBeforeAssignment;
   /// Max fraction of total sea tiles per sea zone (Pass 11); e.g. 0.05 = 5%.
   final double maxSeaZoneFraction;
+
+  // --- Pass 6a (mountain ridges)
+  final double mountainRangesFactor;
+  final int mountainRangesMin;
+  final int mountainRangesMax;
+  final int mountainRangeMinLength;
+
+  // --- Pass 6b (region-growing)
+  final double terrainSeedsFactor;
+  final int terrainSeedsMin;
+  final int terrainSeedsMax;
+  final double terrainMacroFraction;
+
+  // --- Pass 6b (pattern refinement)
+  final int patternMinBlobSize;
+  final double patternMaxFractionPerBlob;
+  final double patternSeedFactor;
+  final int patternMaxSeedsPerBlob;
+  final int patternMaxChangesPerSeed;
+  final int patternMaxRadius;
+
+  // --- Pass 10b (jitter)
+  final double jitterHomogeneityThreshold;
+  final double jitterMaxFraction;
+  final double jitterProbability;
+  final int jitterMinProvinceSize;
+  final int jitterNeighborSupportThreshold;
 }
 
 /// Generates a per-region tile map from province/continent params. SPEC/program/tile-map-generation.md.
@@ -327,6 +397,11 @@ class TileMapGenerator {
       }
     }
 
+    // Optional Pass 10b: province-aware terrain jitter (tiles without resources only).
+    if (terrainGrid != null && resourceGrid != null) {
+      _jitterTerrainByProvince(grid, terrainGrid, resourceGrid, regionId, rnd);
+    }
+
     // Pass 11: Sea zone subdivision with size cap (max fraction of total sea per zone).
     final totalSea = _countSeaCells(grid, seaZoneId);
     if (totalSea > 0) {
@@ -344,6 +419,149 @@ class TileMapGenerator {
     );
     final topology = inferTopologyFromTileMap(result, regionId, seaZoneId);
     return (result, topology);
+  }
+
+  /// Province-aware terrain jitter (Pass 10b): introduce small variation inside
+  /// highly homogeneous provinces by changing terrain on a limited number of
+  /// tiles that have no resource assigned.
+  void _jitterTerrainByProvince(
+    List<List<String>> grid,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<Resource?>> resourceGrid,
+    String regionId,
+    Random rnd,
+  ) {
+    final allowedNonMountain = allowedTerrainsForRegion(regionId)
+        .where((t) => t != TerrainType.mountain)
+        .toList();
+    if (allowedNonMountain.isEmpty) return;
+
+    final height = grid.length;
+    if (height == 0) return;
+    final width = grid[0].length;
+
+    // Build province -> tiles mapping.
+    final tilesByProvince = <String, List<(int x, int y)>>{};
+    final provinceIdPattern = RegExp(r'^p\d+$');
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        final id = grid[y][x];
+        if (!provinceIdPattern.hasMatch(id)) continue;
+        tilesByProvince.putIfAbsent(id, () => []).add((x, y));
+      }
+    }
+    if (tilesByProvince.isEmpty) return;
+
+    const directions4 = <(int dx, int dy)>[
+      (0, -1),
+      (1, 0),
+      (0, 1),
+      (-1, 0),
+    ];
+    const directions8 = <(int dx, int dy)>[
+      (0, -1),
+      (1, 0),
+      (0, 1),
+      (-1, 0),
+      (-1, -1),
+      (1, -1),
+      (1, 1),
+      (-1, 1),
+    ];
+
+    for (final entry in tilesByProvince.entries) {
+      final tiles = entry.value;
+      if (tiles.length < params.jitterMinProvinceSize) continue;
+
+      // Terrain histogram.
+      final counts = <TerrainType, int>{};
+      var terrainTiles = 0;
+      for (final (x, y) in tiles) {
+        final t = terrainGrid[y][x];
+        if (t == null) continue;
+        counts[t] = (counts[t] ?? 0) + 1;
+        terrainTiles++;
+      }
+      if (terrainTiles == 0 || counts.isEmpty) continue;
+
+      // Find dominant terrain.
+      TerrainType dominant = counts.keys.first;
+      var maxCount = counts[dominant]!;
+      for (final e in counts.entries) {
+        if (e.value > maxCount) {
+          dominant = e.key;
+          maxCount = e.value;
+        }
+      }
+      final fDom = maxCount / terrainTiles;
+      if (fDom < params.jitterHomogeneityThreshold) continue;
+
+      // Candidate tiles: dominant terrain, no resource, and lying on a
+      // terrain or province edge.
+      final candidates = <(int x, int y)>[];
+      for (final (x, y) in tiles) {
+        if (terrainGrid[y][x] != dominant) continue;
+        if (resourceGrid[y][x] != null) continue;
+
+        var isEdge = false;
+        // Terrain-edge or province-edge in 4-neighborhood.
+        for (final (dx, dy) in directions4) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          final neighborProvince = grid[ny][nx];
+          final neighborTerrain = terrainGrid[ny][nx];
+          if (neighborProvince != entry.key) {
+            isEdge = true; // province-edge
+            break;
+          }
+          if (neighborTerrain != null && neighborTerrain != dominant) {
+            isEdge = true; // terrain-edge within same province
+            break;
+          }
+        }
+        if (!isEdge) continue;
+
+        candidates.add((x, y));
+      }
+      if (candidates.isEmpty) continue;
+
+      candidates.shuffle(rnd);
+      final maxChanges = (params.jitterMaxFraction * tiles.length).floor();
+      if (maxChanges <= 0) continue;
+      var changes = 0;
+
+      for (final (x, y) in candidates) {
+        if (changes >= maxChanges) break;
+        if (rnd.nextDouble() > params.jitterProbability) continue;
+
+        // Prefer neighboring terrains within same province that are not
+        // dominant, and require a minimum neighbor support threshold.
+        final neighborCounts = <TerrainType, int>{};
+        for (final (dx, dy) in directions8) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          if (grid[ny][nx] != entry.key) continue; // same province only
+          final nt = terrainGrid[ny][nx];
+          if (nt == null || nt == dominant || nt == TerrainType.mountain) continue;
+          neighborCounts[nt] = (neighborCounts[nt] ?? 0) + 1;
+        }
+
+        final supported = neighborCounts.entries
+            .where((e) => e.value >= params.jitterNeighborSupportThreshold)
+            .map((e) => e.key)
+            .toList();
+        if (supported.isEmpty) {
+          // No terrain with enough local support; skip to avoid isolated speckles.
+          continue;
+        }
+
+        final newTerrain = supported[rnd.nextInt(supported.length)];
+        terrainGrid[y][x] = newTerrain;
+        changes++;
+      }
+    }
   }
 
   /// Join step: for each continent with >1 land component, connect two by a shortest path of sea cells. Returns (grid, terrainGrid, resourceGrid, didJoin).
@@ -746,26 +964,50 @@ class TileMapGenerator {
       (_) => List.filled(params.width, null as Resource?),
     );
 
+    // Collect land cells (sentinel) for terrain assignment.
+    final landCells = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] == _landSentinel) {
+          landCells.add((x, y));
+        }
+      }
+    }
+    if (landCells.isEmpty) {
+      // No land; nothing to assign.
+      return (terrainGrid, resourceGrid);
+    }
+
+    final distribution = terrainDistributionForRegion(mapRegionId);
+
+    // Pass 6a: mountain ridges (random-walk ranges).
+    _assignMountainRidges(terrainGrid, grid, landCells, distribution, rnd);
+
+    // Pass 6b: region-growing for non-mountain terrains.
+    _assignNonMountainTerrainsRegionGrowing(
+      terrainGrid,
+      grid,
+      mapRegionId,
+      distribution,
+      rnd,
+    );
+
+    // Pass 7: resources, using final terrainGrid and existing rules.
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) {
-          terrainGrid[y][x] = null;
-          resourceGrid[y][x] = null;
+          // Sea: no terrain, no resource.
           continue;
         }
-        // Land (sentinel): assign terrain from map-region allowed set. SPEC: map-level region.
-        final landTerrains = allowedTerrainsForRegion(mapRegionId);
-        if (landTerrains.isEmpty) continue;
-        terrainGrid[y][x] = landTerrains[rnd.nextInt(landTerrains.length)];
-        final terrain = terrainGrid[y][x]!;
-        // With probability place a resource from allowed set; weight = inverse to price
+        final terrain = terrainGrid[y][x];
+        if (terrain == null) continue;
         final allowed = Resource.values
             .where((r) =>
                 rules.isAllowedInRegion(r, mapRegionId) &&
                 rules.isAllowedOnTerrain(r, terrain))
             .toList();
         if (allowed.isEmpty) continue;
-        // 40% chance to place any resource on eligible land; then weighted pick
+        // 40% chance to place any resource on eligible land; then weighted pick.
         if (rnd.nextDouble() > 0.4) continue;
         final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
         final sum = weights.reduce((a, b) => a + b);
@@ -779,7 +1021,608 @@ class TileMapGenerator {
         }
       }
     }
+
     return (terrainGrid, resourceGrid);
+  }
+
+  /// Pass 6a: generate mountain ridges via random walks over land cells.
+  void _assignMountainRidges(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    List<(int x, int y)> landCells,
+    TerrainDistribution distribution,
+    Random rnd,
+  ) {
+    final totalLand = landCells.length;
+    if (totalLand == 0) return;
+    final targetMountain =
+        (distribution.mountainFraction * totalLand).round().clamp(0, totalLand);
+    if (targetMountain <= 0) return;
+
+    // Determine number of ranges based on target mountain tiles.
+    final suggestedRanges =
+        (params.mountainRangesFactor * sqrt(targetMountain)).round().clamp(
+              params.mountainRangesMin,
+              params.mountainRangesMax,
+            );
+    final numRanges = suggestedRanges.clamp(1, targetMountain);
+    if (numRanges <= 0) return;
+
+    var remainingMountain = targetMountain;
+
+    // Helper to pick a start cell biased away from edges and existing mountains.
+    (int x, int y)? pickStart() {
+      const maxAttempts = 1000;
+      for (var attempt = 0; attempt < maxAttempts; attempt++) {
+        final (cx, cy) = landCells[rnd.nextInt(landCells.length)];
+        if (terrainGrid[cy][cx] == TerrainType.mountain) continue;
+        // Prefer interior cells (not on border).
+        if (cx <= 0 ||
+            cx >= params.width - 1 ||
+            cy <= 0 ||
+            cy >= params.height - 1) {
+          // Still acceptable, but try to find interior cells first.
+          if (rnd.nextDouble() < 0.7) continue;
+        }
+        return (cx, cy);
+      }
+      return null;
+    }
+
+    // 4-connected directions: up, right, down, left.
+    const directions = <(int dx, int dy)>[
+      (0, -1),
+      (1, 0),
+      (0, 1),
+      (-1, 0),
+    ];
+
+    for (var r = 0; r < numRanges && remainingMountain > 0; r++) {
+      final start = pickStart();
+      if (start == null) break;
+      var (x, y) = start;
+      terrainGrid[y][x] = TerrainType.mountain;
+      remainingMountain--;
+
+      // Target length per range, clipped by remaining budget and minimum.
+      final idealLength = (targetMountain / numRanges).round();
+      final maxLengthForRange = idealLength.clamp(
+        params.mountainRangeMinLength,
+        targetMountain,
+      );
+      var placedThisRange = 1;
+
+      // Initial direction.
+      var dir = directions[rnd.nextInt(directions.length)];
+
+      const pForward = 0.6;
+      const pTurn = 0.3;
+      const maxTurnRetries = 4;
+
+      while (placedThisRange < maxLengthForRange && remainingMountain > 0) {
+        // Choose a new direction with persistence.
+        (int dx, int dy) pickDirection((int dx, int dy) current) {
+          final roll = rnd.nextDouble();
+          if (roll < pForward) {
+            return current;
+          } else if (roll < pForward + pTurn) {
+            // Turn left or right relative to current direction.
+            final left = (-current.$2, current.$1);
+            final right = (current.$2, -current.$1);
+            return rnd.nextBool() ? left : right;
+          } else {
+            return directions[rnd.nextInt(directions.length)];
+          }
+        }
+
+        var attempts = 0;
+        (int nx, int ny)? nextCell;
+        while (attempts < maxTurnRetries && nextCell == null) {
+          dir = pickDirection(dir);
+          final nx = x + dir.$1;
+          final ny = y + dir.$2;
+          attempts++;
+          if (nx < 0 ||
+              nx >= params.width ||
+              ny < 0 ||
+              ny >= params.height) {
+            continue;
+          }
+          if (grid[ny][nx] != _landSentinel) continue;
+          if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+          nextCell = (nx, ny);
+        }
+        if (nextCell == null) {
+          // This range is blocked; stop it.
+          break;
+        }
+        (x, y) = nextCell;
+        terrainGrid[y][x] = TerrainType.mountain;
+        placedThisRange++;
+        remainingMountain--;
+      }
+    }
+  }
+
+  /// Pass 6b: region-growing assignment for non-mountain terrains.
+  void _assignNonMountainTerrainsRegionGrowing(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    String mapRegionId,
+    TerrainDistribution distribution,
+    Random rnd,
+  ) {
+    // Allowed non-mountain terrains for this region.
+    final allowed = allowedTerrainsForRegion(mapRegionId)
+        .where((t) => t != TerrainType.mountain)
+        .toList();
+    if (allowed.isEmpty) return;
+
+    // Collect remaining land cells (not sea, not mountain).
+    final remainingLand = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != _landSentinel) continue;
+        if (terrainGrid[y][x] == TerrainType.mountain) continue;
+        remainingLand.add((x, y));
+      }
+    }
+    if (remainingLand.isEmpty) return;
+
+    // Split remaining land into connected components (continents) and run the
+    // region-growing per component so each continent gets its own mix.
+    final components = _connectedComponentsOfLand(remainingLand.toSet());
+    if (components.isEmpty) return;
+
+    const directions = <(int dx, int dy)>[
+      (0, -1),
+      (1, 0),
+      (0, 1),
+      (-1, 0),
+    ];
+
+    for (final component in components) {
+      if (component.isEmpty) continue;
+      final cells = component.toList();
+      final totalRemaining = cells.length;
+
+      // Per-component targets: same regional fractions, applied to this
+      // continent's non-mountain land. Adjust so the sum matches exactly.
+      final targets = <TerrainType, int>{};
+      var sum = 0;
+      for (final t in allowed) {
+        final frac = distribution.nonMountainFractions[t] ?? 0.0;
+        final n = (frac * totalRemaining).round();
+        targets[t] = n;
+        sum += n;
+      }
+      if (sum <= 0) {
+        // Fallback: uniform among allowed for this component.
+        final per = (totalRemaining / allowed.length).round();
+        targets.clear();
+        sum = 0;
+        for (final t in allowed) {
+          targets[t] = per;
+          sum += per;
+        }
+      }
+      final delta = totalRemaining - sum;
+      if (delta != 0) {
+        final last = allowed.last;
+        targets[last] = (targets[last] ?? 0) + delta;
+      }
+
+      // --- Macro phase: coarse blobs ---------------------------------------
+
+      final macroTargets = <TerrainType, int>{};
+      final macroRemaining = <TerrainType, int>{};
+      for (final t in allowed) {
+        final target = targets[t] ?? 0;
+        if (target <= 0) continue;
+        final macro = max(
+          1,
+          (target * params.terrainMacroFraction).round().clamp(1, target),
+        );
+        macroTargets[t] = macro;
+        macroRemaining[t] = macro;
+      }
+
+      // Seed placement within this component for macro phase.
+      final macroQueues = <TerrainType, List<(int x, int y)>>{};
+      final availableMacro = List<(int x, int y)>.from(cells);
+
+      for (final t in allowed) {
+        final macroTarget = macroTargets[t] ?? 0;
+        if (macroTarget <= 0) continue;
+        final seedCount = max(
+          params.terrainSeedsMin,
+          min(
+            params.terrainSeedsMax,
+            (params.terrainSeedsFactor * sqrt(macroTarget)).round(),
+          ),
+        );
+        final q = <(int x, int y)>[];
+        macroQueues[t] = q;
+
+        var placedSeeds = 0;
+        while (placedSeeds < seedCount &&
+            macroRemaining[t]! > 0 &&
+            availableMacro.isNotEmpty) {
+          final idx = rnd.nextInt(availableMacro.length);
+          final (sx, sy) = availableMacro.removeAt(idx);
+          if (terrainGrid[sy][sx] != null) continue;
+          terrainGrid[sy][sx] = t;
+          q.add((sx, sy));
+          macroRemaining[t] = macroRemaining[t]! - 1;
+          placedSeeds++;
+        }
+      }
+
+      bool hasActiveMacroTerrain() {
+        for (final t in allowed) {
+          final rem = macroRemaining[t] ?? 0;
+          final q = macroQueues[t];
+          if (rem > 0 && q != null && q.isNotEmpty) return true;
+        }
+        return false;
+      }
+
+      // Macro region-growing loop, restricted to this component's cells.
+      final cellSet = component;
+      while (hasActiveMacroTerrain()) {
+        var totalRem = 0;
+        for (final t in allowed) {
+          totalRem += macroRemaining[t] ?? 0;
+        }
+        if (totalRem <= 0) break;
+        var roll = rnd.nextInt(totalRem) + 1;
+        TerrainType? chosen;
+        for (final t in allowed) {
+          final rem = macroRemaining[t] ?? 0;
+          if (rem <= 0) continue;
+          roll -= rem;
+          if (roll <= 0) {
+            chosen = t;
+            break;
+          }
+        }
+        if (chosen == null) break;
+        final queue = macroQueues[chosen]!;
+        if (queue.isEmpty) continue;
+
+        final (cx, cy) = queue.removeLast();
+
+        final dirs = List<(int dx, int dy)>.from(directions)..shuffle(rnd);
+        for (final (dx, dy) in dirs) {
+          final nx = cx + dx;
+          final ny = cy + dy;
+          if (nx < 0 ||
+              nx >= params.width ||
+              ny < 0 ||
+              ny >= params.height) {
+            continue;
+          }
+          if (!cellSet.contains((nx, ny))) continue;
+          if (grid[ny][nx] != _landSentinel) continue;
+          if (terrainGrid[ny][nx] != null) continue;
+          terrainGrid[ny][nx] = chosen;
+          macroRemaining[chosen] = macroRemaining[chosen]! - 1;
+          queue.add((nx, ny));
+          if (macroRemaining[chosen]! <= 0) break;
+        }
+      }
+
+      // --- Micro phase: fill residual quotas with refinement ---------------
+
+      final residualTargets = <TerrainType, int>{};
+      for (final t in allowed) {
+        final target = targets[t] ?? 0;
+        if (target <= 0) continue;
+        final macro = macroTargets[t] ?? 0;
+        final usedMacro = macro - (macroRemaining[t] ?? 0);
+        final residual = max(0, target - usedMacro);
+        if (residual > 0) {
+          residualTargets[t] = residual;
+        }
+      }
+
+      if (residualTargets.isNotEmpty) {
+        final microQueues = <TerrainType, List<(int x, int y)>>{};
+        final microRemaining = <TerrainType, int>{};
+        final availableMicro = <(int x, int y)>[];
+        for (final (x, y) in cells) {
+          if (terrainGrid[y][x] == null) {
+            availableMicro.add((x, y));
+          }
+        }
+
+        for (final t in allowed) {
+          final residual = residualTargets[t] ?? 0;
+          if (residual <= 0) continue;
+          final seedCount = max(
+            params.terrainSeedsMin,
+            min(
+              params.terrainSeedsMax,
+              (params.terrainSeedsFactor * sqrt(residual)).round(),
+            ),
+          );
+          final q = <(int x, int y)>[];
+          microQueues[t] = q;
+          microRemaining[t] = residual;
+
+          var placedSeeds = 0;
+          while (placedSeeds < seedCount &&
+              microRemaining[t]! > 0 &&
+              availableMicro.isNotEmpty) {
+            final idx = rnd.nextInt(availableMicro.length);
+            final (sx, sy) = availableMicro.removeAt(idx);
+            if (terrainGrid[sy][sx] != null) continue;
+            terrainGrid[sy][sx] = t;
+            q.add((sx, sy));
+            microRemaining[t] = microRemaining[t]! - 1;
+            placedSeeds++;
+          }
+        }
+
+        bool hasActiveMicroTerrain() {
+          for (final t in allowed) {
+            final rem = microRemaining[t] ?? 0;
+            final q = microQueues[t];
+            if (rem > 0 && q != null && q.isNotEmpty) return true;
+          }
+          return false;
+        }
+
+        while (hasActiveMicroTerrain()) {
+          var totalRem = 0;
+          for (final t in allowed) {
+            totalRem += microRemaining[t] ?? 0;
+          }
+          if (totalRem <= 0) break;
+          var roll = rnd.nextInt(totalRem) + 1;
+          TerrainType? chosen;
+          for (final t in allowed) {
+            final rem = microRemaining[t] ?? 0;
+            if (rem <= 0) continue;
+            roll -= rem;
+            if (roll <= 0) {
+              chosen = t;
+              break;
+            }
+          }
+          if (chosen == null) break;
+          final queue = microQueues[chosen]!;
+          if (queue.isEmpty) continue;
+
+          final (cx, cy) = queue.removeLast();
+
+          final dirs = List<(int dx, int dy)>.from(directions)..shuffle(rnd);
+          for (final (dx, dy) in dirs) {
+            final nx = cx + dx;
+            final ny = cy + dy;
+            if (nx < 0 ||
+                nx >= params.width ||
+                ny < 0 ||
+                ny >= params.height) {
+              continue;
+            }
+            if (!cellSet.contains((nx, ny))) continue;
+            if (grid[ny][nx] != _landSentinel) continue;
+            if (terrainGrid[ny][nx] != null) continue;
+            terrainGrid[ny][nx] = chosen;
+            microRemaining[chosen] = microRemaining[chosen]! - 1;
+            queue.add((nx, ny));
+            if (microRemaining[chosen]! <= 0) break;
+          }
+        }
+      }
+
+      // Cleanup within this component: assign any remaining unassigned land
+      // cells to neighboring terrains (majority vote), or random fallback.
+      for (final (x, y) in cells) {
+        if (terrainGrid[y][x] != null) continue;
+        final counts = <TerrainType, int>{};
+        for (final (dx, dy) in directions) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 ||
+              nx >= params.width ||
+              ny < 0 ||
+              ny >= params.height) {
+            continue;
+          }
+          if (!cellSet.contains((nx, ny))) continue;
+          final t = terrainGrid[ny][nx];
+          if (t == null || t == TerrainType.mountain) continue;
+          counts[t] = (counts[t] ?? 0) + 1;
+        }
+        if (counts.isNotEmpty) {
+          TerrainType best = counts.keys.first;
+          var bestCount = counts[best]!;
+          for (final entry in counts.entries) {
+            if (entry.value > bestCount) {
+              best = entry.key;
+              bestCount = entry.value;
+            }
+          }
+          terrainGrid[y][x] = best;
+        } else {
+          terrainGrid[y][x] = allowed[rnd.nextInt(allowed.length)];
+        }
+      }
+
+      // Optional pattern refinement phase: carve small pockets of alternate
+      // non-mountain terrains inside large blobs, per continent.
+      _refineTerrainPatternsInComponent(
+        terrainGrid,
+        grid,
+        component,
+        allowed,
+        distribution,
+        rnd,
+      );
+    }
+  }
+
+  /// Optional Pass 6b pattern refinement: for a given connected land component
+  /// (continent), find large blobs of a single non-mountain terrain and carve
+  /// small pockets of other non-mountain terrains into their interior while
+  /// keeping blob shapes recognizable and overall fractions stable.
+  void _refineTerrainPatternsInComponent(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    Set<(int x, int y)> component,
+    List<TerrainType> allowedNonMountain,
+    TerrainDistribution distribution,
+    Random rnd,
+  ) {
+    if (component.isEmpty || allowedNonMountain.isEmpty) return;
+
+    // Restrict connected-components search to this continent's cells.
+    Set<(int x, int y)> cellsOfTerrain(TerrainType t) {
+      final out = <(int x, int y)>{};
+      for (final (x, y) in component) {
+        if (terrainGrid[y][x] == t) {
+          out.add((x, y));
+        }
+      }
+      return out;
+    }
+
+    // Helper to compute connected blobs within the component for a terrain.
+    List<Set<(int x, int y)>> blobsForTerrain(TerrainType t) {
+      final cells = cellsOfTerrain(t);
+      if (cells.isEmpty) return const [];
+      return _connectedComponentsOfLand(cells);
+    }
+
+    // Neighbour directions for interior tests and BFS (4-connected).
+    const directions = <(int dx, int dy)>[
+      (0, -1),
+      (1, 0),
+      (0, 1),
+      (-1, 0),
+    ];
+
+    for (final terrain in allowedNonMountain) {
+      final blobs = blobsForTerrain(terrain);
+      if (blobs.isEmpty) continue;
+
+      for (final blob in blobs) {
+        final size = blob.length;
+        if (size < params.patternMinBlobSize) continue;
+
+        // Budget: how many tiles in this blob we may convert away from [terrain].
+        final maxChangesForBlob =
+            (params.patternMaxFractionPerBlob * size).floor().clamp(0, size);
+        if (maxChangesForBlob <= 0) continue;
+
+        // Identify interior cells: all 4-neighbors are also in this blob.
+        final interior = <(int x, int y)>[];
+        for (final (x, y) in blob) {
+          var isInterior = true;
+          for (final (dx, dy) in directions) {
+            final nx = x + dx;
+            final ny = y + dy;
+            if (nx < 0 ||
+                nx >= params.width ||
+                ny < 0 ||
+                ny >= params.height ||
+                !blob.contains((nx, ny))) {
+              isInterior = false;
+              break;
+            }
+          }
+          if (isInterior) {
+            interior.add((x, y));
+          }
+        }
+        if (interior.isEmpty) continue;
+
+        // Determine how many seeds to use in this blob.
+        final seedCount = max(
+          1,
+          min(
+            params.patternMaxSeedsPerBlob,
+            (params.patternSeedFactor * sqrt(size)).round(),
+          ),
+        ).clamp(1, maxChangesForBlob);
+
+        final interiorShuffled = List<(int x, int y)>.from(interior)..shuffle(rnd);
+        final seeds = <(int x, int y, TerrainType target)>[];
+        var interiorIndex = 0;
+
+        for (var i = 0; i < seedCount && interiorIndex < interiorShuffled.length; i++) {
+          final (sx, sy) = interiorShuffled[interiorIndex++];
+          // Choose a target terrain different from the blob terrain, optionally
+          // preferring underrepresented terrains according to distribution.
+          final options = allowedNonMountain.where((t) => t != terrain).toList();
+          if (options.isEmpty) break;
+
+          // Weight by desired fraction heuristic (simplified).
+          final weights = <double>[];
+          for (final t in options) {
+            final desired = distribution.nonMountainFractions[t] ?? 0.0;
+            weights.add(max(0.0001, desired));
+          }
+          final total = weights.fold<double>(0, (a, b) => a + b);
+          var roll = rnd.nextDouble() * total;
+          TerrainType chosen = options.first;
+          for (var idx = 0; idx < options.length; idx++) {
+            roll -= weights[idx];
+            if (roll <= 0) {
+              chosen = options[idx];
+              break;
+            }
+          }
+          seeds.add((sx, sy, chosen));
+        }
+
+        if (seeds.isEmpty) continue;
+
+        var remainingBlobBudget = maxChangesForBlob;
+
+        for (final (sx, sy, target) in seeds) {
+          if (remainingBlobBudget <= 0) break;
+
+          var changesForSeed = 0;
+          final queue = <(int x, int y, int dist)>[(sx, sy, 0)];
+          final visited = <(int, int)>{(sx, sy)};
+
+          while (queue.isNotEmpty &&
+              changesForSeed < params.patternMaxChangesPerSeed &&
+              remainingBlobBudget > 0) {
+            final (cx, cy, dist) = queue.removeAt(0);
+            if (dist > params.patternMaxRadius) continue;
+
+            if (grid[cy][cx] == _landSentinel &&
+                blob.contains((cx, cy)) &&
+                terrainGrid[cy][cx] == terrain) {
+              terrainGrid[cy][cx] = target;
+              changesForSeed++;
+              remainingBlobBudget--;
+            }
+
+            if (dist == params.patternMaxRadius) continue;
+
+            for (final (dx, dy) in directions) {
+              final nx = cx + dx;
+              final ny = cy + dy;
+              if (nx < 0 ||
+                  nx >= params.width ||
+                  ny < 0 ||
+                  ny >= params.height) {
+                continue;
+              }
+              final key = (nx, ny);
+              if (!blob.contains(key) || visited.contains(key)) continue;
+              visited.add(key);
+              queue.add((nx, ny, dist + 1));
+            }
+          }
+        }
+      }
+    }
   }
 
   /// One continent seed per continent; then a cluster of land-shape seeds per continent (K from province count). No province seeds yet.

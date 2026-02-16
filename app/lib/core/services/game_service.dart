@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -20,9 +21,20 @@ class GameService {
   List<String> listGameIds() => _adapter.listGameIds(_box);
 
   /// Resolves one turn, persists the new state, and returns the updated game.
-  Game nextTurn(Game current) {
-    final newWorldState = resolveTurn(current.worldState);
-    final newGame = current.copyWith(worldState: newWorldState);
+  ///
+  /// Phase 2: this uses the Game-level resolver so that economy and movement
+  /// phases can operate on players, stockpiles, workers, and units.
+  ///
+  /// Currently, topology is loaded once per call via colonizethis_data and
+  /// orders are passed in by the caller (UI or AI).
+  Game nextTurn(Game current, {Orders? orders, MapTopology? topology}) {
+    final resolvedOrders = orders ?? const Orders();
+    final topo = topology ?? const MapTopology();
+    final newGame = resolveTurnForGame(
+      game: current,
+      topology: topo,
+      orders: resolvedOrders,
+    );
     saveGame(newGame);
     return newGame;
   }
@@ -32,12 +44,18 @@ class GameService {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final game = Game(
       id: gameId,
-      worldState: WorldState(
+      worldState: const WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
+        oldWorld: RegionData(),
+        newWorld: RegionData(),
       ),
-      players: const [Player(id: 'human', displayName: 'Player', isHuman: true)],
+      players: const [
+        Player(
+          id: 'human',
+          displayName: 'Player',
+          isHuman: true,
+        ),
+      ],
     );
     saveGame(game);
     return game;

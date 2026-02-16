@@ -1,0 +1,195 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('applyExtractionToStockpile', () {
+    test('adds extracted quantities', () {
+      const stockpile = Stockpile();
+      final extracted = {
+        CommodityCatalog.grain.id: 5,
+        CommodityCatalog.iron.id: 2,
+      };
+      final updated = applyExtractionToStockpile(stockpile, extracted);
+      expect(updated.quantityOf(CommodityCatalog.grain.id), 5);
+      expect(updated.quantityOf(CommodityCatalog.iron.id), 2);
+    });
+  });
+
+  group('applyExtractionForPlayers', () {
+    test('applies per-player extraction to stockpiles', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: false),
+        ],
+      );
+
+      final extracted = {
+        'p1': {
+          CommodityCatalog.grain.id: 3,
+        },
+        'p2': {
+          CommodityCatalog.iron.id: 2,
+        },
+      };
+
+      final updated = applyExtractionForPlayers(game, extracted);
+      expect(
+        updated.players[0].stockpile.quantityOf(CommodityCatalog.grain.id),
+        3,
+      );
+      expect(
+        updated.players[1].stockpile.quantityOf(CommodityCatalog.iron.id),
+        2,
+      );
+    });
+  });
+
+  group('resolveProduction', () {
+    test('consumes inputs and produces outputs', () {
+      // Start with enough timber, iron, and coal.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.timber.id, 10)
+          .applyDelta(CommodityCatalog.iron.id, 10)
+          .applyDelta(CommodityCatalog.coal.id, 5);
+      const workers = WorkerPool(peasants: 10);
+
+      final result = resolveProduction(
+        stockpile: stockpile,
+        workers: workers,
+        assignments: const [
+          AssignedRecipe(
+            recipeId: 'castIron_from_timber_iron_coal',
+            assignedLabour: 20,
+          ),
+        ],
+      );
+
+      // labourPerOutput = 5, assigned 20 => max 4 runs.
+      // Inputs per run: 2 timber, 2 iron, 1 coal.
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 4);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 4);
+      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 10 - 2 * 4);
+      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5 - 1 * 4);
+    });
+  });
+
+  group('resolveConsumption', () {
+    test('workers consume food from stockpile without starving', () {
+      // 3 peasants + 2 trained tiers => 3 * 1 + 2 * 2 = 7 food required.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 5)
+          .applyDelta(CommodityCatalog.meat.id, 5);
+      const workers = WorkerPool(
+        peasants: 3,
+        apprentices: 1,
+        journeymen: 1,
+        masters: 0,
+      );
+
+      final result = resolveConsumption(
+        stockpile: stockpile,
+        workers: workers,
+      );
+
+      final totalFood =
+          result.stockpile.quantityOf(CommodityCatalog.grain.id) +
+              result.stockpile.quantityOf(CommodityCatalog.meat.id);
+
+      // Started with 10 food, required 7, all workers should be fed.
+      expect(totalFood, 3);
+      expect(result.workerPool.peasants, 3);
+      expect(result.workerPool.apprentices, 1);
+      expect(result.workerPool.journeymen, 1);
+      expect(result.workerPool.masters, 0);
+    });
+
+    test('workers starve when food is insufficient', () {
+      // Require 7 food as above, but provide only 3.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 1)
+          .applyDelta(CommodityCatalog.meat.id, 2);
+      const workers = WorkerPool(
+        peasants: 3,
+        apprentices: 1,
+        journeymen: 1,
+        masters: 0,
+      );
+
+      final result = resolveConsumption(
+        stockpile: stockpile,
+        workers: workers,
+      );
+
+      // Only 3 food available; peasants are fed first.
+      expect(result.workerPool.peasants, 3);
+      // No food remains for trained tiers; they starve.
+      expect(result.workerPool.apprentices, 0);
+      expect(result.workerPool.journeymen, 0);
+      expect(result.workerPool.masters, 0);
+    });
+
+    test('military consumes food from stockpile', () {
+      // 2 military units at 2 food each = 4 food.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 5)
+          .applyDelta(CommodityCatalog.meat.id, 5);
+      const workers = WorkerPool(
+        peasants: 0,
+        apprentices: 0,
+        journeymen: 0,
+        masters: 0,
+      );
+
+      final result = resolveConsumption(
+        stockpile: stockpile,
+        workers: workers,
+        militaryUnits: 2,
+      );
+
+      final totalFood =
+          result.stockpile.quantityOf(CommodityCatalog.grain.id) +
+              result.stockpile.quantityOf(CommodityCatalog.meat.id);
+
+      // Started with 10 food, consumed 4 for military.
+      expect(totalFood, 6);
+    });
+  });
+
+  group('resolveRichesToTreasury', () {
+    test('converts riches to treasury and removes them from stockpile', () {
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.spices.id, 2)
+          .applyDelta(CommodityCatalog.gold.id, 1);
+      const treasuryStart = 100;
+
+      final result = resolveRichesToTreasury(stockpile: stockpile);
+
+      expect(result.stockpile.quantityOf(CommodityCatalog.spices.id), 0);
+      expect(result.stockpile.quantityOf(CommodityCatalog.gold.id), 0);
+      expect(result.treasuryDelta, 2 * 50 + 1 * richesBasePrice('gold'));
+      expect(treasuryStart + result.treasuryDelta, 100 + 100 + 166); // 366
+    });
+
+    test('leaves non-riches commodities unchanged', () {
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 10)
+          .applyDelta(CommodityCatalog.spices.id, 1);
+
+      final result = resolveRichesToTreasury(stockpile: stockpile);
+
+      expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 10);
+      expect(result.stockpile.quantityOf(CommodityCatalog.spices.id), 0);
+      expect(result.treasuryDelta, 50);
+    });
+  });
+}
+

@@ -10,6 +10,9 @@ void main() {
       expect(p2.id, 'p1');
       expect(p2.displayName, 'Spain');
       expect(p2.isHuman, true);
+      expect(p2.stockpile, Stockpile.empty);
+      expect(p2.workerPool, WorkerPool.empty);
+      expect(p2.treasury, 0);
     });
     test('equality', () {
       const a = Player(id: 'p1', displayName: 'Spain', isHuman: true);

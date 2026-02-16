@@ -34,6 +34,7 @@ All design deliverables must accord with **GDD 04, 04b, 05** and **TDD 04, 05**.
 | **Movement and orders (technical)** | Define movement rules (adjacency from topology, land only); order types: MoveOrder, BuildUnitOrder, WorkOrder (explore, build improvement, prospect); validation (topology, costs, caps); resolution (apply moves, apply builds, apply work). | [movement.md](../program/movement.md), [orders.md](../program/orders.md) (each ≤500 words). |
 | **Turn resolution expansion** | Full phase sequence (orders → extraction → production → consumption → movement → end-of-turn); define what each phase does (extraction: tile yields → stockpile; production: recipes + labour; consumption: workers + military; movement: apply move orders). | [turn-resolution.md](../program/turn-resolution.md) (extend), [turn-resolution-phases.md](../program/turn-resolution-phases.md) (new; ≤500 words). |
 | **New World exploitation** | State explicitly: New World provinces can be owned; extraction and production work identically to Old World; "colonies" = owned New World provinces; no separate colony entity. | Subsection in [world-model.md](../game/world-model.md) or [new-world-exploitation.md](../game/new-world-exploitation.md) (≤500 words). |
+| **sim_economy design** | Specify a standalone CLI tool (`melo sim_economy`) that reuses Phase 2 economy rules to simulate a single player’s stockpile and WorkerPool over N turns. Define CLI interface (including optional JSON script, random-start default mode, and `--seed`), JSON script schema, initial-state ranges, default extraction/assignment behaviour, and how it aligns with extraction/production/consumption phases. | [sim-economy.md](../program/sim-economy.md) (≤500 words). |
 
 **Existing specs to align (no new file):** [stockpiles-and-production.md](../game/stockpiles-and-production.md), [workers-and-population.md](../game/workers-and-population.md), [civilian-units.md](../game/civilian-units.md), [economy-models.md](../program/economy-models.md) — ensure Phase 2 subset and program-level config (no JSON rulesets in MVP) are referenced.
 
@@ -56,6 +57,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 | 9 | **Movement resolution (colonizethis_logic)** | Load topology from colonizethis_data; validate MoveOrders (adjacent province); apply moves (update unit locations). No combat. |
 | 10 | **Order application** | Apply BuildUnitOrder (deduct cost from stockpile, add unit to world state; worker consumed for military per workers spec). WorkOrder: minimal or stub (e.g. set unit status working; no terrain change yet) or one improvement type per [unit-types.md](../game/unit-types.md). |
 | 11 | **Wire app to Phase 2** | App (or service) passes orders into resolve; TurnResolver uses orders in movement and build phases; save/load includes stockpile, workers, units, orders. Riverpod exposes updated state. |
+| 12 | **sim_economy CLI** | Implement `melo sim_economy` as a standalone Dart CLI that parses an optional JSON script, constructs an initial player state (stockpile, WorkerPool, optional military and treasury) using `colonizethis_models` and `colonizethis_data`, runs the scripted or default turn loop by delegating to `colonizethis_logic` for extraction/production/consumption, and produces human-readable and optional machine-readable logs. |
 
 ---
 
@@ -75,6 +77,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Integration test — one full turn** | Run TurnResolver for one turn with initial state (provinces, tiles, units, orders); assert extraction added to stockpile, production/consumption applied, movement applied, turn number incremented. |
 | **Save/load round-trip (critical path)** | Save game state with stockpile, workers, units, orders; load and assert key fields match. |
 | **Per-package coverage** | colonizethis_models, colonizethis_logic (and colonizethis_data if extended) aim for 80%; enforce in CI where applicable. |
+| **sim_economy tests** | Unit tests for sim_economy script parsing and validation (invalid ids, malformed structure), plus golden-style tests where a short script or default random-start run yields an expected stockpile and WorkerPool after N turns; optionally cross-check one scripted turn against TurnResolver economy phases for behavioural alignment. |
 
 ---
 
@@ -133,6 +136,7 @@ Phase 2 is done when all design and dev tasks are implemented, all test tasks pa
 - [SPEC/game/world-model.md](../game/world-model.md) — Core entities; add New World exploitation note.
 - [SPEC/game/stockpiles-and-production.md](../game/stockpiles-and-production.md), [SPEC/game/workers-and-population.md](../game/workers-and-population.md), [SPEC/game/civilian-units.md](../game/civilian-units.md), [SPEC/program/economy-models.md](../program/economy-models.md) — Existing specs to align.
 - `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+ - [SPEC/program/sim-economy.md](../program/sim-economy.md) — Standalone economy simulation tool spec.
 
 ---
 

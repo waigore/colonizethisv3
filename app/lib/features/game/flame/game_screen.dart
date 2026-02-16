@@ -24,6 +24,9 @@ class GameScreen extends ConsumerWidget {
               child: ElevatedButton(
                 onPressed: () {
                   final service = ref.read(gameServiceProvider);
+                  // Phase 2: orders and topology are not yet surfaced in the UI,
+                  // so we pass empty orders and a default topology. This still
+                  // exercises the full Phase 2 turn resolver pipeline.
                   final newGame = service.nextTurn(game);
                   ref.read(currentGameProvider.notifier).state = newGame;
                 },

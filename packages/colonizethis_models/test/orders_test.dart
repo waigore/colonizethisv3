@@ -6,28 +6,74 @@ void main() {
     test('toJson/fromJson round-trip empty', () {
       const o = Orders();
       final o2 = Orders.fromJson(o.toJson());
-      expect(o2.byPlayerId, isEmpty);
+      expect(o2.moveOrdersByPlayerId, isEmpty);
     });
     test('toJson/fromJson round-trip with data', () {
-      const o = Orders(byPlayerId: {'p1': {'move': 'prov1'}});
+      const o = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+        },
+        buildUnitOrdersByPlayerId: {
+          'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
+        },
+        workOrdersByPlayerId: {
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+        },
+      );
       final o2 = Orders.fromJson(o.toJson());
-      expect(o2.byPlayerId['p1'], {'move': 'prov1'});
+      expect(o2.moveOrdersByPlayerId['p1']!.single.unitId, 'u1');
+      expect(
+        o2.moveOrdersByPlayerId['p1']!.single.destinationProvinceId,
+        'prov1',
+      );
+      expect(o2.buildUnitOrdersByPlayerId['p1']!.single.unitType, 'Regiment');
+      expect(o2.workOrdersByPlayerId['p1']!.single.target, 'build_mine');
     });
     test('equality', () {
-      const a = Orders(byPlayerId: {'p1': {}});
-      const b = Orders(byPlayerId: {'p1': {}});
+      const a = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+        },
+        buildUnitOrdersByPlayerId: {
+          'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
+        },
+        workOrdersByPlayerId: {
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+        },
+      );
+      const b = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+        },
+        buildUnitOrdersByPlayerId: {
+          'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
+        },
+        workOrdersByPlayerId: {
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+        },
+      );
       expect(a, b);
       expect(a.hashCode, b.hashCode);
     });
     test('fromJson with null or missing byPlayerId', () {
       final o = Orders.fromJson({});
-      expect(o.byPlayerId, isEmpty);
-      final o2 = Orders.fromJson({'byPlayerId': null});
-      expect(o2.byPlayerId, isEmpty);
+      expect(o.moveOrdersByPlayerId, isEmpty);
+      expect(o.buildUnitOrdersByPlayerId, isEmpty);
+      expect(o.workOrdersByPlayerId, isEmpty);
+      final o2 = Orders.fromJson({'moveOrdersByPlayerId': null});
+      expect(o2.moveOrdersByPlayerId, isEmpty);
     });
     test('equality false when different', () {
-      const a = Orders(byPlayerId: {'p1': {}});
-      const b = Orders(byPlayerId: {'p2': {}});
+      const a = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+        },
+      );
+      const b = Orders(
+        moveOrdersByPlayerId: {
+          'p2': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+        },
+      );
       expect(a == b, false);
       expect(a == Object(), false);
     });

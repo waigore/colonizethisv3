@@ -13,6 +13,7 @@ workspace:
   - packages/colonizethis_ai
   - packages/colonizethis_map
   - tool/generate_map
+  - tool/sim_economy
 
 dev_dependencies:
   melos: ^7.0.0
@@ -22,3 +23,6 @@ melos:
     generate_map:
       description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
       run: dart run generate_map
+    sim_economy:
+      description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
+      run: dart run sim_economy

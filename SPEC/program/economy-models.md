@@ -48,8 +48,9 @@ class WorkerPool {
 ## Turn Flow
 
 1. **Extraction phase:** Province tiles produce; resources flow to player stockpile (auto-transport).
-2. **Production phase:** Consume commodities and labour from stockpile; produce outputs to stockpile.
-3. **Consumption phase:** Workers, military, navy consume food and materials from stockpile.
+2. **Riches-to-treasury phase:** Riches in stockpile convert to treasury at base price and are removed from stockpile.
+3. **Production phase:** Consume commodities and labour from stockpile; produce outputs to stockpile.
+4. **Consumption phase:** Workers, military, navy consume food and materials from stockpile.
 
 ---
 
