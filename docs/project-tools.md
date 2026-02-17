@@ -6,6 +6,41 @@ The list below is the single place for **what tools exist** and **how to invoke 
 
 ---
 
+## init_game
+
+Game creation: generate Old World and New World maps, assign provinces and capitals to Great Powers, Minor Nations, and Tribes, build initial world state. Outputs combined map PNG (with ownership and capitals) and faction setup markdown. Does not advance turns. Spec: [SPEC/program/init-game-tool.md](../SPEC/program/init-game-tool.md).
+
+**Invocation**
+
+```bash
+melos run init_game -- [options]
+```
+
+**Options**
+
+- `--config <path>` — JSON config (optional)
+- `--output-map <path>` — write map PNG
+- `--output-markdown <path>` — write faction setup markdown
+- `--output-game <path>` — save game to Hive directory (use with `--no-save` to skip)
+- `--no-save` — do not save game
+- `--seed <n>` — RNG seed
+- `--great-power-count N`, `--minor-nation-count N`, `--tribe-count N` — override config
+- `--num-provinces-old-world N`, `--num-provinces-new-world N` — override config
+
+**Output**
+
+- Map PNG: combined OW+NW with ownership colors and capital markers.
+- Markdown: Faction Setup table (Faction, Type, Capital Province, Provinces Owned) and Faction Starting State table (Stockpile, Workers, Treasury, Units).
+
+**Examples**
+
+```bash
+melos run init_game -- --output-map=./game_map.png --output-markdown=./setup.md --no-save
+melos run init_game -- --minor-nation-count 0 --tribe-count 3 --output-map=./map.png
+```
+
+---
+
 ## generate_map
 
 End-to-end map generation: generate tile map from province and continent count, infer topology from the grid, output graph description, map summary, tile map PNG, and topology graph (DOT + PNG when Graphviz installed). Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).

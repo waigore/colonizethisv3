@@ -28,5 +28,28 @@ void main() {
       expect(a == c, false);
       expect(a == Object(), false);
     });
+    test('toJson/fromJson round-trip with capital and techUnlocked', () {
+      const cap = CapitalTile(
+        regionId: 'oldWorld',
+        provinceId: 'p1',
+        x: 2,
+        y: 3,
+      );
+      final p = Player(
+        id: 'p1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'p1',
+        capitalTile: cap,
+        techUnlocked: {'road_construction': true},
+      );
+      final p2 = Player.fromJson(p.toJson());
+      expect(p2.capitalProvinceId, 'p1');
+      expect(p2.capitalTile?.regionId, 'oldWorld');
+      expect(p2.capitalTile?.provinceId, 'p1');
+      expect(p2.capitalTile?.x, 2);
+      expect(p2.capitalTile?.y, 3);
+      expect(p2.techUnlocked?['road_construction'], true);
+    });
   });
 }

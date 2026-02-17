@@ -770,7 +770,7 @@ class TileMapGenerator {
       var bestMinD2 = 0;
       for (final (x, y) in list) {
         if (chosen.contains((x, y))) continue;
-        var minD2 = 0x7FFFFFFFFFFFFFFF;
+        var minD2 = 0x7fffffff;
         for (final (sx, sy) in chosen) {
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
           if (d2 < minD2) minD2 = d2;
@@ -1954,7 +1954,7 @@ class TileMapGenerator {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7FFFFFFFFFFFFFFF;
+          var d2 = 0x7fffffff;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -2161,7 +2161,7 @@ class TileMapGenerator {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7FFFFFFFFFFFFFFF;
+          var d2 = 0x7fffffff;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sy) * (x - sx) + (y - sy) * (y - sy);
@@ -2253,7 +2253,7 @@ class TileMapGenerator {
   ) {
     if (landSeeds.isEmpty) return 0;
     var bestSeedIndex = 0;
-    var bestD2 = 0x7FFFFFFFFFFFFFFF;
+    var bestD2 = 0x7fffffff;
     for (var i = 0; i < landSeeds.length; i++) {
       final (sx, sy) = landSeeds[i];
       final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -2356,7 +2356,7 @@ class TileMapGenerator {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
         var bestSeedIndex = 0;
-        var bestD2 = 0x7FFFFFFFFFFFFFFF;
+        var bestD2 = 0x7fffffff;
         for (var i = 0; i < landSeeds.length; i++) {
           final (sx, sy) = landSeeds[i];
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);

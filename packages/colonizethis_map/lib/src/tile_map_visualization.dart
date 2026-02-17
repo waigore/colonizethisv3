@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_map_visualization_shared.dart';
+
 /// Deep blue for sea zones. SPEC/program/map-data.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
 
@@ -24,55 +26,15 @@ const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
   TerrainType.swamp: (70, 100, 90),
 };
 
-/// Land seed marker color (bright red). SPEC/program/map-data.md § Tile map PNG export.
-const (int, int, int) landSeedMarkerRgb = (255, 0, 0);
+const int _titleLines = 2;
 
-/// Continent seed marker color (distinct from land seeds; e.g. white/gold). SPEC/program/map-data.md § Tile map PNG export.
-const (int, int, int) continentSeedMarkerRgb = (255, 255, 200);
-
-/// Distinct RGB colors for region assignment (fallback when no terrain). Deterministic order.
-const List<(int r, int g, int b)> _palette = [
-  (180, 80, 80),   // red
-  (80, 140, 200),  // blue
-  (90, 160, 90),   // green
-  (220, 180, 60),  // yellow
-  (160, 100, 180), // purple
-  (60, 180, 180),  // cyan
-  (220, 140, 100), // orange
-  (140, 100, 60),  // brown
-  (200, 100, 160), // pink
-  (100, 120, 200), // lighter blue
-  (120, 200, 120), // light green
-  (200, 200, 100), // light yellow
-  (180, 140, 200), // light purple
-  (100, 200, 200), // light cyan
-  (200, 160, 140), // peach
-  (160, 160, 160), // gray
-];
-
-/// Builds a map from region id to (r, g, b) using deterministic palette assignment.
-Map<String, (int r, int g, int b)> _colorMap(TileMapResult result) {
-  final ids = <String>{};
+Iterable<String> _regionIdsFromResult(TileMapResult result) sync* {
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
-      ids.add(result.cell(x, y));
+      yield result.cell(x, y);
     }
   }
-  final sorted = ids.toList()..sort();
-  final map = <String, (int r, int g, int b)>{};
-  for (var i = 0; i < sorted.length; i++) {
-    final c = _palette[i % _palette.length];
-    map[sorted[i]] = c;
-  }
-  return map;
 }
-
-/// Legend layout constants.
-const int _legendPadding = 12;
-const int _legendLineHeight = 20;
-const int _swatchSize = 14;
-const int _swatchGap = 8;
-const int _titleLines = 2;
 
 /// Renders the tile map and legend to a PNG image; returns PNG bytes.
 /// When [result.terrainGrid] is present: fill by terrain (sea = deep blue), draw province/sea borders in black, terrain legend. Otherwise: region-colored fill and region legend.
@@ -114,7 +76,7 @@ Uint8List renderTileMapToPng(
     }
   }
   if (result.resourceGrid != null) legendLines += Resource.values.length;
-  final legendHeight = _legendPadding * 2 + legendLines * _legendLineHeight;
+  final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
   final totalWidth = mapW;
   final totalHeight = mapH + legendHeight;
 
@@ -149,7 +111,7 @@ Uint8List renderTileMapToPng(
       }
     }
   } else {
-    final colors = _colorMap(result);
+    final colors = colorMapFromIds(_regionIdsFromResult(result));
     for (var y = 0; y < result.height; y++) {
       for (var x = 0; x < result.width; x++) {
         final id = result.cell(x, y);
@@ -168,48 +130,7 @@ Uint8List renderTileMapToPng(
   }
 
   // Borders: land borders (P–P, P–S) in black; sea zone borders (S–S) in light blue.
-  final borderThickness = cellSize >= 12 ? 2 : 1;
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      final id = result.cell(x, y);
-      if (x + 1 < result.width) {
-        final other = result.cell(x + 1, y);
-        if (id != other) {
-          final borderColor = (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-              ? seaZoneBorderColor
-              : black;
-          final xEdge = (x + 1) * cellSize;
-          img.drawLine(
-            image,
-            x1: xEdge,
-            y1: y * cellSize,
-            x2: xEdge,
-            y2: (y + 1) * cellSize - 1,
-            color: borderColor,
-            thickness: borderThickness,
-          );
-        }
-      }
-      if (y + 1 < result.height) {
-        final other = result.cell(x, y + 1);
-        if (id != other) {
-          final borderColor = (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-              ? seaZoneBorderColor
-              : black;
-          final yEdge = (y + 1) * cellSize;
-          img.drawLine(
-            image,
-            x1: x * cellSize,
-            y1: yEdge,
-            x2: (x + 1) * cellSize - 1,
-            y2: yEdge,
-            color: borderColor,
-            thickness: borderThickness,
-          );
-        }
-      }
-    }
-  }
+  drawBorders(image, result, seaZoneIds, cellSize, seaZoneBorderColor);
 
   // Continent seed markers (distinct: larger, different color, black outline).
   if (showContinentSeeds) {
@@ -229,7 +150,7 @@ Uint8List renderTileMapToPng(
     for (var i = 0; i < landSeedPositions!.length; i++) {
       final (sx, sy) = landSeedPositions[i];
       final (r, g, b) = useLandSeedByContinent
-          ? _palette[landSeedContinentIndices![i] % _palette.length]
+          ? regionPalette[landSeedContinentIndices![i] % regionPalette.length]
           : landSeedMarkerRgb;
       final markerColor = image.getColor(r, g, b);
       final cx = sx * cellSize + cellSize ~/ 2;
@@ -274,13 +195,13 @@ Uint8List renderTileMapToPng(
   }
 
   // Legend (below map).
-  final legendY0 = mapH + _legendPadding;
+  final legendY0 = mapH + legendPadding;
   if (useTerrain) {
     img.drawString(
       image,
       'Terrain. Black = land borders; light blue = sea zone borders.',
       font: img.arial14,
-      x: _legendPadding,
+      x: legendPadding,
       y: legendY0,
       color: black,
     );
@@ -288,49 +209,49 @@ Uint8List renderTileMapToPng(
       image,
       'Colors = terrain type; sea = deep blue.',
       font: img.arial14,
-      x: _legendPadding,
-      y: legendY0 + _legendLineHeight,
+      x: legendPadding,
+      y: legendY0 + legendLineHeight,
       color: black,
     );
     var row = _titleLines;
-    _drawLegendSwatch(image, legendY0 + row * _legendLineHeight, seaColorRgb.$1, seaColorRgb.$2, seaColorRgb.$3);
-    img.drawString(image, 'Sea', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: legendY0 + row * _legendLineHeight, color: black);
+    drawLegendSwatch(image, legendY0 + row * legendLineHeight, seaColorRgb.$1, seaColorRgb.$2, seaColorRgb.$3);
+    img.drawString(image, 'Sea', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: legendY0 + row * legendLineHeight, color: black);
     row++;
     for (final t in TerrainType.values) {
       final (r, g, b) = terrainColorRgb[t]!;
-      _drawLegendSwatch(image, legendY0 + row * _legendLineHeight, r, g, b);
+      drawLegendSwatch(image, legendY0 + row * legendLineHeight, r, g, b);
       final label = _terrainLabel(t);
-      img.drawString(image, label, font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: legendY0 + row * _legendLineHeight, color: black);
+      img.drawString(image, label, font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: legendY0 + row * legendLineHeight, color: black);
       row++;
     }
     if (showContinentSeeds) {
-      final y = legendY0 + row * _legendLineHeight;
-      _drawLegendContinentSeedMarker(image, y);
-      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+      final y = legendY0 + row * legendLineHeight;
+      drawLegendContinentSeedMarker(image, y);
+      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
       row++;
     }
     if (showLandSeeds) {
       if (useLandSeedByContinent) {
         final maxContinent = landSeedContinentIndices!.reduce((a, b) => a > b ? a : b);
         for (var c = 0; c <= maxContinent; c++) {
-          final y = legendY0 + row * _legendLineHeight;
-          final (r, g, b) = _palette[c % _palette.length];
-          _drawLegendSwatch(image, y, r, g, b);
-          img.drawString(image, 'Continent $c', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+          final y = legendY0 + row * legendLineHeight;
+          final (r, g, b) = regionPalette[c % regionPalette.length];
+          drawLegendSwatch(image, y, r, g, b);
+          img.drawString(image, 'Continent $c', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
           row++;
         }
       } else {
-        final y = legendY0 + row * _legendLineHeight;
-        _drawLegendLandSeedMarker(image, y);
-        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+        final y = legendY0 + row * legendLineHeight;
+        drawLegendLandSeedMarker(image, y);
+        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
         row++;
       }
     }
     if (result.resourceGrid != null) {
       for (final r in Resource.values) {
-        final y = legendY0 + row * _legendLineHeight;
-        img.drawString(image, _resourceLetter(r), font: img.arial14, x: _legendPadding, y: y, color: black);
-        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+        final y = legendY0 + row * legendLineHeight;
+        img.drawString(image, _resourceLetter(r), font: img.arial14, x: legendPadding, y: y, color: black);
+        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
         row++;
       }
     }
@@ -339,7 +260,7 @@ Uint8List renderTileMapToPng(
       image,
       'Each cell = one tile. Colors = regions (provinces / sea zones).',
       font: img.arial14,
-      x: _legendPadding,
+      x: legendPadding,
       y: legendY0,
       color: black,
     );
@@ -347,86 +268,56 @@ Uint8List renderTileMapToPng(
       image,
       'P = province (land), S = sea zone. Black = land borders; light blue = sea borders.',
       font: img.arial14,
-      x: _legendPadding,
-      y: legendY0 + _legendLineHeight,
+      x: legendPadding,
+      y: legendY0 + legendLineHeight,
       color: black,
     );
-    final colors = _colorMap(result);
+    final colors = colorMapFromIds(_regionIdsFromResult(result));
     final nodesSorted =
         List<TopologyNode>.from(topology.nodes)..sort((a, b) => a.id.compareTo(b.id));
     var row = _titleLines;
     for (final n in nodesSorted) {
-      final y = legendY0 + row * _legendLineHeight;
+      final y = legendY0 + row * legendLineHeight;
       final c = colors[n.id]!;
-      _drawLegendSwatch(image, y, c.$1, c.$2, c.$3);
+      drawLegendSwatch(image, y, c.$1, c.$2, c.$3);
       final label = '${n.id} (${n.type == TopologyNodeType.province ? 'P' : 'S'})';
-      img.drawString(image, label, font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+      img.drawString(image, label, font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
       row++;
     }
     if (showContinentSeeds) {
-      final y = legendY0 + row * _legendLineHeight;
-      _drawLegendContinentSeedMarker(image, y);
-      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+      final y = legendY0 + row * legendLineHeight;
+      drawLegendContinentSeedMarker(image, y);
+      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
       row++;
     }
     if (showLandSeeds) {
       if (useLandSeedByContinent) {
         final maxContinent = landSeedContinentIndices!.reduce((a, b) => a > b ? a : b);
         for (var c = 0; c <= maxContinent; c++) {
-          final y = legendY0 + row * _legendLineHeight;
-          final (r, g, b) = _palette[c % _palette.length];
-          _drawLegendSwatch(image, y, r, g, b);
-          img.drawString(image, 'Continent $c', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+          final y = legendY0 + row * legendLineHeight;
+          final (r, g, b) = regionPalette[c % regionPalette.length];
+          drawLegendSwatch(image, y, r, g, b);
+          img.drawString(image, 'Continent $c', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
           row++;
         }
       } else {
-        final y = legendY0 + row * _legendLineHeight;
-        _drawLegendLandSeedMarker(image, y);
-        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+        final y = legendY0 + row * legendLineHeight;
+        drawLegendLandSeedMarker(image, y);
+        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
         row++;
       }
     }
     if (result.resourceGrid != null) {
       for (final r in Resource.values) {
-        final y = legendY0 + row * _legendLineHeight;
-        img.drawString(image, _resourceLetter(r), font: img.arial14, x: _legendPadding, y: y, color: black);
-        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: _legendPadding + _swatchSize + _swatchGap, y: y, color: black);
+        final y = legendY0 + row * legendLineHeight;
+        img.drawString(image, _resourceLetter(r), font: img.arial14, x: legendPadding, y: y, color: black);
+        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
         row++;
       }
     }
   }
 
   return img.encodePng(image);
-}
-
-void _drawLegendContinentSeedMarker(img.Image image, int y) {
-  final cx = _legendPadding + _swatchSize ~/ 2;
-  final cy = y + _swatchSize ~/ 2;
-  final fillColor = image.getColor(continentSeedMarkerRgb.$1, continentSeedMarkerRgb.$2, continentSeedMarkerRgb.$3);
-  final black = image.getColor(0, 0, 0);
-  img.fillCircle(image, x: cx, y: cy, radius: 5, color: fillColor);
-  img.drawCircle(image, x: cx, y: cy, radius: 5, color: black);
-}
-
-void _drawLegendLandSeedMarker(img.Image image, int y) {
-  final cx = _legendPadding + _swatchSize ~/ 2;
-  final cy = y + _swatchSize ~/ 2;
-  final black = image.getColor(0, 0, 0);
-  final color = image.getColor(landSeedMarkerRgb.$1, landSeedMarkerRgb.$2, landSeedMarkerRgb.$3);
-  img.fillCircle(image, x: cx, y: cy, radius: 4, color: color);
-  img.drawCircle(image, x: cx, y: cy, radius: 4, color: black);
-}
-
-void _drawLegendSwatch(img.Image image, int y, int r, int g, int b) {
-  final color = image.getColor(r, g, b);
-  img.fillRect(
-    image,
-    x1: _legendPadding,
-    y1: y,
-    x2: _legendPadding + _swatchSize,
-    y2: y + _swatchSize,
-    color: color,
-  );
 }
 
 String _terrainLabel(TerrainType t) {

@@ -21,40 +21,34 @@ void main() {
       await box.close();
     });
 
-    test('nextTurn persists updated game including Phase 2 fields', () {
-      final game = service.createNewGame(id: 'g1');
-
-      // Build minimal topology with two adjacent provinces.
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(
-            id: 'P1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          const TopologyNode(
-            id: 'P2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: [
-          const TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
+    test('createNewGame and nextTurn persist Phase 2 fields; save/load round-trip', () {
+      const config = GameSetupConfig(
+        greatPowerCount: 1,
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 2,
       );
+      final game = service.createNewGame(id: 'g1', config: config);
 
-      final orders = Orders(
-        moveOrdersByPlayerId: const {},
-      );
+      expect(game.players.length, 1);
+      expect(game.players.first.id, 'gp1');
+      expect(game.players.first.capitalProvinceId, isNotNull);
+      expect(game.minorNations, isEmpty);
+      expect(game.tribes.length, 1);
 
-      final updated = service.nextTurn(game, orders: orders, topology: topology);
+      final orders = Orders(moveOrdersByPlayerId: const {});
+      final updated = service.nextTurn(game, orders: orders);
 
-      // Save/load round-trip via GameService to ensure Phase 2 fields survive.
       final loaded = service.loadGame(updated.id);
       expect(loaded, isNotNull);
       expect(loaded!.worldState.turnState.turnNumber, updated.worldState.turnState.turnNumber);
       expect(loaded.players.first.stockpile.quantities, updated.players.first.stockpile.quantities);
       expect(loaded.players.first.workerPool, updated.players.first.workerPool);
+      expect(loaded.turnTimeMapping, TurnTimeMapping.gdd01);
+      expect(loaded.minorNations, isEmpty);
+      expect(loaded.tribes.length, 1);
     });
   });
 }

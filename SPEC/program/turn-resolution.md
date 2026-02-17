@@ -8,7 +8,7 @@
 
 **Turn state** is part of WorldState. It includes:
 
-- **Turn number** — Integer; increments each full resolution (e.g. after end-of-turn phase).
+- **Turn number** — Integer; increments each full resolution (e.g. after end-of-turn phase). Calendar year is derived from `turnState.turnNumber` using the game's `turnTimeMapping`; no change to resolution logic.
 - **Phase** — Enum indicating current step within resolution (e.g. orders, economy, combat, diplomacy, end-of-turn). Stub may use a single “resolution” phase or a minimal sequence; full phase set in [turn-resolution-phases.md](turn-resolution-phases.md).
 
 At least one phase exists; resolver advances turn number so that “next turn” produces a new WorldState with incremented turn.
@@ -17,7 +17,7 @@ At least one phase exists; resolver advances turn number so that “next turn”
 
 ## Resolution Sequence
 
-**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)). Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces).
+**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)); the full phase list includes **Combat**, which runs after Movement when combat is in scope. Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces). The **Combat** phase takes WorldState after movement, runs conflict detection and the combat resolver, and applies casualties and province flips.
 
 **Stub:** Sequence and interfaces exist. Each phase can be no-op or minimal (e.g. end-of-turn advances turn number only) until economy, movement, and other logic are implemented.
 

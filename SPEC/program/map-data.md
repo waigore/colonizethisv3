@@ -48,7 +48,61 @@ When the tool (or colonizethis_data) exports a tile map as PNG:
 - **Land seeds:** Land seeds are drawn as **small circles** at cell centers, with a **black outline** (fill + outline), so they are clearly distinguishable from the square tile cells. Continent seeds remain the larger, distinct-style markers.
 - **Region id on tiles:** Each tile (cell) MAY display its **region id** (e.g. p1, s2) as text on the map for identification. The id is drawn in **red** so it stands out from terrain and borders. When resources are present, resource letters are drawn at cell center and remain visible; region id placement (e.g. top-left of cell) should avoid obscuring resource letters where possible.
 - **Tile size:** **Tile size** (pixels per cell, "cell size") is configurable so that tile details are easier to see. The default cell size is **24** pixels per tile (implementation may use a larger default than previously). The generate_map tool and colonizethis_map APIs accept an optional cell size parameter; when not specified, the default is used.
-- **Ownership:** Implemented in colonizethis_map (tile_map_visualization); consumed by the generate_map tool.
+
+---
+
+## Tile map visualizers (two, shared code)
+
+Two visualizers exist; they share border drawing, legend layout, and swatch helpers.
+
+### Base tile map visualizer
+
+**Module:** `tile_map_visualization`. Renders `TileMapResult` + `MapTopology`. Fill by terrain or region. Legend: terrain types, regions, seeds, resources. No game state. Used by generate_map. Implemented in colonizethis_map.
+
+### Game world state map visualizer
+
+**Module:** `game_world_state_map_visualizer`. Extends base by adding ownership overlay, capital markers, and port markers. Input: `Game` + per-region tile maps and topology (or an `InitGameMapViewData` view model for tools). Reads `Province.ownerId` for ownership; `Player.capitalTile`, `MinorNation.capitalTile`, `Tribe.capitalTile` for capitals; `WorldState.portsByProvinceSeaboard` for port tile positions (value = tile key `regionId|provinceId|x|y`). Separate module; shares border drawing, legend layout, swatches.
+
+- **Ownership colours (legibility):** One colour per faction, chosen by faction type. **Great Powers** use a primary/vibrant palette (red, blue, green, yellow, etc.). **Minor nations** use a palette of grey shades so they are clearly differentiated from GPs on the map. **Tribes** (New World) use the same vibrant palette as Great Powers. Assignment is deterministic (e.g. sorted faction ids per type). The base tile map visualizer and other region-by-id colouring continue to use the existing single `regionPalette`; only the game-state ownership overlay uses the type-based split.
+- **Capitals:** Distinct marker (e.g. gold circle) at capital tile; legend entry per faction.
+- **Ports:** The map shows **port** locations. For each region, the visualizer draws a **distinct marker** at each port tile (e.g. filled diamond or small square in a different colour from capitals). The legend includes a line explaining ports. Capitals remain the gold circle; ports use a different shape/colour.
+
+The ctdev debug app consumes `InitGameMapViewData` and offers a **view mode toggle**:
+
+- **Political view:** fill tiles by faction ownership using `ownerFactionId` and `factionColors`; capitals and ports are overlaid as markers.
+- **Geographic view:** fill tiles by **terrain type** (and draw resource glyphs) using `terrainTypeId` / `resourceId`; ownership is shown only via overlays (capitals/ports or optional outlines). Both modes use the same underlying view model; the toggle is a **UI-only concern** in ctdev.
+
+Implemented in colonizethis_map; consumed by init_game tool and the ctdev debug app (via the shared map view model).
+
+### Map view model for tools
+
+For tools that need richer, renderer-agnostic access to map and ownership data (PNG export, ctdev debug app), colonizethis_map exposes a lightweight view model. The logical `cellSize` in these view models is the base pixel size used for PNG export (e.g. 24px per tile); UI tools such as ctdev are free to apply their own additional scale factor so that maps fit typical viewports while keeping tiles readable.
+
+- `RegionMapViewData`:
+  - `regionId` (`oldWorld` or `newWorld`).
+  - `width`, `height` (grid in cells) and `cellSize` (logical tile size).
+  - Per-cell data (`CellViewData`): `x`, `y`, `regionCellId` (province/sea zone id), `isSea`, optional `terrainTypeId`, optional `resourceId`, optional `ownerFactionId`.
+  - Overlays:
+    - `capitalMarkers`: faction id, display name, x, y.
+    - `portMarkers`: tile position plus province/sea-zone ids (derived from `portsByProvinceSeaboard`).
+  - Legend/palette:
+    - `factionColors`: faction id → RGB.
+    - `terrainColors`: terrain type → RGB (when terrain is present).
+- `InitGameMapViewData`:
+  - `oldWorld` and `newWorld` `RegionMapViewData` instances.
+  - Optional metadata: RNG seed and a short `GameSetupConfig` summary string.
+
+`runInitGame` builds an `InitGameMapViewData` instance alongside the combined PNG. Both the PNG renderer and the ctdev Flutter dev app consume this view model instead of re-deriving map overlays from scratch.
+
+### Legend layout abstraction
+
+Shared legend layout utilities (padding, line height, swatch size) used by both visualizers. Game-state visualizer adds sections: **Ownership** (faction id → color), **Capitals** (marker + "Capital of gp1", etc.).
+
+---
+
+## Multi-region rendering
+
+Renderer supports composing two maps (Old World + New World) side by side. Layout: OW left, NW right; labels "Old World" / "New World"; shared legend below. Generation (which returns `TileMapResult` per region) is decoupled from rendering; composition step combines two single-region renders. API: `renderMultiRegionMapToPng(oldWorld, newWorld, options)` or equivalent. Orchestration in colonizethis_map. Used by init_game for combined OW+NW output.
 
 ---
 

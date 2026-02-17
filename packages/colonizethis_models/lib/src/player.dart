@@ -1,3 +1,4 @@
+import 'capital_tile.dart';
 import 'stockpile.dart';
 import 'worker_pool.dart';
 
@@ -10,6 +11,9 @@ class Player {
     this.stockpile = Stockpile.empty,
     this.workerPool = WorkerPool.empty,
     this.treasury = 0,
+    this.capitalProvinceId,
+    this.capitalTile,
+    this.techUnlocked,
   });
 
   final String id;
@@ -22,6 +26,15 @@ class Player {
   /// SPEC/game/workers-and-population.md, SPEC/game/stockpiles-and-production.md.
   final int treasury;
 
+  /// Capital province id. Set in capital-choice phase. SPEC/game/capital-and-connectivity.
+  final String? capitalProvinceId;
+
+  /// Capital tile within the capital province. Null = legacy / not set.
+  final CapitalTile? capitalTile;
+
+  /// Tech id -> unlocked. Optional; Phase 2 may use constant extraction cap.
+  final Map<String, bool>? techUnlocked;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'displayName': displayName,
@@ -29,6 +42,10 @@ class Player {
         'stockpile': stockpile.toJson(),
         'workerPool': workerPool.toJson(),
         'treasury': treasury,
+        if (capitalProvinceId != null) 'capitalProvinceId': capitalProvinceId,
+        if (capitalTile != null) 'capitalTile': capitalTile!.toJson(),
+        if (techUnlocked != null && techUnlocked!.isNotEmpty)
+          'techUnlocked': techUnlocked,
       };
 
   static Player fromJson(Map<String, dynamic> json) {
@@ -60,6 +77,21 @@ class Player {
       return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
+    CapitalTile? _readCapitalTile() {
+      final raw = json['capitalTile'];
+      if (raw is Map<String, dynamic>) return CapitalTile.fromJson(raw);
+      if (raw is Map) return CapitalTile.fromJson(Map<String, dynamic>.from(raw));
+      return null;
+    }
+
+    Map<String, bool>? _readTechUnlocked() {
+      final raw = json['techUnlocked'];
+      if (raw is! Map) return null;
+      return Map<String, bool>.from(
+        raw.map((k, v) => MapEntry(k.toString(), v == true)),
+      );
+    }
+
     return Player(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
@@ -67,6 +99,33 @@ class Player {
       stockpile: _readStockpile(),
       workerPool: _readWorkerPool(),
       treasury: _readTreasury(),
+      capitalProvinceId: json['capitalProvinceId'] as String?,
+      capitalTile: _readCapitalTile(),
+      techUnlocked: _readTechUnlocked(),
+    );
+  }
+
+  Player copyWith({
+    String? id,
+    String? displayName,
+    bool? isHuman,
+    Stockpile? stockpile,
+    WorkerPool? workerPool,
+    int? treasury,
+    String? capitalProvinceId,
+    CapitalTile? capitalTile,
+    Map<String, bool>? techUnlocked,
+  }) {
+    return Player(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      isHuman: isHuman ?? this.isHuman,
+      stockpile: stockpile ?? this.stockpile,
+      workerPool: workerPool ?? this.workerPool,
+      treasury: treasury ?? this.treasury,
+      capitalProvinceId: capitalProvinceId ?? this.capitalProvinceId,
+      capitalTile: capitalTile ?? this.capitalTile,
+      techUnlocked: techUnlocked ?? this.techUnlocked,
     );
   }
 
@@ -80,9 +139,30 @@ class Player {
           isHuman == other.isHuman &&
           stockpile == other.stockpile &&
           workerPool == other.workerPool &&
-          treasury == other.treasury;
+          treasury == other.treasury &&
+          capitalProvinceId == other.capitalProvinceId &&
+          capitalTile == other.capitalTile &&
+          _mapEquals(techUnlocked, other.techUnlocked);
 
   @override
-  int get hashCode =>
-      Object.hash(id, displayName, isHuman, stockpile, workerPool, treasury);
+  int get hashCode => Object.hash(
+        id,
+        displayName,
+        isHuman,
+        stockpile,
+        workerPool,
+        treasury,
+        capitalProvinceId,
+        capitalTile,
+        techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
+      );
+
+  static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {
+    if (a == b) return true;
+    if (a == null || b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
 }

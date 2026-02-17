@@ -101,5 +101,54 @@ void main() {
         3,
       );
     });
+
+    test('full turn with tileMapByRegion: extraction pipeline, turn advanced', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final grid = [['p1']];
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: grid,
+        resourceGrid: [[Resource.grain]],
+      );
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 2)
+          .setRoadLevel('oldWorld|p1|0|0', 1);
+      final cap = CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: 'p1',
+            capitalTile: cap,
+          ),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        tileMapByRegion: {'oldWorld': tileMap},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.players.single.stockpile.quantityOf('grain'), 1);
+    });
   });
 }

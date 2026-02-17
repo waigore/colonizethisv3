@@ -1,12 +1,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'connectivity_resolver.dart';
 import 'economy_consumption.dart';
 import 'economy_extraction.dart';
 import 'economy_production.dart';
 import 'economy_riches_to_treasury.dart';
 import 'movement.dart';
 import 'orders_application.dart';
+import 'resource_extractor.dart';
+import 'sea_transport.dart';
 
 /// Resolution sequence. SPEC/program/turn-resolution-phases.md
 const List<TurnPhase> turnResolutionSequence = [
@@ -54,12 +57,15 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
 /// using shared economy and movement helpers.
 ///
 /// [topology] is the static map topology; [orders] holds per-player orders
-/// for this turn. In Phase 2 scope, only MoveOrders are applied; Build/Work
-/// can be wired later.
+/// for this turn. When [tileMapByRegion] is provided, extraction runs from
+/// connectivity + resource extractor + sea allocation. When null and
+/// [extractedByPlayerId] is empty, extraction phase leaves stockpiles unchanged.
+/// [extractedByPlayerId] override (non-empty) is used for tests/sim_economy.
 Game resolveTurnForGame({
   required Game game,
   required MapTopology topology,
   required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
@@ -71,9 +77,12 @@ Game resolveTurnForGame({
         // Orders are assumed to already be attached to the Game or passed in.
         break;
       case TurnPhase.extraction:
-        // Phase 2: extraction from tiles → per-player vectors is not yet
-        // implemented; callers may supply [extractedByPlayerId] directly.
-        state = applyExtractionForPlayers(state, extractedByPlayerId);
+        state = _runExtractionPhase(
+          state,
+          topology,
+          tileMapByRegion,
+          extractedByPlayerId,
+        );
         break;
       case TurnPhase.richesToTreasury:
         state = _runRichesToTreasuryPhase(state);
@@ -106,6 +115,45 @@ Game resolveTurnForGame({
   return state;
 }
 
+Game _runExtractionPhase(
+  Game state,
+  MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId,
+) {
+  if (extractedByPlayerId.isNotEmpty) {
+    return applyExtractionForPlayers(state, extractedByPlayerId);
+  }
+  if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
+    return state;
+  }
+  final connectivity = resolveConnectivity(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  final extraction = computeExtraction(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    connectivityResult: connectivity,
+  );
+  final updatedPlayers = <Player>[];
+  for (final player in state.players) {
+    var stockpile = player.stockpile;
+    final tot = extraction[player.id];
+    if (tot != null) {
+      stockpile = applyExtractionToStockpile(stockpile, tot.land);
+      final overseasDelivered = allocateOverseasToStockpile(
+        tot.overseas,
+        cargoHolds: defaultCargoHoldsStub,
+      );
+      stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
+    }
+    updatedPlayers.add(player.copyWith(stockpile: stockpile));
+  }
+  return state.copyWith(players: updatedPlayers);
+}
+
 Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
   final updatedPlayers = <Player>[];
 
@@ -116,13 +164,9 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
       assignments: defaultAssignments,
     );
     updatedPlayers.add(
-      Player(
-        id: player.id,
-        displayName: player.displayName,
-        isHuman: player.isHuman,
+      player.copyWith(
         stockpile: result.stockpile,
         workerPool: result.workerPool,
-        treasury: player.treasury,
       ),
     );
   }
@@ -139,13 +183,9 @@ Game _runConsumptionPhase(Game game) {
       workers: player.workerPool,
     );
     updatedPlayers.add(
-      Player(
-        id: player.id,
-        displayName: player.displayName,
-        isHuman: player.isHuman,
+      player.copyWith(
         stockpile: result.stockpile,
         workerPool: result.workerPool,
-        treasury: player.treasury,
       ),
     );
   }
@@ -159,12 +199,8 @@ Game _runRichesToTreasuryPhase(Game game) {
   for (final player in game.players) {
     final result = resolveRichesToTreasury(stockpile: player.stockpile);
     updatedPlayers.add(
-      Player(
-        id: player.id,
-        displayName: player.displayName,
-        isHuman: player.isHuman,
+      player.copyWith(
         stockpile: result.stockpile,
-        workerPool: player.workerPool,
         treasury: player.treasury + result.treasuryDelta,
       ),
     );

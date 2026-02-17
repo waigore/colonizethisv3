@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - app
+  - ctdev
   - packages/colonizethis_models
   - packages/colonizethis_data
   - packages/colonizethis_save
@@ -13,6 +14,7 @@ workspace:
   - packages/colonizethis_ai
   - packages/colonizethis_map
   - tool/generate_map
+  - tool/init_game
   - tool/sim_economy
 
 dev_dependencies:
@@ -23,6 +25,9 @@ melos:
     generate_map:
       description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
       run: dart run generate_map
+    init_game:
+      description: Game creation (map gen, province/capital assignment). SPEC/program/init-game-tool.md.
+      run: dart run init_game
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy

@@ -78,14 +78,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders) {
     }
 
     updatedPlayers.add(
-      Player(
-        id: player.id,
-        displayName: player.displayName,
-        isHuman: player.isHuman,
-        stockpile: stockpile,
-        workerPool: workers,
-        treasury: player.treasury,
-      ),
+      player.copyWith(stockpile: stockpile, workerPool: workers),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,9 @@ class GameScreen extends ConsumerWidget {
                   final newGame = service.nextTurn(game);
                   ref.read(currentGameProvider.notifier).state = newGame;
                 },
-                child: Text('Next turn (${game.worldState.turnState.turnNumber})'),
+                child: Text(
+                  'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+                ),
               ),
             ),
         ],

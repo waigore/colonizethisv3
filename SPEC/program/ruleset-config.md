@@ -31,6 +31,39 @@ Debug builds only: a debug console (or dev menu) may allow inspecting and option
 
 ---
 
+## Turn-Time Mapping
+
+| Key path / concept | Base | Difficulty | Scenario |
+|--------------------|------|------------|----------|
+| turnTimeMapping (startYear, cutoffYear, yearsPerTurnBeforeCutoff, yearsPerTurnAfterCutoff) | ✓ (GDD 01 default) | — | ✓ (post-MVP) |
+
+Structure: `{ startYear, cutoffYear, yearsPerTurnBeforeCutoff, yearsPerTurnAfterCutoff }`. See [turn-time-mapping.md](../game/turn-time-mapping.md).
+
+---
+
 ## Consumers
 
 colonizethis_logic and colonizethis_ai take a single ResolvedRuleset/GameConfig; no layer awareness. App receives resolved config at game load. Flutter does not perform merge or file parsing.
+
+---
+
+## Naming (default ruleset)
+
+The resolved ruleset includes a **naming** section that drives historically inspired names:
+
+- `naming.greatPowers`: array where each entry contains:
+  - `id`: internal id (e.g. `gp1`).
+  - `countryName`: display name (e.g. `Spain`).
+  - `adjective`: e.g. `Spanish`.
+  - `leaderKey`: key into the GDD leader definition for this power.
+  - `capitalCityName`: primary capital city name (e.g. `Madrid`).
+  - `provinceNamePool`: ordered list of homeland province/region names.
+- `naming.minorNations`: array of `{ id, displayName, provinceNamePool? }`.
+- `naming.tribes`: array of `{ id, displayName }`.
+
+Resolver output exposes this as a `ResolvedNamingConfig` (or equivalent) that colonizethis_logic uses during game setup to assign:
+
+- `Province.displayName` (for Great Powers, Minor Nations, Tribes) and
+- capital city display names per faction (from `capitalCityName`).
+
+The **default ruleset** is historically inspired and aligned with the GDD’s Great Power & leader definitions; alternative scenarios may override naming while keeping the same structure.

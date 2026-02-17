@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   colonizethis_data:
+  colonizethis_models:
   image: ^4.7.0
 
 dev_dependencies:

@@ -16,9 +16,9 @@ Current implementation includes a **subset** of civilian types:
 
 ---
 
-## Military: One Type
+## Military: Full Roster
 
-Current implementation includes **one military unit type**: **Regiment**. Cost and upkeep from program-level config (colonizethis_data). Construction consumes a worker from the player's WorkerPool (per [workers-and-population.md](workers-and-population.md)). No navy; no other military types in scope.
+Current implementation includes the **full Imperialism II military roster**: 28 regiment types across 8 categories and 4 eras. See [military-units.md](military-units.md) for the complete table, tactical stats (FPN, FPM, RNG, DEF, MVR), and tech unlocks. Cost and upkeep per regiment type from program-level config (colonizethis_data). Construction consumes a worker from the player's WorkerPool (per [workers-and-population.md](workers-and-population.md)). No navy.
 
 ---
 

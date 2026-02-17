@@ -91,5 +91,47 @@ void main() {
       adapter.delete(box, 'toDelete');
       expect(adapter.load(box, 'toDelete'), isNull);
     });
+
+    test('save/load round-trip includes tile state, ports, and capital', () {
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 2)
+          .setRoadLevel('oldWorld|p1|0|0', 1);
+      final game = Game(
+        id: 'withCapital',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+          portsByProvinceSeaboard: {'p1|sea1': 'oldWorld|p1|0|0'},
+        ),
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: 'p1',
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'withCapital');
+      expect(loaded, isNotNull);
+      expect(loaded!.worldState.tileState.improvementLevel('oldWorld|p1|0|0'), 2);
+      expect(loaded.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 1);
+      expect(loaded.worldState.portsByProvinceSeaboard['p1|sea1'], 'oldWorld|p1|0|0');
+      expect(loaded.players.single.capitalProvinceId, 'p1');
+      expect(loaded.players.single.capitalTile?.regionId, 'oldWorld');
+      expect(loaded.players.single.capitalTile?.x, 0);
+      expect(loaded.players.single.capitalTile?.y, 0);
+    });
   });
 }

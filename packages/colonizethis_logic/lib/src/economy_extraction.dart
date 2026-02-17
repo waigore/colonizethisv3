@@ -45,16 +45,7 @@ Game applyExtractionForPlayers(
       player.stockpile,
       extracted,
     );
-    updatedPlayers.add(
-      Player(
-        id: player.id,
-        displayName: player.displayName,
-        isHuman: player.isHuman,
-        stockpile: updatedStockpile,
-        workerPool: player.workerPool,
-        treasury: player.treasury,
-      ),
-    );
+    updatedPlayers.add(player.copyWith(stockpile: updatedStockpile));
   }
 
   return game.copyWith(players: updatedPlayers);
