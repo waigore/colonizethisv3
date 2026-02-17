@@ -62,6 +62,17 @@ Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
 
 ---
 
+## Regiment Economy (Training & Upkeep)
+
+Each regiment type has **training cost** and **food upkeep** defined in program-level config (`colonizethis_data`), keyed by the regiment id used in [combat_config.dart](../..//packages/colonizethis_data/lib/src/combat_config.dart):
+
+- **Training cost:** `treasuryCost` (cash) **+ material inputs** (commodities such as fabric, castIron, lumber, steel, bronze) **+ one worker** consumed from the player's `WorkerPool` at construction time. Cavalry and artillery generally cost more cash and metal than line infantry; late‑era and elite regiments (e.g. Guards, Siege Guns) are the most expensive.
+- **Upkeep (food):** per‑turn food demand per regiment, expressed as **food units/turn** and consumed during the Consumption phase. Light infantry and early‑era units have lower upkeep; cavalry and artillery, and late‑era elites, have higher upkeep.
+
+Exact per‑regiment values live in the regiment economy catalog in `colonizethis_data` and follow the same era/category progression as the tactical stats table above.
+
+---
+
 ## Generals
 
 Generals are the **heads of armies**. An army is a group of regiments led by exactly one general; armies that participate in combat always have a general attached (**no general = no army** for field forces). Generals are limited by era‑based caps (see GDD 05), and determine how many armies a faction can field.

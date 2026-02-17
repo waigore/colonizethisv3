@@ -1,4 +1,5 @@
 /// Military or civilian unit. SPEC/game/world-model.
+/// Phase 3: medals (0–4) for military experience per SPEC/game/military-units.md.
 class Unit {
   const Unit({
     required this.id,
@@ -7,6 +8,7 @@ class Unit {
     required this.provinceId,
     this.status = UnitStatus.idle,
     this.movementPoints = 0,
+    this.medals = 0,
   });
 
   final String id;
@@ -16,6 +18,9 @@ class Unit {
   final UnitStatus status;
   final int movementPoints;
 
+  /// Experience medals (0–4); multiplies FPN/FPM in combat. SPEC/game/military-units.md.
+  final int medals;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'type': type,
@@ -23,6 +28,7 @@ class Unit {
         'provinceId': provinceId,
         'status': status.name,
         'movementPoints': movementPoints,
+        if (medals != 0) 'medals': medals,
       };
 
   static Unit fromJson(Map<String, dynamic> json) {
@@ -33,6 +39,27 @@ class Unit {
       provinceId: json['provinceId'] as String,
       status: _statusFromJson(json['status'] as String?),
       movementPoints: (json['movementPoints'] as int?) ?? 0,
+      medals: (json['medals'] as int?) ?? 0,
+    );
+  }
+
+  Unit copyWith({
+    String? id,
+    String? type,
+    String? ownerId,
+    String? provinceId,
+    UnitStatus? status,
+    int? movementPoints,
+    int? medals,
+  }) {
+    return Unit(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      ownerId: ownerId ?? this.ownerId,
+      provinceId: provinceId ?? this.provinceId,
+      status: status ?? this.status,
+      movementPoints: movementPoints ?? this.movementPoints,
+      medals: medals ?? this.medals,
     );
   }
 
@@ -46,10 +73,12 @@ class Unit {
           ownerId == other.ownerId &&
           provinceId == other.provinceId &&
           status == other.status &&
-          movementPoints == other.movementPoints;
+          movementPoints == other.movementPoints &&
+          medals == other.medals;
 
   @override
-  int get hashCode => Object.hash(id, type, ownerId, provinceId, status, movementPoints);
+  int get hashCode =>
+      Object.hash(id, type, ownerId, provinceId, status, movementPoints, medals);
 }
 
 /// Minimal status for Phase 2 work and movement.

@@ -611,6 +611,26 @@ void main() {
       expect(logLines.any((s) => s.contains('organic')), isTrue);
     });
 
+    test('Pass 4 log mentions lakes and moats', () {
+      final logLines = <String>[];
+      TileMapGenerator(
+        params: TileMapParams(width: 10, height: 10, seed: 1, seaFraction: 0.6),
+      ).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      expect(logLines.any((s) => s.contains('Pass 4')), isTrue);
+      expect(
+        logLines.any(
+          (s) => s.contains('Pass 4') && s.contains('lakes') && s.contains('moats'),
+        ),
+        isTrue,
+      );
+    });
+
+
     test('inferred topology matches grid adjacencies', () {
       final (result, topology) = TileMapGenerator(
         params: TileMapParams(width: 30, height: 30, seed: 42, seaFraction: 0.6),

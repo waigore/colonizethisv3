@@ -15,7 +15,12 @@
 ## Validation
 
 - **Topology:** MoveOrder destination from colonizethis_data adjacency.
-- **Costs:** BuildUnitOrder consumes commodities from player stockpile and (for military) one worker from WorkerPool. Costs and caps from program-level config (colonizethis_data).
+- **Costs (civilian):** BuildUnitOrder for **civilian** units consumes the specified construction commodities from player stockpile (e.g. paper, cash, lumber, metal) per [civilian-units.md](../game/civilian-units.md). Costs and caps come from program-level config (colonizethis_data).
+- **Costs (military):** BuildUnitOrder for **military** regiments consults the regiment economy catalog in `colonizethis_data` and:
+  - Requires `treasury ≥ regimentEconomy.buildTreasuryCost`.
+  - Requires sufficient stockpile for all `(commodityId, quantity)` entries in `regimentEconomy.buildInputs`.
+  - Requires at least one available worker in the player's `WorkerPool` (Phase 2: one Peasant is consumed).
+  - On success, **deducts treasury and commodities and consumes one worker**, then spawns the regiment in the chosen province.
 - **Caps:** Civilian and military unit counts must not exceed per-player caps after build.
 
 Rejected orders are not applied; state unchanged.

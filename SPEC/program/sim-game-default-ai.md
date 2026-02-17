@@ -1,43 +1,83 @@
 # sim_game — Default AI Behaviour
 
-**SPEC/program** — Deterministic "first default action" behaviour used by [sim-game.md](sim-game.md). Only Great Powers submit orders; behaviour is reproducible given seed and world state. References: [factions.md](../game/factions.md), [orders.md](orders.md), [combat.md](../game/combat.md).
+**SPEC/program** — Deterministic default AI used by [sim-game.md](sim-game.md). Only Great Powers submit orders; behaviour is reproducible given seed and world state. References: [factions.md](../game/factions.md), [orders.md](orders.md), [movement.md](movement.md), [combat.md](../game/combat.md).
 
 ---
 
 ## Purpose
 
-Define the order and rules by which each Great Power produces orders each turn in sim_game. No strategic logic; the goal is to exercise the turn resolver (movement, combat, build/work) in a reproducible way so that combat can trigger when a move targets an enemy province.
+Define a **pure function** that, given the current game state and a single Great Power, produces that player’s orders for one turn in sim_game. No strategic logic; the goal is to exercise the turn resolver (movement, combat, build/work) in a reproducible way so that combat and economy both fire under simple “toy” behaviour.
 
 ---
 
-## Order of Execution
+## Function Signature
 
-- **Great Powers:** Process GPs in a fixed order (e.g. by player id lexicographically or by index in Game.players). Same order every turn.
-- **Units:** For movement, process units in a fixed order per GP (e.g. by unit id). Same order every turn so that "first valid move" is well-defined.
+Conceptual signature (Dart, colonizethis_logic):
+
+```dart
+Orders defaultSimGameAi({
+  required Game game,
+  required Player player,
+  required MapTopology topology,
+  required int baseSeed,
+});
+```
+
+- **Input:**
+  - `game` — full current game state at the start of the turn.
+  - `player` — the Great Power for whom we are generating orders.
+  - `topology` — map adjacency information for movement validation.
+  - `baseSeed` — deterministic base seed for pseudo-random choices.
+- **Output:**
+  - An `Orders` value that may contain MoveOrders and (optionally) build/work orders **for that player only**.
+
+The function must be **pure and side-effect free**: it does not mutate `game` or any global state; it only inspects inputs and returns a new `Orders`.
 
 ---
 
 ## MoveOrders
 
-- For each GP, for each military unit (and optionally each civilian unit that can move) in the chosen unit order:
-  - **Valid destinations:** Adjacent provinces from topology (same region as unit's current province; land adjacency only per [movement.md](movement.md)).
-  - **First default move:** The first valid destination when destinations are ordered deterministically (e.g. by province id). No preference for friendly vs enemy provinces; if the first adjacent province is enemy-owned, the move is an attack and combat will trigger in the Combat phase ([combat.md](../game/combat.md)).
-- At most one MoveOrder per unit per turn. If no valid destination exists (e.g. no adjacent province), issue no move for that unit.
-- Any randomness (e.g. tie-breaking) must use a RNG seeded by the sim_game `--seed` and a deterministic context (e.g. turn number, unit id) so that the same seed and state yield the same orders.
+Within `defaultSimGameAi`, movement is generated as follows:
+
+- **Unit iteration:** For the given `player`, iterate that player’s units in a fixed, stable order (e.g. by `unit.id`).
+- **Valid destinations:** For each unit that can move this turn:
+  - Compute adjacent provinces using `topology` and the unit’s current province (same region; land adjacency only per [movement.md](movement.md)).
+  - Filter destinations to those that are reachable and valid this turn (no additional pathfinding; one-step moves only).
+- **Destination choice:** For each unit:
+  - Build a list of valid destinations ordered deterministically (e.g. sorted by province id).
+  - Optionally apply a **pseudo-random shuffle** driven by a PRNG seeded from `(baseSeed, player.id, unit.id, currentTurnNumber)` so that different runs can explore different patterns while remaining reproducible.
+  - Choose at most one destination per unit; if the chosen destination is enemy-owned, this is an attack and combat will trigger in the Combat phase ([combat.md](../game/combat.md)).
+- **Constraints:**
+  - At most one MoveOrder per unit per turn.
+  - If no valid destination exists, emit no MoveOrder for that unit.
 
 ---
 
 ## BuildUnitOrders and WorkOrders
 
-- **BuildUnitOrder:** Optional. If implemented: at most one build per GP per turn. Rule example: first GP-owned province by province id that is valid for spawn; build military unit if WorkerPool has at least one peasant, else skip or build civilian if allowed. Deterministic given state and seed.
-- **WorkOrder:** Optional. If implemented: at most one work order per GP per turn. Rule example: first civilian unit by unit id that is idle; target from a fixed list (e.g. first improvement type). Deterministic given state.
-- If not implemented, sim_game may emit no build or work orders; movement (and thus combat) remains in scope.
+- **BuildUnitOrder (optional but recommended):**
+  - At most one build per GP per turn.
+  - Example rule:
+    - Find the first GP-owned province by province id that is valid for spawning a military unit.
+    - If `player.workerPool` and `player.stockpile` meet a simple threshold (e.g. at least one free worker and enough generic resources), queue a build for a basic regiment type available at the player’s `militaryLevel`.
+  - Choice of province and unit type must be deterministic given `game`, `player`, and `baseSeed`.
+
+- **WorkOrder (optional):**
+  - At most one WorkOrder per GP per turn.
+  - Example rule:
+    - Pick the first civilian unit by unit id that is idle.
+    - Assign it to a simple, fixed improvement type (e.g. upgrade a nearby resource tile) if such a target exists.
+  - Deterministic given state; may use the same PRNG as MoveOrders.
+
+- If BuildUnitOrders and WorkOrders are omitted, sim_game still remains valid; movement (and thus combat) alone will exercise the resolver.
 
 ---
 
 ## Determinism
 
-Same `--seed`, same initial state (or same procedural generation seed), and same resolver implementation must produce the same sequence of orders and the same run outcome. No external input during the run.
+- **Per-call determinism:** Given the same `(game, player, topology, baseSeed)` and the same implied turn number, `defaultSimGameAi` must return the same `Orders`.
+- **Run-level determinism:** When sim_game calls `defaultSimGameAi` in a fixed GP order each turn (see [sim-game.md](sim-game.md)), the overall sim run is reproducible for a given initial `Game`, `topology`, and `baseSeed`.
+- The AI must not read from or write to any global RNG; all randomness is derived from a PRNG seeded from `(baseSeed, player.id, currentTurnNumber[, unit.id])`.
 
 ---
 

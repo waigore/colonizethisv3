@@ -333,10 +333,11 @@ class TileMapGenerator {
 
     // Pass 4: Fill lakes (ocean = sea connected to edge; lake → land; optional coastal swap)
     if (params.skipFillLakes) {
-      onLog?.call('Pass 4: Fill lakes skipped');
+      onLog?.call('Pass 4: Fill lakes and moats skipped');
     } else {
       grid = _fillLakes(grid, seaZoneId, landSeeds, continentBySeedIndex);
-      onLog?.call('Pass 4: Fill lakes done');
+      grid = _fillMoats(grid, seaZoneId, landSeeds, continentBySeedIndex, rnd);
+      onLog?.call('Pass 4: Fill lakes and moats done');
     }
 
     // Pass 5: Border randomization (optional; sentinel = land)
@@ -1140,6 +1141,74 @@ class TileMapGenerator {
         terrainGrid[y][x] = TerrainType.mountain;
         placedThisRange++;
         remainingMountain--;
+      }
+    }
+
+    // If we significantly undershot the target due to blocking or early
+    // termination of ranges, top up mountain tiles by growing existing ridges
+    // along their edges. This keeps the overall pattern ridge-like while
+    // nudging the global count closer to the configured fraction.
+    var currentMountain = 0;
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (terrainGrid[y][x] == TerrainType.mountain) currentMountain++;
+      }
+    }
+    if (currentMountain >= targetMountain) {
+      return;
+    }
+
+    // Prefer to grow from existing mountain fronts into adjacent land.
+    final frontier = <(int x, int y)>{};
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (terrainGrid[y][x] != TerrainType.mountain) continue;
+        for (final (dx, dy) in directions) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 ||
+              nx >= params.width ||
+              ny < 0 ||
+              ny >= params.height) {
+            continue;
+          }
+          if (grid[ny][nx] != _landSentinel) continue;
+          if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+          frontier.add((nx, ny));
+        }
+      }
+    }
+
+    final frontierList = frontier.toList();
+    frontierList.shuffle(rnd);
+    var idx = 0;
+    while (currentMountain < targetMountain && idx < frontierList.length) {
+      final (fx, fy) = frontierList[idx++];
+      if (terrainGrid[fy][fx] == TerrainType.mountain) continue;
+      terrainGrid[fy][fx] = TerrainType.mountain;
+      currentMountain++;
+    }
+
+    // As a final fallback, if we still undershoot (e.g. very small maps with
+    // fragmented land), convert random remaining land cells until we reach
+    // the target. This should be rare and only adjusts a handful of tiles.
+    if (currentMountain < targetMountain) {
+      final remainingLand = <(int x, int y)>[];
+      for (var y = 0; y < params.height; y++) {
+        for (var x = 0; x < params.width; x++) {
+          if (grid[y][x] == _landSentinel &&
+              terrainGrid[y][x] != TerrainType.mountain) {
+            remainingLand.add((x, y));
+          }
+        }
+      }
+      remainingLand.shuffle(rnd);
+      var i = 0;
+      while (currentMountain < targetMountain && i < remainingLand.length) {
+        final (lx, ly) = remainingLand[i++];
+        if (terrainGrid[ly][lx] == TerrainType.mountain) continue;
+        terrainGrid[ly][lx] = TerrainType.mountain;
+        currentMountain++;
       }
     }
   }
@@ -2002,7 +2071,11 @@ class TileMapGenerator {
     return (next, nextContinent);
   }
 
-  /// Grow coastlines at random; do not bring land within buffer of another continent.
+  /// Grow coastlines with a thickness-first heuristic; do not bring land within
+  /// buffer of another continent. Preference is given to coastal sea cells that
+  /// already have a high density of same-continent land in a local neighborhood
+  /// (bays and coves) so they are filled before long, thin tendrils into open
+  /// ocean.
   (List<List<String>>, List<List<int>>) _growCoastlines(
     List<List<String>> grid,
     List<List<int>> continentGrid,
@@ -2049,45 +2122,114 @@ class TileMapGenerator {
     }
     if (allocated < remaining && numContinents > 0) budgetPerContinent[0] += remaining - allocated;
 
+    // Radius for local land-neighbour scoring when picking coastal cells.
+    const scoreRadius = 3;
+    final buffer = params.continentBufferTiles == 0 ? 1 : params.continentBufferTiles;
+    final bufferOffsets = _bufferOffsets(buffer);
+
+    // Local helper: score a coastal sea cell for continent [continentIndex].
+    // Higher scores correspond to tiles that are already surrounded by that
+    // continent's land in a radius-limited neighborhood (bays / coves).
+    int scoreCoastalCell(int sx, int sy, int continentIndex) {
+      var score = 0;
+      for (var dy = -scoreRadius; dy <= scoreRadius; dy++) {
+        for (var dx = -scoreRadius; dx <= scoreRadius; dx++) {
+          final nx = sx + dx;
+          final ny = sy + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          if (dx == 0 && dy == 0) continue;
+          if (g[ny][nx] != _landSentinel) continue;
+          final nc = cg[ny][nx];
+          if (nc == continentIndex) {
+            score += 1;
+          } else if (nc >= 0 && nc != continentIndex) {
+            // Strongly discourage squeezing between other continents.
+            score -= 10;
+          }
+        }
+      }
+      return score;
+    }
+
     var added = 0;
     const maxAttempts = 10000;
     var attempts = 0;
     while (added < remaining && attempts < maxAttempts) {
       attempts++;
+      var anyProgress = false;
+
       for (var c = 0; c < numContinents; c++) {
         if (budgetPerContinent[c] <= 0) continue;
         final coastal = coastalByContinent[c]!;
         if (coastal.isEmpty) continue;
-        final (sx, sy) = coastal[rnd.nextInt(coastal.length)];
-        if (g[sy][sx] != seaZoneId) continue;
-        final buffer = params.continentBufferTiles == 0 ? 1 : params.continentBufferTiles;
-        final offsets = _bufferOffsets(buffer);
-        var wouldJoin = false;
-        for (final (dx, dy) in offsets) {
-          final nx = sx + dx;
-          final ny = sy + dy;
-          if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height) {
-            final nc = cg[ny][nx];
-            if (nc >= 0 && nc != c) {
-              wouldJoin = true;
-              break;
+
+        var bestScore = -0x7fffffff;
+        final bestCandidates = <(int x, int y)>[];
+
+        for (final (sx, sy) in coastal) {
+          if (g[sy][sx] != seaZoneId) continue;
+
+          // Respect continent buffer: never bring this continent's land too
+          // close to another continent.
+          var wouldJoin = false;
+          for (final (dx, dy) in bufferOffsets) {
+            final nx = sx + dx;
+            final ny = sy + dy;
+            if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height) {
+              final nc = cg[ny][nx];
+              if (nc >= 0 && nc != c) {
+                wouldJoin = true;
+                break;
+              }
             }
           }
+          if (wouldJoin) continue;
+
+          final score = scoreCoastalCell(sx, sy, c);
+          if (score > bestScore) {
+            bestScore = score;
+            bestCandidates
+              ..clear()
+              ..add((sx, sy));
+          } else if (score == bestScore) {
+            bestCandidates.add((sx, sy));
+          }
         }
-        if (wouldJoin) continue;
+
+        if (bestCandidates.isEmpty) {
+          continue;
+        }
+
+        final (sx, sy) = bestCandidates[rnd.nextInt(bestCandidates.length)];
+        if (g[sy][sx] != seaZoneId) {
+          continue;
+        }
+
         g[sy][sx] = _landSentinel;
         cg[sy][sx] = c;
         budgetPerContinent[c]--;
         added++;
+        anyProgress = true;
+
         coastalByContinent[c]!.removeWhere((p) => p.$1 == sx && p.$2 == sy);
         for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
           final nx = sx + dx;
           final ny = sy + dy;
-          if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
-              g[ny][nx] == seaZoneId && !coastalByContinent[c]!.contains((nx, ny))) {
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
+              g[ny][nx] == seaZoneId &&
+              !coastalByContinent[c]!.contains((nx, ny))) {
             coastalByContinent[c]!.add((nx, ny));
           }
         }
+      }
+
+      if (!anyProgress) {
+        // No continent could grow further under current constraints; stop.
         break;
       }
     }
@@ -2338,6 +2480,84 @@ class TileMapGenerator {
           grid[ny][nx] == seaZoneId && ocean.contains((nx, ny))) n++;
     }
     return n;
+  }
+
+  /// Collapse narrow ocean moats: convert ocean cells that are effectively
+  /// thin moats around a single continent into land, then preserve overall sea
+  /// fraction by converting an equal number of coastal land tiles back to sea.
+  ///
+  /// A moat candidate is an ocean cell whose 4-neighbourhood contains land
+  /// belonging to the **same** continent in at least two directions and no
+  /// land from any other continent.
+  List<List<String>> _fillMoats(
+    List<List<String>> grid,
+    String seaZoneId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+    Random rnd,
+  ) {
+    final ocean = _oceanCells(grid, seaZoneId);
+    if (ocean.isEmpty) return grid;
+
+    final next = grid.map((row) => row.toList()).toList();
+    final moatCells = <(int x, int y)>[];
+
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (next[y][x] != seaZoneId) continue;
+        if (!ocean.contains((x, y))) continue;
+
+        // Examine 4-neighbourhood for bordering land.
+        final neighbouringContinents = <int>{};
+        final sameContinentDirectionCounts = <int, int>{};
+
+    for (final (dx, dy) in const <(int, int)>[
+          (0, -1), // N
+          (1, 0), // E
+          (0, 1), // S
+          (-1, 0), // W
+        ]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          if (next[ny][nx] == seaZoneId) continue;
+          final continent = _continentForLandCell(nx, ny, landSeeds, continentBySeedIndex);
+          neighbouringContinents.add(continent);
+          sameContinentDirectionCounts[continent] =
+              (sameContinentDirectionCounts[continent] ?? 0) + 1;
+        }
+
+        if (neighbouringContinents.isEmpty) continue;
+        if (neighbouringContinents.length > 1) continue; // multi-continent strait, keep as sea
+
+        final c = neighbouringContinents.single;
+        final dirCount = sameContinentDirectionCounts[c] ?? 0;
+        if (dirCount < 2) continue; // not strongly enclosed by that continent
+
+        moatCells.add((x, y));
+      }
+    }
+
+    if (moatCells.isEmpty) return grid;
+
+    for (final (x, y) in moatCells) {
+      next[y][x] = _landSentinel;
+    }
+
+    // Preserve overall sea fraction by converting an equal number of coastal
+    // land tiles back to sea, using the existing helper.
+    _preserveSeaFraction(
+      next,
+      null,
+      null,
+      seaZoneId,
+      ocean,
+      moatCells.length,
+    );
+
+    return next;
   }
 
   /// Land cells grouped by continent (nearest land seed → continent via continentBySeedIndex).

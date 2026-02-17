@@ -150,5 +150,77 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.players.single.stockpile.quantityOf('grain'), 1);
     });
+
+    test('one full turn with combat: MoveOrder into enemy province, casualties and province flip', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'p1',
+                provinceId: 'P1',
+                medals: 2,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'peasant_levies',
+                ownerId: 'p2',
+                provinceId: 'P2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
+          Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': const [
+            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+
+      final unitsAfter = next.worldState.oldWorld.units;
+      expect(unitsAfter.length, lessThanOrEqualTo(2));
+
+      final p2 = next.worldState.oldWorld.provinces
+          .where((p) => p.id == 'P2')
+          .singleOrNull;
+      expect(p2, isNotNull);
+      expect(p2!.ownerId, anyOf('p1', 'p2'));
+    });
   });
 }

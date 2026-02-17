@@ -133,5 +133,58 @@ void main() {
       expect(loaded.players.single.capitalTile?.x, 0);
       expect(loaded.players.single.capitalTile?.y, 0);
     });
+
+    test('save/load round-trip includes Phase 3 combat state', () {
+      final game = Game(
+        id: 'phase3',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                fortLevel: 2,
+                terrain: 'forest',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'pl1',
+                provinceId: 'p1',
+                medals: 3,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            militaryLevel: 4,
+          ),
+        ],
+        minorNations: [
+          MinorNation(id: 'min1', effectiveMilitaryLevel: 4),
+        ],
+        tribes: [
+          Tribe(id: 'tribe1', effectiveMilitaryLevel: 4),
+        ],
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'phase3');
+      expect(loaded, isNotNull);
+      expect(loaded!.worldState.oldWorld.provinces.single.fortLevel, 2);
+      expect(loaded.worldState.oldWorld.provinces.single.terrain, 'forest');
+      expect(loaded.worldState.oldWorld.units.single.medals, 3);
+      expect(loaded.players.single.militaryLevel, 4);
+      expect(loaded.minorNations.single.effectiveMilitaryLevel, 4);
+      expect(loaded.tribes.single.effectiveMilitaryLevel, 4);
+    });
   });
 }

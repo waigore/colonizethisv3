@@ -1,0 +1,19 @@
+name: sim_combat_montecarlo
+description: Monte Carlo combat simulation CLI. SPEC/program/sim-combat-montecarlo.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  colonizethis_data:
+  colonizethis_logic:
+  colonizethis_models:
+
+dev_dependencies:
+  test: ^1.24.0
+
+executables:
+  sim_combat_montecarlo: bin/sim_combat_montecarlo.dart

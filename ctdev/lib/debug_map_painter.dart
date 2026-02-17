@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 
 /// Visual scale factor applied to logical cellSize from RegionMapViewData.
 /// Keeps tiles readable while fitting more of the map in a typical viewport.
-const double kDebugMapScale = 0.5;
+/// In ctdev, we default this to 1.0 so tiles are easy to inspect without zooming.
+const double kDebugMapScale = 0.25;
 
 class RegionMapPainter extends CustomPainter {
   RegionMapPainter({

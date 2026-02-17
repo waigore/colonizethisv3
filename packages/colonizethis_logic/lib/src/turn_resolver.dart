@@ -1,11 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'combat_resolver.dart';
+import 'conflict_detection.dart';
 import 'connectivity_resolver.dart';
 import 'economy_consumption.dart';
 import 'economy_extraction.dart';
 import 'economy_production.dart';
 import 'economy_riches_to_treasury.dart';
+import 'minor_military_parity.dart';
 import 'movement.dart';
 import 'orders_application.dart';
 import 'resource_extractor.dart';
@@ -19,6 +22,7 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.production,
   TurnPhase.consumption,
   TurnPhase.movement,
+  TurnPhase.combat,
   TurnPhase.buildWork,
   TurnPhase.endOfTurn,
 ];
@@ -41,6 +45,7 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
     case TurnPhase.production:
     case TurnPhase.consumption:
     case TurnPhase.movement:
+    case TurnPhase.combat:
     case TurnPhase.buildWork:
       return state;
     case TurnPhase.endOfTurn:
@@ -70,6 +75,7 @@ Game resolveTurnForGame({
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
   Game state = game;
+  final feedingCoverageByPlayerId = <String, double>{};
 
   for (final phase in turnResolutionSequence) {
     switch (phase) {
@@ -91,10 +97,13 @@ Game resolveTurnForGame({
         state = _runProductionPhase(state, defaultAssignments);
         break;
       case TurnPhase.consumption:
-        state = _runConsumptionPhase(state);
+        state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
         break;
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);
+        break;
+      case TurnPhase.combat:
+        state = _runCombatPhase(state, orders, feedingCoverageByPlayerId);
         break;
       case TurnPhase.buildWork:
         state = applyBuildAndWorkOrders(state, orders);
@@ -174,14 +183,39 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
   return game.copyWith(players: updatedPlayers);
 }
 
-Game _runConsumptionPhase(Game game) {
+Game _runConsumptionPhase(
+  Game game,
+  Map<String, double> feedingCoverageByPlayerId,
+) {
   final updatedPlayers = <Player>[];
 
   for (final player in game.players) {
+    // Count this player's regiments across both regions.
+    final regimentCounts = <String, int>{};
+    for (final unit in game.worldState.oldWorld.units) {
+      if (unit.ownerId != player.id) continue;
+      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
+    }
+    for (final unit in game.worldState.newWorld.units) {
+      if (unit.ownerId != player.id) continue;
+      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
+    }
+
     final result = resolveConsumption(
       stockpile: player.stockpile,
       workers: player.workerPool,
+      regimentCountsById: regimentCounts,
     );
+
+    double coverage;
+    if (result.totalRegiments <= 0) {
+      coverage = 1.0;
+    } else {
+      coverage = result.fullyFedRegiments / result.totalRegiments;
+      if (coverage < 0) coverage = 0;
+      if (coverage > 1) coverage = 1;
+    }
+    feedingCoverageByPlayerId[player.id] = coverage;
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,
@@ -236,4 +270,21 @@ Game _runMovementPhase(
       newWorld: newWorld,
     ),
   );
+}
+
+Game _runCombatPhase(
+  Game game,
+  Orders orders,
+  Map<String, double> feedingCoverageByPlayerId,
+) {
+  Game state = applyMinorMilitaryParity(game);
+  final battles = detectConflicts(state, orders);
+  for (final ctx in battles) {
+    state = resolveBattleContext(
+      state,
+      ctx,
+      feedingCoverageByPlayerId: feedingCoverageByPlayerId,
+    );
+  }
+  return state;
 }

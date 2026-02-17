@@ -14,6 +14,7 @@ class Player {
     this.capitalProvinceId,
     this.capitalTile,
     this.techUnlocked,
+    this.militaryLevel,
   });
 
   final String id;
@@ -35,6 +36,9 @@ class Player {
   /// Tech id -> unlocked. Optional; Phase 2 may use constant extraction cap.
   final Map<String, bool>? techUnlocked;
 
+  /// Military level (1–4) from tech; highest regiment era available. Used for minor parity.
+  final int? militaryLevel;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'displayName': displayName,
@@ -46,6 +50,7 @@ class Player {
         if (capitalTile != null) 'capitalTile': capitalTile!.toJson(),
         if (techUnlocked != null && techUnlocked!.isNotEmpty)
           'techUnlocked': techUnlocked,
+        if (militaryLevel != null) 'militaryLevel': militaryLevel,
       };
 
   static Player fromJson(Map<String, dynamic> json) {
@@ -102,6 +107,7 @@ class Player {
       capitalProvinceId: json['capitalProvinceId'] as String?,
       capitalTile: _readCapitalTile(),
       techUnlocked: _readTechUnlocked(),
+      militaryLevel: (json['militaryLevel'] as int?),
     );
   }
 
@@ -115,6 +121,7 @@ class Player {
     String? capitalProvinceId,
     CapitalTile? capitalTile,
     Map<String, bool>? techUnlocked,
+    int? militaryLevel,
   }) {
     return Player(
       id: id ?? this.id,
@@ -126,6 +133,7 @@ class Player {
       capitalProvinceId: capitalProvinceId ?? this.capitalProvinceId,
       capitalTile: capitalTile ?? this.capitalTile,
       techUnlocked: techUnlocked ?? this.techUnlocked,
+      militaryLevel: militaryLevel ?? this.militaryLevel,
     );
   }
 
@@ -142,7 +150,8 @@ class Player {
           treasury == other.treasury &&
           capitalProvinceId == other.capitalProvinceId &&
           capitalTile == other.capitalTile &&
-          _mapEquals(techUnlocked, other.techUnlocked);
+          _mapEquals(techUnlocked, other.techUnlocked) &&
+          militaryLevel == other.militaryLevel;
 
   @override
   int get hashCode => Object.hash(
@@ -155,6 +164,7 @@ class Player {
         capitalProvinceId,
         capitalTile,
         techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
+        militaryLevel,
       );
 
   static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {

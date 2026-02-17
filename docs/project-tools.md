@@ -88,3 +88,54 @@ melos run generate_map -- --provinces 40 --continents 2 --region newWorld
 melos run generate_map -- --tile-map-image=./map.png
 melos run generate_map -- --interactive
 ```
+
+---
+
+## sim_combat
+
+Probabilistic combat simulation on scripted scenarios. Up to 5 rounds per engagement, clamped hit odds, strength-weighted casualties. Outputs detailed per-round formula and probability stats. Spec: [SPEC/program/sim-combat.md](../SPEC/program/sim-combat.md).
+
+**Invocation**
+
+```bash
+melos run sim_combat -- --script <path> [--output <path>] [--json-output <path>] [--seed <int>]
+```
+
+**Options**
+
+- `--script <path>` — JSON battle script (required)
+- `--output <path>` — Markdown report (default: sim_combat.md)
+- `--json-output <path>` — JSON log (optional)
+- `--seed <int>` — RNG seed for reproducibility (optional)
+
+**Examples**
+
+```bash
+melos run sim_combat -- --script tmp/my_test_battle.json --output report.md --seed 42
+```
+
+---
+
+## sim_combat_montecarlo
+
+Monte Carlo combat simulation. Runs many trials per battle, aggregates win rates and mean casualties. Spec: [SPEC/program/sim-combat-montecarlo.md](../SPEC/program/sim-combat-montecarlo.md).
+
+**Invocation**
+
+```bash
+melos run sim_combat_montecarlo -- --script <path> [--trials N] [--seed <int>] [--output <path>] [--json-output <path>]
+```
+
+**Options**
+
+- `--script <path>` — JSON battle script (required, same format as sim_combat)
+- `--trials <N>` — number of trials per battle (default: 1000)
+- `--seed <int>` — base RNG seed (optional)
+- `--output <path>` — Markdown report (default: sim_combat_montecarlo.md)
+- `--json-output <path>` — JSON log (optional)
+
+**Examples**
+
+```bash
+melos run sim_combat_montecarlo -- --script tmp/my_test_battle.json --trials 500 --seed 123
+```

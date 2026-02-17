@@ -76,12 +76,7 @@ RegionData applyMoveOrdersToRegion(
       )) {
         continue;
       }
-      unitsById[unit.id] = Unit(
-        id: unit.id,
-        type: unit.type,
-        ownerId: unit.ownerId,
-        provinceId: order.destinationProvinceId,
-      );
+      unitsById[unit.id] = unit.copyWith(provinceId: order.destinationProvinceId);
     }
   }
 

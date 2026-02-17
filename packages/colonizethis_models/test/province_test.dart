@@ -22,6 +22,25 @@ void main() {
       expect(a, b);
       expect(a.hashCode, b.hashCode);
     });
+    test('fortLevel and terrain round-trip', () {
+      const p = Province(
+        id: 'p1',
+        regionId: 'oldWorld',
+        fortLevel: 2,
+        terrain: 'forest',
+      );
+      final p2 = Province.fromJson(p.toJson());
+      expect(p2.fortLevel, 2);
+      expect(p2.terrain, 'forest');
+    });
+    test('fortLevel defaults 0, terrain defaults plains', () {
+      final p = Province.fromJson({
+        'id': 'p1',
+        'regionId': 'oldWorld',
+      });
+      expect(p.fortLevel, 0);
+      expect(p.terrain, 'plains');
+    });
     test('equality false when different', () {
       const a = Province(id: 'p1', regionId: 'oldWorld', ownerId: 'x');
       const b = Province(id: 'p2', regionId: 'oldWorld', ownerId: 'x');

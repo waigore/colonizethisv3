@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Order application helpers for build and work phases.
@@ -25,15 +26,45 @@ Game applyBuildAndWorkOrders(Game game, Orders orders) {
   for (final player in game.players) {
     var stockpile = player.stockpile;
     var workers = player.workerPool;
+    var treasury = player.treasury;
 
     // Build units for this player.
     for (final order in buildOrders[player.id] ?? const []) {
-      if (order.isMilitary && workers.peasants <= 0) {
-        // Not enough workers to recruit; skip.
-        continue;
-      }
+      if (order.isMilitary) {
+        final econ = RegimentEconomyCatalog.byId[order.unitType];
+        if (econ == null) {
+          // Unknown regiment id; skip.
+          continue;
+        }
 
-      if (order.isMilitary && workers.peasants > 0) {
+        // Require at least one peasant to recruit a regiment.
+        if (workers.peasants <= 0) {
+          continue;
+        }
+
+        // Require sufficient treasury to pay the training cost.
+        if (treasury < econ.buildTreasuryCost) {
+          continue;
+        }
+
+        // Require sufficient stockpile for all material inputs.
+        var hasAllInputs = true;
+        for (final entry in econ.buildInputs.entries) {
+          final available = stockpile.quantityOf(entry.key);
+          if (available < entry.value) {
+            hasAllInputs = false;
+            break;
+          }
+        }
+        if (!hasAllInputs) {
+          continue;
+        }
+
+        // Apply costs: treasury, materials, and one worker.
+        treasury -= econ.buildTreasuryCost;
+        for (final entry in econ.buildInputs.entries) {
+          stockpile = stockpile.applyDelta(entry.key, -entry.value);
+        }
         workers = workers.copyWith(peasants: workers.peasants - 1);
       }
 
@@ -78,7 +109,11 @@ Game applyBuildAndWorkOrders(Game game, Orders orders) {
     }
 
     updatedPlayers.add(
-      player.copyWith(stockpile: stockpile, workerPool: workers),
+      player.copyWith(
+        stockpile: stockpile,
+        workerPool: workers,
+        treasury: treasury,
+      ),
     );
   }
 

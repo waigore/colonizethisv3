@@ -3,6 +3,7 @@ library colonizethis_models;
 
 export 'src/capital_tile.dart';
 export 'src/game.dart';
+export 'src/general.dart';
 export 'src/minor_nation.dart';
 export 'src/tribe.dart';
 export 'src/orders.dart';

@@ -84,6 +84,7 @@ GameSetupResult createGameFromGeneratedMaps({
     seaBoundProvinceIds: seaBoundOW,
     gpIds: gpIds,
     minorIds: minorIds,
+    minProvincesPerMinor: config.minProvincesPerMinor,
   );
 
   final nwOwner = _assignNewWorldOwnershipContiguous(
@@ -372,6 +373,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   required List<String> seaBoundProvinceIds,
   required List<String> gpIds,
   required List<String> minorIds,
+  required int minProvincesPerMinor,
 }) {
   final neighbours = _provinceNeighboursFromTopology(topologyOldWorld);
   final landmassIds = _landmassIdsFromNeighbours(neighbours);
@@ -380,6 +382,20 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   final minorCount = minorIds.length;
 
   final owners = <String, String>{};
+
+  // Aggregate reservation: number of OW provinces the ruleset intends to leave
+  // for minors. The actual minor-per-faction distribution is still driven by
+  // contiguity and may vary, but this quota shapes how many provinces GPs
+  // receive in total.
+  final totalOw = provinceIds.length;
+  final reservedForMinors = minorCount * minProvincesPerMinor;
+  final availableForGps = totalOw - reservedForMinors;
+  if (availableForGps < gpCount) {
+    throw ArgumentError(
+      'Old World has $totalOw provinces but after reserving $reservedForMinors '
+      'for $minorCount minors only $availableForGps remain for $gpCount Great Powers',
+    );
+  }
 
   // Seed selection for Great Powers: one sea-bound province per GP, spreading across landmasses.
   final seaBoundByLandmass = <int, List<String>>{};
@@ -425,10 +441,9 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     );
   }
 
-  // Target province counts per GP: fair split of all OW provinces.
-  final totalOw = provinceIds.length;
-  final basePerGp = totalOw ~/ gpCount;
-  var remainder = totalOw % gpCount;
+  // Target province counts per GP: fair split of the non-reserved OW share.
+  final basePerGp = availableForGps ~/ gpCount;
+  var remainder = availableForGps % gpCount;
   final targetPerGp = <String, int>{
     for (var i = 0; i < gpCount; i++)
       gpIds[i]: basePerGp + (remainder-- > 0 ? 1 : 0),
@@ -442,6 +457,8 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     for (final gpId in gpIds) gpId: 0,
   };
 
+  var totalAssignedToGps = 0;
+
   // Assign seeds.
   for (final entry in gpSeeds.entries) {
     final provinceId = entry.key;
@@ -449,6 +466,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     owners[provinceId] = gpId;
     gpQueues[gpId]!.add(provinceId);
     assignedCount[gpId] = assignedCount[gpId]! + 1;
+    totalAssignedToGps++;
   }
 
   final unassigned = provinceIds.toSet()..removeAll(owners.keys);
@@ -463,10 +481,11 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
 
     for (final gpId in gpOrder) {
       if (assignedCount[gpId]! >= targetPerGp[gpId]!) continue;
+      if (totalAssignedToGps >= availableForGps) break;
       final queue = gpQueues[gpId]!;
       var expandedThisGp = false;
 
-      while (queue.isNotEmpty && !expandedThisGp) {
+      while (queue.isNotEmpty && !expandedThisGp && totalAssignedToGps < availableForGps) {
         final from = queue.removeAt(0);
         final lm = landmassIds[from]!;
         for (final nb in neighbours[from] ?? const <String>{}) {
@@ -476,6 +495,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
           unassigned.remove(nb);
           queue.add(nb);
           assignedCount[gpId] = assignedCount[gpId]! + 1;
+          totalAssignedToGps++;
           anyProgress = true;
           expandedThisGp = true;
           break;
@@ -485,18 +505,20 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
 
     // If no same-landmass neighbours can be assigned but some GPs are still under target,
     // start new seeds on other landmasses using remaining unassigned provinces.
-    if (!anyProgress && unassigned.isNotEmpty) {
+    if (!anyProgress && unassigned.isNotEmpty && totalAssignedToGps < availableForGps) {
       final underTarget = gpIds.where((id) => assignedCount[id]! < targetPerGp[id]!).toList();
       if (underTarget.isNotEmpty) {
         final sortedUnassigned = unassigned.toList()..sort();
         for (final gpId in underTarget) {
           if (assignedCount[gpId]! >= targetPerGp[gpId]!) continue;
           if (sortedUnassigned.isEmpty) break;
+          if (totalAssignedToGps >= availableForGps) break;
           final seed = sortedUnassigned.removeAt(0);
           if (!unassigned.remove(seed)) continue;
           owners[seed] = gpId;
           gpQueues[gpId]!.add(seed);
           assignedCount[gpId] = assignedCount[gpId]! + 1;
+          totalAssignedToGps++;
           anyProgress = true;
         }
       }
@@ -539,7 +561,6 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
 }) {
   final neighbours = _provinceNeighboursFromTopology(topologyNewWorld);
   final owners = <String, String>{};
-  final visited = <String>{};
   final tribeCount = tribeIds.length;
   if (tribeCount == 0) {
     return {
@@ -547,24 +568,107 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     };
   }
 
-  int tribeIndex = 0;
-  final sorted = provinceIds.toList()..sort();
-  for (final seed in sorted) {
-    if (visited.contains(seed)) continue;
-    final tribeId = tribeIds[tribeIndex % tribeCount];
-    tribeIndex++;
+  final totalNw = provinceIds.length;
+  final basePerTribe = totalNw ~/ tribeCount;
+  var remainder = totalNw % tribeCount;
+  final targetPerTribe = <String, int>{
+    for (var i = 0; i < tribeCount; i++)
+      tribeIds[i]: basePerTribe + (remainder-- > 0 ? 1 : 0),
+  };
 
-    final queue = <String>[seed];
-    visited.add(seed);
-    while (queue.isNotEmpty) {
-      final p = queue.removeAt(0);
-      owners[p] = tribeId;
-      for (final nb in neighbours[p] ?? const <String>{}) {
-        if (!sorted.contains(nb)) continue;
-        if (visited.contains(nb)) continue;
-        visited.add(nb);
-        queue.add(nb);
+  final tribeQueues = <String, List<String>>{
+    for (final id in tribeIds) id: <String>[],
+  };
+  final assignedCount = <String, int>{
+    for (final id in tribeIds) id: 0,
+  };
+
+  final unassigned = provinceIds.toSet();
+  var totalAssigned = 0;
+
+  // Initial seeds: give each tribe a starting province where possible.
+  final sorted = provinceIds.toList()..sort();
+  for (final tribeId in tribeIds) {
+    if (unassigned.isEmpty) break;
+    final seed = sorted.firstWhere(
+      (p) => unassigned.contains(p),
+      orElse: () => '',
+    );
+    if (seed.isEmpty) break;
+    owners[seed] = tribeId;
+    unassigned.remove(seed);
+    tribeQueues[tribeId]!.add(seed);
+    assignedCount[tribeId] = assignedCount[tribeId]! + 1;
+    totalAssigned++;
+  }
+
+  bool anyProgress;
+  do {
+    anyProgress = false;
+
+    // Order tribes by currently assigned count (fewest first) to keep split fair.
+    final tribeOrder = tribeIds.toList()
+      ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
+
+    for (final tribeId in tribeOrder) {
+      if (assignedCount[tribeId]! >= targetPerTribe[tribeId]!) continue;
+      if (totalAssigned >= totalNw) break;
+      final queue = tribeQueues[tribeId]!;
+      var expandedThisTribe = false;
+
+      while (queue.isNotEmpty && !expandedThisTribe && totalAssigned < totalNw) {
+        final from = queue.removeAt(0);
+        for (final nb in neighbours[from] ?? const <String>{}) {
+          if (!unassigned.contains(nb)) continue;
+          owners[nb] = tribeId;
+          unassigned.remove(nb);
+          queue.add(nb);
+          assignedCount[tribeId] = assignedCount[tribeId]! + 1;
+          totalAssigned++;
+          anyProgress = true;
+          expandedThisTribe = true;
+          break;
+        }
       }
+    }
+
+    // If growth stalled but unassigned provinces remain, start new seeds for
+    // tribes that are still under their target.
+    if (!anyProgress && unassigned.isNotEmpty && totalAssigned < totalNw) {
+      final underTarget = tribeIds.where((id) => assignedCount[id]! < targetPerTribe[id]!).toList();
+      if (underTarget.isNotEmpty) {
+        final remaining = unassigned.toList()..sort();
+        for (final tribeId in underTarget) {
+          if (assignedCount[tribeId]! >= targetPerTribe[tribeId]!) continue;
+          if (remaining.isEmpty) break;
+          if (totalAssigned >= totalNw) break;
+          final seed = remaining.removeAt(0);
+          if (!unassigned.remove(seed)) continue;
+          owners[seed] = tribeId;
+          tribeQueues[tribeId]!.add(seed);
+          assignedCount[tribeId] = assignedCount[tribeId]! + 1;
+          totalAssigned++;
+          anyProgress = true;
+        }
+      }
+    }
+  } while (anyProgress && unassigned.isNotEmpty && totalAssigned < totalNw);
+
+  // Any leftover provinces (e.g. from extreme target combinations) are assigned
+  // greedily to the tribes with the fewest provinces, preserving contiguity
+  // where possible but prioritising completeness and fairness.
+  if (unassigned.isNotEmpty) {
+    final remaining = unassigned.toList()..sort();
+    while (remaining.isNotEmpty) {
+      remaining.sort((a, b) => a.compareTo(b));
+      final provinceId = remaining.removeAt(0);
+      if (!unassigned.remove(provinceId)) continue;
+      tribeIds.sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
+      final tribeId = tribeIds.first;
+      owners[provinceId] = tribeId;
+      tribeQueues[tribeId]!.add(provinceId);
+      assignedCount[tribeId] = assignedCount[tribeId]! + 1;
+      totalAssigned++;
     }
   }
 

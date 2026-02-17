@@ -89,6 +89,21 @@ When the defender is a Minor Nation or Tribe, the **parity step** (see [factions
 
 ---
 
+## Probabilistic Engagement (Simulation)
+
+A separate **probabilistic** resolver is used by `sim_combat` and `sim_combat_montecarlo` for simulation and analysis. The main game uses the **deterministic** resolver above; `resolveBattleContext` is unchanged.
+
+The probabilistic resolver:
+
+- **Rounds:** Up to 5 rounds per engagement.
+- **Hit probabilities:** P(attacker hits) = E_a / (E_a + E_d), P(defender hits) = E_d / (E_a + E_d), clamped to [0.15, 0.85].
+- **Expected casualties:** λ_defender = k × P_a, λ_attacker = k × P_d (k = 1.0).
+- **Sampling:** Actual casualties per round sampled from Poisson(λ), capped by remaining units.
+- **Casualty selection:** Strength-weighted; stronger units less likely to be chosen (weight ∝ 1 / (strength + 0.1)).
+- **Determinism:** Same seed and inputs produce identical outcome.
+
+---
+
 ## Determinism and RNG
 
 The combat resolver must be **deterministic given its inputs**:

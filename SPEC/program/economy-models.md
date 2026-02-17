@@ -50,7 +50,7 @@ class WorkerPool {
 1. **Extraction phase:** Province tiles produce; resources flow to player stockpile (auto-transport).
 2. **Riches-to-treasury phase:** Riches in stockpile convert to treasury at base price and are removed from stockpile.
 3. **Production phase:** Consume commodities and labour from stockpile; produce outputs to stockpile.
-4. **Consumption phase:** Workers, military, navy consume food and materials from stockpile.
+4. **Consumption phase:** Military regiments consume food upkeep from stockpile **first**, then workers and navy consume food and materials from what remains. Military food demand is derived from the regiment economy config (per‑regiment foodUpkeep); shortfalls reduce military morale/strength in combat rather than immediately removing regiments.
 
 ---
 

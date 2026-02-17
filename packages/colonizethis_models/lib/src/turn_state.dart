@@ -7,6 +7,7 @@ enum TurnPhase {
   production,
   consumption,
   movement,
+  combat,
   buildWork,
   endOfTurn,
 }

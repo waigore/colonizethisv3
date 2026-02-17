@@ -2,6 +2,7 @@
 /// Topology and tile map formats: SPEC/program/map-data.md.
 library colonizethis_data;
 
+export 'src/combat_config.dart';
 export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
 export 'src/naming_rules.dart';
@@ -16,3 +17,4 @@ export 'src/terrain_type.dart';
 export 'src/tile_map_result.dart';
 export 'src/topology_describe.dart';
 export 'src/topology_node.dart';
+export 'src/regiment_economy.dart';

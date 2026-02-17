@@ -9,10 +9,14 @@ class ConsumptionResult {
   const ConsumptionResult({
     required this.stockpile,
     required this.workerPool,
+    required this.totalRegiments,
+    required this.fullyFedRegiments,
   });
 
   final Stockpile stockpile;
   final WorkerPool workerPool;
+  final int totalRegiments;
+  final int fullyFedRegiments;
 }
 
 /// Applies worker and basic military food consumption for one turn.
@@ -30,6 +34,7 @@ ConsumptionResult resolveConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
   int militaryUnits = 0,
+  Map<String, int> regimentCountsById = const {},
 }) {
   Stockpile current = stockpile;
 
@@ -75,6 +80,44 @@ ConsumptionResult resolveConsumption({
     return fed;
   }
 
+  // --- Military-first feeding ---
+  // Derive total regiment count and food demand. If detailed regiment counts
+  // are provided, use per-type foodUpkeep from RegimentEconomyCatalog; fall
+  // back to 2 food units per regiment when only [militaryUnits] is known.
+  int totalRegiments = 0;
+  int totalFoodDemand = 0;
+
+  if (regimentCountsById.isNotEmpty) {
+    for (final entry in regimentCountsById.entries) {
+      final count = entry.value;
+      if (count <= 0) continue;
+      totalRegiments += count;
+      final econ = RegimentEconomyCatalog.byId[entry.key];
+      final perRegimentFood = econ?.foodUpkeep ?? 0;
+      if (perRegimentFood > 0) {
+        totalFoodDemand += perRegimentFood * count;
+      }
+    }
+  } else if (militaryUnits > 0) {
+    totalRegiments = militaryUnits;
+    totalFoodDemand = militaryUnits * 2;
+  }
+
+  int fullyFedRegiments = 0;
+  if (totalFoodDemand > 0 && totalRegiments > 0) {
+    final consumedForMilitary = consumeFood(totalFoodDemand);
+    // Approximate fully-fed regiments using average food per regiment.
+    final avgFoodPerRegiment =
+        (totalFoodDemand + totalRegiments - 1) ~/ totalRegiments; // ceil
+    if (avgFoodPerRegiment > 0) {
+      fullyFedRegiments = consumedForMilitary ~/ avgFoodPerRegiment;
+      if (fullyFedRegiments > totalRegiments) {
+        fullyFedRegiments = totalRegiments;
+      }
+    }
+  }
+
+  // --- Workers: fed from remaining food ---
   // Peasants: feed first, 1 food each.
   final fedPeasants = feedGroup(count: workers.peasants, foodPerUnit: 1);
 
@@ -87,11 +130,6 @@ ConsumptionResult resolveConsumption({
   // Masters: 2 food each.
   final fedMasters = feedGroup(count: workers.masters, foodPerUnit: 2);
 
-  // Military upkeep: 2 food per unit (stub; units are not removed here).
-  if (militaryUnits > 0) {
-    feedGroup(count: militaryUnits, foodPerUnit: 2);
-  }
-
   final updatedWorkers = WorkerPool(
     peasants: fedPeasants,
     apprentices: fedApprentices,
@@ -102,6 +140,8 @@ ConsumptionResult resolveConsumption({
   return ConsumptionResult(
     stockpile: current,
     workerPool: updatedWorkers,
+    totalRegiments: totalRegiments,
+    fullyFedRegiments: fullyFedRegiments,
   );
 }
 

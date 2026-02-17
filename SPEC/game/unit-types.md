@@ -18,7 +18,12 @@ Current implementation includes a **subset** of civilian types:
 
 ## Military: Full Roster
 
-Current implementation includes the **full Imperialism II military roster**: 28 regiment types across 8 categories and 4 eras. See [military-units.md](military-units.md) for the complete table, tactical stats (FPN, FPM, RNG, DEF, MVR), and tech unlocks. Cost and upkeep per regiment type from program-level config (colonizethis_data). Construction consumes a worker from the player's WorkerPool (per [workers-and-population.md](workers-and-population.md)). No navy.
+Current implementation includes the **full Imperialism II military roster**: 28 regiment types across 8 categories and 4 eras. See [military-units.md](military-units.md) for the complete table, tactical stats (FPN, FPM, RNG, DEF, MVR), and tech unlocks. **Training cost and upkeep per regiment type** come from program-level config in `colonizethis_data`:
+
+- **Training cost:** `treasuryCost` (cash) **+ material inputs** (commodities such as fabric, castIron, lumber, steel, bronze) defined in the regiment economy catalog, **plus one worker** consumed from the player's `WorkerPool` at construction time (per [workers-and-population.md](workers-and-population.md)).
+- **Upkeep:** per‑turn food demand per regiment (food units/turn) defined in the same catalog; food is consumed during the Consumption phase per [turn-resolution-phases.md](../program/turn-resolution-phases.md).
+
+No navy.
 
 ---
 

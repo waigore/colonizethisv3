@@ -6,11 +6,11 @@
 
 ## Categories
 
-Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (tactical stats per regiment: FPN, FPM, RNG, DEF, MVR; terrain modifiers; fort level modifiers; difficulty multipliers; initiative weights; medal multipliers), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count).
+Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (tactical stats per regiment: FPN, FPM, RNG, DEF, MVR; terrain modifiers; fort level modifiers; difficulty multipliers; initiative weights; medal multipliers), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, Old World and New World province counts).
 
 **Map:** **Adjacency** is defined by the topology graph ([world-model.md](world-model.md), [map-topology.md](map-topology.md)). **Terrain**, **resources**, and **improvements** may come from the tile map or config overlays.
 
-**Game/setup:** **Great Power count** (default 7), **continent count** (e.g. 3–4), **Minor Nation count** (e.g. 6), **Tribe count** (e.g. 10). Defined in base or scenario. See [game-setup.md](game-setup.md).
+**Game/setup:** **Great Power count** (default 6), **continent count** (e.g. 3–4), **Minor Nation count** (default 6), **Tribe count** (e.g. 10), **minimum provinces per Minor Nation** (default 3), **Old World province count** (default ≈60) and **New World province count** (default ≈80). Defined in base or scenario. See [game-setup.md](game-setup.md).
 
 ---
 

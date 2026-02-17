@@ -11,6 +11,7 @@ void main() {
         provinceId: 'prov1',
         status: UnitStatus.working,
         movementPoints: 2,
+        medals: 2,
       );
       final u2 = Unit.fromJson(u.toJson());
       expect(u2.id, 'u1');
@@ -19,12 +20,22 @@ void main() {
       expect(u2.provinceId, 'prov1');
       expect(u2.status, UnitStatus.working);
       expect(u2.movementPoints, 2);
+      expect(u2.medals, 2);
     });
     test('equality', () {
       const a = Unit(id: 'u1', type: 'inf', ownerId: 'p1', provinceId: 'prov1');
       const b = Unit(id: 'u1', type: 'inf', ownerId: 'p1', provinceId: 'prov1');
       expect(a, b);
       expect(a.hashCode, b.hashCode);
+    });
+    test('medals default 0 when omitted from JSON', () {
+      final u = Unit.fromJson({
+        'id': 'u1',
+        'type': 'infantry',
+        'ownerId': 'p1',
+        'provinceId': 'prov1',
+      });
+      expect(u.medals, 0);
     });
     test('equality false when different', () {
       const a = Unit(id: 'u1', type: 'inf', ownerId: 'p1', provinceId: 'prov1');

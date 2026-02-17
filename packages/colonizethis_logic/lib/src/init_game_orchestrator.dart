@@ -15,21 +15,38 @@ class InitGameResult {
     required this.mapPngBytes,
     required this.markdown,
     required this.mapViewData,
+    required this.tileMapByRegion,
+    required this.topologyByRegion,
+    required this.combinedTopology,
   });
 
   final Game game;
   final Uint8List mapPngBytes;
   final String markdown;
   final InitGameMapViewData mapViewData;
+  /// Tile maps per region (e.g. 'oldWorld', 'newWorld'); needed for extraction.
+  final Map<String, TileMapResult> tileMapByRegion;
+  /// Topology per region; used by visualizers and debug tooling.
+  final Map<String, MapTopology> topologyByRegion;
+  /// Single topology merging OW and NW for resolveTurnForGame (movement, extraction).
+  final MapTopology combinedTopology;
 }
 
 /// Options for runInitGame.
 class InitGameOptions {
   const InitGameOptions({
     this.cellSize = 24,
+    this.skipFillLakes = false,
+    this.renderPng = true,
   });
 
   final int cellSize;
+  /// When true, forward skipFillLakes to TileMapParams so Pass 4 (fill lakes)
+  /// is skipped in tile-map generation for both Old World and New World.
+  final bool skipFillLakes;
+  /// When false, skips PNG rendering inside runInitGame; mapViewData and
+  /// markdown are still produced.
+  final bool renderPng;
 }
 
 /// Runs the full game creation process: generate OW+NW maps, create game, render map, format markdown.
@@ -38,17 +55,24 @@ InitGameResult runInitGame({
   required GameSetupConfig config,
   InitGameOptions options = const InitGameOptions(),
 }) {
+  // Derive an effective seed: non-zero config seeds are used as-is for
+  // reproducible runs; a zero seed means "choose a time-based seed".
+  final effectiveSeed = config.seed == 0
+      ? DateTime.now().millisecondsSinceEpoch
+      : config.seed;
+
   final mapGenParams = MapGenerationParams(
     numContinents: config.continentCount,
-    seed: config.seed,
+    seed: effectiveSeed,
     seaFraction: 0.6,
   );
   final sizeOW = computeGridSizeFromParams(config.numProvincesOldWorld, mapGenParams);
   final paramsOW = TileMapParams(
     width: sizeOW.width,
     height: sizeOW.height,
-    seed: config.seed,
+    seed: effectiveSeed,
     seaFraction: 0.6,
+    skipFillLakes: options.skipFillLakes,
   );
   final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
     numProvinces: config.numProvincesOldWorld,
@@ -60,8 +84,9 @@ InitGameResult runInitGame({
   final paramsNW = TileMapParams(
     width: sizeNW.width,
     height: sizeNW.height,
-    seed: config.seed + 1,
+    seed: effectiveSeed + 1,
     seaFraction: 0.6,
+    skipFillLakes: options.skipFillLakes,
   );
   final (tileMapNW, topoNW) = TileMapGenerator(params: paramsNW).generate(
     numProvinces: config.numProvincesNewWorld,
@@ -83,14 +108,16 @@ InitGameResult runInitGame({
     tileMapByRegion: setupResult.tileMapByRegion,
     topologyByRegion: setupResult.topologyByRegion,
     cellSize: options.cellSize,
-    seed: config.seed,
+    seed: effectiveSeed,
     configSummary:
         'GP:${config.greatPowerCount} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
 
-  final mapPngBytes = renderInitGameMapToPngFromViewData(
-    viewData: mapViewData,
-  );
+  final mapPngBytes = options.renderPng
+      ? renderInitGameMapToPngFromViewData(
+          viewData: mapViewData,
+        )
+      : Uint8List(0);
 
   final markdown = formatInitGameSetupMarkdown(setupResult.game);
 
@@ -99,6 +126,9 @@ InitGameResult runInitGame({
     mapPngBytes: mapPngBytes,
     markdown: markdown,
     mapViewData: mapViewData,
+    tileMapByRegion: setupResult.tileMapByRegion,
+    topologyByRegion: setupResult.topologyByRegion,
+    combinedTopology: setupResult.combinedTopology,
   );
 }
 

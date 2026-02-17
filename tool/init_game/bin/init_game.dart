@@ -129,9 +129,14 @@ Future<void> main(List<String> arguments) async {
 
   print('=== init_game ===');
   print('Running game setup...');
+  final shouldRenderPng =
+      outputMapPath != null && outputMapPath.isNotEmpty;
   final result = runInitGame(
     config: config,
-    options: const InitGameOptions(cellSize: 24),
+    options: InitGameOptions(
+      cellSize: 24,
+      renderPng: shouldRenderPng,
+    ),
   );
   print('Game created: ${result.game.id}');
 

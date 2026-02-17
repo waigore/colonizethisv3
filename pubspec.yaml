@@ -16,6 +16,8 @@ workspace:
   - tool/generate_map
   - tool/init_game
   - tool/sim_economy
+  - tool/sim_combat
+  - tool/sim_combat_montecarlo
 
 dev_dependencies:
   melos: ^7.0.0
@@ -31,3 +33,9 @@ melos:
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy
+    sim_combat:
+      description: Standalone Phase 3 combat simulation CLI. SPEC/program/sim-combat.md.
+      run: dart run sim_combat
+    sim_combat_montecarlo:
+      description: Monte Carlo combat simulation CLI. SPEC/program/sim-combat-montecarlo.md.
+      run: dart run sim_combat_montecarlo
