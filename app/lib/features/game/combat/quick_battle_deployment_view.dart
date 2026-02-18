@@ -1,0 +1,82 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+/// Displays Quick Battle deployment (units per lane/line).
+/// SPEC/game/quick-battle.md: LEFT/CENTER/RIGHT/RESERVE, FRONT/SUPPORT.
+class QuickBattleDeploymentView extends StatelessWidget {
+  const QuickBattleDeploymentView({
+    super.key,
+    required this.attackerDeployment,
+    required this.defenderDeployment,
+    this.attackerName = 'Attacker',
+    this.defenderName = 'Defender',
+  });
+
+  final QuickBattleDeployment attackerDeployment;
+  final QuickBattleDeployment defenderDeployment;
+  final String attackerName;
+  final String defenderName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(attackerName, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        _buildSideDeployment(context, attackerDeployment),
+        const SizedBox(height: 16),
+        Text(defenderName, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        _buildSideDeployment(context, defenderDeployment),
+      ],
+    );
+  }
+
+  Widget _buildSideDeployment(BuildContext context, QuickBattleDeployment d) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: d.groups.map((g) {
+            final label = '${_laneLabel(g.lane)} ${_lineLabel(g.line)}';
+            return Chip(
+              label: Text('$label: ${g.unitIds.length} units'),
+              avatar: g.cohesion > 0
+                  ? CircleAvatar(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      child: Text('${g.cohesion}', style: const TextStyle(fontSize: 12)),
+                    )
+                  : null,
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  String _laneLabel(QuickBattleLane lane) {
+    switch (lane) {
+      case QuickBattleLane.left:
+        return 'Left';
+      case QuickBattleLane.center:
+        return 'Center';
+      case QuickBattleLane.right:
+        return 'Right';
+      case QuickBattleLane.reserve:
+        return 'Reserve';
+    }
+  }
+
+  String _lineLabel(QuickBattleLine line) {
+    switch (line) {
+      case QuickBattleLine.front:
+        return 'Front';
+      case QuickBattleLine.support:
+        return 'Support';
+    }
+  }
+}

@@ -37,8 +37,8 @@ void main() {
       );
       final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
 
-      const config = GameSetupConfig(
-        greatPowerCount: 1,
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
         tribeCount: 1,
@@ -72,6 +72,22 @@ void main() {
       expect(result.game.worldState.newWorld.provinces.length, 1);
       expect(result.game.worldState.portsByProvinceSeaboard.containsKey('p1|sea1'), true);
       expect(result.game.worldState.portsByProvinceSeaboard.containsKey('nw1|sea1'), true);
+
+      // Province naming: mandatory; GP capital gets capital city name, others from pool.
+      expect(result.game.players.first.displayName, 'England');
+      final owProvinces = result.game.worldState.oldWorld.provinces;
+      for (final p in owProvinces) {
+        expect(p.displayName, isNotNull, reason: 'OW province ${p.id} must have displayName');
+      }
+      final p1 = owProvinces.firstWhere((p) => p.id == 'p1');
+      expect(p1.displayName, 'London');
+      final nwProvinces = result.game.worldState.newWorld.provinces;
+      for (final p in nwProvinces) {
+        expect(p.displayName, isNotNull, reason: 'NW province ${p.id} must have displayName');
+      }
+      final nw1 = nwProvinces.firstWhere((p) => p.id == 'nw1');
+      expect(nw1.displayName, 'Tenochtitlan');
+      expect(result.game.tribes.first.displayName, 'Aztec');
 
       expect(result.tileMapByRegion['oldWorld'], owTileMap);
       expect(result.topologyByRegion['oldWorld'], owTopology);
@@ -124,8 +140,8 @@ void main() {
       const reservedForMinors = minorCount * minPerMinor; // 6
       const availableForGps = totalOw - reservedForMinors; // 6
 
-      const config = GameSetupConfig(
-        greatPowerCount: gpCount,
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england', 'france'],
         continentCount: 1,
         minorNationCount: minorCount,
         tribeCount: 1,
@@ -213,8 +229,8 @@ void main() {
       const totalNw = 9;
       const basePerTribe = totalNw ~/ tribeCount; // 3
 
-      const config = GameSetupConfig(
-        greatPowerCount: 1,
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
         tribeCount: tribeCount,
@@ -243,6 +259,174 @@ void main() {
       for (final count in countsByTribe.values) {
         expect(count, inInclusiveRange(basePerTribe - 1, basePerTribe + 1));
       }
+    });
+
+    test('Old World minor assignment balances minors by province count', () {
+      // OW: 24 provinces in a line, p1 and p2 sea-bound. 2 GPs, 6 minors.
+      // reservedForMinors = 6 * 2 = 12, availableForGps = 12.
+      // Minors get 12 provinces, basePerMinor = 2 each.
+      final owNodes = <TopologyNode>[
+        const TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        for (var i = 1; i <= 24; i++)
+          TopologyNode(id: 'p$i', regionId: 'oldWorld', type: TopologyNodeType.province),
+      ];
+      final owEdges = <TopologyEdge>[
+        const TopologyEdge(id1: 'p1', id2: 'sea1'),
+        const TopologyEdge(id1: 'p2', id2: 'sea1'),
+        for (var i = 1; i < 24; i++)
+          TopologyEdge(id1: 'p$i', id2: 'p${i + 1}'),
+      ];
+      final owTopology = MapTopology(nodes: owNodes, edges: owEdges);
+      final owTileMap = TileMapResult(
+        width: 24,
+        height: 2,
+        grid: [
+          [for (var i = 1; i <= 24; i++) 'p$i'],
+          [for (var i = 1; i <= 24; i++) 'sea1'],
+        ],
+      );
+
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'nwSea', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'nw1', id2: 'nwSea')],
+      );
+      final nwTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [
+          ['nw1'],
+          ['nwSea'],
+        ],
+      );
+
+      const gpCount = 2;
+      const minorCount = 6;
+      const minPerMinor = 2;
+      const totalOw = 24;
+      const reservedForMinors = minorCount * minPerMinor; // 12
+      const availableForGps = totalOw - reservedForMinors; // 12
+      const basePerMinor = reservedForMinors ~/ minorCount; // 2
+
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england', 'france'],
+        continentCount: 1,
+        minorNationCount: minorCount,
+        tribeCount: 1,
+        numProvincesOldWorld: totalOw,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: minPerMinor,
+      );
+
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'ow-minor-balance',
+      );
+
+      final owProvs = result.game.worldState.oldWorld.provinces;
+      final minorCounts = <String, int>{};
+      for (final p in owProvs) {
+        final ownerId = p.ownerId ?? '';
+        if (ownerId.startsWith('minor')) {
+          minorCounts[ownerId] = (minorCounts[ownerId] ?? 0) + 1;
+        }
+      }
+
+      expect(minorCounts.length, minorCount, reason: 'Every minor should have at least one province');
+      for (final count in minorCounts.values) {
+        expect(count, greaterThanOrEqualTo(1), reason: 'Each minor must have at least 1 province');
+        expect(count, inInclusiveRange(basePerMinor - 1, basePerMinor + 1),
+            reason: 'Minor province counts should be within ±1 of equal split');
+      }
+    });
+
+    test('Prussia with Frederick William variant uses variant province pool and sets leaderKey', () {
+      // OW: 3 provinces in a line, p1 sea-bound. Single GP (Prussia).
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+          TopologyEdge(id1: 'p2', id2: 'p3'),
+        ],
+      );
+      final owTileMap = TileMapResult(
+        width: 3,
+        height: 2,
+        grid: const [
+          ['p1', 'p2', 'p3'],
+          ['sea1', 'sea1', 'sea1'],
+        ],
+      );
+
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'nwSea', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'nw1', id2: 'nwSea')],
+      );
+      final nwTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [
+          ['nw1'],
+          ['nwSea'],
+        ],
+      );
+
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['prussia'],
+        leaderVariantByGpId: {'prussia': prussiaVariantFrederickWilliam},
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+        seed: 12345,
+      );
+
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'prussia-fw',
+        namingSeed: 12345,
+      );
+
+      expect(result.game.players.length, 1);
+      final prussiaPlayer = result.game.players.first;
+      expect(prussiaPlayer.displayName, 'Prussia');
+      expect(prussiaPlayer.leaderKey, 'prussia_reserve_leader');
+
+      final owProvinces = result.game.worldState.oldWorld.provinces;
+      final provinceNames = owProvinces.map((p) => p.displayName).toSet();
+      expect(provinceNames.contains('Berlin'), true, reason: 'Capital must be Berlin');
+      expect(
+        provinceNames.any((n) => n == 'Prussia' || n == 'Farther Pomerania'),
+        true,
+        reason: 'Frederick William pool includes Prussia and Farther Pomerania',
+      );
+    });
+
+    test('allGreatPowerIds has 7 entries (no prussia_reserve)', () {
+      expect(allGreatPowerIds.length, 7);
+      expect(allGreatPowerIds, contains('prussia'));
+      expect(allGreatPowerIds, isNot(contains('prussia_reserve')));
     });
   });
 }

@@ -2,10 +2,13 @@
 library colonizethis_logic;
 
 export 'src/capital_choice.dart';
+export 'src/combat_mode_selection.dart';
 export 'src/conflict_detection.dart';
 export 'src/combat_resolver.dart';
 export 'src/combat_resolver_probabilistic.dart';
+export 'src/ai_planner.dart';
 export 'src/connectivity_resolver.dart';
+export 'src/diplomacy_resolver.dart';
 export 'src/game_setup.dart';
 export 'src/init_game_orchestrator.dart';
 export 'src/economy_consumption.dart';
@@ -16,7 +19,14 @@ export 'src/minor_military_parity.dart';
 export 'src/movement.dart';
 export 'src/resource_extractor.dart';
 export 'src/sea_transport.dart';
+export 'src/order_engine.dart';
+export 'src/order_projections.dart';
+export 'src/order_merge.dart';
 export 'src/orders_application.dart';
+export 'src/order_suggestion.dart';
+export 'src/quick_battle_input_builder.dart';
+export 'src/quick_battle_resolver.dart';
 export 'src/turn_resolver.dart';
 export 'src/turn_to_year.dart';
 export 'src/sim_game_ai.dart';
+export 'src/player_view.dart';

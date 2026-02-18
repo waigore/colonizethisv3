@@ -6,7 +6,7 @@
 
 ## Tile map
 
-A **tile map** is the 2D grid for **one region**. Each cell is assigned to a **province** or **sea zone** (by id). Each **land** cell has a **terrain type** and an optional **resource** (at most one). Resource placement must satisfy **region** (oldWorld only, newWorld only, or both) and **terrain** (allowed terrain types per resource) rules. Improvements (extraction level, road) are **mutable** and stored in world state; the tile map holds static terrain and resource (and optional initial improvement state for scenarios). The grid is per region; the world has one tile map per region, not one global grid.
+A **tile map** is the 2D grid for **one region**. Each cell is assigned to a **province** or **sea zone** (by id). Each **land** cell has a **terrain type** and an optional **resource** (at most one). Resource placement must satisfy **region** (oldWorld only, newWorld only, or both) and **terrain** (allowed terrain types per resource) rules. Full table: [resource-terrain-region-rules.md](resource-terrain-region-rules.md). Improvements (extraction level, road) are **mutable** and stored in world state; the tile map holds static terrain and resource (and optional initial improvement state for scenarios). The grid is per region; the world has one tile map per region, not one global grid.
 
 ---
 
@@ -23,7 +23,7 @@ Requirements:
 - Shapes and borders are semi-random (e.g. Voronoi-style), not fixed templates.
 - **Province size target:** Average tiles per province is configurable (~30–40); **grid size** is chosen so the generated map respects this target.
 - **Terrain:** **Terrain types differ by region** (Old World vs New World per canonical table). Terrain assignment must use only **terrain types allowed for that region**; assignment must produce **contiguous blobs** (e.g. hill ranges, forest/plains clusters), not per-cell random splotches. Implementation and region–terrain rules live in colonizethis_data.
-- Generation must assign terrain and at most one resource per tile respecting region and terrain rules, and must control resource spawn rates so distribution is in inverse proportion to default market price (TDD 04b).
+- Generation must assign terrain and at most one resource per tile respecting region and terrain rules, and must control resource spawn rates so distribution is in inverse proportion to default market price (TDD 04b). Multi-region resource cap: at most 30% of resources per map may be multi-region compatible; the remainder are region-exclusive.
 
 Input: province count (N), continent count (C), region, map params (target tiles per province, grid size or derived size, seed, border noise). Output: per-region 2D grid (tile → province/sea zone id, terrain, optional resource) and **inferred topology**. A map generation tool may export a PNG: cells colored by terrain type (sea = deep blue), land borders as black lines, sea zone borders as light blue, **region ids in red** on each tile for identification, and a legend mapping colors to terrain (and Sea). **Tile size** is configurable for readability. Full contract: SPEC/program/map-data.md § Tile map PNG export.
 

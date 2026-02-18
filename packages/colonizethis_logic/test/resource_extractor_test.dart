@@ -106,5 +106,60 @@ void main() {
       );
       expect(result['pl1']!.land['grain'], 1);
     });
+
+    test('extracts wool and copper when present on tile map', () {
+      final grid = [
+        ['p1', 'p1'],
+        ['p1', 'p1'],
+      ];
+      final resourceGrid = [
+        [Resource.wool, Resource.copper],
+        [Resource.timber, Resource.iron],
+      ];
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: grid,
+        resourceGrid: resourceGrid,
+      );
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 1)
+          .setImprovement('oldWorld|p1|1|0', 1)
+          .setImprovement('oldWorld|p1|0|1', 1)
+          .setImprovement('oldWorld|p1|1|1', 1)
+          .setRoadLevel('oldWorld|p1|0|0', 1)
+          .setRoadLevel('oldWorld|p1|1|0', 1)
+          .setRoadLevel('oldWorld|p1|0|1', 1)
+          .setRoadLevel('oldWorld|p1|1|1', 1);
+      final player = Player(
+        id: 'pl1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'p1',
+        capitalTile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [player],
+      );
+      final result = computeExtraction(
+        game: game,
+        tileMapByRegion: {'oldWorld': tileMap},
+        connectivityResult: {'pl1': {'oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|0|1', 'oldWorld|p1|1|1'}},
+        techCapForPlayer: (_) => 4,
+      );
+      expect(result['pl1']!.land['wool'], 1);
+      expect(result['pl1']!.land['copper'], 1);
+      expect(result['pl1']!.land['timber'], 1);
+      expect(result['pl1']!.land['iron'], 1);
+    });
   });
 }

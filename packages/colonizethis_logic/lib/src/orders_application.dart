@@ -37,6 +37,18 @@ Game applyBuildAndWorkOrders(Game game, Orders orders) {
           continue;
         }
 
+        // Tech gate: if an unlocking tech is configured for this regiment,
+        // require it to be present in the player's techUnlocked set.
+        final techUnlocked = player.techUnlocked ?? const {};
+        // Placeholder mapping for MVP; full mapping comes from tech catalog.
+        const Map<String, String> unlockingTechByRegimentId = {
+          // 'rifle_infantry': 'some_military_tech',
+        };
+        final unlockingTechId = unlockingTechByRegimentId[order.unitType];
+        if (unlockingTechId != null && techUnlocked[unlockingTechId] != true) {
+          continue;
+        }
+
         // Require at least one peasant to recruit a regiment.
         if (workers.peasants <= 0) {
           continue;

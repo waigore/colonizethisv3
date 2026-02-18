@@ -44,7 +44,7 @@ When the tool (or colonizethis_data) exports a tile map as PNG:
 - **Fill:** When terrain data is present, each cell is colored by **terrain type**. Sea zones use a single **deep blue**. Land cells use a fixed color per terrain (plains, forest, hills, mountain, swamp). When terrain data is absent, fill falls back to region-based coloring (one color per province/sea zone) for backward compatibility.
 - **Borders:** Borders are drawn on edges between two cells that belong to different regions. **Land borders** (province–province and province–sea) are drawn in **black**. **Sea zone borders** (sea–sea, i.e. between two different sea zone ids) are drawn in **light blue** (e.g. RGB 173, 216, 230) so sea zone boundaries are visible. Legend text should indicate: black = land borders, light blue = sea zone borders.
 - **Legend:** When terrain is present, the legend lists **terrain types** with a color swatch and label. When seed positions are provided, the image MAY draw continent seeds and land seeds with per-continent coloring.
-- **Resources:** When resource data is present (`result.resourceGrid != null`), each land cell that has a resource displays a single **lowercase letter** at cell center: `g` = grain, `t` = timber, `i` = iron. Letters are drawn **last** on the map (after borders and seed markers) so they remain visible. The legend includes a "Resources" section listing each letter and its resource name (e.g. "g  Grain").
+- **Resources:** When resource data is present (`result.resourceGrid != null`), each land cell that has a resource displays a single **lowercase letter** at cell center. Legend letters: g Grain, m Meat, w Wool, h Horses, t Timber, i Iron, c Copper, n Tin, k Coal, s Sugar Cane, b Tobacco, u Cotton, f Furs, p Spices, v Silver, a Gold, e Gems, d Diamonds. Letters are drawn **last** on the map (after borders and seed markers) so they remain visible. See [resource-terrain-region-rules.md](../game/resource-terrain-region-rules.md). If more resources are added later, consider two-letter codes.
 - **Land seeds:** Land seeds are drawn as **small circles** at cell centers, with a **black outline** (fill + outline), so they are clearly distinguishable from the square tile cells. Continent seeds remain the larger, distinct-style markers.
 - **Region id on tiles:** Each tile (cell) MAY display its **region id** (e.g. p1, s2) as text on the map for identification. The id is drawn in **red** so it stands out from terrain and borders. When resources are present, resource letters are drawn at cell center and remain visible; region id placement (e.g. top-left of cell) should avoid obscuring resource letters where possible.
 - **Tile size:** **Tile size** (pixels per cell, "cell size") is configurable so that tile details are easier to see. The default cell size is **24** pixels per tile (implementation may use a larger default than previously). The generate_map tool and colonizethis_map APIs accept an optional cell size parameter; when not specified, the default is used.
@@ -67,12 +67,14 @@ Two visualizers exist; they share border drawing, legend layout, and swatch help
 - **Capitals:** Distinct marker (e.g. gold circle) at capital tile; legend entry per faction.
 - **Ports:** The map shows **port** locations. For each region, the visualizer draws a **distinct marker** at each port tile (e.g. filled diamond or small square in a different colour from capitals). The legend includes a line explaining ports. Capitals remain the gold circle; ports use a different shape/colour.
 
-The ctdev debug app consumes `InitGameMapViewData` and offers a **view mode toggle**:
+The ctdev debug app consumes `InitGameMapViewData` and offers a **view mode toggle**. In geographic mode, the legend includes a **compact glyph reference** (all 18 resource letters in fixed order) and **per-region resource count breakdown** (OW and NW; format `letter+count`, e.g. `OW: g12 m8 w5`, `NW: t8 s20 b5`). Hovering over the resource glyph lines shows the full letter→name legend in the right inspection panel.
 
 - **Political view:** fill tiles by faction ownership using `ownerFactionId` and `factionColors`; capitals and ports are overlaid as markers.
 - **Geographic view:** fill tiles by **terrain type** (and draw resource glyphs) using `terrainTypeId` / `resourceId`; ownership is shown only via overlays (capitals/ports or optional outlines). Both modes use the same underlying view model; the toggle is a **UI-only concern** in ctdev.
 
 Implemented in colonizethis_map; consumed by init_game tool and the ctdev debug app (via the shared map view model).
+
+- **PNG-from-view-data:** `renderInitGameMapToPngFromViewData` supports an optional **geographic mode** parameter. When true, land is filled by terrain using `terrainColors` and per-tile resource glyphs (g/t/i) are drawn at cell centres; when false, current behaviour (ownership fill only). Legend in geographic mode lists terrain swatches and resource letters (e.g. "g Grain", "t Timber", "i Iron").
 
 ### Map view model for tools
 
@@ -81,13 +83,13 @@ For tools that need richer, renderer-agnostic access to map and ownership data (
 - `RegionMapViewData`:
   - `regionId` (`oldWorld` or `newWorld`).
   - `width`, `height` (grid in cells) and `cellSize` (logical tile size).
-  - Per-cell data (`CellViewData`): `x`, `y`, `regionCellId` (province/sea zone id), `isSea`, optional `terrainTypeId`, optional `resourceId`, optional `ownerFactionId`.
+  - Per-cell data (`CellViewData`): `x`, `y`, `regionCellId` (province/sea zone id), `isSea`, optional `terrainTypeId`, optional `terrainType` (for renderers; lookup by terrain type, not string id), optional `resourceId`, optional `ownerFactionId`, optional `improvementLevel` (0–4, from `WorldState.tileState.improvementByTile`; tile key format `regionId|provinceId|x|y`), optional `roadLevel` (0/1/2/4, from `tileState.roadLevelByTile`). The builder populates improvement and road levels when `Game` is provided.
   - Overlays:
     - `capitalMarkers`: faction id, display name, x, y.
     - `portMarkers`: tile position plus province/sea-zone ids (derived from `portsByProvinceSeaboard`).
   - Legend/palette:
     - `factionColors`: faction id → RGB.
-    - `terrainColors`: terrain type → RGB (when terrain is present).
+    - `terrainColors`: terrain type → RGB (when terrain is present). Must use the **same terrain palette** as the base tile map PNG (fixed RGB per `TerrainType`). For geographic rendering, lookup is by **terrain type** (enum), not by string id.
 - `InitGameMapViewData`:
   - `oldWorld` and `newWorld` `RegionMapViewData` instances.
   - Optional metadata: RNG seed and a short `GameSetupConfig` summary string.

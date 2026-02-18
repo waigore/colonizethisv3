@@ -1,0 +1,15 @@
+name: show_tech
+description: "CLI tool to visualize the ColonizeThis tech tree."
+version: 0.1.0
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  colonizethis_data:
+    path: ../../packages/colonizethis_data
+
+dev_dependencies:
+  test: ^1.25.0
+

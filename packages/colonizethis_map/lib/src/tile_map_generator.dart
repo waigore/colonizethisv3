@@ -177,6 +177,8 @@ class TileMapParams {
     this.jitterProbability = 0.25,
     this.jitterMinProvinceSize = 10,
     this.jitterNeighborSupportThreshold = 2,
+    // Pass 7 — multi-region resource cap
+    this.multiRegionResourceCapFraction = 0.30,
   })  : assert(seaFraction >= 0 && seaFraction < 1),
         assert(voronoiNoiseScale >= 0),
         assert(continentBufferTiles >= 0),
@@ -199,7 +201,8 @@ class TileMapParams {
         assert(jitterMaxFraction >= 0 && jitterMaxFraction <= 1),
         assert(jitterProbability >= 0 && jitterProbability <= 1),
         assert(jitterMinProvinceSize >= 0),
-        assert(jitterNeighborSupportThreshold >= 0);
+        assert(jitterNeighborSupportThreshold >= 0),
+        assert(multiRegionResourceCapFraction >= 0 && multiRegionResourceCapFraction <= 1);
 
   final int width;
   final int height;
@@ -250,6 +253,60 @@ class TileMapParams {
   final double jitterProbability;
   final int jitterMinProvinceSize;
   final int jitterNeighborSupportThreshold;
+
+  // --- Pass 7 (resources)
+  /// Max fraction of placed resources that may be multi-region ("both") per map. Default 0.30.
+  final double multiRegionResourceCapFraction;
+}
+
+/// Tracks both-count and total for multi-region resource cap (Pass 7). SPEC/game/resource-terrain-region-rules.md.
+class _MultiRegionCapState {
+  _MultiRegionCapState(this.capFraction, this.rules, this.regionId);
+
+  factory _MultiRegionCapState.fromExisting(
+    double capFraction,
+    ResourceRules rules,
+    String regionId,
+    List<List<Resource?>> resourceGrid,
+  ) {
+    var both = 0, total = 0;
+    for (final row in resourceGrid) {
+      for (final r in row) {
+        if (r == null) continue;
+        total++;
+        if (rules.regionRule[r] == ResourceRegionRule.both) both++;
+      }
+    }
+    final s = _MultiRegionCapState(capFraction, rules, regionId);
+    s.bothCount = both;
+    s.totalCount = total;
+    return s;
+  }
+
+  int bothCount = 0;
+  int totalCount = 0;
+  final double capFraction;
+  final ResourceRules rules;
+  final String regionId;
+
+  bool shouldRestrictToRegionOnly(List<Resource> allowed) {
+    if (totalCount == 0) return false;
+    if (bothCount / totalCount < capFraction) return false;
+    final hasBoth =
+        allowed.any((r) => rules.regionRule[r] == ResourceRegionRule.both);
+    final hasRegionOnly =
+        allowed.any((r) => rules.regionRule[r] != ResourceRegionRule.both);
+    return hasBoth && hasRegionOnly;
+  }
+
+  List<Resource> filterToRegionOnly(List<Resource> allowed) => allowed
+      .where((r) => rules.regionRule[r] != ResourceRegionRule.both)
+      .toList();
+
+  void record(Resource r) {
+    totalCount++;
+    if (rules.regionRule[r] == ResourceRegionRule.both) bothCount++;
+  }
 }
 
 /// Generates a per-region tile map from province/continent params. SPEC/program/tile-map-generation.md.
@@ -584,6 +641,19 @@ class TileMapGenerator {
     var rg = resourceGrid != null ? resourceGrid.map((row) => row.toList()).toList() : null;
     final ocean = _oceanCells(g, seaZoneId);
 
+    final capState = (tg != null &&
+            rg != null &&
+            mapRegionId != null &&
+            resourceRules != null &&
+            (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld'))
+        ? _MultiRegionCapState.fromExisting(
+            params.multiRegionResourceCapFraction,
+            resourceRules,
+            mapRegionId,
+            rg,
+          )
+        : null;
+
     for (var c = 0; c < numContinents; c++) {
       while (true) {
         final landCells = _landCellsForContinent(g, provinceToContinent, c, seaZoneId);
@@ -598,7 +668,16 @@ class TileMapGenerator {
         for (final (x, y) in path) {
           g[y][x] = provinceId;
           if (tg != null && rg != null && mapRegionId != null && resourceRules != null) {
-            _assignTerrainAndResourceForCell(tg, rg, x, y, mapRegionId, resourceRules, rnd);
+            _assignTerrainAndResourceForCell(
+              tg,
+              rg,
+              x,
+              y,
+              mapRegionId,
+              resourceRules,
+              rnd,
+              capState: capState,
+            );
           }
         }
         _preserveSeaFraction(g, tg, rg, seaZoneId, ocean, path.length);
@@ -878,18 +957,25 @@ class TileMapGenerator {
     int y,
     String mapRegionId,
     ResourceRules rules,
-    Random rnd,
-  ) {
+    Random rnd, {
+    _MultiRegionCapState? capState,
+  }) {
     final landTerrains = allowedTerrainsForRegion(mapRegionId);
     if (landTerrains.isEmpty) return;
     terrainGrid[y][x] = landTerrains[rnd.nextInt(landTerrains.length)];
     final terrain = terrainGrid[y][x]!;
-    final allowed = Resource.values
+    var allowed = Resource.values
         .where((r) =>
             rules.isAllowedInRegion(r, mapRegionId) &&
             rules.isAllowedOnTerrain(r, terrain))
         .toList();
     if (allowed.isEmpty) return;
+    if (capState != null &&
+        (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld') &&
+        capState.shouldRestrictToRegionOnly(allowed)) {
+      allowed = capState.filterToRegionOnly(allowed);
+      if (allowed.isEmpty) return;
+    }
     if (rnd.nextDouble() > 0.4) return;
     final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
     final sum = weights.reduce((a, b) => a + b);
@@ -897,7 +983,9 @@ class TileMapGenerator {
     for (var i = 0; i < allowed.length; i++) {
       roll -= weights[i];
       if (roll <= 0) {
-        resourceGrid[y][x] = allowed[i];
+        final placed = allowed[i];
+        resourceGrid[y][x] = placed;
+        capState?.record(placed);
         break;
       }
     }
@@ -994,6 +1082,14 @@ class TileMapGenerator {
     );
 
     // Pass 7: resources, using final terrainGrid and existing rules.
+    final capState = (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld')
+        ? _MultiRegionCapState(
+            params.multiRegionResourceCapFraction,
+            rules,
+            mapRegionId,
+          )
+        : null;
+
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) {
@@ -1002,12 +1098,17 @@ class TileMapGenerator {
         }
         final terrain = terrainGrid[y][x];
         if (terrain == null) continue;
-        final allowed = Resource.values
+        var allowed = Resource.values
             .where((r) =>
                 rules.isAllowedInRegion(r, mapRegionId) &&
                 rules.isAllowedOnTerrain(r, terrain))
             .toList();
         if (allowed.isEmpty) continue;
+        // Multi-region cap: when at cap, restrict to region-only where possible.
+        if (capState != null && capState.shouldRestrictToRegionOnly(allowed)) {
+          allowed = capState.filterToRegionOnly(allowed);
+          if (allowed.isEmpty) continue;
+        }
         // 40% chance to place any resource on eligible land; then weighted pick.
         if (rnd.nextDouble() > 0.4) continue;
         final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
@@ -1016,7 +1117,9 @@ class TileMapGenerator {
         for (var i = 0; i < allowed.length; i++) {
           roll -= weights[i];
           if (roll <= 0) {
-            resourceGrid[y][x] = allowed[i];
+            final placed = allowed[i];
+            resourceGrid[y][x] = placed;
+            capState?.record(placed);
             break;
           }
         }

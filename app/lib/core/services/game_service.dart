@@ -37,11 +37,21 @@ class GameService {
   ///
   /// When [topology] and [tileMapByRegion] are not provided, uses cached map data for [current.id] if present
   /// (so extraction runs from connectivity + resource extractor). Otherwise extraction phase leaves stockpiles unchanged.
-  Game nextTurn(Game current, {Orders? orders, MapTopology? topology, Map<String, TileMapResult>? tileMapByRegion}) {
-    final resolvedOrders = orders ?? const Orders();
+  /// When [aiOrders] is provided, merges with [orders] (human over AI) before resolution.
+  Game nextTurn(
+    Game current, {
+    Orders? orders,
+    Orders? aiOrders,
+    MapTopology? topology,
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     final cache = _mapCache[current.id];
     final topo = topology ?? cache?.combinedTopology ?? const MapTopology();
     final tileMaps = tileMapByRegion ?? cache?.tileMapByRegion;
+    final humanOrders = orders ?? const Orders();
+    final resolvedOrders = aiOrders != null
+        ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
+        : humanOrders;
     final newGame = resolveTurnForGame(
       game: current,
       topology: topo,

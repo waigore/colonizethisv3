@@ -15,14 +15,13 @@
 
 Per active ruleset, naming config defines:
 
-- **Great Powers (GP):**
-  - `id` (e.g. `gp1`) mapped to:
-    - `countryName` (e.g. `Spain`), `adjective` (e.g. `Spanish`).
-    - `leaderKey` referencing the GDD leader entry.
-    - `capitalCityName` (e.g. `Madrid`).
-    - `provinceNamePool`: ordered list of historical **homeland region names** (e.g. `Castile`, `Andalusia`, `Catalonia`, ...).
-- **Minor Nations:** list of `displayName` entries (e.g. `Portugal`, `Savoy`, `Bavaria`, ...) and optional province name pools.
-- **Tribes:** list of `displayName` entries for New World peoples/civilisations, optionally grouped by sub-region.
+- **Great Powers (GP):** Registry keyed by semantic id (e.g. `england`, `france`, `spain`). Game setup uses `selectedGreatPowerIds` to determine which powers appear; players (ordinal gp1, gp2…) are mapped to selected powers for naming. Each GP may have multiple **leader variants**; when multiple exist, setup config must specify which is chosen (`leaderVariantByGpId`). Province naming and leader display use the selected variant. Each entry has:
+  - `id`: semantic id (e.g. `england`) mapped to:
+    - `countryName` (e.g. `England`), `adjective` (e.g. `English`).
+    - `capitalCityName` (e.g. `London`).
+    - `leaderVariants`: list of `{ id, name, leaderKey, provinceNamePool? }`; first is default. Province pool comes from the chosen variant (or GP default when variant has none).
+- **Minor Nations:** `displayName` (e.g. `Portugal`, `Savoy`) and **province name pool** (default: **5** names per minor).
+- **Tribes:** `displayName` for New World peoples and **province name pool** (default: **5** names per tribe; historically inspired **Amerindian / indigenous** place or region names).
 
 All names are **ruleset-driven**; game logic only consumes resolved naming data.
 
@@ -30,18 +29,14 @@ All names are **ruleset-driven**; game logic only consumes resolved naming data.
 
 ## Application During Game Setup
 
-After **province assignment** and **capital auto-choice**:
+**Province naming is mandatory** for all factions (Great Powers, Minor Nations, Tribes). Every province receives a non-null `Province.displayName`.
 
-- For each **Great Power**:
-  - Determine its **primary landmass** from the capital province.
-  - For provinces owned by that GP on the primary landmass, assign `Province.displayName` deterministically from the GP’s `provinceNamePool` (stable order: sorted province ids, wrap when the pool is shorter than the province count).
-  - Set the capital province’s display name from the same pool (or a dedicated homeland name) and treat `capitalCityName` as the city shown for the capital tile in UI.
-- For **Minor Nations** and **Tribes**:
-  - Use the naming config’s `displayName` for the faction label.
-  - When province pools are present, assign province display names deterministically in the same way as GPs.
+Order: **after** province assignment and **after** capital auto-choice, assign province names and faction display names.
 
-Determinism:
+- **Capital province:** Gets the faction’s capital name (`capitalCityName` for GPs; for minors/tribes, the first entry of the province name pool or a dedicated capital name when present).
+- **Other provinces:** Names are chosen **randomly** from the faction’s `provinceNamePool` using a RNG seeded from the game setup seed so that:
+  - Same seed ⇒ same names (deterministic, reproducible).
+  - Different seed ⇒ different names across games.
+- **Faction display names:** Great Powers get `countryName` (e.g. England, France); Minor Nations and Tribes get `displayName` from the naming config. These are applied to the game’s players, minorNations, and tribes so UI can show human-readable faction names.
 
-- Naming decisions must be **deterministic** for a given ruleset and `GameSetupConfig.seed` (no per-run randomness leaking into names).
-- When rulesets change (e.g. different scenario), only the new naming config alters the resulting names; the assignment algorithm remains the same.
-
+Pool sizes: default ruleset uses **10** names per Great Power and **5** per Minor Nation and Tribe. Tribes use historically inspired **Amerindian / indigenous** place or region names.

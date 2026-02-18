@@ -6,7 +6,7 @@
 
 ## Connectivity Resolver
 
-**Input:** Game state (provinces, owners, capital per player, tile map, per-tile roads, ports per province/seaboard), topology, optional blockade stub.
+**Input:** Game state (provinces, owners, capital per player, tile map, per-tile roads, ports per province/seaboard), topology, optional blockade stub. Extraction logic is **read-only** with respect to terrain: it consumes improvement/road/port state produced by setup and development resolution and does not mutate it.
 
 **Output:** Per player, a set of **connected** tile keys (e.g. per (regionId, provinceId, x, y)) or a per-province connected flag sufficient to know which tiles contribute to extraction.
 

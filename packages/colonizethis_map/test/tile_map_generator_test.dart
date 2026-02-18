@@ -174,6 +174,96 @@ void main() {
       }
     });
 
+    test('newWorld resources respect region and terrain rules', () {
+      final params = TileMapParams(width: 30, height: 30, seed: 17, seaFraction: 0.6);
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'newWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
+      final rules = ResourceRules.defaultRules;
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          final t = result.terrainAt(x, y);
+          final r = result.resourceAt(x, y);
+          if (t != null && r != null) {
+            expect(rules.isAllowedOnTerrain(r, t), isTrue);
+            expect(rules.isAllowedInRegion(r, 'newWorld'), isTrue);
+          }
+        }
+      }
+    });
+
+    test('multi-region resource cap: newWorld keeps both resources at or below cap', () {
+      final params = TileMapParams(
+        width: 24,
+        height: 24,
+        seed: 42,
+        seaFraction: 0.5,
+      );
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'newWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
+      final rules = ResourceRules.defaultRules;
+      var bothCount = 0;
+      var totalCount = 0;
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          final r = result.resourceAt(x, y);
+          if (r == null) continue;
+          totalCount++;
+          if (rules.regionRule[r] == ResourceRegionRule.both) bothCount++;
+        }
+      }
+      if (totalCount > 0) {
+        final fraction = bothCount / totalCount;
+        expect(
+          fraction,
+          lessThanOrEqualTo(0.35),
+          reason: 'bothCount=$bothCount totalCount=$totalCount fraction=$fraction',
+        );
+      }
+    });
+
+    test('multi-region resource cap: oldWorld respects region and terrain rules', () {
+      final params = TileMapParams(
+        width: 24,
+        height: 24,
+        seed: 99,
+        seaFraction: 0.5,
+      );
+      final (result, _) = TileMapGenerator(params: params).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
+      final rules = ResourceRules.defaultRules;
+      for (var y = 0; y < result.height; y++) {
+        for (var x = 0; x < result.width; x++) {
+          final t = result.terrainAt(x, y);
+          final r = result.resourceAt(x, y);
+          if (t != null && r != null) {
+            expect(rules.isAllowedOnTerrain(r, t), isTrue);
+            expect(rules.isAllowedInRegion(r, 'oldWorld'), isTrue);
+          }
+        }
+      }
+    });
+
+    test('ResourceRules.defaultRules covers all Resource enum values', () {
+      final rules = ResourceRules.defaultRules;
+      for (final r in Resource.values) {
+        expect(rules.regionRule.containsKey(r), isTrue, reason: 'regionRule missing $r');
+        expect(rules.allowedTerrains.containsKey(r), isTrue, reason: 'allowedTerrains missing $r');
+        expect(rules.defaultMarketPrice.containsKey(r), isTrue, reason: 'defaultMarketPrice missing $r');
+      }
+    });
+
     test('two-phase sea fraction: land count matches (1 - seaFraction) * width * height', () {
       const w = 20;
       const h = 20;

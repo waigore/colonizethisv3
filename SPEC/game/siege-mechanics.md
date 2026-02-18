@@ -12,7 +12,7 @@
 | 2 | Stone | 2 emplaced | Medium | 4 Lumber, 4 Bronze (+ Mine Engineering) |
 | 3 | Modern | 3 emplaced | Heavy | 5 Steel, 5 Lumber (+ Modern Forts) |
 
-Engineers build forts on the town tile. Tech unlocks higher levels.
+Engineers build forts on the town tile using `WorkOrder` target `build_fort`. Each completed fort build or upgrade is a **multi-turn project** resolved during the Build/Work phase; higher fort levels require more turns and stricter tech prerequisites (Mine Engineering, Modern Forts) and consume the materials shown above. Fort level is stored in the world model and read by the combat system; see [development-resolution.md](../program/development-resolution.md) and [world-model.md](world-model.md).
 
 ---
 

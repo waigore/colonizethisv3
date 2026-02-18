@@ -15,6 +15,9 @@ class Player {
     this.capitalTile,
     this.techUnlocked,
     this.militaryLevel,
+    this.leaderKey,
+    this.researchProgressByTechId,
+    this.researchSlots,
   });
 
   final String id;
@@ -39,6 +42,17 @@ class Player {
   /// Military level (1–4) from tech; highest regiment era available. Used for minor parity.
   final int? militaryLevel;
 
+  /// Leader variant key for bonus lookups (combat, economy). Set during game setup. GDD 09.
+  final String? leaderKey;
+
+  /// Accumulated research progress per tech id (research points).
+  /// Phase 5: used by research resolution. Null/empty = no progress tracked yet.
+  final Map<String, int>? researchProgressByTechId;
+
+  /// Number of concurrent research slots available to this player.
+  /// Default is 3; University tech can raise this to 4. When null, treat as 3.
+  final int? researchSlots;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'displayName': displayName,
@@ -51,6 +65,10 @@ class Player {
         if (techUnlocked != null && techUnlocked!.isNotEmpty)
           'techUnlocked': techUnlocked,
         if (militaryLevel != null) 'militaryLevel': militaryLevel,
+        if (leaderKey != null && leaderKey!.isNotEmpty) 'leaderKey': leaderKey,
+        if (researchProgressByTechId != null && researchProgressByTechId!.isNotEmpty)
+          'researchProgressByTechId': researchProgressByTechId,
+        if (researchSlots != null) 'researchSlots': researchSlots,
       };
 
   static Player fromJson(Map<String, dynamic> json) {
@@ -97,6 +115,16 @@ class Player {
       );
     }
 
+    Map<String, int>? _readResearchProgress() {
+      final raw = json['researchProgressByTechId'];
+      if (raw is! Map) return null;
+      return Map<String, int>.from(
+        raw.map(
+          (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
+        ),
+      );
+    }
+
     return Player(
       id: json['id'] as String,
       displayName: json['displayName'] as String,
@@ -108,6 +136,9 @@ class Player {
       capitalTile: _readCapitalTile(),
       techUnlocked: _readTechUnlocked(),
       militaryLevel: (json['militaryLevel'] as int?),
+      leaderKey: json['leaderKey'] as String?,
+      researchProgressByTechId: _readResearchProgress(),
+      researchSlots: (json['researchSlots'] as num?)?.toInt(),
     );
   }
 
@@ -122,6 +153,9 @@ class Player {
     CapitalTile? capitalTile,
     Map<String, bool>? techUnlocked,
     int? militaryLevel,
+    String? leaderKey,
+    Map<String, int>? researchProgressByTechId,
+    int? researchSlots,
   }) {
     return Player(
       id: id ?? this.id,
@@ -134,6 +168,10 @@ class Player {
       capitalTile: capitalTile ?? this.capitalTile,
       techUnlocked: techUnlocked ?? this.techUnlocked,
       militaryLevel: militaryLevel ?? this.militaryLevel,
+      leaderKey: leaderKey ?? this.leaderKey,
+      researchProgressByTechId:
+          researchProgressByTechId ?? this.researchProgressByTechId,
+      researchSlots: researchSlots ?? this.researchSlots,
     );
   }
 
@@ -151,7 +189,10 @@ class Player {
           capitalProvinceId == other.capitalProvinceId &&
           capitalTile == other.capitalTile &&
           _mapEquals(techUnlocked, other.techUnlocked) &&
-          militaryLevel == other.militaryLevel;
+          militaryLevel == other.militaryLevel &&
+          leaderKey == other.leaderKey &&
+          _intMapEquals(researchProgressByTechId, other.researchProgressByTechId) &&
+          researchSlots == other.researchSlots;
 
   @override
   int get hashCode => Object.hash(
@@ -165,9 +206,23 @@ class Player {
         capitalTile,
         techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
         militaryLevel,
+        leaderKey,
+        researchProgressByTechId == null
+            ? null
+            : Object.hashAll(researchProgressByTechId!.entries),
+        researchSlots,
       );
 
   static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {
+    if (a == b) return true;
+    if (a == null || b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  static bool _intMapEquals(Map<String, int>? a, Map<String, int>? b) {
     if (a == b) return true;
     if (a == null || b == null || a.length != b.length) return false;
     for (final e in a.entries) {

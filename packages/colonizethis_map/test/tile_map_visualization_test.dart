@@ -281,7 +281,18 @@ void main() {
       expect(decodedWithout, isNotNull);
       expect(decodedWith, isNotNull);
       expect(decodedWith!.height, greaterThan(decodedWithout!.height),
-          reason: 'Legend has extra lines for resources (g, t, i)');
+          reason: 'Legend has extra lines for resources');
+    });
+
+    test('resourceIdToLegendLetter covers all Resource values with unique single letters', () {
+      final letters = <String>{};
+      for (final r in Resource.values) {
+        final letter = resourceIdToLegendLetter(r.name);
+        expect(letter, isNotNull, reason: 'Resource $r should have a legend letter');
+        expect(letter!.length, 1, reason: 'Letter for $r should be single character');
+        expect(letters.contains(letter), isFalse, reason: 'Duplicate letter $letter for $r');
+        letters.add(letter);
+      }
     });
 
     test('region id label is drawn in red at top-left of each cell', () {

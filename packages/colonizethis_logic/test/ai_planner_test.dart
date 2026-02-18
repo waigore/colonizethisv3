@@ -1,0 +1,137 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('isAiControlled', () {
+    test('uses explicit aiControlByGpId when present', () {
+      final game = Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+        aiControlByGpId: const {'gp1': true},
+      );
+
+      expect(isAiControlled(game, 'gp1'), isTrue);
+    });
+
+    test('falls back to !isHuman when no explicit entry', () {
+      final game = Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+      );
+
+      expect(isAiControlled(game, 'gp1'), isFalse);
+      expect(isAiControlled(game, 'gp2'), isTrue);
+    });
+  });
+
+  group('generateOrdersForGame', () {
+    MapTopology _simpleTopology() {
+      return const MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+    }
+
+    Game _baseGame() {
+      return Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'gp2'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI GP', isHuman: false),
+          Player(id: 'gp2', displayName: 'Human GP', isHuman: true),
+        ],
+        globalGameSeed: 123,
+        aiSeedByGpId: const {'gp1': 999},
+      );
+    }
+
+    test('does not attack factions at peace or Minors without war', () {
+      final game = Game(
+        id: 'g2',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'minor1'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI GP', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        globalGameSeed: 123,
+        aiSeedByGpId: const {'gp1': 999},
+      );
+
+      final orders = generateOrdersForGame(game, _simpleTopology());
+      final moves = orders.moveOrdersByPlayerId['gp1'] ?? const [];
+      // AI should not emit attacks against Minor1 because there is no war relation.
+      expect(
+        moves.where((m) => m.destinationProvinceId == 'P2'),
+        isEmpty,
+      );
+    });
+
+    test('is deterministic for same game and seeds', () {
+      final game = _baseGame();
+      final topology = _simpleTopology();
+
+      final o1 = generateOrdersForGame(game, topology);
+      final o2 = generateOrdersForGame(game, topology);
+      expect(o1, equals(o2));
+    });
+  });
+}
+

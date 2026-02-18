@@ -6,6 +6,8 @@ enum TurnPhase {
   richesToTreasury,
   production,
   consumption,
+  research,
+  diplomacy,
   movement,
   combat,
   buildWork,

@@ -17,11 +17,13 @@ Future<void> main(List<String> arguments) async {
   String? outputGamePath;
   var noSave = false;
   int? seedOverride;
+  List<String>? greatPowersOverride;
   int? greatPowerCount;
   int? minorNationCount;
   int? tribeCount;
   int? numProvincesOldWorld;
   int? numProvincesNewWorld;
+  String? prussiaLeaderOverride;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -61,6 +63,19 @@ Future<void> main(List<String> arguments) async {
         exit(1);
       }
       seedOverride = v;
+    } else if (arg == '--great-powers' && i + 1 < arguments.length) {
+      greatPowersOverride = arguments[++i]
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    } else if (arg.startsWith('--great-powers=')) {
+      greatPowersOverride = arg
+          .substring('--great-powers='.length)
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     } else if (arg == '--great-power-count' && i + 1 < arguments.length) {
       greatPowerCount = int.tryParse(arguments[++i]);
     } else if (arg.startsWith('--great-power-count=')) {
@@ -81,6 +96,10 @@ Future<void> main(List<String> arguments) async {
       numProvincesNewWorld = int.tryParse(arguments[++i]);
     } else if (arg.startsWith('--num-provinces-new-world=')) {
       numProvincesNewWorld = int.tryParse(arg.substring('--num-provinces-new-world='.length).trim());
+    } else if (arg == '--prussia-leader' && i + 1 < arguments.length) {
+      prussiaLeaderOverride = arguments[++i].trim();
+    } else if (arg.startsWith('--prussia-leader=')) {
+      prussiaLeaderOverride = arg.substring('--prussia-leader='.length).trim();
     }
   }
 
@@ -92,8 +111,26 @@ Future<void> main(List<String> arguments) async {
       exit(1);
     }
     final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
+    List<String> selectedIds = config.selectedGreatPowerIds;
+    final jsonSelected = json['selectedGreatPowerIds'];
+    if (jsonSelected is List) {
+      selectedIds = jsonSelected.map((e) => e.toString()).toList();
+    } else {
+      final count = (json['greatPowerCount'] as num?)?.toInt();
+      if (count != null && count > 0) {
+        selectedIds = allGreatPowerIds.take(count).toList();
+      }
+    }
+    Map<String, String> leaderVariantByGpId = config.leaderVariantByGpId;
+    final jsonLeader = json['leaderVariantByGpId'];
+    if (jsonLeader is Map) {
+      leaderVariantByGpId = Map<String, String>.from(
+        jsonLeader.map((k, v) => MapEntry(k.toString(), v.toString())),
+      );
+    }
     config = GameSetupConfig(
-      greatPowerCount: (json['greatPowerCount'] as num?)?.toInt() ?? config.greatPowerCount,
+      selectedGreatPowerIds: selectedIds,
+      leaderVariantByGpId: leaderVariantByGpId,
       continentCount: (json['continentCount'] as num?)?.toInt() ?? config.continentCount,
       minorNationCount: (json['minorNationCount'] as num?)?.toInt() ?? config.minorNationCount,
       tribeCount: (json['tribeCount'] as num?)?.toInt() ?? config.tribeCount,
@@ -105,7 +142,8 @@ Future<void> main(List<String> arguments) async {
 
   if (seedOverride != null) {
     config = GameSetupConfig(
-      greatPowerCount: config.greatPowerCount,
+      selectedGreatPowerIds: config.selectedGreatPowerIds,
+      leaderVariantByGpId: config.leaderVariantByGpId,
       continentCount: config.continentCount,
       minorNationCount: config.minorNationCount,
       tribeCount: config.tribeCount,
@@ -114,10 +152,31 @@ Future<void> main(List<String> arguments) async {
       seed: seedOverride,
     );
   }
-  if (greatPowerCount != null || minorNationCount != null || tribeCount != null ||
-      numProvincesOldWorld != null || numProvincesNewWorld != null) {
+  if (greatPowersOverride != null ||
+      greatPowerCount != null ||
+      minorNationCount != null ||
+      tribeCount != null ||
+      numProvincesOldWorld != null ||
+      numProvincesNewWorld != null) {
+    List<String> selectedIds = config.selectedGreatPowerIds;
+    if (greatPowersOverride != null && greatPowersOverride!.isNotEmpty) {
+      selectedIds = greatPowersOverride!;
+    } else     if (greatPowerCount != null && greatPowerCount! > 0) {
+      selectedIds = allGreatPowerIds.take(greatPowerCount!).toList();
+    }
+    Map<String, String> leaderVariantByGpId = config.leaderVariantByGpId;
+    if (prussiaLeaderOverride != null && selectedIds.contains('prussia')) {
+      if (prussiaLeaderOverride == prussiaVariantFrederickTheGreat ||
+          prussiaLeaderOverride == prussiaVariantFrederickWilliam) {
+        leaderVariantByGpId = {...leaderVariantByGpId, 'prussia': prussiaLeaderOverride};
+      } else {
+        print('Error: --prussia-leader must be $prussiaVariantFrederickTheGreat or $prussiaVariantFrederickWilliam');
+        exit(1);
+      }
+    }
     config = GameSetupConfig(
-      greatPowerCount: greatPowerCount ?? config.greatPowerCount,
+      selectedGreatPowerIds: selectedIds,
+      leaderVariantByGpId: leaderVariantByGpId,
       continentCount: config.continentCount,
       minorNationCount: minorNationCount ?? config.minorNationCount,
       tribeCount: tribeCount ?? config.tribeCount,
@@ -186,7 +245,9 @@ void _printUsage() {
   print('  --output-game <path>    Save game (requires --output-game when not --no-save)');
   print('  --no-save               Do not save game');
   print('  --seed <n>              RNG seed');
-  print('  --great-power-count N   Override config');
+  print('  --great-powers id1,id2  Comma-separated Great Power ids (e.g. england,france,spain)');
+  print('  --great-power-count N   Override: use first N powers from default order (backward compat)');
+  print('  --prussia-leader ID     When prussia is selected: frederick_the_great | frederick_william (default: first)');
   print('  --minor-nation-count N  Override config');
   print('  --tribe-count N         Override config');
   print('  --num-provinces-old-world N  Override config');

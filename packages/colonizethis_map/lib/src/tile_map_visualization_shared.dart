@@ -30,6 +30,62 @@ const List<(int r, int g, int b)> regionPalette = [
   (160, 160, 160), // gray
 ];
 
+/// Fixed RGB per terrain type for map fill and legend. Shared by base tile map visualizer and map view builder.
+/// SPEC/program/map-data.md § Map view model for tools, Tile map PNG export.
+const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
+  TerrainType.plains: (200, 220, 160),
+  TerrainType.forest: (34, 100, 34),
+  TerrainType.hills: (160, 130, 90),
+  TerrainType.mountain: (120, 120, 120),
+  TerrainType.swamp: (70, 100, 90),
+};
+
+/// Returns the single-letter legend glyph for a resource id (e.g. grain → 'g'), or null if unknown.
+/// Matches SPEC/program/map-data.md legend; see SPEC/game/resource-terrain-region-rules.md.
+String? resourceIdToLegendLetter(String? resourceId) {
+  if (resourceId == null || resourceId.isEmpty) return null;
+  switch (resourceId) {
+    case 'grain':
+      return 'g';
+    case 'meat':
+      return 'm';
+    case 'wool':
+      return 'w';
+    case 'horses':
+      return 'h';
+    case 'timber':
+      return 't';
+    case 'iron':
+      return 'i';
+    case 'copper':
+      return 'c';
+    case 'tin':
+      return 'n';
+    case 'coal':
+      return 'k';
+    case 'sugarCane':
+      return 's';
+    case 'tobacco':
+      return 'b';
+    case 'cotton':
+      return 'u';
+    case 'furs':
+      return 'f';
+    case 'spices':
+      return 'p';
+    case 'silver':
+      return 'v';
+    case 'gold':
+      return 'a';
+    case 'gems':
+      return 'e';
+    case 'diamonds':
+      return 'd';
+    default:
+      return null;
+  }
+}
+
 /// Grey shades for minor nations (distinct from vibrant GP colours). Deterministic order.
 const List<(int r, int g, int b)> minorNationPalette = [
   (70, 70, 70),

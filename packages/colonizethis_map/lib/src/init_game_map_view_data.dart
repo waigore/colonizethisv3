@@ -14,8 +14,12 @@ class CellViewData {
     required this.regionCellId,
     required this.isSea,
     this.terrainTypeId,
+    this.terrainType,
     this.resourceId,
     this.ownerFactionId,
+    this.provinceDisplayName,
+    this.improvementLevel,
+    this.roadLevel,
   });
 
   final int x;
@@ -27,14 +31,26 @@ class CellViewData {
   /// True if this cell belongs to a sea zone; false for land provinces.
   final bool isSea;
 
-  /// Terrain type identifier for land tiles, when available.
+  /// Terrain type identifier for land tiles, when available (for display/legend).
   final String? terrainTypeId;
+
+  /// Terrain type for renderers; used for lookup in terrainColors. Optional for backward compatibility.
+  final TerrainType? terrainType;
 
   /// Resource identifier for land tiles, when present.
   final String? resourceId;
 
   /// Owning faction id for land provinces, when set.
   final String? ownerFactionId;
+
+  /// Assigned province display name for land provinces (e.g. "Wessex", "London"); null for sea cells.
+  final String? provinceDisplayName;
+
+  /// Improvement level 0–4 for land tiles. From WorldState.tileState.improvementByTile. Null for sea or when not populated.
+  final int? improvementLevel;
+
+  /// Road level 0/1/2/4 for land tiles. From WorldState.tileState.roadLevelByTile. Null for sea or when not populated.
+  final int? roadLevel;
 }
 
 /// Capital marker location for a faction within a region.
@@ -50,6 +66,19 @@ class CapitalMarkerView {
   final String displayName;
   final int x;
   final int y;
+}
+
+/// Unit/army marker for the Units overlay. Province→representative tile.
+class UnitMarkerView {
+  const UnitMarkerView({
+    required this.x,
+    required this.y,
+    required this.ownerFactionId,
+  });
+
+  final int x;
+  final int y;
+  final String ownerFactionId;
 }
 
 /// Port marker location for a province/sea zone tile.
@@ -83,6 +112,7 @@ class RegionMapViewData {
     required this.portMarkers,
     required this.factionColors,
     required this.terrainColors,
+    this.unitMarkers = const [],
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -108,6 +138,9 @@ class RegionMapViewData {
 
   /// Terrain type -> RGB color used for terrain fills when needed.
   final Map<TerrainType, Rgb> terrainColors;
+
+  /// Unit/army markers (province→representative tile) for Units overlay.
+  final List<UnitMarkerView> unitMarkers;
 
   /// Convenience accessor for cell at (x, y).
   CellViewData cellAt(int x, int y) => cells[y * width + x];

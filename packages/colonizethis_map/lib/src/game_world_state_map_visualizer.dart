@@ -18,6 +18,20 @@ const String _regionNewWorld = 'newWorld';
 /// Capital marker color (gold/yellow, distinct from terrain).
 const (int, int, int) capitalMarkerRgb = (255, 215, 0);
 
+/// Resolves terrain RGB for a cell (geographic fill). Uses terrainType or parses terrainTypeId.
+(int r, int g, int b) _terrainRgbForCell(
+  CellViewData cell,
+  RegionMapViewData region,
+) {
+  final terrain = cell.terrainType ??
+      (cell.terrainTypeId != null
+          ? TerrainType.values.byName(cell.terrainTypeId!)
+          : null);
+  if (terrain == null) return (128, 128, 128);
+  final rgb = region.terrainColors[terrain];
+  return rgb ?? (128, 128, 128);
+}
+
 /// Port marker color (teal, distinct from capitals).
 const (int, int, int) portMarkerRgb = (0, 100, 140);
 
@@ -320,8 +334,10 @@ Uint8List renderInitGameMapToPng({
 }
 
 /// Renders the combined Old World + New World map from InitGameMapViewData.
+/// When [geographicMode] is true, land is filled by terrain and resource glyphs (g/t/i) are drawn; legend lists terrain and resources. When false, ownership fill only.
 Uint8List renderInitGameMapToPngFromViewData({
   required InitGameMapViewData viewData,
+  bool geographicMode = false,
 }) {
   final ow = viewData.oldWorld;
   final nw = viewData.newWorld;
@@ -338,7 +354,15 @@ Uint8List renderInitGameMapToPngFromViewData({
       }
     }
 
-    final image = img.Image(width: mapW, height: mapH + legendPadding * 4);
+    // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
+    final legendLines = geographicMode
+        ? (1 + 1 + region.terrainColors.length + 1 + 3 +
+            (region.portMarkers.isNotEmpty ? 1 : 0))
+        : (2 + region.factionColors.length +
+            (region.portMarkers.isNotEmpty ? 1 : 0));
+    final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+
+    final image = img.Image(width: mapW, height: mapH + legendHeight);
     final white = image.getColor(255, 255, 255);
     final black = image.getColor(0, 0, 0);
     final seaZoneBorderColor = image.getColor(
@@ -348,12 +372,14 @@ Uint8List renderInitGameMapToPngFromViewData({
     );
     image.clear(white);
 
-    // Fill by ownership or sea colour.
+    // Fill: by terrain (geographic) or by ownership.
     for (final cell in region.cells) {
       final (r, g, b) = cell.isSea
           ? seaColorRgb
-          : (region.factionColors[cell.ownerFactionId ?? ''] ??
-              (128, 128, 128));
+          : (geographicMode
+              ? _terrainRgbForCell(cell, region)
+              : (region.factionColors[cell.ownerFactionId ?? ''] ??
+                  (128, 128, 128)));
       final color = image.getColor(r, g, b);
       img.fillRect(
         image,
@@ -378,6 +404,26 @@ Uint8List renderInitGameMapToPngFromViewData({
       ),
     );
     drawBorders(image, tmpResult, seaZoneIds, region.cellSize, seaZoneBorderColor);
+
+    // Resource glyphs (geographic mode): g/t/i at cell centre.
+    if (geographicMode) {
+      for (final cell in region.cells) {
+        final letter = resourceIdToLegendLetter(cell.resourceId);
+        if (letter == null) continue;
+        final cx = cell.x * region.cellSize + region.cellSize ~/ 2;
+        final cy = cell.y * region.cellSize + region.cellSize ~/ 2;
+        const letterOffsetX = 4;
+        const letterOffsetY = 6;
+        img.drawString(
+          image,
+          letter,
+          font: img.arial14,
+          x: cx - letterOffsetX,
+          y: cy - letterOffsetY,
+          color: black,
+        );
+      }
+    }
 
     // Ports.
     const portHalfSize = 4;
@@ -433,17 +479,107 @@ Uint8List renderInitGameMapToPngFromViewData({
       );
     }
 
-    // Simple ownership legend (faction ids only) for now.
+    // Legend.
     var legendY = mapH + legendPadding;
-    img.drawString(
-      image,
-      'Ownership by faction. Black = land borders; light blue = sea borders.',
-      font: img.arial14,
-      x: legendPadding,
-      y: legendY,
-      color: black,
-    );
-    legendY += legendLineHeight;
+    if (geographicMode) {
+      img.drawString(
+        image,
+        'Terrain. Black = land borders; light blue = sea borders.',
+        font: img.arial14,
+        x: legendPadding,
+        y: legendY,
+        color: black,
+      );
+      legendY += legendLineHeight;
+      drawLegendSwatch(
+        image,
+        legendY,
+        seaColorRgb.$1,
+        seaColorRgb.$2,
+        seaColorRgb.$3,
+      );
+      img.drawString(
+        image,
+        'Sea',
+        font: img.arial14,
+        x: legendPadding + swatchSize + swatchGap,
+        y: legendY,
+        color: black,
+      );
+      legendY += legendLineHeight;
+      for (final entry in region.terrainColors.entries) {
+        final y = legendY;
+        drawLegendSwatch(
+          image,
+          y,
+          entry.value.$1,
+          entry.value.$2,
+          entry.value.$3,
+        );
+        img.drawString(
+          image,
+          entry.key.name,
+          font: img.arial14,
+          x: legendPadding + swatchSize + swatchGap,
+          y: y,
+          color: black,
+        );
+        legendY += legendLineHeight;
+      }
+      img.drawString(
+        image,
+        'Resources:',
+        font: img.arial14,
+        x: legendPadding,
+        y: legendY,
+        color: black,
+      );
+      legendY += legendLineHeight;
+      for (final (letter, label) in [
+        ('g', 'Grain'),
+        ('t', 'Timber'),
+        ('i', 'Iron'),
+      ]) {
+        img.drawString(
+          image,
+          '$letter  $label',
+          font: img.arial14,
+          x: legendPadding,
+          y: legendY,
+          color: black,
+        );
+        legendY += legendLineHeight;
+      }
+    } else {
+      img.drawString(
+        image,
+        'Ownership by faction. Black = land borders; light blue = sea borders.',
+        font: img.arial14,
+        x: legendPadding,
+        y: legendY,
+        color: black,
+      );
+      legendY += legendLineHeight;
+      for (final entry in region.factionColors.entries) {
+        final y = legendY;
+        drawLegendSwatch(
+          image,
+          y,
+          entry.value.$1,
+          entry.value.$2,
+          entry.value.$3,
+        );
+        img.drawString(
+          image,
+          entry.key,
+          font: img.arial14,
+          x: legendPadding + swatchSize + swatchGap,
+          y: y,
+          color: black,
+        );
+        legendY += legendLineHeight;
+      }
+    }
     if (region.portMarkers.isNotEmpty) {
       img.drawString(
         image,
@@ -451,19 +587,6 @@ Uint8List renderInitGameMapToPngFromViewData({
         font: img.arial14,
         x: legendPadding,
         y: legendY,
-        color: black,
-      );
-      legendY += legendLineHeight;
-    }
-    for (final entry in region.factionColors.entries) {
-      final y = legendY;
-      drawLegendSwatch(image, y, entry.value.$1, entry.value.$2, entry.value.$3);
-      img.drawString(
-        image,
-        entry.key,
-        font: img.arial14,
-        x: legendPadding + swatchSize + swatchGap,
-        y: y,
         color: black,
       );
       legendY += legendLineHeight;

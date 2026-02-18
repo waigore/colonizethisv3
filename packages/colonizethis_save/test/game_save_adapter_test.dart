@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
@@ -8,18 +6,9 @@ import 'package:test/test.dart';
 void main() {
   late Box<dynamic> box;
   late GameSaveAdapter adapter;
-  late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('hive_save_test');
-    Hive.init(tempDir.path);
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    try {
-      tempDir.deleteSync(recursive: true);
-    } catch (_) {}
+    Hive.init('./.dart_tool/test_hive');
   });
 
   setUp(() async {

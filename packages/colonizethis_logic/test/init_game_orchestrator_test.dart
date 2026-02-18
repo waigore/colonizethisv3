@@ -8,7 +8,7 @@ void main() {
   group('runInitGame renderPng flag', () {
     test('renderPng=false skips PNG bytes but still returns game and view data',
         () {
-      const config = GameSetupConfig.defaultConfig;
+      final config = GameSetupConfig.defaultConfig;
 
       final result = runInitGame(
         config: config,

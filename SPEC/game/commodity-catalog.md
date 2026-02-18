@@ -15,7 +15,7 @@ Commodities are grouped by **category**: food, rawMaterial, manufactured, luxury
 | Category | Commodities |
 |----------|-------------|
 | **Food** | grain, meat |
-| **Raw materials** | timber, iron, wool, cotton, coal, sugarCane, tobacco, furs |
+| **Raw materials** | timber, iron, wool, cotton, coal, copper, tin, sugarCane, tobacco, furs, horses |
 | **Manufactured** | lumber, castIron, fabric, refinedSugar, cigars, furHats, steel, paper, bronze |
 | **Luxury** | (consumed by trained workers; e.g. refinedSugar, cigars, furHats) |
 | **Riches** | gold, silver, gems, diamonds |

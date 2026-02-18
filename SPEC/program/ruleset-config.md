@@ -51,15 +51,14 @@ colonizethis_logic and colonizethis_ai take a single ResolvedRuleset/GameConfig;
 
 The resolved ruleset includes a **naming** section that drives historically inspired names:
 
-- `naming.greatPowers`: array where each entry contains:
-  - `id`: internal id (e.g. `gp1`).
-  - `countryName`: display name (e.g. `Spain`).
-  - `adjective`: e.g. `Spanish`.
-  - `leaderKey`: key into the GDD leader definition for this power.
-  - `capitalCityName`: primary capital city name (e.g. `Madrid`).
-  - `provinceNamePool`: ordered list of homeland province/region names.
-- `naming.minorNations`: array of `{ id, displayName, provinceNamePool? }`.
-- `naming.tribes`: array of `{ id, displayName }`.
+- `naming.greatPowers`: registry keyed by semantic id, aligned with GDD 09. Each entry contains:
+  - `id`: semantic id (e.g. `england`, `france`, `spain`, `portugal`, `netherlands`, `prussia`, `sweden`).
+  - `countryName`: display name (e.g. `England`).
+  - `adjective`: e.g. `English`.
+  - `capitalCityName`: primary capital city name (e.g. `London`).
+  - `leaderVariants`: array of `{ id, name, leaderKey, provinceNamePool? }`. Default variant is first. When a GP has multiple variants, setup config specifies which is chosen; province pool comes from the chosen variant (or GP default).
+- `naming.minorNations`: array of `{ id, displayName, provinceNamePool? }` (default: 5 names per minor).
+- `naming.tribes`: array of `{ id, displayName, provinceNamePool? }`. Province name pools for tribes use historically inspired **Amerindian / indigenous** names (default: 5 per tribe).
 
 Resolver output exposes this as a `ResolvedNamingConfig` (or equivalent) that colonizethis_logic uses during game setup to assign:
 

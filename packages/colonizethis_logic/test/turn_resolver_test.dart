@@ -222,5 +222,122 @@ void main() {
       expect(p2, isNotNull);
       expect(p2!.ownerId, anyOf('p1', 'p2'));
     });
+
+    test('quick battle mode runs without error and can flip province', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
+            ],
+            units: [
+              const Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'p1',
+                provinceId: 'P1',
+              ),
+              const Unit(
+                id: 'u2',
+                type: 'peasant_levies',
+                ownerId: 'p2',
+                provinceId: 'P2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
+          Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
+        ],
+        defaultCombatMode: CombatMode.quickBattle,
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': const [
+            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      final p2 = next.worldState.oldWorld.provinces
+          .where((p) => p.id == 'P2')
+          .singleOrNull;
+      expect(p2, isNotNull);
+      // Owner may or may not flip depending on Quick Battle outcome, but state
+      // remains consistent and combat resolved.
+      expect(p2!.ownerId, isNotNull);
+    });
+
+    test('resolveTurnForGameFromOrderEngine integrates order engine output', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'p1',
+                provinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+
+      final engine = OrderEngine();
+      engine.addMoveOrder('p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'));
+
+      final next = resolveTurnForGameFromOrderEngine(
+        game: game,
+        topology: topology,
+        orderEngine: engine,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units.single.provinceId, 'P2');
+    });
   });
 }

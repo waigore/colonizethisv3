@@ -6,7 +6,7 @@
 
 ## Purpose and Scope
 
-- **Purpose:** Deterministically simulate a complete game from an `init_game`-generated state, directly inside ctdev's **Init Game Map Debug Screen**. Used to verify that implemented systems (extraction, production, consumption, movement, combat, build/work) behave correctly over many turns under a simple, reproducible AI.
+- **Purpose:** Deterministically simulate a complete game from an `init_game`-generated state inside ctdev. After Start Game, ctdev navigates to the **Running Game Screen** (see [ctdev-app.md](ctdev-app.md)). Used to verify that implemented systems (extraction, production, consumption, movement, combat, build/work) behave correctly over many turns under a simple, reproducible AI.
 - **Scope:** Seven Great Powers (GPs) submit orders only; optional Minor Nations and Tribes may own provinces and defend. No Phase 4 diplomacy or AI. Combat triggers when a GP's MoveOrder targets an enemy province ([combat.md](../game/combat.md)); Combat phase runs after Movement per [turn-resolution-phases.md](turn-resolution-phases.md).
 - **Owner:** Program layer (ctdev + colonizethis_logic). sim_game is **not** a standalone CLI; it is a mode within ctdev that wraps colonizethis_logic (resolveTurnForGame including Combat phase), colonizethis_data (topology, combat config), and colonizethis_models (Game, WorldState, factions). See [repo-and-packages.md](repo-and-packages.md).
 
@@ -21,9 +21,10 @@
   - ctdev takes `InitGameResult.game` as the initial `Game` for simulation.
   - It also captures the `MapTopology` and any tile-map data needed by `resolveTurnForGame`.
   - A deterministic `baseSeed` is chosen (from the init seed or a UI field) for the default AI.
-- **Sim Game mode:** After Start Game, ctdev enters **Sim Game mode**:
-  - The same map view remains visible.
-  - A small Sim Game control bar appears, allowing the user to advance the game using the modes below.
+- **Running Game Screen:** After Start Game, ctdev navigates to the **Running Game Screen** (separate route):
+  - The Sim Game controller and `Game` live in that screen's state.
+  - A persistent control bar (Next Player, Resolve Turn, Next Turn, Fast-forward 10) allows the user to advance the game.
+  - Tabbed content (Map, Game Overview, per-player tabs) displays running world state.
   - sim_game keeps the `Game` in memory and may optionally save debug snapshots to disk.
 
 ---

@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
@@ -70,7 +71,11 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final provinceId = entry.key;
       final units = entry.value;
 
-      final factionsPresent = units.map((u) => u.ownerId).toSet();
+      // Only combat-capable units participate in conflict detection.
+      final combatUnits =
+          units.where((u) => canUnitInitiateCombat(u.type)).toList();
+
+      final factionsPresent = combatUnits.map((u) => u.ownerId).toSet();
       if (factionsPresent.length < 2) continue;
 
       final province = provinceById[provinceId];
@@ -99,12 +104,14 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       if (attackerFactionIds.isEmpty) continue;
 
-      final defenderUnits = units.where((u) => u.ownerId == defenderFactionId).toList();
+      final defenderUnits =
+          combatUnits.where((u) => u.ownerId == defenderFactionId).toList();
       if (defenderUnits.isEmpty) continue;
 
       final attackers = <AttackingSide>[];
       for (final fid in attackerFactionIds) {
-        final attackerUnits = units.where((u) => u.ownerId == fid).toList();
+        final attackerUnits =
+            combatUnits.where((u) => u.ownerId == fid).toList();
         if (attackerUnits.isEmpty) continue;
         attackers.add(AttackingSide(
           factionId: fid,

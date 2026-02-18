@@ -23,9 +23,20 @@
 
 ---
 
+## Work Types and Multi-Turn Builds
+
+- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** (one tile per completed order).
+- **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
+- **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the unit's tile (or province town tile) after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
+- **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile to railroad (transport level 4) over multiple turns, costing steel + lumber; only available after the relevant transport techs. See [tech-tree-transport.md](tech-tree-transport.md).
+
+Multi-turn progress for all civilian work is tracked in the model and resolved during the Build/Work phase; `Unit.status` reflects whether a civilian is idle, working, or done for the turn. See [orders.md](../program/orders.md) and [development-resolution.md](../program/development-resolution.md).
+
+---
+
 ## Relations
 
-- **Unit** (type = civilian) → has owner (player id), location (province id).
+- **Unit** (type = civilian) → has owner (player id), location (province id), and **tile-level position** (tileKey: `regionId|provinceId|x|y`). Civilians work on specific tiles; Explorers explore (province-level) and prospect (tile under unit). See [fog-and-exploration.md](fog-and-exploration.md).
 - Civilian units consume construction costs (paper, cash, lumber, metal) from player stockpile when built.
 - Civilian units do not eat food; they do not consume workers when built (unlike military/naval).
 

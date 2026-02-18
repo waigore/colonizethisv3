@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 /// Keeps tiles readable while fitting more of the map in a typical viewport.
 /// In ctdev, we default this to 1.0 so tiles are easy to inspect without zooming.
 const double kDebugMapScale = 0.25;
+
 
 class RegionMapPainter extends CustomPainter {
   RegionMapPainter({
@@ -16,6 +18,8 @@ class RegionMapPainter extends CustomPainter {
     this.showCapitals = true,
     this.showPorts = true,
     this.geographicMode = false,
+    this.showImprovements = false,
+    this.showUnits = false,
     this.selectedX,
     this.selectedY,
   });
@@ -26,6 +30,8 @@ class RegionMapPainter extends CustomPainter {
   final bool showCapitals;
   final bool showPorts;
   final bool geographicMode;
+  final bool showImprovements;
+  final bool showUnits;
   final int? selectedX;
   final int? selectedY;
 
@@ -43,10 +49,15 @@ class RegionMapPainter extends CustomPainter {
       final top = cell.y * cellSize;
       if (cell.isSea) {
         paint.color = _seaColor;
-      } else if (geographicMode && cell.terrainTypeId != null) {
-        // Geographic view: fill by terrainTypeId when available.
-        final terrainRgb =
-            region.terrainColors[cell.terrainTypeId] ?? (128, 128, 128);
+      } else if (geographicMode) {
+        // Geographic view: fill by terrain type (enum lookup).
+        final terrain = cell.terrainType ??
+            (cell.terrainTypeId != null
+                ? TerrainType.values.byName(cell.terrainTypeId!)
+                : null);
+        final terrainRgb = terrain != null
+            ? (region.terrainColors[terrain] ?? (128, 128, 128))
+            : (128, 128, 128);
         paint.color = Color.fromARGB(
           255,
           terrainRgb.$1,
@@ -69,6 +80,90 @@ class RegionMapPainter extends CustomPainter {
         Rect.fromLTWH(left, top, cellSize, cellSize),
         paint,
       );
+    }
+
+    // Resource glyphs (geographic view): g/t/i at cell centre.
+    if (geographicMode) {
+      for (final cell in region.cells) {
+        final letter = resourceIdToLegendLetter(cell.resourceId);
+        if (letter == null) continue;
+        final cx = cell.x * cellSize + cellSize / 2;
+        final cy = cell.y * cellSize + cellSize / 2;
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: letter,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: math.max(8, cellSize * 0.6),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        textPainter.paint(
+          canvas,
+          Offset(
+            cx - textPainter.width / 2,
+            cy - textPainter.height / 2,
+          ),
+        );
+      }
+    }
+
+    // Units overlay: army markers per province, colored by owner.
+    if (showUnits && region.unitMarkers.isNotEmpty) {
+      for (final m in region.unitMarkers) {
+        final cx = m.x * cellSize + cellSize / 2;
+        final cy = m.y * cellSize + cellSize / 2;
+        final colorTuple =
+            region.factionColors[m.ownerFactionId] ?? (128, 128, 128);
+        final fillPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = Color.fromARGB(
+            255,
+            colorTuple.$1,
+            colorTuple.$2,
+            colorTuple.$3,
+          );
+        final strokePaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Colors.black;
+        const radius = 5.0;
+        canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
+        canvas.drawCircle(Offset(cx, cy), radius, strokePaint);
+      }
+    }
+
+    // Improvements overlay: improvement level (0-4) and road level on land tiles.
+    if (showImprovements) {
+      for (final cell in region.cells) {
+        if (cell.isSea) continue;
+        final imp = cell.improvementLevel ?? 0;
+        final road = cell.roadLevel ?? 0;
+        final cx = cell.x * cellSize + cellSize / 2;
+        final cy = cell.y * cellSize + cellSize / 2;
+        final fontSize = math.max(8, cellSize * 0.5);
+        final text = 'i$imp r$road';
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: text,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: fontSize.toDouble(),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        textPainter.paint(
+          canvas,
+          Offset(
+            (cx - textPainter.width / 2).toDouble(),
+            (cy - textPainter.height / 2).toDouble(),
+          ),
+        );
+      }
     }
 
     // Borders between differing regionCellId neighbours.
@@ -180,6 +275,8 @@ class RegionMapPainter extends CustomPainter {
         oldDelegate.showCapitals != showCapitals ||
         oldDelegate.showPorts != showPorts ||
         oldDelegate.geographicMode != geographicMode ||
+        oldDelegate.showImprovements != showImprovements ||
+        oldDelegate.showUnits != showUnits ||
         oldDelegate.selectedX != selectedX ||
         oldDelegate.selectedY != selectedY;
   }
@@ -192,6 +289,8 @@ class CombinedMapPainter extends CustomPainter {
     this.showCapitals = true,
     this.showPorts = true,
     this.geographicMode = false,
+    this.showImprovements = false,
+    this.showUnits = false,
     this.selectedRegionId,
     this.selectedX,
     this.selectedY,
@@ -202,6 +301,8 @@ class CombinedMapPainter extends CustomPainter {
   final bool showCapitals;
   final bool showPorts;
   final bool geographicMode;
+  final bool showImprovements;
+  final bool showUnits;
   final String? selectedRegionId;
   final int? selectedX;
   final int? selectedY;
@@ -222,6 +323,8 @@ class CombinedMapPainter extends CustomPainter {
       showCapitals: showCapitals,
       showPorts: showPorts,
       geographicMode: geographicMode,
+      showImprovements: showImprovements,
+      showUnits: showUnits,
       selectedX:
           selectedRegionId == ow.regionId ? selectedX : null,
       selectedY:
@@ -241,6 +344,8 @@ class CombinedMapPainter extends CustomPainter {
       showCapitals: showCapitals,
       showPorts: showPorts,
       geographicMode: geographicMode,
+      showImprovements: showImprovements,
+      showUnits: showUnits,
       selectedX:
           selectedRegionId == nw.regionId ? selectedX : null,
       selectedY:
@@ -260,6 +365,8 @@ class CombinedMapPainter extends CustomPainter {
         oldDelegate.showCapitals != showCapitals ||
         oldDelegate.showPorts != showPorts ||
         oldDelegate.geographicMode != geographicMode ||
+        oldDelegate.showImprovements != showImprovements ||
+        oldDelegate.showUnits != showUnits ||
         oldDelegate.selectedRegionId != selectedRegionId ||
         oldDelegate.selectedX != selectedX ||
         oldDelegate.selectedY != selectedY;

@@ -78,6 +78,7 @@ InitGameResult runInitGame({
     numProvinces: config.numProvincesOldWorld,
     numContinents: config.continentCount,
     regionId: 'oldWorld',
+    resourceRules: ResourceRules.defaultRules,
   );
 
   final sizeNW = computeGridSizeFromParams(config.numProvincesNewWorld, mapGenParams);
@@ -92,6 +93,7 @@ InitGameResult runInitGame({
     numProvinces: config.numProvincesNewWorld,
     numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
     regionId: 'newWorld',
+    resourceRules: ResourceRules.defaultRules,
   );
 
   final setupResult = createGameFromGeneratedMaps(
@@ -101,6 +103,7 @@ InitGameResult runInitGame({
     tileMapNewWorld: tileMapNW,
     topologyNewWorld: topoNW,
     gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+    namingSeed: effectiveSeed,
   );
 
   final mapViewData = buildInitGameMapViewData(
@@ -110,7 +113,7 @@ InitGameResult runInitGame({
     cellSize: options.cellSize,
     seed: effectiveSeed,
     configSummary:
-        'GP:${config.greatPowerCount} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+        'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
 
   final mapPngBytes = options.renderPng
@@ -121,8 +124,15 @@ InitGameResult runInitGame({
 
   final markdown = formatInitGameSetupMarkdown(setupResult.game);
 
+  // Phase 4: set AI seeds for determinism
+  var game = setupResult.game;
+  game = game.copyWith(
+    globalGameSeed: effectiveSeed,
+    aiSeedByGpId: {for (final p in game.players) p.id: effectiveSeed + p.id.hashCode},
+  );
+
   return InitGameResult(
-    game: setupResult.game,
+    game: game,
     mapPngBytes: mapPngBytes,
     markdown: markdown,
     mapViewData: mapViewData,

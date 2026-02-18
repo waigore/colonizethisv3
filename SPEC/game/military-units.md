@@ -8,6 +8,10 @@
 
 Land military forces consist of **regiments** and **generals**. Regiments are organized into 8 categories across 4 eras. Each regiment has tactical stats (FPN, FPM, RNG, DEF, MVR) used for auto-resolve and Quick Battle. Tech unlocks determine which types a Great Power can build; older types are replaced within their category.
 
+**Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md) and [tech-tree-catalog.md](tech-tree-catalog.md)). There is **no era gate**: if the unlocking tech is in the player’s techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
+
+**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each Minor Nation and Tribe’s `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase (see [factions.md](factions.md)).
+
 ---
 
 ## Tactical Stats
@@ -82,3 +86,11 @@ Each general has **medals** (0–4), earned through successful battles (see [com
 - **Deployment:** +1 regiment per general medal to the battle deployment limit (base 10; Nationalism tech → 12).
 - **Morale aura:** Regiments in the general’s army receive a morale/strength bonus that scales with general medals (configurable percent per medal).
 - **Initiative:** Army initiative rating increases with general medals and cavalry share; higher‑medal generals tend to act earlier in multi‑attacker chains.
+
+---
+
+## Armies and Movement
+
+- **Army definition:** An army is a set of regiments in a province led by exactly one general. Units are always part of armies; armies are always headed by a general. Implementation: armies are inferred by grouping units in a province by owner and matching to a general in that province (`General.provinceId`; units in `RegionData.units` by `provinceId`).
+- **Location invariant:** Armies are always located in a province. A player's armies must always be located within provinces they own. When at peace, a player's units remain in their owned provinces.
+- **Movement into non-owned province:** Moving an army into a province the player does not own is an act of war. War declaration is triggered during turn resolution (Diplomacy phase) before Movement; the combat and province-flip logic then applies when units enter enemy-held territory. See [combat.md](combat.md) and [movement.md](../program/movement.md).

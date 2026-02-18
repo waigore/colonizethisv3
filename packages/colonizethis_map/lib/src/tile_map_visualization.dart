@@ -17,15 +17,6 @@ const (int, int, int) seaZoneBorderRgb = (173, 216, 230);
 /// Red for on-map region id labels (e.g. p1, s1). SPEC/program/map-data.md § Tile map PNG export.
 const (int, int, int) regionIdLabelRgb = (220, 0, 0);
 
-/// Fixed RGB per terrain type for map fill and legend.
-const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
-  TerrainType.plains: (200, 220, 160),
-  TerrainType.forest: (34, 100, 34),
-  TerrainType.hills: (160, 130, 90),
-  TerrainType.mountain: (120, 120, 120),
-  TerrainType.swamp: (70, 100, 90),
-};
-
 const int _titleLines = 2;
 
 Iterable<String> _regionIdsFromResult(TileMapResult result) sync* {
@@ -339,10 +330,40 @@ String _resourceLetter(Resource r) {
   switch (r) {
     case Resource.grain:
       return 'g';
+    case Resource.meat:
+      return 'm';
+    case Resource.wool:
+      return 'w';
+    case Resource.horses:
+      return 'h';
     case Resource.timber:
       return 't';
     case Resource.iron:
       return 'i';
+    case Resource.copper:
+      return 'c';
+    case Resource.tin:
+      return 'n';
+    case Resource.coal:
+      return 'k';
+    case Resource.sugarCane:
+      return 's';
+    case Resource.tobacco:
+      return 'b';
+    case Resource.cotton:
+      return 'u';
+    case Resource.furs:
+      return 'f';
+    case Resource.spices:
+      return 'p';
+    case Resource.silver:
+      return 'v';
+    case Resource.gold:
+      return 'a';
+    case Resource.gems:
+      return 'e';
+    case Resource.diamonds:
+      return 'd';
   }
 }
 
@@ -350,10 +371,40 @@ String _resourceLabel(Resource r) {
   switch (r) {
     case Resource.grain:
       return 'Grain';
+    case Resource.meat:
+      return 'Meat';
+    case Resource.wool:
+      return 'Wool';
+    case Resource.horses:
+      return 'Horses';
     case Resource.timber:
       return 'Timber';
     case Resource.iron:
       return 'Iron';
+    case Resource.copper:
+      return 'Copper';
+    case Resource.tin:
+      return 'Tin';
+    case Resource.coal:
+      return 'Coal';
+    case Resource.sugarCane:
+      return 'Sugar Cane';
+    case Resource.tobacco:
+      return 'Tobacco';
+    case Resource.cotton:
+      return 'Cotton';
+    case Resource.furs:
+      return 'Furs';
+    case Resource.spices:
+      return 'Spices';
+    case Resource.silver:
+      return 'Silver';
+    case Resource.gold:
+      return 'Gold';
+    case Resource.gems:
+      return 'Gems';
+    case Resource.diamonds:
+      return 'Diamonds';
   }
 }
 

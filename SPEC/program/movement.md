@@ -6,7 +6,9 @@
 
 ## Scope
 
-**Land movement only** in current implementation. No naval movement; no sea zones as destinations. Units move between **provinces** only.
+**Land movement:** Units move between **provinces** only (P<->P).
+
+**Naval movement (Phase 5+):** Fleets move between **sea zones** (S<->S or P<->S for ports). Destination = sea zone id. Ship reveal runs when fleet enters sea zone. See [naval-movement-resolution.md](naval-movement-resolution.md).
 
 ---
 
@@ -20,8 +22,8 @@
 
 Before applying a move order:
 
-- Destination must be a **province** (not sea zone) for land units.
-- Destination must be **adjacent** to the unit's current province (edge exists in topology).
+- **Land units:** Destination must be a **province** (not sea zone); must be **adjacent** (P<->P edge).
+- **Naval (Phase 5+):** Destination must be a **sea zone**; must be adjacent to current sea zone (S<->S or P<->S).
 - Optional: movement points, passable terrain, or blocking (e.g. enemy) — per design; can be stubbed.
 
 Invalid moves are rejected; unit location unchanged.

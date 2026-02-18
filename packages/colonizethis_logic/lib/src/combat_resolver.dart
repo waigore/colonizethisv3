@@ -161,10 +161,22 @@ Game resolveBattleContext(
   final recoveredUnits = unitsById.values
       .where((u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id))
       .toList();
-  final finalUnits = [
+  var finalUnits = [
     ...survivingUnits,
     ...recoveredUnits,
   ];
+
+  // If the province changed hands during this battle, remove civilian units
+  // in that province that do not belong to the new owner.
+  if (provinceOwnerId != ctx.defenderFactionId) {
+    final victorId = provinceOwnerId;
+    finalUnits = finalUnits.where((u) {
+      if (u.provinceId != ctx.provinceId) return true;
+      // Military units remain; civilians of non-victor factions are removed.
+      if (canUnitInitiateCombat(u.type)) return true;
+      return u.ownerId == victorId;
+    }).toList();
+  }
 
   final newRegion = RegionData(
     provinces: updatedProvinces,
@@ -468,4 +480,13 @@ double _moraleMultiplierForCoverage(double coverage) {
   if (coverage >= 1.0) return 1.0;
   if (coverage >= 0.5) return 0.75;
   return 0.5;
+}
+
+/// Aggregates military strength for a faction. SPEC/program/military-strength.md.
+/// Uses the same formula as auto-resolve: sum of (FPN+FPM)*medalMultiplier per unit.
+double aggregateMilitaryStrengthForPlayer(Game game, String playerId) {
+  final owUnits = game.worldState.oldWorld.units.where((u) => u.ownerId == playerId).toList();
+  final nwUnits = game.worldState.newWorld.units.where((u) => u.ownerId == playerId).toList();
+  final effectiveEra = _defenderEffectiveLevel(game, playerId);
+  return _aggregateStrength(owUnits, effectiveEra) + _aggregateStrength(nwUnits, effectiveEra);
 }

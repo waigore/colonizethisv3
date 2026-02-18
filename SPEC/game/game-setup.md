@@ -38,7 +38,7 @@ Each Great Power must receive at least **one sea-bound province** (has a P–S e
 
 ## Phase 4: Assignment — Minor Nations
 
-Assign **remaining Old World provinces** (after Great Power assignment) to Minor Nations using **contiguous clusters** per minor, again defined by P–P edges in topology. Total Old World province count and the **minimum provinces per Minor Nation** config value ensure that, for default rules, each minor receives approximately three provinces. Start from unassigned seed provinces and grow clusters by walking to unassigned neighbours until all provinces are assigned. Minor Nation count from config. Each minor receives a capital (from its cluster) at setup (any owned province; sea-bound not required); no player choice.
+Assign **remaining Old World provinces** (after Great Power assignment) to Minor Nations using **contiguous clusters** per minor, again defined by P–P edges in topology. Per-minor province counts are derived from an **even split** of the remaining OW total by Minor Nation count (within ±1), ensuring every minor receives at least one province. Seed each minor and grow clusters by BFS over unassigned neighbours; when growth stalls, start new seeds for minors still under target. Combined with the config defaults, this yields approximately three provinces per minor in the base ruleset. Each minor receives a capital at setup (any owned province; sea-bound not required); no player choice.
 
 ---
 

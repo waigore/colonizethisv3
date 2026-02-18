@@ -7,7 +7,7 @@
 ## Purpose and Scope
 
 - **Purpose:** Create a new game: generate Old World and New World maps, assign provinces and capitals to Great Powers, Minor Nations, and Tribes, build initial WorldState. Export a combined map PNG (with ownership and capitals) and concise faction setup markdown. Does not advance turns.
-- **Orchestration in libraries:** The tool is thin; all orchestration lives in packages. `runInitGame(config, options)` in colonizethis_logic performs: generate OW map, generate NW map, `createGameFromGeneratedMaps`, build an `InitGameMapViewData` view model for visualization, render a combined PNG via colonizethis_map, and format markdown. Returns `InitGameResult(game, mapPngBytes, markdown, mapViewData)`.
+- **Orchestration in libraries:** The tool is thin; all orchestration lives in packages. `runInitGame(config, options)` in colonizethis_logic performs: generate OW and NW maps **with terrain and resources** (by passing resource rules to the tile map generator), `createGameFromGeneratedMaps`, build an `InitGameMapViewData` view model for visualization, render a combined PNG via colonizethis_map, and format markdown. Returns `InitGameResult(game, mapPngBytes, markdown, mapViewData)`. The generated tile maps thus have full terrain and resource data for `InitGameMapViewData`, ctdev geographic view, PNG export, and extraction.
 - **Owner:** Program layer (Dart CLI under `tool/init_game`), implemented as thin facade over colonizethis_logic, colonizethis_map, colonizethis_data.
 
 ---
@@ -32,7 +32,11 @@
   - `--output-game <path>` (optional): path for saving the game (colonizethis_save format). If omitted and `--no-save` is not set, implementation may use a default path or skip save.
   - `--no-save`: do not save the game. Overrides `--output-game` if both are present.
   - `--seed <int>` (optional): RNG seed for map generation. Overrides config seed. When provided and **non-zero**, this value is used as the base RNG seed. When provided as **0**, or when omitted and the config seed is 0 or missing, orchestration derives an **effective seed** from the current time in milliseconds at run time.
-  - `--great-power-count N`, `--minor-nation-count N`, `--tribe-count N`, `--num-provinces-old-world N`, `--num-provinces-new-world N` (optional): overrides for GameSetupConfig.
+  - `--great-powers id1,id2,...` (optional): comma-separated Great Power semantic ids (e.g. `england,france,spain`). Overrides `selectedGreatPowerIds`. Valid ids from `allGreatPowerIds` (colonizethis_data).
+  - `--great-power-count N` (optional, backward compat): when `--great-powers` is not provided, uses the first N ids from the default order. Superseded by `--great-powers` when both are present.
+  - `--minor-nation-count N`, `--tribe-count N`, `--num-provinces-old-world N`, `--num-provinces-new-world N` (optional): overrides for GameSetupConfig.
+
+JSON config supports `selectedGreatPowerIds` (array of strings). If present, that array is used. If absent but `greatPowerCount` is present, the first N ids from the default order are used for backward compatibility.
 
 When wiring the CLI to orchestration, callers SHOULD set `InitGameOptions.renderPng` based on whether `--output-map` (or an equivalent sink) is provided so that PNG rendering work is skipped entirely when no PNG artifact is needed. Seed handling is centralized in `runInitGame`: the CLI passes the parsed `--seed` (or config seed) through to `GameSetupConfig.seed`, and `runInitGame` computes the effective seed (explicit non-zero seed → reproducible run; zero/absent seed → time-based run). The tool **does not guarantee reproducibility** for runs that use a time-based effective seed unless that seed is captured and surfaced separately by the caller.
 

@@ -78,16 +78,29 @@ AI may randomise between multiple acceptable actions using the provided seeds, b
 
 ### High-level heuristics (strategic)
 
-At the strategic (turn-wide) level, AIPlanner can follow a simple policy:
+At the strategic (turn-wide) level, AIPlanner does **not** construct raw orders directly. Instead it:
+
+- Builds a [PlayerView](player-view.md) for each AI-controlled Great Power `P`, encoding only what `P` can legally see under fog of war.
+- Asks the **order suggestion API** (see [order-engine.md](order-engine.md)) for:
+  - Candidate movement orders based on units and topology visible in `PlayerView`.
+  - Candidate work/build orders using visible provinces, prospected tiles, and economy.
+  - Candidate research orders using `P`'s known tech state and the public tech catalog.
+- Applies simple heuristics (per this section) plus seeded randomness to choose:
+  - Which order type to act on next (move vs work vs build vs research).
+  - Which candidate within that type to take.
+- Appends the chosen order to `P`'s current order list and repeats until it decides to stop (e.g. no more suggestions or a per-turn cap).
+
+Example heuristics:
 
 - Movement:
-  - For each AI unit, consider legal moves per `movement.md`.
-  - Prefer moves that bring units into contested or enemy territory with which the AI is at war.
-  - Avoid illegal moves against players at peace; skip or choose alternative non-aggressive moves.
-- Build/work (if implemented):
-  - Use simple rules similar to `sim-game-default-ai.md` (e.g. first valid build location, first idle worker).
+  - For each AI unit, prefer suggested moves that bring units into contested or enemy territory with which the AI is at war.
+  - Avoid suggested moves into provinces owned by factions at peace (these will typically not be offered when rules forbid them).
+- Build/work:
+  - Prefer cheaper suggested builds and work orders that improve owned, visible provinces.
+- Research:
+  - Prefer lower-era, cheaper technologies that unlock core capabilities.
 
-These behaviours remain basic by design; later phases can extend or override them.
+These behaviours remain basic by design; later phases can extend or override them while still going through PlayerView and the suggestion API.
 
 ## Order merge with human players
 
@@ -104,4 +117,24 @@ Once AIPlanner and human players have produced their orders:
   - All merged orders must be validated against `diplomacy.md` and world state; invalid orders are dropped or reported, but must not break determinism.
 
 The merged and validated order list is then passed to `TurnResolver` as in previous phases.
+
+---
+
+## Diagnostics in ctdev (Running Game)
+
+The **ctdev** dev application uses AIPlanner output as a diagnostic signal when running the **Running Game** sim screen:
+
+- When the user clicks **Next Turn** or **Fast-forward 10**, ctdev calls `generateOrdersForGame(game, topology)` to obtain per-turn `Orders` for AI-controlled Great Powers. For human Great Powers in sim mode, it may additionally call `defaultSimGameAi(...)` to generate placeholder orders.
+- Before passing the combined `Orders` to `TurnResolver`, ctdev may mirror these orders into an in-memory **AI order history** structure and ask `OrderEngine.validatePlayerOrdersWithContext(game, topology, playerId)` for per-order validation results.
+- This diagnostic history is rendered in the **Orders (AI history)** tab described in `ctdev-app.md`. It is **read-only** and does not change which orders are applied during turn resolution; it exists purely to help developers understand which orders AIPlanner attempted to issue, and why certain orders were rejected by validation.
+
+---
+
+## Phase 6 superseding behaviour
+
+The behaviour above is the **Phase 4 minimal** AIPlanner: baseline for tooling and tests, and sufficient for Phase 4 exit.
+
+**Phase 6** introduces the **full hybrid AI** (package **colonizethis_ai**): behavior trees, utility-based domain planners, personalities, hidden agendas, dialogue and mood events, dossier. For standard gameplay, the game uses the full AI to generate orders; the same control rules, seeding, PlayerView, and order merge apply. The Phase 4 implementation remains available so that **ctdev** can offer a toggle: run simulations with **simple AI** (Phase 4) or **full AI** (Phase 6). Both paths produce valid, deterministic orders.
+
+Authoritative behaviour for the full AI is defined in [SPEC/ai/](../ai/) and [ai-systems-impl.md](ai-systems-impl.md); this document remains the source for control rules, seeds, and merge semantics shared by both.
 

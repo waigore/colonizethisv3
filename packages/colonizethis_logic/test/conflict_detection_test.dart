@@ -154,5 +154,49 @@ void main() {
       expect(battles.firstWhere((b) => b.provinceId == 'P1').defenderFactionId, 'player2');
       expect(battles.firstWhere((b) => b.provinceId == 'P2').defenderFactionId, 'player1');
     });
+
+    test('civilians alone do not trigger battles', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'player2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'player1',
+                provinceId: 'P1',
+              ),
+              Unit(
+                id: 'u2',
+                type: 'Builder',
+                ownerId: 'player2',
+                provinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'player1', displayName: 'P1', isHuman: true),
+          Player(id: 'player2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'player1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: 'P1'),
+          ],
+        },
+      );
+
+      final battles = detectConflicts(game, orders);
+      expect(battles, isEmpty);
+    });
   });
 }

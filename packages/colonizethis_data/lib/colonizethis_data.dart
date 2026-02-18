@@ -3,6 +3,7 @@
 library colonizethis_data;
 
 export 'src/combat_config.dart';
+export 'src/quick_battle_config.dart';
 export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
 export 'src/naming_rules.dart';
@@ -18,3 +19,5 @@ export 'src/tile_map_result.dart';
 export 'src/topology_describe.dart';
 export 'src/topology_node.dart';
 export 'src/regiment_economy.dart';
+export 'src/starting_resources_config.dart';
+export 'src/unit_roles.dart';

@@ -37,11 +37,12 @@ Map<String, ExtractionTotals> computeExtraction({
     final landTotals = <CommodityId, int>{};
     final overseasTotals = <CommodityId, int>{};
 
+    final prospected = game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
+
     for (final tileKey in connected) {
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
       final regionId = parts[0];
-      final provinceId = parts[1];
       final x = int.tryParse(parts[2]) ?? -1;
       final y = int.tryParse(parts[3]) ?? -1;
       if (x < 0 || y < 0) continue;
@@ -53,6 +54,21 @@ Map<String, ExtractionTotals> computeExtraction({
       if (resource == null) continue;
 
       final commodityId = _resourceToCommodityId(resource);
+      final isMineral = commodityId == 'iron' ||
+          commodityId == 'copper' ||
+          commodityId == 'tin' ||
+          commodityId == 'coal' ||
+          commodityId == 'silver' ||
+          commodityId == 'gold' ||
+          commodityId == 'gems' ||
+          commodityId == 'diamonds';
+
+      // Gate mineral extraction by prospected tiles only when there is at
+      // least some prospection data; until prospected sets are populated,
+      // behaviour remains unchanged.
+      if (isMineral && prospected.isNotEmpty && !prospected.contains(tileKey)) {
+        continue;
+      }
       final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);
       final roadLevel = game.worldState.tileState.roadLevel(tileKey);
       final isPort = game.worldState.portsByProvinceSeaboard.values.contains(tileKey);
@@ -80,9 +96,39 @@ CommodityId _resourceToCommodityId(Resource resource) {
   switch (resource) {
     case Resource.grain:
       return 'grain';
+    case Resource.meat:
+      return 'meat';
+    case Resource.wool:
+      return 'wool';
+    case Resource.horses:
+      return 'horses';
     case Resource.timber:
       return 'timber';
     case Resource.iron:
       return 'iron';
+    case Resource.copper:
+      return 'copper';
+    case Resource.tin:
+      return 'tin';
+    case Resource.coal:
+      return 'coal';
+    case Resource.sugarCane:
+      return 'sugarCane';
+    case Resource.tobacco:
+      return 'tobacco';
+    case Resource.cotton:
+      return 'cotton';
+    case Resource.furs:
+      return 'furs';
+    case Resource.spices:
+      return 'spices';
+    case Resource.silver:
+      return 'silver';
+    case Resource.gold:
+      return 'gold';
+    case Resource.gems:
+      return 'gems';
+    case Resource.diamonds:
+      return 'diamonds';
   }
 }

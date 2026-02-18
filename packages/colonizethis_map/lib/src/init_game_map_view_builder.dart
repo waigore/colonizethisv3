@@ -61,14 +61,18 @@ RegionMapViewData _buildRegionViewData({
       if (n.type == TopologyNodeType.seaZone) n.id
   };
 
-  // Owner mapping differs per region.
+  // Owner and province display name by province id.
   final ownerByProvinceId = <String, String>{};
+  final provinceDisplayNameById = <String, String>{};
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;
   for (final p in provinces) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
       ownerByProvinceId[p.id] = p.ownerId!;
+    }
+    if (p.displayName != null && p.displayName!.isNotEmpty) {
+      provinceDisplayNameById[p.id] = p.displayName!;
     }
   }
 
@@ -91,19 +95,19 @@ RegionMapViewData _buildRegionViewData({
     tribeIds: tribeIds,
   );
 
-  // Terrain palette: map TerrainType to its display colour from rules.
+  // Terrain palette: same as base tile map PNG (shared terrainColorRgb).
   final terrainColors = <TerrainType, Rgb>{};
   if (tileMap.terrainGrid != null) {
     for (final row in tileMap.terrainGrid!) {
       for (final t in row) {
         if (t != null && !terrainColors.containsKey(t)) {
-          // Palette will be filled by renderers; we just track presence here.
-          terrainColors[t] = (0, 0, 0);
+          terrainColors[t] = terrainColorRgb[t]!;
         }
       }
     }
   }
 
+  final tileState = game.worldState.tileState;
   final cells = <CellViewData>[];
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
@@ -111,6 +115,10 @@ RegionMapViewData _buildRegionViewData({
       final isSea = seaZoneIds.contains(id);
       final terrain = tileMap.terrainAt(x, y);
       final resource = tileMap.resourceAt(x, y);
+      // Tile key for improvement/road lookup: regionId|provinceId|x|y (provinceId = regionCellId for land).
+      final tileKey = '$regionId|$id|$x|$y';
+      final improvement = isSea ? null : tileState.improvementLevel(tileKey);
+      final road = isSea ? null : tileState.roadLevel(tileKey);
       cells.add(
         CellViewData(
           x: x,
@@ -118,8 +126,12 @@ RegionMapViewData _buildRegionViewData({
           regionCellId: id,
           isSea: isSea,
           terrainTypeId: terrain?.name,
+          terrainType: terrain,
           resourceId: resource?.name,
           ownerFactionId: ownerByProvinceId[id],
+          provinceDisplayName: isSea ? null : provinceDisplayNameById[id],
+          improvementLevel: isSea ? null : improvement,
+          roadLevel: isSea ? null : road,
         ),
       );
     }
@@ -167,6 +179,33 @@ RegionMapViewData _buildRegionViewData({
     }
   }
 
+  // Province id → representative tile (x,y) for units overlay.
+  final provinceToTile = <String, (int x, int y)>{};
+  for (var y = 0; y < tileMap.height; y++) {
+    for (var x = 0; x < tileMap.width; x++) {
+      final id = tileMap.cell(x, y);
+      if (!seaZoneIds.contains(id) && !provinceToTile.containsKey(id)) {
+        provinceToTile[id] = (x, y);
+      }
+    }
+  }
+
+  // Unit markers: one per unit, placed at province representative tile.
+  final unitMarkers = <UnitMarkerView>[];
+  final regionUnits = isOldWorld
+      ? game.worldState.oldWorld.units
+      : game.worldState.newWorld.units;
+  for (final u in regionUnits) {
+    final tile = provinceToTile[u.provinceId];
+    if (tile != null) {
+      unitMarkers.add(UnitMarkerView(
+        x: tile.$1,
+        y: tile.$2,
+        ownerFactionId: u.ownerId,
+      ));
+    }
+  }
+
   // Port markers from world state.
   final ports = <PortMarkerView>[];
   final portsByProvinceSeaboard = game.worldState.portsByProvinceSeaboard;
@@ -206,6 +245,7 @@ RegionMapViewData _buildRegionViewData({
     portMarkers: ports,
     factionColors: factionColors,
     terrainColors: terrainColors,
+    unitMarkers: unitMarkers,
   );
 }
 
