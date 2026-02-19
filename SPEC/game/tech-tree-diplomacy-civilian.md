@@ -1,6 +1,6 @@
 # Tech Tree — Diplomacy and Civilian
 
-**SPEC/game** — Diplomatic options and civilian unit unlocks. Reference: Imperialism II 08-technology (Diplomacy and Civilian). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md). Diplomacy: [diplomacy.md](diplomacy.md). Civilian units: [civilian-units.md](civilian-units.md).
+**SPEC/game** — Diplomatic options and civilian unit unlocks. Reference: Imperialism II 08-technology (Diplomacy and Civilian). Overview: [tech-tree.md](tech-tree.md). Diplomacy: [diplomacy.md](diplomacy.md). Civilian units: [civilian-units.md](civilian-units.md).
 
 ---
 

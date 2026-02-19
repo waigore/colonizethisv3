@@ -33,7 +33,7 @@ All design deliverables must accord with **GDD 01** (victory), **GDD 08** (techn
 |------|-------------|-------------|
 | **Victory condition** | Military: 31+ OW provinces; victory check; victory screen. | [victory.md](../game/victory.md) or extend [world-model.md](../game/world-model.md). |
 | **Tech tree overview and rules** | Eras, categories, prerequisites, effect types, research model (slots, funding, cancel). | [tech-tree.md](../game/tech-tree.md). |
-| **Tech tree catalog** | Full catalog: id, name, era, category, prerequisites, effects (from Imperialism II). | [tech-tree-catalog.md](../game/tech-tree-catalog.md) and category sub-docs. |
+| **Tech tree catalog** | Full catalog: id, name, era, category, prerequisites, effects (from Imperialism II). | [tech-tree.md](../game/tech-tree.md) and category sub-docs. |
 | **Extraction and transport rules** | Tech-derived extraction cap; roads/railroads/ports by player action; transport level 4. | Extend [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md), [extraction-and-improvements.md](../game/extraction-and-improvements.md). |
 | **Regiment and unit unlocks** | Regiment/civilian/diplomatic unlocks from tech catalog; no era gate for buildability. | Extend [military-units.md](../game/military-units.md), [civilian-units.md](../game/civilian-units.md), [diplomacy.md](../game/diplomacy.md). |
 | **Research phase (technical)** | Phase placement, steps, treasury, progress, completion, prerequisite rule. | [research-resolution.md](../program/research-resolution.md), [turn-resolution-phases.md](../program/turn-resolution-phases.md). |
@@ -59,7 +59,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 |---|------|-------------|
 | 1 | **Victory check (colonizethis_logic)** | At end of turn (or after Combat), check: does any GP control 31+ OW provinces? If yes, set victory state (winner, victory type). |
 | 2 | **Victory screen (app)** | UI: victory screen showing winner, victory type; option to return to main menu or view final state. |
-| 3 | **Tech catalog (colonizethis_data)** | Full tech list: era, category, prerequisites, costs, effects (extraction, transport, regiment ids, civilian, diplomatic, labour). Program-level config per [tech-tree-catalog.md](../game/tech-tree-catalog.md) and category sub-docs. |
+| 3 | **Tech catalog (colonizethis_data)** | Full tech list: era, category, prerequisites, costs, effects (extraction, transport, regiment ids, civilian, diplomatic, labour). Program-level config per [tech-tree.md](../game/tech-tree.md) and category sub-docs. |
 | 4 | **Research phase (colonizethis_logic)** | Implement research resolution per [research-resolution.md](../program/research-resolution.md) and [turn-resolution-phases.md](../program/turn-resolution-phases.md) (after Consumption). |
 | 5 | **Extraction cap from tech** | Derive per-player extraction cap from techUnlocked and catalog; wire into computeExtraction in extraction phase. |
 | 6 | **Build validation** | Regiment buildable only if unlocking tech in techUnlocked; military level derived from techUnlocked for minor parity. |
@@ -124,7 +124,7 @@ Before marking Phase 5 complete, verify:
 | Check | Criteria |
 |-------|----------|
 | **Package boundaries** | Victory and research logic in colonizethis_logic; tech config in colonizethis_data; leader model in colonizethis_models; show_tech in tool/; UI in app. |
-| **Spec alignment** | All Phase 5 behaviour traceable to victory.md, tech-tree.md, tech-tree-catalog.md, research-resolution.md, leader-bonuses.md, show-tech-tool.md, fog-and-exploration.md, fog-and-exploration-resolution.md, ships-and-naval.md, naval-movement-resolution.md; no behaviour without authorizing spec. |
+| **Spec alignment** | All Phase 5 behaviour traceable to victory.md, tech-tree.md, research-resolution.md, leader-bonuses.md, show-tech-tool.md, fog-and-exploration.md, fog-and-exploration-resolution.md, ships-and-naval.md, naval-movement-resolution.md; no behaviour without authorizing spec. |
 | **Phase 5 scope** | Military victory only; full tech tree; research phase and orders; leader bonuses; show_tech tool; fog of war and exploration; ships and naval movement; no alternative victory types. |
 | **State and lifecycle** | State subscriptions and cleanup follow lifecycle conventions; no leaks. |
 
@@ -168,7 +168,7 @@ Phase 5 is done when all design and dev tasks are implemented, all test tasks pa
 - **Imperialism II 08-technology** — Full tech chart (Obsidian).
 - [mvp-scope.md](mvp-scope.md) — Phase 5 scope.
 - [phase-4-project-tasks.md](phase-4-project-tasks.md) — Previous phase; Quick Battle, diplomacy, AI.
-- [tech-tree.md](../game/tech-tree.md), [tech-tree-catalog.md](../game/tech-tree-catalog.md) — Tech tree and catalog.
+- [tech-tree.md](../game/tech-tree.md) — Tech tree and catalog.
 - [research-resolution.md](../program/research-resolution.md), [show-tech-tool.md](../program/show-tech-tool.md) — Research phase and show_tech tool.
 - [combat.md](../game/combat.md), [combat-resolution.md](../program/combat-resolution.md) — Combat and leader bonus application.
 - [military-units.md](../game/military-units.md) — Regiment types and tech unlocks.
@@ -183,8 +183,7 @@ Phase 5 is done when all design and dev tasks are implemented, all test tasks pa
 | Spec | Action |
 |------|--------|
 | **SPEC/game/victory.md** | New: military victory (31+ OW provinces); victory check; victory screen. |
-| **SPEC/game/tech-tree.md** | New: overview (eras, categories, prerequisites, effects, research model). |
-| **SPEC/game/tech-tree-catalog.md** | New: catalog index; category sub-docs (gathering, transport, labour-economy, diplomacy-civilian, naval, military, new-world). |
+| **SPEC/game/tech-tree.md** | New: overview (eras, categories, prerequisites, effects, research model); catalog and category sub-docs (gathering, transport, labour-economy, diplomacy-civilian, naval, military, new-world). |
 | **SPEC/game/tech-and-extraction-cap.md** | Extend: extraction cap derived from catalog; fallback constant. |
 | **SPEC/game/extraction-and-improvements.md** | Extend: roads/railroads/ports by player action; tech allows building level. |
 | **SPEC/game/military-units.md** | Extend: buildability by unlocking tech; minor parity from buildable set. |

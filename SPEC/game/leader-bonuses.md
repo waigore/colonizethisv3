@@ -1,6 +1,6 @@
 # Leader Bonuses
 
-**SPEC/game** — Per–Great Power leader selection and combat bonuses. Reference: GDD 09. Implementation: colonizethis_models (Player.leaderKey), game_setup (assignment), combat_resolver and quick_battle_resolver (application).
+**SPEC/game** — Per–Great Power leader selection and combat bonuses. Reference: GDD 09.
 
 ---
 
@@ -33,7 +33,7 @@ Leaders are identified by **leaderKey** (string). Each key maps to a **combat mo
 | `frederick` | +15% melee strength |
 | `reserve` / default | No bonus (0%) |
 
-Implementation may use a table in colonizethis_data or colonizethis_logic keyed by leaderKey. Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.25 for +25% melee) before the combat formula. If a leaderKey is unknown, treat as no bonus.
+Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.25 for +25% melee) before the combat formula. If a leaderKey is unknown, treat as no bonus.
 
 ---
 

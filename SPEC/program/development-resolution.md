@@ -18,7 +18,7 @@
 
 - WorkOrder applies to **civilian units only** and carries **targetTileKey**. Military and naval units do not have tileKey or work orders of this kind.
 - When a `WorkOrder` is accepted for a civilian:
-  - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for road level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
+  - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for transport level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
   - Look up:
     - `totalTurns` for this action from ruleset config (higher levels → more turns; fort and rail slower than level-1 road/improvement).
     - Material **costs** per action.
@@ -38,7 +38,7 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
 2. When `remainingTurns` reaches 0, apply the action's effect:
    - `build_improvement`: increase improvement level for `tileKey` by 1, clamped by terrain and tech caps.
    - `upgrade_town`: set/update town development level and derived material outputs.
-   - `build_road`: set or upgrade road level for `tileKey` (0→1→2) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
+   - `build_road`: set or upgrade transport level for `tileKey` (0→1→2) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
    - `build_port`: create/update a `(provinceId, seaZoneId) → tileKey` mapping in `portsByProvinceSeaboard` and ensure the port tile has transport level 4.
    - `build_fort`: increase the province's `fortLevel` by 1 (up to max).
    - `build_rail`: upgrade an existing road tile at `tileKey` to railroad (transport level 4).

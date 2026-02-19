@@ -31,18 +31,24 @@ Lane terrain is used as a modifier on top of existing tactical stats (FPN, FPM, 
 
 ## Cohesion (morale) model
 
-Each battalion group (lane + line) has a **cohesion** value on a small integer scale (e.g. 0–3):
+Each battalion group (lane + line) has a **cohesion** value on a 0–3 integer scale:
 
-- Starts at maximum for all groups.
-- Cohesion declines when:
-  - The group suffers significant casualties in a round.
-  - The group maneuvers through bad ground (e.g. into or out of `SWAMP`) under pressure.
-  - A neighboring lane collapses (e.g. friendly flank breaks).
-- Effects of low cohesion:
-  - Reduces effective combat power for that group (applied as modifiers in Quick Battle resolution).
-  - At **0 cohesion**, the group is **broken**: it no longer contributes offensive strength, and is treated as routed or pulled to `RESERVE` for casualty application.
+| Cohesion | State | Effect |
+|---|---|---|
+| 3 | Fresh | Full combat power |
+| 2 | Engaged | 75% combat power |
+| 1 | Shaken | 50% combat power |
+| 0 | Broken | No offensive strength; routed to RESERVE |
 
-In addition, each side has a coarse **battle morale index** derived from the sum of group cohesion and key lane status (especially `CENTER`). This is used to distinguish decisive wins from mutual exhaustion.
+- Starts at 3 for all groups.
+- Cohesion declines when the group suffers significant casualties, maneuvers through bad ground under pressure, or a neighboring lane collapses.
+- At **0 cohesion** (per Imp2: "green bar empty"), the group is **broken**: it surrenders if surrounded, otherwise flees.
+
+**Battle morale index:** Sum of group cohesion across all lanes. Used to distinguish decisive wins from mutual exhaustion.
+
+**Effective combat power per group:** `basePower * (cohesion / 3)`, where `basePower = Σ (FPN_eff + FPM_eff) * medalMult` for regiments in that group, adjusted by terrain modifier for the lane.
+
+> **REQUIRES CLARIFICATION:** Exact terrain modifier values per lane type (OPEN, HILL, WOODS, TOWN, SWAMP) for attack and defense. Imp2 confirms light infantry take reduced damage in terrain but gives no numeric modifiers.
 
 ## Turn structure and actions
 
@@ -65,7 +71,13 @@ Players use CP to choose when to defend, when to trade space, when to concentrat
 
 ## Outcome and integration
 
-After up to 3 rounds (or earlier if one side clearly collapses), the Quick Battle produces:
+**Collapse conditions** (battle ends early):
+
+- **Attacker collapse:** CENTER broken AND at least one flank broken, OR total battle morale index ≤ 2.
+- **Defender collapse:** CENTER broken AND at least one flank broken, OR total battle morale index ≤ 2.
+- **Mutual exhaustion:** Both sides' battle morale index ≤ 4 at end of a round.
+
+After up to 3 rounds (or earlier if one side collapses), the Quick Battle produces:
 
 - Casualties per side (by unit type or equivalent granularity).
 - Updated status of key lanes and side morale (e.g. broken center vs intact battle line).

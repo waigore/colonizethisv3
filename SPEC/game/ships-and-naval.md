@@ -51,27 +51,26 @@ Ships built appear in home fleet (capital port). Only home fleet used for transp
 Naval battles are **strategic resolutions** between opposing fleets in the same sea zone:
 
 - Inputs: fleets (owner, ships with stats and medals, mission, aggression), sea zone id, tech state.
-- Outcomes per engagement: attacker victory, defender victory, stalemate (both retain ships), or mutual destruction. Surviving fleets may remain, retreat, or be forced to withdraw per aggression/retreat rules.
-- Ship stats (FRP, RNG, ARM, HULL, MV) are aggregated into naval strength and durability; later-era ships and techs provide higher values.
+- Outcomes per engagement: attacker victory, defender victory, stalemate (both retain ships), or mutual destruction.
+- Per Imp2: "superior range is usually the most important statistic" — RNG should be weighted highest in strength aggregation.
 
-Retreat is allowed only if there is at least one **adjacent friendly or neutral sea zone**. A fleet’s commander may attempt retreat when outmatched; success probability depends on relative fleet speed/composition and aggression level (cautious fleets favour retreat, aggressive fleets favour fighting on). Failed retreat causes additional losses (e.g. extra damage or sinking of a vulnerable ship).
+Retreat is allowed only if there is at least one **adjacent friendly or neutral sea zone**. Success depends on relative fleet speed/composition and aggression level. Failed retreat causes additional losses.
 
 Interception and battle contexts are created when:
 
 - A patrolling or blockading fleet successfully intercepts a hostile fleet moving through its zone or entering/leaving a blockaded port.
 - Enemy fleets end Movement in the same sea zone (including at a beachhead or port).
-See [naval-combat-resolution.md](../program/naval-combat-resolution.md) for the technical model and formulas.
+
+> **REQUIRES CLARIFICATION:** (a) Naval strength aggregation formula: how FRP, RNG, ARM, HULL, MV combine into side strength/durability. (b) Retreat probability formula. (c) Naval interception probability: baseline for patrol vs blockade, how escort strength reduces losses. Imp2 confirms factors (range most important, escorts help, blockade > patrol) but provides no numeric formulas.
 
 ---
 
 ## Trade and Transport Interception
 
-Only **home fleet** ships (in the capital port sea zone) carry a faction’s transport and trade cargo. During Extraction/Trade, hostile naval forces can **raid** overseas deliveries:
+Only **home fleet** ships (in the capital port sea zone) carry a faction's transport and trade cargo. During Extraction/Trade, hostile naval forces can **raid** overseas deliveries:
 
 - Interception of trade/transport only occurs when the intercepting faction is **at war** with the owner of the home fleet.
-- Patrolling or blockading fleets in relevant sea zones can intercept:
-  - **Cargo** (reducing delivered quantities to stockpile/treasury).
-  - **Civilian ships** (Carrack, Fluyte, etc.), with higher vulnerability than escorted warships.
+- Patrolling or blockading fleets in relevant sea zones can intercept **cargo** (reducing delivered quantities) and **civilian ships** (higher vulnerability than warships).
 - Escorts: warships accompanying the home fleet reduce both cargo and ship loss probabilities.
 
-Mechanically, trade/transport interception uses the same relative-naval-strength and mission factors as fleet-vs-fleet interception, with **higher baseline probabilities vs civilian targets**. Exact formulas and config live in [naval-movement-resolution.md](../program/naval-movement-resolution.md) and [auto-transport.md](../program/auto-transport.md).
+> **REQUIRES CLARIFICATION:** Exact interception probability formulas for trade/transport raids. Imp2 confirms escort and patrol/blockade factors but gives no numbers.

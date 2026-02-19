@@ -29,4 +29,4 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 
 ## Where Stored
 
-**Production recipes** live in **colonizethis_data** as program-level constants (list or map of recipe definitions). colonizethis_logic reads them at resolve time. Program-level config only; no JSON rulesets in MVP.
+**Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets in MVP.

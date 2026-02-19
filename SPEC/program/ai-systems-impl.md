@@ -1,38 +1,32 @@
 # AI Systems — Implementation (Phase 6)
 
-**SPEC/program** — Module boundaries and APIs for full AI. Design: [SPEC/ai/ai-architecture.md](../ai/ai-architecture.md), [ai-planner.md](ai-planner.md).
+## Responsibility
+Module boundaries and APIs for the full AI system. AI behavior: [SPEC/ai/](../ai/). Control and seeding: [ai-planner.md](ai-planner.md).
 
----
+## Data Model
 
-## Location
-
-AI implementation lives in package **colonizethis_ai**. Consumed by app (single-player) and, later, server (multiplayer AI). colonizethis_logic provides PlayerView, order suggestion API, and turn resolution; it **calls** colonizethis_ai to generate orders for AI-controlled Great Powers.
-
----
-
-## Module boundaries
+### Module Boundaries
 
 | Package | Owns |
 |---------|------|
-| **colonizethis_ai** | Perception (PlayerView → AIWorldSnapshot), behavior-tree goal selection, domain planners (economy, military, diplomacy, research), tactical (Quick Battle) planner, hidden agenda assignment and modifiers, evidence accumulation, dialogue/mood event emission, dossier projection. |
-| **colonizethis_logic** | Game state, TurnResolver, OrderEngine, order suggestion API, `buildPlayerView()`. Invokes colonizethis_ai to get orders per AI player. |
+| **colonizethis_ai** | Perception (PlayerView → snapshot), behavior-tree goal selection, domain planners, tactical planner, hidden agenda assignment/modifiers, evidence accumulation, dialogue/mood emission, dossier projection. |
+| **colonizethis_logic** | Game state, TurnResolver, OrderEngine, order suggestion API, PlayerView construction. Invokes AI for order generation. |
 | **colonizethis_models** | Game, Orders, unit/combat/diplomacy types. |
 | **colonizethis_data** | Personality config, dialogue keys/catalog; no AI logic. |
 
-AI must only read world state via **PlayerView** and shared config. It must not depend on Flutter or platform APIs.
+AI reads world state only via PlayerView and shared config. No Flutter or platform dependencies.
 
----
+## Algorithm / Flow
 
-## Strategic order generation
+### Strategic Order Generation
 
 ```dart
-// colonizethis_ai
 Orders generateStrategicOrders({
   required Game game,
   required MapTopology topology,
   required String nationId,
   required PlayerView view,
-  required AIConfig config,   // personality, hidden agenda, difficulty params from game)
+  required AIConfig config,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
   void Function(DialogueEvent)? onDialogue,
@@ -40,16 +34,11 @@ Orders generateStrategicOrders({
 });
 ```
 
-- **Inputs:** game/topology for validation context; `view` is the only source of visibility; `config` holds leader personality id, assigned hidden agenda, and difficulty-derived modifiers; `seeds` are derived from `turnSeed[P, T]` per [ai-planner.md](ai-planner.md).
-- **Output:** Valid `Orders` for that nation for the current turn. Orders must pass OrderEngine validation when merged.
-- **Side effects:** Optional callbacks for dialogue and portrait mood events (deterministic given seeds).
+`view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. Callbacks for deterministic dialogue/mood events.
 
----
-
-## Tactical (Quick Battle) decisions
+### Tactical (Quick Battle)
 
 ```dart
-// colonizethis_ai
 QuickBattleDecisions decideQuickBattleActions({
   required QuickBattleState state,
   required String nationId,
@@ -58,32 +47,18 @@ QuickBattleDecisions decideQuickBattleActions({
 });
 ```
 
-Returns CP-based actions per lane for the AI side. Deterministic given state and seed.
+Returns CP-based actions per lane. Deterministic given state and seed.
 
----
+### Order Suggestion API Usage
+AI calls the suggestion API with PlayerView and current orders, scores candidates via utility AI (personality + agenda weights), selects a subset, and repeats. When naval is in scope, API also exposes naval candidates. AI does not construct raw orders; all go through the suggestion API for validation.
 
-## Order suggestion API usage
+## Integration
 
-colonizethis_logic exposes an **order suggestion API** (see [order-engine.md](order-engine.md)): given PlayerView, current orders, and game/topology, it returns candidate move/build/work/research orders that would validate. When naval is in scope, the API also exposes **naval candidates** (fleet move to adjacent sea zone, mission assignment: patrol/blockade/beachhead/defend) using PlayerView’s naval state (fleet locations, sea zones, ports). colonizethis_ai:
+- **Phase:** Called during turn resolution for each AI GP.
+- **Upstream:** PlayerView, order suggestion API, personality/agenda config.
+- **Downstream:** Orders → order merge → TurnResolver. Events → UI. Evidence → game state.
 
-- Calls this API with the AI’s PlayerView and current AI orders.
-- Scores candidates with utility AI (personality + hidden agenda weights).
-- Selects a subset (e.g. by cap or budget), appends to orders, and may call again until done or cap reached.
-
-AI does **not** construct raw orders in isolation; it goes through the suggestion API so that all orders are valid by construction after validation. Naval orders produced this way are used in both the main app and ctdev sim, so naval features are usable by the sim game AI when Phase 6 full AI and naval are implemented.
-
----
-
-## Dossier and evidence
-
-- **Evidence accumulation:** When the game (or AI) performs actions that match hidden-agenda evidence rules (e.g. declared war on weaker neighbor), colonizethis_ai or a hook in logic records evidence entries into game state (per [SPEC/ai/hidden-agendas.md](../ai/hidden-agendas.md)).
-- **Dossier projection:** colonizethis_ai (or a dedicated reader) exposes a **PlayerView-safe** dossier projection: suspicion levels per agenda, recent evidence list, visible intel (relation, strength). True hidden agenda value is never exposed. See [ai-events-and-dossier.md](ai-events-and-dossier.md).
-
----
-
-## Dialogue and mood events
-
-- **DialogueEvent:** Emitted when AI takes diplomatic actions, reacts to events, or triggers agenda-flavoured lines. Contains leaderId, category, situation, era, mood, variables. UI resolves to text via dialogue data.
-- **PortraitMoodEvent:** Emitted when negotiation mood changes (considering, pleased, gracious, skeptical, irritated, dismissive, etc.). UI uses this to choose portrait/animation; assets are deferred to UI phases.
-
-Both event types must be deterministic for the same game state and seeds.
+## Constraints
+- AI reads only via PlayerView; no hidden data access.
+- All decisions deterministic given seeds.
+- No Flutter or platform dependencies.

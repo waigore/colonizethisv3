@@ -1,6 +1,6 @@
 # Victory
 
-**SPEC/game** — Victory conditions and resolution. Reference: GDD 01. Phase 5: military victory only. Implementation: colonizethis_logic (end-of-turn check), colonizethis_models (VictoryState), app (victory screen).
+**SPEC/game** — Victory conditions and resolution. Reference: GDD 01. Phase 5: military victory only.
 
 ---
 

@@ -1,6 +1,6 @@
 # Tech Tree — Labour and Economy
 
-**SPEC/game** — Worker tiers, banking, trade, and University. Reference: Imperialism II 08-technology (Labour and Economy). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md).
+**SPEC/game** — Worker tiers, banking, trade, and University. Reference: Imperialism II 08-technology (Labour and Economy). Overview: [tech-tree.md](tech-tree.md).
 
 ---
 
@@ -22,4 +22,4 @@
 ## Notes
 
 - Cigar Production and Hat Production are listed under New World (discovery/luxury); Trained Journeymen and Master Artisans depend on them.
-- Labour effects drive production/consumption and worker pool tiers; implementation in colonizethis_logic and economy specs.
+- Labour effects drive production/consumption and worker pool tiers; see economy specs.

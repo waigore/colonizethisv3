@@ -1,35 +1,44 @@
 # Game Setup Pipeline
 
-**SPEC/program** — Technical orchestration of game creation. Game design: [game-setup.md](../game/game-setup.md). Map generation: [tile-map-generation.md](tile-map-generation.md). Map data: [map-data.md](map-data.md).
+## Responsibility
 
----
+Orchestrates game creation from config through map generation, province/capital assignment, and initial state construction. Implements the setup phases defined in [game-setup.md](../game/game-setup.md).
 
-## Flow
+## Data Model
 
-1. **Load config** — Selected Great Power ids (`selectedGreatPowerIds`, default: first 6 from GDD 09), continent count, Minor Nation count (default 6), Tribe count, minimum provinces per Minor Nation (default 3), and target Old/New World province counts from ruleset base or scenario (colonizethis_data or equivalent). Defaults: Old World ≈60 provinces to support Great Powers and Minor Nations; New World ≈80 provinces so Tribes and later colonial play have a deeper frontier. Map generation uses a **configured seed** from `GameSetupConfig.seed`; orchestration computes an **effective seed** as follows: if `seed != 0`, use it directly; if `seed == 0` (or absent from external config), derive the effective seed from `DateTime.now().millisecondsSinceEpoch` at run time.
-2. **Generate Old World map** — Call colonizethis_map (or generate_map) with province count, continent count, region id `oldWorld`, map params constructed from the **effective seed** (e.g. `seed = effectiveSeed`), and **resource rules** (e.g. default rules from colonizethis_data) so that the tile map includes terrain type and optional resource per land cell, as required for visualization and extraction. Obtain tile map and inferred topology for OW.
-3. **Generate New World map** — Same for region id `newWorld`, typically using a **deterministic offset** from the effective seed (e.g. `seed = effectiveSeed + 1`) and the same **resource rules**, so that OW and NW are stable relative to the same base seed and both have full terrain and resource data.
-4. **Province and capital assignment — Great Powers** — From OW topology (and optionally NW if GPs get NW provinces at start), build a **province adjacency graph** from P–P edges and derive **landmass components** (connected components of that graph). First reserve `minorCount * minProvincesPerMinor` Old World provinces for Minor Nations at the aggregate level; partition the remaining OW provinces among GPs as **contiguous land clusters** with a fair split: select one **sea-bound seed province** per GP (spreading seeds across distinct landmasses where possible), then run a **multi-source BFS** over province neighbours to grow each GP’s cluster toward its per-GP target (derived from the non-reserved OW share), always preferring unassigned neighbours on the same landmass. Only start new seeds on other landmasses when no unassigned neighbours remain for that GP, and ensure each GP ends with at least one sea-bound province to serve as its capital province.
-5. **Assignment — Minor Nations** — Assign remaining OW provinces (after Great Power assignment) to N minors as **contiguous clusters** per minor using the same P–P adjacency graph. Derive per-minor province targets from an **even split** of the remaining OW total by Minor Nation count (within ±1). Seed each minor with one province and grow clusters by BFS so each minor approaches its target; when growth stalls, start new seeds for minors still under target. This ensures every minor receives at least one province. Assign capital per minor from setup (any owned province; sea-bound not required).
-6. **Assignment — Tribes** — Assign NW provinces to M tribes as **contiguous clusters** per tribe using the NW topology P–P adjacency graph. Derive per-tribe province targets from an even split of the New World province total by Tribe count (within ±1), then seed and grow clusters by BFS so each tribe approaches its target while maintaining contiguity; assign capital per tribe from setup (any owned province; sea-bound not required).
-7. **Build state** — Construct **WorldState**: RegionData for OW and NW with Province list (id, regionId, ownerId = faction id). Optionally initial Unit list. Construct **Game**: id, WorldState, list of Players (GPs), list of Minor Nations, list of Tribes. Each faction has placeholder capital (null or stub).
-   - **7a. GP colour mapping (semantic → runtime ids)** — Great Power colour defaults and any setup-time overrides are expressed in terms of **semantic GP ids** (e.g. `england`, `france`) in ruleset data and tools such as ctdev. During setup, orchestration maps the ordered `selectedGreatPowerIds` list onto the ordered `Game.players` list (runtime ids such as `gp1`, `gp2`, …) and builds a deterministic mapping from semantic id → `Player.id`. Any GP colour override map provided by the caller (semantic id → RGB) is re-keyed through this mapping so that the effective colour override stored on the `Game` and passed to map builders is keyed by **runtime `Player.id`**. Map visualizers and the running game therefore always consume GP colours by `Player.id`, while the GDD and ruleset remain keyed by semantic id.
-   - **7b. Capital auto-choice** — For each faction (GP then minor then tribe), run the **capital auto-choice** algorithm (see [capital-choice-phase.md](../game/capital-choice-phase.md)#auto-choice-game-setup). Inputs: faction’s owned provinces and region from assignment; topology and tile map per region from steps 2–3; current Game. When choosing a tile, apply the **border-avoidance heuristic** from the capital-choice spec (prefer coastal tiles not adjacent to other provinces, then interior tiles not adjacent to other provinces, then any tile). Apply result using the same port/road auto-build as setCapital and set the faction’s capital. Depends on: WorldState with Province.ownerId set; topologyByRegion and tileMapByRegion from steps 2–3; Game with players (and minors/tribes when implemented).
-   - **7c. Province naming** — Apply province and capital naming from the active ruleset (see [naming.md](../game/naming.md)). Naming at setup applies to **all** provinces owned by each faction at that time (all GP and minor OW provinces, all tribe NW provinces), with no landmass filter. Provinces acquired later retain their existing display name.
-8. **Persist or pass** — Tile maps and topology are static per map; store with game or in colonizethis_data for load. Save Game via colonizethis_save or hand off to app.
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)).
+- **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`.
+- **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
+- **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData.
 
-**init_game tool:** Runs steps 1–7 via `runInitGame` in colonizethis_logic; exports visualization artifacts — `InitGameMapViewData` (for interactive debug views), faction setup markdown, and optionally a combined map PNG (with ownership and capitals) when `InitGameOptions.renderPng` is true; optionally saves game. See [init-game-tool.md](init-game-tool.md).
+## Algorithm / Flow
 
----
+Steps implement the phases from [game-setup.md](../game/game-setup.md):
 
-## Ownership
+1. **Load config** — Parse GameSetupConfig; compute effective seed.
+2. **Generate OW map** — Call colonizethis_map with province count, continent count, region id `oldWorld`, effective seed, and resource rules. Output: tile map with terrain/resources and inferred topology.
+3. **Generate NW map** — Same for `newWorld`; use deterministic seed offset (e.g. `effectiveSeed + 1`) and same resource rules.
+4. **GP assignment** — Build province adjacency graph from P–P edges. Reserve `minorCount × minProvincesPerMinor` OW provinces for minors. Partition remainder among GPs via multi-source BFS per [game-setup.md](../game/game-setup.md) § GP Assignment.
+5. **Minor Nation assignment** — Assign remaining OW provinces to minors via BFS per [game-setup.md](../game/game-setup.md) § Minor Nation Assignment.
+6. **Tribe assignment** — Assign NW provinces to tribes via BFS per [game-setup.md](../game/game-setup.md) § Tribe Assignment.
+7. **Build state:**
+   - Construct WorldState with RegionData and Province list (ownerId set).
+   - Construct Game with Players, Minor Nations, Tribes.
+   - **7a. GP colour mapping** — Map semantic GP ids (e.g. `england`) onto runtime Player ids (`gp1`, `gp2`, …). Re-key any colour overrides from semantic → runtime id so map builders and the running game consume GP colours by runtime Player id.
+   - **7b. Capital auto-choice** — Run per-faction capital algorithm from [capital-choice-phase.md](../game/capital-choice-phase.md). Apply border-avoidance heuristic; auto-build port/road at capital. Depends on: WorldState with Province.ownerId set; topology and tile map from steps 2–3.
+   - **7c. Province naming** — Apply naming from active ruleset per [naming.md](../game/naming.md). Applies to all provinces owned at setup; provinces acquired later retain existing display name.
+8. **Persist or pass** — Save via colonizethis_save or hand off to app. Tile maps and topology are static; store with game or regenerate from seed.
 
-- **Implemented in:** colonizethis_logic (or app) for orchestration; colonizethis_map for map gen; colonizethis_models for Game/WorldState/Faction types.
-- **Consumed by:** App (GameService.createNewGame) and init_game tool when starting or visualizing a new game.
-- **Config:** colonizethis_data owns config; merge order Base → Difficulty → Scenario per ruleset-config.
+Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [init-game-tool.md](init-game-tool.md).
 
----
+## Integration
 
-## Tile Maps and Topology
+- **Phase:** Pre-game (before turn 0).
+- **Upstream:** colonizethis_data (config, ruleset merge), colonizethis_map (map generation).
+- **Downstream:** App (GameService.createNewGame), init_game CLI tool, ctdev debug views.
 
-Generated tile maps and inferred topology are not stored in WorldState (static per map/scenario). They are either stored alongside the game (e.g. scenario bundle) or regenerated from a stored seed when the game is loaded. Map-data.md: loaded at game creation; colonizethis_data owns loading.
+## Constraints
+
+- Effective seed must be computed consistently across all entry points (CLI, ctdev, app).
+- Tile maps include full terrain and resource data for visualization and extraction.
+- Owned by colonizethis_logic (orchestration), colonizethis_map (generation), colonizethis_models (types).

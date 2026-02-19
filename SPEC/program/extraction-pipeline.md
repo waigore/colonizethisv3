@@ -1,34 +1,65 @@
 # Extraction Pipeline
 
-**SPEC/program** — Connectivity resolver and resource extractor used in the extraction phase. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-and-improvements.md](../game/extraction-and-improvements.md), [auto-transport.md](auto-transport.md).
+## Responsibility
+
+Computes per-player resource extraction each turn by resolving tile connectivity and applying the extraction formula from game rules. Game rules: [extraction-and-improvements.md](../game/extraction-and-improvements.md).
 
 ---
 
-## Connectivity Resolver
+## Data Model
 
-**Input:** Game state (provinces, owners, capital per player, tile map, per-tile roads, ports per province/seaboard), topology, optional blockade stub. Extraction logic is **read-only** with respect to terrain: it consumes improvement/road/port state produced by setup and development resolution and does not mutate it.
+**Connectivity result:** Per player, a set of connected tile keys (regionId, provinceId, x, y).
 
-**Output:** Per player, a set of **connected** tile keys (e.g. per (regionId, provinceId, x, y)) or a per-province connected flag sufficient to know which tiles contribute to extraction.
-
-**Algorithm:** From each player’s capital tile, run BFS on the tile graph: tiles are nodes; edges are adjacency plus “on or adjacent to road/railroad” forming a path to the capital or (for overseas) to a port on the correct seaboard. For overseas provinces, a tile is connected if there is a road path to a port in that province on the seaboard that has a sea path to the capital’s sea. Re-run each turn. Phase 2: blockade stub (no effect).
+**Extraction result:** Per player, two maps (same-region and overseas) of commodity id → quantity.
 
 ---
 
-## Resource Extractor
+## Algorithm / Flow
 
-**Input:** Game state (tile map: terrain, resource per cell; per-tile improvement level, per-tile road level; ports; owners; tech caps), and the connectivity result from the connectivity resolver.
+### Connectivity Resolver
 
-**Output:** Per player: **land** totals (same-region) and **overseas** totals (different region), each a map commodity id → quantity. No direct “apply to stockpile”; that stays in turn resolution.
+**Input:** World state (provinces, owners, capital per player, tile map, per-tile roads/transport, ports per province/seaboard), topology.
 
-**Logic:** For each player, for each connected tile that has a resource: **production** = min(improvement level, owner tech cap); **effective extraction** = min(production, transport level). Sum by commodity; split by same-region vs overseas using the player’s capital region.
+**Algorithm:** From each player's capital tile, BFS on the tile graph. Tiles are nodes; edges require adjacency plus road/railroad path to capital (same region) or road path to a port on the correct seaboard (overseas). Re-run each turn. Phase 2: blockade stub (no effect).
+
+**Output:** Per player, set of connected tile keys.
+
+### Resource Extractor
+
+**Input:** World state (tile map with terrain, resource, improvement level, transport level; ports; owners; tech caps), connectivity result, player prospected sets.
+
+**Algorithm:** For each player, for each connected tile with a resource:
+
+1. Check mineral gating: if mineral resource, tile must be in player's prospected set (per game/fog-and-exploration.md). Skip if not.
+2. Production = min(improvement level, owner tech cap).
+3. Effective yield = min(production, transport level) — per game/extraction-and-improvements.md.
+4. Sum by commodity; split same-region vs overseas using player's capital region.
+
+**Output:** Per player, land totals and overseas totals (commodity → quantity).
+
+### Turn Extraction Phase
+
+1. **Connectivity:** Recompute per-player connectivity.
+2. **Extract:** Run resource extractor; obtain land and overseas totals.
+3. **Land:** Add same-region totals to each player's stockpile.
+4. **Sea:** Allocate overseas totals to stockpile by priority, capped by cargo holds (stub).
 
 ---
 
-## Turn Extraction Phase (Order)
+## Integration
 
-1. **Connectivity:** Recompute per-player connectivity (connectivity resolver).
-2. **Extract:** Run resource extractor; obtain per-player land and overseas commodity totals.
-3. **Land:** Add same-region totals to each player’s stockpile.
-4. **Sea:** Allocate overseas totals to stockpile by priority, capped by cargo holds (stub); add allocated amounts to stockpile.
+| Aspect | Detail |
+|---|---|
+| Phase | Extraction (after Build/Work, before Production) |
+| Upstream | World state, connectivity resolver, prospected state (fog module) |
+| Downstream | Player stockpiles, overseas transport ([auto-transport.md](auto-transport.md)) |
 
-Existing `applyExtractionForPlayers` can be refactored to accept the extractor output (land + sea result) or remain as two steps (land add, then sea add). Owner: colonizethis_logic.
+Read-only with respect to terrain: extraction consumes improvement/road/port state produced by setup and development resolution; it does not mutate terrain.
+
+---
+
+## Constraints
+
+- All extraction rules and formulas are defined in game/extraction-and-improvements.md; this module implements, not restates, them.
+- Mineral gating depends on prospected state from the fog-and-exploration module.
+- Connectivity must be recomputed each turn (road/port changes, conquests).

@@ -1,6 +1,6 @@
 # show_tech — Technology Tree and Query Tool
 
-**SPEC/program** — CLI tool to view the full tech tree as a markdown diagram and to query individual techs (description, dependencies, effects). Reference: [tech-tree.md](../game/tech-tree.md), [tech-tree-catalog.md](../game/tech-tree-catalog.md) and category sub-docs.
+**SPEC/program** — CLI tool to view the full tech tree as a markdown diagram and to query individual techs (description, dependencies, effects). Reference: [tech-tree.md](../game/tech-tree.md) and category sub-docs.
 
 ---
 

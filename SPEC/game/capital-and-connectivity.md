@@ -40,4 +40,8 @@ Connectivity is **recomputed every turn** during the extraction phase. Ownership
 
 A province is **overseas** for a player if it is in a **different region** from that player’s capital province. Sea transport is required **only** for overseas-extracted commodities. Same-region provinces (e.g. all Old World when the capital is in the Old World) flow by land only once connectivity is satisfied.
 
-Reference: Imperialism II 02-economy — connections lost when a province along the line to the capital is taken; sea ports part of network; blockade risk.
+**Connectivity edge cases (per Imp2):**
+
+- **Severed road:** Losing a province along a road path to the capital breaks all connections through it. Resources from disconnected tiles no longer flow to stockpile.
+- **Ports never lose connection:** Sea ports remain connected regardless of land path status (they connect via sea). Blockade may intercept cargo but does not sever the port's network membership.
+- **Retaking a province:** Re-establishes connections through it immediately.

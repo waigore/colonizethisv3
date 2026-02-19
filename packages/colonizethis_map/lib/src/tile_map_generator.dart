@@ -1,4 +1,4 @@
-// SPEC/program/tile-map-generation.md. Reference: SPEC/ideas/tile-based-map-generation.md.
+// SPEC/program/tile-map-gen-algorithm.md, tile-map-gen-resources.md, tile-map-gen-config.md. Reference: SPEC/ideas/tile-based-map-generation.md.
 
 import 'dart:math';
 
@@ -11,14 +11,14 @@ import 'topology_inference.dart';
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
 const String _landSentinel = '_land';
 
-/// How land-shape seeds are placed around each continent seed. SPEC/program/tile-map-generation.md § Pass 2.
+/// How land-shape seeds are placed around each continent seed. SPEC/program/tile-map-gen-algorithm.md § Pass 2.
 enum LandSeedClusterShape {
   gaussian,
   uniformDisk,
   uniformAnnulus,
 }
 
-/// Centralized map generation parameters. SPEC/program/tile-map-generation.md § Grid size derivation.
+/// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
   const MapGenerationParams({
     this.targetTilesPerProvince = 35,
@@ -65,7 +65,7 @@ class MapGenerationParams {
 }
 
 /// Computes grid width and height from province count and map params.
-/// Uses land count, target tiles per province, and sea fraction. SPEC/program/tile-map-generation.md § Grid size derivation.
+/// Uses land count, target tiles per province, and sea fraction. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 ({int width, int height}) computeGridSizeFromParams(
   int numProvinces,
   MapGenerationParams params,
@@ -139,7 +139,7 @@ Map<String, int> computeContinentMembership(MapTopology topology) {
 }
 
 /// Runtime parameters for tile-based map generation (grid dimensions and generator options).
-/// Pass 6 and Pass 10b terrain/jitter parameters are tunable here; see SPEC/program/tile-map-generation.md.
+/// Pass 6 and Pass 10b terrain/jitter parameters are tunable here; see SPEC/program/tile-map-gen-config.md.
 class TileMapParams {
   const TileMapParams({
     this.width = 100,
@@ -310,7 +310,7 @@ class _MultiRegionCapState {
   }
 }
 
-/// Generates a per-region tile map from province/continent params. SPEC/program/tile-map-generation.md.
+/// Generates a per-region tile map from province/continent params. SPEC/program/tile-map-gen-algorithm.md, tile-map-gen-resources.md, tile-map-gen-config.md.
 /// Map-first: topology is inferred from the grid after generation.
 class TileMapGenerator {
   TileMapGenerator({this.params = const TileMapParams()});

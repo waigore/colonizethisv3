@@ -33,8 +33,9 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 ## Consumption and Production
 
-- Workers consume food and luxuries from player stockpile.
-- Without food: worker starves (removed). Without luxury: trained worker produces no labour that turn.
+- Workers consume food and luxuries from player stockpile during end-of-turn Consumption phase.
+- **Starvation (per Imp2):** Food is deducted from transported amounts first, then from warehouse/stockpile. If a worker's required food cannot be met from either source, the worker **starves and is immediately removed** at end of that turn's Consumption phase. There is no grace period.
+- Without luxury: trained worker produces no labour that turn (but is not removed).
 - Production uses labour: one labour per resource input consumed by a recipe (e.g. 2 timber → 1 lumber = 2 labour).
 - Total food demand = workers + navy + army.
 

@@ -45,4 +45,4 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 
 ## Implementation
 
-Unit model in colonizethis_models; movement and work orders in colonizethis_logic. See [world-model.md](world-model.md) for Unit entity. Which unit types are in current implementation scope: [unit-types.md](unit-types.md).
+See [world-model.md](world-model.md) for Unit entity. Implementation scope: civilian types per this doc; military per [military-units.md](military-units.md).

@@ -1,76 +1,58 @@
 # AI Architecture (Phase 6)
 
-**SPEC/ai** — Hybrid AI stack for MVP. Source: GDD 10b, TDD 10. Implementation: [ai-systems-impl.md](../program/ai-systems-impl.md).
+**SPEC/ai** — Hybrid AI stack for MVP. Source: GDD 10b.
 
 ---
 
-## Design philosophy
+## Overview
+Characterful, deterministic AI using only observable game state. Difficulty affects starting resources and ruleset modifiers, not AI logic.
 
-- **Characterful personalities** — Each leader feels distinct (GDD 10a).
-- **Deterministic** — Same game state and seeds → same AI decisions.
-- **PlayerView-only** — AI never reads hidden tiles or enemy data; all world knowledge comes from [PlayerView](../program/player-view.md).
-- **Single algorithm, difficulty via params** — Difficulty affects only starting resources and ruleset modifiers, not AI strength or logic.
+## Rules
 
----
+### Design Principles
+- Each leader feels distinct via personality (see [ai-personalities.md](ai-personalities.md)).
+- Deterministic: same game state and seeds → same decisions.
+- PlayerView-only: AI never reads hidden tiles or enemy data.
+- Difficulty via params only: same algorithm at all difficulty levels.
 
-## Hybrid stack
+### Hybrid Stack
 
 | Layer | System | Purpose |
 |-------|--------|---------|
-| **Goal management** | Behavior trees | Long-term strategy (expand, defend, trade, conquer, tech, diplomacy). |
-| **Strategic** | Utility AI | Domain decisions: economy, military, diplomacy, research. |
-| **Tactical** | Shallow search / heuristics | Quick Battle actions; local move/attack choices. |
+| Goal management | Behavior trees | Long-term strategy (expand, defend, trade, conquer, tech, diplomacy) |
+| Strategic | Utility AI | Domain decisions: economy, military, diplomacy, research |
+| Tactical | Shallow search / heuristics | Quick Battle actions; local move/attack |
 
 Behavior trees pick top-level goals; utility AI scores and selects concrete objectives; tactical layer produces combat and movement orders.
 
----
+### Turn Pipeline (per AI Great Power)
+1. **Perception** — Derive observable snapshot: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
+2. **Goal selection** — Behavior tree chooses strategy using personality weights and hidden agenda modifiers.
+3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders.
+4. **Execution** — Combine, cap, and validate orders; emit dialogue/mood events.
+5. **Tactical** — Quick Battle: CP-based actions per lane, deterministic given state and seed.
 
-## Turn pipeline (per AI Great Power, per turn)
+### Tactical Behavior Rules
+- Prefer occupying good terrain (hill, town, woods) with high-value units.
+- Avoid exposing fragile units in swamp unless numerically overwhelming.
+- Use Volley Fire / Defend when outmatched or holding key lanes (especially center).
+- Use Maneuver / Fall Back to rotate damaged units or shift strength to threatened flanks.
+- Use Assault / Charge when enemy lane is disrupted and terrain is favorable.
 
-```mermaid
-flowchart LR
-  subgraph perception [Perception]
-    PV[PlayerView]
-    Snapshot[AIWorldSnapshot]
-    PV --> Snapshot
-  end
-  subgraph goals [Goal selection]
-    BT[Behavior tree]
-  end
-  subgraph planning [Domain planning]
-    Econ[Economy]
-    Mil[Military]
-    Dip[Diplomacy]
-    Res[Research]
-  end
-  subgraph exec [Execution]
-    Orders[Orders]
-  end
-  perception --> goals --> planning --> exec
-```
+### Strategic Behavior Preferences
+AI uses the order suggestion API and applies:
+- **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
+- **Build/work:** Prefer cheaper orders improving owned, visible provinces.
+- **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
 
-1. **Perception** — Build `PlayerView` (colonizethis_logic). Derive `AIWorldSnapshot`: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
-2. **Goal selection** — Behavior tree chooses strategy (defend, expand, conquer, trade, tech, diplomacy) using personality weights and hidden agenda modifiers.
-3. **Domain planning** — Economy, military, diplomacy, research planners use the [order suggestion API](../program/order-engine.md) with PlayerView; utility scoring applies personality and agenda; each emits candidate orders.
-4. **Execution** — Combine and cap orders; validate via order engine; emit dialogue/mood events where specified.
-5. **Tactical** — For Quick Battle, tactical planner consumes battle state and seeds; outputs CP-based actions (deterministic).
+Seeded randomness selects among acceptable candidates; personality weights bias selection.
 
----
+### Seeding
+Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds: perception, goals, economy, military, diplomacy, research, tactical, dialogue, agenda. Same save + seeds → same orders and events.
 
-## Seeding and determinism
-
-Per [ai-planner.md](../program/ai-planner.md): `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. From this, derive sub-seeds:
-
-- `perceptionSeed`, `goalSeed`, `economySeed`, `militarySeed`, `diplomacySeed`, `researchSeed`, `tacticalSeed`, `dialogueSeed`, `agendaSeed` (for agenda assignment at game start).
-
-All AI randomness uses these seeds. Same save + same seeds → same orders and events.
-
----
-
-## Package boundary
-
-**colonizethis_ai** owns: perception adapter (PlayerView → snapshot), behavior trees, domain planners, tactical planner, hidden agenda logic, dialogue/mood emission, dossier projection.
-
-**colonizethis_logic** owns: game state, turn resolution, order engine, PlayerView construction, order suggestion API. Logic calls into colonizethis_ai for order generation and receives events.
-
-App and (future) server call colonizethis_ai; they do not duplicate AI logic.
+## Interactions
+- [ai-personalities.md](ai-personalities.md) — per-leader weights
+- [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
+- [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
+- Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
+- Program: [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, APIs

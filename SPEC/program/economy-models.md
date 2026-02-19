@@ -1,60 +1,51 @@
 # Economy Data Models
 
-**SPEC/program** — Data structures for stockpiles and workers. Reference: [SPEC/game/stockpiles-and-production.md](../game/stockpiles-and-production.md), [SPEC/game/workers-and-population.md](../game/workers-and-population.md).
+## Responsibility
+
+Defines core data structures for the player economy: stockpiles, worker pools, and the turn-level economic flow. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [workers-and-population.md](../game/workers-and-population.md).
 
 ---
 
-## Stockpile
+## Data Model
 
-**Player** holds **Stockpile** — map of commodity id → quantity.
+### Stockpile
 
-```dart
-// Conceptual; exact types in colonizethis_models
-typedef Stockpile = Map<String, int>;  // commodityId -> quantity
-```
+Per-player map of commodity id → quantity. No per-province storage. Extraction, production, and consumption all operate on this structure.
 
-- Extraction in provinces flows to owning player's stockpile each turn (via auto-transport).
-- Production consumes from and produces into stockpile.
-- No per-province commodity storage.
+### WorkerPool
 
-**Location:** colonizethis_models. Player entity extended with stockpile field. Auto-transport: [auto-transport.md](auto-transport.md).
+Per-player population for production, distinct from military/civilian units. Tier definitions and labour values are specified in game/workers-and-population.md.
 
 ---
 
-## WorkerPool
+## Algorithm / Flow
 
-Per-player population for production; distinct from Unit.
+Turn economic phases (in order):
 
-```dart
-// Conceptual; exact types in colonizethis_models
-class WorkerPool {
-  int peasants;
-  int apprentices;
-  int journeymen;
-  int masters;
-  // Or: Map<WorkerTier, int>
-}
-```
-
-- Tiers: Peasant (1 labour), Apprentice (4), Journeyman (6), Master (8).
-- Recruiting: fabric → Peasant. Training: worker + paper + cash → next tier.
-- Military/naval construction consumes a worker.
-- Production uses labour: 1 labour per resource input.
-
-**Location:** colonizethis_models. Per-player WorkerPool.
+1. **Extraction:** Province tiles produce; resources flow to player stockpile via auto-transport. Per game/extraction-and-improvements.md.
+2. **Riches-to-treasury:** Riches in stockpile convert to treasury at base price; removed from stockpile.
+3. **Production:** Consume commodities and labour; produce outputs to stockpile. Per game/stockpiles-and-production.md.
+4. **Consumption:** Military regiments consume food upkeep first, then workers and navy consume food and materials from remainder. Military food shortfalls reduce morale/strength rather than removing regiments.
 
 ---
 
-## Turn Flow
+## Integration
 
-1. **Extraction phase:** Province tiles produce; resources flow to player stockpile (auto-transport).
-2. **Riches-to-treasury phase:** Riches in stockpile convert to treasury at base price and are removed from stockpile.
-3. **Production phase:** Consume commodities and labour from stockpile; produce outputs to stockpile.
-4. **Consumption phase:** Military regiments consume food upkeep from stockpile **first**, then workers and navy consume food and materials from what remains. Military food demand is derived from the regiment economy config (per‑regiment foodUpkeep); shortfalls reduce military morale/strength in combat rather than immediately removing regiments.
+| Aspect | Detail |
+|---|---|
+| Phase | Spans extraction through consumption |
+| Upstream | Extraction pipeline, game rules (stockpiles-and-production, workers-and-population) |
+| Downstream | Player treasury, military morale, production output |
+
+**Package locations:**
+
+- Models (Stockpile, WorkerPool, Player fields): colonizethis_models.
+- Resolution logic (extraction, production, transport, consumption): colonizethis_logic.
 
 ---
 
-## Package Responsibilities
+## Constraints
 
-- **colonizethis_models:** Stockpile type, WorkerPool type, Player.stockpile, Player.workerPool.
-- **colonizethis_logic:** Extraction resolution, production resolution, transport algorithm, consumption. Config is program-level (no JSON rulesets in MVP).
+- Stockpile and WorkerPool types must be serializable for save/load.
+- Worker tier definitions, labour values, recruiting/training rules are defined in game/workers-and-population.md; this module references them.
+- Config is program-level (no JSON rulesets in MVP).

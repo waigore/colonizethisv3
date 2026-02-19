@@ -1,77 +1,95 @@
 # Fog of War and Exploration
 
-**SPEC/game** — Per-player tile visibility and exploration/prospecting. Reference: Imperialism II 03-units-civilian. Technical resolution: [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md). Civilian units: [civilian-units.md](civilian-units.md).
+## Overview
+
+Per-player tile visibility governing what each Great Power knows about the map. Exploration and prospecting reveal tiles and mineral deposits.
 
 ---
 
-## Visibility Levels (per player, per tile)
+## Rules
 
-Four levels, applied at tile granularity:
+### Visibility Levels
+
+Four levels per player per tile:
 
 - **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
-- **Revealed:** Province boundary and owner known; terrain and resources unknown. Reached when a tile is first revealed (e.g. ship enters adjacent sea zone).
-- **Fogged:** Tile and terrain known; non-prospect resources (grain, timber, etc.) known; improvements at last visible state known. **Other faction provinces only**; applies when no Explorer/Spy working in province. Decay is **immediate** when units leave.
-- **Fully visible:** Everything known except unprospected mineral resources. **Own provinces are always fully visible.**
+- **Revealed:** Province boundary and owner known; terrain and resources unknown.
+- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay is immediate when units leave.
+- **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible.
 
----
+### Own vs Other Provinces
 
-## Own vs Other Provinces
+Own provinces are always fully visible and never decay. Fogged applies only to other factions' provinces.
 
-Own provinces never fogged. Fogged only applies to other factions' provinces.
+### Initial Visibility
 
----
+- **Old World:** Starts fogged (own provinces fully visible).
+- **New World:** Starts unknown; ships reveal coastal tiles when entering adjacent sea zones.
 
-## Exploration (province-level)
+### Exploration (Province-Level)
 
-Explorer with WorkOrder target `explore` spends turns revealing province tiles. Reveals **all tiles** in the province; takes **up to 3 turns** scaled by province size: `turns = ceil(3 * tilesInProvince / maxTilesInAnyProvince)`. Must have WorkOrder to explore.
+Explorer with work order target `explore` reveals all tiles in a province. Turns required: `ceil(3 * tilesInProvince / maxTilesInAnyProvince)` (up to 3 turns). On completion, all tiles set to fully visible for that player.
 
----
+### Prospecting (Tile-Level)
 
-## Prospecting (tile-level)
+Explorer with work order target `prospect` prospects the tile under the unit. One turn per tile. Per-player; minerals must be prospected before extraction.
 
-Explorer with WorkOrder target `prospect` prospects the **tile under the unit**. Per player; minerals must be prospected before extraction. One turn per tile.
+### Prospect-Required Resources
 
----
+**Require prospecting:** iron, copper, tin, coal, silver, gold, gems, diamonds.
 
-## Prospect-Required Resources (per I2)
+**Known from terrain when visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
 
-**Prospect-required:** iron, copper, tin, coal, silver, gold, gems, diamonds.
+Mineral-eligible terrain: swamp, hills, mountain. See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
 
-**Known from terrain when tile revealed/fogged/fully visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
+### Fog Decay
 
-See [resource-terrain-region-rules.md](resource-terrain-region-rules.md). Mineral tiles (swamp, hills, mountain) are prospect-eligible.
+When a player's last Explorer/Spy leaves another faction's province, all tiles in that province immediately revert to fogged (retaining last-known state). Own provinces never decay.
 
----
+### Explorer vs Spy
 
-## Initial Visibility
-
-- **Old World:** Starts **fogged** (own provinces fully visible).
-- **New World:** Starts **unknown**; ships reveal coastal tiles when entering adjacent sea zone. See [ships-and-naval.md](ships-and-naval.md).
-
----
-
-## Explorer vs Spy
-
-**Explorer** pushes fog (terrain, resources, improvements) but **not** armies/navies stationed in the province.
+**Explorer** reveals terrain, resources, and improvements but not armies/navies.
 
 **Spy** reveals everything including garrison and naval strength.
 
+### Order Visibility Requirements
+
+**Move orders:**
+
+- Source province: at least one tile with visibility ≠ unknown.
+- Destination province: at least one tile with visibility ≠ unknown.
+
+**Work orders** (unit must be in the province):
+
+| Unit type | Work target | Minimum visibility |
+|---|---|---|
+| Explorer | explore | Province at least revealed |
+| Explorer | prospect | Tile at least fogged |
+| Builder | build_improvement, upgrade_town | At least fogged (own = fully visible) |
+| Engineer | build_road, build_port, build_fort | Same as Builder |
+| Rail Builder | build_rail | Same as Builder |
+
+### Extraction Gating
+
+Mineral resources may only be extracted from tiles that are (a) connected and (b) prospected by that player. Non-minerals unchanged.
+
 ---
 
-## Civilian Positioning
+## Configurable Values
 
-Civilians (Explorer, Builder, Engineer, etc.) have **tile-level** location. Military units remain province-level only. See [world-model.md](world-model.md), [civilian-units.md](civilian-units.md).
+| Parameter | Default | Notes |
+|---|---|---|
+| Explore max turns | 3 | Scaled by province size |
+| Prospect turns per tile | 1 | |
+| Old World initial visibility | fogged | Own = fully visible |
+| New World initial visibility | unknown | |
 
 ---
 
-## Per-player knowledge and PlayerView
+## Interactions
 
-Fog of war defines **what each player can know** about the map at any time. For a given Great Power `P`, the game derives a **knowledge state** consisting of:
-
-- Tile visibility per `VisibilityLevel` (unknown, revealed, fogged, fullyVisible) per tile key.
-- Prospected tiles for `P` (which mineral tiles have been prospected).
-- Last-known terrain, resources, and improvements for tiles that are at least fogged.
-- Ownership and boundaries for provinces that have been at least revealed.
-- Full information about `P`'s own units, economy (stockpile, treasury, workers) and research state.
-
-This knowledge state is exposed to AI and tooling via a **PlayerView** abstraction (see [player-view.md](../program/player-view.md)). PlayerView is the **only source of per-player world knowledge** that AI and order suggestion logic may use; it may not see tiles or units that are hidden by fog of war. Order visibility rules (which moves and work orders are allowed or suggested based on visibility) are specified in [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+- Civilian units: [civilian-units.md](civilian-units.md)
+- Ship coastal reveal: [ships-and-naval.md](ships-and-naval.md)
+- Resource/terrain rules: [resource-terrain-region-rules.md](resource-terrain-region-rules.md)
+- Extraction gating: [extraction-and-improvements.md](extraction-and-improvements.md)
+- World model (tile positioning): [world-model.md](world-model.md)

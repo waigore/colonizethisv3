@@ -1,6 +1,6 @@
 # Tech Tree — Gathering and Production
 
-**SPEC/game** — Old World extraction and improvement techs. Reference: Imperialism II 08-technology (Gathering and Production). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md).
+**SPEC/game** — Old World extraction and improvement techs. Reference: Imperialism II 08-technology (Gathering and Production). Overview: [tech-tree.md](tech-tree.md).
 
 ---
 

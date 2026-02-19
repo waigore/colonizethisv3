@@ -1,6 +1,6 @@
 # Tech Tree — New World Resources
 
-**SPEC/game** — Discovery and improvement techs for New World resources. Reference: Imperialism II 08-technology (New World Resources). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md). Discovery often requires Explorer finding the resource first (event/province); catalog lists tech prerequisites only.
+**SPEC/game** — Discovery and improvement techs for New World resources. Reference: Imperialism II 08-technology (New World Resources). Overview: [tech-tree.md](tech-tree.md). Discovery often requires Explorer finding the resource first (event/province); catalog lists tech prerequisites only.
 
 ---
 

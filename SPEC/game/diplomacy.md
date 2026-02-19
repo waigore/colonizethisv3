@@ -1,56 +1,73 @@
-# Diplomacy (Phase 4 full)
+# Diplomacy
 
-**SPEC/game** — Full diplomacy: war/peace, alliances, overture chain, relations, Join Empire/Colony, intervention, aid. Derived from GDD 07 and Imperialism II. Technical resolution: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Turn sequence: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
+## Overview
 
----
-
-## Relation model (game)
-
-Per faction-pair the game maintains: **relation state** `AT_PEACE` | `AT_WAR`; **relation score** 0–100; **relation level** (Hostile 0–25, Neutral 26–50, Friendly 51–75, Allied 76–100); **sinceTurn**; **lastInteractionTurn**. Initial state at game start: all GP–GP at peace, score 50 (or configurable). Relations are updated by grants, trade, war, broken treaties, etc. (see diplomacy-resolution for modifiers).
+Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, relations, Join Empire/Colony, intervention, and foreign aid. Derived from GDD 07 and Imperialism II.
 
 ---
 
-## Tribe vs Minor war rule
+## Rules
 
-- **Minor Nations (Old World):** A Great Power must be **AT_WAR** with a Minor before attacking its provinces or units. Declaration of war is required.
-- **Tribes (New World):** A Great Power may invade a Tribe **without** a declaration of war, **unless** another Great Power has invested in the target province (e.g. Merchant land purchase); then the attacker must declare war on that GP. Combat and movement validation enforce this.
+### Relation Model
+
+Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0–100), **relation level** (Hostile 0–25, Neutral 26–50, Friendly 51–75, Allied 76–100), **sinceTurn**, **lastInteractionTurn**. Initial: all GP–GP at peace, score 50. Updated by grants, trade, war, broken treaties.
+
+### Tribe vs Minor War Rule
+
+- **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
+- **Tribes (New World):** No declaration required unless another GP has invested in the target province; then war must be declared on that GP.
+
+### GP–GP Rules
+
+- **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
+- **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
+- **Alliances:** Offer/accept between GPs. Mutual defence: when ally is attacked, the other receives a demand to join; refusal breaks the alliance with relation penalties. Joining an ally's offensive war is optional; no penalty for refusing.
+- **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
+
+### GP–Minor Rules
+
+- **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (free, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation.
+- **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
+- **Intervention:** When a Minor with the player's Embassy is attacked by another GP: **Intervene** (Minor joins player, war on attacker), **Do Nothing** (Minor may fall, relations reset), or **Diplomatic Protest** (relation penalty with attacker).
+- **Peace:** Minors never refuse peace offers.
+
+### GP–Tribe Rules
+
+- No war required for invasion (see Tribe vs Minor war rule).
+- **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
+- Tribes react to nearby conquest (relation/trade effects).
+
+### Diplomatic Order Types
+
+- **Declare War** — target faction; valid if AT_PEACE.
+- **Offer Peace** — target faction; valid if AT_WAR.
+- **Alliance** — target GP; propose, accept, or refuse.
+- **Establish Overture** — target Minor/Tribe, overture type; valid if previous step achieved and costs met.
+- **Grant Aid** — target faction, amount; valid if Embassy exists; deducts treasury.
+- **Set Subsidy** — target, amount/percentage; valid if consulate/embassy exists.
+
+### Turn Sequence
+
+Diplomacy phase runs before Movement. Declarations and peace take effect for the same turn's movement and combat.
 
 ---
 
-## GP–GP rules
+## Configurable Values
 
-**Declare War:** Precondition: `AT_PEACE`. Effect: `AT_WAR`, sinceTurn and lastInteractionTurn set. Takes effect before Movement in the same turn (Diplomacy phase runs first).
-
-**Peace (white peace):** Both sides must agree. Effect: `AT_PEACE`; no border or ownership changes (territory from combat only).
-
-**Alliances:** Offer/accept between GPs. Mutual defence: when an ally is attacked, the other receives a demand to join the war; refusal **breaks the alliance** and applies relation penalties. Joining an ally's **offensive** war is optional; no penalty for refusing.
-
-**Join Empire:** A GP may request another GP to join its empire only when the target is nearly defeated (e.g. hopeless position); **tech-gated by Empire Building** (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md), [tech-tree-catalog.md](tech-tree-catalog.md)). Acceptance removes the target from the game and transfers provinces to the requester.
-
----
-
-## GP–Minor rules
-
-**War required:** Declaration of war is required before attacking a Minor. Same relation and combat constraints as above.
-
-**Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → **Join Empire** (free; relation check). Each step unlocks the next. **Embassies** and the ability for Merchants/Engineers/Builders to work in Minor Nations are **tech-gated by Diplomatic Expertise**. Minors never refuse Consulate or Embassy; Join Empire is accepted only if relation score is high enough (e.g. Friendly/Allied). See [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md).
-
-**Foreign aid:** Preset grant amounts; deduct from treasury; improve relation score per diplomacy-resolution.
-
-**Intervention:** When a Minor **with which the human player has an Embassy** is attacked by another GP, the human gets a one-time choice: **Intervene** (Minor joins player, player declares war on attacker), **Do Nothing** (Minor may fall; relations reset), or **Diplomatic Protest** (relation penalty with attacker). Effects on relations per resolution spec.
-
-**Peace:** Minors never refuse peace offers.
+| Parameter | Default | Notes |
+|---|---|---|
+| Initial GP–GP relation score | 50 | |
+| Hostile threshold | 0–25 | |
+| Neutral threshold | 26–50 | |
+| Friendly threshold | 51–75 | |
+| Allied threshold | 76–100 | |
+| Consulate cost | £500 | |
+| Embassy cost | £1000 | |
 
 ---
 
-## GP–Tribe rules
+## Interactions
 
-**No war required:** Invasion of a Tribe does not require declaration of war unless another GP has invested in the province (see Tribe vs Minor war rule).
-
-**Overture chain:** Same progression (Trade Consulate → Embassy → NAP → **Join Empire / Colony**). Tribes become **colonies**: provinces do not count toward victory; profit share and colonial government per GDD. Tribes react to nearby conquest (relation/trade effects).
-
----
-
-## Turn sequence placement
-
-Diplomacy phase runs **before** Movement (see turn-resolution-phases.md). Declarations and peace take effect for the same turn's movement and combat. All diplomatic rules must be traceable to this spec and diplomacy-resolution; no behaviour without authorizing spec.
+- Tech gates: [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md), [tech-tree.md](tech-tree.md)
+- Turn sequence: see program/turn-resolution-phases.md
+- Combat validation: [combat.md](combat.md)

@@ -18,8 +18,17 @@ Engineers build forts on the town tile using `WorkOrder` target `build_fort`. Ea
 
 ## Wall Protection
 
-- **Damage reduction:** All damage to defenders is reduced by a percentage based on fort level (config).
-- **Units on the wall** (adjacent to wall hex): Can be hit by firearms and artillery.
+All damage to defenders on or behind the wall is reduced by a percentage based on fort level:
+
+| Fort Level | Damage Reduction |
+|---|---|
+| 1 (Wood) | ? |
+| 2 (Stone) | ? |
+| 3 (Modern) | ? |
+
+> **REQUIRES CLARIFICATION:** Exact damage reduction percentages per fort level. Imp2 confirms the mechanic (percentage-based, scales with fort level) but provides no numeric values.
+
+- **Units on the wall** (adjacent to wall hex): Can be hit by firearms and artillery (at reduced damage per table above).
 - **Units behind the wall** (not manning): Cannot be damaged except by enemy artillery; only artillery can return fire.
 - **Melee-only units** (RNG 1): Cannot attack walls or any units in a fort. Must sortie to engage.
 

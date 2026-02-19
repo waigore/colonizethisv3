@@ -64,7 +64,7 @@ For each phase the **full dev workflow** is followed: **Design → Dev → Test 
 | One victory (Military: 31+ provinces) | Asia region |
 | New World resources and colonies | Full tech tree, all victory types |
 | Program-level config; single source for stats/modifiers (no hardcoding) | JSON rulesets; layered overrides (difficulty/scenario); scenario files |
-| Map data (topology and tile maps per [map-data.md](../program/map-data.md)); tile-based map generation ([tile-map-generation.md](../program/tile-map-generation.md)); game setup per [game-setup.md](../game/game-setup.md) | Dynamic scenario map loading (beyond procedural) |
+| Map data (topology and tile maps per [map-data.md](../program/map-data.md)); tile-based map generation ([tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md)); game setup per [game-setup.md](../game/game-setup.md) | Dynamic scenario map loading (beyond procedural) |
 
 ---
 

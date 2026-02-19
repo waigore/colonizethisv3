@@ -1,6 +1,6 @@
 # Tech Tree — Military (Infantry, Cavalry, Artillery)
 
-**SPEC/game** — Regiment and fort unlocks. Reference: Imperialism II 08-technology (Military), [military-units.md](military-units.md). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md). Regiment **buildability** is gated only by the tech that unlocks it; no era gate.
+**SPEC/game** — Regiment and fort unlocks. Reference: Imperialism II 08-technology (Military), [military-units.md](military-units.md). Overview: [tech-tree.md](tech-tree.md). Regiment **buildability** is gated only by the tech that unlocks it; no era gate.
 
 ---
 

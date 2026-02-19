@@ -1,54 +1,53 @@
 # Diplomacy Resolution
 
-**SPEC/program** — Technical diplomacy: relation model, overture state machine, order types, phase resolution order. Game rules: [diplomacy.md](../game/diplomacy.md). Turn sequence: [turn-resolution-phases.md](turn-resolution-phases.md).
+## Responsibility
+
+Resolves diplomatic orders, manages overture state machine, updates relation scores, and feeds AI evidence pipeline during the Diplomacy phase. Game rules: [diplomacy.md](../game/diplomacy.md).
 
 ---
 
-## Relation model (technical)
+## Data Model
 
-Per faction-pair: data structures for **score** (0–100), **level** (Hostile/Neutral/Friendly/Allied), **sinceTurn**, **lastInteractionTurn**, and **relationState** (AT_PEACE/AT_WAR). Stored in world state; serialized in save/load. Relation level derived from score using thresholds (0–25, 26–50, 51–75, 76–100).
+**Relation record** (per faction-pair): score (int 0–100), level (enum: Hostile, Neutral, Friendly, Allied — derived from score per game thresholds), sinceTurn (int), lastInteractionTurn (int), relationState (enum: AT_PEACE, AT_WAR). Stored in world state; serialized in save/load.
 
----
-
-## Overture state machine
-
-Per Minor/Tribe per GP: current **overture stage** (none, Trade Consulate, Embassy, Non-Aggression Pact, Join Empire/Colony). **Costs and turn delays:** Consulate and Embassy have fixed costs (e.g. £500, £1000) and complete the turn after payment. **Advancement:** Each step requires the previous; Join Empire/Colony resolution depends on relation check (and optionally RNG or threshold). State is stored in world state and save/load.
+**Overture state** (per Minor/Tribe per GP): current stage (none, TradeConsulate, Embassy, NAP, JoinEmpire/Colony). Costs and turn delays per game rules. Stored in world state; serialized in save/load.
 
 ---
 
-## Diplomatic order types
+## Algorithm / Flow
 
-- **DeclareWarOrder** — target faction; valid if AT_PEACE.
-- **OfferPeaceOrder** — target faction; valid if AT_WAR.
-- **AllianceOrder** — target GP; propose, accept, or refuse; validation per diplomacy.md.
-- **EstablishOvertureOrder** — target Minor/Tribe, overture type (Consulate, Embassy, NAP, Join Empire); valid if previous step achieved and cost/turn conditions met.
-- **GrantAidOrder** — target faction, amount; valid if Embassy with target; deducts from treasury.
-- **SetSubsidyOrder** — target, amount or percentage; trade policy; valid where consulate/embassy exists.
+Diplomacy phase runs before Movement. Resolution steps in order:
 
-Validation preconditions for each type are enforced by the order engine and at resolution.
-
----
-
-## Diplomacy phase resolution order
-
-The Diplomacy phase runs **before** Movement in the turn sequence. Steps (in order):
-
-1. **Process overture payments** — Consulate, Embassy; deduct treasury; advance state when paid.
-2. **Advance in-progress overtures** — Turn delays and completion.
-3. **Resolve Join Empire/Colony** — For each request, check relation score (and threshold/RNG); apply absorption or colony creation per diplomacy.md.
-4. **Process alliance proposals and responses** — Apply accept/refuse; update alliance state; apply refusal penalties.
+1. **Process overture payments** — For Consulate/Embassy orders: validate treasury, deduct cost, advance overture stage.
+2. **Advance in-progress overtures** — Apply turn delays; mark completed.
+3. **Resolve Join Empire/Colony** — Check relation score threshold per game rules; apply absorption (GP target) or colony creation (Tribe target).
+4. **Process alliance proposals** — Apply accept/refuse; update alliance state; apply refusal relation penalties per game rules.
 5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn.
-6. **Apply relation modifiers** — From trade, grants, war, broken treaties (see GDD 07 modifier table).
-7. **Update relation scores** — Recompute scores from modifiers; clamp 0–100; update level.
+6. **Apply relation modifiers** — From trade, grants, war, broken treaties per game rules.
+7. **Update relation scores** — Recompute from modifiers; clamp 0–100; derive level.
 
-TurnResolver calls the diplomacy resolver in the Diplomacy phase (phase 1 or as defined in turn-resolution-phases).
+**Order validation:** Each diplomatic order type (see game/diplomacy.md § Diplomatic Order Types) is validated by the order engine — preconditions (AT_PEACE/AT_WAR, overture stage, treasury) checked at submission and again at resolution.
 
 ---
 
 ## Integration
 
-**Economy:** GrantAid deducts treasury. Trade agreement slots gated by embassy level (per economy spec). War terminates all trade agreements with the target.
+| Aspect | Detail |
+|---|---|
+| Phase | Diplomacy (before Movement) |
+| Upstream | Player orders, world state (relations, overtures, treasury) |
+| Downstream | Relation state → combat/movement validation; AI evidence/dossier pipeline |
 
-**Combat/movement validation:** Before move or combat, check AT_WAR for Minor targets; for Tribe targets, no war check unless the province has another GP's investment (then check AT_WAR with that GP). Order engine and TurnResolver enforce these checks.
+**Economy:** GrantAid deducts treasury. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
 
-**AI events and evidence:** When AI (or any faction) performs diplomatic actions (declare war, peace, alliances, overtures), resolution may feed into AI **evidence** and **dialogue event** pipelines for hidden-agenda discovery and dossier updates. See [ai-events-and-dossier.md](ai-events-and-dossier.md) and [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
+**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver.
+
+**AI:** Diplomatic actions feed into AI evidence and dialogue event pipelines for hidden-agenda discovery. See [ai-events-and-dossier.md](ai-events-and-dossier.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
+
+---
+
+## Constraints
+
+- All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
+- Resolution order is strict (steps 1–7); reordering may break precondition checks.
+- Overture stage transitions are linear; no stage may be skipped.

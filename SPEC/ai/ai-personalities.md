@@ -1,6 +1,6 @@
 # AI Personalities (Phase 6)
 
-**SPEC/ai** — Leader-specific behavior config for MVP. Source: GDD 10a. Implementation: personality data in colonizethis_data; application in [ai-architecture.md](ai-architecture.md).
+**SPEC/ai** — Leader-specific behavior config for MVP. Source: GDD 10a. Application: [ai-architecture.md](ai-architecture.md).
 
 ---
 
@@ -11,7 +11,7 @@ Each Great Power has a **leader** (e.g. Victoria, Napoleon, Isabella). The leade
 - **Goal selection** — Behavior tree prefers strategies that match the personality (e.g. Napoleon → conquer/fortify; Victoria → trade/alliances).
 - **Utility scoring** — Domain planners weight candidates by personality (e.g. Isabella → high weight for exploration and gold provinces; Henry → high weight for trade and subsidies).
 
-Personalities are **config data** (colonizethis_data): read-only once the game is created. No mid-game change.
+Personalities are **config data**: read-only once the game is created. No mid-game change.
 
 ---
 
@@ -41,7 +41,7 @@ Each personality defines **domain weights** (economy, military, diplomacy, resea
 - **defender:** military high (defensive), economy low, diplomacy medium.
 - **tactician:** military high (combined arms), economy medium, diplomacy medium.
 
-Exact numbers live in colonizethis_data; SPEC does not mandate values, only that each leader has a defined vector and that it biases goal selection and utility scores.
+Exact numbers live in config data; SPEC does not mandate values, only that each leader has a defined vector and that it biases goal selection and utility scores.
 
 ---
 
@@ -54,7 +54,7 @@ Personality also adjusts **thresholds** used by planners:
 - **Alliance tendency** — Likelihood to accept/offer alliances and maintain them (Victoria high, Napoleon low).
 - **Research preference** — Weights per tech category (naval, military, economic, exploration) so that e.g. Isabella favors exploration techs.
 
-These are applied in colonizethis_ai when scoring actions (e.g. declare war, accept peace, choose research slot). Combined with hidden agenda modifiers (see [hidden-agendas.md](hidden-agendas.md)).
+These are applied when scoring actions (e.g. declare war, accept peace, choose research slot). Combined with hidden agenda modifiers (see [hidden-agendas.md](hidden-agendas.md)).
 
 ---
 

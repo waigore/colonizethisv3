@@ -1,6 +1,6 @@
 # Resource–Terrain–Region Rules
 
-**SPEC/game** — Canonical table for extractable resources, allowed regions, terrain types, and spawn weights. Source: Imperialism II Terrain and Development table (03-units-civilian). Implementation: colonizethis_data `ResourceRules.defaultRules`.
+**SPEC/game** — Canonical table for extractable resources, allowed regions, terrain types, and spawn weights. Source: Imperialism II Terrain and Development table (03-units-civilian).
 
 ---
 
@@ -43,4 +43,4 @@ On each map (oldWorld and newWorld), at most 30% of placed resources may be mult
 
 - **Fish:** Water tiles only. Pass 7 assigns resources to land cells only. Fish is future scope (water-resource pass or separate handling).
 - **Diamonds:** Imperialism II has Desert terrain; current TerrainType has no Desert. Diamonds use swamp as proxy until Desert terrain exists.
-- **Riches:** silver, gold, gems, diamonds, spices align with riches-to-treasury base prices (riches_prices.dart).
+- **Riches:** silver, gold, gems, diamonds, spices align with riches-to-treasury base prices (defined in ruleset config).

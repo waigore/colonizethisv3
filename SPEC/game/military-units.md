@@ -1,6 +1,6 @@
 # Military Units (Land)
 
-**SPEC/game** — Full Imperialism II regiment roster. Tactical stats for combat. Reference: Imperialism II 05-units-military. Combat: [combat.md](combat.md). Siege: [siege-mechanics.md](siege-mechanics.md). Unit overview: [unit-types.md](unit-types.md).
+**SPEC/game** — Full Imperialism II regiment roster. Tactical stats for combat. Reference: Imperialism II 05-units-military. Combat: [combat.md](combat.md). Siege: [siege-mechanics.md](siege-mechanics.md). Civilian units: [civilian-units.md](civilian-units.md). Naval: [ships-and-naval.md](ships-and-naval.md). Generals and armies: [military-generals.md](military-generals.md).
 
 ---
 
@@ -8,9 +8,9 @@
 
 Land military forces consist of **regiments** and **generals**. Regiments are organized into 8 categories across 4 eras. Each regiment has tactical stats (FPN, FPM, RNG, DEF, MVR) used for auto-resolve and Quick Battle. Tech unlocks determine which types a Great Power can build; older types are replaced within their category.
 
-**Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md) and [tech-tree-catalog.md](tech-tree-catalog.md)). There is **no era gate**: if the unlocking tech is in the player’s techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
+**Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md)). There is **no era gate**: if the unlocking tech is in the player's techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
 
-**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each Minor Nation and Tribe’s `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase (see [factions.md](factions.md)).
+**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each Minor Nation and Tribe's `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase (see [factions.md](factions.md)).
 
 ---
 
@@ -24,7 +24,7 @@ Land military forces consist of **regiments** and **generals**. Regiments are or
 | **DEF (Defence)** | Durability; effect ∝ DEF/9. |
 | **MVR (Movement)** | Tactical movement per turn. |
 
-Stats live in colonizethis_data per [ruleset-config.md](ruleset-config.md). Experience (medals 0–4) multiplies FPN and FPM: 1.0, 1.1, 1.2, 1.3, 1.4.
+Stats are configurable per [ruleset-config.md](ruleset-config.md). Experience (medals 0-4) multiplies FPN and FPM: 1.0, 1.1, 1.2, 1.3, 1.4.
 
 ---
 
@@ -63,34 +63,3 @@ Stats live in colonizethis_data per [ruleset-config.md](ruleset-config.md). Expe
 | Siege Guns | 17 | 2 | 12 | 3 | 3 | Heavy Artillery | 4 |
 
 Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
-
----
-
-## Regiment Economy (Training & Upkeep)
-
-Each regiment type has **training cost** and **food upkeep** defined in program-level config (`colonizethis_data`), keyed by the regiment id used in [combat_config.dart](../..//packages/colonizethis_data/lib/src/combat_config.dart):
-
-- **Training cost:** `treasuryCost` (cash) **+ material inputs** (commodities such as fabric, castIron, lumber, steel, bronze) **+ one worker** consumed from the player's `WorkerPool` at construction time. Cavalry and artillery generally cost more cash and metal than line infantry; late‑era and elite regiments (e.g. Guards, Siege Guns) are the most expensive.
-- **Upkeep (food):** per‑turn food demand per regiment, expressed as **food units/turn** and consumed during the Consumption phase. Light infantry and early‑era units have lower upkeep; cavalry and artillery, and late‑era elites, have higher upkeep.
-
-Exact per‑regiment values live in the regiment economy catalog in `colonizethis_data` and follow the same era/category progression as the tactical stats table above.
-
----
-
-## Generals
-
-Generals are the **heads of armies**. An army is a group of regiments led by exactly one general; armies that participate in combat always have a general attached (**no general = no army** for field forces). Generals are limited by era‑based caps (see GDD 05), and determine how many armies a faction can field.
-
-Each general has **medals** (0–4), earned through successful battles (see [combat.md](combat.md)). General medals represent experience and rank. Effects:
-
-- **Deployment:** +1 regiment per general medal to the battle deployment limit (base 10; Nationalism tech → 12).
-- **Morale aura:** Regiments in the general’s army receive a morale/strength bonus that scales with general medals (configurable percent per medal).
-- **Initiative:** Army initiative rating increases with general medals and cavalry share; higher‑medal generals tend to act earlier in multi‑attacker chains.
-
----
-
-## Armies and Movement
-
-- **Army definition:** An army is a set of regiments in a province led by exactly one general. Units are always part of armies; armies are always headed by a general. Implementation: armies are inferred by grouping units in a province by owner and matching to a general in that province (`General.provinceId`; units in `RegionData.units` by `provinceId`).
-- **Location invariant:** Armies are always located in a province. A player's armies must always be located within provinces they own. When at peace, a player's units remain in their owned provinces.
-- **Movement into non-owned province:** Moving an army into a province the player does not own is an act of war. War declaration is triggered during turn resolution (Diplomacy phase) before Movement; the combat and province-flip logic then applies when units enter enemy-held territory. See [combat.md](combat.md) and [movement.md](../program/movement.md).

@@ -1,102 +1,53 @@
 # sim_game — Full Game Simulation Mode
 
-**SPEC/program** — Dev-only simulation mode that runs a full game forward from an `init_game` result inside **ctdev**. Uses the Phase 2+3 turn resolver (including Combat phase) to demonstrate economy, movement, build/work, and combat under a simple default AI. Entry point and UI are defined in [ctdev-app.md](ctdev-app.md). References: [turn-resolution-phases.md](turn-resolution-phases.md), [combat.md](../game/combat.md), [combat-resolution.md](combat-resolution.md), [factions.md](../game/factions.md), [game-setup-pipeline.md](game-setup-pipeline.md), [turn-time-mapping.md](../game/turn-time-mapping.md), [sim-game-default-ai.md](sim-game-default-ai.md).
+**SPEC/program** — Dev-only simulation mode in ctdev that runs a full game forward from an `init_game` result. References: [ctdev-app-running-game.md](ctdev-app-running-game.md), [turn-resolution-phases.md](turn-resolution-phases.md), [sim-game-default-ai.md](sim-game-default-ai.md).
 
 ---
 
-## Purpose and Scope
+## Responsibility
 
-- **Purpose:** Deterministically simulate a complete game from an `init_game`-generated state inside ctdev. After Start Game, ctdev navigates to the **Running Game Screen** (see [ctdev-app.md](ctdev-app.md)). Used to verify that implemented systems (extraction, production, consumption, movement, combat, build/work) behave correctly over many turns under a simple, reproducible AI.
-- **Scope:** Seven Great Powers (GPs) submit orders only; optional Minor Nations and Tribes may own provinces and defend. No Phase 4 diplomacy or AI. Combat triggers when a GP's MoveOrder targets an enemy province ([combat.md](../game/combat.md)); Combat phase runs after Movement per [turn-resolution-phases.md](turn-resolution-phases.md).
-- **Owner:** Program layer (ctdev + colonizethis_logic). sim_game is **not** a standalone CLI; it is a mode within ctdev that wraps colonizethis_logic (resolveTurnForGame including Combat phase), colonizethis_data (topology, combat config), and colonizethis_models (Game, WorldState, factions). See [repo-and-packages.md](repo-and-packages.md).
-
----
-
-## Entry Point and Lifecycle
-
-- **Start from Init Game:** sim_game always starts from a `Game` produced by the **Init Game** flow:
-  - User runs init game inside ctdev (see [ctdev-app.md](ctdev-app.md)) and lands on the Init Game Map Debug Screen with an `InitGameResult`.
-  - When the user is satisfied with the map and setup, they press **Start Game**.
-- **Game construction:** On Start Game:
-  - ctdev takes `InitGameResult.game` as the initial `Game` for simulation.
-  - It also captures the `MapTopology` and any tile-map data needed by `resolveTurnForGame`.
-  - A deterministic `baseSeed` is chosen (from the init seed or a UI field) for the default AI.
-- **Running Game Screen:** After Start Game, ctdev navigates to the **Running Game Screen** (separate route):
-  - The Sim Game controller and `Game` live in that screen's state.
-  - A persistent control bar (Next Player, Resolve Turn, Next Turn, Fast-forward 10) allows the user to advance the game.
-  - Tabbed content (Map, Game Overview, per-player tabs) displays running world state.
-  - sim_game keeps the `Game` in memory and may optionally save debug snapshots to disk.
+Deterministically simulate a complete game inside ctdev. Verifies that economy, movement, combat, and build/work behave correctly over many turns under a reproducible AI.
 
 ---
 
 ## Initial State
 
-- **Source:** sim_game never builds its own map. The initial `Game` **must** come from an `init_game` run (either just executed in ctdev or loaded from a save created by `tool/init_game`).
-- **Requirements:** The incoming `Game`:
-  - Contains 7 Great Powers and any configured Minor Nations and Tribes.
-  - Embeds or references the map topology and tile state required by `resolveTurnForGame`.
-  - Uses Phase 2+3 rules for economy, movement, and combat.
-- **Determinism:** Given the same initial `Game` and the same `baseSeed`, sim_game must produce the same sequence of states for a given sequence of user actions (which mode button is pressed and when).
+sim_game never builds its own map. The initial `Game` must come from an `init_game` run. Requirements: 6 Great Powers, configured Minors/Tribes, map topology and tile state embedded. Given the same initial Game and baseSeed, produces the same sequence of states.
 
 ---
 
-## Simulation Modes and Turn Loop
+## Simulation Modes
 
-Only Great Powers submit orders ([factions.md](../game/factions.md)). In sim_game **all** Great Powers are simulated; there are no human players. The chosen AI (Sim Game AI or AI Planner, minimal/full) is used for **every** GP. Each mode uses the same underlying pieces:
+All GPs are AI-controlled; no human players. The user selects either **Sim Game AI** ([sim-game-default-ai.md](sim-game-default-ai.md)) or **AI Planner** ([ai-planner.md](ai-planner.md)) for order generation.
 
-- **Sim Game AI:** When selected, per-GP behaviour is defined in [sim-game-default-ai.md](sim-game-default-ai.md). It is a deterministic function that, given `(Game, Player, turnNumber, baseSeed)`, returns an `Orders` object for that player only. When **AI Planner** is selected, AIPlanner (or full AI) is used for each GP instead.
-- **Turn resolver:** All modes call the existing Phase 3 `resolveTurnForGame` (full sequence including Movement → Combat → Build/work) with combined per-player orders and the captured topology/tile-map data.
+| Mode | Behavior |
+|---|---|
+| **Player-by-player** | Next Player generates one GP's orders at a time; Resolve Turn after all GPs have orders |
+| **Turn-by-turn** | One click generates all GP orders and resolves one full turn |
+| **Fast-forward 10** | Runs 10 full turns, shows aggregated summary |
 
-### Player-by-player mode
-
-- **Intent:** Let the developer watch each Great Power’s automaton choose orders one at a time before resolving the turn.
-- **Loop (per turn):**
-  1. Maintain an in-memory map `ordersByPlayerId`.
-  2. When the user presses **Next Player**, pick the next GP without orders (fixed ordering by `Game.players` index or id).
-  3. Call the **selected** AI (Sim Game AI or AI Planner) once for that player to produce `Orders` for the current turn.
-  4. Show a short summary of that player’s orders in the Sim Game panel.
-  5. After all GPs have orders, enable a **Resolve Turn** action that:
-     - Combines `ordersByPlayerId` into a single `Orders` value.
-     - Calls `resolveTurnForGame`.
-     - Updates the stored `Game` and clears `ordersByPlayerId` for the next turn.
-
-### Turn-by-turn mode
-
-- **Intent:** One click advances the game by exactly one full turn for all players.
-- **Loop (per turn):**
-  1. On **Next Turn**, for each Great Power in fixed order:
-     - Call the **selected** AI (Sim Game AI or AI Planner) to obtain that player’s `Orders` for this turn.
-  2. Combine all per-player orders into a single `Orders`.
-  3. Call `resolveTurnForGame` once.
-  4. Update the stored `Game` and refresh the map and per-turn summary (e.g. combat events and province flips).
-
-### Fast-forward 10 turns
-
-- **Intent:** Advance the simulation quickly over a small horizon to see macro effects.
-- **Loop:**
-  1. On **Fast-forward 10**, ctdev runs a loop for 10 iterations:
-     - For each iteration, generate orders for all GPs via the selected AI as in Turn-by-turn mode.
-     - Call `resolveTurnForGame` once.
-     - Optionally accumulate a compact log (e.g. battle count, province flips, stockpile summaries).
-  2. After the loop:
-     - Present the final `Game` state on the map.
-     - Show an aggregated summary for the 10-turn window.
-- **UX:** While the loop runs, ctdev displays a simple progress indicator (e.g. “Simulating 7/10 turns…”). Intermediate map redraws are optional.
+All modes call `resolveTurnForGame` (full phase sequence including Combat) with combined per-player orders.
 
 ---
 
-## Output and Instrumentation
+## Turn Loop
 
-- **In-UI summary:** After each resolved turn (or batch for fast-forward), sim_game surfaces:
-  - Turn number and calendar year (if [turn-time-mapping.md](../game/turn-time-mapping.md) is in use).
-  - Key combat events: province id, attacker, defender, casualties, province flips.
-  - Optional high-level metrics (e.g. province counts per GP, notable stockpile deltas).
-- **Optional debug logs:** Implementations may offer a “Save sim log” action that writes a Markdown or JSON summary of the current sim run to disk, but this is not required for sim_game’s core functionality.
+1. For each GP in fixed order, call the selected AI to produce `Orders`.
+2. Combine all per-player orders.
+3. Call `resolveTurnForGame` once.
+4. Update stored `Game`; refresh map and summary.
+
+Player-by-player pauses after step 1 per GP; fast-forward loops steps 1-4 ten times.
 
 ---
 
-## References
+## Output
 
-- [sim-economy.md](sim-economy.md) — Single-player economy tool; sim_game reuses economy phase semantics and may reuse default extraction/assignment patterns.
-- [init-game-tool.md](init-game-tool.md) — Game creation; sim_game always starts from an init_game-produced Game (either created by ctdev or by the CLI and loaded into ctdev).
-- [orders.md](orders.md), [movement.md](movement.md) — MoveOrder into enemy province = attack.
+After each resolved turn: turn number, calendar year (if [turn-time-mapping.md](../game/turn-time-mapping.md) in use), combat events (province, attacker, defender, casualties, flips), and optional metrics (province counts, stockpile deltas).
+
+---
+
+## Integration
+
+- Entry: ctdev Running Game screen (see [ctdev-app-running-game.md](ctdev-app-running-game.md))
+- Depends on: [game-setup-pipeline.md](game-setup-pipeline.md) for init, [order-engine.md](order-engine.md) for validation

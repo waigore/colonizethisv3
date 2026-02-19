@@ -40,7 +40,7 @@ All design deliverables must accord with **GDD 06**. Each Phase 3 SPEC sub-doc m
 | **sim_combat design** | CLI tool that runs combat resolver on scripted scenarios; inputs (unit compositions, province, fort level, terrain); output winner, casualties, optional log. | [sim-combat.md](../program/sim-combat.md) (≤500 words). |
 | **sim_game design** (optional) | Specify CLI tool that runs full game simulation; deterministic default AI; full Phase 3 turn sequence; initial state from file or procedural; output report and optional JSON log. | [sim-game.md](../program/sim-game.md), [sim-game-default-ai.md](../program/sim-game-default-ai.md) (each ≤500 words). |
 
-**Existing specs to align:** [unit-types.md](../game/unit-types.md) (full military roster per military-units), [movement.md](../program/movement.md), [orders.md](../program/orders.md) — MoveOrder into enemy province = attack. [ruleset-config.md](../game/ruleset-config.md) — combat parameter group (tactical stats, terrain, fort, initiative, medals).
+**Existing specs to align:** [military-units.md](../game/military-units.md) (full military roster), [civilian-units.md](../game/civilian-units.md), [movement.md](../program/movement.md), [orders.md](../program/orders.md) — MoveOrder into enemy province = attack. [ruleset-config.md](../game/ruleset-config.md) — combat parameter group (tactical stats, terrain, fort, initiative, medals).
 
 ---
 
@@ -134,7 +134,7 @@ Phase 3 is done when all design and dev tasks are implemented, all test tasks pa
 - [mvp-scope.md](mvp-scope.md) — Phase 3 row: combat, full military roster, tactical stats, initiative, siege, sim_combat.
 - [phase-2-project-tasks.md](phase-2-project-tasks.md) — Previous phase; movement and orders.
 - [SPEC/game/factions.md](../game/factions.md) — Who initiates/defends; minor military parity.
-- [SPEC/game/unit-types.md](../game/unit-types.md), [military-units.md](../game/military-units.md) — Full military roster and tactical stats.
+- [SPEC/game/military-units.md](../game/military-units.md), [civilian-units.md](../game/civilian-units.md) — Full military roster and tactical stats; civilian units.
 - [SPEC/game/siege-mechanics.md](../game/siege-mechanics.md) — Fort structure, wall protection, emplaced artillery.
 - [SPEC/game/ruleset-config.md](../game/ruleset-config.md) — Combat parameter group.
 - [SPEC/program/turn-resolution.md](../program/turn-resolution.md), [turn-resolution-phases.md](../program/turn-resolution-phases.md) — Phase sequence and Combat phase.

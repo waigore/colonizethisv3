@@ -1,6 +1,6 @@
 # Tech Tree — Naval (Merchant and Warships)
 
-**SPEC/game** — Ship type unlocks. Reference: Imperialism II 08-technology (Naval). Overview: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md). Navy (ships, naval movement, ship reveal) in Phase 5 per [ships-and-naval.md](ships-and-naval.md); full naval combat may be minimal stub.
+**SPEC/game** — Ship type unlocks. Reference: Imperialism II 08-technology (Naval). Overview: [tech-tree.md](tech-tree.md). Navy (ships, naval movement, ship reveal) in Phase 5 per [ships-and-naval.md](ships-and-naval.md); full naval combat may be minimal stub.
 
 ---
 

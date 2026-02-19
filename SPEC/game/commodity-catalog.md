@@ -27,13 +27,13 @@ Ids are stable strings or enum values (e.g. `grain`, `castIron`). Implementation
 
 ## Riches and treasury
 
-Riches (gold, silver, gems, diamonds, spices) convert to treasury each turn in a dedicated phase after extraction. Per-unit base price: spices fixed at 50 (Imperialism II); other riches have base price inversely related to scarcity (spawn weight). Implementation: colonizethis_data defines spawn weights and base prices; colonizethis_logic applies them in the riches-to-treasury phase.
+Riches (gold, silver, gems, diamonds, spices) convert to treasury each turn in a dedicated phase after extraction. Per-unit base price: spices fixed at 50 (Imperialism II); other riches have base price inversely related to scarcity (spawn weight). Spawn weights and base prices are defined in ruleset config; riches-to-treasury phase applies them.
 
 ---
 
 ## Where Stored
 
-The **commodity catalog** (id list, category per commodity, default price for spawn-weight and market) lives in **colonizethis_data** as program-level constants. No JSON rulesets in MVP; single source. colonizethis_logic and colonizethis_ai consume this via resolved config at game load.
+The **commodity catalog** (id list, category per commodity, default price for spawn-weight and market) is defined in ruleset config (program-level constants in MVP; no JSON rulesets).
 
 ---
 

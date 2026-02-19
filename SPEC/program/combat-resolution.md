@@ -1,118 +1,80 @@
 # Combat Resolution
 
-**SPEC/program** — Conflict detection and auto-resolve pipeline. Reference: [combat.md](../game/combat.md), [military-units.md](../game/military-units.md), [siege-mechanics.md](../game/siege-mechanics.md), [turn-resolution-phases.md](turn-resolution-phases.md), [movement.md](movement.md).
+## Responsibility
 
----
+Conflict detection, auto-resolve pipeline, and application of combat outcomes to world state during the Combat phase.
 
-## Battle Model
+## Data Model
 
-Combat is orchestrated around a **battle context per province**.
+**BattleContext:** Province id, defender side (faction id + unit ids), list of attacking sides (each: faction id + unit ids + optional general id), battle type (field / siege), province terrain and fort level snapshot.
 
-- **BattleContext:** province id, defender side (owner faction id + unit ids), list of **attacking sides** (one per attacking army: faction id + unit ids + optional general id), battle type (field or siege), snapshot of province terrain and fort level.
-- Within a BattleContext, the defender may fight multiple attacking sides in sequence (multi‑attacker chain; see [combat.md](../game/combat.md)).
+**EngagementResult:** Winner side (attacker / defender / stalemate / mutual annihilation), casualty unit ids per side.
 
----
+## Algorithm / Flow
 
-## Conflict Detection
+### 1. Conflict Detection
 
-**Input:** WorldState after the movement phase (unit locations updated; movement orders applied).
+**Input:** World state after the Movement phase (unit locations updated).
 
-**Logic:** For each province that has at least one unit:
+For each province with units from multiple factions:
 
-1. Group units by faction id.
-2. Determine **defender**: province owner if any; otherwise the faction that did **not** move in this turn (tie‑break by lowest faction id if both moved). Defender side = defender faction id + all of its units in the province.
-3. Determine **attackers:** for each Great Power that moved units into the province this turn (based on MoveOrders), construct an attacking side = faction id + just the units that moved in (or that are assigned to its army).
-4. If there is at least one attacking side and a defender side, create one BattleContext for the province containing defender + list of attackers.
+1. Group units by faction.
+2. Determine defender and attacker sides per game/combat.md § Rules (Attacker / Defender).
+3. If ≥ 1 attacker and a defender exist, create a BattleContext.
 
-**Output:** A list of BattleContexts, one per contested province. Global ordering between provinces can be by province id; ordering of attackers **within** a BattleContext is handled by initiative (below).
+**Output:** List of BattleContexts, ordered deterministically by province id.
 
----
+### 2. Initiative Ordering
 
-## Initiative and Ordering
+Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending; tie-break by faction id.
 
-For each attacking side in a BattleContext, compute an **army initiative score**:
+### 3. Per-Engagement Resolver
 
-- Inputs: unit composition (e.g. cavalry share), attached general medals, difficulty modifiers.
-- Implementation: weighted sum defined in colonizethis_data (see [combat.md](../game/combat.md)).
+**Input:** One attacker side, current defender side, province snapshot, ruleset config, optional RNG seed.
 
-Within a BattleContext:
+Steps:
 
-1. Sort attacking sides by initiative (descending); break ties by faction id for determinism.
-2. Use this ordered list to drive the **resolution chain** (defender vs highest‑initiative attacker first, then winner vs next attacker, etc.).
+1. Aggregate strength per side per game/combat.md § Rules (Strength).
+2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
+3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
+4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers).
+5. Compute winner and casualties. Pure function; no side effects.
 
----
+**Output:** EngagementResult.
 
-## Combat Resolver (Per Engagement)
+### 4. Resolution Chain
 
-**Input:** One engagement between a single attacking side and the current defender side: attacker faction id + unit ids (with type and medals), defender faction id + unit ids, province snapshot (fort level, terrain), game config (tactical stats per regiment type, terrain/fort/difficulty modifiers from colonizethis_data), and optional RNG/seed.
+Per BattleContext:
 
-**Steps:**
+1. Maintain mutable views of defender and attacker unit lists.
+2. Iterate attackers in initiative order:
+   - Run per-engagement resolver.
+   - Apply casualties to local views.
+   - Interpret outcome per game/combat.md § Rules (Outcomes).
+   - On mutual annihilation with remaining attackers: recover garrison per game/combat.md § Configurable Values (Recovery %).
+3. After chain completes, apply to world state in a single pass:
+   - Remove casualty units.
+   - Flip province ownership if defender eliminated per game/combat.md § Rules (Province Flip).
 
-1. **Aggregate strength:** For each side, compute effective strength from **tactical stats** (FPN, FPM) per unit type and **medals** (multiplier 1.0–1.4) per [military-units.md](../game/military-units.md). Blend ranged (FPN) and melee (FPM) per formula. If defender is Minor Nation or Tribe, use **minor military parity**: defender stats are interpreted at the faction’s `effectiveMilitaryLevel` (see [factions.md](../game/factions.md)).
-2. **Siege modifiers:** If province has fort (level 1–3), apply wall protection and emplaced artillery contribution per [siege-mechanics.md](../game/siege-mechanics.md).
-3. **Apply modifiers:** Apply terrain and difficulty modifiers to attacker and/or defender strength per [combat.md](../game/combat.md).
-4. **Run formula:** Compute winner and casualties per side (how many units removed, or which units). Deterministic given inputs (including RNG seed, if any).
-5. **Output:** Engagement result: winner side (attacker, defender, mutual annihilation, or stalemate) plus casualty unit ids for both sides.
+### 5. Probabilistic Resolver (Simulation Only)
 
-The resolver itself does **not** flip provinces or advance the attacker chain; it is a pure function used by the BattleContext orchestrator.
+Separate resolver for simulation and Monte Carlo analysis; **not** used in the main game loop.
 
----
+- Up to 5 rounds per engagement.
+- Hit probability: `P_a = E_a / (E_a + E_d)`, clamped to [0.15, 0.85].
+- Expected casualties: `λ = k × P` (k = 1.0), sampled from Poisson(λ), capped by remaining units.
+- Casualty selection: strength-weighted (weight ∝ 1 / (strength + 0.1)).
+- Deterministic given same seed.
 
-## Resolution Chain and Application
+## Integration
 
-For each BattleContext:
+- **Phase:** Combat phase, after Movement.
+- **Upstream:** Movement phase (unit positions), ruleset config (tactical stats, modifiers).
+- **Downstream:** Province ownership updates, unit removal; connectivity and extraction recompute next turn.
 
-1. Keep local, mutable views of defender units and each attacking side’s units.
-2. Iterate over attacking sides in initiative order:
-   - Run the **per‑engagement resolver** between current defender and current attacker.
-   - Apply casualties to the local views only.
-   - Interpret the result per [combat.md](../game/combat.md) *Battle Outcomes*:
-     - **Attacker victory:** defender units empty, attacker retains survivors.
-     - **Defender victory:** attacker units empty, defender retains survivors.
-     - **Stalemate:** both sides keep survivors; province owner unchanged.
-     - **Mutual annihilation:** both sides empty.
-   - If mutual annihilation occurs and there are **further attackers** left in this BattleContext:
-     - Compute `recoverCount = ceil(initialDefenderUnitCount * 0.2)`.
-     - Recreate a small defending garrison of `recoverCount` units using the province owner’s current regiment templates (at their effective military level); this represents rapid local reconstitution before the next attacker arrives.
-3. Stop when there are no attackers left or no defender units remain.
-4. After the chain completes, apply results to WorldState in a single pass:
-   - Remove all units marked as casualties across all engagements.
-   - If the **final defender** has no units and the province previously had an owner, flip `province.ownerId` to the surviving attacking faction (if any) per [combat.md](../game/combat.md) *Province Flip*.
+## Constraints
 
-Battles in different provinces are independent; TurnResolver may process BattleContexts in any deterministic order (e.g. by province id).
-
----
-
-## Minor Military Parity
-
-When the defender is a Minor Nation or Tribe, the **parity step** (see [factions.md](../game/factions.md)) must have run earlier in the **Combat phase**. The combat resolver and BattleContext orchestrator read the faction’s stored `effectiveMilitaryLevel` and treat defender stats, regiment templates, and any recovered garrison units as being at that level. Owner: colonizethis_logic; parity computation and storage in colonizethis_models / colonizethis_logic.
-
----
-
-## Probabilistic Engagement (Simulation)
-
-A separate **probabilistic** resolver is used by `sim_combat` and `sim_combat_montecarlo` for simulation and analysis. The main game uses the **deterministic** resolver above; `resolveBattleContext` is unchanged.
-
-The probabilistic resolver:
-
-- **Rounds:** Up to 5 rounds per engagement.
-- **Hit probabilities:** P(attacker hits) = E_a / (E_a + E_d), P(defender hits) = E_d / (E_a + E_d), clamped to [0.15, 0.85].
-- **Expected casualties:** λ_defender = k × P_a, λ_attacker = k × P_d (k = 1.0).
-- **Sampling:** Actual casualties per round sampled from Poisson(λ), capped by remaining units.
-- **Casualty selection:** Strength-weighted; stronger units less likely to be chosen (weight ∝ 1 / (strength + 0.1)).
-- **Determinism:** Same seed and inputs produce identical outcome.
-
----
-
-## Determinism and RNG
-
-The combat resolver must be **deterministic given its inputs**:
-
-- If no randomness is used, the formula is pure: same attacker/defender inputs → same outcome.
-- If randomness is desired (e.g. later phases), callers provide an explicit RNG/seed; the resolver must not access global RNG state. Given the same seed and inputs, results must be reproducible (needed for `sim_combat` and replays).
-
----
-
-## Owner
-
-colonizethis_logic owns conflict detection, combat resolver, and application of results within the Combat phase.
+- Resolver is a pure function: same inputs (including seed) → same output.
+- No global RNG access; callers provide explicit seed when randomness is needed.
+- Province battles are independent; processing order is deterministic (province id).
+- Results applied in a single pass after full chain resolution per BattleContext.

@@ -12,7 +12,7 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 
 ## Great Power
 
-- **Count:** Configurable per game (default 7). Human players only ever play Great Powers.
+- **Count:** Configurable per game (default 6). Human players only ever play Great Powers.
 - **Can:** Win the game; submit all orders (movement, build, research, diplomacy, trade, etc.); initiate attacks; conduct great-power diplomacy (e.g. absorb Minor Nations and Tribes); expand territory; own provinces in Old World and New World; have capital (set in capital-choice phase), stockpile, workers, military, navy; research technology.
 - **Cannot:** (Nothing within the rules.)
 - **Capital:** Chosen in capital-choice phase (sea-bound province + tile). See [capital-choice-phase.md](capital-choice-phase.md).
@@ -26,9 +26,11 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 - **Cannot:** Win the game; submit orders; initiate attacks or declare war; build units or research (no order phase); own ships (no navy).
 - **Capital:** Assigned during game setup (any owned province; sea-bound not required), not by player choice.
 
-**Minor military parity:** Old World minor nations are difficult to conquer and automatically keep pace with the most advanced Great Power. Define a global **military level** \(1–4\) as the highest regiment era currently available to **any** Great Power (from [military-units.md](military-units.md) and tech). A minor nation’s **effective military level** is set to this maximum, not the average.
+**Minor military parity:** Old World minor nations are difficult to conquer and automatically keep pace with the most advanced Great Power. Define a global **military level** (1–4) as the highest regiment era currently available to **any** Great Power (from [military-units.md](military-units.md) and tech). A minor nation's **effective military level** is set to this maximum, not the average.
 
-**Implementation (Phase 3):** At the start of each Combat phase (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)), compute `maxGreatPowerMilitaryLevel` from all Great Powers. For every Minor Nation and Tribe, set `effectiveMilitaryLevel = maxGreatPowerMilitaryLevel`. Their **recruit templates** and **existing military unit categories** are treated as upgraded in-place to the best regiment type for that era and category (mirroring Imperialism II’s Army Book upgrades). The combat resolver reads `effectiveMilitaryLevel` and applies it when computing defender strength for minors/tribes. Serialize this field with the faction for save/load. Parity affects **defence and recruitment quality**, not army count caps or general bonuses.
+**Timing:** At the start of each Combat phase (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)), compute `maxGreatPowerMilitaryLevel` from all Great Powers. For every Minor Nation and Tribe, set `effectiveMilitaryLevel = maxGreatPowerMilitaryLevel`. The combat resolver reads this when computing defender strength. Parity affects **defence and recruitment quality**, not army count caps or general bonuses.
+
+> **REQUIRES CLARIFICATION:** How "upgraded in-place" works. Imp2 does not have minor parity upgrades. Specifically: (a) Do existing regiment units transform to higher-era equivalents within their category, or is only the combat stat lookup changed? (b) If units transform, what happens to partially damaged units? (c) Are recruit templates regenerated each Combat phase or cached?
 
 ---
 
@@ -53,4 +55,4 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 | Defend            | Yes         | Yes          | Yes    |
 | Provinces count to victory | OW yes | Yes (for controller) | No |
 
-Extraction and ownership apply per faction; only Great Powers have stockpiles and receive extraction in the economy phase. Minors and Tribes’ production may feed trade/market per economy spec.
+Extraction and ownership apply per faction; only Great Powers have stockpiles and receive extraction in the economy phase. Minors and Tribes' production may feed trade/market per economy spec.

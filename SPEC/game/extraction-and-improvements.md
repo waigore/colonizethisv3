@@ -1,33 +1,82 @@
 # Extraction and Improvements
 
-**SPEC/game** — Per-tile extraction and improvement types. Derived from GDD 04b. Tiles: [tile-map-and-generation.md](tile-map-and-generation.md). Stockpile flow: [stockpiles-and-production.md](stockpiles-and-production.md). Connectivity: [capital-and-connectivity.md](capital-and-connectivity.md).
+## Overview
+
+Per-tile resource extraction using improvements, constrained by tech level and transport infrastructure. Civilian work orders build improvements, roads, ports, and railroads.
 
 ---
 
-## Extraction Formula
+## Rules
 
-Each **land tile** in an owned province may have an **extraction improvement** (mine, farm, ranch, plantation, fur post, town, etc.) with an **improvement level** (e.g. 0–4). The tile has at most one **resource** (region- and terrain-constrained per GDD 04b). Full resource list and rules: [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
+### Extraction Formula
 
-**Production** = min(improvement level, owner's tech-allowed max level). **Effective yield** (per connected tile) = min(production, **transport level**). So first cap by tech, then by transport. Example: level 4 farm, tech cap 3, transport level 2 → 2 units per turn. The improvement remains level 4; conquest or tech/transport upgrade can allow more later.
+Each land tile in an owned province may have one extraction improvement (mine, farm, ranch, plantation, fur post, town, etc.) with an improvement level (0–4) and at most one resource (terrain-constrained per [resource-terrain-region-rules.md](resource-terrain-region-rules.md)).
 
-**Minerals require prospecting:** iron, copper, tin, coal, silver, gold, gems, diamonds. Extraction only from tiles that (a) are connected and (b) the player has prospected. Non-minerals (grain, meat, wool, etc.) do not require prospecting. See [fog-and-exploration.md](fog-and-exploration.md), [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
+**Production** = min(improvement level, owner's tech-allowed max level).
+**Effective yield** = min(production, transport level).
+
+Tech caps first, then transport caps. Example: level 4 farm, tech cap 3, transport 2 → 2 units/turn. The improvement stays at level 4; tech/transport upgrades or conquest can unlock more later.
+
+### Mineral Prospecting Gate
+
+Iron, copper, tin, coal, silver, gold, gems, diamonds require prospecting before extraction. Tile must be (a) connected and (b) prospected by that player. Non-minerals do not require prospecting. See [fog-and-exploration.md](fog-and-exploration.md).
+
+### Transport Level (Per Tile)
+
+Each land tile has transport level in {0, 1, 2, 4}:
+
+- **0** — not connected.
+- **1** — primitive road.
+- **2** — improved road (requires Road Construction tech + Engineer work order).
+- **4** — port or railroad (requires Early Steam Engine and related techs + Engineer/Rail Builder work order).
+
+Tech only **allows** building — it does not upgrade existing tiles. Ports and railroads both provide level 4. Adjacent port tile grants level 4 to that tile. See [tech-tree-transport.md](tech-tree-transport.md).
+
+### Flow to Stockpile
+
+Connected tiles' effective yields are summed by commodity. **Same-region:** added to owning player's stockpile. **Overseas:** sea transport step (cargo limit + priority). No per-province storage. See [stockpiles-and-production.md](stockpiles-and-production.md).
+
+### Improvement Build Costs (Builder)
+
+| Level | Material Cost | Output |
+|---|---|---|
+| 1 | 1 lumber + 1 cast iron | 1 resource/turn |
+| 2 | 4 lumber + 4 cast iron | 2 resources/turn |
+| 3 | 8 lumber + 8 cast iron | 3 resources/turn |
+| 4 | 16 lumber + 16 cast iron | 4 resources/turn |
+
+### Road Costs (Engineer)
+
+1 lumber + 1 cast iron per tile (transport level 1). Improved road: requires Road Construction tech.
+
+### Port Placement
+
+One port per seaboard (seaboard = one sea zone adjacent to the province). Province with two seaboards: overseas connectivity requires a port on the seaboard with a sea path to the capital's sea.
+
+### Fort Costs
+
+See [siege-mechanics.md](siege-mechanics.md).
+
+> **REQUIRES CLARIFICATION:** (a) Exact turn duration per build level (Imp2 implies ~1 turn per level but doesn't state explicitly). (b) Railroad material costs (Imp2 says "steel and lumber per tile" but no exact amounts). (c) Whether ColonizeThis adapts the exact Imp2 material types or uses its own commodity catalog.
 
 ---
 
-## Transport Level (Per Tile)
+## Configurable Values
 
-Each land tile has a **transport level** in {0, 1, 2, 4}. 0 = not connected. 1 = primitive road, 2 = improved road, 4 = port or railroad. **Road level 2 (improved roads) and level 4 (railroad or port) require explicit player action:** an Engineer builds roads (level 1 or, with Road Construction tech, level 2); a Rail Builder builds railroads (with Early Steam Engine and related techs). Tech only **allows** building that level—it does not change existing tiles by itself. Ports and railroads both provide transport level 4. Source: road level on that tile or adjacent port (port tile = 4). Imperialism II 02-economy: primitive 1, improved 2, port 4, railroad 4. See [tech-tree-transport.md](tech-tree-transport.md).
+| Parameter | Default | Notes |
+|---|---|---|
+| Max improvement level | 4 | |
+| Transport levels | 0, 1, 2, 4 | |
+| Improvement cost scaling | ×2 per level | lumber + cast iron |
+| Road cost | 1 lumber + 1 cast iron | Per tile |
 
 ---
 
-## Flow to Stockpile
+## Interactions
 
-Connected tiles’ effective yields are summed by commodity. **Same-region** (land): all added to owning player's stockpile. **Overseas:** sea transport step (cargo limit + priority). No per-province storage. See [stockpiles-and-production.md](stockpiles-and-production.md) and [auto-transport.md](../program/auto-transport.md).
-
----
-
-## Improvement Types, Roads, Ports
-
-Improvement type matches the resource (e.g. mine for ore, farm for grain). **Improvements** and **roads** are per **tile** in world state (improvement level 0–4; road level 0 / 1 / 2; railroad or port can give transport level 4). Building improved roads (level 2) or railroads requires the corresponding tech (Road Construction, Early Steam Engine, etc.) and a work order by an Engineer or Rail Builder. **Ports** are at **province-seaboard** level: one port per **seaboard** (each seaboard = one sea zone adjacent to the province per topology). Province with two seaboards: for overseas connectivity, must have a port on the seaboard that has a sea path to the capital’s sea. Implementation: port stored per (provinceId, seaZoneId) or per tile with port + seaZoneId; terrain–resource rules in colonizethis_data; extraction resolution in colonizethis_logic.
-
-All **terrain development** (Builder improvements, Engineer roads/ports/forts, Rail Builder railroads) is applied via civilian work orders during the **Build/Work** phase. Each development action is a **multi-turn build**: work duration and material cost increase with target level (e.g. Level 4 improvement slower and more expensive than Level 1), mirroring Imperialism II. Progress is tracked per working unit; on completion, the relevant tile or province state is updated, and subsequent Extraction phases use the new improvement and transport levels. Exact per-action costs and turn counts are defined in the ruleset and [development-resolution.md](../program/development-resolution.md).
+- Connectivity: [capital-and-connectivity.md](capital-and-connectivity.md)
+- Stockpile flow: [stockpiles-and-production.md](stockpiles-and-production.md)
+- Transport tech: [tech-tree-transport.md](tech-tree-transport.md)
+- Fog/prospecting: [fog-and-exploration.md](fog-and-exploration.md)
+- Development resolution: see program/development-resolution.md
+- Tile generation: [tile-map-and-generation.md](tile-map-and-generation.md)

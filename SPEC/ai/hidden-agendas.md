@@ -31,7 +31,7 @@
 At game start, for each AI Great Power `P`:
 
 1. Compute `agendaSeed[P]` from game seed and `aiSeed[P]`.
-2. Map seed to one of the six agenda ids (e.g. deterministic shuffle or index). If there are more than six AI players, agendas may repeat or use a defined tie-break.
+2. Map seed to one of six agenda ids (deterministic shuffle or index). More than six AI players: agendas may repeat.
 3. Store `hiddenAgenda[P]` in game state; never expose to human players. Only suspicion scores and evidence are visible (see dossier).
 
 ---
@@ -46,7 +46,7 @@ Agenda applies **additive or multiplicative modifiers** to the same quantities t
 - **Build/order choice** — Tech Thief: boost spy/research orders; Envy: boost orders that mirror human’s recent builds or targets.
 - **Treaty breaking** — Backstabber: more likely to break when beneficial; Warmonger: more likely to break peace early.
 
-Implementation expresses these as weights or thresholds in colonizethis_ai’s utility and goal-selection logic. Exact numbers in config; SPEC only requires that each agenda type has defined effects in the above categories.
+Expressed as weights or thresholds in config; SPEC requires each agenda type has defined effects in the above categories.
 
 ---
 
@@ -56,4 +56,4 @@ When the game or AI performs an action, **evidence rules** (defined per agenda) 
 
 - Counters are **per (observer nation, subject AI, agenda type)**. Only the human observer’s view is stored; AI does not observe other AI’s evidence.
 - **Suspicion levels** map total evidence score to a band: Unknown (0–2), Possible (3–5), Likely (6–8), Almost certain (9–10), Confirmed (10+). Display labels in dossier use these bands; “Confirmed” is a threshold, not revelation of true agenda.
-- Evidence accumulation and storage are deterministic (same actions → same evidence). Dossier projection is PlayerView-safe: only suspicion scores and a capped evidence log are exposed. See [ai-dossier.md](ai-dossier.md) and [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
+- Evidence is deterministic (same actions → same evidence). Dossier projection is PlayerView-safe: only suspicion scores and capped evidence log exposed. See [ai-dossier.md](ai-dossier.md).

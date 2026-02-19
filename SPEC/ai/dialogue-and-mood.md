@@ -18,13 +18,13 @@ AI emits **events** that describe what to say and which mood to show. The UI (or
 - **agenda** — Hint at hidden motivation (personality + hidden agenda flavour).
 - **negotiation** — Lines during active deal-making, keyed by mood and situation (opening, counter_offer, accepting, rejecting).
 
-Dialogue content (localized strings) lives in data (e.g. colonizethis_data or assets); AI selects **keys and context** only.
+Dialogue content (localized strings) lives in data assets; AI selects **keys and context** only.
 
 ---
 
 ## DialogueEvent model (logic)
 
-Emitted by colonizethis_ai when a dialogue line should be shown. Consumed by UI or tooling.
+Emitted when a dialogue line should be shown. Consumed by UI or tooling.
 
 | Field | Type | Meaning |
 |-------|------|---------|

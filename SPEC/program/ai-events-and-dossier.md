@@ -1,37 +1,39 @@
-# AI Events and Dossier (Phase 6)
+# AI Events and Dossier — Implementation (Phase 6)
 
-**SPEC/program** — Technical event models and data flows for dialogue, mood, evidence, and dossier. Design: [SPEC/ai/dialogue-and-mood.md](../ai/dialogue-and-mood.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md), [SPEC/ai/hidden-agendas.md](../ai/hidden-agendas.md).
+## Responsibility
+Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md).
 
----
+## Data Model
 
-## Event types
+### DialogueEvent
+Fields: `leaderId`, `category`, `situation`, `era`, `mood?`, `variables` (map string→string). Categories and situations per [dialogue-and-mood.md](../ai/dialogue-and-mood.md).
 
-**DialogueEvent** — Emitted when AI should “say” something. Fields: leaderId, category, situation, era, mood?, variables. Consumer (UI) resolves to text. Deterministic: same game state and dialogue seed → same event.
+### PortraitMoodEvent
+Fields: `leaderId`, `fromMood`, `toMood`, `durationMs`. Mood values per [dialogue-and-mood.md](../ai/dialogue-and-mood.md).
 
-**PortraitMoodEvent** — Emitted when negotiation (or base) mood changes. Fields: leaderId, fromMood, toMood, durationMs. Consumer (UI) uses for portrait/animation choice. Deterministic.
+### EvidenceEntry
+Internal record appended when an action matches an evidence rule. Fields: observer id, subject id, agenda type, score delta, turn, description. Not emitted to UI; updates state read by dossier.
 
-**EvidenceEntry** — Internal: when an action matches an evidence rule (e.g. “declared war on weaker neighbor”), a record is appended to the observer’s evidence log for that subject. Not an event to UI; it updates state that dossier reads.
+## Algorithm / Flow
 
----
+### Dialogue and Mood
+1. AI calls `onDialogue(DialogueEvent)` and `onMood(PortraitMoodEvent)` callbacks during order generation.
+2. Caller guarantees deterministic invocation order.
+3. **Negotiation mood:** App updates offer state and stall count; mood state machine computes next mood and emits event on transition. Inputs deterministic for replay.
+4. UI subscribes and resolves to text/portrait assets. No asset paths in events.
 
-## Flow: dialogue and mood
+### Evidence and Dossier
+1. Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook). Rules per [hidden-agendas.md](../ai/hidden-agendas.md).
+2. Storage: per (observer, subject, agenda type) counter + optional (turn, description) list. Deterministic: same actions → same evidence.
+3. Dossier projection: read API returning PlayerView-safe data (basic intel, suspicion levels, evidence list, behavioral notes). True hidden agenda never exposed.
 
-1. **Strategic/tactical AI** (colonizethis_ai) runs and may call `onDialogue(DialogueEvent)` and `onMood(PortraitMoodEvent)` callbacks provided by the caller (e.g. TurnResolver or app).
-2. Caller guarantees callbacks are invoked in a deterministic order (e.g. after each decision that triggers dialogue).
-3. **Negotiation mood:** When the human is in a deal-making flow, the app or a dedicated component updates offer state and stall count; colonizethis_ai (or a shared mood state machine) computes next mood and emits PortraitMoodEvent on transition. Inputs (offer quality, stall count) must be deterministic for replay; use seeds if any randomness.
-4. UI subscribes to these events (or polls after turn resolution) and displays dialogue text and portrait mood. No asset paths in events; UI resolves leaderId + mood to asset.
+## Integration
 
----
+- **Phase:** Events emitted during AI order generation. Evidence accumulated during action resolution.
+- **Upstream:** AI order generation, turn resolution hooks.
+- **Downstream:** UI (dialogue, portrait mood), game state (evidence), dossier screen.
 
-## Flow: evidence and dossier
-
-1. **Evidence rules** are evaluated when actions are applied (e.g. in turn resolution or in a post-resolution hook). Example: “AI P declared war on nation Q where Q was weaker” → add evidence (observerId = human, subjectId = P, agendaType = warmonger, +2). Rules live in colonizethis_ai or in a shared module; resolution calls into them so that evidence is written in one place.
-2. **Evidence storage** is part of game state (or a dedicated store keyed by game id). Per (observerId, subjectId, agendaType) counter; optional list of (turn, description) for dossier display. Same actions → same evidence (deterministic).
-3. **Dossier projection** is a read API: given observerId (e.g. human), subjectId (AI nation), and current game state + evidence store, return the PlayerView-safe dossier (basic intel, suspicion levels, evidence list, behavioral notes). colonizethis_ai or colonizethis_logic can expose this; no hidden data in the return value.
-
----
-
-## Determinism and replay
-
-- All events and evidence must be reproducible: same (game state, seeds, order of operations) → same (DialogueEvents, PortraitMoodEvents, evidence entries).
-- Replay and save/load must restore or recompute evidence and dossier from persisted state so that no non-determinism is introduced.
+## Constraints
+- All events and evidence reproducible: same state + seeds → same output.
+- Replay and save/load must restore or recompute evidence from persisted state.
+- True hidden agenda never exposed via events or dossier.

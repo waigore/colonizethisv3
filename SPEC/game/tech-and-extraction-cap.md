@@ -1,12 +1,12 @@
 # Tech and Extraction Cap
 
-**SPEC/game** — Per-player tech and its effect on extraction. Derived from GDD 04b. Reference: Imperialism II 02-economy (production level 0–4; technology caps). Tech tree: [tech-tree.md](tech-tree.md), [tech-tree-catalog.md](tech-tree-catalog.md). Extraction: [extraction-and-improvements.md](extraction-and-improvements.md).
+**SPEC/game** — Per-player tech and its effect on extraction. Derived from GDD 04b. Reference: Imperialism II 02-economy (production level 0–4; technology caps). Tech tree: [tech-tree.md](tech-tree.md). Extraction: [extraction-and-improvements.md](extraction-and-improvements.md).
 
 ---
 
 ## Per-Player Tech
 
-Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<String, bool>` or equivalent). The same **static list** of tech ids is defined for all players and lives in **colonizethis_data** (no JSON rulesets in MVP).
+Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<String, bool>` or equivalent). The same **static list** of tech ids is defined for all players in program-level config (no JSON rulesets in MVP).
 
 ---
 
@@ -14,12 +14,4 @@ Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<Stri
 
 The **max effective extraction level** (1–4) per resource or improvement type is **derived from the tech tree catalog**: which techs grant which max improvement level for each resource (grain, timber, iron, coal, etc.). Effective extraction per tile = min(improvement level, **owner’s tech cap** for that resource). The improvement level on the tile is unchanged; only the amount that counts for extraction is capped.
 
-**Fallback:** When the full tech model is not yet loaded or a resource has no tech-gated cap, use a **constant cap** (e.g. 4) per player from config so extraction resolution can run. Phase 2 used this exclusively; Phase 5+ derive cap from [tech-tree-catalog.md](tech-tree-catalog.md) and category sub-docs.
-
----
-
-## Implementation
-
-- **colonizethis_data:** Tech catalog (ids, effects including extraction levels per resource); optional constant for default cap when no tech data.
-- **colonizethis_models:** Player holds tech table; serialization for save/load.
-- **colonizethis_logic:** Extraction resolution reads owner’s tech cap (derived from techUnlocked + catalog, or constant fallback) when computing effective yield per tile.
+**Fallback:** When the full tech model is not yet loaded or a resource has no tech-gated cap, use a **constant cap** (e.g. 4) per player from config so extraction resolution can run. Phase 2 used this exclusively; Phase 5+ derive cap from [tech-tree.md](tech-tree.md) and category sub-docs.

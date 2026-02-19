@@ -24,7 +24,9 @@ All **same-region** extracted goods are added to the player's stockpile. Extract
 
 ## Sea Transport (Overseas Only)
 
-**Cargo-hold limit:** Total cargo holds = sum over the player's ships. Phase 2: **stub** = fixed number per player (e.g. 24). Allocate overseas extraction to stockpile by **priority** (food, raw materials, riches, trade goods) until cargo full; rest is left behind (not delivered this turn). Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/commodity-catalog.md)).
+**Cargo-hold limit (per Imp2):** Each cargo hold carries **1 unit of any commodity per turn**. Total cargo holds = sum over the player's ships. Phase 2: **stub** = fixed number per player (e.g. 24). Allocate overseas extraction to stockpile by **priority** (food, raw materials, riches, trade goods) until cargo full; rest is left behind (not delivered this turn). Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/commodity-catalog.md)).
+
+> **REQUIRES CLARIFICATION:** Exact priority ordering within categories (e.g. grain before meat within "food"?) and tie-breaking when multiple commodities share a priority tier. Imp2 uses a fixed "commodity order" for trade but transport allocation is player-driven; ColonizeThis auto-transport needs a defined priority sequence.
 
 ---
 
