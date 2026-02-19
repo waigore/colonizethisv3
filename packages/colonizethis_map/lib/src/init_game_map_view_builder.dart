@@ -1,14 +1,51 @@
 /// Builder for InitGameMapViewData from game + tile maps + topology.
 /// SPEC/program/map-data.md § Map view model for tools.
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import 'init_game_map_view_data.dart';
 import 'tile_map_visualization_shared.dart';
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
+
+// #region agent log
+const String _agentDebugLogPath =
+    '/Users/waigore/Documents/GitHub/colonizethisv3/.cursor/debug-9f02df.log';
+
+void _agentDebugLog({
+  required String runId,
+  required String hypothesisId,
+  required String location,
+  required String message,
+  required Map<String, Object?> data,
+}) {
+  try {
+    final payload = <String, Object?>{
+      'sessionId': '9f02df',
+      'runId': runId,
+      'hypothesisId': hypothesisId,
+      'location': location,
+      'message': message,
+      'data': data,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+    final line = '${jsonEncode(payload)}\n';
+    File(_agentDebugLogPath).writeAsStringSync(
+      line,
+      mode: FileMode.append,
+      flush: false,
+    );
+  } catch (_) {
+    // Swallow all errors in debug logger.
+  }
+}
+// #endregion
 
 InitGameMapViewData buildInitGameMapViewData({
   required Game game,
@@ -17,7 +54,9 @@ InitGameMapViewData buildInitGameMapViewData({
   required int cellSize,
   int? seed,
   String? configSummary,
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
 }) {
+  Logger().i('map: buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
   final nwTileMap = tileMapByRegion[_regionNewWorld]!;
   final owTopology = topologyByRegion[_regionOldWorld]!;
@@ -30,6 +69,7 @@ InitGameMapViewData buildInitGameMapViewData({
     game: game,
     cellSize: cellSize,
     isOldWorld: true,
+    greatPowerColorOverride: greatPowerColorOverride,
   );
   final nwRegion = _buildRegionViewData(
     regionId: _regionNewWorld,
@@ -38,8 +78,10 @@ InitGameMapViewData buildInitGameMapViewData({
     game: game,
     cellSize: cellSize,
     isOldWorld: false,
+    greatPowerColorOverride: greatPowerColorOverride,
   );
 
+  Logger().i('map: buildInitGameMapViewData end');
   return InitGameMapViewData(
     oldWorld: owRegion,
     newWorld: nwRegion,
@@ -55,6 +97,7 @@ RegionMapViewData _buildRegionViewData({
   required Game game,
   required int cellSize,
   required bool isOldWorld,
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -76,6 +119,23 @@ RegionMapViewData _buildRegionViewData({
     }
   }
 
+  // #region agent log
+  _agentDebugLog(
+    runId: 'pre-fix-1',
+    hypothesisId: 'H1-H2-H5',
+    location: 'init_game_map_view_builder.dart:_buildRegionViewData',
+    message: 'Province ownership mapping built for region',
+    data: {
+      'regionId': regionId,
+      'isOldWorld': isOldWorld,
+      'provinceCount': provinces.length,
+      'ownedProvinceCount': ownerByProvinceId.length,
+      'sampleProvinceIds': provinces.take(5).map((p) => p.id).toList(),
+      'sampleOwnerProvinceKeys': ownerByProvinceId.keys.take(5).toList(),
+    },
+  );
+  // #endregion
+
   // Collect faction ids by type for ownership colours.
   final greatPowerIds = <String>[];
   final minorNationIds = <String>[];
@@ -93,6 +153,7 @@ RegionMapViewData _buildRegionViewData({
     greatPowerIds: greatPowerIds,
     minorNationIds: minorNationIds,
     tribeIds: tribeIds,
+    greatPowerColorOverride: greatPowerColorOverride,
   );
 
   // Terrain palette: same as base tile map PNG (shared terrainColorRgb).
@@ -111,25 +172,32 @@ RegionMapViewData _buildRegionViewData({
   final cells = <CellViewData>[];
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
-      final id = tileMap.cell(x, y);
-      final isSea = seaZoneIds.contains(id);
+      final localId = tileMap.cell(x, y);
+      final isSea = seaZoneIds.contains(localId);
       final terrain = tileMap.terrainAt(x, y);
       final resource = tileMap.resourceAt(x, y);
       // Tile key for improvement/road lookup: regionId|provinceId|x|y (provinceId = regionCellId for land).
-      final tileKey = '$regionId|$id|$x|$y';
+      final tileKey = '$regionId|$localId|$x|$y';
       final improvement = isSea ? null : tileState.improvementLevel(tileKey);
       final road = isSea ? null : tileState.roadLevel(tileKey);
+      final fullProvinceId =
+          isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
         CellViewData(
           x: x,
           y: y,
-          regionCellId: id,
+          regionCellId: localId,
           isSea: isSea,
           terrainTypeId: terrain?.name,
           terrainType: terrain,
           resourceId: resource?.name,
-          ownerFactionId: ownerByProvinceId[id],
-          provinceDisplayName: isSea ? null : provinceDisplayNameById[id],
+          ownerFactionId:
+              fullProvinceId != null ? ownerByProvinceId[fullProvinceId] : null,
+          provinceDisplayName: isSea
+              ? null
+              : (fullProvinceId != null
+                  ? provinceDisplayNameById[fullProvinceId]
+                  : null),
           improvementLevel: isSea ? null : improvement,
           roadLevel: isSea ? null : road,
         ),
@@ -183,9 +251,13 @@ RegionMapViewData _buildRegionViewData({
   final provinceToTile = <String, (int x, int y)>{};
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
-      final id = tileMap.cell(x, y);
-      if (!seaZoneIds.contains(id) && !provinceToTile.containsKey(id)) {
-        provinceToTile[id] = (x, y);
+      final localId = tileMap.cell(x, y);
+      if (seaZoneIds.contains(localId)) {
+        continue;
+      }
+      final fullProvinceId = ProvinceId.full(regionId, localId);
+      if (!provinceToTile.containsKey(fullProvinceId)) {
+        provinceToTile[fullProvinceId] = (x, y);
       }
     }
   }

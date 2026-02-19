@@ -1,3 +1,4 @@
+import 'fleet.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
@@ -12,6 +13,8 @@ class WorldState {
     this.portsByProvinceSeaboard = const {},
     this.playerVisibilityByTile = const {},
     this.playerProspectedTiles = const {},
+    this.fleets = const [],
+    this.tileKeysByRegionAndProvince = const {},
   });
 
   final TurnState turnState;
@@ -32,6 +35,14 @@ class WorldState {
   /// Stored as lists in JSON; converted to sets in logic as needed.
   final Map<String, Set<String>> playerProspectedTiles;
 
+  /// Fleets (naval). SPEC/game/ships-and-naval.md.
+  final List<Fleet> fleets;
+
+  /// Tile keys per region and province. regionId -> provinceId -> list of tile keys.
+  /// Used for explore resolution (full province reveal). Populated at game setup.
+  /// SPEC/program/fog-and-exploration-resolution.md.
+  final Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince;
+
   Map<String, dynamic> toJson() => {
         'turnState': turnState.toJson(),
         'oldWorld': oldWorld.toJson(),
@@ -43,6 +54,14 @@ class WorldState {
         if (playerProspectedTiles.isNotEmpty)
           'playerProspectedTiles': playerProspectedTiles.map(
             (playerId, tiles) => MapEntry(playerId, tiles.toList()),
+          ),
+        if (fleets.isNotEmpty) 'fleets': fleets.map((e) => e.toJson()).toList(),
+        if (tileKeysByRegionAndProvince.isNotEmpty)
+          'tileKeysByRegionAndProvince': tileKeysByRegionAndProvince.map(
+            (regionId, byProvince) => MapEntry(
+              regionId,
+              byProvince.map((provinceId, keys) => MapEntry(provinceId, keys)),
+            ),
           ),
       };
 
@@ -85,6 +104,28 @@ class WorldState {
       });
     }
 
+    final fleetsRaw = json['fleets'] as List<dynamic>? ?? [];
+    final fleets = fleetsRaw
+        .map((e) => Fleet.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+
+    final tileKeysRaw = json['tileKeysByRegionAndProvince'];
+    final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
+    if (tileKeysRaw is Map) {
+      tileKeysRaw.forEach((regionId, byProvince) {
+        if (byProvince is Map) {
+          final inner = <String, List<String>>{};
+          byProvince.forEach((provinceId, keys) {
+            if (keys is List) {
+              inner[provinceId.toString()] =
+                  keys.map((e) => e.toString()).toList();
+            }
+          });
+          tileKeysByRegionAndProvince[regionId.toString()] = inner;
+        }
+      });
+    }
+
     return WorldState(
       turnState: TurnState.fromJson(Map<String, dynamic>.from(json['turnState'] as Map)),
       oldWorld: RegionData.fromJson(Map<String, dynamic>.from(json['oldWorld'] as Map)),
@@ -93,6 +134,8 @@ class WorldState {
       portsByProvinceSeaboard: ports,
       playerVisibilityByTile: visibility,
       playerProspectedTiles: prospected,
+      fleets: fleets,
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     );
   }
 
@@ -104,6 +147,8 @@ class WorldState {
     Map<String, String>? portsByProvinceSeaboard,
     Map<String, Map<String, String>>? playerVisibilityByTile,
     Map<String, Set<String>>? playerProspectedTiles,
+    List<Fleet>? fleets,
+    Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -113,6 +158,9 @@ class WorldState {
       portsByProvinceSeaboard: portsByProvinceSeaboard ?? this.portsByProvinceSeaboard,
       playerVisibilityByTile: playerVisibilityByTile ?? this.playerVisibilityByTile,
       playerProspectedTiles: playerProspectedTiles ?? this.playerProspectedTiles,
+      fleets: fleets ?? this.fleets,
+      tileKeysByRegionAndProvince:
+          tileKeysByRegionAndProvince ?? this.tileKeysByRegionAndProvince,
     );
   }
 
@@ -127,7 +175,10 @@ class WorldState {
           tileState == other.tileState &&
           _mapEquals(portsByProvinceSeaboard, other.portsByProvinceSeaboard) &&
           _nestedStringMapEquals(playerVisibilityByTile, other.playerVisibilityByTile) &&
-          _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles);
+          _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
+          _listEqualsFleet(fleets, other.fleets) &&
+          _tileKeysByRegionEquals(
+              tileKeysByRegionAndProvince, other.tileKeysByRegionAndProvince);
 
   @override
   int get hashCode => Object.hash(
@@ -146,7 +197,52 @@ class WorldState {
             (e) => Object.hash(e.key, Object.hashAll(e.value)),
           ),
         ),
+        Object.hashAll(fleets),
+        Object.hashAll(
+          tileKeysByRegionAndProvince.entries.map(
+            (e) => Object.hash(e.key, Object.hashAll(e.value.entries.map(
+                  (e2) => Object.hash(e2.key, Object.hashAll(e2.value)),
+                ))),
+          ),
+        ),
       );
+
+  static bool _tileKeysByRegionEquals(
+    Map<String, Map<String, List<String>>> a,
+    Map<String, Map<String, List<String>>> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      final otherInner = b[entry.key];
+      if (otherInner == null) return false;
+      if (otherInner.length != entry.value.length) return false;
+      for (final innerEntry in entry.value.entries) {
+        final otherList = otherInner[innerEntry.key];
+        if (otherList == null ||
+            otherList.length != innerEntry.value.length ||
+            !_listEqualsString(innerEntry.value, otherList)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  static bool _listEqualsString(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static bool _listEqualsFleet(List<Fleet> a, List<Fleet> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   static bool _mapEquals(Map<String, String> a, Map<String, String> b) {
     if (a.length != b.length) return false;

@@ -34,6 +34,14 @@ Orders mergeOrderLists({
       humanOrders.researchOrdersByPlayerId,
       aiOrders.researchOrdersByPlayerId,
     ),
+    navalMoveOrdersByPlayerId: _mergeNavalMoveOrders(
+      humanOrders.navalMoveOrdersByPlayerId,
+      aiOrders.navalMoveOrdersByPlayerId,
+    ),
+    navalMissionOrdersByPlayerId: _mergeNavalMissionOrders(
+      humanOrders.navalMissionOrdersByPlayerId,
+      aiOrders.navalMissionOrdersByPlayerId,
+    ),
   );
   return merged;
 }
@@ -43,7 +51,9 @@ bool _isEmpty(Orders o) =>
     o.buildUnitOrdersByPlayerId.isEmpty &&
     o.workOrdersByPlayerId.isEmpty &&
     o.diplomaticOrdersByPlayerId.isEmpty &&
-    o.researchOrdersByPlayerId.isEmpty;
+    o.researchOrdersByPlayerId.isEmpty &&
+    o.navalMoveOrdersByPlayerId.isEmpty &&
+    o.navalMissionOrdersByPlayerId.isEmpty;
 
 Map<String, List<MoveOrder>> _mergeMoveOrders(
   Map<String, List<MoveOrder>> human,
@@ -158,6 +168,58 @@ Map<String, List<ResearchOrder>> _mergeResearchOrders(
     } else if (aiList.isNotEmpty) {
       result[playerId] = aiList;
     }
+  }
+  return result;
+}
+
+Map<String, List<NavalMoveOrder>> _mergeNavalMoveOrders(
+  Map<String, List<NavalMoveOrder>> human,
+  Map<String, List<NavalMoveOrder>> ai,
+) {
+  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
+  final result = <String, List<NavalMoveOrder>>{};
+  final humanFleetIds = <String>{};
+  for (final playerId in allPlayerIds) {
+    final humanList = human[playerId] ?? [];
+    final aiList = ai[playerId] ?? [];
+    humanFleetIds.clear();
+    for (final o in humanList) {
+      humanFleetIds.add(o.fleetId);
+    }
+    final merged = [...humanList];
+    for (final o in aiList) {
+      if (!humanFleetIds.contains(o.fleetId)) {
+        merged.add(o);
+        humanFleetIds.add(o.fleetId);
+      }
+    }
+    if (merged.isNotEmpty) result[playerId] = merged;
+  }
+  return result;
+}
+
+Map<String, List<NavalMissionOrder>> _mergeNavalMissionOrders(
+  Map<String, List<NavalMissionOrder>> human,
+  Map<String, List<NavalMissionOrder>> ai,
+) {
+  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
+  final result = <String, List<NavalMissionOrder>>{};
+  final humanFleetIds = <String>{};
+  for (final playerId in allPlayerIds) {
+    final humanList = human[playerId] ?? [];
+    final aiList = ai[playerId] ?? [];
+    humanFleetIds.clear();
+    for (final o in humanList) {
+      humanFleetIds.add(o.fleetId);
+    }
+    final merged = [...humanList];
+    for (final o in aiList) {
+      if (!humanFleetIds.contains(o.fleetId)) {
+        merged.add(o);
+        humanFleetIds.add(o.fleetId);
+      }
+    }
+    if (merged.isNotEmpty) result[playerId] = merged;
   }
   return result;
 }

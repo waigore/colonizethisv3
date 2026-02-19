@@ -1,5 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Orders', () {
@@ -17,7 +17,7 @@ void main() {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
         },
         workOrdersByPlayerId: {
-          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine', targetTileKey: 'oldWorld|prov1|0|0')],
         },
       );
       final o2 = Orders.fromJson(o.toJson());
@@ -38,7 +38,7 @@ void main() {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
         },
         workOrdersByPlayerId: {
-          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine', targetTileKey: 'oldWorld|prov1|0|0')],
         },
       );
       const b = Orders(
@@ -49,7 +49,7 @@ void main() {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
         },
         workOrdersByPlayerId: {
-          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine')],
+          'p1': [WorkOrder(unitId: 'u1', target: 'build_mine', targetTileKey: 'oldWorld|prov1|0|0')],
         },
       );
       expect(a, b);

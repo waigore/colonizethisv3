@@ -51,11 +51,17 @@ bool isValidLandMove(
 
 /// Applies all MoveOrders in [orders] to the units in [regionData], returning
 /// an updated RegionData. Invalid moves are ignored.
+///
+/// For **civilian** units (have [tileKey]), sets [tileKey] to a tile in the destination
+/// province when [tileKeysByRegionAndProvince] and [regionId] are provided; otherwise
+/// only [provinceId] is updated. For **military** units (no tileKey), updates [provinceId] only.
 RegionData applyMoveOrdersToRegion(
   RegionData regionData,
   MapTopology topology,
-  Map<String, List<MoveOrder>> moveOrdersByPlayerId,
-) {
+  Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
+  String? regionId,
+  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+}) {
   if (moveOrdersByPlayerId.isEmpty || regionData.units.isEmpty) {
     return regionData;
   }
@@ -69,14 +75,28 @@ RegionData applyMoveOrdersToRegion(
     for (final order in entry.value) {
       final unit = unitsById[order.unitId];
       if (unit == null || unit.ownerId != playerId) continue;
-      if (!isValidLandMove(
-        topology,
-        unit.provinceId,
-        order.destinationProvinceId,
-      )) {
+      final currentProvinceId = unit.locationProvinceId;
+      final destProvinceId = order.destinationProvinceId;
+      // Topology uses local province ids; validate using them.
+      final fromLocal = ProvinceId.localIdFrom(currentProvinceId);
+      final toLocal = ProvinceId.localIdFrom(destProvinceId);
+      if (!isValidLandMove(topology, fromLocal, toLocal)) {
         continue;
       }
-      unitsById[unit.id] = unit.copyWith(provinceId: order.destinationProvinceId);
+      final isCivilian = unit.tileKey != null && unit.tileKey!.isNotEmpty;
+      final firstTileInDest = regionId != null &&
+              tileKeysByRegionAndProvince != null &&
+              (tileKeysByRegionAndProvince[regionId]?[destProvinceId]?.isNotEmpty ?? false)
+          ? tileKeysByRegionAndProvince[regionId]![destProvinceId]!.first
+          : null;
+      if (isCivilian && firstTileInDest != null) {
+        unitsById[unit.id] = unit.copyWith(
+          provinceId: destProvinceId,
+          tileKey: firstTileInDest,
+        );
+      } else {
+        unitsById[unit.id] = unit.copyWith(provinceId: destProvinceId);
+      }
     }
   }
 

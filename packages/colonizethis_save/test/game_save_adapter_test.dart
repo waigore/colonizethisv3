@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
-import 'package:test/test.dart';
 
 void main() {
   late Box<dynamic> box;
@@ -9,15 +9,16 @@ void main() {
 
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive');
+    box = await Hive.openBox<dynamic>('games');
+  });
+
+  tearDownAll(() async {
+    await box.close();
   });
 
   setUp(() async {
-    box = await Hive.openBox<dynamic>('games');
+    await box.clear();
     adapter = GameSaveAdapter();
-  });
-
-  tearDown(() async {
-    await box.close();
   });
 
   group('GameSaveAdapter', () {

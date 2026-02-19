@@ -23,8 +23,18 @@ alwaysApply: true
 - **Thin screens/pages:** orchestrate only; delegate data, state, and logic to services, controllers, or Flame components.
 - One main concern per file/class. Extract when a pattern appears in 2+ places or logic can be tested in isolation.
 
+## Logging
+
+- **Required:** All code must use Dart's `logger` package for logging; no `print` for operational or diagnostic output.
+- Follow project conventions: message prefixes (e.g. `logic:`, `ai:`, `data:`, `map:`, `save:`), appropriate levels (debug, info, warn, error), and `error`/`stackTrace` for exceptions.
+- See **SPEC/program/ctdev-logging.md** for scope, naming, and configuration.
+
 ## Spec alignment
 
 - Game and AI behavior: follow the **GDD** (`SPEC/game/`).
 - Architecture and modules: follow the **TDD** (`SPEC/program/`).
 - See `colonizethis-spec-required.mdc` for SPEC structure and source-of-truth.
+
+## Province lookup (multi-region)
+
+- When locating provinces in logic, always use **(regionId, provinceId)** or a **prefixed** province id (`regionId|localId`). Never use province id alone; never assume oldWorld/newWorld as a default region. See **SPEC/game/world-model.md** (Province identity and lookup).

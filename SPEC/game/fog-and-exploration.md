@@ -74,4 +74,4 @@ Fog of war defines **what each player can know** about the map at any time. For 
 - Ownership and boundaries for provinces that have been at least revealed.
 - Full information about `P`'s own units, economy (stockpile, treasury, workers) and research state.
 
-This knowledge state is exposed to AI and tooling via a **PlayerView** abstraction (see `SPEC/program/player-view.md`). PlayerView is the **only source of per-player world knowledge** that AI and order suggestion logic may use; it may not see tiles or units that are hidden by fog of war.
+This knowledge state is exposed to AI and tooling via a **PlayerView** abstraction (see [player-view.md](../program/player-view.md)). PlayerView is the **only source of per-player world knowledge** that AI and order suggestion logic may use; it may not see tiles or units that are hidden by fog of war. Order visibility rules (which moves and work orders are allowed or suggested based on visibility) are specified in [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).

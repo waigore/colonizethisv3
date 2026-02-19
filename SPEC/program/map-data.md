@@ -11,6 +11,7 @@
 - **Nodes:** List of nodes with id, region id, and type (province | sea zone). Cross-region: nodes may belong to different regions.
 - **Edges:** List of undirected edges (id1, id2). Semantics: P<->P (contiguous land), P<->S (province next to sea), optionally S<->S. Edges may reference nodes from different regions (cross-region adjacency).
 - **Storage:** File per region or one world graph with region labels; format (e.g. JSON or YAML) is implementation-defined. Loaded at game creation; colonizethis_data owns loading and provides topology to logic and tools. When generating maps, topology is **inferred** from the tile map.
+- **Province ids:** Topology and tile maps use **local** province ids (e.g. `p1`, `p2`). Game state (Province, Unit, orders, etc.) uses **prefixed** ids (`regionId|localId`). When resolving a province from game state, always use regionId + provinceId; never look up by province id alone. See [world-model.md](../game/world-model.md) (Province identity and lookup). **Map visualizers must always convert local ids from the tile map into full province ids before querying ownership or names.** Tile-map ids are an internal encoding only; the source of truth for ownership is the full province id stored in game state.
 
 ---
 
@@ -63,7 +64,12 @@ Two visualizers exist; they share border drawing, legend layout, and swatch help
 
 **Module:** `game_world_state_map_visualizer`. Extends base by adding ownership overlay, capital markers, and port markers. Input: `Game` + per-region tile maps and topology (or an `InitGameMapViewData` view model for tools). Reads `Province.ownerId` for ownership; `Player.capitalTile`, `MinorNation.capitalTile`, `Tribe.capitalTile` for capitals; `WorldState.portsByProvinceSeaboard` for port tile positions (value = tile key `regionId|provinceId|x|y`). Separate module; shares border drawing, legend layout, swatches.
 
-- **Ownership colours (legibility):** One colour per faction, chosen by faction type. **Great Powers** use a primary/vibrant palette (red, blue, green, yellow, etc.). **Minor nations** use a palette of grey shades so they are clearly differentiated from GPs on the map. **Tribes** (New World) use the same vibrant palette as Great Powers. Assignment is deterministic (e.g. sorted faction ids per type). The base tile map visualizer and other region-by-id colouring continue to use the existing single `regionPalette`; only the game-state ownership overlay uses the type-based split.
+- **Ownership colours (legibility):** One colour per faction, chosen by faction type.
+  - **Great Powers:** Ownership colours are taken from **GDD 09 (Great Powers & Leaders)** default colour per **semantic GP id** (e.g. `england` red, `france` dark blue, `portugal` green). During game setup, orchestration maps each selected semantic id to a per-game `Player.id` (e.g. `gp1`, `gp2`…) and re-keys any GP colour overrides from semantic id → `Player.id`. The game-state map view model (`RegionMapViewData.factionColors`) is therefore always keyed by **runtime faction id** (`Player.id`, MinorNation id, Tribe id), never by semantic id.
+  - When an optional override map (semantic GP id → RGB) is supplied—e.g. by ctdev from Init Game Config choices—setup converts it into a `Player.id` → RGB map and passes that to the map builder. If no override is supplied, GDD defaults per semantic id are looked up and then associated with the corresponding `Player.id`.
+  - **Minor Nations:** Use a palette of grey shades.
+  - **Tribes (New World):** Use a deterministic vibrant palette by index.
+  - The base tile map visualizer and other region-by-id colouring continue to use the existing single `regionPalette`; only the game-state ownership overlay uses the type-based split. When building the map view from a **loaded game**, ctdev passes the game's `greatPowerColorOverride` (if any, keyed by `Player.id`) so ownership colours match the setup that was used when the game was created; when the save has no override, GDD default colours are used. The `Game` model may carry an optional `greatPowerColorOverride` (setup-time GP map colours) for display; when present it is used by map visualizers and ctdev, and when absent GDD defaults apply.
 - **Capitals:** Distinct marker (e.g. gold circle) at capital tile; legend entry per faction.
 - **Ports:** The map shows **port** locations. For each region, the visualizer draws a **distinct marker** at each port tile (e.g. filled diamond or small square in a different colour from capitals). The legend includes a line explaining ports. Capitals remain the gold circle; ports use a different shape/colour.
 
@@ -83,10 +89,20 @@ For tools that need richer, renderer-agnostic access to map and ownership data (
 - `RegionMapViewData`:
   - `regionId` (`oldWorld` or `newWorld`).
   - `width`, `height` (grid in cells) and `cellSize` (logical tile size).
-  - Per-cell data (`CellViewData`): `x`, `y`, `regionCellId` (province/sea zone id), `isSea`, optional `terrainTypeId`, optional `terrainType` (for renderers; lookup by terrain type, not string id), optional `resourceId`, optional `ownerFactionId`, optional `improvementLevel` (0–4, from `WorldState.tileState.improvementByTile`; tile key format `regionId|provinceId|x|y`), optional `roadLevel` (0/1/2/4, from `tileState.roadLevelByTile`). The builder populates improvement and road levels when `Game` is provided.
+  - Per-cell data (`CellViewData`):
+    - `x`, `y`.
+    - `regionCellId` — **local** province/sea-zone id from the tile map (e.g. `p12`, `s3`). This id is used for drawing borders and matching the topology, but is **never** used directly to look up ownership in game state.
+    - `isSea`.
+    - optional `terrainTypeId`, optional `terrainType` (for renderers; lookup by terrain type, not string id).
+    - optional `resourceId`.
+    - optional `ownerFactionId` — owning faction id for the province that this cell belongs to. This is computed by first converting `regionCellId` + `regionId` into a **full province id** (`regionId|regionCellId`) and then looking up `Province.ownerId` using that full id. When `Province.ownerId` is null/empty, `ownerFactionId` is null and political view falls back to a neutral colour.
+    - optional `provinceDisplayName` — assigned province display name for land provinces (e.g. "Wessex", "London"); derived by resolving full province id (`regionId|regionCellId`) into a `Province` and reading `displayName`.
+    - optional `improvementLevel` (0–4, from `WorldState.tileState.improvementByTile`; tile key format `regionId|provinceId|x|y`).
+    - optional `roadLevel` (0/1/2/4, from `tileState.roadLevelByTile`).
   - Overlays:
     - `capitalMarkers`: faction id, display name, x, y.
     - `portMarkers`: tile position plus province/sea-zone ids (derived from `portsByProvinceSeaboard`).
+    - `unitMarkers`: province-level markers for units/armies. The builder chooses **one representative tile per province** by scanning the tile map and mapping the **full** province id (`regionId|localId`) to the first land tile it encounters for that province. When building markers, it looks up units by `Unit.provinceId` (full id) in this map. This guarantees that unit markers continue to work even when the same local id (e.g. `p1`) exists in multiple regions.
   - Legend/palette:
     - `factionColors`: faction id → RGB.
     - `terrainColors`: terrain type → RGB (when terrain is present). Must use the **same terrain palette** as the base tile map PNG (fixed RGB per `TerrainType`). For geographic rendering, lookup is by **terrain type** (enum), not by string id.

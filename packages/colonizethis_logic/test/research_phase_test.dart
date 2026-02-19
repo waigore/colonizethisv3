@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Research phase', () {
@@ -98,6 +98,50 @@ void main() {
       expect(player.treasury, game.players.single.treasury);
       expect(player.researchProgressByTechId, isNull);
       expect(player.techUnlocked?['gathering_2'], isNot(true));
+    });
+
+    test('research with funding none does not spend treasury or add progress', () {
+      final game = _baseGame(treasury: 100, techUnlocked: const {});
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'gathering_1',
+              funding: ResearchFundingLevel.none,
+            ),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      );
+      expect(next.players.single.treasury, 100);
+      expect(next.players.single.researchProgressByTechId, isNull);
+    });
+
+    test('research with low funding deducts treasury and adds progress', () {
+      final game = _baseGame(treasury: 100, techUnlocked: const {});
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'gathering_1',
+              funding: ResearchFundingLevel.low,
+            ),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      );
+      expect(next.players.single.treasury, 90);
+      expect(next.players.single.researchProgressByTechId!['gathering_1'], 10);
     });
   });
 }

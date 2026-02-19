@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:logger/logger.dart';
 
 import 'grid_voronoi.dart';
 import 'topology_inference.dart';
@@ -332,6 +333,7 @@ class TileMapGenerator {
     void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)? onLandSeedsPlaced,
     void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
   }) {
+    Logger().i('map: TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}');
     if (numProvinces < 1) {
       throw ArgumentError('numProvinces must be at least 1');
     }
@@ -476,6 +478,7 @@ class TileMapGenerator {
       resourceGrid: resourceGrid,
     );
     final topology = inferTopologyFromTileMap(result, regionId, seaZoneId);
+    Logger().i('map: TileMapGenerator.generate end regionId=$regionId provinces=${topology.nodes.where((n) => n.type == TopologyNodeType.province).length}');
     return (result, topology);
   }
 

@@ -42,7 +42,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Per [colonizethis-testing](../../.cursor/rules/colonizethis-testing.mdc): save/load is a **critical path** and must have tests; aim for **80% per-package coverage** for Phase 1 packages, enforced in CI where applicable (e.g. `dart test --coverage`).
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Per [colonizethis-testing](../../.cursor/rules/colonizethis-testing.mdc): save/load is a **critical path** and must have tests; aim for **90% per-package coverage** for Phase 1 packages, enforced in CI where applicable (e.g. `dart test --coverage`).
 
 | Task | Success criteria |
 |------|------------------|
@@ -53,7 +53,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Unit tests — topology generator** | Given inputs (e.g. province count, continent count), generator produces a valid MapTopology (correct node types, edges consistent with continents/coasts). |
 | **Unit tests — tile map generator** | Given a small topology and params, generator produces a valid tile map (adjacency invariant holds; optional: terrain and resource placement respect rules). When target tiles per province is set, grid dimensions are appropriate; terrain shows spatial coherence (blob-like) where specified. Include colonizethis_map (or the tool) in per-package coverage where the generator lives. |
 | **Map generation tool** | Tool can generate topology and tile map end-to-end; PNG export shows borders (and when implemented terrain, resources, improvements from world state). With loaded topology, tool prints topology and map summary; with `--interactive` lists provinces and shows province detail; with `--world-state` shows owner or "no owner". Manual or scripted test; tool builds and runs. |
-| **Per-package coverage** | Unit tests and coverage for colonizethis_models, colonizethis_save, colonizethis_logic aim for 80% per package; enforce in CI where applicable. |
+| **Per-package coverage** | Unit tests and coverage for colonizethis_models, colonizethis_save, colonizethis_logic aim for 90% per package; enforce in CI where applicable. |
 
 ---
 
@@ -117,7 +117,7 @@ Phase 1 is done when all design and dev tasks below are implemented, all test ta
 - **generate_map / map tool expansion plan** — Full CLI interface, data sources, output content, implementation steps, SPEC change for map-data.md (see `.cursor/plans/describe_topology_tool_expansion_a8108dc0.plan.md` or project plan copy).
 - `.cursor/rules/colonizethis-core-principles.mdc` — Flutter vs Flame separation.
 - `.cursor/rules/colonizethis-spec-required.mdc` — SPEC-first, layout, max 500 words, authorizing spec for behavior.
-- `.cursor/rules/colonizethis-testing.mdc` — 80% per-package coverage, test layout, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% per-package coverage, test layout, critical path (save/load).
 
 ---
 

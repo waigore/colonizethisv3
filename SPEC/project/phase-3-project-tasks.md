@@ -65,7 +65,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **80% per-package coverage** for Phase 3 packages (colonizethis_models, colonizethis_logic, colonizethis_data where extended).
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **90% per-package coverage** for Phase 3 packages (colonizethis_models, colonizethis_logic, colonizethis_data where extended).
 
 | Task | Success criteria |
 |------|------------------|
@@ -80,7 +80,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Unit tests — combat resolution** | Apply resolution to a small scenario: one attacker unit, one defender unit in province; after resolve, casualties applied and optionally province flip; no crash when defender wins. |
 | **Integration test — one full turn with combat** | Run TurnResolver with initial state where a MoveOrder sends a unit into enemy province; after Movement then Combat phase, assert casualties and/or province ownership change per spec. |
 | **Save/load round-trip (critical path)** | Save game state after combat (parity, unit types, medals, generals); load and assert key fields match. |
-| **Per-package coverage** | colonizethis_models (if extended), colonizethis_logic aim for 80%; colonizethis_data for combat config. |
+| **Per-package coverage** | colonizethis_models (if extended), colonizethis_logic aim for 90%; colonizethis_data for combat config. |
 | **sim_combat — determinism** | Run sim_combat with same script and `--seed` twice; outputs (report or JSON) are identical. |
 
 ---
@@ -140,7 +140,7 @@ Phase 3 is done when all design and dev tasks are implemented, all test tasks pa
 - [SPEC/program/turn-resolution.md](../program/turn-resolution.md), [turn-resolution-phases.md](../program/turn-resolution-phases.md) — Phase sequence and Combat phase.
 - [SPEC/program/movement.md](../program/movement.md), [SPEC/program/orders.md](../program/orders.md) — MoveOrder into enemy province.
 - [SPEC/program/sim-combat.md](../program/sim-combat.md) — sim_combat tool.
-- `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% coverage, critical path (save/load).
 
 ---
 

@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('ConnectivityResolver', () {
@@ -17,12 +17,13 @@ void main() {
         nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
         edges: [],
       );
-      final cap = CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 1, y: 1);
+      const ow = 'oldWorld';
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
       final game = Game(
@@ -30,7 +31,7 @@ void main() {
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
           ]),
           newWorld: const RegionData(),
         ),
@@ -62,7 +63,8 @@ void main() {
         nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
         edges: [],
       );
-      final cap = CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 1, y: 1);
+      const ow = 'oldWorld';
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
       final tileState = TileMapState()
           .setRoadLevel('oldWorld|p1|1|1', 1)
           .setRoadLevel('oldWorld|p1|0|1', 1)
@@ -71,7 +73,7 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
       final game = Game(
@@ -79,7 +81,7 @@ void main() {
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
           ]),
           newWorld: const RegionData(),
           tileState: tileState,
@@ -98,10 +100,11 @@ void main() {
     });
 
     test('player without capital gets empty set', () {
+      const ow = 'oldWorld';
       final grid = [['p1']];
       final tileMap = TileMapResult(width: 1, height: 1, grid: grid);
       final topology = MapTopology(
-        nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)],
         edges: [],
       );
       final player = Player(id: 'pl1', displayName: 'Spain', isHuman: true);
@@ -110,7 +113,7 @@ void main() {
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
           ]),
           newWorld: const RegionData(),
         ),
@@ -145,20 +148,21 @@ void main() {
           TopologyEdge(id1: 'p2', id2: 'sea1'),
         ],
       );
-      final cap = CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0);
+      const ow = 'oldWorld', nw = 'newWorld';
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
       final tileState = TileMapState()
           .setRoadLevel('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|1|0', 4)
           .setRoadLevel('newWorld|p2|0|0', 4);
       final ports = {
-        'p1|sea1': 'oldWorld|p1|1|0',
-        'p2|sea1': 'newWorld|p2|0|0',
+        '$ow|p1|sea1': 'oldWorld|p1|1|0',
+        '$nw|p2|sea1': 'newWorld|p2|0|0',
       };
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
       final game = Game(
@@ -166,10 +170,10 @@ void main() {
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
           ]),
           newWorld: RegionData(provinces: [
-            Province(id: 'p2', regionId: 'newWorld', ownerId: 'pl1'),
+            Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1'),
           ]),
           tileState: tileState,
           portsByProvinceSeaboard: ports,

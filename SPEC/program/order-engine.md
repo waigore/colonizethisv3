@@ -16,6 +16,8 @@ The **order engine** (colonizethis_logic) maintains the **current-turn order lis
 
 **Rule:** Validate in **submission order**. The **first** order that fails validation is **rejected**, and **every order after it in the same turn for that player is also rejected**. Sequence of submission therefore matters: if order 3 is invalid, orders 3, 4, 5, … are rejected; orders 1 and 2 remain.
 
+When validation runs **with context** (`validatePlayerOrdersWithContext(game, topology, playerId)`), the engine must use the **same visibility data** as the order suggestion API (i.e. a PlayerView built from that game, topology, and playerId) to enforce visibility rules for move and work orders. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) (Order visibility rules). The **source province** for move and work validation is the unit's located province (`Unit.locationProvinceId`). There is no requirement that the source province be owned by the player; visibility rules still apply (source must be visible when validating with context).
+
 Rejected orders are not applied; the engine returns validation results (accepted / rejected with reason) for UI feedback.
 
 ---
@@ -56,7 +58,7 @@ OrderEngine is also used by **developer tooling** to surface order validity with
 
 - The **ctdev** Running Game screen keeps an in-memory history of orders generated per Great Power per turn (including AI-generated orders for human GPs while in sim mode).
 - For each player and turn, ctdev constructs an `OrderEngine` instance seeded with that player's orders and calls `validatePlayerOrdersWithContext(game, topology, playerId)` to obtain a sequence of `OrderValidationResult` values in submission order.
-- The results (accepted/rejected + reason) are rendered in the **Orders (AI history)** tab alongside human-readable summaries (unit id and type, origin/destination, target). This is purely diagnostic: it does **not** alter the orders passed into `TurnResolver` and must be deterministic for a given game state and topology.
+- The results (accepted/rejected + reason) are rendered in the **Orders (AI history)** tab alongside human-readable summaries (unit id and type, origin/destination, **target tile** for work orders). WorkOrder validation checks **targetTileKey** (exists in world, in allowed province, terrain/tech rules for the action). Diagnostic summaries for work orders include unit, action, and target tile. This is purely diagnostic: it does **not** alter the orders passed into `TurnResolver` and must be deterministic for a given game state and topology.
 
 ---
 
@@ -75,4 +77,6 @@ The order engine is also the **validator** for a higher-level **order suggestion
 - **Guarantee:** For every suggested order `o`, if it is appended after the current list for `playerId` and validated via `validatePlayerOrdersWithContext`, the last `OrderValidationResult` is `accepted`.
 - **Determinism:** For a fixed `(Game, topology, playerId, Orders, PlayerView)`, the set and ordering of suggestions is deterministic (e.g. sorted by unit id and destination for moves).
 
-The suggestion API itself lives alongside the order engine implementation in `colonizethis_logic` and must use `PlayerView` as its only source of map/visibility information; it may not inspect hidden tiles or enemy units directly. Both the Phase 4 minimal AIPlanner (colonizethis_logic) and the Phase 6 full AI (colonizethis_ai) consume this API to obtain candidate orders; see [ai-planner.md](ai-planner.md) and [ai-systems-impl.md](ai-systems-impl.md).
+The suggestion API suggests **work orders only for the unit's current province** (the unit's source province per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)) and tile when applicable. It must never suggest work for a province the unit is not in. Visibility checks for suggestions are defined in [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) (Order visibility rules).
+
+The suggestion API itself lives alongside the order engine implementation in `colonizethis_logic` and must use `PlayerView` as its only source of map/visibility information; it may not inspect hidden tiles or enemy units directly. The Phase 4 minimal AIPlanner (colonizethis_logic), the sim-game default AI ([sim-game-default-ai.md](sim-game-default-ai.md)), and the Phase 6 full AI (colonizethis_ai) consume this API. For now, AIPlanner and defaultSimGameAi share the same **simple heuristics** implementation; see [ai-planner.md](ai-planner.md) and [sim-game-default-ai.md](sim-game-default-ai.md). Full AI behaviour is defined in [ai-systems-impl.md](ai-systems-impl.md).

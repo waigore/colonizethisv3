@@ -1,5 +1,5 @@
 ---
-description: Test layers and 80% per-package coverage requirement
+description: Test layers and 90% per-package coverage requirement
 globs: "**/*_test.dart,**/test/**/*.dart"
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Coverage
 
-- **80% per package.** Enforce in CI where applicable (e.g. `dart test --coverage` and fail if below threshold).
+- **90% per package.** Enforce in CI where applicable (e.g. `tool/test_coverage.sh` and fail if any package is below threshold).
 
 ## Layers
 
@@ -27,4 +27,4 @@ alwaysApply: false
 
 ## Critical paths
 
-- Combat, economy, save/load, and **ruleset loading** should have tests. Prioritize coverage on these when approaching the 80% target.
+- Combat, economy, save/load, and **ruleset loading** should have tests. Prioritize coverage on these when approaching the 90% target.

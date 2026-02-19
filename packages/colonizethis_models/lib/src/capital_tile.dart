@@ -1,3 +1,5 @@
+import 'province_id.dart';
+
 /// Capital tile position within a province. SPEC/game/capital-and-connectivity.
 class CapitalTile {
   const CapitalTile({
@@ -8,15 +10,17 @@ class CapitalTile {
   });
 
   final String regionId;
+  /// Full province id (regionId|localId). Use [ProvinceId.localIdFrom] for tile key second segment.
   final String provinceId;
   final int x;
   final int y;
 
-  /// Tile key for use in connectivity and extraction: "regionId|provinceId|x|y".
-  String toTileKey() => '$regionId|$provinceId|$x|$y';
+  /// Tile key for use in connectivity and extraction: "regionId|localId|x|y".
+  String toTileKey() =>
+      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
 
   static String tileKey(String regionId, String provinceId, int x, int y) =>
-      '$regionId|$provinceId|$x|$y';
+      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
 
   Map<String, dynamic> toJson() => {
         'regionId': regionId,

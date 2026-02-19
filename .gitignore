@@ -30,8 +30,10 @@ coverage_merged/
 .idea/
 *.iml
 
-# Temporary files
+# Temporary files and logs
 tmp/
+logs/
+.test_output.txt
 
 # Flutter generated
 **/generated_plugin_registrant.dart

@@ -1,4 +1,8 @@
+import 'package:logger/logger.dart';
+
 import 'starting_resources_config.dart';
+
+final Logger _log = Logger();
 
 /// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md.
 /// Program-level config only (no JSON in MVP).
@@ -19,7 +23,9 @@ class GameSetupConfig {
         assert(minorNationCount >= 0),
         assert(tribeCount >= 0),
         assert(minProvincesPerMinor >= 0),
-        assert(numProvincesNewWorld >= 1);
+        assert(numProvincesNewWorld >= 1) {
+    _log.d('data: GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld');
+  }
 
   static const List<String> _defaultSelectedGreatPowerIds = [
     'england',

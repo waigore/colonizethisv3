@@ -42,9 +42,9 @@
 
 ## Simulation Modes and Turn Loop
 
-Only Great Powers submit orders ([factions.md](../game/factions.md)). Each mode uses the same underlying pieces:
+Only Great Powers submit orders ([factions.md](../game/factions.md)). In sim_game **all** Great Powers are simulated; there are no human players. The chosen AI (Sim Game AI or AI Planner, minimal/full) is used for **every** GP. Each mode uses the same underlying pieces:
 
-- **Default AI:** Per-GP behaviour is defined in [sim-game-default-ai.md](sim-game-default-ai.md). It is a deterministic function that, given `(Game, Player, turnNumber, baseSeed)`, returns an `Orders` object for that player only.
+- **Sim Game AI:** When selected, per-GP behaviour is defined in [sim-game-default-ai.md](sim-game-default-ai.md). It is a deterministic function that, given `(Game, Player, turnNumber, baseSeed)`, returns an `Orders` object for that player only. When **AI Planner** is selected, AIPlanner (or full AI) is used for each GP instead.
 - **Turn resolver:** All modes call the existing Phase 3 `resolveTurnForGame` (full sequence including Movement → Combat → Build/work) with combined per-player orders and the captured topology/tile-map data.
 
 ### Player-by-player mode
@@ -53,7 +53,7 @@ Only Great Powers submit orders ([factions.md](../game/factions.md)). Each mode 
 - **Loop (per turn):**
   1. Maintain an in-memory map `ordersByPlayerId`.
   2. When the user presses **Next Player**, pick the next GP without orders (fixed ordering by `Game.players` index or id).
-  3. Call the default AI once for that player to produce `Orders` for the current turn.
+  3. Call the **selected** AI (Sim Game AI or AI Planner) once for that player to produce `Orders` for the current turn.
   4. Show a short summary of that player’s orders in the Sim Game panel.
   5. After all GPs have orders, enable a **Resolve Turn** action that:
      - Combines `ordersByPlayerId` into a single `Orders` value.
@@ -65,7 +65,7 @@ Only Great Powers submit orders ([factions.md](../game/factions.md)). Each mode 
 - **Intent:** One click advances the game by exactly one full turn for all players.
 - **Loop (per turn):**
   1. On **Next Turn**, for each Great Power in fixed order:
-     - Call default AI to obtain that player’s `Orders` for this turn.
+     - Call the **selected** AI (Sim Game AI or AI Planner) to obtain that player’s `Orders` for this turn.
   2. Combine all per-player orders into a single `Orders`.
   3. Call `resolveTurnForGame` once.
   4. Update the stored `Game` and refresh the map and per-turn summary (e.g. combat events and province flips).
@@ -75,7 +75,7 @@ Only Great Powers submit orders ([factions.md](../game/factions.md)). Each mode 
 - **Intent:** Advance the simulation quickly over a small horizon to see macro effects.
 - **Loop:**
   1. On **Fast-forward 10**, ctdev runs a loop for 10 iterations:
-     - For each iteration, generate orders for all GPs via default AI as in Turn-by-turn mode.
+     - For each iteration, generate orders for all GPs via the selected AI as in Turn-by-turn mode.
      - Call `resolveTurnForGame` once.
      - Optionally accumulate a compact log (e.g. battle count, province flips, stockpile summaries).
   2. After the loop:

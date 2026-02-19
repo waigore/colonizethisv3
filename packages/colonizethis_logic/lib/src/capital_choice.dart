@@ -35,7 +35,10 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   TileMapResult tileMap, {
   bool requireSeaBound = true,
 }) {
-  final seaBound = ownedProvinceIds.where((id) => isProvinceSeaBound(topology, id)).toList()
+  // Topology/tileMap use local ids; ownedProvinceIds are full (regionId|localId).
+  final seaBound = ownedProvinceIds
+      .where((id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)))
+      .toList()
     ..sort();
   final provinceId = seaBound.isNotEmpty
       ? seaBound.first
@@ -44,6 +47,8 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
               'No sea-bound province among $ownedProvinceIds; setup must assign at least one sea-bound per faction',
             ))
           : (List<String>.from(ownedProvinceIds)..sort()).first);
+
+  final localProvinceId = ProvinceId.localIdFrom(provinceId);
 
   // Tile choice with border-avoidance heuristic:
   // Class A: coastal tiles not adjacent to other provinces.
@@ -63,10 +68,10 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
 
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
-      if (tileMap.cell(x, y) != provinceId) continue;
+      if (tileMap.cell(x, y) != localProvinceId) continue;
       final coastal = _isTileAdjacentToSea(x, y, tileMap, topology);
       final adjacentOtherProvince =
-          _isTileAdjacentToOtherProvince(x, y, tileMap, provinceIds, provinceId);
+          _isTileAdjacentToOtherProvince(x, y, tileMap, provinceIds, localProvinceId);
 
       if (coastal && !adjacentOtherProvince) {
         if (classAx == null) {
@@ -119,12 +124,13 @@ WorldState applyCapitalPortAndRoad(
   final regionId = tile.regionId;
   final map = tileMapByRegion[regionId];
   if (map == null) throw ArgumentError('No tile map for region $regionId');
+  final localProvinceId = ProvinceId.localIdFrom(provinceId);
 
   var tileState = worldState.tileState;
   var ports = Map<String, String>.from(worldState.portsByProvinceSeaboard);
 
   final capitalKey = tile.toTileKey();
-  final seaZoneIds = _seaZonesAdjacentToProvince(topology, provinceId);
+  final seaZoneIds = _seaZonesAdjacentToProvince(topology, localProvinceId);
   if (seaZoneIds.isEmpty) throw ArgumentError('Province $provinceId has no sea zone in topology');
 
   final seaZoneId = seaZoneIds.first;
@@ -137,7 +143,7 @@ WorldState applyCapitalPortAndRoad(
   } else {
     final coastal = _nearestCoastalTileInProvince(
       map,
-      provinceId,
+      localProvinceId,
       tile.x,
       tile.y,
       topology,
@@ -166,7 +172,7 @@ Game setCapital({
   required MapTopology topology,
   required Map<String, TileMapResult> tileMapByRegion,
 }) {
-  if (!isProvinceSeaBound(topology, provinceId)) {
+  if (!isProvinceSeaBound(topology, ProvinceId.localIdFrom(provinceId))) {
     throw ArgumentError('Province $provinceId is not sea-bound');
   }
   if (tile.provinceId != provinceId) {
@@ -209,7 +215,7 @@ Game setCapitalForMinorNation({
     throw ArgumentError('Capital tile province ${tile.provinceId} does not match $provinceId');
   }
 
-  final worldState = isProvinceSeaBound(topology, provinceId)
+  final worldState = isProvinceSeaBound(topology, ProvinceId.localIdFrom(provinceId))
       ? applyCapitalPortAndRoad(
           game.worldState,
           provinceId,
@@ -244,7 +250,7 @@ Game setCapitalForTribe({
     throw ArgumentError('Capital tile province ${tile.provinceId} does not match $provinceId');
   }
 
-  final worldState = isProvinceSeaBound(topology, provinceId)
+  final worldState = isProvinceSeaBound(topology, ProvinceId.localIdFrom(provinceId))
       ? applyCapitalPortAndRoad(
           game.worldState,
           provinceId,

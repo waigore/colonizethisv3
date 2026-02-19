@@ -64,13 +64,13 @@ Returns CP-based actions per lane for the AI side. Deterministic given state and
 
 ## Order suggestion API usage
 
-colonizethis_logic exposes an **order suggestion API** (see [order-engine.md](order-engine.md)): given PlayerView, current orders, and game/topology, it returns candidate move/build/work/research orders that would validate. colonizethis_ai:
+colonizethis_logic exposes an **order suggestion API** (see [order-engine.md](order-engine.md)): given PlayerView, current orders, and game/topology, it returns candidate move/build/work/research orders that would validate. When naval is in scope, the API also exposes **naval candidates** (fleet move to adjacent sea zone, mission assignment: patrol/blockade/beachhead/defend) using PlayerView’s naval state (fleet locations, sea zones, ports). colonizethis_ai:
 
 - Calls this API with the AI’s PlayerView and current AI orders.
 - Scores candidates with utility AI (personality + hidden agenda weights).
 - Selects a subset (e.g. by cap or budget), appends to orders, and may call again until done or cap reached.
 
-AI does **not** construct raw orders in isolation; it goes through the suggestion API so that all orders are valid by construction after validation.
+AI does **not** construct raw orders in isolation; it goes through the suggestion API so that all orders are valid by construction after validation. Naval orders produced this way are used in both the main app and ctdev sim, so naval features are usable by the sim game AI when Phase 6 full AI and naval are implemented.
 
 ---
 

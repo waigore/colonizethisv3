@@ -60,7 +60,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **80% per-package coverage** for Phase 4 packages.
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **90% per-package coverage** for Phase 4 packages.
 
 | Task | Success criteria |
 |------|------------------|
@@ -75,7 +75,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Integration test — AI vs human** | Run a turn with one human GP and one AI GP; AIPlanner generates orders, TurnResolver runs full sequence (including diplomacy checks and Quick Battle where chosen), and results are consistent across runs with the same seeds. |
 | **Integration test — order engine + merge** | At turn resolution, per-player lists from order engine are merged and applied; cross-player effects (combat, diplomacy) resolved correctly; determinism with same seeds. |
 | **Save/load round-trip (critical path)** | Quick Battle has no in-progress state; save contains either resolved battle outcomes or no mid-battle state; load does not resume a Quick Battle. Save diplomacy relations and AI control/seeds; load and assert key fields match and behaviour remains deterministic. |
-| **Per-package coverage** | `colonizethis_logic` (Quick Battle, order engine, diplomacy, AIPlanner, order merge) and any extended models/data aim for 80%. |
+| **Per-package coverage** | `colonizethis_logic` (Quick Battle, order engine, diplomacy, AIPlanner, order merge) and any extended models/data aim for 90%. |
 
 ---
 
@@ -133,7 +133,7 @@ Phase 4 is done when all design and dev tasks are implemented, all test tasks pa
 - [SPEC/program/orders.md](../program/orders.md) — Order types and merge.
 - [SPEC/program/order-engine.md](../program/order-engine.md) — Order engine and validation.
 - [SPEC/program/diplomacy-resolution.md](../program/diplomacy-resolution.md) (or [turn-resolution-phases.md](../program/turn-resolution-phases.md)) — Diplomacy phase.
-- `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% coverage, critical path (save/load).
 
 ---
 

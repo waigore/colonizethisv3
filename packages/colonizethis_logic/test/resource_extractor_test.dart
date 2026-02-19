@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('ResourceExtractor', () {
@@ -138,6 +138,7 @@ void main() {
         capitalProvinceId: 'p1',
         capitalTile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
       );
+      final connectedTiles = {'oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|0|1', 'oldWorld|p1|1|1'};
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -147,13 +148,14 @@ void main() {
           ]),
           newWorld: const RegionData(),
           tileState: tileState,
+          playerProspectedTiles: {'pl1': connectedTiles},
         ),
         players: [player],
       );
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': {'oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|0|1', 'oldWorld|p1|1|1'}},
+        connectivityResult: {'pl1': connectedTiles},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['wool'], 1);

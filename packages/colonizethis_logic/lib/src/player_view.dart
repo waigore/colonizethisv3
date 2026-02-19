@@ -31,9 +31,7 @@ class PlayerView {
   /// Units owned by [playerId], keyed by unit id.
   final Map<String, Unit> ownUnitsById;
 
-  /// All provinces known to this view, keyed by province id. For now this
-  /// includes all provinces in the world; future fog-of-war wiring can
-  /// restrict this to revealed provinces only.
+  /// All provinces known to this view, keyed by full province id (regionId|localId).
   final Map<String, Province> provincesById;
 
   /// Tile visibility per tile key. When a key is absent, visibility is
@@ -49,10 +47,14 @@ class PlayerView {
 
   Iterable<Unit> get ownUnits => ownUnitsById.values;
 
-  Province? provinceById(String provinceId) => provincesById[provinceId];
+  /// Lookup province by region and id. [provinceId] may be full (regionId|localId) or local; [regionId] is used when [provinceId] is local.
+  Province? provinceByRegionAndId(String regionId, String provinceId) =>
+      provincesById[ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId)];
 
-  Iterable<Unit> unitsInProvince(String provinceId) =>
-      ownUnits.where((u) => u.provinceId == provinceId);
+  Iterable<Unit> unitsInProvince(String regionId, String provinceId) {
+    final fullId = ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
+    return ownUnits.where((u) => u.provinceId == fullId);
+  }
 
   VisibilityLevel visibilityForTile(String tileKey) =>
       visibilityByTile[tileKey] ?? VisibilityLevel.unknown;
@@ -79,14 +81,15 @@ PlayerView buildPlayerView(
     throw ArgumentError.value(playerId, 'playerId', 'Player not found in game');
   }
 
-  // Provinces: collect from both regions. Future fog-of-war wiring can
-  // filter these based on visibility state.
+  // Provinces: key by full id (p.id is regionId|localId).
   final provincesById = <String, Province>{};
   for (final p in game.worldState.oldWorld.provinces) {
-    provincesById[p.id] = p;
+    final key = ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id);
+    provincesById[key] = p;
   }
   for (final p in game.worldState.newWorld.provinces) {
-    provincesById[p.id] = p;
+    final key = ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id);
+    provincesById[key] = p;
   }
 
   // Units owned by this player across both regions.

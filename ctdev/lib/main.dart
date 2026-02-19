@@ -1,16 +1,44 @@
+import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
+import 'ctdev_log.dart';
 import 'debug_map_painter.dart';
+import 'player_view_map_painter.dart';
+
+/// Converts [Game.greatPowerColorOverride] (list form) to tuple form for [buildInitGameMapViewData].
+/// Use when building map view from a loaded game (Load Savegame flow).
+Map<String, (int r, int g, int b)>? greatPowerColorOverrideFromGame(Game game) {
+  final raw = game.greatPowerColorOverride;
+  if (raw == null || raw.isEmpty) return null;
+  return raw.map(
+    (k, v) => MapEntry(k, (v[0], v[1], v[2])),
+  );
+}
+
+/// Short display form for a tile key (regionId|provinceId|x|y).
+String _formatTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length >= 4) return '${parts[2]},${parts[3]}';
+  return tileKey;
+}
 
 void main() {
-  runApp(const CtDevApp());
+  initCtdevLogging();
+  runZonedGuarded(
+    () => runApp(const CtDevApp()),
+    (Object error, StackTrace stackTrace) {
+      Logger().e('ctdev: uncaught error', error: error, stackTrace: stackTrace);
+    },
+  );
 }
 
 class CtDevApp extends StatelessWidget {
@@ -82,6 +110,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
   late int _minProvincesPerMinor;
   late int _seed;
   late String _prussiaLeaderVariantId;
+  late Map<String, (int r, int g, int b)> _greatPowerColorByGpId;
   bool _skipFillLakes = false;
   bool _renderPng = false;
   bool _isRunning = false;
@@ -99,6 +128,9 @@ class _InitGameScreenState extends State<InitGameScreen> {
     _minProvincesPerMinor = cfg.minProvincesPerMinor;
     _prussiaLeaderVariantId =
         cfg.leaderVariantByGpId['prussia'] ?? prussiaVariantFrederickTheGreat;
+    _greatPowerColorByGpId = {
+      for (final id in allGreatPowerIds) id: greatPowerDefaultColorRgb[id]!,
+    };
     // Seed is not prefilled from config; default to 0 so orchestration
     // chooses a time-based seed when the field is left blank.
     _seed = 0;
@@ -164,6 +196,9 @@ class _InitGameScreenState extends State<InitGameScreen> {
       cellSize: 24,
       skipFillLakes: _skipFillLakes,
       renderPng: _renderPng,
+      greatPowerColorOverride: {
+        for (final id in _selectedGreatPowerIds) id: _greatPowerColorByGpId[id]!,
+      },
     );
 
     setState(() {
@@ -270,6 +305,75 @@ class _InitGameScreenState extends State<InitGameScreen> {
                 },
               ),
             ],
+            const SizedBox(height: 12),
+            const Text(
+              'Map colour (per Great Power)',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 4),
+            ...(_selectedGreatPowerIds.toList()..sort()).map((gpId) {
+              final currentRgb = _greatPowerColorByGpId[gpId]!;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        defaultNamingConfig.gpById(gpId)?.countryName ?? gpId,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    DropdownButton<(int r, int g, int b)>(
+                      value: currentRgb,
+                      isExpanded: false,
+                      items: greatPowerColorOptions.map((opt) {
+                        final rgb = opt.$3;
+                        return DropdownMenuItem<(int r, int g, int b)>(
+                          value: rgb,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3),
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(opt.$2, style: const TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newRgb) {
+                        if (newRgb == null || newRgb == currentRgb) return;
+                        setState(() {
+                          final others = _greatPowerColorByGpId.entries
+                              .where((e) =>
+                                  e.key != gpId &&
+                                  _selectedGreatPowerIds.contains(e.key) &&
+                                  e.value.$1 == newRgb.$1 &&
+                                  e.value.$2 == newRgb.$2 &&
+                                  e.value.$3 == newRgb.$3)
+                              .map((e) => e.key)
+                              .toList();
+                          final other = others.isNotEmpty ? others.first : null;
+                          if (other != null) {
+                            _greatPowerColorByGpId[other] = currentRgb;
+                          }
+                          _greatPowerColorByGpId[gpId] = newRgb;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 16),
             Wrap(
               spacing: 16,
@@ -489,6 +593,8 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
    // When true, render geographic (terrain/resources) view instead of political ownership fill.
   bool _geographicMode = false;
   bool _hoveringResourceLegend = false;
+  bool _useSimGameAi = true;
+  bool _useFullAI = false;
 
   @override
   void initState() {
@@ -650,11 +756,17 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
   }
 
   void _startSimGame() {
+    final sessionId =
+        '${DateTime.now().millisecondsSinceEpoch}_${(math.Random().nextDouble() * 0xFFFF).floor().toRadixString(16)}';
+    startSimSession(sessionId);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => RunningGameScreen(
+          sessionId: sessionId,
           initResult: widget.initResult,
           baseSeed: widget.baseSeed,
+          useSimGameAi: _useSimGameAi,
+          useFullAI: _useFullAI,
         ),
       ),
     );
@@ -831,6 +943,37 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
                         ],
                       ),
                       const SizedBox(width: 24),
+                      SegmentedButton<bool>(
+                        segments: const [
+                          ButtonSegment<bool>(
+                            value: true,
+                            label: Text('Sim Game AI'),
+                          ),
+                          ButtonSegment<bool>(
+                            value: false,
+                            label: Text('AI Planner'),
+                          ),
+                        ],
+                        selected: {_useSimGameAi},
+                        onSelectionChanged: (s) {
+                          setState(() => _useSimGameAi = s.first);
+                        },
+                      ),
+                      if (!_useSimGameAi) ...[
+                        const SizedBox(width: 12),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Checkbox(
+                              value: _useFullAI,
+                              onChanged: (v) =>
+                                  setState(() => _useFullAI = v ?? false),
+                            ),
+                            const Text('Use full AI (Phase 6)'),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: _startSimGame,
                         child: const Text('Start Game (Sim)'),
@@ -911,7 +1054,7 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
                           'Province: ${_selectedCell!.provinceDisplayName ?? _selectedCell!.regionCellId}',
                         ),
                         Text(
-                          'Owner: ${_selectedCell!.ownerFactionId ?? '—'}',
+                          'Owner: ${_selectedCell!.ownerFactionId != null ? _factionDisplayName(_selectedCell!.ownerFactionId!) : '—'}',
                         ),
                         if (_isCapitalTile(_selectedCell!, _selectedRegionId))
                           Text(
@@ -946,12 +1089,18 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
 class RunningGameScreen extends StatefulWidget {
   const RunningGameScreen({
     super.key,
+    required this.sessionId,
     required this.initResult,
     required this.baseSeed,
+    this.useSimGameAi = true,
+    this.useFullAI = false,
   });
 
+  final String sessionId;
   final InitGameResult initResult;
   final int baseSeed;
+  final bool useSimGameAi;
+  final bool useFullAI;
 
   @override
   State<RunningGameScreen> createState() => _RunningGameScreenState();
@@ -979,6 +1128,8 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       topology: widget.initResult.combinedTopology,
       tileMapByRegion: widget.initResult.tileMapByRegion,
       baseSeed: widget.baseSeed,
+      useSimGameAi: widget.useSimGameAi,
+      useFullAI: widget.useFullAI,
     );
     _viewData = buildInitGameMapViewData(
       game: _controller.game,
@@ -987,6 +1138,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       cellSize: 24,
       seed: widget.baseSeed,
       configSummary: widget.initResult.mapViewData.configSummary,
+      greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
     );
     final tabCount = 3 + _controller.game.players.length;
     _tabController = TabController(length: tabCount, vsync: this);
@@ -999,6 +1151,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
         cellSize: _viewData.oldWorld.cellSize,
         seed: _viewData.seed,
         configSummary: _viewData.configSummary,
+        greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
       );
 
   @override
@@ -1024,6 +1177,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     try {
       _controller.resolveFromPendingOrders();
       _refresh();
+    } catch (e, st) {
+      Logger().e('ctdev: resolve turn failed', error: e, stackTrace: st);
+      rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
     }
@@ -1035,6 +1191,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     try {
       _controller.stepFullTurn();
       _refresh();
+    } catch (e, st) {
+      Logger().e('ctdev: step full turn failed', error: e, stackTrace: st);
+      rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
     }
@@ -1046,6 +1205,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     try {
       _controller.fastForward(turns: 10);
       _refresh();
+    } catch (e, st) {
+      Logger().e('ctdev: fast-forward failed', error: e, stackTrace: st);
+      rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
     }
@@ -1078,7 +1240,10 @@ class _RunningGameScreenState extends State<RunningGameScreen>
             padding: const EdgeInsets.all(8),
             child: Wrap(
               spacing: 8,
+              runSpacing: 4,
               children: [
+                Text('Session: ${widget.sessionId}', style: Theme.of(context).textTheme.bodySmall),
+                Text('Log: ${sessionLogPath ?? "—"}', style: Theme.of(context).textTheme.bodySmall),
                 ElevatedButton(
                   onPressed: _isSimulatingBatch ? null : _stepNextPlayer,
                   child: const Text('Next Player'),
@@ -1180,11 +1345,27 @@ class _RunningGameScreenState extends State<RunningGameScreen>
         children: [
           Text('Turn $turn ($year)', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
-          const Text('Province counts', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Turn seed (monitored)', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
           ...game.players.map((p) {
-            final owCount = game.worldState.oldWorld.provinces.where((pr) => pr.ownerId == p.id).length;
-            final nwCount = game.worldState.newWorld.provinces.where((pr) => pr.ownerId == p.id).length;
-            return Text('${p.displayName}: OW $owCount, NW $nwCount');
+            final seed = turnSeedForPlayer(
+              game,
+              p.id,
+              turn,
+              fallbackAiSeed: _controller.baseSeed,
+            );
+            return Text('${p.displayName} (${p.id}): $seed');
+          }),
+          const SizedBox(height: 16),
+          const Text('Provinces', style: TextStyle(fontWeight: FontWeight.bold)),
+          ...game.players.map((p) {
+            final ow = game.worldState.oldWorld.provinces.where((pr) => pr.ownerId == p.id);
+            final nw = game.worldState.newWorld.provinces.where((pr) => pr.ownerId == p.id);
+            final names = [
+              ...ow.map((pr) => pr.displayName ?? pr.id),
+              ...nw.map((pr) => pr.displayName ?? pr.id),
+            ];
+            return Text('${p.displayName}: ${names.join(', ')}');
           }),
           const SizedBox(height: 16),
           const Text('Military strength', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1195,7 +1376,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
           const SizedBox(height: 16),
           const Text('Sim Log', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(_controller.logLines.join('\n')),
+          Text(getLastUiLogLines().join('\n')),
         ],
       ),
     );
@@ -1311,18 +1492,75 @@ class _RunningGameScreenState extends State<RunningGameScreen>
   Widget _buildPlayerTab(Player player) {
     final orders = _controller.pendingOrdersByPlayerId[player.id];
     final game = _controller.game;
+    final topology = _controller.topology;
     final units = [
       ...game.worldState.oldWorld.units.where((u) => u.ownerId == player.id),
       ...game.worldState.newWorld.units.where((u) => u.ownerId == player.id),
     ];
-    
+
+    final currentOrders = orders ?? const Orders();
+    final view = buildPlayerView(game, topology, player.id);
+    const suggestionApi = DefaultOrderSuggestionAPI();
+    final suggestedMoves = suggestionApi.suggestMoveOrders(view, game, topology, currentOrders);
+    final suggestedBuilds = suggestionApi.suggestBuildOrders(view, game, topology, currentOrders);
+    final suggestedWorks = suggestionApi.suggestWorkOrders(view, game, topology, currentOrders);
+    final suggestedResearch = suggestionApi.suggestResearchOrders(view, game, topology, currentOrders);
+
+    // Key by regionId|id so OW and NW can share province ids (e.g. p1).
+    final provinceNamesByRegionAndId = <String, String>{};
+    for (final p in game.worldState.oldWorld.provinces) {
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+    }
+    for (final p in game.worldState.newWorld.provinces) {
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+    }
+    String provinceLabelInRegion(String regionId, String id) =>
+        provinceNamesByRegionAndId['$regionId|$id'] ?? id;
+
+    final unitsById = <String, Unit>{};
+    for (final u in game.worldState.oldWorld.units) {
+      unitsById[u.id] = u;
+    }
+    for (final u in game.worldState.newWorld.units) {
+      unitsById[u.id] = u;
+    }
+
+    final ow = _viewData.oldWorld;
+    final nw = _viewData.newWorld;
+    final viewCellSize = ow.cellSize.toDouble() * kDebugMapScale;
+    final gap = viewCellSize * 2;
+    final totalMapWidth = ow.width * viewCellSize + gap + nw.width * viewCellSize;
+    final totalMapHeight = math.max(
+      ow.height * viewCellSize,
+      nw.height * viewCellSize,
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('${player.displayName} (${player.id})', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          const Text('Per-player map', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: totalMapWidth,
+            height: totalMapHeight,
+            child: CustomPaint(
+              painter: PlayerViewMapPainter(
+                viewData: _viewData,
+                playerView: view,
+                showOwnership: _showOwnership,
+                showCapitals: _showCapitals,
+                showPorts: _showPorts,
+                geographicMode: _geographicMode,
+                showImprovements: _showImprovements,
+                showUnits: _showUnits,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           const Text('Stockpile', style: TextStyle(fontWeight: FontWeight.bold)),
           Text(player.stockpile.quantities.isEmpty
               ? '—'
@@ -1342,6 +1580,16 @@ class _RunningGameScreenState extends State<RunningGameScreen>
           const Text('Pending orders', style: TextStyle(fontWeight: FontWeight.bold)),
           Text(orders != null ? '${orders.moveOrdersByPlayerId[player.id]?.length ?? 0} move, ${orders.buildUnitOrdersByPlayerId[player.id]?.length ?? 0} build' : '—'),
           const SizedBox(height: 12),
+          const Text('Available orders (suggestion API)', style: TextStyle(fontWeight: FontWeight.bold)),
+          _buildAvailableOrdersSection(
+            suggestedMoves: suggestedMoves,
+            suggestedBuilds: suggestedBuilds,
+            suggestedWorks: suggestedWorks,
+            suggestedResearch: suggestedResearch,
+            unitsById: unitsById,
+            provinceLabelInRegion: provinceLabelInRegion,
+          ),
+          const SizedBox(height: 12),
           const Text('Units', style: TextStyle(fontWeight: FontWeight.bold)),
           if (units.isEmpty)
             const Text('—')
@@ -1356,7 +1604,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    'Province: ${unit.provinceId}',
+                    'Province: ${provinceLabelInRegion(Unit.regionIdFromTileKey(unit.tileKey) ?? "oldWorld", unit.locationProvinceId)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
@@ -1372,7 +1620,97 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       ),
     );
   }
-  
+
+  Widget _buildAvailableOrdersSection({
+    required List<MoveOrder> suggestedMoves,
+    required List<BuildUnitOrder> suggestedBuilds,
+    required List<WorkOrder> suggestedWorks,
+    required List<ResearchOrder> suggestedResearch,
+    required Map<String, Unit> unitsById,
+    required String Function(String regionId, String id) provinceLabelInRegion,
+  }) {
+    final hasAny = suggestedMoves.isNotEmpty ||
+        suggestedBuilds.isNotEmpty ||
+        suggestedWorks.isNotEmpty ||
+        suggestedResearch.isNotEmpty;
+    if (!hasAny) {
+      return const Text('—');
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (suggestedMoves.isNotEmpty) ...[
+          const Text('Move', style: TextStyle(fontWeight: FontWeight.w600)),
+          ...suggestedMoves.map((o) {
+            final unit = unitsById[o.unitId];
+            final unitLabel = unit != null ? '${unit.id} (${unit.type})' : o.unitId;
+            final regionId = unit != null
+                ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
+                : 'oldWorld';
+            final origin = unit != null
+                ? provinceLabelInRegion(regionId, unit.locationProvinceId)
+                : '?';
+            final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
+            return Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text('$unitLabel: $origin → $dest', style: Theme.of(context).textTheme.bodySmall),
+            );
+          }),
+          const SizedBox(height: 6),
+        ],
+        if (suggestedBuilds.isNotEmpty) ...[
+          const Text('Build', style: TextStyle(fontWeight: FontWeight.w600)),
+          ...suggestedBuilds.map((o) {
+            final location = provinceLabelInRegion('oldWorld', o.spawnProvinceId);
+            final kind = o.isMilitary ? 'military' : 'civilian';
+            return Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text('${o.unitType} ($kind) at $location', style: Theme.of(context).textTheme.bodySmall),
+            );
+          }),
+          const SizedBox(height: 6),
+        ],
+        if (suggestedWorks.isNotEmpty) ...[
+          const Text('Work', style: TextStyle(fontWeight: FontWeight.w600)),
+          ...suggestedWorks.map((o) {
+            final unit = unitsById[o.unitId];
+            final unitLabel = unit != null ? '${unit.id} (${unit.type})' : o.unitId;
+            final unitRegion = unit != null
+                ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
+                : 'oldWorld';
+            final targetRegion = Unit.regionIdFromTileKey(o.targetTileKey) ?? unitRegion;
+            final currentProvince = unit != null
+                ? provinceLabelInRegion(unitRegion, unit.locationProvinceId)
+                : '?';
+            final targetProvince = provinceLabelInRegion(
+                targetRegion, Unit.provinceIdFromTileKey(o.targetTileKey) ?? '');
+            final currentTile = (unit != null && unit.tileKey != null && unit.tileKey!.isNotEmpty)
+                ? _formatTileKey(unit.tileKey!)
+                : '?';
+            final targetTile = o.targetTileKey.isNotEmpty ? _formatTileKey(o.targetTileKey) : '?';
+            return Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text(
+                '$unitLabel at $currentTile ($currentProvince) → ${o.target} at $targetTile ($targetProvince)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            );
+          }),
+          const SizedBox(height: 6),
+        ],
+        if (suggestedResearch.isNotEmpty) ...[
+          const Text('Research', style: TextStyle(fontWeight: FontWeight.w600)),
+          ...suggestedResearch.map((o) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text('slot ${o.slotIndex} → ${o.techId} (${o.funding})', style: Theme.of(context).textTheme.bodySmall),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+
   static const _civilianUnitCapabilities = {
     'Explorer': 'Prospect, explore',
     'Builder': 'Develop tile',
@@ -1432,6 +1770,22 @@ class _SimOrderHistoryEntry {
   final String? reason;
 }
 
+/// Ensures every Great Power has an aiSeed so turnSeed[P, T] is well-defined (Option A).
+Game _ensureAiSeedsForSim(Game game, int baseSeed) {
+  final byGp = Map<String, int>.from(game.aiSeedByGpId);
+  for (final p in game.players) {
+    byGp.putIfAbsent(p.id, () => baseSeed);
+  }
+  return game.copyWith(aiSeedByGpId: byGp);
+}
+
+/// In sim game all GPs are AI-controlled; no human player.
+Game _forceAllGpsAiControlled(Game game) {
+  return game.copyWith(
+    aiControlByGpId: {for (final p in game.players) p.id: true},
+  );
+}
+
 /// In-memory controller for Sim Game mode used by ctdev.
 class SimGameController {
   SimGameController({
@@ -1439,18 +1793,33 @@ class SimGameController {
     required MapTopology topology,
     required Map<String, TileMapResult> tileMapByRegion,
     required int baseSeed,
-  })  : _game = initialGame,
+    this.useSimGameAi = true,
+    this.useFullAI = false,
+  })  : _game = _forceAllGpsAiControlled(
+            _ensureAiSeedsForSim(initialGame, baseSeed)),
         _topology = topology,
         _tileMapByRegion = tileMapByRegion,
-        _baseSeed = baseSeed;
+        _baseSeed = baseSeed {
+    if (!useSimGameAi && useFullAI) {
+      _game = assignHiddenAgendasForGame(_game);
+    }
+  }
 
   Game _game;
   final MapTopology _topology;
   final Map<String, TileMapResult> _tileMapByRegion;
   final int _baseSeed;
 
+  /// When true, use Sim Game AI (defaultSimGameAi) for all GPs. When false, use AI Planner (minimal or full).
+  final bool useSimGameAi;
+
+  /// When true and useSimGameAi is false, use Phase 6 full AI (personalities, hidden agendas, naval orders). When false, use Phase 4 simple AI.
+  final bool useFullAI;
+
+  /// Base seed used for sim; also fallback for turnSeed when a GP has no aiSeed.
+  int get baseSeed => _baseSeed;
+
   final Map<String, Orders> _pendingOrdersByPlayerId = {};
-  final List<String> _logLines = [];
   final List<_SimOrderHistoryEntry> _orderHistory = [];
 
   Game get game => _game;
@@ -1471,7 +1840,6 @@ class SimGameController {
         ),
       };
 
-  List<String> get logLines => List.unmodifiable(_logLines);
   List<_SimOrderHistoryEntry> get orderHistory =>
       List.unmodifiable(_orderHistory);
 
@@ -1481,15 +1849,24 @@ class SimGameController {
   }
 
   /// Generates orders for the next Great Power that does not yet have orders
-  /// for the current turn (player-by-player mode).
+  /// for the current turn (player-by-player mode). All GPs use the selected AI.
   void generateOrdersForNextPlayer() {
     final currentTurn = _game.worldState.turnState.turnNumber;
     for (final player in _game.players) {
       if (_pendingOrdersByPlayerId.containsKey(player.id)) continue;
-      final orders = generateOrdersForPlayer(_game, _topology, player.id);
+      final orders = useSimGameAi
+          ? defaultSimGameAi(
+              game: _game,
+              player: player,
+              topology: _topology,
+              baseSeed: _baseSeed,
+            )
+          : (useFullAI
+              ? generateOrdersForPlayerFullAI(_game, _topology, player.id)
+              : generateOrdersForPlayer(_game, _topology, player.id));
       _pendingOrdersByPlayerId[player.id] = orders;
-      _logLines.add(
-        'Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
+      Logger().i(
+        'ctdev: Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
       );
       break;
     }
@@ -1498,24 +1875,33 @@ class SimGameController {
   /// Resolves one full turn from the currently accumulated per-player orders.
   void resolveFromPendingOrders() {
     if (!allPlayersHaveOrders) return;
+    clearUiLog();
     final combined = _combineOrders(_pendingOrdersByPlayerId.values.toList());
     _pendingOrdersByPlayerId.clear();
     _advanceOneTurnFromOrders(combined);
   }
 
   /// Generates orders for all Great Powers and advances one full turn.
-  /// Uses generateOrdersForGame for AI GPs; defaultSimGameAi for human GPs (sim mode).
+  /// All GPs use the selected AI (Sim Game AI or AI Planner).
   void stepFullTurn() {
-    final ordersList = [generateOrdersForGame(_game, _topology)];
-    for (final player in _game.players) {
-      if (!isAiControlled(_game, player.id)) {
-        ordersList.add(defaultSimGameAi(
-          game: _game,
-          player: player,
-          topology: _topology,
-          baseSeed: _baseSeed,
-        ));
-      }
+    clearUiLog();
+    final List<Orders> ordersList;
+    if (useSimGameAi) {
+      ordersList = [
+        for (final player in _game.players)
+          defaultSimGameAi(
+            game: _game,
+            player: player,
+            topology: _topology,
+            baseSeed: _baseSeed,
+          ),
+      ];
+    } else {
+      ordersList = [
+        useFullAI
+            ? generateOrdersForGameFullAI(_game, _topology)
+            : generateOrdersForGame(_game, _topology),
+      ];
     }
     final combined = _combineOrders(ordersList);
     _pendingOrdersByPlayerId.clear();
@@ -1534,6 +1920,9 @@ class SimGameController {
     final buildByPlayer = <String, List<BuildUnitOrder>>{};
     final workByPlayer = <String, List<WorkOrder>>{};
     final diploByPlayer = <String, List<DiplomaticOrder>>{};
+    final researchByPlayer = <String, List<ResearchOrder>>{};
+    final navalByPlayer = <String, List<NavalMoveOrder>>{};
+    final missionByPlayer = <String, List<NavalMissionOrder>>{};
 
     for (final o in all) {
       o.moveOrdersByPlayerId.forEach((pid, list) {
@@ -1548,6 +1937,15 @@ class SimGameController {
       o.diplomaticOrdersByPlayerId.forEach((pid, list) {
         diploByPlayer.putIfAbsent(pid, () => <DiplomaticOrder>[]).addAll(list);
       });
+      o.researchOrdersByPlayerId.forEach((pid, list) {
+        researchByPlayer.putIfAbsent(pid, () => <ResearchOrder>[]).addAll(list);
+      });
+      o.navalMoveOrdersByPlayerId.forEach((pid, list) {
+        navalByPlayer.putIfAbsent(pid, () => <NavalMoveOrder>[]).addAll(list);
+      });
+      o.navalMissionOrdersByPlayerId.forEach((pid, list) {
+        missionByPlayer.putIfAbsent(pid, () => <NavalMissionOrder>[]).addAll(list);
+      });
     }
 
     return Orders(
@@ -1555,6 +1953,9 @@ class SimGameController {
       buildUnitOrdersByPlayerId: buildByPlayer,
       workOrdersByPlayerId: workByPlayer,
       diplomaticOrdersByPlayerId: diploByPlayer,
+      researchOrdersByPlayerId: researchByPlayer,
+      navalMoveOrdersByPlayerId: navalByPlayer,
+      navalMissionOrdersByPlayerId: missionByPlayer,
     );
   }
 
@@ -1576,7 +1977,10 @@ class SimGameController {
     if (orders.moveOrdersByPlayerId.isEmpty &&
         orders.buildUnitOrdersByPlayerId.isEmpty &&
         orders.workOrdersByPlayerId.isEmpty &&
-        orders.diplomaticOrdersByPlayerId.isEmpty) {
+        orders.diplomaticOrdersByPlayerId.isEmpty &&
+        orders.researchOrdersByPlayerId.isEmpty &&
+        orders.navalMoveOrdersByPlayerId.isEmpty &&
+        orders.navalMissionOrdersByPlayerId.isEmpty) {
       return;
     }
 
@@ -1590,15 +1994,15 @@ class SimGameController {
       unitsById[u.id] = u;
     }
 
-    final provinceNamesById = <String, String>{};
+    final provinceNamesByRegionAndId = <String, String>{};
     for (final p in _game.worldState.oldWorld.provinces) {
-      provinceNamesById[p.id] = p.displayName ?? p.id;
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
     }
     for (final p in _game.worldState.newWorld.provinces) {
-      provinceNamesById[p.id] = p.displayName ?? p.id;
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
     }
-
-    String provinceLabel(String id) => provinceNamesById[id] ?? id;
+    String provinceLabelInRegion(String regionId, String id) =>
+        provinceNamesByRegionAndId['$regionId|$id'] ?? id;
 
     for (final player in _game.players) {
       final playerId = player.id;
@@ -1607,11 +2011,20 @@ class SimGameController {
       final works = orders.workOrdersByPlayerId[playerId] ?? const [];
       final diplo =
           orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
+      final research =
+          orders.researchOrdersByPlayerId[playerId] ?? const <ResearchOrder>[];
+      final naval =
+          orders.navalMoveOrdersByPlayerId[playerId] ?? const <NavalMoveOrder>[];
+      final mission =
+          orders.navalMissionOrdersByPlayerId[playerId] ?? const <NavalMissionOrder>[];
 
       if (moves.isEmpty &&
           builds.isEmpty &&
           works.isEmpty &&
-          diplo.isEmpty) {
+          diplo.isEmpty &&
+          research.isEmpty &&
+          naval.isEmpty &&
+          mission.isEmpty) {
         continue;
       }
 
@@ -1625,6 +2038,12 @@ class SimGameController {
               works.isEmpty ? const {} : {playerId: List.of(works)},
           diplomaticOrdersByPlayerId:
               diplo.isEmpty ? const {} : {playerId: List.of(diplo)},
+          researchOrdersByPlayerId:
+              research.isEmpty ? const {} : {playerId: List.of(research)},
+          navalMoveOrdersByPlayerId:
+              naval.isEmpty ? const {} : {playerId: List.of(naval)},
+          navalMissionOrdersByPlayerId:
+              mission.isEmpty ? const {} : {playerId: List.of(mission)},
         ),
       );
 
@@ -1648,8 +2067,13 @@ class SimGameController {
         final unitLabel = unit != null
             ? '${unit.id} (${unit.type})'
             : o.unitId;
-        final origin = unit != null ? provinceLabel(unit.provinceId) : '?';
-        final dest = provinceLabel(o.destinationProvinceId);
+        final regionId = unit != null
+            ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
+            : 'oldWorld';
+        final origin = unit != null
+            ? provinceLabelInRegion(regionId, unit.locationProvinceId)
+            : '?';
+        final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
         final validation = nextResult();
         _orderHistory.add(
           _SimOrderHistoryEntry(
@@ -1665,7 +2089,7 @@ class SimGameController {
       }
 
       for (final o in builds) {
-        final location = provinceLabel(o.spawnProvinceId);
+        final location = provinceLabelInRegion('oldWorld', o.spawnProvinceId);
         final kind = o.isMilitary ? 'military' : 'civilian';
         final validation = nextResult();
         _orderHistory.add(
@@ -1686,6 +2110,19 @@ class SimGameController {
         final unitLabel = unit != null
             ? '${unit.id} (${unit.type})'
             : o.unitId;
+        final unitRegion = unit != null
+            ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
+            : 'oldWorld';
+        final targetRegion = Unit.regionIdFromTileKey(o.targetTileKey) ?? unitRegion;
+        final currentProvince = unit != null
+            ? provinceLabelInRegion(unitRegion, unit.locationProvinceId)
+            : '?';
+        final targetProvince = provinceLabelInRegion(
+            targetRegion, Unit.provinceIdFromTileKey(o.targetTileKey) ?? '');
+        final currentTile = (unit != null && unit.tileKey != null && unit.tileKey!.isNotEmpty)
+            ? _formatTileKey(unit.tileKey!)
+            : '?';
+        final targetTile = o.targetTileKey.isNotEmpty ? _formatTileKey(o.targetTileKey) : '?';
         final validation = nextResult();
         _orderHistory.add(
           _SimOrderHistoryEntry(
@@ -1693,7 +2130,7 @@ class SimGameController {
             playerId: playerId,
             playerName: player.displayName,
             orderType: 'work',
-            summary: 'Work $unitLabel on ${o.target}',
+            summary: 'Work $unitLabel at $currentTile ($currentProvince) → ${o.target} at $targetTile ($targetProvince)',
             status: validation.status,
             reason: validation.reason,
           ),
@@ -1747,10 +2184,10 @@ class SimGameController {
     }
 
     if (flips.isEmpty) {
-      _logLines.add('Turn $turn ($year): no province ownership changes');
+      Logger().i('ctdev: Turn $turn ($year): no province ownership changes');
     } else {
-      _logLines.add(
-        'Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
+      Logger().i(
+        'ctdev: Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
       );
     }
   }

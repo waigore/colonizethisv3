@@ -98,19 +98,23 @@ const List<(int r, int g, int b)> minorNationPalette = [
   (210, 210, 210),
 ];
 
-/// Builds ownership colour map by faction type: GPs and tribes use [regionPalette], minors use [minorNationPalette].
+/// Builds ownership colour map by faction type: GPs use GDD defaults (or [greatPowerColorOverride]), minors use [minorNationPalette], tribes use [regionPalette].
 /// Insertion order: GPs first, then minor nations, then tribes (legend order).
 Map<String, (int r, int g, int b)> factionOwnershipColorMap({
   List<String> greatPowerIds = const [],
   List<String> minorNationIds = const [],
   List<String> tribeIds = const [],
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
 }) {
   final map = <String, (int r, int g, int b)>{};
   final gps = greatPowerIds.toList()..sort();
   final minors = minorNationIds.toList()..sort();
   final tribes = tribeIds.toList()..sort();
   for (var i = 0; i < gps.length; i++) {
-    map[gps[i]] = regionPalette[i % regionPalette.length];
+    final id = gps[i];
+    final override = greatPowerColorOverride?[id];
+    final defaultColor = greatPowerDefaultColorRgb[id];
+    map[id] = override ?? defaultColor ?? regionPalette[i % regionPalette.length];
   }
   for (var i = 0; i < minors.length; i++) {
     map[minors[i]] = minorNationPalette[i % minorNationPalette.length];

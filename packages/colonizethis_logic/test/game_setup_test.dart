@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('GameSetup', () {
@@ -59,19 +59,19 @@ void main() {
       expect(result.game.id, 'test-game');
       expect(result.game.players.length, 1);
       expect(result.game.players.first.id, 'gp1');
-      expect(result.game.players.first.capitalProvinceId, 'p1');
-      expect(result.game.players.first.capitalTile?.provinceId, 'p1');
+      expect(result.game.players.first.capitalProvinceId, 'oldWorld|p1');
+      expect(result.game.players.first.capitalTile?.provinceId, 'oldWorld|p1');
 
       expect(result.game.minorNations, isEmpty);
       expect(result.game.tribes.length, 1);
       expect(result.game.tribes.first.id, 'tribe1');
-      expect(result.game.tribes.first.capitalProvinceId, 'nw1');
+      expect(result.game.tribes.first.capitalProvinceId, 'newWorld|nw1');
       expect(result.game.tribes.first.capitalTile?.regionId, 'newWorld');
 
       expect(result.game.worldState.oldWorld.provinces.length, 2);
       expect(result.game.worldState.newWorld.provinces.length, 1);
-      expect(result.game.worldState.portsByProvinceSeaboard.containsKey('p1|sea1'), true);
-      expect(result.game.worldState.portsByProvinceSeaboard.containsKey('nw1|sea1'), true);
+      expect(result.game.worldState.portsByProvinceSeaboard.containsKey('oldWorld|p1|sea1'), true);
+      expect(result.game.worldState.portsByProvinceSeaboard.containsKey('newWorld|nw1|sea1'), true);
 
       // Province naming: mandatory; GP capital gets capital city name, others from pool.
       expect(result.game.players.first.displayName, 'England');
@@ -79,14 +79,14 @@ void main() {
       for (final p in owProvinces) {
         expect(p.displayName, isNotNull, reason: 'OW province ${p.id} must have displayName');
       }
-      final p1 = owProvinces.firstWhere((p) => p.id == 'p1');
+      final p1 = owProvinces.firstWhere((p) => p.id == 'oldWorld|p1');
       expect(p1.displayName, 'London');
       final nwProvinces = result.game.worldState.newWorld.provinces;
       for (final p in nwProvinces) {
         expect(p.displayName, isNotNull, reason: 'NW province ${p.id} must have displayName');
       }
-      final nw1 = nwProvinces.firstWhere((p) => p.id == 'nw1');
-      expect(nw1.displayName, 'Tenochtitlan');
+      final nw1 = nwProvinces.firstWhere((p) => p.id == 'newWorld|nw1');
+      expect(nw1.displayName, 'Mexica');
       expect(result.game.tribes.first.displayName, 'Aztec');
 
       expect(result.tileMapByRegion['oldWorld'], owTileMap);
@@ -423,10 +423,150 @@ void main() {
       );
     });
 
+    test('GP province naming names all owned OW provinces across landmasses', () {
+      // Two disconnected OW landmasses: A = p1 (sea), p2; B = p3 (sea), p4. One GP gets all 4.
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p4', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+          TopologyEdge(id1: 'p3', id2: 'sea2'),
+          TopologyEdge(id1: 'p3', id2: 'p4'),
+        ],
+      );
+      final owTileMap = TileMapResult(
+        width: 4,
+        height: 2,
+        grid: const [
+          ['p1', 'p2', 'p3', 'p4'],
+          ['sea1', 'sea1', 'sea2', 'sea2'],
+        ],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'nwSea', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'nw1', id2: 'nwSea')],
+      );
+      final nwTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [['nw1'], ['nwSea']],
+      );
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 2,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 4,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+        seed: 42,
+      );
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'multi-landmass-naming',
+        namingSeed: 42,
+      );
+      final gp = result.game.players.first;
+      expect(gp.id, 'gp1');
+      final ownedOw = result.game.worldState.oldWorld.provinces
+          .where((p) => p.ownerId == gp.id)
+          .toList();
+      expect(ownedOw.length, 4, reason: 'GP should own all 4 OW provinces');
+      for (final p in ownedOw) {
+        expect(p.displayName, isNotNull, reason: '${p.id} must have displayName');
+        expect(p.displayName!.isNotEmpty, isTrue, reason: '${p.id} must have non-empty name');
+      }
+      final capitalProv = ownedOw.firstWhere((p) => p.id == gp.capitalProvinceId);
+      expect(capitalProv.displayName, 'London', reason: 'Capital province gets capital city name');
+    });
+
     test('allGreatPowerIds has 7 entries (no prussia_reserve)', () {
       expect(allGreatPowerIds.length, 7);
       expect(allGreatPowerIds, contains('prussia'));
       expect(allGreatPowerIds, isNot(contains('prussia_reserve')));
+    });
+
+    test('province naming fallback when tribe count exceeds naming config', () {
+      // Default naming has tribe1..tribe10. Use 11 tribes so tribe11 uses fallback.
+      final nwGrid = [
+        ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n10', 'n11'],
+        ['sea', 'sea', 'sea', 'sea', 'sea', 'sea', 'sea', 'sea', 'sea', 'sea', 'sea'],
+      ];
+      final nwNodes = <TopologyNode>[
+        const TopologyNode(id: 'sea', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        for (var i = 1; i <= 11; i++)
+          TopologyNode(id: 'n$i', regionId: 'newWorld', type: TopologyNodeType.province),
+      ];
+      final nwEdges = <TopologyEdge>[
+        for (var i = 1; i <= 11; i++) TopologyEdge(id1: 'n$i', id2: 'sea'),
+        for (var i = 1; i < 11; i++) TopologyEdge(id1: 'n$i', id2: 'n${i + 1}'),
+      ];
+      final nwTopology = MapTopology(nodes: nwNodes, edges: nwEdges);
+      final nwTileMap = TileMapResult(width: 11, height: 2, grid: nwGrid);
+
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 'sea1')],
+      );
+      final owTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [['p1'], ['sea1']],
+      );
+
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 11,
+        numProvincesOldWorld: 1,
+        numProvincesNewWorld: 11,
+        minProvincesPerMinor: 0,
+      );
+
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'fallback-test',
+      );
+
+      for (final p in result.game.worldState.oldWorld.provinces) {
+        expect(p.displayName, isNotNull, reason: 'OW ${p.id}');
+        expect(p.displayName!.isNotEmpty, isTrue, reason: 'OW ${p.id}');
+      }
+      final nwProvinces = result.game.worldState.newWorld.provinces;
+      for (final p in nwProvinces) {
+        expect(p.displayName, isNotNull, reason: 'NW ${p.id}');
+        expect(p.displayName!.isNotEmpty, isTrue, reason: 'NW ${p.id}');
+      }
+      expect(result.game.tribes.length, 11);
+      final tribe11 = result.game.tribes.firstWhere((t) => t.id == 'tribe11');
+      final tribe11Provinces = nwProvinces.where((p) => p.ownerId == tribe11.id).toList();
+      expect(tribe11Provinces, isNotEmpty);
+      for (final p in tribe11Provinces) {
+        expect(p.displayName, isNotNull);
+        expect(p.displayName!.isNotEmpty, isTrue, reason: 'tribe11 fallback must produce non-empty name');
+      }
     });
   });
 }

@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('isAiControlled', () {
@@ -74,6 +74,12 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fogged',
+            },
+          },
         ),
         players: const [
           Player(id: 'gp1', displayName: 'AI GP', isHuman: false),
@@ -104,6 +110,12 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fogged',
+            },
+          },
         ),
         players: const [
           Player(id: 'gp1', displayName: 'AI GP', isHuman: false),

@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('defaultSimGameAi', () {
@@ -44,6 +44,13 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+              'oldWorld|P3|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'Power 1', isHuman: true),
@@ -64,15 +71,15 @@ void main() {
       for (final mo in moveOrders) {
         final unit = game.worldState.oldWorld.units
             .firstWhere((u) => u.id == mo.unitId);
-        final from = unit.provinceId;
-        final to = mo.destinationProvinceId;
+        final fromLocal = ProvinceId.localIdFrom(unit.provinceId);
+        final toLocal = ProvinceId.localIdFrom(mo.destinationProvinceId);
         final isAdjacent = topology.edges.any(
           (e) =>
-              (e.id1 == from && e.id2 == to) ||
-              (e.id1 == to && e.id2 == from),
+              (e.id1 == fromLocal && e.id2 == toLocal) ||
+              (e.id1 == toLocal && e.id2 == fromLocal),
         );
         expect(isAdjacent, isTrue,
-            reason: 'Move from $from to $to must follow topology edge');
+            reason: 'Move from $fromLocal to $toLocal must follow topology edge');
       }
     });
 
@@ -106,6 +113,12 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'Power 1', isHuman: true),

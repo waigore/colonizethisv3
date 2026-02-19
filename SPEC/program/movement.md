@@ -32,4 +32,8 @@ Invalid moves are rejected; unit location unchanged.
 
 ## Resolution
 
-TurnResolver runs a **movement** step that applies validated move orders: update each unit's location to the destination province. Order of application (e.g. by player, by unit) is deterministic. See [turn-resolution-phases.md](turn-resolution-phases.md).
+TurnResolver runs a **movement** step that applies validated move orders. Order of application (e.g. by player, by unit) is deterministic. See [turn-resolution-phases.md](turn-resolution-phases.md).
+
+- **Civilian units:** Set the unit’s **tileKey** to a valid tile in the **destination province** (e.g. first tile in `tileKeysByRegionAndProvince[regionId][order.destinationProvinceId]`); province is derived from tileKey.
+- **Military units:** Update the unit’s **provinceId** to the destination (no tileKey).
+- **Naval:** Movement remains at sea zone / fleet level; no tileKey for ships.

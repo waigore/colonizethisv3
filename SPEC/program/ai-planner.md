@@ -8,7 +8,7 @@ Phase 4 introduces a minimal **AIPlanner** that generates orders for AI-controll
 - Integrate with diplomacy (war/peace) and combat (including Quick Battle).
 - Remain limited in scope: no deep strategy, no complex diplomacy.
 
-This spec focuses on control rules, seeding and determinism, and the high-level behaviour of AIPlanner. It complements (but does not replace) `sim-game-default-ai.md`, which is used by CLI simulation tools.
+This spec focuses on control rules, seeding and determinism, and the high-level behaviour of AIPlanner. It complements (but does not replace) `sim-game-default-ai.md`, which produces orders for one GP when ctdev selects Sim Game AI for the run (all GPs use that AI). AIPlanner (for AI-controlled GPs) and the sim-game default AI share the same **simple heuristics core** in colonizethis_logic: both use PlayerView, the order suggestion API, the same category order (move → work → build → research), seeded random choice within category, and the same diplomacy post-filter. Entry points remain separate; only the strategy implementation is shared.
 
 ## Control rules (who is AI)
 
@@ -57,8 +57,9 @@ AIPlanner’s responsibilities in Phase 4 are intentionally narrow:
   - Long-term strategic planning (grand strategy).
   - Complex diplomatic behaviour (alliances, multi-stage negotiations).
   - Economic optimization beyond trivial rules.
+  - **Naval orders** (fleet move, patrol, blockade, beachhead). Phase 4 AIPlanner does not generate naval orders. When ctdev uses **simple (Phase 4) AI**, games with fleets still resolve (e.g. fleets keep current position and no mission, or implementation may emit minimal naval orders so fleets are not stuck); **full naval play in sim** (patrol, blockade, beachhead, invasions) requires **Phase 6 full AI**, which issues naval orders via the same order suggestion API and PlayerView.
 
-AIPlanner may internally reuse patterns from the sim-game default AI, but must additionally consult diplomacy and terrain/tactical context.
+The shared simple heuristics (used by both AIPlanner and defaultSimGameAi) apply the diplomacy post-filter to moves and consult only PlayerView and the suggestion API; no raw order construction from topology.
 
 ### High-level heuristics (tactical)
 
@@ -124,9 +125,10 @@ The merged and validated order list is then passed to `TurnResolver` as in previ
 
 The **ctdev** dev application uses AIPlanner output as a diagnostic signal when running the **Running Game** sim screen:
 
-- When the user clicks **Next Turn** or **Fast-forward 10**, ctdev calls `generateOrdersForGame(game, topology)` to obtain per-turn `Orders` for AI-controlled Great Powers. For human Great Powers in sim mode, it may additionally call `defaultSimGameAi(...)` to generate placeholder orders.
+- In ctdev sim, all GPs are AI-controlled. The user chooses either **Sim Game AI** (defaultSimGameAi for every GP) or **AI Planner** (minimal or full) for every GP; no human orders. When the user clicks **Next Turn** or **Fast-forward 10**, ctdev uses the selected AI to obtain per-turn `Orders` for all Great Powers.
 - Before passing the combined `Orders` to `TurnResolver`, ctdev may mirror these orders into an in-memory **AI order history** structure and ask `OrderEngine.validatePlayerOrdersWithContext(game, topology, playerId)` for per-order validation results.
 - This diagnostic history is rendered in the **Orders (AI history)** tab described in `ctdev-app.md`. It is **read-only** and does not change which orders are applied during turn resolution; it exists purely to help developers understand which orders AIPlanner attempted to issue, and why certain orders were rejected by validation.
+- ctdev displays the **turn seed** (per player and turn) as a monitored variable on the Running Game screen so developers can reproduce or debug AI behaviour (see [ctdev-app.md](ctdev-app.md)).
 
 ---
 
@@ -134,7 +136,7 @@ The **ctdev** dev application uses AIPlanner output as a diagnostic signal when 
 
 The behaviour above is the **Phase 4 minimal** AIPlanner: baseline for tooling and tests, and sufficient for Phase 4 exit.
 
-**Phase 6** introduces the **full hybrid AI** (package **colonizethis_ai**): behavior trees, utility-based domain planners, personalities, hidden agendas, dialogue and mood events, dossier. For standard gameplay, the game uses the full AI to generate orders; the same control rules, seeding, PlayerView, and order merge apply. The Phase 4 implementation remains available so that **ctdev** can offer a toggle: run simulations with **simple AI** (Phase 4) or **full AI** (Phase 6). Both paths produce valid, deterministic orders.
+**Phase 6** introduces the **full hybrid AI** (package **colonizethis_ai**): behavior trees, utility-based domain planners, personalities, hidden agendas, dialogue and mood events, dossier. For standard gameplay, the game uses the full AI to generate orders for AI-controlled GPs; the same control rules, seeding, PlayerView, and order merge apply. AIPlanner will then use this full AI and thus a **different** strategy from the shared simple heuristics. When the user selects Sim Game AI in ctdev, all GPs use the sim-game default AI (shared simple heuristics). When the user selects AI Planner, all GPs use that path (minimal or full). The Phase 4 simple-heuristics implementation remains available so that **ctdev** can offer a toggle: run simulations with **Sim Game AI** or **AI Planner** (simple Phase 4 or full Phase 6). Both paths produce valid, deterministic orders.
 
 Authoritative behaviour for the full AI is defined in [SPEC/ai/](../ai/) and [ai-systems-impl.md](ai-systems-impl.md); this document remains the source for control rules, seeds, and merge semantics shared by both.
 

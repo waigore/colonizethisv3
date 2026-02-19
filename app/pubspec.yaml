@@ -22,10 +22,13 @@ dependencies:
   colonizethis_ai:
 
 dev_dependencies:
+  colonizethis_test:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/
 

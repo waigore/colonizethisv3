@@ -6,9 +6,13 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import 'capital_choice.dart';
 import 'player_view.dart';
+import 'province_name_fallback.dart';
+
+final Logger _log = Logger();
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
@@ -41,6 +45,7 @@ GameSetupResult createGameFromGeneratedMaps({
   required String gameId,
   int? namingSeed,
 }) {
+  _log.i('logic: game setup start gameId=$gameId');
   final tileMapByRegion = {
     _regionOldWorld: tileMapOldWorld,
     _regionNewWorld: tileMapNewWorld,
@@ -98,10 +103,18 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   final oldWorldProvinces = owOwner.entries
-      .map((e) => Province(id: e.key, regionId: _regionOldWorld, ownerId: e.value))
+      .map((e) => Province(
+            id: ProvinceId.full(_regionOldWorld, e.key),
+            regionId: _regionOldWorld,
+            ownerId: e.value,
+          ))
       .toList();
   final newWorldProvinces = nwOwner.entries
-      .map((e) => Province(id: e.key, regionId: _regionNewWorld, ownerId: e.value))
+      .map((e) => Province(
+            id: ProvinceId.full(_regionNewWorld, e.key),
+            regionId: _regionNewWorld,
+            ownerId: e.value,
+          ))
       .toList();
 
   final worldState = WorldState(
@@ -220,8 +233,6 @@ GameSetupResult createGameFromGeneratedMaps({
     game: game,
     selectedGreatPowerIds: config.selectedGreatPowerIds,
     leaderVariantByGpId: config.leaderVariantByGpId,
-    topologyOldWorld: topologyOldWorld,
-    topologyNewWorld: topologyNewWorld,
     namingSeed: namingSeed ?? config.seed,
   );
 
@@ -233,6 +244,7 @@ GameSetupResult createGameFromGeneratedMaps({
     edges: [...topologyOldWorld.edges, ...topologyNewWorld.edges],
   );
 
+  _log.i('logic: game setup end gameId=${game.id}');
   return GameSetupResult(
     game: game,
     tileMapByRegion: tileMapByRegion,
@@ -267,6 +279,36 @@ Game _applyInitialVisibility({
   final playerVisibilityByTile = <String, Map<String, String>>{};
   final playerProspectedTiles = <String, Set<String>>{};
 
+  // Build tile keys per region and province for explore resolution. SPEC/program/fog-and-exploration-resolution.md.
+  final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{
+    _regionOldWorld: <String, List<String>>{},
+    _regionNewWorld: <String, List<String>>{},
+  };
+  for (var y = 0; y < owMap.height; y++) {
+    for (var x = 0; x < owMap.width; x++) {
+      final localId = owMap.cell(x, y);
+      final fullId = ProvinceId.full(_regionOldWorld, localId);
+      final ownerId = owOwnerById[fullId];
+      if (ownerId == null) continue;
+      final tileKey = '$_regionOldWorld|$localId|$x|$y';
+      tileKeysByRegionAndProvince[_regionOldWorld]!
+          .putIfAbsent(fullId, () => <String>[])
+          .add(tileKey);
+    }
+  }
+  for (var y = 0; y < nwMap.height; y++) {
+    for (var x = 0; x < nwMap.width; x++) {
+      final localId = nwMap.cell(x, y);
+      final fullId = ProvinceId.full(_regionNewWorld, localId);
+      final ownerId = nwOwnerById[fullId];
+      if (ownerId == null) continue;
+      final tileKey = '$_regionNewWorld|$localId|$x|$y';
+      tileKeysByRegionAndProvince[_regionNewWorld]!
+          .putIfAbsent(fullId, () => <String>[])
+          .add(tileKey);
+    }
+  }
+
   for (final player in game.players) {
     final playerId = player.id;
     final visibility = <String, String>{};
@@ -274,13 +316,14 @@ Game _applyInitialVisibility({
     // Old World: own provinces fullyVisible, others fogged.
     for (var y = 0; y < owMap.height; y++) {
       for (var x = 0; x < owMap.width; x++) {
-        final provinceId = owMap.cell(x, y);
-        final ownerId = owOwnerById[provinceId];
+        final localId = owMap.cell(x, y);
+        final fullId = ProvinceId.full(_regionOldWorld, localId);
+        final ownerId = owOwnerById[fullId];
         if (ownerId == null) {
           // Sea zone or unowned; skip.
           continue;
         }
-        final tileKey = '$_regionOldWorld|$provinceId|$x|$y';
+        final tileKey = '$_regionOldWorld|$localId|$x|$y';
         visibility[tileKey] =
             ownerId == playerId ? VisibilityLevel.fullyVisible.name : VisibilityLevel.fogged.name;
       }
@@ -289,14 +332,15 @@ Game _applyInitialVisibility({
     // New World: start unknown (no entries; PlayerView treats missing as unknown).
     for (var y = 0; y < nwMap.height; y++) {
       for (var x = 0; x < nwMap.width; x++) {
-        final provinceId = nwMap.cell(x, y);
-        final ownerId = nwOwnerById[provinceId];
+        final localId = nwMap.cell(x, y);
+        final fullId = ProvinceId.full(_regionNewWorld, localId);
+        final ownerId = nwOwnerById[fullId];
         if (ownerId == null) {
           // Sea or unowned; skip.
           continue;
         }
         // We do not add explicit 'unknown' entries; absence = unknown.
-        final _ = provinceId; // ignore: unused_local_variable
+        final _ = fullId; // ignore: unused_local_variable
       }
     }
 
@@ -307,6 +351,7 @@ Game _applyInitialVisibility({
   final updatedWorldState = game.worldState.copyWith(
     playerVisibilityByTile: playerVisibilityByTile,
     playerProspectedTiles: playerProspectedTiles,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
   );
   return game.copyWith(worldState: updatedWorldState);
 }
@@ -315,8 +360,6 @@ Game _applyNaming({
   required Game game,
   required List<String> selectedGreatPowerIds,
   required Map<String, String> leaderVariantByGpId,
-  required MapTopology topologyOldWorld,
-  required MapTopology topologyNewWorld,
   required int namingSeed,
 }) {
   final naming = defaultNamingConfig;
@@ -324,8 +367,10 @@ Game _applyNaming({
   final nwProvinces = game.worldState.newWorld.provinces;
   final owById = {for (final p in owProvinces) p.id: p};
   final nwById = {for (final p in nwProvinces) p.id: p};
-  final neighbours = _provinceNeighboursFromTopology(topologyOldWorld);
-  final landmassIds = _landmassIdsFromNeighbours(neighbours);
+  final usedProvinceNames = <String>{};
+
+  String generateFallback(int seedOffset) =>
+      generateUniqueProvinceName(namingSeed + seedOffset, usedProvinceNames);
 
   // Helper: assign names to provinces from pool (random order). Capital gets capitalName; others get shuffled pool, wrap if needed.
   void assignProvinceNames({
@@ -335,6 +380,8 @@ Game _applyNaming({
     required List<String> pool,
     required String fallbackPrefix,
     required int rngSeed,
+    required Set<String> usedProvinceNames,
+    required String Function(int seedOffset) generateFallback,
     required Map<String, Province> outById,
     required String regionId,
   }) {
@@ -345,11 +392,12 @@ Game _applyNaming({
     var poolIndex = 0;
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];
-      final name = p.id == capitalProvinceId
+      var name = p.id == capitalProvinceId
           ? capitalName
           : (pool.isNotEmpty
               ? pool[poolIndices[poolIndex % poolIndices.length]]
               : '$fallbackPrefix ${i + 1}');
+      if (name.isEmpty) name = generateFallback(rngSeed + i);
       if (p.id != capitalProvinceId && pool.isNotEmpty) poolIndex++;
       final updated = Province(
         id: p.id,
@@ -361,8 +409,7 @@ Game _applyNaming({
     }
   }
 
-  // Great Powers: capital gets capitalCityName, others random from chosen variant's pool.
-  // Map ordinal player id (gp1, gp2...) to semantic id via selectedGreatPowerIds.
+  // Great Powers: capital gets capitalCityName, others from chosen variant's pool. All owned OW provinces are named (no landmass filter).
   for (var i = 0; i < game.players.length; i++) {
     final player = game.players[i];
     if (i >= selectedGreatPowerIds.length) continue;
@@ -373,19 +420,18 @@ Game _applyNaming({
     final variant = gpNaming.variantById(variantId);
     final capitalProvId = player.capitalProvinceId;
     if (capitalProvId == null) continue;
-    final capitalLandmass = landmassIds[capitalProvId];
-    if (capitalLandmass == null) continue;
-    final ownedOnLandmass = owProvinces
-        .where((p) =>
-            p.ownerId == player.id && landmassIds[p.id] == capitalLandmass)
+    final owned = owProvinces
+        .where((p) => p.ownerId == player.id)
         .toList();
     assignProvinceNames(
-      provinces: ownedOnLandmass,
+      provinces: owned,
       capitalProvinceId: capitalProvId,
       capitalName: gpNaming.capitalCityName,
       pool: variant.provinceNamePool,
       fallbackPrefix: gpNaming.countryName,
       rngSeed: namingSeed + player.id.hashCode,
+      usedProvinceNames: usedProvinceNames,
+      generateFallback: generateFallback,
       outById: owById,
       regionId: _regionOldWorld,
     );
@@ -404,16 +450,21 @@ Game _applyNaming({
       ..sort((a, b) => a.id.compareTo(b.id));
     if (owned.isEmpty) continue;
     final capitalProvId = minor.capitalProvinceId;
-    final capitalName = namingMinor.provinceNamePool.isNotEmpty
-        ? namingMinor.provinceNamePool.first
-        : namingMinor.displayName;
+    final capitalName = namingMinor.id.isEmpty
+        ? generateUniqueProvinceName(namingSeed + minor.id.hashCode, usedProvinceNames)
+        : (namingMinor.provinceNamePool.isNotEmpty
+            ? namingMinor.provinceNamePool.first
+            : namingMinor.displayName);
+    final fallbackPrefix = namingMinor.id.isEmpty ? 'Territory' : namingMinor.displayName;
     assignProvinceNames(
       provinces: owned,
       capitalProvinceId: capitalProvId,
       capitalName: capitalName,
       pool: namingMinor.provinceNamePool,
-      fallbackPrefix: namingMinor.displayName,
+      fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + minor.id.hashCode,
+      usedProvinceNames: usedProvinceNames,
+      generateFallback: generateFallback,
       outById: owById,
       regionId: _regionOldWorld,
     );
@@ -432,16 +483,21 @@ Game _applyNaming({
       ..sort((a, b) => a.id.compareTo(b.id));
     if (owned.isEmpty) continue;
     final capitalProvId = tribe.capitalProvinceId;
-    final capitalName = namingTribe.provinceNamePool.isNotEmpty
-        ? namingTribe.provinceNamePool.first
-        : namingTribe.displayName;
+    final capitalName = namingTribe.id.isEmpty
+        ? generateUniqueProvinceName(namingSeed + tribe.id.hashCode, usedProvinceNames)
+        : (namingTribe.provinceNamePool.isNotEmpty
+            ? namingTribe.provinceNamePool.first
+            : namingTribe.displayName);
+    final fallbackPrefix = namingTribe.id.isEmpty ? 'Territory' : '${namingTribe.displayName} Territory';
     assignProvinceNames(
       provinces: owned,
       capitalProvinceId: capitalProvId,
       capitalName: capitalName,
       pool: namingTribe.provinceNamePool,
-      fallbackPrefix: '${namingTribe.displayName} Territory',
+      fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + tribe.id.hashCode,
+      usedProvinceNames: usedProvinceNames,
+      generateFallback: generateFallback,
       outById: nwById,
       regionId: _regionNewWorld,
     );
@@ -513,41 +569,55 @@ Game _addStartingUnits({
   required Game game,
   required GameSetupConfig config,
 }) {
-  final startingUnits = <Unit>[];
-  
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
+  var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
+
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
     if (capitalProvinceId == null) continue;
-    
+
+    final capitalRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final tilesInCapital = tileKeysByRegion[capitalRegionId]?[capitalProvinceId];
+    final firstTileInCapital = (tilesInCapital != null && tilesInCapital.isNotEmpty)
+        ? tilesInCapital.first
+        : null;
+
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
       final unitType = entry.key;
       final count = entry.value;
-      
+
       for (var k = 1; k <= count; k++) {
         final unitId = '${player.id}_${unitType.toLowerCase()}_$k';
-        startingUnits.add(
-          Unit(
-            id: unitId,
-            type: unitType,
-            ownerId: player.id,
-            provinceId: capitalProvinceId,
-            status: UnitStatus.idle,
-          ),
+        final unit = Unit(
+          id: unitId,
+          type: unitType,
+          ownerId: player.id,
+          provinceId: capitalProvinceId,
+          status: UnitStatus.idle,
+          tileKey: firstTileInCapital,
         );
+        if (capitalRegionId == _regionOldWorld) {
+          oldWorldUnits.add(unit);
+        } else {
+          newWorldUnits.add(unit);
+        }
       }
     }
   }
-  
-  if (startingUnits.isEmpty) return game;
-  
-  final updatedOldWorld = RegionData(
-    provinces: game.worldState.oldWorld.provinces,
-    units: [...game.worldState.oldWorld.units, ...startingUnits],
-  );
-  
+
   return game.copyWith(
-    worldState: game.worldState.copyWith(oldWorld: updatedOldWorld),
+    worldState: game.worldState.copyWith(
+      oldWorld: RegionData(
+        provinces: game.worldState.oldWorld.provinces,
+        units: oldWorldUnits,
+      ),
+      newWorld: RegionData(
+        provinces: game.worldState.newWorld.provinces,
+        units: newWorldUnits,
+      ),
+    ),
   );
 }
 
@@ -737,10 +807,10 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
           if (assignedCount[gpId]! >= targetPerGp[gpId]!) continue;
           if (sortedUnassigned.isEmpty) break;
           if (totalAssignedToGps >= availableForGps) break;
-          final seed = sortedUnassigned.removeAt(0);
-          if (!unassigned.remove(seed)) continue;
-          owners[seed] = gpId;
-          gpQueues[gpId]!.add(seed);
+      final seed = sortedUnassigned.removeAt(0);
+      if (!unassigned.remove(seed)) continue;
+      owners[seed] = gpId;
+      gpQueues[gpId]!.add(seed);
           assignedCount[gpId] = assignedCount[gpId]! + 1;
           totalAssignedToGps++;
           anyProgress = true;

@@ -335,27 +335,89 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     ),
   ],
   minorNations: [
+    // GDD 09b — Minor Nations. Capital province gets first in pool.
     MinorNationNaming(
       id: 'minor1',
-      displayName: 'Savoy',
-      provinceNamePool: ['Savoy', 'Piedmont', 'Nice', 'Genoa', 'Aosta'],
+      displayName: 'Italy',
+      provinceNamePool: ['Papal States', 'Venice', 'Milan', 'Naples', 'Tuscany'],
     ),
     MinorNationNaming(
       id: 'minor2',
-      displayName: 'Venice',
-      provinceNamePool: ['Venice', 'Padua', 'Verona', 'Vicenza', 'Treviso'],
+      displayName: 'Germany',
+      provinceNamePool: ['Bavaria', 'Saxony', 'Brandenburg', 'Hanover', 'Palatinate'],
+    ),
+    MinorNationNaming(
+      id: 'minor3',
+      displayName: 'Austria',
+      provinceNamePool: ['Lower Austria', 'Upper Austria', 'Styria', 'Tyrol', 'Carinthia'],
+    ),
+    MinorNationNaming(
+      id: 'minor4',
+      displayName: 'Poland',
+      provinceNamePool: ['Greater Poland', 'Lesser Poland', 'Mazovia', 'Lithuania', 'Livonia'],
+    ),
+    MinorNationNaming(
+      id: 'minor5',
+      displayName: 'Denmark',
+      provinceNamePool: ['Sjælland', 'Jutland', 'Skåne', 'Norway', 'Iceland'],
+    ),
+    MinorNationNaming(
+      id: 'minor6',
+      displayName: 'Scotland',
+      provinceNamePool: ['Lothian', 'Fife', 'Strathclyde', 'Grampian', 'Highlands'],
     ),
   ],
   tribes: [
+    // GDD 09c — New World Tribes. Capital province gets first in pool.
     TribeNaming(
       id: 'tribe1',
       displayName: 'Aztec',
-      provinceNamePool: ['Tenochtitlan', 'Tlacopan', 'Texcoco', 'Tlatelolco', 'Chalco'],
+      provinceNamePool: ['Mexica', 'Acolhua', 'Tepanec', 'Tlaxcala', 'Cuauhnahuac'],
     ),
     TribeNaming(
       id: 'tribe2',
+      displayName: 'Maya',
+      provinceNamePool: ['Cupul', 'Cocom', "K'iche'", 'Kaqchikel', 'Mopan'],
+    ),
+    TribeNaming(
+      id: 'tribe3',
       displayName: 'Inca',
-      provinceNamePool: ['Cuzco', 'Quito', 'Cajamarca', 'Tumbes', 'Chinchay Suyu'],
+      provinceNamePool: ['Cuzco', 'Chinchaysuyu', 'Antisuyu', 'Qullasuyu', 'Kuntisuyu'],
+    ),
+    TribeNaming(
+      id: 'tribe4',
+      displayName: 'Muisca',
+      provinceNamePool: ['Bacatá', 'Hunza', 'Iraca', 'Tundama', 'Ubaque'],
+    ),
+    TribeNaming(
+      id: 'tribe5',
+      displayName: 'Taíno',
+      provinceNamePool: ['Maguana', 'Marién', 'Xaragua', 'Boriquén', 'Cibao'],
+    ),
+    TribeNaming(
+      id: 'tribe6',
+      displayName: 'Powhatan',
+      provinceNamePool: ['Powhatan', 'Pamunkey', 'Chickahominy', 'Appomattoc', 'Weanoc'],
+    ),
+    TribeNaming(
+      id: 'tribe7',
+      displayName: 'Iroquois',
+      provinceNamePool: ['Mohawk', 'Oneida', 'Onondaga', 'Cayuga', 'Seneca'],
+    ),
+    TribeNaming(
+      id: 'tribe8',
+      displayName: 'Cherokee',
+      provinceNamePool: ['Overhill', 'Valley', 'Middle', 'Lower', 'Out Towns'],
+    ),
+    TribeNaming(
+      id: 'tribe9',
+      displayName: 'Sioux',
+      provinceNamePool: ['Santee', 'Wahpeton', 'Sisseton', 'Yankton', 'Teton'],
+    ),
+    TribeNaming(
+      id: 'tribe10',
+      displayName: 'Mapuche',
+      provinceNamePool: ['Arauco', 'Malleco', 'Toltén', 'Bio-Bio', 'Cautín'],
     ),
   ],
 );

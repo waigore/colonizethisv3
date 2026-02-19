@@ -1,7 +1,9 @@
 // Game world state map visualization: ownership overlay and capital markers.
 // SPEC/program/map-data.md § Game world state map visualizer.
 
+import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -14,6 +16,39 @@ import 'init_game_map_view_data.dart';
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
+
+// #region agent log
+const String _agentDebugLogPath =
+    '/Users/waigore/Documents/GitHub/colonizethisv3/.cursor/debug-9f02df.log';
+
+void _agentDebugLog({
+  required String runId,
+  required String hypothesisId,
+  required String location,
+  required String message,
+  required Map<String, Object?> data,
+}) {
+  try {
+    final payload = <String, Object?>{
+      'sessionId': '9f02df',
+      'runId': runId,
+      'hypothesisId': hypothesisId,
+      'location': location,
+      'message': message,
+      'data': data,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+    final line = '${jsonEncode(payload)}\n';
+    File(_agentDebugLogPath).writeAsStringSync(
+      line,
+      mode: FileMode.append,
+      flush: false,
+    );
+  } catch (_) {
+    // Swallow all errors in debug logger.
+  }
+}
+// #endregion
 
 /// Capital marker color (gold/yellow, distinct from terrain).
 const (int, int, int) capitalMarkerRgb = (255, 215, 0);
@@ -390,6 +425,31 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: color,
       );
     }
+
+    // #region agent log
+    final ownerIds = <String>{};
+    for (final cell in region.cells) {
+      if (!cell.isSea && (cell.ownerFactionId ?? '').isNotEmpty) {
+        ownerIds.add(cell.ownerFactionId!);
+      }
+    }
+    _agentDebugLog(
+      runId: 'pre-fix-1',
+      hypothesisId: 'H1-H2-H5',
+      location: 'game_world_state_map_visualizer.dart:_renderRegion',
+      message: 'Region render ownership summary',
+      data: {
+        'regionId': region.regionId,
+        'geographicMode': geographicMode,
+        'cellCount': region.cells.length,
+        'ownedLandCellCount': region.cells
+            .where((c) => !c.isSea && (c.ownerFactionId ?? '').isNotEmpty)
+            .length,
+        'uniqueOwnerIdsOnCells': ownerIds.toList(),
+        'factionColorKeys': region.factionColors.keys.toList(),
+      },
+    );
+    // #endregion
 
     // Reconstruct a minimal TileMapResult-like structure for border drawing.
     final tmpResult = TileMapResult(

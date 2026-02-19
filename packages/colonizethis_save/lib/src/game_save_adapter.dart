@@ -1,22 +1,34 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
+
+final Logger _log = Logger();
 
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
 /// SPEC/project/phase-1: save format and adapter.
 class GameSaveAdapter {
   /// Saves [game] to [box]. Key = game.id, value = game.toJson().
   void save(Box<dynamic> box, Game game) {
+    _log.i('save: saving gameId=${game.id}');
     box.put(game.id, game.toJson());
+    _log.i('save: saved gameId=${game.id}');
   }
 
   /// Loads game by [gameId]. Returns null if not found or invalid.
   Game? load(Box<dynamic> box, String gameId) {
+    _log.i('save: loading gameId=$gameId');
     final raw = box.get(gameId);
-    if (raw == null) return null;
+    if (raw == null) {
+      _log.w('save: gameId=$gameId not found');
+      return null;
+    }
     try {
       final map = Map<String, dynamic>.from(raw as Map);
-      return Game.fromJson(map);
-    } catch (_) {
+      final game = Game.fromJson(map);
+      _log.i('save: loaded gameId=$gameId');
+      return game;
+    } catch (e, st) {
+      _log.e('save: load failed gameId=$gameId', error: e, stackTrace: st);
       return null;
     }
   }

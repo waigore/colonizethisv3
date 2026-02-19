@@ -79,7 +79,8 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       if (factionsPresent.length < 2) continue;
 
       final province = provinceById[provinceId];
-      final ownerId = province?.ownerId;
+      if (province == null) continue;
+      final ownerId = province.ownerId;
 
       String defenderFactionId;
       if (ownerId != null && ownerId.isNotEmpty && factionsPresent.contains(ownerId)) {
@@ -121,9 +122,9 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       if (attackers.isEmpty) continue;
 
-      final fortLevel = province?.fortLevel ?? 0;
-      final terrain = province?.terrain ?? 'plains';
-      final regionId = province?.regionId ?? 'oldWorld';
+      final fortLevel = province.fortLevel;
+      final terrain = province.terrain;
+      final regionId = province.regionId;
 
       contexts.add(BattleContext(
         provinceId: provinceId,

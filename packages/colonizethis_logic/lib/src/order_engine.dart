@@ -1,9 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import 'economy_production.dart';
 import 'movement.dart';
+import 'naval.dart';
+import 'order_visibility.dart';
+import 'player_view.dart';
+import 'province_lookup.dart';
 import 'turn_resolver.dart';
+
+final Logger _log = Logger();
 
 /// Order engine: current-turn orders per player, validation, projected effects.
 /// SPEC/program/order-engine.md. Does not mutate world state.
@@ -51,9 +58,15 @@ class OrderEngine {
                 ..updateAll((_, v) => List.from(v)),
           workOrdersByPlayerId: Map.from(initialOrders.workOrdersByPlayerId)
             ..updateAll((_, v) => List.from(v)),
-        researchOrdersByPlayerId:
-            Map.from(initialOrders.researchOrdersByPlayerId)
-              ..updateAll((_, v) => List.from(v)),
+          researchOrdersByPlayerId:
+              Map.from(initialOrders.researchOrdersByPlayerId)
+                ..updateAll((_, v) => List.from(v)),
+          navalMoveOrdersByPlayerId:
+              Map.from(initialOrders.navalMoveOrdersByPlayerId)
+                ..updateAll((_, v) => List<NavalMoveOrder>.from(v)),
+          navalMissionOrdersByPlayerId:
+              Map.from(initialOrders.navalMissionOrdersByPlayerId)
+                ..updateAll((_, v) => List<NavalMissionOrder>.from(v)),
         );
 
   Orders _orders;
@@ -73,6 +86,12 @@ class OrderEngine {
         researchOrdersByPlayerId: o.researchOrdersByPlayerId.map(
           (k, v) => MapEntry(k, List<ResearchOrder>.from(v)),
         ),
+        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId.map(
+          (k, v) => MapEntry(k, List<NavalMoveOrder>.from(v)),
+        ),
+        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId.map(
+          (k, v) => MapEntry(k, List<NavalMissionOrder>.from(v)),
+        ),
       );
 
   /// Adds order for [playerId]. Re-validates full list; returns validation result.
@@ -83,6 +102,8 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
       workOrdersByPlayerId: _orders.workOrdersByPlayerId,
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrders(playerId);
     final lastIdx = results.length - 1;
@@ -105,12 +126,16 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
       workOrdersByPlayerId: _orders.workOrdersByPlayerId,
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrdersWithContext(game, topology, playerId);
     if (results.isEmpty) {
       return const OrderValidationResult(status: OrderValidationStatus.accepted);
     }
-    return results.last;
+    final r = results.last;
+    if (!r.isAccepted) _log.w('logic: move order rejected player=$playerId reason=${r.reason}');
+    return r;
   }
 
   OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) {
@@ -120,6 +145,8 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: {..._orders.buildUnitOrdersByPlayerId, playerId: [...list, order]},
       workOrdersByPlayerId: _orders.workOrdersByPlayerId,
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrders(playerId);
     return results.isEmpty
@@ -140,12 +167,16 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: {..._orders.buildUnitOrdersByPlayerId, playerId: [...list, order]},
       workOrdersByPlayerId: _orders.workOrdersByPlayerId,
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrdersWithContext(game, topology, playerId);
     if (results.isEmpty) {
       return const OrderValidationResult(status: OrderValidationStatus.accepted);
     }
-    return results.last;
+    final r = results.last;
+    if (!r.isAccepted) _log.w('logic: build order rejected player=$playerId reason=${r.reason}');
+    return r;
   }
 
   OrderValidationResult addWorkOrder(String playerId, WorkOrder order) {
@@ -155,6 +186,8 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
       workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: [...list, order]},
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrders(playerId);
     return results.isEmpty
@@ -175,12 +208,90 @@ class OrderEngine {
       buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
       workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: [...list, order]},
       researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
     );
     final results = validatePlayerOrdersWithContext(game, topology, playerId);
     if (results.isEmpty) {
       return const OrderValidationResult(status: OrderValidationStatus.accepted);
     }
-    return results.last;
+    final r = results.last;
+    if (!r.isAccepted) _log.w('logic: work order rejected player=$playerId reason=${r.reason}');
+    return r;
+  }
+
+  OrderValidationResult addNavalMoveOrder(String playerId, NavalMoveOrder order) {
+    final list = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
+    _orders = Orders(
+      moveOrdersByPlayerId: _orders.moveOrdersByPlayerId,
+      buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
+      workOrdersByPlayerId: _orders.workOrdersByPlayerId,
+      researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: {..._orders.navalMoveOrdersByPlayerId, playerId: [...list, order]},
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
+    );
+    return const OrderValidationResult(status: OrderValidationStatus.accepted);
+  }
+
+  OrderValidationResult addNavalMoveOrderWithContext(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    NavalMoveOrder order,
+  ) {
+    final list = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
+    _orders = Orders(
+      moveOrdersByPlayerId: _orders.moveOrdersByPlayerId,
+      buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
+      workOrdersByPlayerId: _orders.workOrdersByPlayerId,
+      researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: {..._orders.navalMoveOrdersByPlayerId, playerId: [...list, order]},
+      navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
+    );
+    final results = validatePlayerOrdersWithContext(game, topology, playerId);
+    if (results.isEmpty) {
+      return const OrderValidationResult(status: OrderValidationStatus.accepted);
+    }
+    final r = results.last;
+    if (!r.isAccepted) _log.w('logic: naval move order rejected player=$playerId reason=${r.reason}');
+    return r;
+  }
+
+  OrderValidationResult addNavalMissionOrder(String playerId, NavalMissionOrder order) {
+    final list = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
+    _orders = Orders(
+      moveOrdersByPlayerId: _orders.moveOrdersByPlayerId,
+      buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
+      workOrdersByPlayerId: _orders.workOrdersByPlayerId,
+      researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: {..._orders.navalMissionOrdersByPlayerId, playerId: [...list, order]},
+    );
+    return const OrderValidationResult(status: OrderValidationStatus.accepted);
+  }
+
+  OrderValidationResult addNavalMissionOrderWithContext(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    NavalMissionOrder order,
+  ) {
+    final list = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
+    _orders = Orders(
+      moveOrdersByPlayerId: _orders.moveOrdersByPlayerId,
+      buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
+      workOrdersByPlayerId: _orders.workOrdersByPlayerId,
+      researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+      navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+      navalMissionOrdersByPlayerId: {..._orders.navalMissionOrdersByPlayerId, playerId: [...list, order]},
+    );
+    final results = validatePlayerOrdersWithContext(game, topology, playerId);
+    if (results.isEmpty) {
+      return const OrderValidationResult(status: OrderValidationStatus.accepted);
+    }
+    final r = results.last;
+    if (!r.isAccepted) _log.w('logic: naval mission order rejected player=$playerId reason=${r.reason}');
+    return r;
   }
 
   void removeMoveOrder(String playerId, int index) {
@@ -192,6 +303,8 @@ class OrderEngine {
         buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
         workOrdersByPlayerId: _orders.workOrdersByPlayerId,
         researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+        navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+        navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
       );
     }
   }
@@ -205,6 +318,8 @@ class OrderEngine {
         buildUnitOrdersByPlayerId: {..._orders.buildUnitOrdersByPlayerId, playerId: list},
         workOrdersByPlayerId: _orders.workOrdersByPlayerId,
         researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+        navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+        navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
       );
     }
   }
@@ -218,6 +333,8 @@ class OrderEngine {
         buildUnitOrdersByPlayerId: _orders.buildUnitOrdersByPlayerId,
         workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: list},
         researchOrdersByPlayerId: _orders.researchOrdersByPlayerId,
+        navalMoveOrdersByPlayerId: _orders.navalMoveOrdersByPlayerId,
+        navalMissionOrdersByPlayerId: _orders.navalMissionOrdersByPlayerId,
       );
     }
   }
@@ -297,22 +414,17 @@ class OrderEngine {
         );
     if (player == null) return results;
 
+    final view = buildPlayerView(game, topology, playerId);
+
     final moves = _orders.moveOrdersByPlayerId[playerId] ?? [];
     final builds = _orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final works = _orders.workOrdersByPlayerId[playerId] ?? [];
+    final navals = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
+    final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
     var rejected = false;
 
-    final region = game.worldState.oldWorld;
-    final unitsById = {for (final u in region.units) u.id: u}
+    final unitsById = {for (final u in game.worldState.oldWorld.units) u.id: u}
       ..addAll({for (final u in game.worldState.newWorld.units) u.id: u});
-
-    final provincesById = <String, Province>{};
-    for (final p in game.worldState.oldWorld.provinces) {
-      provincesById[p.id] = p;
-    }
-    for (final p in game.worldState.newWorld.provinces) {
-      provincesById[p.id] = p;
-    }
 
     bool _ownerIsGreatPower(String? ownerId) {
       if (ownerId == null) return false;
@@ -331,31 +443,50 @@ class OrderEngine {
         continue;
       }
       final unit = unitsById[o.unitId];
-      var valid = unit != null &&
-          unit.ownerId == playerId &&
-          isValidLandMove(topology, unit.provinceId, o.destinationProvinceId);
+      var valid = unit != null && unit.ownerId == playerId;
       String? reason;
 
       if (!valid) {
         reason = 'Invalid move';
       } else {
-        final destProvince = provincesById[o.destinationProvinceId];
-        final destOwnerId = destProvince?.ownerId;
-        final isMilitary = isMilitaryUnit(unit.type);
-        final isExplorer = isExplorerUnit(unit.type);
-        final isMerchant = isMerchantUnit(unit.type);
+        final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
+            ? Unit.requireRegionIdFromTileKey(unit.tileKey)
+            : ProvinceId.regionIdFrom(resolveToFullProvinceId(game.worldState, unit.provinceId));
+        final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
+        final destLocalId = ProvinceId.localIdFrom(o.destinationProvinceId);
+        valid = isValidLandMove(topology, unitLocalId, destLocalId);
+        if (!valid) {
+          reason = 'Invalid move';
+        } else {
+          Province? destProvince;
+          try {
+            destProvince = getProvince(game.worldState, o.destinationProvinceId);
+          } on StateError {
+            destProvince = null;
+          }
+          final destOwnerId = destProvince?.ownerId;
+          final isMilitary = isMilitaryUnit(unit.type);
+          final isExplorer = isExplorerUnit(unit.type);
+          final isMerchant = isMerchantUnit(unit.type);
 
-        if (!isMilitary && destOwnerId != null && destOwnerId != playerId) {
-          if (_ownerIsGreatPower(destOwnerId)) {
-            // Civilians may not enter other Great Power territory at all.
-            valid = false;
-            reason = 'Civilian cannot enter other Great Power territory';
-          } else if (_ownerIsMinorOrTribe(destOwnerId)) {
-            // Explorers (and Merchants, when in scope) may enter Minors/Tribes.
-            if (!(isExplorer || isMerchant)) {
+          if (!isMilitary && destOwnerId != null && destOwnerId != playerId) {
+            if (_ownerIsGreatPower(destOwnerId)) {
               valid = false;
-              reason = 'Civilian cannot enter Minor/Tribe territory';
+              reason = 'Civilian cannot enter other Great Power territory';
+            } else if (_ownerIsMinorOrTribe(destOwnerId)) {
+              if (!(isExplorer || isMerchant)) {
+                valid = false;
+                reason = 'Civilian cannot enter Minor/Tribe territory';
+              }
             }
+          }
+          if (valid &&
+              (!moveSourceVisibilityOk(
+                  view, unitRegion, unit.locationProvinceId) ||
+                  !moveDestVisibilityOk(
+                      view, unitRegion, o.destinationProvinceId, unit.type))) {
+            valid = false;
+            reason = 'Source or destination not visible';
           }
         }
       }
@@ -450,20 +581,66 @@ class OrderEngine {
         if (!targetOk) {
           valid = false;
           reason = 'Invalid work target for unit type';
+        } else if (o.targetTileKey.isEmpty) {
+          valid = false;
+          reason = 'Work order requires a target tile';
         } else if (!isExplorer) {
           // Non-explorer civilians must work only in owned or rights-granted provinces.
-          final province = provincesById[unit.provinceId];
+          final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
+          Province? province;
+          if (targetProvinceId != null) {
+            try {
+              province = getProvince(game.worldState, targetProvinceId);
+            } on StateError {
+              province = null;
+            }
+          }
           final ownerId = province?.ownerId;
           if (ownerId != null && ownerId != playerId) {
             valid = false;
             reason = 'Cannot work in foreign province';
           }
         }
+        if (valid && !workOrderVisibilityOk(view, unit, o.target, o.targetTileKey)) {
+          valid = false;
+          reason = 'Province or tile not visible for this work';
+        }
       }
 
       results.add(OrderValidationResult(
         status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
         reason: valid ? null : reason ?? 'Unit not found',
+      ));
+      if (!valid) rejected = true;
+    }
+
+    final fleetById = {for (final f in game.worldState.fleets) f.id: f};
+    for (final o in navals) {
+      if (rejected) {
+        results.add(OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Previous invalid'));
+        continue;
+      }
+      final fleet = fleetById[o.fleetId];
+      final valid = fleet != null &&
+          fleet.ownerId == playerId &&
+          isAdjacentSeaZone(topology, fleet.seaZoneId, o.destinationSeaZoneId);
+      results.add(OrderValidationResult(
+        status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
+        reason: valid ? null : (fleet == null ? 'Fleet not found' : 'Invalid naval move'),
+      ));
+      if (!valid) rejected = true;
+    }
+
+    for (final o in missions) {
+      if (rejected) {
+        results.add(OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Previous invalid'));
+        continue;
+      }
+      final fleet = fleetById[o.fleetId];
+      final valid = fleet != null && fleet.ownerId == playerId;
+      results.add(OrderValidationResult(
+        status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
+        reason: valid ? null : (fleet == null ? 'Fleet not found' : 'Fleet not owned by player'),
       ));
       if (!valid) rejected = true;
     }

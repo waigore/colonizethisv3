@@ -14,6 +14,14 @@
 
 AI and suggestion code must treat `PlayerView` as the **source of truth** for map and opponent information; it may not read hidden data directly from `Game`.
 
+**Single source of truth for visibility:** PlayerView (derived from `WorldState.playerVisibilityByTile` and related state) is the single source of truth for per-player visibility used by both the **order suggestion API** and the **order engine** when validating with context. Neither the suggester nor the engine may use raw `Game` or `WorldState` for visibility; both must use the same visibility view (PlayerView or the same derivation). See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) for order visibility rules.
+
+---
+
+### Principle: PlayerView as channel
+
+When obtaining information from the map or submitting orders from a player's perspective, everything must go through **PlayerView**. Direct access to or modification of world state is only appropriate in a small set of cases (e.g. authoritative turn resolution, save/load, debug omniscient tools). AI, order suggestion, order validation, and any UI that reasons "as" a player must use PlayerView (and the same visibility, unit, and province data it exposes).
+
 ---
 
 ### Contents
@@ -34,6 +42,7 @@ For a given `Game`, `MapTopology`, and `playerId`:
   - Research: unlocked techs and current research slot assignments.
 - **Diplomacy**
   - Relations between `P` and other factions (peace/war/etc.) needed for order validation.
+- **Naval state** (when naval is in scope): Own fleets (sea zone, mission, ship list); known sea zones and ports; for visibility-allowed sea zones, any enemy or neutral fleet presence so the AI can issue naval orders (move, patrol, blockade, beachhead) and the order suggestion API can propose valid naval candidates. See [ships-and-naval.md](../game/ships-and-naval.md), [naval-movement-resolution.md](naval-movement-resolution.md).
 
 `PlayerView` deliberately omits:
 

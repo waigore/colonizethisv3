@@ -62,14 +62,17 @@ Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
   return owned;
 }
 
-/// Port tile key -> (provinceId, seaZoneId). Built from portsByProvinceSeaboard.
+/// Port tile key -> (fullProvinceId, seaZoneId). Built from portsByProvinceSeaboard.
+/// Key format: fullProvinceId|seaZoneId (e.g. oldWorld|p1|sea1) or legacy provinceId|seaZoneId (2 parts).
 Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
   final out = <String, (String, String)>{};
   for (final e in worldState.portsByProvinceSeaboard.entries) {
     final key = e.key;
     final tileKey = e.value;
     final parts = key.split('|');
-    if (parts.length >= 2) {
+    if (parts.length >= 3) {
+      out[tileKey] = ('${parts[0]}|${parts[1]}', parts[2]);
+    } else if (parts.length >= 2) {
       out[tileKey] = (parts[0], parts[1]);
     }
   }
@@ -104,12 +107,13 @@ Set<String> _connectedTilesForPlayer({
     final parts = key.split('|');
     if (parts.length != 4) continue;
     final regionId = parts[0];
-    final provinceId = parts[1];
+    final localProvinceId = parts[1];
+    final fullProvinceId = '$regionId|$localProvinceId';
     final x = int.tryParse(parts[2]) ?? -1;
     final y = int.tryParse(parts[3]) ?? -1;
     if (x < 0 || y < 0) continue;
 
-    if (!owned.contains(provinceId)) continue;
+    if (!owned.contains(fullProvinceId)) continue;
 
     final region = _regionData(game, regionId);
     final map = tileMapByRegion[regionId];
@@ -120,7 +124,7 @@ Set<String> _connectedTilesForPlayer({
 
     if (!canExpand) continue;
 
-    for (final n in _adjacentTileKeys(regionId, provinceId, x, y, map, provinceIdsByType)) {
+    for (final n in _adjacentTileKeys(regionId, localProvinceId, x, y, map, provinceIdsByType)) {
       if (connected.contains(n)) continue;
       connected.add(n);
       queue.add(n);
@@ -142,7 +146,10 @@ Set<String> _connectedTilesForPlayer({
     final provSea = e.key;
     final tileKey = e.value;
     final parts = provSea.split('|');
-    if (parts.length >= 2) {
+    if (parts.length >= 3) {
+      final seaZoneId = parts[2];
+      seaZoneToPortKeys.putIfAbsent(seaZoneId, () => {}).add(tileKey);
+    } else if (parts.length >= 2) {
       final seaZoneId = parts[1];
       seaZoneToPortKeys.putIfAbsent(seaZoneId, () => {}).add(tileKey);
     }
@@ -166,8 +173,8 @@ Set<String> _connectedTilesForPlayer({
     final parts = portKey.split('|');
     if (parts.length != 4) continue;
     final regionId = parts[0];
-    final provinceId = parts[1];
-    if (!owned.contains(provinceId)) continue;
+    final fullProvinceId = '$regionId|${parts[1]}';
+    if (!owned.contains(fullProvinceId)) continue;
     final map = tileMapByRegion[regionId];
     if (map == null) continue;
     final x = int.tryParse(parts[2]) ?? -1;

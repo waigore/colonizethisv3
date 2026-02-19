@@ -1,10 +1,14 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:ctdev/ctdev_log.dart';
 import 'package:ctdev/main.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('SimGameController', () {
+    setUpAll(initCtdevLogging);
+    setUp(clearUiLog);
+
     test('stepFullTurn advances turn number', () {
       final topology = MapTopology(
         nodes: const [
@@ -43,6 +47,12 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'Power 1', isHuman: true),
@@ -80,7 +90,7 @@ void main() {
       controller.stepFullTurn();
 
       expect(controller.game.worldState.turnState.turnNumber, 1);
-      expect(controller.logLines, isNotEmpty);
+      expect(getLastUiLogLines(), isNotEmpty);
     });
 
     test('stepFullTurn records AI order history', () {
@@ -121,6 +131,12 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'Power 1', isHuman: true),
@@ -157,7 +173,7 @@ void main() {
 
       controller.stepFullTurn();
 
-      expect(controller.orderHistory, isNotEmpty);
+      expect(controller.orderHistory, isNotEmpty, reason: 'AI uses suggestion API; visibility must be set so moves are suggested');
       for (final entry in controller.orderHistory) {
         expect(entry.turnNumber, 0);
         expect(entry.playerId, 'p1');

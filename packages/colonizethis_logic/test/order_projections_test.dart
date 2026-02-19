@@ -1,0 +1,92 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+void main() {
+  group('projectOrderEffects', () {
+    test('returns empty ProjectedEffects when player not in game', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'nonexistent',
+      );
+      expect(effects.workerCount, isNull);
+      expect(effects.unitLocations, isNull);
+      expect(effects.stockpileDeltas, isNull);
+      expect(effects.treasuryDelta, isNull);
+    });
+
+    test('returns unitLocations and workerCount for single player after resolve', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Regiment',
+                ownerId: 'p1',
+                provinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': const [
+            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          ],
+        },
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: orders,
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.workerCount, isNotNull);
+      expect(effects.unitLocations, isNotNull);
+      expect(effects.unitLocations!['u1'], 'P2');
+    });
+  });
+}

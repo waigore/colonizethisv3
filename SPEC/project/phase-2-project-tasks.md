@@ -80,7 +80,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **80% per-package coverage** for Phase 2 packages (colonizethis_models, colonizethis_logic, colonizethis_data where extended).
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **90% per-package coverage** for Phase 2 packages (colonizethis_models, colonizethis_logic, colonizethis_data where extended).
 
 | Task | Success criteria |
 |------|------------------|
@@ -98,7 +98,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Unit tests — orders** | BuildUnitOrder deducts cost and adds unit; WorkOrder stub sets status or applies one improvement type. |
 | **Integration test — one full turn** | Run TurnResolver for one turn with initial state (provinces, tiles, units, orders); extraction phase uses resolver + extractor; land and overseas (with stub cargo) applied to stockpile; assert stockpile deltas, cargo limit behaviour, production/consumption applied, movement applied, turn number incremented. |
 | **Save/load round-trip (critical path)** | Save game state with stockpile, workers, units, orders, tile state, capital; load and assert key fields match. |
-| **Per-package coverage** | colonizethis_models, colonizethis_logic (and colonizethis_data if extended) aim for 80%; enforce in CI where applicable. |
+| **Per-package coverage** | colonizethis_models, colonizethis_logic (and colonizethis_data if extended) aim for 90%; enforce in CI where applicable. |
 | **sim_economy tests** | Unit tests for sim_economy script parsing and validation (invalid ids, malformed structure), plus golden-style tests where a short script or default random-start run yields an expected stockpile and WorkerPool after N turns; optionally cross-check one scripted turn against TurnResolver economy phases for behavioural alignment. |
 
 ---
@@ -159,7 +159,7 @@ Phase 2 is done when all design and dev tasks are implemented, all test tasks pa
 - [SPEC/game/stockpiles-and-production.md](../game/stockpiles-and-production.md), [SPEC/game/workers-and-population.md](../game/workers-and-population.md), [SPEC/game/civilian-units.md](../game/civilian-units.md), [SPEC/program/economy-models.md](../program/economy-models.md) — Existing specs to align.
 - Imperialism II 02-economy (Obsidian) — Transport level table, connectivity, cargo holds.
 - GDD 04, TDD 04 — Stockpile flow, transport algorithm, cargo stub.
-- `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% coverage, critical path (save/load).
 - [SPEC/program/sim-economy.md](../program/sim-economy.md) — Standalone economy simulation tool spec.
 - [SPEC/game/factions.md](../game/factions.md) — Faction types (Great Power, Minor Nation, Tribe), capabilities, minor military parity.
 - [SPEC/game/game-setup.md](../game/game-setup.md) — Pre-game phases and config.

@@ -13,6 +13,7 @@ dependencies:
   colonizethis_logic:
 
 dev_dependencies:
+  colonizethis_test:
   test: ^1.24.0
 
 executables:

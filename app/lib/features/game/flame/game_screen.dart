@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../widgets/technology_panel.dart';
 import 'game_canvas.dart';
 
 /// Hosts the Flame game canvas. Phase 1: Next turn invokes TurnResolver and persists.
@@ -20,24 +21,47 @@ class GameScreen extends ConsumerWidget {
       body: Stack(
         children: [
           GameWidget(game: ColonizeThisGame()),
-          if (game != null && victory == null)
+          if (game != null && victory == null) ...[
             Positioned(
               right: 16,
               top: 16,
-              child: ElevatedButton(
-                onPressed: () {
-                  final service = ref.read(gameServiceProvider);
-                  // Phase 2: orders and topology are not yet surfaced in the UI,
-                  // so we pass empty orders and a default topology. This still
-                  // exercises the full Phase 2 turn resolver pipeline.
-                  final newGame = service.nextTurn(game);
-                  ref.read(currentGameProvider.notifier).state = newGame;
-                },
-                child: Text(
-                  'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      final service = ref.read(gameServiceProvider);
+                      final newGame = service.nextTurn(game);
+                      ref.read(currentGameProvider.notifier).state = newGame;
+                    },
+                    child: Text(
+                      'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      final player = game.players.isNotEmpty
+                          ? game.players.first
+                          : null;
+                      if (player != null) {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          builder: (ctx) => TechnologyPanel(
+                            game: game,
+                            player: player,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.science, size: 20),
+                    label: const Text('Technology'),
+                  ),
+                ],
               ),
             ),
+          ],
           if (game != null && victory != null)
             Positioned.fill(
               child: Container(

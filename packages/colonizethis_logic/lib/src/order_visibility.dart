@@ -1,0 +1,116 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'player_view.dart';
+
+/// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
+///
+/// Shared helpers used by the order engine and order suggestion API so both
+/// enforce the same visibility rules using the same data (PlayerView).
+
+/// Visibility level ordering: unknown < revealed < fogged < fullyVisible.
+bool _visibilityAtLeast(VisibilityLevel actual, VisibilityLevel min) {
+  return actual.index >= min.index;
+}
+
+/// True iff at least one tile in [regionId]/[provinceId] has visibility >= [min].
+/// Tile keys use format regionId|localId|x|y. [provinceId] may be full (regionId|localId) or local.
+bool provinceHasAtLeastVisibility(
+  PlayerView view,
+  String regionId,
+  String provinceId,
+  VisibilityLevel min,
+) {
+  final localId = ProvinceId.localIdFrom(provinceId);
+  return view.visibilityByTile.entries.any((e) {
+    final parts = e.key.split('|');
+    if (parts.length != 4) return false;
+    return parts[0] == regionId &&
+        parts[1] == localId &&
+        _visibilityAtLeast(e.value, min);
+  });
+}
+
+/// True iff [tileKey] has visibility >= [min].
+bool tileHasAtLeastVisibility(
+  PlayerView view,
+  String tileKey,
+  VisibilityLevel min,
+) {
+  return _visibilityAtLeast(view.visibilityForTile(tileKey), min);
+}
+
+/// Move order: source province must be known (not unknown).
+bool moveSourceVisibilityOk(
+  PlayerView view,
+  String regionId,
+  String provinceId,
+) {
+  return provinceHasAtLeastVisibility(
+      view, regionId, provinceId, VisibilityLevel.revealed);
+}
+
+/// Move order: destination province must be known (not unknown).
+/// Optional refinement: non-explorer civilians could require fogged+; for now
+/// we require at least revealed (same as source).
+bool moveDestVisibilityOk(
+  PlayerView view,
+  String regionId,
+  String provinceId,
+  String unitType,
+) {
+  final min = VisibilityLevel.revealed;
+  return provinceHasAtLeastVisibility(view, regionId, provinceId, min);
+}
+
+/// Resolves regionId for [unit] when no tileKey: from compound provinceId, [view].provincesById, or visibility tile keys.
+String _regionIdForUnit(PlayerView view, Unit unit) {
+  if (unit.tileKey != null && unit.tileKey!.isNotEmpty) {
+    return Unit.requireRegionIdFromTileKey(unit.tileKey);
+  }
+  if (ProvinceId.isPrefixed(unit.provinceId)) {
+    return ProvinceId.regionIdFrom(unit.provinceId);
+  }
+  for (final key in view.provincesById.keys) {
+    if (key == unit.provinceId || key.endsWith('|${unit.provinceId}')) {
+      return ProvinceId.regionIdFrom(key);
+    }
+  }
+  for (final tileKey in view.visibilityByTile.keys) {
+    final parts = tileKey.split('|');
+    if (parts.length == 4 && parts[1] == unit.provinceId) return parts[0];
+  }
+  return ProvinceId.regionIdFrom(unit.provinceId);
+}
+
+/// Work order: true iff the unit's province (and [targetTileKey] when applicable) meets
+/// the minimum visibility for [workTarget]. SPEC/program/fog-and-exploration-resolution.md.
+bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [String? targetTileKey]) {
+  final regionId = targetTileKey != null && targetTileKey.isNotEmpty
+      ? Unit.requireRegionIdFromTileKey(targetTileKey)
+      : _regionIdForUnit(view, unit);
+  final provinceId = targetTileKey != null && targetTileKey.isNotEmpty
+      ? (Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId)
+      : unit.locationProvinceId;
+  final province = view.provinceByRegionAndId(regionId, provinceId);
+  final isOwned = province?.ownerId == view.playerId;
+
+  switch (workTarget) {
+    case 'explore':
+      return provinceHasAtLeastVisibility(
+          view, regionId, provinceId, VisibilityLevel.revealed);
+    case 'prospect':
+      return provinceHasAtLeastVisibility(
+          view, regionId, provinceId, VisibilityLevel.fogged);
+    case 'build_improvement':
+    case 'upgrade_town':
+    case 'build_road':
+    case 'build_port':
+    case 'build_fort':
+    case 'build_rail':
+      return isOwned ||
+          provinceHasAtLeastVisibility(
+              view, regionId, provinceId, VisibilityLevel.fogged);
+    default:
+      return false;
+  }
+}

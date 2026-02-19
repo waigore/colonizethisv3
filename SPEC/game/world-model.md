@@ -42,7 +42,7 @@ The map is a graph. **Nodes:** provinces (P) and sea zones (S); each has id and 
 | **Province** | Land region. Id, region id, **owner** (faction id: Great Power, Minor Nation, or Tribe). Contains tiles (terrain, optional resource, improvements). Effective extraction capped by owner's tech. Neighbours from topology. |
 | **SeaZone** | Water region. Id, region id. Adjacency from topology; naval movement Phase 2+. |
 | **Tile map** | Per-region 2D grid; each cell assigned to a province or sea zone; produced by map generation from topology. |
-| **Unit** | Military or civilian (Phase 2+). Id, type, **owner** (faction id), location (province id or sea zone id for naval), optional **tileKey** (civilians only; format `regionId|provinceId|x|y`), and later: strength, movement. |
+| **Unit** | Military or civilian (Phase 2+). Id, type, **owner** (faction id). **Location depends on unit kind:** **Civilian units:** location is **tileKey only** (required, format `regionId|provinceId|x|y`); province and region are derived from tileKey. **Military units (armies):** location is **provinceId** (province-level; no tileKey). **Ships (navies):** location is at **fleet / sea zone** level (no tileKey). Tile keys apply to civilians only; armies and ships interact at province/sea-zone level (movement, attacking, patrolling, etc.). |
 | **Player** | Great Power. Id, display name, human vs AI, treasury (Phase 2+), **stockpile** (centralized commodity repository; Phase 2+), **capitalProvinceId**, **capitalTile** (set in capital-choice phase), and later: relations, tech. Only Great Powers submit orders and are victory-eligible. See [factions.md](factions.md). |
 | **Orders** | Per–Great Power orders for the current turn (e.g. movement, build). Minor Nations and Tribes do not submit orders. Phase 1 may hold an empty or stub structure; full order types in Phase 2+. |
 
@@ -59,7 +59,7 @@ No game logic in models; they are data and serialization only.
 - **WorldState** → two region blobs: Old World data, New World data. Each blob: list of **Province**s, list of **Unit**s (or embedded per province as needed for serialization).
 - **Province** → belongs to one region; has optional **owner** (faction id); contains tiles (from static tile map + mutable improvement state). **Mutable tile state** (keyed by region, province, tile): **improvement level** (0–4), **road level** (0 / 1 / 2; 4 for railroad or derived from port). **Ports:** one per (provinceId, seaZoneId) or per tile with port + seaZoneId; world state records which tiles have a port and for which seaboard. Each tile: terrain type, optional resource, improvement, road; effective yield = min(improvement level, owner's tech cap), then min(..., transport level). Neighbours (P and S) from topology graph. See [map-data.md](../program/map-data.md): extraction level and road are mutable game state.
 - **SeaZone** → belongs to one region; neighbours from topology graph.
-- **Unit** → has **owner** (faction id), **location** (province id or sea zone id). Civilian units have optional **tileKey** for tile-level positioning.
+- **Unit** → has **owner** (faction id). **Civilian** units have **tileKey** (location; province/region derived from it). **Military** land units have **provinceId**. Naval units are located via Fleet/sea zone.
 - **Orders** → keyed by Great Power id (or attached to Game/WorldState for “orders for this turn”).
 - **Topology and tile maps** → static per map/scenario (in colonizethis_data or loaded by tools); not stored in WorldState.
 
@@ -73,8 +73,23 @@ All entities support **toJson** / **fromJson** (or equivalent) for persistence. 
 
 ---
 
+## Province identity and lookup (multi-region)
+
+In a multi-region world, **province lookup must always use regionId + provinceId**. A bare province id is not sufficient to locate a province, because the same local id can exist in more than one region (e.g. `p1` in Old World and `p1` in New World).
+
+- **Game-state province id format:** All province ids stored in game state (e.g. `Province.id`, `Unit.provinceId`, `Player.capitalProvinceId`, order fields) use a **prefixed** form: `regionId|localId` (e.g. `oldWorld|p1`, `newWorld|nw1`). This makes every province id globally unique and prevents a province from being resolved in the wrong region.
+- **Tile key format:** Tile keys remain 4-part: `regionId|localId|x|y`. The second segment is the **local** province id (as in topology/tile maps); the full province id is `regionId|localId`.
+- **Map visualizers:** When turning topology/tile maps into view models (ownership fill, per-player maps, unit markers), code MUST first derive the full province id from the region + local id before reading any game state. Examples:
+  - Ownership: convert `regionId` + `regionCellId` (e.g. `oldWorld` + `p1`) into `oldWorld|p1` and use that full id to query `Province.ownerId`.
+  - Province names: resolve `oldWorld|p1` / `newWorld|p1` into the corresponding `Province` and use its `displayName`.
+  - Unit markers: build a map from **full** province id (`regionId|localId`) to a representative tile `(x, y)`, then place markers by looking up units via `Unit.provinceId` (also full). Do not key these maps by bare local ids.
+- **Lookup rule:** Code must never locate a province by province id alone. Use (regionId, provinceId) or a prefixed full id, and resolve the province only within that region. Do **not** infer region by searching oldWorld then newWorld or by string heuristics (e.g. `startsWith('newWorld')`). If a province cannot be found, treat it as a logic error (e.g. throw `StateError`); do not fall back to a default region.
+
+---
+
 ## Invariants (Phase 1)
 
-- Every province has a region id. Every unit has owner and location (province id).
+- Every province has a region id. Every unit has owner and location (civilian: tileKey; military: province id; naval: fleet/sea zone).
+- **Province lookup:** Always use regionId + provinceId (or prefixed id); never use province id in isolation or assume a default region.
 - Resource on a tile is allowed only in regions and terrain types specified for that resource (GDD 04b).
 - Turn state (phase, turn number) lives in WorldState; TurnResolver takes WorldState in, returns new WorldState out (see [turn-resolution.md](../program/turn-resolution.md)).

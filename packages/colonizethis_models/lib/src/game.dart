@@ -1,4 +1,5 @@
 import 'combat_mode.dart';
+import 'dossier_evidence.dart';
 import 'diplomacy.dart';
 import 'minor_nation.dart';
 import 'player.dart';
@@ -76,7 +77,10 @@ class Game {
     this.overtureStates = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
+    this.hiddenAgendaByGpId = const {},
+    this.dossierEvidenceEntries = const [],
     this.globalGameSeed,
+    this.greatPowerColorOverride,
     this.victory,
   });
 
@@ -107,8 +111,17 @@ class Game {
   /// Per-AI seed for determinism. Phase 4.
   final Map<String, int> aiSeedByGpId;
 
+  /// Hidden agenda id per AI Great Power. Phase 6. Never exposed to player.
+  final Map<String, String> hiddenAgendaByGpId;
+
+  /// Evidence entries for dossier (observer, subject, agenda, turn, description). Phase 6.
+  final List<DossierEvidenceEntry> dossierEvidenceEntries;
+
   /// Global game seed for AI determinism. Phase 4.
   final int? globalGameSeed;
+
+  /// Setup-time GP map colours (GP id → [r, g, b]). When null/empty, map uses GDD defaults.
+  final Map<String, List<int>>? greatPowerColorOverride;
 
   /// Victory state when game has been won. Null when game is ongoing.
   final VictoryState? victory;
@@ -131,7 +144,12 @@ class Game {
           'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
         if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
         if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
+        if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
+        if (dossierEvidenceEntries.isNotEmpty)
+          'dossierEvidenceEntries': dossierEvidenceEntries.map((e) => e.toJson()).toList(),
         if (globalGameSeed != null) 'globalGameSeed': globalGameSeed,
+        if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
+          'greatPowerColorOverride': greatPowerColorOverride!.map((k, v) => MapEntry(k, v)),
         if (victory != null) 'victory': victory!.toJson(),
       };
 
@@ -164,7 +182,22 @@ class Game {
     final aiSeedByGpId = aiSeedRaw.map(
       (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
     );
+    final hiddenAgendaRaw = json['hiddenAgendaByGpId'] as Map<dynamic, dynamic>? ?? {};
+    final hiddenAgendaByGpId = hiddenAgendaRaw.map(
+      (k, v) => MapEntry(k.toString(), v.toString()),
+    );
+    final evidenceList = json['dossierEvidenceEntries'] as List<dynamic>? ?? [];
+    final dossierEvidenceEntries = evidenceList
+        .map((e) => DossierEvidenceEntry.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
     final globalGameSeed = json['globalGameSeed'] as int?;
+    final greatPowerColorOverrideRaw = json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
+    final greatPowerColorOverride = greatPowerColorOverrideRaw?.map(
+      (k, v) => MapEntry(
+        k.toString(),
+        (v as List<dynamic>).map((e) => (e as num).toInt()).toList(),
+      ),
+    );
 
     final combatModeRaw = json['combatModeByProvinceId'] as Map<dynamic, dynamic>? ?? {};
     final combatModeByProvinceId = combatModeRaw.map(
@@ -191,7 +224,10 @@ class Game {
       overtureStates: overtureStates,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
+      hiddenAgendaByGpId: hiddenAgendaByGpId,
+      dossierEvidenceEntries: dossierEvidenceEntries,
       globalGameSeed: globalGameSeed,
+      greatPowerColorOverride: greatPowerColorOverride,
       victory: json['victory'] is Map<String, dynamic>
           ? VictoryState.fromJson(json['victory'] as Map<String, dynamic>)
           : json['victory'] is Map
@@ -213,7 +249,10 @@ class Game {
     List<OvertureState>? overtureStates,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
+    Map<String, String>? hiddenAgendaByGpId,
+    List<DossierEvidenceEntry>? dossierEvidenceEntries,
     int? globalGameSeed,
+    Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
   }) {
     return Game(
@@ -229,7 +268,10 @@ class Game {
       overtureStates: overtureStates ?? this.overtureStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
+      hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
+      dossierEvidenceEntries: dossierEvidenceEntries ?? this.dossierEvidenceEntries,
       globalGameSeed: globalGameSeed ?? this.globalGameSeed,
+      greatPowerColorOverride: greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
     );
   }
@@ -251,7 +293,10 @@ class Game {
           _listEquals(overtureStates, other.overtureStates) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
+          _mapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
+          _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
           globalGameSeed == other.globalGameSeed &&
+          _mapListEquals(greatPowerColorOverride, other.greatPowerColorOverride) &&
           victory == other.victory;
 
   @override
@@ -268,9 +313,25 @@ class Game {
         Object.hashAll(overtureStates),
         Object.hashAll(aiControlByGpId.entries),
         Object.hashAll(aiSeedByGpId.entries),
+        Object.hashAll(hiddenAgendaByGpId.entries),
+        Object.hashAll(dossierEvidenceEntries),
         globalGameSeed,
+        greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
         victory,
       );
+
+  static bool _mapListEquals(Map<String, List<int>>? a, Map<String, List<int>>? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null || a.length != b.length) return false;
+    for (final e in a.entries) {
+      final ob = b[e.key];
+      if (ob == null || ob.length != e.value.length) return false;
+      for (var i = 0; i < e.value.length; i++) {
+        if (e.value[i] != ob[i]) return false;
+      }
+    }
+    return true;
+  }
 
   static bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
     if (a.length != b.length) return false;

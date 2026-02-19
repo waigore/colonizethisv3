@@ -16,6 +16,7 @@ When reviewing or generating Dart/Flutter/Flame code, run this checklist. Princi
 - **Hardcoded strings:** User-facing or repeated strings → move to constants. Use `app/lib/config/constants.dart`, `app/lib/config/routes.dart`, or feature constants (e.g. `HiveBoxNames`, `Routes`).
 - **Types:** Explicit types; no `dynamic` (see core-principles).
 - **Spec:** New/changed behavior must be authorized by GDD/TDD/UI spec (see colonizethis-spec-required).
+- **Logging:** Verify sufficiency and level of log statements (key operations: start/end of flows, rejections, errors; appropriate debug/info/warn/error). Follow project conventions (see core-principles Logging, SPEC/program/ctdev-logging.md).
 - **Flame/Flutter:** Respect division; no game logic in Flutter build (see core-principles, ui-design).
 - **Reuse:** Before new utils/widgets, check `app/lib/core/utils/`, `app/lib/widgets/`, `app/lib/config/`, `packages/*/lib/src/` (see reuse-before-new-code, component-structure).
 - **New Flutter widgets:** Register in catalog + Widgetbook (see component-structure, ui-design).

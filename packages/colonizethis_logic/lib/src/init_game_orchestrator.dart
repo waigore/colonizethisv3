@@ -5,8 +5,11 @@ import 'dart:typed_data';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import 'game_setup.dart';
+
+final Logger _log = Logger();
 
 /// Result of running init game.
 class InitGameResult {
@@ -18,6 +21,7 @@ class InitGameResult {
     required this.tileMapByRegion,
     required this.topologyByRegion,
     required this.combinedTopology,
+    this.greatPowerColorOverride,
   });
 
   final Game game;
@@ -30,6 +34,8 @@ class InitGameResult {
   final Map<String, MapTopology> topologyByRegion;
   /// Single topology merging OW and NW for resolveTurnForGame (movement, extraction).
   final MapTopology combinedTopology;
+  /// GP id → (r, g, b) used for map view; ctdev uses this when rebuilding view data.
+  final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
 
 /// Options for runInitGame.
@@ -38,6 +44,7 @@ class InitGameOptions {
     this.cellSize = 24,
     this.skipFillLakes = false,
     this.renderPng = true,
+    this.greatPowerColorOverride,
   });
 
   final int cellSize;
@@ -47,6 +54,8 @@ class InitGameOptions {
   /// When false, skips PNG rendering inside runInitGame; mapViewData and
   /// markdown are still produced.
   final bool renderPng;
+  /// Optional GP id → (r, g, b) for map ownership colours; stored on Game and in result.
+  final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
 
 /// Runs the full game creation process: generate OW+NW maps, create game, render map, format markdown.
@@ -55,6 +64,7 @@ InitGameResult runInitGame({
   required GameSetupConfig config,
   InitGameOptions options = const InitGameOptions(),
 }) {
+  _log.i('logic: init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}');
   // Derive an effective seed: non-zero config seeds are used as-is for
   // reproducible runs; a zero seed means "choose a time-based seed".
   final effectiveSeed = config.seed == 0
@@ -74,6 +84,7 @@ InitGameResult runInitGame({
     seaFraction: 0.6,
     skipFillLakes: options.skipFillLakes,
   );
+  _log.d('logic: init game generating OW map');
   final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
     numProvinces: config.numProvincesOldWorld,
     numContinents: config.continentCount,
@@ -81,6 +92,7 @@ InitGameResult runInitGame({
     resourceRules: ResourceRules.defaultRules,
   );
 
+  _log.d('logic: init game generating NW map');
   final sizeNW = computeGridSizeFromParams(config.numProvincesNewWorld, mapGenParams);
   final paramsNW = TileMapParams(
     width: sizeNW.width,
@@ -106,6 +118,31 @@ InitGameResult runInitGame({
     namingSeed: effectiveSeed,
   );
 
+  // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids
+  // so colour overrides can be keyed by Player.id for map builders and saves.
+  final semanticToPlayerId = <String, String>{};
+  for (var i = 0; i < setupResult.game.players.length; i++) {
+    if (i >= config.selectedGreatPowerIds.length) break;
+    final semanticId = config.selectedGreatPowerIds[i];
+    final playerId = setupResult.game.players[i].id;
+    semanticToPlayerId[semanticId] = playerId;
+  }
+
+  Map<String, (int r, int g, int b)>? effectiveGpColorOverride;
+  final rawOverride = options.greatPowerColorOverride;
+  if (rawOverride != null && rawOverride.isNotEmpty) {
+    effectiveGpColorOverride = <String, (int, int, int)>{};
+    rawOverride.forEach((semanticId, rgb) {
+      final playerId = semanticToPlayerId[semanticId];
+      if (playerId != null) {
+        effectiveGpColorOverride![playerId] = rgb;
+      }
+    });
+    if (effectiveGpColorOverride.isEmpty) {
+      effectiveGpColorOverride = null;
+    }
+  }
+
   final mapViewData = buildInitGameMapViewData(
     game: setupResult.game,
     tileMapByRegion: setupResult.tileMapByRegion,
@@ -114,6 +151,7 @@ InitGameResult runInitGame({
     seed: effectiveSeed,
     configSummary:
         'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+    greatPowerColorOverride: effectiveGpColorOverride,
   );
 
   final mapPngBytes = options.renderPng
@@ -124,13 +162,18 @@ InitGameResult runInitGame({
 
   final markdown = formatInitGameSetupMarkdown(setupResult.game);
 
-  // Phase 4: set AI seeds for determinism
+  // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
+  final gpColorOverrideList = effectiveGpColorOverride?.map(
+    (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
+  );
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {for (final p in game.players) p.id: effectiveSeed + p.id.hashCode},
+    greatPowerColorOverride: gpColorOverrideList,
   );
 
+  _log.i('logic: init game end seed=$effectiveSeed gameId=${game.id}');
   return InitGameResult(
     game: game,
     mapPngBytes: mapPngBytes,
@@ -139,6 +182,7 @@ InitGameResult runInitGame({
     tileMapByRegion: setupResult.tileMapByRegion,
     topologyByRegion: setupResult.topologyByRegion,
     combinedTopology: setupResult.combinedTopology,
+    greatPowerColorOverride: effectiveGpColorOverride,
   );
 }
 

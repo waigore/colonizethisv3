@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('TurnResolver (WorldState)', () {
@@ -45,18 +45,22 @@ void main() {
         ],
       );
 
+      const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(
-            provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+            ],
             units: [
               Unit(
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: '$ow|P1',
               ),
             ],
           ),
@@ -69,8 +73,8 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': const [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
           ],
         },
       );
@@ -94,7 +98,7 @@ void main() {
       // Turn number advanced.
       expect(next.worldState.turnState.turnNumber, 1);
       // Unit moved to P2.
-      expect(next.worldState.oldWorld.units.single.provinceId, 'P2');
+      expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
       // Extraction applied to player stockpile.
       expect(
         next.players.single.stockpile.quantityOf('grain'),
@@ -119,13 +123,14 @@ void main() {
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
           .setRoadLevel('oldWorld|p1|0|0', 1);
-      final cap = CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0);
+      const ow = 'oldWorld';
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
           ]),
           newWorld: const RegionData(),
           tileState: tileState,
@@ -135,7 +140,7 @@ void main() {
             id: 'pl1',
             displayName: 'Spain',
             isHuman: true,
-            capitalProvinceId: 'p1',
+            capitalProvinceId: '$ow|p1',
             capitalTile: cap,
           ),
         ],
@@ -162,28 +167,29 @@ void main() {
         ],
       );
 
+      const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: '$ow|P1',
                 medals: 2,
               ),
               Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: 'P2',
+                provinceId: '$ow|P2',
               ),
             ],
           ),
@@ -197,8 +203,8 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': const [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
           ],
         },
       );
@@ -217,7 +223,7 @@ void main() {
       expect(unitsAfter.length, lessThanOrEqualTo(2));
 
       final p2 = next.worldState.oldWorld.provinces
-          .where((p) => p.id == 'P2')
+          .where((p) => p.id == 'oldWorld|P2')
           .singleOrNull;
       expect(p2, isNotNull);
       expect(p2!.ownerId, anyOf('p1', 'p2'));
@@ -234,27 +240,28 @@ void main() {
         ],
       );
 
+      const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: '$ow|P1',
               ),
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: 'P2',
+                provinceId: '$ow|P2',
               ),
             ],
           ),
@@ -269,8 +276,8 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': const [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
           ],
         },
       );
@@ -283,7 +290,7 @@ void main() {
 
       expect(next.worldState.turnState.turnNumber, 1);
       final p2 = next.worldState.oldWorld.provinces
-          .where((p) => p.id == 'P2')
+          .where((p) => p.id == 'oldWorld|P2')
           .singleOrNull;
       expect(p2, isNotNull);
       // Owner may or may not flip depending on Quick Battle outcome, but state
@@ -302,25 +309,32 @@ void main() {
         ],
       );
 
+      const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: '$ow|P1',
               ),
             ],
           ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'A', isHuman: true),
@@ -328,7 +342,7 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'));
+      engine.addMoveOrder('p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
 
       final next = resolveTurnForGameFromOrderEngine(
         game: game,
@@ -337,7 +351,7 @@ void main() {
       );
 
       expect(next.worldState.turnState.turnNumber, 1);
-      expect(next.worldState.oldWorld.units.single.provinceId, 'P2');
+      expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
     });
   });
 }

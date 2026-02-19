@@ -16,14 +16,15 @@
 
 ### Assigning Work
 
+- WorkOrder applies to **civilian units only** and carries **targetTileKey**. Military and naval units do not have tileKey or work orders of this kind.
 - When a `WorkOrder` is accepted for a civilian:
-  - Validate **unit type**, **tile ownership**, **terrain eligibility**, and **tech prerequisites** (e.g. Road Construction for road level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
+  - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for road level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
   - Look up:
     - `totalTurns` for this action from ruleset config (higher levels → more turns; fort and rail slower than level-1 road/improvement).
     - Material **costs** per action.
   - If validation passes and the player has sufficient materials:
     - **Deduct materials immediately** (atomic per action; no refund if later cancelled).
-    - Set unit `status = working` and `currentWork = (target, tileKey, totalTurns, remainingTurns = totalTurns)`.
+    - Set unit `status = working`, `currentWork = (target, targetTileKey, totalTurns, remainingTurns = totalTurns)`, and **unit.tileKey = targetTileKey** (civilian unit is considered on the target tile for the turn).
 
 ---
 

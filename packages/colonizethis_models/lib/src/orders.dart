@@ -10,6 +10,8 @@ class Orders {
     this.workOrdersByPlayerId = const {},
     this.diplomaticOrdersByPlayerId = const {},
     this.researchOrdersByPlayerId = const {},
+    this.navalMoveOrdersByPlayerId = const {},
+    this.navalMissionOrdersByPlayerId = const {},
   });
 
   /// Player id -> list of move orders.
@@ -22,6 +24,10 @@ class Orders {
   final Map<String, List<DiplomaticOrder>> diplomaticOrdersByPlayerId;
   /// Player id -> list of research orders. Phase 5.
   final Map<String, List<ResearchOrder>> researchOrdersByPlayerId;
+  /// Player id -> list of naval move orders. Phase 5. SPEC/program/naval-movement-resolution.md.
+  final Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId;
+  /// Player id -> list of naval mission orders. Phase 6.
+  final Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId;
 
   Map<String, dynamic> toJson() => {
         'moveOrdersByPlayerId': moveOrdersByPlayerId.map(
@@ -51,6 +57,20 @@ class Orders {
           ),
         if (researchOrdersByPlayerId.isNotEmpty)
           'researchOrdersByPlayerId': researchOrdersByPlayerId.map(
+            (playerId, orders) => MapEntry(
+              playerId,
+              orders.map((o) => o.toJson()).toList(),
+            ),
+          ),
+        if (navalMoveOrdersByPlayerId.isNotEmpty)
+          'navalMoveOrdersByPlayerId': navalMoveOrdersByPlayerId.map(
+            (playerId, orders) => MapEntry(
+              playerId,
+              orders.map((o) => o.toJson()).toList(),
+            ),
+          ),
+        if (navalMissionOrdersByPlayerId.isNotEmpty)
+          'navalMissionOrdersByPlayerId': navalMissionOrdersByPlayerId.map(
             (playerId, orders) => MapEntry(
               playerId,
               orders.map((o) => o.toJson()).toList(),
@@ -109,12 +129,34 @@ class Orders {
       researchByPlayerId[playerId] = list;
     });
 
+    final navalRaw = json['navalMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final navalByPlayerId = <String, List<NavalMoveOrder>>{};
+    navalRaw.forEach((key, value) {
+      final playerId = key.toString();
+      final list = (value as List<dynamic>? ?? [])
+          .map((e) => NavalMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      navalByPlayerId[playerId] = list;
+    });
+
+    final missionRaw = json['navalMissionOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final missionByPlayerId = <String, List<NavalMissionOrder>>{};
+    missionRaw.forEach((key, value) {
+      final playerId = key.toString();
+      final list = (value as List<dynamic>? ?? [])
+          .map((e) => NavalMissionOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      missionByPlayerId[playerId] = list;
+    });
+
     return Orders(
       moveOrdersByPlayerId: moveByPlayerId,
       buildUnitOrdersByPlayerId: buildByPlayerId,
       workOrdersByPlayerId: workByPlayerId,
       diplomaticOrdersByPlayerId: diploByPlayerId,
       researchOrdersByPlayerId: researchByPlayerId,
+      navalMoveOrdersByPlayerId: navalByPlayerId,
+      navalMissionOrdersByPlayerId: missionByPlayerId,
     );
   }
 
@@ -127,7 +169,9 @@ class Orders {
           _mapEquals(buildUnitOrdersByPlayerId, other.buildUnitOrdersByPlayerId) &&
           _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
           _mapEquals(diplomaticOrdersByPlayerId, other.diplomaticOrdersByPlayerId) &&
-          _mapEquals(researchOrdersByPlayerId, other.researchOrdersByPlayerId);
+          _mapEquals(researchOrdersByPlayerId, other.researchOrdersByPlayerId) &&
+          _mapEquals(navalMoveOrdersByPlayerId, other.navalMoveOrdersByPlayerId) &&
+          _mapEquals(navalMissionOrdersByPlayerId, other.navalMissionOrdersByPlayerId);
 
   @override
   int get hashCode => Object.hash(
@@ -157,6 +201,40 @@ class Orders {
             (e) => Object.hashAll(e.value),
           ),
         ),
+        Object.hashAll(
+          navalMoveOrdersByPlayerId.entries.map(
+            (e) => Object.hashAll(e.value),
+          ),
+        ),
+        Object.hashAll(
+          navalMissionOrdersByPlayerId.entries.map(
+            (e) => Object.hashAll(e.value),
+          ),
+        ),
+      );
+
+  Orders copyWith({
+    Map<String, List<MoveOrder>>? moveOrdersByPlayerId,
+    Map<String, List<BuildUnitOrder>>? buildUnitOrdersByPlayerId,
+    Map<String, List<WorkOrder>>? workOrdersByPlayerId,
+    Map<String, List<DiplomaticOrder>>? diplomaticOrdersByPlayerId,
+    Map<String, List<ResearchOrder>>? researchOrdersByPlayerId,
+    Map<String, List<NavalMoveOrder>>? navalMoveOrdersByPlayerId,
+    Map<String, List<NavalMissionOrder>>? navalMissionOrdersByPlayerId,
+  }) =>
+      Orders(
+        moveOrdersByPlayerId: moveOrdersByPlayerId ?? this.moveOrdersByPlayerId,
+        buildUnitOrdersByPlayerId:
+            buildUnitOrdersByPlayerId ?? this.buildUnitOrdersByPlayerId,
+        workOrdersByPlayerId: workOrdersByPlayerId ?? this.workOrdersByPlayerId,
+        diplomaticOrdersByPlayerId:
+            diplomaticOrdersByPlayerId ?? this.diplomaticOrdersByPlayerId,
+        researchOrdersByPlayerId:
+            researchOrdersByPlayerId ?? this.researchOrdersByPlayerId,
+        navalMoveOrdersByPlayerId:
+            navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
+        navalMissionOrdersByPlayerId:
+            navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
       );
 
   static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {
@@ -209,6 +287,84 @@ class MoveOrder {
   int get hashCode => Object.hash(unitId, destinationProvinceId);
 }
 
+/// Move a fleet to an adjacent sea zone. Phase 5. SPEC/program/naval-movement-resolution.md.
+class NavalMoveOrder {
+  const NavalMoveOrder({
+    required this.fleetId,
+    required this.destinationSeaZoneId,
+  });
+
+  final String fleetId;
+  final String destinationSeaZoneId;
+
+  Map<String, dynamic> toJson() => {
+        'fleetId': fleetId,
+        'destinationSeaZoneId': destinationSeaZoneId,
+      };
+
+  static NavalMoveOrder fromJson(Map<String, dynamic> json) {
+    return NavalMoveOrder(
+      fleetId: json['fleetId'] as String,
+      destinationSeaZoneId: json['destinationSeaZoneId'] as String,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NavalMoveOrder &&
+          runtimeType == other.runtimeType &&
+          fleetId == other.fleetId &&
+          destinationSeaZoneId == other.destinationSeaZoneId;
+
+  @override
+  int get hashCode => Object.hash(fleetId, destinationSeaZoneId);
+}
+
+/// Assign a mission to a fleet (patrol, blockade, beachhead, defend). SPEC/program/naval-movement-resolution.md.
+class NavalMissionOrder {
+  const NavalMissionOrder({
+    required this.fleetId,
+    required this.mission,
+    this.targetPortId,
+    this.targetProvinceId,
+  });
+
+  final String fleetId;
+  final String mission;
+  final String? targetPortId;
+  final String? targetProvinceId;
+
+  Map<String, dynamic> toJson() => {
+        'fleetId': fleetId,
+        'mission': mission,
+        if (targetPortId != null) 'targetPortId': targetPortId,
+        if (targetProvinceId != null) 'targetProvinceId': targetProvinceId,
+      };
+
+  static NavalMissionOrder fromJson(Map<String, dynamic> json) {
+    return NavalMissionOrder(
+      fleetId: json['fleetId'] as String,
+      mission: json['mission'] as String? ?? 'none',
+      targetPortId: json['targetPortId'] as String?,
+      targetProvinceId: json['targetProvinceId'] as String?,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NavalMissionOrder &&
+          runtimeType == other.runtimeType &&
+          fleetId == other.fleetId &&
+          mission == other.mission &&
+          targetPortId == other.targetPortId &&
+          targetProvinceId == other.targetProvinceId;
+
+  @override
+  int get hashCode => Object.hash(fleetId, mission, targetPortId, targetProvinceId);
+}
+
 /// Build a new unit for a player.
 /// SPEC/program/orders.md
 class BuildUnitOrder {
@@ -250,25 +406,31 @@ class BuildUnitOrder {
 }
 
 /// Order a unit to work (explore, build improvement, prospect).
-/// SPEC/program/orders.md
+/// Applies to civilian units only. SPEC/program/orders.md
 class WorkOrder {
   const WorkOrder({
     required this.unitId,
     required this.target,
+    required this.targetTileKey,
   });
 
   final String unitId;
   final String target;
 
+  /// Tile key for the work target (format regionId|provinceId|x|y). For province-level actions (e.g. explore) a synthetic key may be used.
+  final String targetTileKey;
+
   Map<String, dynamic> toJson() => {
         'unitId': unitId,
         'target': target,
+        'targetTileKey': targetTileKey,
       };
 
   static WorkOrder fromJson(Map<String, dynamic> json) {
     return WorkOrder(
       unitId: json['unitId'] as String,
       target: json['target'] as String,
+      targetTileKey: json['targetTileKey'] as String? ?? '',
     );
   }
 
@@ -278,10 +440,11 @@ class WorkOrder {
       other is WorkOrder &&
           runtimeType == other.runtimeType &&
           unitId == other.unitId &&
-          target == other.target;
+          target == other.target &&
+          targetTileKey == other.targetTileKey;
 
   @override
-  int get hashCode => Object.hash(unitId, target);
+  int get hashCode => Object.hash(unitId, target, targetTileKey);
 }
 
 /// Funding level for research per slot. Maps to treasury cost and research

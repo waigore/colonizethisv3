@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
+/// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
 ///
 /// Phase 2: cargo holds = fixed stub per player. Fill by priority until cap; rest left behind.
 
@@ -47,4 +48,155 @@ Map<CommodityId, int> allocateOverseasToStockpile(
   }
 
   return delivered;
+}
+
+// --- Trade/transport interception (Phase 6). Only when interceptor is at war with owner. ---
+
+/// Civilian target bonus for cargo interception. SPEC: 1.25–1.5.
+const double civilianTargetBonus = 1.25;
+
+/// Action factor for patrol (baseline). Blockade 0.9 only for port-targeted; we use patrol here.
+const double actionFactorPatrol = 0.5;
+
+/// Result of applying trade interception: reduced delivered amounts and fleet updates.
+class TradeInterceptionResult {
+  const TradeInterceptionResult({
+    required this.reducedDelivered,
+    required this.updatedFleets,
+  });
+
+  final Map<CommodityId, int> reducedDelivered;
+  final List<Fleet> updatedFleets;
+}
+
+/// Enemies at war with [playerId]. From game.diplomacyRelations.
+Set<String> _enemiesAtWar(Game game, String playerId) {
+  final set = <String>{};
+  for (final rel in game.diplomacyRelations) {
+    if (rel.state != RelationState.atWar) continue;
+    if (rel.factionId1 == playerId) set.add(rel.factionId2);
+    if (rel.factionId2 == playerId) set.add(rel.factionId1);
+  }
+  return set;
+}
+
+/// Sum intercept rating for fleets that are (owner in [enemyIds]) and mission patrol/blockade.
+int _interceptScoreForEnemyFleets(List<Fleet> fleets, Set<String> enemyIds) {
+  var sum = 0;
+  for (final f in fleets) {
+    if (!enemyIds.contains(f.ownerId)) continue;
+    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) continue;
+    for (final typeId in f.shipTypeIds) {
+      sum += NavalStatsCatalog.get(typeId).interceptRating;
+    }
+  }
+  return sum;
+}
+
+/// Sum flee rating for all ships of [playerId].
+int _evasionScoreForPlayer(List<Fleet> fleets, String playerId) {
+  var sum = 0;
+  for (final f in fleets) {
+    if (f.ownerId != playerId) continue;
+    for (final typeId in f.shipTypeIds) {
+      sum += NavalStatsCatalog.get(typeId).fleeRating;
+    }
+  }
+  return sum;
+}
+
+/// Apply trade interception: reduce delivered cargo and optionally remove merchant ships.
+/// Only applies when at least one enemy (at war) has patrol/blockade fleets. Deterministic from [seed].
+TradeInterceptionResult applyTradeInterception(
+  Game game,
+  String playerId,
+  Map<CommodityId, int> overseasDelivered, {
+  required int seed,
+}) {
+  if (overseasDelivered.isEmpty) {
+    return TradeInterceptionResult(
+      reducedDelivered: const {},
+      updatedFleets: game.worldState.fleets,
+    );
+  }
+
+  final enemies = _enemiesAtWar(game, playerId);
+  if (enemies.isEmpty) {
+    return TradeInterceptionResult(
+      reducedDelivered: Map<CommodityId, int>.from(overseasDelivered),
+      updatedFleets: game.worldState.fleets,
+    );
+  }
+
+  final fleets = game.worldState.fleets;
+  final interceptScore = _interceptScoreForEnemyFleets(fleets, enemies);
+  final evasionScore = _evasionScoreForPlayer(fleets, playerId);
+
+  if (interceptScore <= 0) {
+    return TradeInterceptionResult(
+      reducedDelivered: Map<CommodityId, int>.from(overseasDelivered),
+      updatedFleets: game.worldState.fleets,
+    );
+  }
+
+  final total = interceptScore + evasionScore;
+  final ratio = total > 0 ? interceptScore / total : 1.0;
+  double base = actionFactorPatrol * ratio * civilianTargetBonus;
+  base = base.clamp(0.0, 1.0);
+
+  final pCargo = (1.2 * base).clamp(0.1, 0.9);
+  final pShip = (0.4 * base).clamp(0.02, 0.5);
+
+  final reducedDelivered = <CommodityId, int>{};
+  for (final entry in overseasDelivered.entries) {
+    final qty = entry.value;
+    final keep = (qty * (1.0 - pCargo)).round();
+    if (keep > 0) reducedDelivered[entry.key] = keep;
+  }
+
+  var rng = seed;
+  int nextInt(int max) {
+    if (max <= 0) return 0;
+    rng = (rng * 1103515245 + 12345) & 0x7fffffff;
+    return rng % max;
+  }
+
+  final playerFleets = fleets.where((f) => f.ownerId == playerId).toList();
+  var shipsToRemove = 0;
+  for (final f in playerFleets) {
+    final merchantCount = f.shipTypeIds.where((id) => id == 'fluyte').length;
+    for (var i = 0; i < merchantCount; i++) {
+      if (nextInt(100) < (pShip * 100)) shipsToRemove++;
+    }
+  }
+  if (shipsToRemove <= 0) {
+    return TradeInterceptionResult(
+      reducedDelivered: reducedDelivered,
+      updatedFleets: game.worldState.fleets,
+    );
+  }
+
+  var remainingToRemove = shipsToRemove;
+  final updatedFleets = <Fleet>[];
+  for (final f in fleets) {
+    if (f.ownerId != playerId) {
+      updatedFleets.add(f);
+      continue;
+    }
+    final types = List<String>.from(f.shipTypeIds);
+    for (var i = types.length - 1; i >= 0 && remainingToRemove > 0; i--) {
+      if (types[i] == 'fluyte') {
+        types.removeAt(i);
+        remainingToRemove--;
+      }
+    }
+    if (types.isNotEmpty) {
+      updatedFleets.add(f.copyWith(shipTypeIds: types));
+    }
+  }
+
+  return TradeInterceptionResult(
+    reducedDelivered: reducedDelivered,
+    updatedFleets: updatedFleets,
+  );
 }

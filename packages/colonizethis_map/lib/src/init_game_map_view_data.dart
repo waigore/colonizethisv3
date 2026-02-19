@@ -25,7 +25,7 @@ class CellViewData {
   final int x;
   final int y;
 
-  /// Province or sea zone id (e.g. 'p12', 's3').
+  /// Province or sea zone id from the tile map (local id, e.g. 'p12', 's3').
   final String regionCellId;
 
   /// True if this cell belongs to a sea zone; false for land provinces.

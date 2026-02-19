@@ -97,7 +97,7 @@ Documented sequence for implementation (design complete before dev):
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **80% per-package coverage** for Phase 5 packages.
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito** or **mocktail** for mocks. Save/load remains a critical path; aim for **90% per-package coverage** for Phase 5 packages.
 
 | Task | Success criteria |
 |------|------------------|
@@ -113,7 +113,7 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming; use **mockito**
 | **Integration test — tech unlock** | Research tech; new regiment type becomes buildable. |
 | **Integration test — sim_game development** | Run `ctdev`'s `sim_game` with civilian WorkOrders (explore/prospect + development); assert that resulting tile improvements, roads/ports/forts/rails, visibility, and prospected state match running the same orders through the main game TurnResolver. |
 | **Save/load round-trip (critical path)** | Save game state with tech, research progress, leader, victory; load and assert key fields match. |
-| **Per-package coverage** | colonizethis_logic (victory, research, leader bonus application) aim for 80%. |
+| **Per-package coverage** | colonizethis_logic (victory, research, leader bonus application) aim for 90%. |
 
 ---
 
@@ -174,7 +174,7 @@ Phase 5 is done when all design and dev tasks are implemented, all test tasks pa
 - [military-units.md](../game/military-units.md) — Regiment types and tech unlocks.
 - [fog-and-exploration.md](../game/fog-and-exploration.md), [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md) — Fog, visibility, exploration, prospecting.
 - [ships-and-naval.md](../game/ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md) — Ships, fleets, naval movement, ship reveal.
-- `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% coverage, critical path (save/load).
 
 ---
 

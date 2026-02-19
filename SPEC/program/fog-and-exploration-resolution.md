@@ -60,6 +60,38 @@ In `resource_extractor.dart`: for mineral resources (iron, copper, tin, coal, si
 
 ---
 
+## Source province definition
+
+The **source province** for a unit is the province the unit is based in: for civilians with a tileKey, the province id is derived from the tileKey (`Unit.locationProvinceId`); otherwise the unit's `provinceId`. All move and work order suggestions use this as the single origin. By definition the source province cannot be unknown; if it is (e.g. no visibility for that province in the player view), the game raises an exception.
+
+---
+
+## Order visibility rules
+
+Visibility levels are defined in [fog-and-exploration.md](../game/fog-and-exploration.md) (unknown, revealed, fogged, fullyVisible). The **order suggestion API** and the **order engine** (when validating with context) both use the same visibility data (PlayerView) and enforce the following rules.
+
+**Move orders (validation and suggestion):**
+
+- **Source province:** At least one tile in the unit's current province must have visibility ≠ unknown. The suggestion API may suggest moves from source provinces that are not owned by the acting player (e.g. explorers, merchants, spies in foreign territory). Ownership of the source is not required for suggestion.
+- **Destination province:** At least one tile in the destination province must have visibility ≠ unknown.
+- Optional refinement (for later): Explorers (and Merchants when in scope) may move into **revealed**; other civilians may require **fogged** or **fullyVisible** for destination.
+
+**Work order suggestions:**
+
+- Work order suggestions are generated **only for the unit's current province** (i.e. the unit's **source province**, as defined above) and, when applicable, the tile under the unit. The suggestion API must never suggest work in a province where the unit is not located.
+
+**Work orders (validation and suggestion) by unit type and target:**
+
+| Unit type    | Work target                         | Minimum visibility (unit's province / tile)                                                                 |
+| ------------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Explorer     | explore                             | Province: at least **revealed** (or better); suggestion also requires something left to reveal.            |
+| Explorer     | prospect                            | Tile (or province if tile not wired): at least **fogged** or **fullyVisible**.                             |
+| Builder      | build_improvement, upgrade_town     | Owned (hence fully visible) or else at least **fogged** / **fullyVisible**.                                  |
+| Engineer     | build_road, build_port, build_fort  | Same as Builder.                                                                                             |
+| Rail Builder | build_rail                          | Same as Builder.                                                                                             |
+
+---
+
 ## PlayerView consumers
 
 Resolution code maintains the authoritative visibility and prospected state on `WorldState`. A separate `buildPlayerView(game, topology, playerId)` helper (see `player-view.md`) derives a **per-player view** from this state for AI and tooling. All AI and order suggestion logic must read visibility and prospecting **through PlayerView**, never by directly inspecting hidden tiles or enemy units on `WorldState`.

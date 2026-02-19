@@ -1,12 +1,11 @@
 /// AIPlanner: generates orders for AI-controlled GPs. SPEC/program/ai-planner.md.
 
-import 'dart:math' as math;
-
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'diplomacy_resolver.dart';
-import 'order_suggestion.dart';
 import 'player_view.dart';
+import 'order_suggestion_api_impl.dart';
+import 'simple_ai_heuristics.dart';
 
 /// Returns true if [gpId] is AI-controlled. Uses aiControlByGpId when present,
 /// otherwise !player.isHuman.
@@ -20,22 +19,10 @@ bool isAiControlled(Game game, String gpId) {
   return player != null && !player.isHuman;
 }
 
-/// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
-int _turnSeed(Game game, String gpId, int turn) {
-  final global = game.globalGameSeed ?? 0;
-  final aiSeed = game.aiSeedByGpId[gpId] ?? gpId.hashCode;
-  const int prime = 0x9E3779B1;
-  var h = global ^ (turn * prime);
-  h ^= aiSeed * prime;
-  return h & 0x7fffffff;
-}
-
 /// Generates orders for a single AI-controlled GP. Deterministic given game
 /// state and seeds. Respects diplomacy: no attacks against factions at peace.
+/// Uses the shared simple heuristics (PlayerView, suggestion API, diplomacy filter).
 Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId) {
-  final turn = game.worldState.turnState.turnNumber;
-  final provinceOwner = _provinceOwnerMap(game);
-
   final player = game.players.cast<Player?>().firstWhere(
         (p) => p?.id == playerId,
         orElse: () => null,
@@ -44,162 +31,13 @@ Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId)
     return const Orders();
   }
 
-  final moveByPlayer = <String, List<MoveOrder>>{};
-  final buildByPlayer = <String, List<BuildUnitOrder>>{};
-  final workByPlayer = <String, List<WorkOrder>>{};
-  final researchByPlayer = <String, List<ResearchOrder>>{};
-
-  final turnSeed = _turnSeed(game, player.id, turn);
-  final rng = math.Random(turnSeed);
-  var current = const Orders();
-
-  final view = buildPlayerView(game, topology, player.id);
-
-    // Simple loop: at each step, gather suggestions and pick one order type
-    // using shallow heuristics, then pick a specific candidate at random.
-    const maxIterationsPerPlayer = 32;
-    for (var i = 0; i < maxIterationsPerPlayer; i++) {
-      final moveSuggestions = suggestMoveOrders(view, game, topology, current);
-      final workSuggestions = suggestWorkOrders(view, game, topology, current);
-      final buildSuggestions = suggestBuildOrders(view, game, topology, current);
-      final researchSuggestions =
-          suggestResearchOrders(view, game, topology, current);
-
-      final categories = <_SuggestionCategory>[];
-      if (moveSuggestions.isNotEmpty) {
-        categories.add(_SuggestionCategory.moves);
-      }
-      if (workSuggestions.isNotEmpty) {
-        categories.add(_SuggestionCategory.work);
-      }
-      if (buildSuggestions.isNotEmpty) {
-        categories.add(_SuggestionCategory.build);
-      }
-      if (researchSuggestions.isNotEmpty) {
-        categories.add(_SuggestionCategory.research);
-      }
-
-      if (categories.isEmpty) break;
-
-      // Basic heuristic: prefer moves first, then work, then build, then research.
-      categories.sort((a, b) => a.index.compareTo(b.index));
-      final chosenCategory = categories.first;
-
-      switch (chosenCategory) {
-        case _SuggestionCategory.moves:
-          final idx = rng.nextInt(moveSuggestions.length);
-          final chosen = moveSuggestions[idx];
-          final list = List<MoveOrder>.from(
-            current.moveOrdersByPlayerId[player.id] ?? const [],
-          )..add(chosen);
-          current = Orders(
-            moveOrdersByPlayerId: {
-              ...current.moveOrdersByPlayerId,
-              player.id: list,
-            },
-            buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-            workOrdersByPlayerId: current.workOrdersByPlayerId,
-            diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-            researchOrdersByPlayerId: current.researchOrdersByPlayerId,
-          );
-          break;
-        case _SuggestionCategory.work:
-          final idx = rng.nextInt(workSuggestions.length);
-          final chosen = workSuggestions[idx];
-          final list = List<WorkOrder>.from(
-            current.workOrdersByPlayerId[player.id] ?? const [],
-          )..add(chosen);
-          current = Orders(
-            moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-            buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-            workOrdersByPlayerId: {
-              ...current.workOrdersByPlayerId,
-              player.id: list,
-            },
-            diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-            researchOrdersByPlayerId: current.researchOrdersByPlayerId,
-          );
-          break;
-        case _SuggestionCategory.build:
-          final idx = rng.nextInt(buildSuggestions.length);
-          final chosen = buildSuggestions[idx];
-          final list = List<BuildUnitOrder>.from(
-            current.buildUnitOrdersByPlayerId[player.id] ?? const [],
-          )..add(chosen);
-          current = Orders(
-            moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-            buildUnitOrdersByPlayerId: {
-              ...current.buildUnitOrdersByPlayerId,
-              player.id: list,
-            },
-            workOrdersByPlayerId: current.workOrdersByPlayerId,
-            diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-            researchOrdersByPlayerId: current.researchOrdersByPlayerId,
-          );
-          break;
-        case _SuggestionCategory.research:
-          final chosen = researchSuggestions.first;
-          final list = <ResearchOrder>[
-            ...current.researchOrdersByPlayerId[player.id] ?? const [],
-            chosen,
-          ];
-          current = Orders(
-            moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-            buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-            workOrdersByPlayerId: current.workOrdersByPlayerId,
-            diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-            researchOrdersByPlayerId: {
-              ...current.researchOrdersByPlayerId,
-              player.id: list,
-            },
-          );
-          break;
-      }
-    }
-
-  final rawMoves = current.moveOrdersByPlayerId[player.id];
-  if (rawMoves != null && rawMoves.isNotEmpty) {
-    final filtered = <MoveOrder>[];
-    for (final m in rawMoves) {
-      final destOwner = provinceOwner[m.destinationProvinceId];
-      if (destOwner == null || destOwner == player.id) {
-        filtered.add(m);
-        continue;
-      }
-      final rel = getRelation(game, player.id, destOwner);
-      if (rel != null && rel.atPeace) {
-        continue;
-      }
-      if (rel == null) {
-        final isMinor =
-            game.minorNations.any((mn) => mn.id == destOwner);
-        if (isMinor) continue;
-      }
-      filtered.add(m);
-    }
-    if (filtered.isNotEmpty) {
-      moveByPlayer[player.id] = filtered;
-    }
-  }
-  if (current.buildUnitOrdersByPlayerId.containsKey(player.id)) {
-    buildByPlayer[player.id] =
-        List<BuildUnitOrder>.from(current.buildUnitOrdersByPlayerId[player.id]!);
-  }
-  if (current.workOrdersByPlayerId.containsKey(player.id)) {
-    workByPlayer[player.id] =
-        List<WorkOrder>.from(current.workOrdersByPlayerId[player.id]!);
-  }
-  if (current.researchOrdersByPlayerId.containsKey(player.id)) {
-    researchByPlayer[player.id] =
-        List<ResearchOrder>.from(current.researchOrdersByPlayerId[player.id]!);
-  }
-
-  return Orders(
-    moveOrdersByPlayerId: moveByPlayer,
-    buildUnitOrdersByPlayerId: buildByPlayer,
-    workOrdersByPlayerId: workByPlayer,
-    diplomaticOrdersByPlayerId: const {},
-    researchOrdersByPlayerId: researchByPlayer,
+  final turn = game.worldState.turnState.turnNumber;
+  final turnSeed = turnSeedForPlayer(game, player.id, turn);
+  return generateOrdersWithSimpleHeuristics(
+    game,
+    topology,
+    player.id,
+    turnSeed,
   );
 }
 
@@ -239,28 +77,91 @@ Orders generateOrdersForGame(Game game, MapTopology topology) {
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: const {},
     researchOrdersByPlayerId: researchByPlayer,
+    navalMoveOrdersByPlayerId: const {},
   );
 }
 
-enum _SuggestionCategory {
-  moves,
-  work,
-  build,
-  research,
+/// Generates orders for a single AI-controlled GP using full AI (Phase 6).
+/// Caller should ensure game has hidden agendas assigned (assignHiddenAgendasForGame).
+Orders generateOrdersForPlayerFullAI(
+  Game game,
+  MapTopology topology,
+  String playerId, {
+  void Function(DialogueEvent)? onDialogue,
+  void Function(PortraitMoodEvent)? onMood,
+}) {
+  final player = game.players.cast<Player?>().firstWhere(
+        (p) => p?.id == playerId,
+        orElse: () => null,
+      );
+  if (player == null || !isAiControlled(game, player.id)) {
+    return const Orders();
+  }
+  final view = buildPlayerView(game, topology, playerId);
+  final turn = game.worldState.turnState.turnNumber;
+  final turnSeed = turnSeedForPlayer(game, player.id, turn);
+  final seeds = AISeedBundle.fromTurnSeed(turnSeed);
+  final leaderId = player.leaderKey ?? player.id;
+  final agendaId = game.hiddenAgendaByGpId[playerId] ?? 'peacemaker';
+  final config = AIConfig(
+    leaderId: leaderId,
+    personalityId: leaderId,
+    hiddenAgendaId: agendaId,
+  );
+  const suggestionAPI = DefaultOrderSuggestionAPI();
+  return generateStrategicOrders(
+    game: game,
+    topology: topology,
+    nationId: playerId,
+    view: view,
+    config: config,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    onDialogue: onDialogue,
+    onMood: onMood,
+  );
 }
 
-Map<String, String> _provinceOwnerMap(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      out[p.id] = p.ownerId!;
-    }
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      out[p.id] = p.ownerId!;
-    }
-  }
-  return out;
-}
+/// Generates orders for all AI-controlled GPs using full AI. Aggregates all order types including naval.
+Orders generateOrdersForGameFullAI(
+  Game game,
+  MapTopology topology, {
+  void Function(DialogueEvent)? onDialogue,
+  void Function(PortraitMoodEvent)? onMood,
+}) {
+  final moveByPlayer = <String, List<MoveOrder>>{};
+  final buildByPlayer = <String, List<BuildUnitOrder>>{};
+  final workByPlayer = <String, List<WorkOrder>>{};
+  final researchByPlayer = <String, List<ResearchOrder>>{};
+  final diploByPlayer = <String, List<DiplomaticOrder>>{};
+  final navalByPlayer = <String, List<NavalMoveOrder>>{};
 
+  for (final player in game.players) {
+    if (!isAiControlled(game, player.id)) continue;
+    final ordersForPlayer = generateOrdersForPlayerFullAI(
+      game,
+      topology,
+      player.id,
+      onDialogue: onDialogue,
+      onMood: onMood,
+    );
+    void add<T>(Map<String, List<T>> map, String pid, List<T>? list) {
+      if (list != null && list.isNotEmpty) map[pid] = list;
+    }
+    add(moveByPlayer, player.id, ordersForPlayer.moveOrdersByPlayerId[player.id]);
+    add(buildByPlayer, player.id, ordersForPlayer.buildUnitOrdersByPlayerId[player.id]);
+    add(workByPlayer, player.id, ordersForPlayer.workOrdersByPlayerId[player.id]);
+    add(researchByPlayer, player.id, ordersForPlayer.researchOrdersByPlayerId[player.id]);
+    add(diploByPlayer, player.id, ordersForPlayer.diplomaticOrdersByPlayerId[player.id]);
+    add(navalByPlayer, player.id, ordersForPlayer.navalMoveOrdersByPlayerId[player.id]);
+  }
+
+  return Orders(
+    moveOrdersByPlayerId: moveByPlayer,
+    buildUnitOrdersByPlayerId: buildByPlayer,
+    workOrdersByPlayerId: workByPlayer,
+    diplomaticOrdersByPlayerId: diploByPlayer,
+    researchOrdersByPlayerId: researchByPlayer,
+    navalMoveOrdersByPlayerId: navalByPlayer,
+  );
+}

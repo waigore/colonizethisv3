@@ -49,6 +49,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
+  basic_logger:
+    dependency: transitive
+    description:
+      name: basic_logger
+      sha256: "8e8aad2ab62b21535fb033410e0dbd32ef99b1cab41e182336a833f5ebcaee42"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
+  basic_logger_file:
+    dependency: transitive
+    description:
+      name: basic_logger_file
+      sha256: dfcb7e39e4f855a895549bedd63f6adb9c5e012016f2617c78012e12b0e4e0a9
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.3"
   boolean_selector:
     dependency: transitive
     description:
@@ -331,6 +347,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  logger:
+    dependency: transitive
+    description:
+      name: logger
+      sha256: a7967e31b703831a893bbc3c3dd11db08126fe5f369b5c648a36f821979f5be3
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.2"
   logging:
     dependency: transitive
     description:

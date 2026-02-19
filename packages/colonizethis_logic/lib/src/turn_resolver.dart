@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import 'combat_mode_selection.dart';
 import 'order_engine.dart';
@@ -20,6 +21,10 @@ import 'orders_application.dart';
 import 'resource_extractor.dart';
 import 'sea_transport.dart';
 import 'research_resolver.dart';
+import 'naval.dart';
+import 'naval_combat_resolver.dart';
+
+final Logger _log = Logger();
 
 /// Resolution sequence. SPEC/program/turn-resolution-phases.md
 const List<TurnPhase> turnResolutionSequence = [
@@ -31,6 +36,7 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.research,
   TurnPhase.diplomacy,
   TurnPhase.movement,
+  TurnPhase.navalInterceptionCombat,
   TurnPhase.combat,
   TurnPhase.buildWork,
   TurnPhase.endOfTurn,
@@ -56,6 +62,7 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
     case TurnPhase.research:
     case TurnPhase.diplomacy:
     case TurnPhase.movement:
+    case TurnPhase.navalInterceptionCombat:
     case TurnPhase.combat:
     case TurnPhase.buildWork:
       return state;
@@ -135,10 +142,13 @@ Game resolveTurnForGame({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
+  final turn = game.worldState.turnState.turnNumber;
+  _log.i('logic: turn $turn resolve start');
   Game state = game;
   final feedingCoverageByPlayerId = <String, double>{};
 
   for (final phase in turnResolutionSequence) {
+    _log.d('logic: phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
         // Orders are assumed to already be attached to the Game or passed in.
@@ -169,18 +179,23 @@ Game resolveTurnForGame({
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);
         break;
+      case TurnPhase.navalInterceptionCombat:
+        state = _runNavalInterceptionCombatPhase(state, topology);
+        break;
       case TurnPhase.combat:
         state = _runCombatPhase(state, orders, feedingCoverageByPlayerId);
         break;
       case TurnPhase.buildWork:
-        state = applyBuildAndWorkOrders(state, orders);
+        state = applyBuildAndWorkOrders(state, orders, topology: topology);
         break;
       case TurnPhase.endOfTurn:
         state = _runEndOfTurnPhase(state);
         break;
     }
+    _log.d('logic: phase ${phase.name} end');
   }
 
+  _log.i('logic: turn $turn resolve end');
   return state;
 }
 
@@ -255,11 +270,28 @@ Orders _filterAcceptedOrdersForAllPlayers({
     }
   }
 
+  // Research orders are validated in the research phase; pass through from original.
+  final researchByPlayer = Map<String, List<ResearchOrder>>.from(
+    original.researchOrdersByPlayerId,
+  );
+
+  // Naval move orders pass through; validated when applied in movement phase.
+  final navalByPlayer = Map<String, List<NavalMoveOrder>>.from(
+    original.navalMoveOrdersByPlayerId,
+  );
+
+  final missionByPlayer = Map<String, List<NavalMissionOrder>>.from(
+    original.navalMissionOrdersByPlayerId,
+  );
+
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: diploByPlayer,
+    researchOrdersByPlayerId: researchByPlayer,
+    navalMoveOrdersByPlayerId: navalByPlayer,
+    navalMissionOrdersByPlayerId: missionByPlayer,
   );
 }
 
@@ -280,16 +312,65 @@ Game _runEndOfTurnPhase(Game game) {
     );
   }
 
-  // Advance turn number; visibility updates from exploration/prospection and
-  // fog-of-war can be handled in dedicated resolvers in future phases.
+  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/fog-and-exploration-resolution.md.
+  final nextVisibility = _applyFogDecay(game);
+
   return game.copyWith(
     worldState: game.worldState.copyWith(
       turnState: game.worldState.turnState.copyWith(
         turnNumber: game.worldState.turnState.turnNumber + 1,
         phase: TurnPhase.orders,
       ),
+      playerVisibilityByTile: nextVisibility,
     ),
   );
+}
+
+/// For each player, set tiles in other-faction provinces to fogged when no Explorer/Spy in that province.
+Map<String, Map<String, String>> _applyFogDecay(Game game) {
+  const explorerTypes = {'explorer', 'spy'};
+  final owOwnerByProvince = {
+    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
+  };
+  final nwOwnerByProvince = {
+    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
+  };
+
+  final provincesWithExplorerByPlayer = <String, Set<String>>{};
+  for (final u in game.worldState.oldWorld.units) {
+    if (explorerTypes.contains(u.type)) {
+      provincesWithExplorerByPlayer
+          .putIfAbsent(u.ownerId, () => <String>{})
+          .add(u.provinceId);
+    }
+  }
+  for (final u in game.worldState.newWorld.units) {
+    if (explorerTypes.contains(u.type)) {
+      provincesWithExplorerByPlayer
+          .putIfAbsent(u.ownerId, () => <String>{})
+          .add(u.provinceId);
+    }
+  }
+
+  final result = <String, Map<String, String>>{};
+  for (final entry in game.worldState.playerVisibilityByTile.entries) {
+    final playerId = entry.key;
+    final visibility = Map<String, String>.from(entry.value);
+    final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
+
+    for (final tileKey in visibility.keys.toList()) {
+      final parts = tileKey.split('|');
+      if (parts.length != 4) continue;
+      final provinceId = parts[1];
+      final ownerId = owOwnerByProvince[provinceId] ?? nwOwnerByProvince[provinceId];
+      if (ownerId == null || ownerId == playerId) continue;
+      if (!hasExplorerIn.contains(provinceId)) {
+        visibility[tileKey] = 'fogged';
+      }
+    }
+    result[playerId] = visibility;
+  }
+  return result;
 }
 
 /// Returns the id of a Great Power that controls 31+ Old World provinces,
@@ -350,21 +431,36 @@ Game _runExtractionPhase(
       return extractionCapForUnlocked(player?.techUnlocked);
     },
   );
+  var currentState = state;
   final updatedPlayers = <Player>[];
+  var extractionSeed = (state.globalGameSeed ?? 0) ^ (state.worldState.turnState.turnNumber * 0x9E3779B1);
   for (final player in state.players) {
     var stockpile = player.stockpile;
     final tot = extraction[player.id];
     if (tot != null) {
       stockpile = applyExtractionToStockpile(stockpile, tot.land);
-      final overseasDelivered = allocateOverseasToStockpile(
+      var overseasDelivered = allocateOverseasToStockpile(
         tot.overseas,
         cargoHolds: defaultCargoHoldsStub,
       );
+      if (overseasDelivered.isNotEmpty) {
+        extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
+        final interception = applyTradeInterception(
+          currentState,
+          player.id,
+          overseasDelivered,
+          seed: extractionSeed ^ player.id.hashCode,
+        );
+        overseasDelivered = interception.reducedDelivered;
+        currentState = currentState.copyWith(
+          worldState: currentState.worldState.copyWith(fleets: interception.updatedFleets),
+        );
+      }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
-  return state.copyWith(players: updatedPlayers);
+  return currentState.copyWith(players: updatedPlayers);
 }
 
 Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
@@ -452,28 +548,150 @@ Game _runMovementPhase(
   MapTopology topology,
   Orders orders,
 ) {
+  var state = game;
+
   final moveOrders = orders.moveOrdersByPlayerId;
-  if (moveOrders.isEmpty) return game;
+  final tileKeysByRegion = state.worldState.tileKeysByRegionAndProvince;
+  if (moveOrders.isNotEmpty) {
+    final oldWorld = applyMoveOrdersToRegion(
+      state.worldState.oldWorld,
+      topology,
+      moveOrders,
+      regionId: 'oldWorld',
+      tileKeysByRegionAndProvince: tileKeysByRegion,
+    );
+    final newWorld = applyMoveOrdersToRegion(
+      state.worldState.newWorld,
+      topology,
+      moveOrders,
+      regionId: 'newWorld',
+      tileKeysByRegionAndProvince: tileKeysByRegion,
+    );
+    state = state.copyWith(
+      worldState: state.worldState.copyWith(
+        oldWorld: oldWorld,
+        newWorld: newWorld,
+      ),
+    );
+  }
 
-  final oldWorld = applyMoveOrdersToRegion(
-    game.worldState.oldWorld,
-    topology,
-    moveOrders,
-  );
+  // Naval movement and ship reveal. SPEC/program/naval-movement-resolution.md.
+  final navalOrders = orders.navalMoveOrdersByPlayerId;
+  if (navalOrders.isNotEmpty) {
+    state = _applyNavalMovesAndShipReveal(state, topology, navalOrders);
+  }
 
-  // In Phase 2, New World uses same adjacency rules; reuse the same topology.
-  final newWorld = applyMoveOrdersToRegion(
-    game.worldState.newWorld,
-    topology,
-    moveOrders,
+  // Naval mission assignment. Phase 6. Apply after moves so fleet position is final.
+  final missionOrders = orders.navalMissionOrdersByPlayerId;
+  if (missionOrders.isNotEmpty) {
+    state = _applyNavalMissionOrders(state, missionOrders);
+  }
+
+  return state;
+}
+
+/// Apply naval mission orders: set fleet mission and optional target per order.
+Game _applyNavalMissionOrders(
+  Game game,
+  Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId,
+) {
+  var fleets = List<Fleet>.from(game.worldState.fleets);
+  final fleetById = {for (final f in fleets) f.id: f};
+
+  for (final entry in navalMissionOrdersByPlayerId.entries) {
+    final playerId = entry.key;
+    for (final order in entry.value) {
+      final fleet = fleetById[order.fleetId];
+      if (fleet == null || fleet.ownerId != playerId) continue;
+      FleetMission mission = FleetMission.none;
+      for (final m in FleetMission.values) {
+        if (m.name == order.mission) {
+          mission = m;
+          break;
+        }
+      }
+      final newFleet = fleet.copyWith(
+        mission: mission,
+        targetPortId: order.targetPortId,
+        targetProvinceId: order.targetProvinceId,
+      );
+      final idx = fleets.indexWhere((f) => f.id == fleet.id);
+      if (idx >= 0) {
+        fleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+        fleetById[fleet.id] = newFleet;
+      }
+    }
+  }
+
+  return game.copyWith(
+    worldState: game.worldState.copyWith(fleets: fleets),
   );
+}
+
+/// Apply naval move orders: update fleet positions; on enter, set coastal province tiles to revealed.
+Game _applyNavalMovesAndShipReveal(
+  Game game,
+  MapTopology topology,
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
+) {
+  var fleets = List<Fleet>.from(game.worldState.fleets);
+  var visibilityByTile = Map<String, Map<String, String>>.from(game.worldState.playerVisibilityByTile);
+  final fleetById = {for (final f in fleets) f.id: f};
+  final nodesById = {for (final n in topology.nodes) n.id: n};
+
+  for (final entry in navalMoveOrdersByPlayerId.entries) {
+    final playerId = entry.key;
+    for (final order in entry.value) {
+      final fleet = fleetById[order.fleetId];
+      if (fleet == null || fleet.ownerId != playerId) continue;
+      if (!isAdjacentSeaZone(topology, fleet.seaZoneId, order.destinationSeaZoneId)) continue;
+
+      final newFleet = fleet.copyWith(seaZoneId: order.destinationSeaZoneId);
+      final idx = fleets.indexWhere((f) => f.id == fleet.id);
+      if (idx >= 0) {
+        fleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+        fleetById[fleet.id] = newFleet;
+      }
+
+      // Ship reveal: coastal provinces of destination sea zone -> revealed for owner.
+      final provinceIds = provinceIdsAdjacentToSeaZone(topology, order.destinationSeaZoneId);
+      final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+      for (final localProvinceId in provinceIds) {
+        final node = nodesById[localProvinceId];
+        if (node == null) continue;
+        final regionId = node.regionId;
+        if (regionId.isEmpty) continue;
+        final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
+        final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? [];
+        for (final tk in tileKeys) {
+          vis[tk] = 'revealed';
+        }
+      }
+      visibilityByTile = Map<String, Map<String, String>>.from(visibilityByTile)
+        ..[playerId] = vis;
+    }
+  }
 
   return game.copyWith(
     worldState: game.worldState.copyWith(
-      oldWorld: oldWorld,
-      newWorld: newWorld,
+      fleets: fleets,
+      playerVisibilityByTile: visibilityByTile,
     ),
   );
+}
+
+/// Naval Interception & Naval Combat phase. SPEC/program/turn-resolution-phases.md, naval-combat-resolution.md.
+Game _runNavalInterceptionCombatPhase(Game game, MapTopology topology) {
+  final battles = detectNavalConflicts(game);
+  var state = game;
+  var seed = (state.globalGameSeed ?? 0) ^ (state.worldState.turnState.turnNumber * 0x9E3779B1);
+  for (final battle in battles) {
+    final result = resolveSeaBattle(battle, seed);
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
+    state = applyNavalBattleResults(state, battle, result, regionId);
+  }
+  return state;
 }
 
 Game _runCombatPhase(

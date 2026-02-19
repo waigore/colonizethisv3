@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('PlayerView', () {
@@ -17,25 +17,26 @@ void main() {
         isHuman: false,
       );
 
-      final p1 = const Province(id: 'p1', regionId: 'oldWorld', displayName: 'P1');
-      final p2 = const Province(
-        id: 'p2',
-        regionId: 'oldWorld',
+      const ow = 'oldWorld';
+      final p1 = Province(id: '$ow|p1', regionId: ow, displayName: 'P1');
+      final p2 = Province(
+        id: '$ow|p2',
+        regionId: ow,
         displayName: 'P2',
         ownerId: 'gp2',
       );
 
-      final u1 = const Unit(
+      final u1 = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'p1',
+        provinceId: '$ow|p1',
       );
-      final u2 = const Unit(
+      final u2 = Unit(
         id: 'u2',
         type: 'inf',
         ownerId: 'gp2',
-        provinceId: 'p2',
+        provinceId: '$ow|p2',
       );
 
       final world = WorldState(
@@ -79,8 +80,19 @@ void main() {
       expect(view.ownUnitsById['u1'], isNotNull);
       expect(view.ownUnitsById['u1']!.ownerId, 'gp1');
 
-      // Provinces: both p1 and p2 are known at this stage.
-      expect(view.provincesById.keys, containsAll(<String>['p1', 'p2']));
+      // Provinces: keyed by regionId|provinceId so both regions can share ids.
+      expect(
+        view.provincesById.keys,
+        containsAll(<String>['oldWorld|p1', 'oldWorld|p2']),
+      );
+      expect(
+        view.provinceByRegionAndId('oldWorld', 'p1')?.displayName,
+        'P1',
+      );
+      expect(
+        view.provinceByRegionAndId('oldWorld', 'p2')?.ownerId,
+        'gp2',
+      );
 
       // Diplomacy: relation with gp2 is indexed.
       final rel = view.relationWith('gp2');

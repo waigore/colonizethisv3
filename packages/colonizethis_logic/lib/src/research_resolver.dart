@@ -135,11 +135,15 @@ Game resolveResearchPhase(Game game, Orders orders) {
       nextProgress = progress;
     }
 
+    final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
+    final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
+
     updatedPlayers.add(
       player.copyWith(
         treasury: treasury,
         techUnlocked: nextUnlocked,
         researchProgressByTechId: nextProgress,
+        militaryLevel: militaryLevel,
       ),
     );
   }

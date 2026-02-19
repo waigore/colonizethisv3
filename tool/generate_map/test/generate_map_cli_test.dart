@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:colonizethis_test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:test/test.dart';
 
 /// Package root: tool/generate_map. Works when run from package dir or repo root.
 String get _packageRoot {

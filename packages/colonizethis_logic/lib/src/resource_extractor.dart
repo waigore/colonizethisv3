@@ -63,10 +63,8 @@ Map<String, ExtractionTotals> computeExtraction({
           commodityId == 'gems' ||
           commodityId == 'diamonds';
 
-      // Gate mineral extraction by prospected tiles only when there is at
-      // least some prospection data; until prospected sets are populated,
-      // behaviour remains unchanged.
-      if (isMineral && prospected.isNotEmpty && !prospected.contains(tileKey)) {
+      // Minerals only from prospected tiles. SPEC/program/fog-and-exploration-resolution.md.
+      if (isMineral && !prospected.contains(tileKey)) {
         continue;
       }
       final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);

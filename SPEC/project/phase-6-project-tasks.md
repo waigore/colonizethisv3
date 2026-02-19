@@ -55,7 +55,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 | 7 | **Dossier projection and evidence storage** | Store evidence per (observer, subject, agenda); expose PlayerView-safe dossier (suspicion levels, evidence list, basic intel). No true agenda exposed. |
 | 8 | **Dialogue and mood event emission** | Emit DialogueEvent and PortraitMoodEvent from AI and negotiation mood state machine; deterministic. Callbacks or event sink provided by caller. |
 | 9 | **Wire logic and app to full AI** | colonizethis_logic (or app) calls colonizethis_ai for AI order generation when full AI is enabled; replace Phase 4 AIPlanner path for standard gameplay; merge and resolve orders unchanged. |
-| 10 | **ctdev AI toggle** | In ctdev Running Game (or equivalent), add option to use simple (Phase 4) AI or full (Phase 6) AI for simulations. Both paths produce valid, deterministic orders. |
+| 10 | **ctdev AI toggle** | In ctdev Init Game Map Debug (or equivalent), add option to choose **which AI** is used for **all** players in sim: **Sim Game AI** or **AI Planner** (with optional full AI for Planner). Sim has no human players; every GP gets orders from the selected AI. Both paths produce valid, deterministic orders. When **full AI** (AI Planner) is selected, sim game AI generates **naval orders** (fleet move, missions) and `resolveTurnForGame` runs the full TurnResolver including the Naval Interception & Naval Combat phase, so **naval features are usable by the sim game AI in ctdev**; see [ctdev-app.md](../program/ctdev-app.md). |
 
 ### Pixel-art and main menu
 
@@ -76,7 +76,7 @@ Order matters. Implement in sequence; each task assumes the previous is done.
 
 ## Test tasks
 
-Tests follow **test/ mirrors lib/** and **\*_test.dart** naming. Save/load remains critical; aim for **80% per-package coverage** for colonizethis_ai and touched logic.
+Tests follow **test/ mirrors lib/** and **\*_test.dart** naming. Save/load remains critical; aim for **90% per-package coverage** for colonizethis_ai and touched logic.
 
 | Task | Success criteria |
 |------|------------------|
@@ -87,9 +87,9 @@ Tests follow **test/ mirrors lib/** and **\*_test.dart** naming. Save/load remai
 | **Unit tests — dialogue and mood** | For given state transitions, correct event categories and moods emitted; content resolution is data-driven (tests use keys/contexts). |
 | **Unit tests — dossier** | Dossier read API returns only PlayerView-safe data; evidence list and suspicion levels consistent with evidence rules. |
 | **Integration test — full AI turn** | One turn with full AI: orders generated, validated, merged, resolved; dialogue/mood events emitted; determinism across runs. |
-| **Integration test — ctdev toggle** | ctdev can select simple or full AI; both produce valid orders; no cross-talk. |
+| **Integration test — ctdev toggle** | ctdev can select Sim Game AI or AI Planner (simple or full); one AI choice applied to all players; both produce valid orders; no cross-talk. With full AI and naval in scope, sim run produces naval orders and naval combat/resolution runs (naval features usable by sim game AI). |
 | **Save/load round-trip (critical path)** | Save includes AI state (agenda, evidence, seeds); load reproduces same AI behavior. |
-| **Per-package coverage** | colonizethis_ai and AI-related code in colonizethis_logic aim for 80%. |
+| **Per-package coverage** | colonizethis_ai and AI-related code in colonizethis_logic aim for 90%. |
 | **Pixel-art and main menu** | Assets load; main menu flows; no regressions on prior phases. |
 
 ---
@@ -145,4 +145,4 @@ Phase 6 is done when all design and dev tasks are implemented, all test tasks pa
 - [phase-5-project-tasks.md](phase-5-project-tasks.md) — Previous phase.
 - [SPEC/ai/ai-architecture.md](../ai/ai-architecture.md), [SPEC/ai/ai-personalities.md](../ai/ai-personalities.md), [SPEC/ai/hidden-agendas.md](../ai/hidden-agendas.md), [SPEC/ai/dialogue-and-mood.md](../ai/dialogue-and-mood.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
 - [SPEC/program/ai-systems-impl.md](../program/ai-systems-impl.md), [SPEC/program/ai-planner.md](../program/ai-planner.md), [SPEC/program/ai-events-and-dossier.md](../program/ai-events-and-dossier.md), [SPEC/program/order-engine.md](../program/order-engine.md), [SPEC/program/player-view.md](../program/player-view.md).
-- `.cursor/rules/colonizethis-testing.mdc` — 80% coverage, critical path (save/load).
+- `.cursor/rules/colonizethis-testing.mdc` — 90% coverage, critical path (save/load).

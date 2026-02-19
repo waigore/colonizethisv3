@@ -11,5 +11,7 @@ dependencies:
     path: ../../packages/colonizethis_data
 
 dev_dependencies:
+  colonizethis_test:
+    path: ../../packages/colonizethis_test
   test: ^1.25.0
 

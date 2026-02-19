@@ -84,6 +84,8 @@ Game resolveBattleContext(
         feedingCoverageByPlayerId[attacker.factionId] ?? 1.0;
     final defenderCoverage =
         feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
+    final attackerLeaderMult = _leaderBonusForFaction(game, attacker.factionId);
+    final defenderLeaderMult = _leaderBonusForFaction(game, defenderFactionId);
     final outcome = resolveEngagement(
       attackerUnits: attackerUnits,
       defenderUnits: defenderUnits,
@@ -93,6 +95,8 @@ Game resolveBattleContext(
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
       attackerMoraleMultiplier: _moraleMultiplierForCoverage(attackerCoverage),
       defenderMoraleMultiplier: _moraleMultiplierForCoverage(defenderCoverage),
+      attackerLeaderMultiplier: attackerLeaderMult,
+      defenderLeaderMultiplier: defenderLeaderMult,
     );
 
     for (final id in outcome.attackerCasualties) {
@@ -237,6 +241,15 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
   return 4;
 }
 
+/// Leader combat bonus for a faction. GPs use Player.leaderKey; minors/tribes get 1.0.
+double _leaderBonusForFaction(Game game, String factionId) {
+  final player = game.players.cast<Player?>().firstWhere(
+    (p) => p?.id == factionId,
+    orElse: () => null,
+  );
+  return leaderCombatBonusMultiplier(player?.leaderKey);
+}
+
 List<String> _garrisonTypesForFaction(
   Game game,
   String factionId,
@@ -261,6 +274,8 @@ EngagementOutcome resolveEngagement({
   int defenderEffectiveMilitaryLevel = 4,
   double attackerMoraleMultiplier = 1.0,
   double defenderMoraleMultiplier = 1.0,
+  double attackerLeaderMultiplier = 1.0,
+  double defenderLeaderMultiplier = 1.0,
 }) {
   final attStr = _aggregateStrength(attackerUnits, 4);
   var defStr = _aggregateStrength(
@@ -269,8 +284,8 @@ EngagementOutcome resolveEngagement({
   );
 
   final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
-  var effAtt = attStr * terrainMod.$1 * attackerMoraleMultiplier;
-  var effDef = defStr * terrainMod.$2 * defenderMoraleMultiplier;
+  var effAtt = attStr * terrainMod.$1 * attackerMoraleMultiplier * attackerLeaderMultiplier;
+  var effDef = defStr * terrainMod.$2 * defenderMoraleMultiplier * defenderLeaderMultiplier;
 
   if (fortLevel >= 1 && fortLevel <= 3) {
     final reduction = fortDamageReduction[fortLevel];

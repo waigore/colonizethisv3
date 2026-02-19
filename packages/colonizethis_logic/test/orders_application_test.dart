@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('applyBuildAndWorkOrders (military training costs)', () {
@@ -39,7 +39,7 @@ void main() {
             BuildUnitOrder(
               unitType: unitType,
               isMilitary: true,
-              spawnProvinceId: 'P1',
+              spawnProvinceId: 'oldWorld|P1',
             ),
           ],
         },
@@ -130,6 +130,67 @@ void main() {
         final after = nextPlayer.stockpile.quantityOf(entry.key);
         expect(after, before - entry.value);
       }
+    });
+
+    test('returns game unchanged when no build or work orders', () {
+      final game = _baseGame(peasants: 2, treasury: 100);
+      final next = applyBuildAndWorkOrders(game, const Orders());
+      expect(next.worldState.oldWorld.units.length, game.worldState.oldWorld.units.length);
+      expect(next.players.single.treasury, game.players.single.treasury);
+      expect(next.players.single.workerPool.peasants, game.players.single.workerPool.peasants);
+    });
+
+    test('ship build adds ship to fleet when topology and capital with sea', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
+      );
+      final player = Player(
+        id: 'p1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|P1',
+        stockpile: const Stockpile(),
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: 100,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: const RegionData(
+          provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g', worldState: world, players: [player]);
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final gameWithStock = game.copyWith(
+        players: [player.copyWith(
+          stockpile: stockpile,
+          treasury: shipEcon.buildTreasuryCost + 10,
+        )],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary: false,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(gameWithStock, orders, topology: topology);
+      expect(next.worldState.fleets, isNotEmpty);
+      expect(next.worldState.fleets.any((f) => f.ownerId == 'p1' && f.shipTypeIds.contains('fluyte')), isTrue);
     });
   });
 }

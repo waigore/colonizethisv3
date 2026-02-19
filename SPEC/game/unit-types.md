@@ -29,4 +29,4 @@ Navy in Phase 5 per [ships-and-naval.md](ships-and-naval.md).
 
 ## Relations
 
-Units are map units (owner, location province id). Movement: land only, adjacent provinces per topology. Orders: move, build unit, work (explore, build improvement, prospect) per [orders](../program/orders.md).
+**Civilian units** have a mandatory **tileKey** (province/region derived from it). **Military units** and **ships** use provinceId / fleet–sea zone for location; no tileKey. Movement: land only, adjacent provinces per topology. Orders: move, build unit, work (explore, build improvement, prospect) per [orders](../program/orders.md).

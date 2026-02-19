@@ -57,12 +57,14 @@ The resolved ruleset includes a **naming** section that drives historically insp
   - `adjective`: e.g. `English`.
   - `capitalCityName`: primary capital city name (e.g. `London`).
   - `leaderVariants`: array of `{ id, name, leaderKey, provinceNamePool? }`. Default variant is first. When a GP has multiple variants, setup config specifies which is chosen; province pool comes from the chosen variant (or GP default).
-- `naming.minorNations`: array of `{ id, displayName, provinceNamePool? }` (default: 5 names per minor).
-- `naming.tribes`: array of `{ id, displayName, provinceNamePool? }`. Province name pools for tribes use historically inspired **Amerindian / indigenous** names (default: 5 per tribe).
+- `naming.minorNations`: array of `{ id, displayName, provinceNamePool? }`. The **default** ruleset provides **6** entries (`minor1`–`minor6`) with display names and province name pools from **GDD 09b (Minor Nations)**: Italy, Germany, Austria, Poland, Denmark, Scotland. Each pool has 5 province names (GDD "Starting Provinces" table). The **capital province** receives the first name in the pool.
+- `naming.tribes`: array of `{ id, displayName, provinceNamePool? }`. The **default** ruleset provides **10** entries (`tribe1`–`tribe10`) with display names and province name pools from **GDD 09c (New World Tribes)**: Aztec, Maya, Inca, Muisca, Taíno, Powhatan, Iroquois, Cherokee, Sioux, Mapuche. Each pool has 5 province names. The **capital province** receives the first name in the pool; other provinces are named from the pool in randomized order (seed-based). If a faction has no entry or an empty pool/capital name, province naming falls back to a deterministic procedural name (see [naming.md](../game/naming.md)#fallback-when-naming-is-missing-or-empty).
 
 Resolver output exposes this as a `ResolvedNamingConfig` (or equivalent) that colonizethis_logic uses during game setup to assign:
 
 - `Province.displayName` (for Great Powers, Minor Nations, Tribes) and
 - capital city display names per faction (from `capitalCityName`).
 
-The **default ruleset** is historically inspired and aligned with the GDD’s Great Power & leader definitions; alternative scenarios may override naming while keeping the same structure.
+Setup names **all** provinces owned by each faction at setup (GPs and minors: all Old World provinces; tribes: all New World provinces); there is no landmass restriction. Provinces acquired during play retain their existing display name.
+
+The **default ruleset** is historically inspired and aligned with the GDD’s Great Power & leader definitions (GDD 09) and with **GDD 09b (Minor Nations)** and **GDD 09c (New World Tribes)** for minor and tribe naming; alternative scenarios may override naming while keeping the same structure.

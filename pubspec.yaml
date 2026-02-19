@@ -13,6 +13,7 @@ workspace:
   - packages/colonizethis_logic
   - packages/colonizethis_ai
   - packages/colonizethis_map
+  - packages/colonizethis_test
   - tool/generate_map
   - tool/init_game
   - tool/sim_economy
