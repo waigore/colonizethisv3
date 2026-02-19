@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+
 /// Resolves which tiles are connected to each player's capital. SPEC/game/capital-and-connectivity.
 ///
 /// Connectivity: from capital, BFS over land; edges are same-province adjacency;
@@ -46,8 +48,8 @@ Set<String> _provinceIdsFromTopology(MapTopology topology) {
 }
 
 RegionData _regionData(Game game, String regionId) {
-  if (regionId == 'oldWorld') return game.worldState.oldWorld;
-  if (regionId == 'newWorld') return game.worldState.newWorld;
+  if (regionId == kRegionOldWorld) return game.worldState.oldWorld;
+  if (regionId == kRegionNewWorld) return game.worldState.newWorld;
   return const RegionData();
 }
 

@@ -4,7 +4,7 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'conflict_detection.dart';
+import '../combat/conflict_detection.dart';
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -29,6 +29,35 @@ DiplomacyRelation? getRelation(Game game, String factionId1, String factionId2) 
     if (_pairKey(r.factionId1, r.factionId2) == key) return r;
   }
   return null;
+}
+
+/// Finds the relation between [factionId1] and [factionId2] in [relations],
+/// passes it (or null if absent) to [updater], and replaces or appends the result.
+List<DiplomacyRelation> upsertRelation(
+  List<DiplomacyRelation> relations,
+  String factionId1,
+  String factionId2,
+  DiplomacyRelation Function(DiplomacyRelation?) updater,
+) {
+  final key = _pairKey(factionId1, factionId2);
+  final idx = relations.indexWhere(
+      (r) => _pairKey(r.factionId1, r.factionId2) == key);
+  final existing = idx >= 0 ? relations[idx] : null;
+  final updated = updater(existing);
+  final result = List<DiplomacyRelation>.from(relations);
+  if (idx >= 0) {
+    result[idx] = updated;
+  } else {
+    result.add(updated);
+  }
+  return result;
+}
+
+/// Canonical faction pair IDs for a pair key.
+({String id1, String id2}) _pairIds(String a, String b) {
+  final key = _pairKey(a, b);
+  final parts = key.split('|');
+  return (id1: parts[0], id2: parts[1]);
 }
 
 /// Returns overture state for GP–Minor/Tribe, or null.
@@ -219,31 +248,27 @@ Game _processAlliances(
       final targetId = order.targetFactionId;
       if (!_isGreatPower(game, targetId)) continue;
 
-      var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-      var rel = getRelation(game, gpId, targetId);
-      final key = _pairKey(gpId, targetId);
-      if (rel == null) {
-        rel = DiplomacyRelation(
-          factionId1: key.split('|').first,
-          factionId2: key.split('|').last,
-          score: 76,
-          level: RelationLevel.allied,
-          state: RelationState.atPeace,
-          sinceTurn: turn,
-          lastInteractionTurn: turn,
-        );
-        relations.add(rel);
-      } else {
-        final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-        if (idx >= 0) {
-          relations = List<DiplomacyRelation>.from(relations);
-          relations[idx] = rel.copyWith(
-            level: RelationLevel.allied,
-            score: rel.score.clamp(76, 100),
-            lastInteractionTurn: turn,
-          );
-        }
-      }
+      final ids = _pairIds(gpId, targetId);
+      final relations = upsertRelation(
+        List<DiplomacyRelation>.from(game.diplomacyRelations),
+        gpId,
+        targetId,
+        (existing) => existing == null
+            ? DiplomacyRelation(
+                factionId1: ids.id1,
+                factionId2: ids.id2,
+                score: 76,
+                level: RelationLevel.allied,
+                state: RelationState.atPeace,
+                sinceTurn: turn,
+                lastInteractionTurn: turn,
+              )
+            : existing.copyWith(
+                level: RelationLevel.allied,
+                score: existing.score.clamp(76, 100),
+                lastInteractionTurn: turn,
+              ),
+      );
       game = game.copyWith(diplomacyRelations: relations);
     }
   }
@@ -262,52 +287,45 @@ Game _processWarAndPeace(
     for (final order in entry.value) {
       if (order.type == DiplomaticOrderType.declareWar) {
         final targetId = order.targetFactionId;
-        var rel = getRelation(game, gpId, targetId);
-        // No relation = implicit peace (initial state)
+        final rel = getRelation(game, gpId, targetId);
         final atPeace = rel == null || rel.atPeace;
         if (atPeace) {
-          final key = _pairKey(gpId, targetId);
-          final parts = key.split('|');
-          if (rel == null) {
-            relations.add(DiplomacyRelation(
-              factionId1: parts[0],
-              factionId2: parts[1],
-              score: 40,
-              level: RelationLevel.neutral,
-              state: RelationState.atWar,
-              sinceTurn: turn,
-              lastInteractionTurn: turn,
-            ));
-          } else {
-            final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-            if (idx >= 0) {
-            relations = List<DiplomacyRelation>.from(relations);
-              relations[idx] = rel.copyWith(
+          final ids = _pairIds(gpId, targetId);
+          relations = upsertRelation(relations, gpId, targetId, (existing) {
+            if (existing == null) {
+              return DiplomacyRelation(
+                factionId1: ids.id1,
+                factionId2: ids.id2,
+                score: 40,
+                level: RelationLevel.neutral,
                 state: RelationState.atWar,
                 sinceTurn: turn,
                 lastInteractionTurn: turn,
-                score: (rel.score - 10).clamp(0, 100),
-                level: scoreToLevel((rel.score - 10).clamp(0, 100)),
               );
             }
-          }
+            final newScore = (existing.score - 10).clamp(0, 100);
+            return existing.copyWith(
+              state: RelationState.atWar,
+              sinceTurn: turn,
+              lastInteractionTurn: turn,
+              score: newScore,
+              level: scoreToLevel(newScore),
+            );
+          });
           game = game.copyWith(diplomacyRelations: relations);
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
-        var rel = getRelation(game, gpId, targetId);
+        final rel = getRelation(game, gpId, targetId);
         if (rel != null && rel.atWar) {
-          final key = _pairKey(gpId, targetId);
-          final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-          if (idx >= 0) {
-            relations = List<DiplomacyRelation>.from(relations);
-            relations[idx] = rel.copyWith(
+          relations = upsertRelation(relations, gpId, targetId, (existing) {
+            return existing!.copyWith(
               state: RelationState.atPeace,
               sinceTurn: turn,
               lastInteractionTurn: turn,
             );
-            game = game.copyWith(diplomacyRelations: relations);
-          }
+          });
+          game = game.copyWith(diplomacyRelations: relations);
         }
       }
     }
@@ -360,27 +378,21 @@ Game _applyRelationModifiersAndUpdateScores(
         players[playerIdx] = players[playerIdx].copyWith(treasury: players[playerIdx].treasury - amount);
       }
 
-      var rel = getRelation(game, gpId, targetId);
-      final key = _pairKey(gpId, targetId);
-      final newScore = (rel?.score ?? 50) + 5;
-      final clamped = newScore.clamp(0, 100);
-      final newLevel = scoreToLevel(clamped);
-
-      if (rel == null) {
-        relations.add(DiplomacyRelation(
-          factionId1: key.split('|').first,
-          factionId2: key.split('|').last,
-          score: clamped,
-          level: newLevel,
-          lastInteractionTurn: turn,
-        ));
-      } else {
-        final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-        if (idx >= 0) {
-          relations = List<DiplomacyRelation>.from(relations);
-          relations[idx] = rel.copyWith(score: clamped, level: newLevel, lastInteractionTurn: turn);
+      final ids = _pairIds(gpId, targetId);
+      relations = upsertRelation(relations, gpId, targetId, (existing) {
+        final newScore = ((existing?.score ?? 50) + 5).clamp(0, 100);
+        final newLevel = scoreToLevel(newScore);
+        if (existing == null) {
+          return DiplomacyRelation(
+            factionId1: ids.id1,
+            factionId2: ids.id2,
+            score: newScore,
+            level: newLevel,
+            lastInteractionTurn: turn,
+          );
         }
-      }
+        return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+      });
       game = game.copyWith(players: players, diplomacyRelations: relations);
     }
   }
@@ -434,54 +446,45 @@ Game applyInterventionChoice(
     if (!_isGreatPower(game, attackerId)) continue;
 
     if (choice == InterventionChoice.intervene) {
-      final key = _pairKey(gpIdWithEmbassy, attackerId);
-      var rel = getRelation(game, gpIdWithEmbassy, attackerId);
-      final parts = key.split('|');
-      if (rel == null) {
-        relations.add(DiplomacyRelation(
-          factionId1: parts[0],
-          factionId2: parts[1],
-          score: 40,
-          level: RelationLevel.neutral,
-          state: RelationState.atWar,
-          sinceTurn: turn,
-          lastInteractionTurn: turn,
-        ));
-      } else if (rel.atPeace) {
-        final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-        if (idx >= 0) {
-          relations = List<DiplomacyRelation>.from(relations);
-          relations[idx] = rel.copyWith(
+      final ids = _pairIds(gpIdWithEmbassy, attackerId);
+      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
+        if (existing == null) {
+          return DiplomacyRelation(
+            factionId1: ids.id1,
+            factionId2: ids.id2,
+            score: 40,
+            level: RelationLevel.neutral,
             state: RelationState.atWar,
             sinceTurn: turn,
             lastInteractionTurn: turn,
-            score: (rel.score - 10).clamp(0, 100),
-            level: scoreToLevel((rel.score - 10).clamp(0, 100)),
           );
         }
-      }
-    } else if (choice == InterventionChoice.protest) {
-      final key = _pairKey(gpIdWithEmbassy, attackerId);
-      var rel = getRelation(game, gpIdWithEmbassy, attackerId);
-      final parts = key.split('|');
-      final newScore = (rel?.score ?? 50) - 10;
-      final clamped = newScore.clamp(0, 100);
-      final newLevel = scoreToLevel(clamped);
-      if (rel == null) {
-        relations.add(DiplomacyRelation(
-          factionId1: parts[0],
-          factionId2: parts[1],
-          score: clamped,
-          level: newLevel,
+        if (!existing.atPeace) return existing;
+        final newScore = (existing.score - 10).clamp(0, 100);
+        return existing.copyWith(
+          state: RelationState.atWar,
+          sinceTurn: turn,
           lastInteractionTurn: turn,
-        ));
-      } else {
-        final idx = relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-        if (idx >= 0) {
-          relations = List<DiplomacyRelation>.from(relations);
-          relations[idx] = rel.copyWith(score: clamped, level: newLevel, lastInteractionTurn: turn);
+          score: newScore,
+          level: scoreToLevel(newScore),
+        );
+      });
+    } else if (choice == InterventionChoice.protest) {
+      final ids = _pairIds(gpIdWithEmbassy, attackerId);
+      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
+        final newScore = ((existing?.score ?? 50) - 10).clamp(0, 100);
+        final newLevel = scoreToLevel(newScore);
+        if (existing == null) {
+          return DiplomacyRelation(
+            factionId1: ids.id1,
+            factionId2: ids.id2,
+            score: newScore,
+            level: newLevel,
+            lastInteractionTurn: turn,
+          );
         }
-      }
+        return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+      });
     }
   }
   return game.copyWith(diplomacyRelations: relations);

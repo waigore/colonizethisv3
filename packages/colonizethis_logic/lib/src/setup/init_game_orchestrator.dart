@@ -7,6 +7,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../constants.dart';
 import 'game_setup.dart';
 
 final Logger _log = Logger();
@@ -88,7 +89,7 @@ InitGameResult runInitGame({
   final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
     numProvinces: config.numProvincesOldWorld,
     numContinents: config.continentCount,
-    regionId: 'oldWorld',
+    regionId: kRegionOldWorld,
     resourceRules: ResourceRules.defaultRules,
   );
 
@@ -104,7 +105,7 @@ InitGameResult runInitGame({
   final (tileMapNW, topoNW) = TileMapGenerator(params: paramsNW).generate(
     numProvinces: config.numProvincesNewWorld,
     numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
-    regionId: 'newWorld',
+    regionId: kRegionNewWorld,
     resourceRules: ResourceRules.defaultRules,
   );
 

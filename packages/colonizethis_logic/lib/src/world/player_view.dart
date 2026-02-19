@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+
 /// Visibility level for a tile from a single player's perspective.
 /// Mirrors SPEC/game/fog-and-exploration.md.
 enum VisibilityLevel {
@@ -73,10 +75,7 @@ PlayerView buildPlayerView(
   MapTopology topology,
   String playerId,
 ) {
-  final player = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final player = game.playerById(playerId);
   if (player == null) {
     throw ArgumentError.value(playerId, 'playerId', 'Player not found in game');
   }

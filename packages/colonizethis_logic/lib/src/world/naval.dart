@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import '../constants.dart';
+
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
@@ -45,5 +47,5 @@ Set<String> provinceIdsAdjacentToSeaZone(MapTopology topology, String seaZoneId)
 /// Region id for a sea zone (from topology node). Defaults to oldWorld if not found.
 String regionIdForSeaZone(MapTopology topology, String seaZoneId) {
   final list = topology.nodes.where((n) => n.id == seaZoneId).toList();
-  return list.isNotEmpty ? list.first.regionId : 'oldWorld';
+  return list.isNotEmpty ? list.first.regionId : kRegionOldWorld;
 }

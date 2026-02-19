@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'naval.dart';
+import '../world/naval.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
-import 'player_view.dart';
+import '../world/player_view.dart';
 
 final Logger _log = Logger();
 

@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import 'conflict_detection.dart';
 
 /// Builds QuickBattleInput from Game and BattleContext. SPEC/program/quick-battle-resolution.
@@ -10,7 +11,7 @@ QuickBattleInput buildQuickBattleInput(
   BattleContext ctx, {
   int seed = 0,
 }) {
-  final region = ctx.regionId == 'oldWorld'
+  final region = ctx.regionId == kRegionOldWorld
       ? game.worldState.oldWorld
       : game.worldState.newWorld;
   final unitsById = {for (final u in region.units) u.id: u};

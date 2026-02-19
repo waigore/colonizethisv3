@@ -6,9 +6,11 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
-import 'diplomacy_resolver.dart';
-import 'order_suggestion.dart';
-import 'player_view.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
+import '../orders/order_suggestion.dart';
+import '../world/player_view.dart';
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
@@ -61,10 +63,7 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed,
 ) {
-  final player = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
   }

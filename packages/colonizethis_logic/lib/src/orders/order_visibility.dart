@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'player_view.dart';
+import '../world/player_view.dart';
 
 /// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
 ///

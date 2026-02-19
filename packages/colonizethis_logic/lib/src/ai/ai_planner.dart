@@ -3,8 +3,10 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'player_view.dart';
-import 'order_suggestion_api_impl.dart';
+
+import '../constants.dart';
+import '../world/player_view.dart';
+import '../orders/order_suggestion_api_impl.dart';
 import 'simple_ai_heuristics.dart';
 
 /// Returns true if [gpId] is AI-controlled. Uses aiControlByGpId when present,
@@ -12,10 +14,7 @@ import 'simple_ai_heuristics.dart';
 bool isAiControlled(Game game, String gpId) {
   final explicit = game.aiControlByGpId[gpId];
   if (explicit != null) return explicit;
-  final player = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == gpId,
-        orElse: () => null,
-      );
+  final player = game.playerById(gpId);
   return player != null && !player.isHuman;
 }
 
@@ -23,10 +22,7 @@ bool isAiControlled(Game game, String gpId) {
 /// state and seeds. Respects diplomacy: no attacks against factions at peace.
 /// Uses the shared simple heuristics (PlayerView, suggestion API, diplomacy filter).
 Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId) {
-  final player = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
     return const Orders();
   }
@@ -90,10 +86,7 @@ Orders generateOrdersForPlayerFullAI(
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
 }) {
-  final player = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
     return const Orders();
   }

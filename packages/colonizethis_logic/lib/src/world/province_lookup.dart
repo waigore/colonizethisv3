@@ -1,13 +1,12 @@
 import 'package:colonizethis_models/colonizethis_models.dart' show Province, ProvinceId, WorldState;
 
+import '../constants.dart';
+
 /// Central province lookup. In a multi-region world, province must be located
 /// using regionId + provinceId (or a prefixed full id). SPEC/game/world-model.
 ///
 /// Use [getProvince] when the province is required; it throws [StateError] if
 /// not found. Do not fall back to oldWorld/newWorld.
-
-const String _regionOldWorld = 'oldWorld';
-const String _regionNewWorld = 'newWorld';
 
 /// Resolves [provinceId] to full form (regionId|localId). If already prefixed, returns as-is.
 /// Otherwise finds a province in [world] with matching local id and returns ProvinceId.full(regionId, provinceId).
@@ -21,10 +20,10 @@ String resolveToFullProvinceId(WorldState world, String provinceId) {
 
 String? _resolveShort(WorldState world, String provinceId) {
   for (final p in world.oldWorld.provinces) {
-    if (p.id == provinceId) return ProvinceId.full(_regionOldWorld, provinceId);
+    if (p.id == provinceId) return ProvinceId.full(kRegionOldWorld, provinceId);
   }
   for (final p in world.newWorld.provinces) {
-    if (p.id == provinceId) return ProvinceId.full(_regionNewWorld, provinceId);
+    if (p.id == provinceId) return ProvinceId.full(kRegionNewWorld, provinceId);
   }
   return null;
 }
@@ -35,9 +34,9 @@ Province getProvince(WorldState world, String fullProvinceId) {
   final resolved = resolveToFullProvinceId(world, fullProvinceId);
   final regionId = ProvinceId.regionIdFrom(resolved);
   final localId = ProvinceId.localIdFrom(resolved);
-  final region = regionId == _regionOldWorld
+  final region = regionId == kRegionOldWorld
       ? world.oldWorld
-      : (regionId == _regionNewWorld ? world.newWorld : null);
+      : (regionId == kRegionNewWorld ? world.newWorld : null);
   if (region == null) {
     throw StateError('Unknown region "$regionId" for province "$fullProvinceId"');
   }
@@ -57,9 +56,9 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
   if (resolved == null) return null;
   final regionId = ProvinceId.regionIdFrom(resolved);
   final localId = ProvinceId.localIdFrom(resolved);
-  final region = regionId == _regionOldWorld
+  final region = regionId == kRegionOldWorld
       ? world.oldWorld
-      : (regionId == _regionNewWorld ? world.newWorld : null);
+      : (regionId == kRegionNewWorld ? world.newWorld : null);
   if (region == null) return null;
   final idx = region.provinces.indexWhere((p) =>
       p.id == resolved || (p.regionId == regionId && p.id == localId));

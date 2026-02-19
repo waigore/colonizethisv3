@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import 'order_suggestion.dart' as suggestion;
-import 'player_view.dart';
+import '../world/player_view.dart';
 
 final Logger _log = Logger();
 

@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import 'conflict_detection.dart';
 
 /// Result of one engagement. SPEC/game/combat.md.
@@ -36,7 +37,7 @@ Game resolveBattleContext(
   Map<String, double> feedingCoverageByPlayerId = const {},
 }) {
   RegionData region;
-  if (ctx.regionId == 'oldWorld') {
+  if (ctx.regionId == kRegionOldWorld) {
     region = game.worldState.oldWorld;
   } else {
     region = game.worldState.newWorld;
@@ -187,7 +188,7 @@ Game resolveBattleContext(
     units: finalUnits,
   );
 
-  if (ctx.regionId == 'oldWorld') {
+  if (ctx.regionId == kRegionOldWorld) {
     return game.copyWith(
       worldState: game.worldState.copyWith(oldWorld: newRegion),
     );
@@ -243,10 +244,7 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
 
 /// Leader combat bonus for a faction. GPs use Player.leaderKey; minors/tribes get 1.0.
 double _leaderBonusForFaction(Game game, String factionId) {
-  final player = game.players.cast<Player?>().firstWhere(
-    (p) => p?.id == factionId,
-    orElse: () => null,
-  );
+  final player = game.playerById(factionId);
   return leaderCombatBonusMultiplier(player?.leaderKey);
 }
 
@@ -310,159 +308,95 @@ EngagementOutcome resolveEngagement({
   final ratio = effDef > 0 ? effAtt / effDef : 10.0;
   final attackerLowMorale = attackerMoraleMultiplier < defenderMoraleMultiplier;
 
-  if (ratio >= 1.5) {
-    // If the attacker is underfed/low morale and the strength ratio is not
-    // overwhelmingly in their favour, blunt the attack: do *not* award a
-    // clean attacker victory. This ensures that reducing attacker morale
-    // cannot lead to strictly better outcomes for the attacker than the
-    // well‑fed case. SPEC/program: combat-resolution (morale as modifier).
-    if (attackerLowMorale && ratio < 4.0) {
-      final defLoss =
-          (defenderUnits.length * 0.4).ceil().clamp(0, defenderUnits.length);
-      for (var i = 0; i < defLoss && i < defenderUnits.length; i++) {
-        defenderCasualties.add(defenderUnits[i].id);
-      }
-      final attLoss =
-          (attackerUnits.length * 0.6).ceil().clamp(0, attackerUnits.length);
-      for (var i = 0; i < attLoss && i < attackerUnits.length; i++) {
-        attackerCasualties.add(attackerUnits[i].id);
-      }
-      final attSurvivors = attackerUnits.length - attLoss;
-      final defSurvivors = defenderUnits.length - defLoss;
+  return _resolveByRatio(
+    ratio: ratio,
+    attackerLowMorale: attackerLowMorale,
+    attackerUnits: attackerUnits,
+    defenderUnits: defenderUnits,
+    attStr: attStr,
+    defStr: defStr,
+  );
+}
 
-      final result = () {
-        if (attSurvivors <= 0 && defSurvivors <= 0) {
-          return EngagementResult.mutualAnnihilation;
-        }
-        if (attSurvivors <= 0) {
-          return EngagementResult.defenderVictory;
-        }
-        if (defSurvivors <= 0) {
-          // Underfed attacker cannot be granted a decisive victory here;
-          // treat this as a bloody stalemate instead.
-          return EngagementResult.stalemate;
-        }
-        return EngagementResult.stalemate;
-      }();
+EngagementOutcome _resolveByRatio({
+  required double ratio,
+  required bool attackerLowMorale,
+  required List<Unit> attackerUnits,
+  required List<Unit> defenderUnits,
+  required double attStr,
+  required double defStr,
+}) {
+  double attLossFrac;
+  double defLossFrac;
+  bool bluntAttackerVictory = false;
 
-      return EngagementOutcome(
-        result: result,
-        attackerCasualties: attackerCasualties,
-        defenderCasualties: defenderCasualties,
-        attackerStrength: attStr,
-        defenderStrength: defStr,
-      );
-    }
+  EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation;
 
-    for (final u in defenderUnits) defenderCasualties.add(u.id);
-    final attLoss =
-        (attackerUnits.length * 0.15).ceil().clamp(0, attackerUnits.length);
-    for (var i = 0; i < attLoss && i < attackerUnits.length; i++) {
-      attackerCasualties.add(attackerUnits[i].id);
-    }
-    return EngagementOutcome(
-      result: EngagementResult.attackerVictory,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
+  if (ratio >= 1.5 && attackerLowMorale && ratio < 4.0) {
+    attLossFrac = 0.6;
+    defLossFrac = 0.4;
+    bluntAttackerVictory = true;
+  } else if (ratio >= 1.5) {
+    attLossFrac = 0.15;
+    defLossFrac = 1.0;
+    bothDeadResult = EngagementResult.attackerVictory;
+  } else if (ratio <= 0.67) {
+    attLossFrac = 1.0;
+    defLossFrac = 0.15;
+    bothDeadResult = EngagementResult.defenderVictory;
+  } else if (ratio >= 1.0) {
+    attLossFrac = 0.3;
+    defLossFrac = 0.6;
+    bothDeadResult = EngagementResult.attackerVictory;
+  } else {
+    attLossFrac = 0.5;
+    defLossFrac = 0.4;
   }
 
-  if (ratio <= 0.67) {
-    for (final u in attackerUnits) attackerCasualties.add(u.id);
-    final defLoss = (defenderUnits.length * 0.15).ceil().clamp(0, defenderUnits.length);
-    for (var i = 0; i < defLoss && i < defenderUnits.length; i++) {
-      defenderCasualties.add(defenderUnits[i].id);
-    }
-    return EngagementOutcome(
-      result: EngagementResult.defenderVictory,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
-  }
+  return _buildOutcome(
+    attackerUnits: attackerUnits,
+    defenderUnits: defenderUnits,
+    attLossFrac: attLossFrac,
+    defLossFrac: defLossFrac,
+    attStr: attStr,
+    defStr: defStr,
+    bluntAttackerVictory: bluntAttackerVictory,
+    bothDeadResult: bothDeadResult,
+  );
+}
 
-  if (ratio >= 1.0) {
-    final defLoss = (defenderUnits.length * 0.6).ceil().clamp(0, defenderUnits.length);
-    for (var i = 0; i < defLoss && i < defenderUnits.length; i++) {
-      defenderCasualties.add(defenderUnits[i].id);
-    }
-    final attLoss = (attackerUnits.length * 0.3).ceil().clamp(0, attackerUnits.length);
-    for (var i = 0; i < attLoss && i < attackerUnits.length; i++) {
-      attackerCasualties.add(attackerUnits[i].id);
-    }
-    final attSurvivors = attackerUnits.length - attLoss;
-    final defSurvivors = defenderUnits.length - defLoss;
-    if (defSurvivors <= 0) {
-      return EngagementOutcome(
-        result: EngagementResult.attackerVictory,
-        attackerCasualties: attackerCasualties,
-        defenderCasualties: defenderCasualties,
-        attackerStrength: attStr,
-        defenderStrength: defStr,
-      );
-    }
-    if (attSurvivors <= 0) {
-      return EngagementOutcome(
-        result: EngagementResult.defenderVictory,
-        attackerCasualties: attackerCasualties,
-        defenderCasualties: defenderCasualties,
-        attackerStrength: attStr,
-        defenderStrength: defStr,
-      );
-    }
-    return EngagementOutcome(
-      result: EngagementResult.stalemate,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
-  }
+EngagementOutcome _buildOutcome({
+  required List<Unit> attackerUnits,
+  required List<Unit> defenderUnits,
+  required double attLossFrac,
+  required double defLossFrac,
+  required double attStr,
+  required double defStr,
+  bool bluntAttackerVictory = false,
+  EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation,
+}) {
+  final attLoss = (attackerUnits.length * attLossFrac).ceil().clamp(0, attackerUnits.length);
+  final defLoss = (defenderUnits.length * defLossFrac).ceil().clamp(0, defenderUnits.length);
 
-  final defLoss = (defenderUnits.length * 0.4).ceil().clamp(0, defenderUnits.length);
-  for (var i = 0; i < defLoss && i < defenderUnits.length; i++) {
-    defenderCasualties.add(defenderUnits[i].id);
-  }
-  final attLoss = (attackerUnits.length * 0.5).ceil().clamp(0, attackerUnits.length);
-  for (var i = 0; i < attLoss && i < attackerUnits.length; i++) {
-    attackerCasualties.add(attackerUnits[i].id);
-  }
+  final attackerCasualties = [for (var i = 0; i < attLoss; i++) attackerUnits[i].id];
+  final defenderCasualties = [for (var i = 0; i < defLoss; i++) defenderUnits[i].id];
+
   final attSurvivors = attackerUnits.length - attLoss;
   final defSurvivors = defenderUnits.length - defLoss;
 
+  EngagementResult result;
   if (attSurvivors <= 0 && defSurvivors <= 0) {
-    return EngagementOutcome(
-      result: EngagementResult.mutualAnnihilation,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
-  }
-  if (attSurvivors <= 0) {
-    return EngagementOutcome(
-      result: EngagementResult.defenderVictory,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
-  }
-  if (defSurvivors <= 0) {
-    return EngagementOutcome(
-      result: EngagementResult.attackerVictory,
-      attackerCasualties: attackerCasualties,
-      defenderCasualties: defenderCasualties,
-      attackerStrength: attStr,
-      defenderStrength: defStr,
-    );
+    result = bothDeadResult;
+  } else if (attSurvivors <= 0) {
+    result = EngagementResult.defenderVictory;
+  } else if (defSurvivors <= 0) {
+    result = bluntAttackerVictory ? EngagementResult.stalemate : EngagementResult.attackerVictory;
+  } else {
+    result = EngagementResult.stalemate;
   }
 
   return EngagementOutcome(
-    result: EngagementResult.stalemate,
+    result: result,
     attackerCasualties: attackerCasualties,
     defenderCasualties: defenderCasualties,
     attackerStrength: attStr,

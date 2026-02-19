@@ -1,9 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'economy_production.dart';
+import '../economy/economy_production.dart';
+import '../constants.dart';
 import 'order_engine.dart';
-import 'turn_resolver.dart';
+import '../turn/turn_resolver.dart';
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.
@@ -25,16 +26,10 @@ ProjectedEffects projectOrderEffects({
     tileMapByRegion: tileMapByRegion,
     defaultAssignments: defaultAssignments,
   );
-  final player = next.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final player = next.playerById(playerId);
   if (player == null) return const ProjectedEffects();
 
-  final origPlayer = game.players.cast<Player?>().firstWhere(
-        (p) => p?.id == playerId,
-        orElse: () => null,
-      );
+  final origPlayer = game.playerById(playerId);
 
   // Unit locations after resolution.
   final unitLocations = <String, String>{};

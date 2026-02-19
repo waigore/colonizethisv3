@@ -1,7 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'naval.dart';
+import '../constants.dart';
+import '../world/naval.dart';
+import '../world/player_view.dart';
 
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
@@ -42,100 +44,73 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
     final playerId = u.ownerId;
     final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
     for (final tk in tileKeys) {
-      vis[tk] = 'fullyVisible';
+      vis[tk] = VisibilityLevel.fullyVisible.name;
     }
     visibilityByTile = Map<String, Map<String, String>>.from(visibilityByTile)
       ..[playerId] = vis;
   }
 
-  for (final entry in oldUnitsById.entries) {
-    final u = entry.value;
-    if (u.currentWork == null) continue;
-    final cw = u.currentWork!;
-    final nextRemaining = cw.remainingTurns - 1;
-    if (nextRemaining <= 0) {
-      if (cw.workTarget == 'build_improvement') {
+  void applyCompletedWorkTarget(Unit u, CurrentWork cw, List<Province> Function() getProvinces, void Function(List<Province>) setProvinces) {
+    switch (cw.workTarget) {
+      case 'build_improvement':
+      case 'upgrade_town':
         final level = tileState.improvementLevel(cw.tileKey);
         tileState = tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
-      } else if (cw.workTarget == 'explore') {
+      case 'explore':
         applyExploreCompletion(u, ProvinceId.regionIdFrom(u.locationProvinceId));
-      } else if (cw.workTarget == 'build_road') {
+      case 'build_road':
         final level = tileState.roadLevel(cw.tileKey);
         tileState = tileState.setRoadLevel(cw.tileKey, (level + 1).clamp(0, 2));
-      } else if (cw.workTarget == 'build_port' && topology != null) {
-        final parts = cw.tileKey.split('|');
-        final regionIdFromTile = parts.isNotEmpty ? parts[0] : ProvinceId.regionIdFrom(u.locationProvinceId);
-        final localId = parts.length > 1 ? parts[1] : ProvinceId.localIdFrom(u.locationProvinceId);
-        final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
-        final seaZoneId = seaZoneIdForProvince(topology, localId);
-        if (seaZoneId != null) {
-          portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
-          tileState = tileState.setRoadLevel(cw.tileKey, 4);
+      case 'build_port':
+        if (topology != null) {
+          final parts = cw.tileKey.split('|');
+          final regionIdFromTile = parts.isNotEmpty ? parts[0] : ProvinceId.regionIdFrom(u.locationProvinceId);
+          final localId = parts.length > 1 ? parts[1] : ProvinceId.localIdFrom(u.locationProvinceId);
+          final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
+          final seaZoneId = seaZoneIdForProvince(topology, localId);
+          if (seaZoneId != null) {
+            portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
+            tileState = tileState.setRoadLevel(cw.tileKey, 4);
+          }
         }
-      } else if (cw.workTarget == 'build_fort') {
-        final idx = oldProvinces.indexWhere((p) => p.id == u.locationProvinceId);
+      case 'build_fort':
+        final provinces = getProvinces();
+        final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
         if (idx >= 0) {
-          final p = oldProvinces[idx];
-          oldProvinces = List<Province>.from(oldProvinces)
-            ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
+          final p = provinces[idx];
+          setProvinces(List<Province>.from(provinces)
+            ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)));
         }
-      } else if (cw.workTarget == 'build_rail') {
+      case 'build_rail':
         tileState = tileState.setRoadLevel(cw.tileKey, 4);
-      } else if (cw.workTarget == 'upgrade_town') {
-        final level = tileState.improvementLevel(cw.tileKey);
-        tileState = tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
-      }
-      oldUnitsById[entry.key] = u.copyWith(status: UnitStatus.idle, currentWork: null);
-    } else {
-      oldUnitsById[entry.key] = u.copyWith(
-        currentWork: cw.copyWith(remainingTurns: nextRemaining),
-      );
+      default:
+        break;
     }
   }
-  for (final entry in newUnitsById.entries) {
-    final u = entry.value;
-    if (u.currentWork == null) continue;
-    final cw = u.currentWork!;
-    final nextRemaining = cw.remainingTurns - 1;
-    if (nextRemaining <= 0) {
-      if (cw.workTarget == 'build_improvement') {
-        final level = tileState.improvementLevel(cw.tileKey);
-        tileState = tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
-      } else if (cw.workTarget == 'explore') {
-        applyExploreCompletion(u, ProvinceId.regionIdFrom(u.locationProvinceId));
-      } else if (cw.workTarget == 'build_road') {
-        final level = tileState.roadLevel(cw.tileKey);
-        tileState = tileState.setRoadLevel(cw.tileKey, (level + 1).clamp(0, 2));
-      } else if (cw.workTarget == 'build_port' && topology != null) {
-        final parts = cw.tileKey.split('|');
-        final regionIdFromTile = parts.isNotEmpty ? parts[0] : ProvinceId.regionIdFrom(u.locationProvinceId);
-        final localId = parts.length > 1 ? parts[1] : ProvinceId.localIdFrom(u.locationProvinceId);
-        final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
-        final seaZoneId = seaZoneIdForProvince(topology, localId);
-        if (seaZoneId != null) {
-          portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
-          tileState = tileState.setRoadLevel(cw.tileKey, 4);
-        }
-      } else if (cw.workTarget == 'build_fort') {
-        final idx = newProvinces.indexWhere((p) => p.id == u.locationProvinceId);
-        if (idx >= 0) {
-          final p = newProvinces[idx];
-          newProvinces = List<Province>.from(newProvinces)
-            ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
-        }
-      } else if (cw.workTarget == 'build_rail') {
-        tileState = tileState.setRoadLevel(cw.tileKey, 4);
-      } else if (cw.workTarget == 'upgrade_town') {
-        final level = tileState.improvementLevel(cw.tileKey);
-        tileState = tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
+
+  void processWorkUnits(
+    Map<String, Unit> unitsById,
+    List<Province> Function() getProvinces,
+    void Function(List<Province>) setProvinces,
+  ) {
+    for (final entry in unitsById.entries) {
+      final u = entry.value;
+      if (u.currentWork == null) continue;
+      final cw = u.currentWork!;
+      final nextRemaining = cw.remainingTurns - 1;
+      if (nextRemaining <= 0) {
+        applyCompletedWorkTarget(u, cw, getProvinces, setProvinces);
+        unitsById[entry.key] = u.copyWith(status: UnitStatus.idle, currentWork: null);
+      } else {
+        unitsById[entry.key] = u.copyWith(
+          currentWork: cw.copyWith(remainingTurns: nextRemaining),
+        );
       }
-      newUnitsById[entry.key] = u.copyWith(status: UnitStatus.idle, currentWork: null);
-    } else {
-      newUnitsById[entry.key] = u.copyWith(
-        currentWork: cw.copyWith(remainingTurns: nextRemaining),
-      );
     }
   }
+
+  processWorkUnits(oldUnitsById, () => oldProvinces, (p) => oldProvinces = p);
+  processWorkUnits(newUnitsById, () => newProvinces, (p) => newProvinces = p);
   game = game.copyWith(
     worldState: game.worldState.copyWith(
       tileState: tileState,
@@ -263,129 +238,114 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
         tileKey: order.isMilitary ? null : firstTileInSpawn,
       );
 
-      if (regionId == 'newWorld') {
+      if (regionId == kRegionNewWorld) {
         newUnitsById[newUnit.id] = newUnit;
       } else {
         oldUnitsById[newUnit.id] = newUnit;
       }
     }
 
-    // Work orders: assign new work or set status; resolve prospect.
-    for (final order in workOrders[player.id] ?? const []) {
-      Unit? u;
-      if (oldUnitsById.containsKey(order.unitId)) {
-        u = oldUnitsById[order.unitId]!;
-      } else if (newUnitsById.containsKey(order.unitId)) {
-        u = newUnitsById[order.unitId]!;
-      }
-      if (u != null) {
-        final targetTileKey = order.targetTileKey;
-        final hasValidTarget = targetTileKey.isNotEmpty;
+    Unit? lookupUnit(String unitId) =>
+        oldUnitsById[unitId] ?? newUnitsById[unitId];
 
-        if (order.target == 'prospect' && hasValidTarget) {
-          final existing = game.worldState.playerProspectedTiles[player.id] ?? const {};
-          final newProspected = Set<String>.from(existing)..add(targetTileKey);
-          game = game.copyWith(
-            worldState: game.worldState.copyWith(
-              playerProspectedTiles: {
-                ...game.worldState.playerProspectedTiles,
-                player.id: newProspected,
-              },
-            ),
-          );
-        }
-        if (order.target == 'build_improvement' &&
-            u.currentWork == null &&
-            hasValidTarget) {
-          final updated = u.copyWith(
+    void updateUnit(String unitId, Unit updated) {
+      if (oldUnitsById.containsKey(unitId)) {
+        oldUnitsById[unitId] = updated;
+      } else {
+        newUnitsById[unitId] = updated;
+      }
+    }
+
+    String regionForUnit(String unitId) =>
+        oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
+
+    for (final order in workOrders[player.id] ?? const []) {
+      final u = lookupUnit(order.unitId);
+      if (u == null) continue;
+      final targetTileKey = order.targetTileKey;
+      final hasValidTarget = targetTileKey.isNotEmpty;
+
+      if (order.target == 'prospect' && hasValidTarget) {
+        final existing = game.worldState.playerProspectedTiles[player.id] ?? const {};
+        final newProspected = Set<String>.from(existing)..add(targetTileKey);
+        game = game.copyWith(
+          worldState: game.worldState.copyWith(
+            playerProspectedTiles: {
+              ...game.worldState.playerProspectedTiles,
+              player.id: newProspected,
+            },
+          ),
+        );
+      }
+      if (order.target == 'build_improvement' &&
+          u.currentWork == null &&
+          hasValidTarget) {
+        updateUnit(order.unitId, u.copyWith(
+          status: UnitStatus.working,
+          tileKey: targetTileKey,
+          currentWork: CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: targetTileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        ));
+        continue;
+      }
+      if (order.target == 'explore' &&
+          isExplorerUnit(u.type) &&
+          u.currentWork == null &&
+          hasValidTarget) {
+        final regionId = regionForUnit(order.unitId);
+        final provinceId = Unit.provinceIdFromTileKey(targetTileKey) ?? u.locationProvinceId;
+        final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
+        final tilesInP = byProvince?[provinceId]?.length ?? 0;
+        if (tilesInP > 0 && byProvince != null && byProvince.isNotEmpty) {
+          var maxTiles = 0;
+          for (final list in byProvince.values) {
+            if (list.length > maxTiles) maxTiles = list.length;
+          }
+          if (maxTiles < 1) maxTiles = 1;
+          final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
+          updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
             currentWork: CurrentWork(
-              workTarget: 'build_improvement',
+              workTarget: 'explore',
               tileKey: targetTileKey,
-              totalTurns: 1,
-              remainingTurns: 1,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
             ),
-          );
-          if (oldUnitsById.containsKey(order.unitId)) {
-            oldUnitsById[order.unitId] = updated;
-          } else {
-            newUnitsById[order.unitId] = updated;
-          }
+          ));
           continue;
         }
-        // Explore: multi-turn province reveal. SPEC/program/fog-and-exploration-resolution.md.
-        if (order.target == 'explore' &&
-            isExplorerUnit(u.type) &&
-            u.currentWork == null &&
-            hasValidTarget) {
-          final regionId = oldUnitsById.containsKey(order.unitId) ? 'oldWorld' : 'newWorld';
-          final provinceId = Unit.provinceIdFromTileKey(targetTileKey) ?? u.locationProvinceId;
-          final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
-          final tilesInP = byProvince?[provinceId]?.length ?? 0;
-          if (tilesInP > 0 && byProvince != null && byProvince.isNotEmpty) {
-            var maxTiles = 0;
-            for (final list in byProvince.values) {
-              if (list.length > maxTiles) maxTiles = list.length;
-            }
-            if (maxTiles < 1) maxTiles = 1;
-            final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
-            final updated = u.copyWith(
-              status: UnitStatus.working,
+      }
+      const engineerTargets = {'build_road', 'build_port', 'build_fort'};
+      const railBuilderTargets = {'build_rail'};
+      const builderTargets = {'upgrade_town'};
+      final workTarget = order.target;
+      if ((engineerTargets.contains(workTarget) && u.type == 'Engineer') ||
+          (railBuilderTargets.contains(workTarget) && u.type == 'Rail Builder') ||
+          (builderTargets.contains(workTarget) && u.type == 'Builder')) {
+        if (u.currentWork == null && hasValidTarget) {
+          const totalTurns = 1;
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
+            tileKey: targetTileKey,
+            currentWork: CurrentWork(
+              workTarget: workTarget,
               tileKey: targetTileKey,
-              currentWork: CurrentWork(
-                workTarget: 'explore',
-                tileKey: targetTileKey,
-                totalTurns: totalTurns,
-                remainingTurns: totalTurns,
-              ),
-            );
-            if (oldUnitsById.containsKey(order.unitId)) {
-              oldUnitsById[order.unitId] = updated;
-            } else {
-              newUnitsById[order.unitId] = updated;
-            }
-            continue;
-          }
-        }
-        // Terrain development: build_road, build_port, build_fort, build_rail, upgrade_town. SPEC/program/development-resolution.md.
-        const engineerTargets = {'build_road', 'build_port', 'build_fort'};
-        const railBuilderTargets = {'build_rail'};
-        const builderTargets = {'upgrade_town'};
-        final workTarget = order.target;
-        if ((engineerTargets.contains(workTarget) && u.type == 'Engineer') ||
-            (railBuilderTargets.contains(workTarget) && u.type == 'Rail Builder') ||
-            (builderTargets.contains(workTarget) && u.type == 'Builder')) {
-          if (u.currentWork == null && hasValidTarget) {
-            const totalTurns = 1; // MVP; config/costs per spec later.
-            final updated = u.copyWith(
-              status: UnitStatus.working,
-              tileKey: targetTileKey,
-              currentWork: CurrentWork(
-                workTarget: workTarget,
-                tileKey: targetTileKey,
-                totalTurns: totalTurns,
-                remainingTurns: totalTurns,
-              ),
-            );
-            if (oldUnitsById.containsKey(order.unitId)) {
-              oldUnitsById[order.unitId] = updated;
-            } else {
-              newUnitsById[order.unitId] = updated;
-            }
-            continue;
-          }
-        }
-        final updated = u.copyWith(
-          status: UnitStatus.working,
-          movementPoints: u.movementPoints,
-        );
-        if (oldUnitsById.containsKey(order.unitId)) {
-          oldUnitsById[order.unitId] = updated;
-        } else {
-          newUnitsById[order.unitId] = updated;
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+          continue;
         }
       }
+      updateUnit(order.unitId, u.copyWith(
+        status: UnitStatus.working,
+        movementPoints: u.movementPoints,
+      ));
     }
 
     updatedPlayers.add(

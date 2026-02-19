@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import 'conflict_detection.dart';
 
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
@@ -304,7 +305,7 @@ Game applyQuickBattleResultToGame(
   BattleContext ctx,
   QuickBattleResult result,
 ) {
-  final region = ctx.regionId == 'oldWorld'
+  final region = ctx.regionId == kRegionOldWorld
       ? game.worldState.oldWorld
       : game.worldState.newWorld;
   final casualtySet = {
@@ -330,7 +331,7 @@ Game applyQuickBattleResultToGame(
     provinces: provinces,
     units: survivingUnits,
   );
-  if (ctx.regionId == 'oldWorld') {
+  if (ctx.regionId == kRegionOldWorld) {
     return game.copyWith(
       worldState: game.worldState.copyWith(oldWorld: newRegion),
     );

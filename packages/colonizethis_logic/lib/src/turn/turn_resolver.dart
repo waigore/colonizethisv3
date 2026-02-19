@@ -2,27 +2,29 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'combat_mode_selection.dart';
-import 'order_engine.dart';
-import 'order_merge.dart';
-import 'combat_resolver.dart';
-import 'conflict_detection.dart';
-import 'quick_battle_input_builder.dart';
-import 'quick_battle_resolver.dart';
-import 'connectivity_resolver.dart';
-import 'economy_consumption.dart';
-import 'economy_extraction.dart';
-import 'economy_production.dart';
-import 'economy_riches_to_treasury.dart';
-import 'diplomacy_resolver.dart';
-import 'minor_military_parity.dart';
-import 'movement.dart';
-import 'orders_application.dart';
-import 'resource_extractor.dart';
-import 'sea_transport.dart';
+import '../combat/combat_mode_selection.dart';
+import '../orders/order_engine.dart';
+import '../orders/order_merge.dart';
+import '../combat/combat_resolver.dart';
+import '../constants.dart';
+import '../combat/conflict_detection.dart';
+import '../combat/quick_battle_input_builder.dart';
+import '../combat/quick_battle_resolver.dart';
+import '../world/connectivity_resolver.dart';
+import '../economy/economy_consumption.dart';
+import '../economy/economy_extraction.dart';
+import '../economy/economy_production.dart';
+import '../economy/economy_riches_to_treasury.dart';
+import '../diplomacy/diplomacy_resolver.dart';
+import '../world/minor_military_parity.dart';
+import '../world/movement.dart';
+import '../orders/orders_application.dart';
+import '../economy/resource_extractor.dart';
+import '../economy/sea_transport.dart';
 import 'research_resolver.dart';
-import 'naval.dart';
-import 'naval_combat_resolver.dart';
+import '../world/naval.dart';
+import '../combat/naval_combat_resolver.dart';
+import '../world/player_view.dart';
 
 final Logger _log = Logger();
 
@@ -365,7 +367,7 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
       final ownerId = owOwnerByProvince[provinceId] ?? nwOwnerByProvince[provinceId];
       if (ownerId == null || ownerId == playerId) continue;
       if (!hasExplorerIn.contains(provinceId)) {
-        visibility[tileKey] = 'fogged';
+        visibility[tileKey] = VisibilityLevel.fogged.name;
       }
     }
     result[playerId] = visibility;
@@ -424,10 +426,7 @@ Game _runExtractionPhase(
     tileMapByRegion: tileMapByRegion,
     connectivityResult: connectivity,
     techCapForPlayer: (playerId) {
-      final player = state.players.cast<Player?>().firstWhere(
-            (p) => p?.id == playerId,
-            orElse: () => null,
-          );
+      final player = state.playerById(playerId);
       return extractionCapForUnlocked(player?.techUnlocked);
     },
   );
@@ -557,14 +556,14 @@ Game _runMovementPhase(
       state.worldState.oldWorld,
       topology,
       moveOrders,
-      regionId: 'oldWorld',
+      regionId: kRegionOldWorld,
       tileKeysByRegionAndProvince: tileKeysByRegion,
     );
     final newWorld = applyMoveOrdersToRegion(
       state.worldState.newWorld,
       topology,
       moveOrders,
-      regionId: 'newWorld',
+      regionId: kRegionNewWorld,
       tileKeysByRegionAndProvince: tileKeysByRegion,
     );
     state = state.copyWith(
@@ -664,7 +663,7 @@ Game _applyNavalMovesAndShipReveal(
         final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
         final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? [];
         for (final tk in tileKeys) {
-          vis[tk] = 'revealed';
+          vis[tk] = VisibilityLevel.revealed.name;
         }
       }
       visibilityByTile = Map<String, Map<String, String>>.from(visibilityByTile)
