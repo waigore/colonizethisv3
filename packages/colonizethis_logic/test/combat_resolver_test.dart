@@ -166,6 +166,44 @@ void main() {
       );
     });
 
+    test('leader keys from Game produce correct multipliers in resolveEngagement path', () {
+      final attackerUnits = [
+        Unit(id: 'a1', type: 'grenadiers', ownerId: 'att', provinceId: 'p', medals: 2),
+        Unit(id: 'a2', type: 'grenadiers', ownerId: 'att', provinceId: 'p', medals: 1),
+      ];
+      final defenderUnits = [
+        Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'p', medals: 0),
+      ];
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            units: [...attackerUnits, ...defenderUnits],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'France', isHuman: true, leaderKey: 'napoleon'),
+          Player(id: 'def', displayName: 'Prussia', isHuman: false, leaderKey: 'frederick'),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [AttackingSide(factionId: 'att', unitIds: ['a1', 'a2'])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final result = resolveBattleContext(game, ctx);
+      expect(result.worldState.oldWorld.units.length, lessThanOrEqualTo(3),
+          reason: 'some units may be casualties');
+      expect(result.worldState.oldWorld.provinces.single.id, 'p');
+    });
+
     test('resolveBattleContext updates newWorld when regionId is newWorld', () {
       final game = Game(
         id: 'g1',

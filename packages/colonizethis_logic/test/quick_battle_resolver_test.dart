@@ -298,5 +298,51 @@ void main() {
       expect(input.attackerDeployment.groups.single.unitIds, ['u1']);
       expect(input.defenderDeployment.groups.single.unitIds, ['u2']);
     });
+
+    test('attacker with napoleon bonus wins more often than with reserve (same seed)', () {
+      final gameReserve = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'def')],
+            units: [
+              Unit(id: 'u1', type: 'pikemen', ownerId: 'att', provinceId: 'P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+      );
+      final gameNapoleon = gameReserve.copyWith(
+        players: [
+          gameReserve.players[0].copyWith(leaderKey: 'napoleon'),
+          gameReserve.players[1],
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['u2'],
+        attackers: [AttackingSide(factionId: 'att', unitIds: ['u1'])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final inputReserve = buildQuickBattleInput(gameReserve, ctx, seed: 100);
+      final inputNapoleon = buildQuickBattleInput(gameNapoleon, ctx, seed: 100);
+      expect(inputReserve.attackerLeaderMultiplier, 1.0);
+      expect(inputNapoleon.attackerLeaderMultiplier, 1.25);
+
+      final resultReserve = resolveQuickBattle(inputReserve);
+      final resultNapoleon = resolveQuickBattle(inputNapoleon);
+      expect(resultNapoleon.attackerCasualties.length,
+          lessThanOrEqualTo(resultReserve.attackerCasualties.length),
+          reason: 'Napoleon bonus should not increase attacker casualties');
+    });
   });
 }
