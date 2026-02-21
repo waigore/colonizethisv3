@@ -48,11 +48,13 @@ void main() {
         players: [player],
       );
       final connectivity = {
-        'pl1': {
-          'oldWorld|p1|0|0',
-          'oldWorld|p1|1|0',
-          'oldWorld|p1|0|1',
-        },
+        'pl1': ConnectivityResult(
+          connected: {
+            'oldWorld|p1|0|0',
+            'oldWorld|p1|1|0',
+            'oldWorld|p1|0|1',
+          },
+        ),
       };
       final result = computeExtraction(
         game: game,
@@ -101,7 +103,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': {'oldWorld|p1|0|0'}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['grain'], 1);
@@ -155,7 +157,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': connectedTiles},
+        connectivityResult: {'pl1': ConnectivityResult(connected: connectedTiles)},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['wool'], 1);
@@ -197,7 +199,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': {'oldWorld|p1|0|0'}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['iron'], isNull);
@@ -238,7 +240,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': {'oldWorld|p1|0|0'}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['iron'], 2);
@@ -277,7 +279,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: {'pl1': {'oldWorld|p1|0|0'}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land['grain'], 1);
@@ -318,11 +320,67 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': TileMapResult(width: 1, height: 1, grid: [['p1']], resourceGrid: [[null]]), 'newWorld': tileMapNw},
-        connectivityResult: {'pl1': {'newWorld|n1|0|0'}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {'newWorld|n1|0|0'})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.overseas['sugarCane'], 1);
       expect(result['pl1']!.land, isEmpty);
+    });
+
+    test('effective yield capped by min transport level along path to capital', () {
+      // SPEC: effective yield = min(production, tech cap, town dev, min transport along path).
+      // When pathTransportCap is provided, it caps yield (e.g. path with road-1 segment → cap 1).
+      final grid = [['p1']];
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: grid,
+        resourceGrid: [[Resource.grain]],
+      );
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 3)
+          .setRoadLevel('oldWorld|p1|0|0', 3);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: 'p1',
+            capitalTile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
+          ),
+        ],
+      );
+      final connectivity = resolveConnectivity(
+        game: game,
+        tileMapByRegion: {'oldWorld': tileMap},
+        topology: MapTopology(
+          nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+          edges: [],
+        ),
+      );
+      expect(connectivity['pl1']!.pathTransportCap['oldWorld|p1|0|0'], 3);
+      final resultWithPathCap = computeExtraction(
+        game: game,
+        tileMapByRegion: {'oldWorld': tileMap},
+        connectivityResult: {
+          'pl1': ConnectivityResult(
+            connected: {'oldWorld|p1|0|0'},
+            pathTransportCap: {'oldWorld|p1|0|0': 1},
+          ),
+        },
+        techCapForPlayer: (_) => 4,
+      );
+      expect(resultWithPathCap['pl1']!.land['grain'], 1);
     });
 
     test('returns empty ExtractionTotals when player has no connected tiles', () {
@@ -347,7 +405,7 @@ void main() {
       final result = computeExtraction(
         game: game,
         tileMapByRegion: const {},
-        connectivityResult: {'pl1': {}},
+        connectivityResult: {'pl1': ConnectivityResult(connected: {})},
         techCapForPlayer: (_) => 4,
       );
       expect(result['pl1']!.land, isEmpty);

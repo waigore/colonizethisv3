@@ -73,6 +73,17 @@ void main() {
       expect(result.game.worldState.portsByProvinceSeaboard.containsKey('oldWorld|p1|sea1'), true);
       expect(result.game.worldState.portsByProvinceSeaboard.containsKey('newWorld|nw1|sea1'), true);
 
+      // SPEC capital-and-connectivity § Town per province: every province has townTileKey set.
+      final gp = result.game.players.first;
+      for (final p in result.game.worldState.oldWorld.provinces) {
+        expect(p.townTileKey, isNotNull, reason: 'OW province ${p.id} must have townTileKey');
+      }
+      for (final p in result.game.worldState.newWorld.provinces) {
+        expect(p.townTileKey, isNotNull, reason: 'NW province ${p.id} must have townTileKey');
+      }
+      final capitalProvince = result.game.worldState.oldWorld.provinces.firstWhere((p) => p.id == gp.capitalProvinceId);
+      expect(capitalProvince.townTileKey, gp.capitalTile?.toTileKey(), reason: 'Capital province townTileKey must equal capital tile key');
+
       // Province naming: mandatory; GP capital gets capital city name, others from pool.
       expect(result.game.players.first.displayName, 'England');
       final owProvinces = result.game.worldState.oldWorld.provinces;
