@@ -741,5 +741,149 @@ void main() {
         expect(results.single.status, OrderValidationStatus.accepted);
       });
     });
+
+    group('validateWork (purchase_land)', () {
+      const ow = 'oldWorld';
+      const minorProvinceId = '$ow|M1';
+      const tileKey = '$ow|M1|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'M1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'M1')],
+      );
+
+      Game _baseGame({
+        required int treasury,
+        List<OvertureState>? overtureStates,
+        List<DiplomacyRelation>? diplomacyRelations,
+        Map<String, String>? resourceByTileKey,
+        Map<String, Set<String>>? playerProspectedTiles,
+      }) {
+        return Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+              ],
+              units: [
+                Unit(id: 'merchant1', type: 'Merchant', ownerId: 'p1', provinceId: minorProvinceId, tileKey: tileKey),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fullyVisible'},
+            },
+            tileKeysByRegionAndProvince: {ow: {minorProvinceId: [tileKey], '$ow|P1': ['$ow|P1|0|0']}},
+            playerProspectedTiles: playerProspectedTiles ?? const {},
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: '$ow|P1',
+              stockpile: const Stockpile(),
+              treasury: treasury,
+              techUnlocked: {'merchant_companies': true},
+            ),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+          overtureStates: overtureStates ?? [],
+          diplomacyRelations: diplomacyRelations ?? [],
+        );
+      }
+
+      test('rejects purchase_land when no embassy with Minor', () {
+        final game = _baseGame(treasury: 500);
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('embassy'));
+      });
+
+      test('rejects purchase_land when at war with faction', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+          diplomacyRelations: [const DiplomacyRelation(factionId1: 'p1', factionId2: 'minor1', state: RelationState.atWar)],
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('war'));
+      });
+
+      test('rejects purchase_land when insufficient treasury', () {
+        const cost = 15 * 10; // grain default base 10
+        final game = _baseGame(
+          treasury: cost - 1,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('Insufficient treasury'));
+      });
+
+      test('rejects purchase_land when tile has no resource', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+          resourceByTileKey: {},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('no resource'));
+      });
+
+      test('rejects purchase_land when mineral tile not prospected', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+          resourceByTileKey: {tileKey: 'iron'},
+          playerProspectedTiles: {}, // p1 has not prospected this tile
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('prospected'));
+      });
+
+      test('accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.accepted);
+      });
+
+      test('accepts purchase_land for mineral when prospected', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [const OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)],
+          resourceByTileKey: {tileKey: 'iron'},
+          playerProspectedTiles: {'p1': {tileKey}},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder('p1', const WorkOrder(unitId: 'merchant1', target: 'purchase_land', targetTileKey: tileKey));
+        final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.accepted);
+      });
+    });
   });
 }

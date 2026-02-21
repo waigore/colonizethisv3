@@ -10,6 +10,7 @@ import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../combat/quick_battle_input_builder.dart';
 import '../combat/quick_battle_resolver.dart';
+import '../setup/capital_choice.dart';
 import '../world/connectivity_resolver.dart';
 import '../economy/economy_consumption.dart';
 import '../economy/economy_extraction.dart';
@@ -185,7 +186,13 @@ Game resolveTurnForGame({
         state = _runNavalInterceptionCombatPhase(state, topology, orders.navalMoveOrdersByPlayerId);
         break;
       case TurnPhase.combat:
-        state = _runCombatPhase(state, orders, feedingCoverageByPlayerId);
+        state = _runCombatPhase(
+          state,
+          orders,
+          feedingCoverageByPlayerId,
+          topology,
+          tileMapByRegion,
+        );
         break;
       case TurnPhase.buildWork:
         state = applyBuildAndWorkOrders(state, orders, topology: topology);
@@ -770,7 +777,10 @@ Game _runCombatPhase(
   Game game,
   Orders orders,
   Map<String, double> feedingCoverageByPlayerId,
+  MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
 ) {
+  // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
@@ -795,5 +805,66 @@ Game _runCombatPhase(
       );
     }
   }
+  // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
+    state = _applyCapitalReassignmentAfterCombat(state, topology, tileMapByRegion);
+  }
   return state;
+}
+
+/// For each Great Power that lost their capital province, pick new capital in original region (prefer seaboard), apply port/road and road path. Same shared API as init.
+Game _applyCapitalReassignmentAfterCombat(
+  Game state,
+  MapTopology topology,
+  Map<String, TileMapResult> tileMapByRegion,
+) {
+  Game game = state;
+  for (final player in state.players) {
+    final capProvinceId = player.capitalProvinceId;
+    if (capProvinceId == null || player.capitalTile == null) continue;
+    final regionId = ProvinceId.regionIdFrom(capProvinceId);
+    final region = regionId == kRegionOldWorld
+        ? state.worldState.oldWorld
+        : state.worldState.newWorld;
+    final province = region.provinces.where((p) => p.id == capProvinceId).firstOrNull;
+    if (province == null) continue;
+    if (province.ownerId == player.id) continue;
+    // Player lost capital. Choose new capital in original region from owned provinces; prefer seaboard.
+    final ownedInRegion = region.provinces
+        .where((p) => p.ownerId == player.id)
+        .map((p) => p.id)
+        .toList();
+    if (ownedInRegion.isEmpty) {
+      final updatedPlayers = game.players.map((p) {
+        if (p.id != player.id) return p;
+        return p.copyWith(capitalProvinceId: null, capitalTile: null);
+      }).toList();
+      game = game.copyWith(players: updatedPlayers);
+      _log.i('logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared');
+      continue;
+    }
+    final tileMap = tileMapByRegion[regionId];
+    if (tileMap == null) continue;
+    try {
+      final (newProvinceId, tile) = pickCapitalForFaction(
+        ownedInRegion,
+        regionId,
+        topology,
+        tileMap,
+        requireSeaBound: false,
+      );
+      game = setCapitalForReassignment(
+        game: game,
+        playerId: player.id,
+        provinceId: newProvinceId,
+        tile: tile,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      );
+      _log.i('logic: player ${player.id} capital reassigned to $newProvinceId after loss');
+    } catch (e, st) {
+      _log.w('logic: capital reassignment failed for ${player.id}', error: e, stackTrace: st);
+    }
+  }
+  return game;
 }

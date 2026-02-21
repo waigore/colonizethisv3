@@ -47,6 +47,72 @@ Set<String> _provinceIdsFromTopology(MapTopology topology) {
       .toSet();
 }
 
+/// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
+Set<String> _seaZonesReachableBySeaPath(
+  MapTopology topology,
+  Set<String> startSeaZoneIds,
+) {
+  final seaZoneIds = topology.nodes
+      .where((n) => n.type == TopologyNodeType.seaZone)
+      .map((n) => n.id)
+      .toSet();
+  final neighbours = <String, Set<String>>{};
+  for (final e in topology.edges) {
+    final a = e.id1;
+    final b = e.id2;
+    if (seaZoneIds.contains(a) && seaZoneIds.contains(b)) {
+      neighbours.putIfAbsent(a, () => {}).add(b);
+      neighbours.putIfAbsent(b, () => {}).add(a);
+    }
+  }
+  final reachable = Set<String>.from(startSeaZoneIds);
+  final queue = List<String>.from(startSeaZoneIds);
+  while (queue.isNotEmpty) {
+    final z = queue.removeAt(0);
+    for (final n in neighbours[z] ?? {}) {
+      if (reachable.contains(n)) continue;
+      reachable.add(n);
+      queue.add(n);
+    }
+  }
+  return reachable;
+}
+
+/// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
+Set<String> _seaZonesAdjacentToProvince(MapTopology topology, String localProvinceId) {
+  final seaZoneIds = topology.nodes
+      .where((n) => n.type == TopologyNodeType.seaZone)
+      .map((n) => n.id)
+      .toSet();
+  final out = <String>{};
+  for (final edge in topology.edges) {
+    if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
+    final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
+    if (seaZoneIds.contains(other)) out.add(other);
+  }
+  return out;
+}
+
+/// True if the capital tile is adjacent to sea (seaboard). SPEC/game/capital-and-connectivity § Port connection to capital.
+bool _isCapitalTileOnSeaboard(
+  CapitalTile capital,
+  Map<String, TileMapResult> tileMapByRegion,
+  Set<String> provinceIdsByType,
+) {
+  final map = tileMapByRegion[capital.regionId];
+  if (map == null) return false;
+  final w = map.width;
+  final h = map.height;
+  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+    final nx = capital.x + d.$1;
+    final ny = capital.y + d.$2;
+    if (nx < 0 || nx >= w || ny < 0 || ny >= h) return true;
+    final cellId = map.cell(nx, ny);
+    if (!provinceIdsByType.contains(cellId)) return true;
+  }
+  return false;
+}
+
 RegionData _regionData(Game game, String regionId) {
   if (regionId == kRegionOldWorld) return game.worldState.oldWorld;
   if (regionId == kRegionNewWorld) return game.worldState.newWorld;
@@ -133,7 +199,7 @@ Set<String> _connectedTilesForPlayer({
     }
   }
 
-  // Overseas: port tile keys that are connected and in the capital region.
+  // Port connection rule: (1) capital on seaboard → ports reachable via sea-path (BFS S–S); (2) else only ports reachable by road/rail from capital. SPEC/game/capital-and-connectivity § Port connection to capital, Sea paths.
   final capitalRegionPortKeys = <String>{};
   for (final k in connected) {
     final info = portInfo[k];
@@ -143,31 +209,29 @@ Set<String> _connectedTilesForPlayer({
     if (parts[0] == capitalRegionId) capitalRegionPortKeys.add(k);
   }
 
-  final seaZoneToPortKeys = <String, Set<String>>{};
-  for (final e in worldState.portsByProvinceSeaboard.entries) {
-    final provSea = e.key;
-    final tileKey = e.value;
-    final parts = provSea.split('|');
-    if (parts.length >= 3) {
-      final seaZoneId = parts[2];
-      seaZoneToPortKeys.putIfAbsent(seaZoneId, () => {}).add(tileKey);
-    } else if (parts.length >= 2) {
-      final seaZoneId = parts[1];
-      seaZoneToPortKeys.putIfAbsent(seaZoneId, () => {}).add(tileKey);
-    }
-  }
-
   final seaConnectedPortKeys = <String>{};
-  for (final portKey in capitalRegionPortKeys) {
-    final info = portInfo[portKey];
-    if (info == null) continue;
-    final (_, seaZoneId) = info;
-    for (final other in seaZoneToPortKeys[seaZoneId] ?? {}) {
-      final otherInfo = portInfo[other];
-      if (otherInfo == null) continue;
-      final (otherProv, _) = otherInfo;
-      if (owned.contains(otherProv)) seaConnectedPortKeys.add(other);
+  final capitalOnSeaboard = _isCapitalTileOnSeaboard(
+    capital,
+    tileMapByRegion,
+    provinceIdsByType,
+  );
+  if (capitalOnSeaboard) {
+    final localProvinceId = ProvinceId.localIdFrom(capital.provinceId);
+    final capitalSeaZones = _seaZonesAdjacentToProvince(topology, localProvinceId);
+    final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
+    for (final e in worldState.portsByProvinceSeaboard.entries) {
+      final provSea = e.key;
+      final tileKey = e.value;
+      final parts = provSea.split('|');
+      final seaZoneId = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : null);
+      final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : (parts.length >= 2 ? parts[0] : null);
+      if (seaZoneId == null || fullProvinceId == null) continue;
+      if (!seaReachable.contains(seaZoneId)) continue;
+      if (!owned.contains(fullProvinceId)) continue;
+      seaConnectedPortKeys.add(tileKey);
     }
+  } else {
+    seaConnectedPortKeys.addAll(capitalRegionPortKeys);
   }
 
   for (final portKey in seaConnectedPortKeys) {
@@ -215,6 +279,7 @@ Set<String> _connectedTilesForPlayer({
   return connected;
 }
 
+/// Adjacent tile keys (4-neighbour). Includes tiles in same or neighbouring provinces (any land cell). Tile key uses neighbour's province id.
 List<String> _adjacentTileKeys(
   String regionId,
   String provinceId,
@@ -237,8 +302,8 @@ List<String> _adjacentTileKeys(
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
     final cellId = map.cell(nx, ny);
     if (!provinceIdsByType.contains(cellId)) continue;
-    if (cellId != provinceId) continue;
-    out.add(CapitalTile.tileKey(regionId, provinceId, nx, ny));
+    final fullProvinceId = '$regionId|$cellId';
+    out.add(CapitalTile.tileKey(regionId, fullProvinceId, nx, ny));
   }
   return out;
 }

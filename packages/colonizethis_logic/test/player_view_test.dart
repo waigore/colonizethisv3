@@ -128,6 +128,40 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('other player does not see our Spy (Spy invisible to non-owners)', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+            ],
+            units: [
+              Unit(
+                id: 'spy1',
+                type: 'Spy',
+                ownerId: 'gp1',
+                provinceId: '$ow|p2',
+                tileKey: '$ow|p2|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+        ],
+      );
+      final topology = MapTopology(nodes: const [], edges: const []);
+      final viewP2 = buildPlayerView(game, topology, 'gp2');
+      expect(viewP2.ownUnitsById, isEmpty);
+      expect(viewP2.ownUnitsById.containsKey('spy1'), isFalse);
+    });
   });
 }
 

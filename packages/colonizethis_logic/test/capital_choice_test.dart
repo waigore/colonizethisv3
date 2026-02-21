@@ -282,5 +282,80 @@ void main() {
       expect(next.tribes.single.capitalTile?.regionId, 'newWorld');
       expect(next.worldState.portsByProvinceSeaboard.isEmpty, true);
     });
+
+    test('init road path: inland capital + port 2+ steps away → every tile on shortest path has road', () {
+      // 3x2: p1 with sea on right; capital inland at (1,1). Nearest coastal is (1,0). Path (1,0)→(1,1) gets road.
+      final grid = [
+        ['p1', 'p1', 'sea1'],
+        ['p1', 'p1', 'p1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      final tileMapByRegion = {'oldWorld': TileMapResult(width: 3, height: 2, grid: grid)};
+      final next = setCapital(
+        game: game,
+        playerId: 'pl1',
+        provinceId: 'oldWorld|p1',
+        tile: const CapitalTile(regionId: 'oldWorld', provinceId: 'oldWorld|p1', x: 1, y: 1),
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      );
+      expect(next.players.single.capitalProvinceId, 'oldWorld|p1');
+      final ts = next.worldState.tileState;
+      expect(ts.roadLevel('oldWorld|p1|1|1'), 1);
+      expect(ts.roadLevel('oldWorld|p1|1|0'), 4);
+      expect(ts.roadLevel('oldWorld|p1|1|1'), 1);
+    });
+
+    test('setCapitalForReassignment allows inland capital and applies port/road when sea-bound', () {
+      final grid = [
+        ['p1', 'sea1'],
+        ['p1', 'p1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      final next = setCapitalForReassignment(
+        game: game,
+        playerId: 'pl1',
+        provinceId: 'oldWorld|p1',
+        tile: const CapitalTile(regionId: 'oldWorld', provinceId: 'oldWorld|p1', x: 0, y: 0),
+        topology: topology,
+        tileMapByRegion: {'oldWorld': TileMapResult(width: 2, height: 2, grid: grid)},
+      );
+      expect(next.players.single.capitalProvinceId, 'oldWorld|p1');
+      expect(next.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 4);
+    });
   });
 }

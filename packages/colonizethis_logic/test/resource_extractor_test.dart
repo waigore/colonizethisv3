@@ -244,6 +244,45 @@ void main() {
       expect(result['pl1']!.land['iron'], 2);
     });
 
+    test('effective extraction capped by province townDevelopmentLevel', () {
+      final grid = [['p1']];
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: grid,
+        resourceGrid: [[Resource.grain]],
+      );
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 4)
+          .setRoadLevel('oldWorld|p1|0|0', 4);
+      final player = Player(
+        id: 'pl1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|p1',
+        capitalTile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1', townDevelopmentLevel: 1),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [player],
+      );
+      final result = computeExtraction(
+        game: game,
+        tileMapByRegion: {'oldWorld': tileMap},
+        connectivityResult: {'pl1': {'oldWorld|p1|0|0'}},
+        techCapForPlayer: (_) => 4,
+      );
+      expect(result['pl1']!.land['grain'], 1);
+    });
+
     test('overseas totals when connected tile in different region', () {
       final gridNw = [['n1']];
       final tileMapNw = TileMapResult(

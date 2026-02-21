@@ -110,6 +110,18 @@ bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [Strin
       return isOwned ||
           provinceHasAtLeastVisibility(
               view, regionId, provinceId, VisibilityLevel.fogged);
+    case 'purchase_land':
+      // Minor/Tribe province; tile must be visible to place order. SPEC/civilian-units.md.
+      return provinceHasAtLeastVisibility(
+          view, regionId, provinceId, VisibilityLevel.revealed);
+    case 'steal_tech':
+      // Other GP capital province must be visible. SPEC/civilian-units.md.
+      return provinceHasAtLeastVisibility(
+          view, regionId, provinceId, VisibilityLevel.revealed);
+    case 'counter_spy':
+      return isOwned ||
+          provinceHasAtLeastVisibility(
+              view, regionId, provinceId, VisibilityLevel.fogged);
     default:
       return false;
   }

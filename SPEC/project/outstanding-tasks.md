@@ -54,7 +54,9 @@
 
 ### Task: Complete Capital and Connectivity (extraction, ports, sea paths, capital reassignment)
 
-**Gap:** Connectivity is extraction-only and tile-level; port–capital rule (seaboard vs road/rail path); road path from port to capital at init (full path); sea-zone connectivity via sea paths; capital reassignment on loss; road level = transport level and railroads. Specs updated per plan; implementation and tests remain.
+**Status:** **Done** (verified). Init road path port→capital; connectivity port rule (seaboard vs road/rail) and sea-path BFS (S–S); combat-phase capital reassignment (shared API); tests added/expanded.
+
+**Gap (resolved):** Connectivity is extraction-only and tile-level; port–capital rule (seaboard vs road/rail path); road path from port to capital at init (full path); sea-zone connectivity via sea paths; capital reassignment on loss; road level = transport level and railroads. Specs updated per plan; implementation and tests complete.
 
 **Referenced specs:**
 - [SPEC/game/capital-and-connectivity.md](SPEC/game/capital-and-connectivity.md)
@@ -147,7 +149,7 @@
 
 ### Task: Civilian Units Spec — Verification and Test Coverage (P0)
 
-**Status:** Implementation done per Civilian Units Spec plan. Specs updated; order engine, orders_application, fog/visibility, init town assignment, extraction town cap, and suggestions updated. The following P0 items need **verification and tests** as below.
+**Status:** **Done** (verified). Integration and unit tests added for purchase_land, Spy (steal_tech, counter_spy, visibility), work order materials (build_road/build_fort deduct vs reject), upgrade_town completion, extraction town cap; order_engine purchase_land validation; order_visibility cases for purchase_land/steal_tech/counter_spy.
 
 **Referenced specs:**
 - [SPEC/game/civilian-units.md](SPEC/game/civilian-units.md) — Work order summary table
@@ -172,11 +174,12 @@
 | 11 | build_road tech gate | **Done** | Road level 2 requires Road Construction tech in validation and completion. |
 | 12 | Work order summary table and engine/suggestions | **Done** | Table in civilian-units.md; order engine and suggestions use workOrderTargetsByUnitType and cost checks. |
 
-**What needs to be done:**
-1. Add integration / scenario tests for Merchant purchase_land (full flow with embassy, at peace, treasury, resource; reject cases).
-2. Add Spy integration tests: steal_tech (spy in other GP capital, 5 turns, tech granted or expiry), counter_spy (enemy spy in our province, friendly counter_spy, probability kill), spy visibility (other player does not see our Spy).
-3. Add work order tests: apply build_road/build_fort etc. with sufficient materials → materials deducted; insufficient → order not applied or rejected in validation.
-4. Add town and extraction tests: init assigns town; extraction uses town development level; upgrade_town increases town development level.
+**What was done:**
+1. **Merchant purchase_land:** order_engine_test validateWork (purchase_land): reject no embassy, at war, insufficient treasury, no resource, mineral not prospected; accept with embassy/peace/treasury/resource and mineral prospected. orders_application_test: purchase_land success (treasury deducted, purchasedTilesByTileKey set).
+2. **Spy:** orders_application_test: steal_tech completion scenario; counter_spy processWork scenario. player_view_test: other player does not see our Spy (view.ownUnitsById empty for non-owner).
+3. **Work orders:** orders_application_test: build_road/build_fort with sufficient materials → materials deducted; insufficient materials → no currentWork, no deduction.
+4. **Town and extraction:** orders_application_test: upgrade_town completion increases province townDevelopmentLevel. resource_extractor_test: effective extraction capped by province townDevelopmentLevel.
+5. **Visibility:** order_visibility.dart: purchase_land, steal_tech, counter_spy cases so validateWork accepts when province/tile visible.
 
 **Complexity:** Small–Medium (test authoring)
 
@@ -589,6 +592,8 @@ Tasks below have been verified against the codebase and are implemented. Date: 2
 | Siege (core numbers) | fortDamageReduction 0/25/45/60%, wallHpByFortLevel, fortGunCount in combat_config and combat_resolver. |
 | Verify Fog Decay | Tests in turn_resolver_test; Explorer/Spy prevents decay; resolver uses case-insensitive type and localIdFrom. |
 | Add Victory Screen | Victory overlay in ctdev when game.victory != null; return to menu and view final state. |
+| Complete Capital and Connectivity | capital_choice: shortest path port→capital, road on path; connectivity_resolver: port rule (seaboard vs road), sea-path BFS S–S; turn_resolver: capital reassignment after combat (setCapitalForReassignment); tests in capital_choice_test, connectivity_resolver_test. |
+| Civilian Units Spec — Verification and Test Coverage | order_engine_test: purchase_land validation (embassy, war, treasury, resource, mineral prospected). orders_application_test: purchase_land apply, build_road/build_fort materials, upgrade_town completion, steal_tech/counter_spy scenarios. player_view_test: Spy invisible to other player. resource_extractor_test: townDevelopmentLevel cap. order_visibility: purchase_land/steal_tech/counter_spy visibility. |
 
 ---
 

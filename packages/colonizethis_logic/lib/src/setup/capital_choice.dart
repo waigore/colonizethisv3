@@ -153,6 +153,20 @@ WorldState applyCapitalPortAndRoad(
     tileState = tileState.setRoadLevel(capitalKey, 1);
     tileState = tileState.setRoadLevel(portKey, 4);
     ports[portKeyProvSea] = portKey;
+    // Shortest path from port to capital on province tiles; set road level 1 on every tile along path (skip port tile to keep level 4). SPEC capital-and-connectivity § Capital Setup.
+    final path = _shortestPathOnProvinceTiles(
+      map,
+      localProvinceId,
+      coastal.$1,
+      coastal.$2,
+      tile.x,
+      tile.y,
+    );
+    for (final p in path) {
+      final key = CapitalTile.tileKey(regionId, provinceId, p.$1, p.$2);
+      if (key == portKey) continue;
+      tileState = tileState.setRoadLevel(key, 1);
+    }
   }
 
   return worldState.copyWith(
@@ -163,7 +177,7 @@ WorldState applyCapitalPortAndRoad(
 
 /// Sets [playerId]'s capital to [provinceId] at [tile]. Validates province is sea-bound;
 /// auto-builds port (on capital tile if adjacent to sea, else nearest coastal tile in province)
-/// and road (stub: road on capital and port tile). Returns updated Game; caller persists.
+/// and road along shortest path from port to capital. Returns updated Game; caller persists.
 Game setCapital({
   required Game game,
   required String playerId,
@@ -195,6 +209,41 @@ Game setCapital({
     );
   }).toList();
 
+  return game.copyWith(
+    worldState: worldState,
+    players: updatedPlayers,
+  );
+}
+
+/// Sets [playerId]'s capital for reassignment after loss. Same as [setCapital] when province is sea-bound; when not (inland fallback), only updates capital province/tile. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+Game setCapitalForReassignment({
+  required Game game,
+  required String playerId,
+  required String provinceId,
+  required CapitalTile tile,
+  required MapTopology topology,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw ArgumentError('Capital tile province ${tile.provinceId} does not match $provinceId');
+  }
+  final seaBound = isProvinceSeaBound(topology, ProvinceId.localIdFrom(provinceId));
+  final worldState = seaBound
+      ? applyCapitalPortAndRoad(
+          game.worldState,
+          provinceId,
+          tile,
+          topology,
+          tileMapByRegion,
+        )
+      : game.worldState;
+  final updatedPlayers = game.players.map((p) {
+    if (p.id != playerId) return p;
+    return p.copyWith(
+      capitalProvinceId: provinceId,
+      capitalTile: tile,
+    );
+  }).toList();
   return game.copyWith(
     worldState: worldState,
     players: updatedPlayers,
@@ -343,4 +392,52 @@ bool _isTileAdjacentToOtherProvince(
   }
   if (bestX == null || bestY == null) return null;
   return (bestX, bestY);
+}
+
+/// Shortest path on province tiles only (BFS). Returns ordered list (start .. end) inclusive.
+/// Used for road placement from port to capital. SPEC/game/capital-and-connectivity § Capital Setup.
+List<(int, int)> _shortestPathOnProvinceTiles(
+  TileMapResult map,
+  String localProvinceId,
+  int fromX,
+  int fromY,
+  int toX,
+  int toY,
+) {
+  if (fromX == toX && fromY == toY) return [(fromX, fromY)];
+  final w = map.width;
+  final h = map.height;
+  final visited = <String>{};
+  final parent = <String, (int, int)>{};
+  final startKey = '$fromX|$fromY';
+  visited.add(startKey);
+  final queue = <(int, int)>[(fromX, fromY)];
+  while (queue.isNotEmpty) {
+    final (cx, cy) = queue.removeAt(0);
+    if (cx == toX && cy == toY) {
+      final path = <(int, int)>[];
+      var (px, py) = (toX, toY);
+      while (true) {
+        path.insert(0, (px, py));
+        final key = '$px|$py';
+        final p = parent[key];
+        if (p == null) break;
+        px = p.$1;
+        py = p.$2;
+      }
+      return path;
+    }
+    for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+      final nx = cx + d.$1;
+      final ny = cy + d.$2;
+      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+      if (map.cell(nx, ny) != localProvinceId) continue;
+      final nkey = '$nx|$ny';
+      if (visited.contains(nkey)) continue;
+      visited.add(nkey);
+      parent[nkey] = (cx, cy);
+      queue.add((nx, ny));
+    }
+  }
+  return [(fromX, fromY)];
 }
