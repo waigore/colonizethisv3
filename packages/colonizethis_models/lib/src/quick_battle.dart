@@ -136,6 +136,7 @@ class QuickBattleDeployment {
 }
 
 /// Input to Quick Battle resolution. SPEC/program/quick-battle-resolution.
+/// Leader multipliers (SPEC/game/leader-bonuses.md) apply to each side's effective strength.
 class QuickBattleInput {
   const QuickBattleInput({
     required this.attackerFactionId,
@@ -148,6 +149,8 @@ class QuickBattleInput {
     this.provinceTerrain = 'plains',
     this.seed = 0,
     this.maxRounds = 3,
+    this.attackerLeaderMultiplier = 1.0,
+    this.defenderLeaderMultiplier = 1.0,
   });
 
   final String attackerFactionId;
@@ -160,6 +163,10 @@ class QuickBattleInput {
   final String provinceTerrain;
   final int seed;
   final int maxRounds;
+  /// Leader combat bonus multiplier for attacker side. SPEC/game/leader-bonuses.md.
+  final double attackerLeaderMultiplier;
+  /// Leader combat bonus multiplier for defender side. SPEC/game/leader-bonuses.md.
+  final double defenderLeaderMultiplier;
 
   Map<String, dynamic> toJson() => {
         'attackerFactionId': attackerFactionId,
@@ -172,6 +179,8 @@ class QuickBattleInput {
         'provinceTerrain': provinceTerrain,
         'seed': seed,
         'maxRounds': maxRounds,
+        'attackerLeaderMultiplier': attackerLeaderMultiplier,
+        'defenderLeaderMultiplier': defenderLeaderMultiplier,
       };
 
   static QuickBattleInput fromJson(Map<String, dynamic> json) =>
@@ -190,6 +199,10 @@ class QuickBattleInput {
         provinceTerrain: json['provinceTerrain'] as String? ?? 'plains',
         seed: json['seed'] as int? ?? 0,
         maxRounds: json['maxRounds'] as int? ?? 3,
+        attackerLeaderMultiplier:
+            (json['attackerLeaderMultiplier'] as num?)?.toDouble() ?? 1.0,
+        defenderLeaderMultiplier:
+            (json['defenderLeaderMultiplier'] as num?)?.toDouble() ?? 1.0,
       );
 }
 

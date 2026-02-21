@@ -44,10 +44,12 @@ QuickBattleResult resolveQuickBattle(
     // Compute effective strengths per side from groups and terrain.
     var attStr =
         _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
-            attMods.offenseModifier;
+            attMods.offenseModifier *
+            input.attackerLeaderMultiplier;
     var defStr =
         _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
-            defMods.offenseModifier;
+            defMods.offenseModifier *
+            input.defenderLeaderMultiplier;
 
     // Apply terrain and fort modifiers (same as combat_resolver).
     final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
@@ -119,9 +121,11 @@ QuickBattleResult resolveQuickBattle(
     }
   }
 
-  // After max rounds: decide by remaining strength.
-  final finalAttStr = _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain);
-  final finalDefStr = _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain);
+  // After max rounds: decide by remaining strength (leader multipliers already applied in-round).
+  final finalAttStr = _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
+      input.attackerLeaderMultiplier;
+  final finalDefStr = _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
+      input.defenderLeaderMultiplier;
   if (finalAttStr > finalDefStr * 1.2) {
     return QuickBattleResult(
       winner: QuickBattleWinner.attacker,
