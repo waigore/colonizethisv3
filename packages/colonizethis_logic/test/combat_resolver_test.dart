@@ -198,10 +198,37 @@ void main() {
         fortLevel: 0,
         terrain: 'plains',
       );
+      // SPEC/game/leader-bonuses.md: napoleon 1.25, frederick 1.15. Verify combat path
+      // passes these multipliers by matching resolveEngagement with same params.
+      const attMult = 1.25;
+      const defMult = 1.15;
+      final engagementOutcome = resolveEngagement(
+        attackerUnits: attackerUnits,
+        defenderUnits: defenderUnits,
+        fortLevel: ctx.fortLevel,
+        terrain: ctx.terrain,
+        attackerLeaderMultiplier: attMult,
+        defenderLeaderMultiplier: defMult,
+      );
       final result = resolveBattleContext(game, ctx);
       expect(result.worldState.oldWorld.units.length, lessThanOrEqualTo(3),
           reason: 'some units may be casualties');
       expect(result.worldState.oldWorld.provinces.single.id, 'p');
+      // Battle result must match engagement: same casualties and province ownership.
+      final allCasualties = {
+        ...engagementOutcome.attackerCasualties,
+        ...engagementOutcome.defenderCasualties,
+      };
+      final survivingIds = result.worldState.oldWorld.units.map((u) => u.id).toSet();
+      for (final id in allCasualties) {
+        expect(survivingIds.contains(id), isFalse,
+            reason: 'Casualty $id should not survive');
+      }
+      final expectedOwner = engagementOutcome.result == EngagementResult.attackerVictory
+          ? 'att'
+          : ctx.defenderFactionId;
+      expect(result.worldState.oldWorld.provinces.single.ownerId, expectedOwner,
+          reason: 'Province owner should match engagement result');
     });
 
     test('resolveBattleContext updates newWorld when regionId is newWorld', () {
