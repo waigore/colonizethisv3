@@ -109,6 +109,25 @@ void main() {
         isTrue,
       );
     });
+
+    test('buildPlayerView throws when playerId not in game', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      expect(
+        () => buildPlayerView(game, topology, 'nonexistent'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
   });
 }
 

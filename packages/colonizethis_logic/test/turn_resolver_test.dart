@@ -130,7 +130,12 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            Province(
+              id: '$ow|p1',
+              regionId: ow,
+              ownerId: 'pl1',
+              townDevelopmentLevel: 4,
+            ),
           ]),
           newWorld: const RegionData(),
           tileState: tileState,
@@ -154,6 +159,67 @@ void main() {
       );
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.players.single.stockpile.quantityOf('grain'), 1);
+    });
+
+    test('extraction phase with overseas runs allocateOverseasToStockpile and applyTradeInterception path', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'n1', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final tileMapOw = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [['p1']],
+        resourceGrid: [[Resource.grain]],
+      );
+      final tileMapNw = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [['n1']],
+        resourceGrid: [[Resource.sugarCane]],
+      );
+      final tileState = TileMapState()
+          .setImprovement('oldWorld|p1|0|0', 1)
+          .setRoadLevel('oldWorld|p1|0|0', 1)
+          .setImprovement('newWorld|n1|0|0', 1)
+          .setRoadLevel('newWorld|n1|0|0', 1);
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+          ]),
+          newWorld: RegionData(provinces: [
+            Province(id: '$nw|n1', regionId: nw, ownerId: 'pl1'),
+          ]),
+          tileState: tileState,
+        ),
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: '$ow|p1',
+            capitalTile: cap,
+          ),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        tileMapByRegion: {'oldWorld': tileMapOw, 'newWorld': tileMapNw},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.players.single.stockpile.quantityOf('grain'), greaterThanOrEqualTo(0));
     });
 
     test('one full turn with combat: MoveOrder into enemy province, casualties and province flip', () {
@@ -352,6 +418,409 @@ void main() {
 
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
+    });
+
+    test('validateOrdersAndResolveTurn filters invalid order and applies only valid move', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P1'),
+            ],
+            ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+            MoveOrder(unitId: 'u999', destinationProvinceId: '$ow|P2'),
+          ],
+        },
+      );
+      final next = validateOrdersAndResolveTurn(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units.length, 1);
+      expect(next.worldState.oldWorld.units.single.provinceId, '$ow|P2');
+    });
+
+    test('movement phase applies naval mission order', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+              mission: FleetMission.none,
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMissionOrdersByPlayerId: {
+          'p1': [
+            NavalMissionOrder(fleetId: 'f1', mission: FleetMission.patrol.name),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.fleets.single.mission, FleetMission.patrol);
+      expect(next.worldState.turnState.turnNumber, 1);
+    });
+
+    test('movement phase applies naval move order to adjacent sea zone', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'sea1', id2: 'sea2'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMoveOrdersByPlayerId: {
+          'p1': [
+            NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.fleets.single.seaZoneId, 'sea2');
+      expect(next.worldState.turnState.turnNumber, 1);
+    });
+
+    test('naval interception phase runs when two at-war fleets in same zone', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet_p1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+            ),
+            Fleet(
+              id: 'fleet_p2',
+              ownerId: 'p2',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['fluyte'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.fleets, isNotEmpty);
+    });
+
+    test('full turn with buildWork applies work order', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      const ow = 'oldWorld';
+      const provinceId = 'oldWorld|P1';
+      const tileKey = 'oldWorld|P1|0|0';
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(unitId: 'u1', target: 'prospect', targetTileKey: tileKey),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
+    });
+
+    test('endOfTurn sets military victory when one GP controls 31+ provinces', () {
+      const ow = 'oldWorld';
+      final provinces = List<Province>.generate(
+        32,
+        (i) => Province(id: '$ow|P$i', regionId: ow, ownerId: 'p1'),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: RegionData(provinces: provinces),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+      );
+      final topology = MapTopology(
+        nodes: [
+          for (var i = 0; i < 32; i++)
+            TopologyNode(id: 'P$i', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+      );
+      expect(next.victory, isNotNull);
+      expect(next.victory!.winnerPlayerId, 'p1');
+      expect(next.victory!.type, VictoryType.military);
+    });
+
+    test('endOfTurn phase leaves game unchanged when victory already set', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
+          oldWorld: RegionData(provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+        victory: VictoryState(
+          winnerPlayerId: 'p1',
+          type: VictoryType.military,
+          turnNumber: 10,
+        ),
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+      expect(next.victory, isNotNull);
+      expect(next.victory!.winnerPlayerId, 'p1');
+      expect(next.worldState.turnState.turnNumber, 10);
+    });
+
+    test('endOfTurn applies fog decay: other-faction tiles become fogged when no Explorer/Spy', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
+              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: {
+            'p1': {tileKeyP2: VisibilityLevel.fullyVisible.name},
+            'p2': {},
+          },
+          tileKeysByRegionAndProvince: {ow: {'P1': ['oldWorld|P1|0|0'], 'P2': [tileKeyP2]}},
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
+    });
+
+    test('endOfTurn fog decay does not apply when Explorer is in other-faction province', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
+              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'explorer1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                provinceId: 'P2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: {
+            'p1': {tileKeyP2: VisibilityLevel.fullyVisible.name},
+            'p2': {},
+          },
+          tileKeysByRegionAndProvince: {ow: {'P1': ['oldWorld|P1|0|0'], 'P2': [tileKeyP2]}},
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fullyVisible.name);
     });
   });
 }

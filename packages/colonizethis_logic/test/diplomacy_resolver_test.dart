@@ -3,6 +3,41 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
+  group('tradeSlotsForGp', () {
+    test('returns 0 without embassy', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+        overtureStates: const [],
+      );
+      expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 0);
+    });
+    test('returns 1 with embassy', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+        overtureStates: const [
+          OvertureState(gpId: 'gp1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0),
+        ],
+      );
+      expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 1);
+    });
+  });
+
   group('scoreToLevel', () {
     test('maps score ranges to levels', () {
       expect(scoreToLevel(0), RelationLevel.hostile);
@@ -65,6 +100,36 @@ void main() {
       expect(player.treasury, lessThan(2000));
     });
 
+    test('alliance order sets relation to allied', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.alliance,
+              targetFactionId: 'gp2',
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      final rel = getRelation(after, 'gp1', 'gp2');
+      expect(rel, isNotNull);
+      expect(rel!.level, RelationLevel.allied);
+      expect(rel.score, greaterThanOrEqualTo(76));
+    });
+
     test('declare war and offer peace update relation state', () {
       final game = _baseGame();
       final declareOrders = Orders(
@@ -95,6 +160,31 @@ void main() {
       final afterPeace = resolveDiplomacyPhase(afterWar, peaceOrders);
       final relPeace = getRelation(afterPeace, 'gp1', 'minor1')!;
       expect(relPeace.atPeace, isTrue);
+    });
+
+    test('declare war when already at peace updates existing relation', () {
+      var game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 60,
+            level: RelationLevel.friendly,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'minor1'),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.atWar, isTrue);
+      expect(rel.score, lessThan(60));
     });
 
     test('grantAid requires embassy and improves relations', () {
@@ -132,6 +222,169 @@ void main() {
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, greaterThan(initialRel.score));
       expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 1);
+    });
+
+    test('join empire order advances overture when at NAP and score friendly', () {
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 60,
+            level: RelationLevel.friendly,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.joinEmpire,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      final overture = getOverture(after, 'gp1', 'minor1');
+      expect(overture, isNotNull);
+      expect(overture!.stage, OvertureStage.joinEmpire);
+    });
+
+    test('grantAid without embassy does not change relation or treasury', () {
+      final game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.grantAid,
+              targetFactionId: 'minor1',
+              amount: 100,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.score, 50);
+      expect(getPlayer(after, 'gp1')!.treasury, 2000);
+    });
+
+    test('setSubsidy to Minor requires consulate and improves relation', () {
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 80,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      expect(getPlayer(after, 'gp1')!.treasury, 2000 - 80);
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.score, 53); // +3 per subsidy
+    });
+
+    test('setSubsidy to GP transfers treasury', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 1000),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: true, treasury: 500),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'gp2',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'gp2',
+              amount: 200,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      expect(getPlayer(after, 'gp1')!.treasury, 800);
+      expect(getPlayer(after, 'gp2')!.treasury, 700);
+    });
+
+    test('setSubsidy without consulate does not deduct treasury', () {
+      final game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 100,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      expect(getPlayer(after, 'gp1')!.treasury, 2000);
     });
   });
 
@@ -172,6 +425,123 @@ void main() {
 
       final gpId = needsInterventionChoice(game, ctx);
       expect(gpId, 'gp1');
+    });
+
+    test('needsInterventionChoice returns null when defender is not minor', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
+        ],
+      );
+      final ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'gp2',
+        defenderUnitIds: const [],
+        attackers: const [AttackingSide(factionId: 'gp1', unitIds: [])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      expect(needsInterventionChoice(game, ctx), isNull);
+    });
+
+    test('applyInterventionChoice doNothing returns game unchanged', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker', isHuman: false),
+        ],
+        diplomacyRelations: const [],
+      );
+      final ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'minor1',
+        defenderUnitIds: const [],
+        attackers: const [AttackingSide(factionId: 'gp2', unitIds: [])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final after = applyInterventionChoice(game, ctx, 'gp1', InterventionChoice.doNothing);
+      expect(after.diplomacyRelations, game.diplomacyRelations);
+    });
+
+    test('applyInterventionChoice protest reduces relation score with attacker', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 60,
+            level: RelationLevel.friendly,
+          ),
+        ],
+      );
+      final ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'minor1',
+        defenderUnitIds: const [],
+        attackers: const [AttackingSide(factionId: 'gp2', unitIds: [])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final after = applyInterventionChoice(game, ctx, 'gp1', InterventionChoice.protest);
+      final rel = getRelation(after, 'gp1', 'gp2');
+      expect(rel, isNotNull);
+      expect(rel!.score, lessThan(60));
+    });
+
+    test('needsInterventionChoice returns null when no GP has embassy for minor', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
+      final ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'minor1',
+        defenderUnitIds: const [],
+        attackers: const [AttackingSide(factionId: 'gp2', unitIds: [])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final gpId = needsInterventionChoice(game, ctx);
+      expect(gpId, isNull);
     });
   });
 }

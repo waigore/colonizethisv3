@@ -39,3 +39,15 @@ int richesBasePrice(CommodityId id) {
   // basePrice = spicesBasePrice * (spicesSpawnWeight / weight), integer truncation
   return (spicesBasePrice * _spicesSpawnWeight / weight).truncate();
 }
+
+/// Default base price for non-riches commodities when used in Merchant purchase_land (15× this = tile cost).
+/// SPEC/game/civilian-units.md. Riches use [richesBasePrice]; others use this default until ruleset config exists.
+const int landPurchaseDefaultBasePrice = 10;
+
+/// Base price per unit for a commodity when computing Merchant purchase_land cost (15 × base price).
+/// Riches use [richesBasePrice]; non-riches return [landPurchaseDefaultBasePrice].
+int landPurchaseBasePrice(CommodityId id) {
+  final richesPrice = richesBasePrice(id);
+  if (richesPrice > 0) return richesPrice;
+  return landPurchaseDefaultBasePrice;
+}

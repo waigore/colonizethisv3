@@ -6,7 +6,7 @@
 
 ## Goal
 
-When tests are run (e.g. via `tool/test_coverage.sh` or `dart test` / `flutter test`), application log output must not be written to stdout so that test results stay readable.
+When tests are run (e.g. via `tool/test_coverage.py` or `dart test` / `flutter test`), application log output must not be written to stdout so that test results stay readable.
 
 ---
 
@@ -34,5 +34,5 @@ Any package or app that has tests adds **colonizethis_test** as a **dev_dependen
 
 ## Coverage
 
-- Run **`tool/test_coverage.sh`** to run all package and app tests with coverage. Output is written to each package’s `coverage/` and optionally merged to `coverage_merged/` when `lcov` is installed. The script prints a per-package and overall line-coverage summary.
-- To enforce a minimum line coverage (e.g. 90%), run **`tool/check_coverage_threshold.sh [threshold]`** after `tool/test_coverage.sh`. Example: `tool/check_coverage_threshold.sh 90`. It exits with code 1 if any package is below the threshold.
+- Run **`tool/test_coverage.py`** to run all package and app tests with coverage. Output is written to each package’s `coverage/` and optionally merged to `coverage_merged/` when `lcov` is installed. The script prints a per-package and overall line-coverage summary.
+- To enforce a minimum line coverage (e.g. 90%), run **`tool/check_coverage_threshold.sh [threshold]`** after `tool/test_coverage.py`. Example: `tool/check_coverage_threshold.sh 90`. It exits with code 1 if any package is below the threshold.

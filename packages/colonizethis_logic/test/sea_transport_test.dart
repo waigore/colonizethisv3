@@ -6,6 +6,11 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   group('SeaTransport', () {
     group('allocateOverseasToStockpile', () {
+      test('returns empty when overseas is empty', () {
+        final delivered = allocateOverseasToStockpile({}, cargoHolds: 10);
+        expect(delivered, isEmpty);
+      });
+
       test('cargo cap limits delivered overseas', () {
         final overseas = {'grain': 5, 'timber': 8, 'iron': 4};
         final delivered = allocateOverseasToStockpile(
@@ -132,6 +137,57 @@ void main() {
         expect(reduced, isNotNull);
         expect(reduced!, lessThan(20));
         expect(reduced, greaterThan(0));
+      });
+
+      test('can remove merchant ships when interception triggers and RNG hits', () {
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: 'p2',
+                seaZoneId: 'sea1',
+                regionId: 'oldWorld',
+                shipTypeIds: ['carrack', 'carrack'],
+                mission: FleetMission.blockade,
+              ),
+              Fleet(
+                id: 'f2',
+                ownerId: 'p1',
+                seaZoneId: 'sea1',
+                regionId: 'oldWorld',
+                shipTypeIds: ['fluyte', 'fluyte', 'fluyte'],
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'A', isHuman: true),
+            Player(id: 'p2', displayName: 'B', isHuman: true),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'p1',
+              factionId2: 'p2',
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final delivered = {CommodityCatalog.grain.id: 30};
+        var shipRemoved = false;
+        for (var seed = 0; seed < 500 && !shipRemoved; seed++) {
+          final result = applyTradeInterception(game, 'p1', delivered, seed: seed);
+          final p1Fleets = result.updatedFleets.where((f) => f.ownerId == 'p1').toList();
+          final totalShips = p1Fleets.fold<int>(0, (s, f) => s + f.shipTypeIds.length);
+          if (totalShips < 3) {
+            shipRemoved = true;
+            expect(result.reducedDelivered, isNotEmpty);
+          }
+        }
+        expect(shipRemoved, isTrue, reason: 'some seed should trigger ship loss');
       });
     });
   });

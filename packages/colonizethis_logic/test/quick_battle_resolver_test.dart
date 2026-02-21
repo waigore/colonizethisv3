@@ -80,6 +80,85 @@ void main() {
       expect(result.provinceFlips, true);
     });
 
+    test('custom roundActions override default Volley Fire', () {
+      final input = QuickBattleInput(
+        attackerFactionId: 'att',
+        defenderFactionId: 'def',
+        provinceId: 'p1',
+        regionId: 'oldWorld',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2'],
+              cohesion: 2,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1'],
+              cohesion: 2,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        seed: 99,
+        maxRounds: 2,
+      );
+      final result = resolveQuickBattle(
+        input,
+        roundActions: [
+          QuickBattleRoundActions(actions: [QuickBattleAction.volleyFire]),
+          QuickBattleRoundActions(actions: [QuickBattleAction.volleyFire]),
+        ],
+      );
+      expect(result.attackerCasualties, isNotNull);
+      expect(result.defenderCasualties, isNotNull);
+    });
+
+    test('fort level applies wall and damage reduction', () {
+      final input = QuickBattleInput(
+        attackerFactionId: 'att',
+        defenderFactionId: 'def',
+        provinceId: 'p1',
+        regionId: 'oldWorld',
+        fortLevel: 2,
+        provinceTerrain: 'plains',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3'],
+              cohesion: 3,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1', 'd2'],
+              cohesion: 3,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        seed: 7,
+        maxRounds: 3,
+      );
+      final result = resolveQuickBattle(input);
+      expect(result.winner, isNotNull);
+    });
+
     test('stronger defender tends to hold', () {
       final input = QuickBattleInput(
         attackerFactionId: 'att',

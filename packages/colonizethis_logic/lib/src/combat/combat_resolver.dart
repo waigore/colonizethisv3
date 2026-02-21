@@ -292,10 +292,17 @@ EngagementOutcome resolveEngagement({
     effDef += emplaced;
   }
 
+  // Wall HP soaks damage before it applies to defender casualty ratio. SPEC/game/siege-mechanics.md.
+  var effAttForRatio = effAtt;
+  if (fortLevel >= 1 && fortLevel <= 3) {
+    final wallHp = wallHpByFortLevel[fortLevel];
+    effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+  }
+
   final attackerCasualties = <String>[];
   final defenderCasualties = <String>[];
 
-  if (effAtt <= 0 && effDef <= 0) {
+  if (effAttForRatio <= 0 && effDef <= 0) {
     return EngagementOutcome(
       result: EngagementResult.stalemate,
       attackerCasualties: attackerCasualties,
@@ -305,7 +312,7 @@ EngagementOutcome resolveEngagement({
     );
   }
 
-  final ratio = effDef > 0 ? effAtt / effDef : 10.0;
+  final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
   final attackerLowMorale = attackerMoraleMultiplier < defenderMoraleMultiplier;
 
   return _resolveByRatio(

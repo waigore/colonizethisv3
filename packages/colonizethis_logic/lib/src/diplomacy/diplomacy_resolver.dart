@@ -357,7 +357,7 @@ Game _applyRelationModifiersAndUpdateScores(
   var players = game.players;
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
-  // GrantAid: deduct treasury, add relation modifier (+5 per grant, e.g.)
+  // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     final player = getPlayer(game, gpId);
@@ -393,6 +393,54 @@ Game _applyRelationModifiersAndUpdateScores(
         }
         return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
       });
+      game = game.copyWith(players: players, diplomacyRelations: relations);
+    }
+  }
+
+  // SetSubsidy: deduct treasury, transfer to target GP or apply relation modifier for Minor/Tribe. Requires Consulate or Embassy.
+  for (final entry in diploByPlayer.entries) {
+    final gpId = entry.key;
+
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.setSubsidy) continue;
+      final amount = order.amount ?? 0;
+      final player = getPlayer(game, gpId);
+      if (player == null || amount <= 0 || player.treasury < amount) continue;
+
+      final targetId = order.targetFactionId;
+      final overture = getOverture(game, gpId, targetId);
+      if (overture == null || !overture.hasConsulate) continue;
+
+      final payerIdx = players.indexWhere((p) => p.id == gpId);
+      if (payerIdx >= 0) {
+        players = List<Player>.from(players);
+        players[payerIdx] = players[payerIdx].copyWith(treasury: players[payerIdx].treasury - amount);
+      }
+
+      final targetPlayer = getPlayer(game, targetId);
+      if (targetPlayer != null) {
+        final receiverIdx = players.indexWhere((p) => p.id == targetId);
+        if (receiverIdx >= 0) {
+          players[receiverIdx] = players[receiverIdx].copyWith(treasury: players[receiverIdx].treasury + amount);
+        }
+      } else {
+        // Minor/Tribe: no treasury; apply relation modifier (+3 per subsidy per diplomacy.md-style)
+        final ids = _pairIds(gpId, targetId);
+        relations = upsertRelation(relations, gpId, targetId, (existing) {
+          final newScore = ((existing?.score ?? 50) + 3).clamp(0, 100);
+          final newLevel = scoreToLevel(newScore);
+          if (existing == null) {
+            return DiplomacyRelation(
+              factionId1: ids.id1,
+              factionId2: ids.id2,
+              score: newScore,
+              level: newLevel,
+              lastInteractionTurn: turn,
+            );
+          }
+          return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+        });
+      }
       game = game.copyWith(players: players, diplomacyRelations: relations);
     }
   }

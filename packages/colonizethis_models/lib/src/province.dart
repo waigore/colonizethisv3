@@ -1,5 +1,6 @@
 /// One map province in a region. SPEC/game/world-model.
 /// Phase 3: fortLevel (0–3), terrain for combat. SPEC/game/siege-mechanics.md.
+/// Town: townTileKey and townDevelopmentLevel for extraction. SPEC/game/capital-and-connectivity.md.
 class Province {
   const Province({
     required this.id,
@@ -8,6 +9,8 @@ class Province {
     this.displayName,
     this.fortLevel = 0,
     this.terrain = 'plains',
+    this.townTileKey,
+    this.townDevelopmentLevel = 0,
   });
 
   final String id;
@@ -19,8 +22,14 @@ class Province {
   /// Fort level 0–3. 0 = field battle; 1+ = siege. SPEC/game/siege-mechanics.md.
   final int fortLevel;
 
-  /// Terrain type for combat modifiers (plains, forest, hills, mountain, swamp).
+  /// Terrain type for combat modifiers (plains, forest, hills, mountain, swamp, desert).
   final String terrain;
+
+  /// Tile key of the province's town (for extraction connectivity). Set at game init. SPEC/game/capital-and-connectivity.md.
+  final String? townTileKey;
+
+  /// Town development level 0–4. Raised by Builder upgrade_town work. Limits extraction. SPEC/game/extraction-and-improvements.md.
+  final int townDevelopmentLevel;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -29,6 +38,8 @@ class Province {
         if (displayName != null) 'displayName': displayName,
         if (fortLevel != 0) 'fortLevel': fortLevel,
         if (terrain != 'plains') 'terrain': terrain,
+        if (townTileKey != null) 'townTileKey': townTileKey,
+        if (townDevelopmentLevel != 0) 'townDevelopmentLevel': townDevelopmentLevel,
       };
 
   static Province fromJson(Map<String, dynamic> json) {
@@ -39,6 +50,8 @@ class Province {
       displayName: json['displayName'] as String?,
       fortLevel: (json['fortLevel'] as int?) ?? 0,
       terrain: json['terrain'] as String? ?? 'plains',
+      townTileKey: json['townTileKey'] as String?,
+      townDevelopmentLevel: (json['townDevelopmentLevel'] as int?) ?? 0,
     );
   }
 
@@ -49,6 +62,8 @@ class Province {
     String? displayName,
     int? fortLevel,
     String? terrain,
+    String? townTileKey,
+    int? townDevelopmentLevel,
   }) {
     return Province(
       id: id ?? this.id,
@@ -57,6 +72,8 @@ class Province {
       displayName: displayName ?? this.displayName,
       fortLevel: fortLevel ?? this.fortLevel,
       terrain: terrain ?? this.terrain,
+      townTileKey: townTileKey ?? this.townTileKey,
+      townDevelopmentLevel: townDevelopmentLevel ?? this.townDevelopmentLevel,
     );
   }
 
@@ -70,9 +87,11 @@ class Province {
           ownerId == other.ownerId &&
           displayName == other.displayName &&
           fortLevel == other.fortLevel &&
-          terrain == other.terrain;
+          terrain == other.terrain &&
+          townTileKey == other.townTileKey &&
+          townDevelopmentLevel == other.townDevelopmentLevel;
 
   @override
   int get hashCode =>
-      Object.hash(id, regionId, ownerId, displayName, fortLevel, terrain);
+      Object.hash(id, regionId, ownerId, displayName, fortLevel, terrain, townTileKey, townDevelopmentLevel);
 }

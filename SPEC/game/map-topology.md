@@ -13,7 +13,7 @@ The map is an **undirected graph**. Nodes are **provinces (P)** or **sea zones (
 - **P1 <-> P2** — P1 and P2 are contiguous land provinces (neighbours). Armies move only between adjacent provinces.
 - **P1 <-> S1** — Province P1 is next to sea zone S1 (coast).
 
-**S1 <-> S2** (sea–sea) for naval movement between sea zones (Phase 5+). No other edge types. **Coastal tiles:** Land tiles in province P that are adjacent (in the grid) to a sea zone S with P<->S edge. Ships entering S reveal coastal tiles of P. See [ships-and-naval.md](ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md).
+**S1 <-> S2** (sea–sea) define **sea paths**: movement and **connectivity** between sea zones use this graph (e.g. a port in sea zone B is reachable from a port in sea zone A if there is a path of S–S edges from A to B, or A = B). Phase 5+. No other edge types. Connectivity algorithm: [extraction-pipeline.md](../program/extraction-pipeline.md). **Coastal tiles:** Land tiles in province P that are adjacent (in the grid) to a sea zone S with P<->S edge. Ships entering S reveal coastal tiles of P. See [ships-and-naval.md](ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md).
 
 ---
 

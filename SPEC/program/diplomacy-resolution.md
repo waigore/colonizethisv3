@@ -23,7 +23,7 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 3. **Resolve Join Empire/Colony** — Check relation score threshold per game rules; apply absorption (GP target) or colony creation (Tribe target).
 4. **Process alliance proposals** — Apply accept/refuse; update alliance state; apply refusal relation penalties per game rules.
 5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn.
-6. **Apply relation modifiers** — From trade, grants, war, broken treaties per game rules.
+6. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
 7. **Update relation scores** — Recompute from modifiers; clamp 0–100; derive level.
 
 **Order validation:** Each diplomatic order type (see game/diplomacy.md § Diplomatic Order Types) is validated by the order engine — preconditions (AT_PEACE/AT_WAR, overture stage, treasury) checked at submission and again at resolution.
@@ -38,7 +38,7 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 | Upstream | Player orders, world state (relations, overtures, treasury) |
 | Downstream | Relation state → combat/movement validation; AI evidence/dossier pipeline |
 
-**Economy:** GrantAid deducts treasury. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
+**Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
 
 **Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver.
 

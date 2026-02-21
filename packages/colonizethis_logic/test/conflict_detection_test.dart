@@ -57,6 +57,39 @@ void main() {
       expect(battles[0].attackers[0].unitIds, ['u1']);
     });
 
+    test('detects conflict in newWorld when two factions and move order', () {
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$nw|N1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$nw|N1'),
+            ],
+          ),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|N1')],
+        },
+      );
+      final battles = detectConflicts(game, orders);
+      expect(battles.length, 1);
+      expect(battles[0].regionId, nw);
+      expect(battles[0].provinceId, '$nw|N1');
+    });
+
     test('returns no battle when only one faction in province', () {
       const ow = 'oldWorld';
       final game = Game(

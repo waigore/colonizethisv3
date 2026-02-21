@@ -66,14 +66,12 @@ Techs grant **effects** when researched (no separate "apply" step):
 
 **Funding presets:**
 
-| Preset | Gold/turn | Research points/turn |
-|---|---|---|
-| None | 0 | 0 |
-| Low | ? | ? |
-| Medium | ? | ? |
-| High | ? | ? |
-| Maximum | ? | ? |
-
-> **REQUIRES CLARIFICATION:** Gold cost and research points per preset. Imp2 uses probabilistic research with continuous cash allocation -- no discrete presets. ColonizeThis uses deterministic presets; define the exact mapping.
+| Preset  | Gold/Turn | RP/Turn | Efficiency                     |
+| ------- | --------- | ------- | ------------------------------ |
+| None    | 0         | 0       | —                              |
+| Low     | 50        | 100     | 2.0 RP/gold                    |
+| Medium  | 150       | 300     | 2.0 RP/gold                    |
+| High    | 400       | 800     | 2.0 RP/gold                    |
+| Maximum | 1000      | 2500    | 2.5 RP/gold (efficiency bonus) |
 
 **Goal slot:** Optional goal tech for UI sorting only; no spending. **Cancel:** Clearing a slot **loses all progress** (per Imp2). Research phase runs after Production and Consumption; see [research-resolution.md](../program/research-resolution.md).

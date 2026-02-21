@@ -1,0 +1,25 @@
+name: sim_scenarios
+description: Batch scenario test driver for game integration testing
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  args:
+  path:
+  hive:
+  colonizethis_data:
+  colonizethis_logic:
+  colonizethis_models:
+  colonizethis_save:
+  colonizethis_map:
+
+dev_dependencies:
+  colonizethis_test:
+  test: ^1.24.0
+
+executables:
+  sim_scenarios: bin/sim_scenarios.dart

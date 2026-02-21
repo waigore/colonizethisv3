@@ -88,5 +88,39 @@ void main() {
       expect(effects.unitLocations, isNotNull);
       expect(effects.unitLocations!['u1'], 'P2');
     });
+
+    test('returns ProjectedEffects with workerCount and unitLocations after full resolve', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.workerCount, isNotNull);
+      expect(effects.unitLocations, isNotNull);
+    });
   });
 }

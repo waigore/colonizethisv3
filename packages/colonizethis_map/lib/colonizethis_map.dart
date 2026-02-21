@@ -14,4 +14,5 @@ export 'src/init_game_map_view_data.dart';
 export 'src/init_game_map_view_builder.dart';
 export 'src/game_world_state_map_visualizer.dart';
 export 'src/multi_region_map_rendering.dart';
+export 'src/map_format_util.dart';
 

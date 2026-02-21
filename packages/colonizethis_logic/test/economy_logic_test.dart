@@ -167,6 +167,24 @@ void main() {
       // Peasants may starve if insufficient food remains, but never increase.
       expect(result.workerPool.peasants, lessThanOrEqualTo(workers.peasants));
     });
+
+    test('starvation order: peasants fed first, then apprentices, then journeymen, then masters', () {
+      // SPEC/game/workers-and-population.md: peasants removed first when food insufficient.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 2)
+          .applyDelta(CommodityCatalog.meat.id, 1);
+      const workers = WorkerPool(
+        peasants: 2,
+        apprentices: 2,
+        journeymen: 0,
+        masters: 0,
+      );
+      final result = resolveConsumption(stockpile: stockpile, workers: workers);
+      expect(result.workerPool.peasants, 2);
+      expect(result.workerPool.apprentices, 0);
+      expect(result.workerPool.journeymen, 0);
+      expect(result.workerPool.masters, 0);
+    });
   });
 
   group('resolveRichesToTreasury', () {

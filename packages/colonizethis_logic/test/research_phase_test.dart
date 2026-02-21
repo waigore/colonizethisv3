@@ -28,8 +28,9 @@ void main() {
 
     test('accumulates research progress and unlocks tech when cost reached', () {
       final tech = techById('gathering_1')!;
+      // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
       final game = _baseGame(
-        treasury: 100,
+        treasury: 2000,
         techUnlocked: const {},
       );
 
@@ -70,8 +71,9 @@ void main() {
     });
 
     test('applies prerequisite rule: cannot research tech without prereqs', () {
+      // No spend when prereq not met; use enough treasury in case logic ever applied
       final game = _baseGame(
-        treasury: 200,
+        treasury: 2000,
         techUnlocked: const {}, // gathering_1 not researched
       );
 
@@ -123,13 +125,14 @@ void main() {
     });
 
     test('research with low funding deducts treasury and adds progress', () {
-      final game = _baseGame(treasury: 100, techUnlocked: const {});
+      // Use gathering_2 (cost 120) with prereq so 100 RP does not complete in one turn.
+      final game = _baseGame(treasury: 100, techUnlocked: const {'gathering_1': true});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'gathering_2',
               funding: ResearchFundingLevel.low,
             ),
           ],
@@ -140,8 +143,90 @@ void main() {
         topology: const MapTopology(),
         orders: orders,
       );
-      expect(next.players.single.treasury, 90);
-      expect(next.players.single.researchProgressByTechId!['gathering_1'], 10);
+      // Low funding: 50 gold cost, 100 RP per turn (per SPEC/game/tech-tree.md)
+      expect(next.players.single.treasury, 50);
+      expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
+    });
+
+    test('research with maximum funding has efficiency bonus', () {
+      final game = _baseGame(treasury: 2000, techUnlocked: const {});
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'gathering_1',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      );
+      // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
+      // gathering_1 cost is 80, so tech unlocks and progress is cleared.
+      expect(next.players.single.treasury, 1000);
+      expect(next.players.single.techUnlocked!['gathering_1'], isTrue);
+    });
+
+    test('all funding levels match spec values via game behavior', () {
+      // Use gathering_2 (cost 120) with prereq met so low funding does not complete in one turn.
+      const prereqMet = {'gathering_1': true};
+
+      // Low: 50 gold, 100 RP (no unlock; 100 < 120)
+      var game = _baseGame(treasury: 100, techUnlocked: prereqMet);
+      var orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.low),
+          ],
+        },
+      );
+      var next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      expect(next.players.single.treasury, 50);
+      expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
+
+      // Medium: 150 gold, 300 RP (unlocks gathering_2)
+      game = _baseGame(treasury: 200, techUnlocked: prereqMet);
+      orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.medium),
+          ],
+        },
+      );
+      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      expect(next.players.single.treasury, 50);
+      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
+
+      // High: 400 gold, 800 RP (unlocks)
+      game = _baseGame(treasury: 500, techUnlocked: prereqMet);
+      orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.high),
+          ],
+        },
+      );
+      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      expect(next.players.single.treasury, 100);
+      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
+
+      // Maximum: 1000 gold, 2500 RP (2.5x efficiency, unlocks)
+      game = _baseGame(treasury: 1500, techUnlocked: prereqMet);
+      orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.maximum),
+          ],
+        },
+      );
+      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      expect(next.players.single.treasury, 500);
+      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
     });
   });
 }

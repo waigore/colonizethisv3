@@ -197,6 +197,19 @@ void main() {
       expect(decoded.height, greaterThanOrEqualTo(24));
     });
 
+    test('with landSeedPositions only (no continent indices): single Land seeds legend row', () {
+      const cellSize = 8;
+      final bytes = renderTileMapToPng(
+        smallResult,
+        topology,
+        cellSize: cellSize,
+        landSeedPositions: [(0, 0), (1, 1)],
+      );
+      final decoded = img.decodeImage(bytes);
+      expect(decoded, isNotNull);
+      expect(decoded!.height, greaterThan(3 * cellSize), reason: 'Legend includes land seeds row');
+    });
+
     test('with landSeedPositions: marker at cell center and extra legend row', () {
       const cellSize = 8;
       final bytesWithout = renderTileMapToPng(smallResult, topology, cellSize: cellSize);
@@ -216,6 +229,23 @@ void main() {
       expect((pixel.r - landSeedMarkerRgb.$1).abs(), lessThanOrEqualTo(_colorTolerance));
       expect((pixel.g - landSeedMarkerRgb.$2).abs(), lessThanOrEqualTo(_colorTolerance));
       expect((pixel.b - landSeedMarkerRgb.$3).abs(), lessThanOrEqualTo(_colorTolerance));
+    });
+
+    test('with continentSeedPositions only: extra legend row for continent seeds', () {
+      const cellSize = 8;
+      final bytesWithContinent = renderTileMapToPng(
+        resultWithTerrain,
+        topology,
+        cellSize: cellSize,
+        continentSeedPositions: [(0, 0)],
+      );
+      final bytesWithout = renderTileMapToPng(resultWithTerrain, topology, cellSize: cellSize);
+      final decodedWith = img.decodeImage(bytesWithContinent);
+      final decodedWithout = img.decodeImage(bytesWithout);
+      expect(decodedWith, isNotNull);
+      expect(decodedWithout, isNotNull);
+      expect(decodedWith!.height, greaterThan(decodedWithout!.height),
+          reason: 'Continent seeds add a legend row');
     });
 
     test('with continentSeedPositions and landSeedPositions: two legend rows and distinct markers', () {
@@ -328,6 +358,12 @@ void main() {
       final path = writeTileMapImageToTempFile(smallResult, topology);
       final result = openInDefaultViewer(path);
       expect(result, isA<bool>());
+    });
+
+    test('returns false when SUPPRESS_IMAGE_VIEWER is 1', () {
+      if (Platform.environment['SUPPRESS_IMAGE_VIEWER'] == '1') {
+        expect(openInDefaultViewer('dummy_path'), isFalse);
+      }
     });
   });
 }

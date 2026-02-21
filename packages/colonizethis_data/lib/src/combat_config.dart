@@ -363,7 +363,7 @@ enum DifficultyLevel {
 }
 
 /// Terrain modifier: multiplier applied to attacker or defender strength.
-/// Key: terrain id (plains, forest, hills, mountain, swamp).
+/// Key: terrain id (plains, forest, hills, mountain, swamp, desert).
 /// Values: attacker modifier, defender modifier (1.0 = no change).
 const Map<String, (double attacker, double defender)> terrainModifiers = {
   'plains': (1.0, 1.0),
@@ -371,16 +371,22 @@ const Map<String, (double attacker, double defender)> terrainModifiers = {
   'hills': (0.95, 1.05),
   'mountain': (0.8, 1.2),
   'swamp': (0.85, 1.15),
+  'desert': (1.0, 1.0),
 };
 
 /// Fort level damage reduction (0–1): fraction of damage blocked for defenders.
-const List<double> fortDamageReduction = [0.0, 0.2, 0.35, 0.5];
+/// SPEC/game/siege-mechanics.md: Fort 0: 0%, Wood: 25%, Stone: 45%, Modern: 60%.
+const List<double> fortDamageReduction = [0.0, 0.25, 0.45, 0.60];
 
 /// Fort level emplaced artillery strength contribution (baseline per gun).
 const List<double> fortEmplacedStrength = [0.0, 3.0, 4.0, 5.0];
 
 /// Number of emplaced guns per fort level.
 const List<int> fortGunCount = [0, 1, 2, 3];
+
+/// Wall HP per fort level (0 = no wall). Damage to defenders is applied after wall soaks this much.
+/// SPEC/game/siege-mechanics.md (Wall Strength: Light / Medium / Heavy).
+const List<double> wallHpByFortLevel = [0.0, 10.0, 20.0, 30.0];
 
 /// Difficulty multiplier: defender strength multiplier.
 const Map<DifficultyLevel, double> difficultyDefenderMultiplier = {

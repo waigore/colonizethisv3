@@ -198,4 +198,37 @@ void main() {
       expect(updated.worldState.fleets.single.shipTypeIds, ['carrack']);
     });
   });
+
+  group('navalInterceptProbability', () {
+    test('Patrol base is 0.3', () {
+      expect(
+        navalInterceptProbability(interceptorStrength: 10, targetStrength: 10, isBlockade: false),
+        0.3,
+      );
+    });
+    test('Blockade base is 0.5', () {
+      expect(
+        navalInterceptProbability(interceptorStrength: 10, targetStrength: 10, isBlockade: true),
+        0.5,
+      );
+    });
+    test('superior force adds bonus', () {
+      final p = navalInterceptProbability(interceptorStrength: 20, targetStrength: 5, isBlockade: false);
+      expect(p, 0.3 + 0.1);
+    });
+    test('inferior force subtracts penalty', () {
+      final p = navalInterceptProbability(interceptorStrength: 5, targetStrength: 20, isBlockade: false);
+      expect(p, 0.3 - 0.1);
+    });
+    test('result is clamped 0.05-0.85', () {
+      expect(
+        navalInterceptProbability(interceptorStrength: 1, targetStrength: 100, isBlockade: false),
+        greaterThanOrEqualTo(0.05),
+      );
+      expect(
+        navalInterceptProbability(interceptorStrength: 100, targetStrength: 1, isBlockade: true),
+        lessThanOrEqualTo(0.85),
+      );
+    });
+  });
 }

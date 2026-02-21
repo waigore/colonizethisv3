@@ -205,5 +205,41 @@ void main() {
         isTrue,
       );
     });
+
+    test('build_road with targetTileKey uses tile key for region and province', () {
+      final view = _view(
+        visibilityByTile: {'oldWorld|p2|1|1': VisibilityLevel.fogged},
+        provincesById: {
+          'oldWorld|p2': Province(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            displayName: 'P2',
+            ownerId: 'gp1',
+          ),
+        },
+      );
+      const unit = Unit(
+        id: 'u1',
+        type: 'engineer',
+        ownerId: 'gp1',
+        provinceId: 'oldWorld|p2',
+      );
+      expect(
+        workOrderVisibilityOk(view, unit, 'build_road', 'oldWorld|p2|1|1'),
+        isTrue,
+      );
+    });
+
+    test('provinceHasAtLeastVisibility returns false when parts.length != 4', () {
+      final view = _view(
+        visibilityByTile: {'oldWorld|p1|0': VisibilityLevel.fullyVisible},
+      );
+      expect(
+        provinceHasAtLeastVisibility(
+          view, 'oldWorld', 'p1', VisibilityLevel.revealed,
+        ),
+        isFalse,
+      );
+    });
   });
 }

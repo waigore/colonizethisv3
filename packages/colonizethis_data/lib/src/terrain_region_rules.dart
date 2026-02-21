@@ -15,13 +15,14 @@ const List<TerrainType> oldWorldTerrains = [
 ];
 
 /// Terrains allowed in the New World (NW-only + Both from canonical table).
-/// Phase 1: all current types; extend when adding e.g. Sugar Plantation, Desert.
+/// Includes desert (diamonds). SPEC/game/resource-terrain-region-rules.md.
 const List<TerrainType> newWorldTerrains = [
   TerrainType.plains,
   TerrainType.forest,
   TerrainType.hills,
   TerrainType.mountain,
   TerrainType.swamp,
+  TerrainType.desert,
 ];
 
 /// Normalized terrain distribution for a map region.
@@ -69,13 +70,14 @@ const Map<TerrainType, double> _oldWorldNonMountainWeights = {
   TerrainType.swamp: 1.0,
 };
 
-// New World: similar defaults for Phase 1; can diverge in later rulesets.
+// New World: includes desert (diamonds). SPEC/game/resource-terrain-region-rules.md.
 const double _newWorldMountainFraction = 0.15;
 const Map<TerrainType, double> _newWorldNonMountainWeights = {
   TerrainType.plains: 4.0,
   TerrainType.forest: 3.0,
   TerrainType.hills: 2.0,
   TerrainType.swamp: 1.0,
+  TerrainType.desert: 1.0,
 };
 
 TerrainDistribution _buildDistribution(

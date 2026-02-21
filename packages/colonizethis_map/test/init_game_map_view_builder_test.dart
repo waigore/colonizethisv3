@@ -266,5 +266,166 @@ void main() {
       expect(marker.x, 0);
       expect(marker.y, 0);
     });
+
+    test('includes capital markers for minor nations and tribes with null displayName', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final game = Game(
+        id: 'capitals',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', displayName: 'OW'),
+            ],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: 'newWorld|p1', regionId: 'newWorld', displayName: 'NW'),
+            ],
+            units: const [],
+          ),
+        ),
+        players: const [],
+        minorNations: [
+          MinorNation(
+            id: 'minor1',
+            displayName: null,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+        tribes: [
+          Tribe(
+            id: 'tribe1',
+            displayName: null,
+            capitalTile: CapitalTile(
+              regionId: 'newWorld',
+              provinceId: 'newWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 8,
+      );
+
+      expect(viewData.oldWorld.capitalMarkers, hasLength(1));
+      expect(viewData.oldWorld.capitalMarkers.single.factionId, 'minor1');
+      expect(viewData.oldWorld.capitalMarkers.single.displayName, 'minor1');
+
+      expect(viewData.newWorld.capitalMarkers, hasLength(1));
+      expect(viewData.newWorld.capitalMarkers.single.factionId, 'tribe1');
+      expect(viewData.newWorld.capitalMarkers.single.displayName, 'tribe1');
+    });
+
+    test('includes port markers from portsByProvinceSeaboard', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final game = Game(
+        id: 'ports',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+            ],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: 'newWorld|p1', regionId: 'newWorld'),
+            ],
+            units: const [],
+          ),
+          portsByProvinceSeaboard: {
+            'oldWorld|p1|seaboard': 'oldWorld|p1|0|1',
+          },
+        ),
+        players: const [],
+        minorNations: const [],
+        tribes: const [],
+      );
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 8,
+      );
+
+      expect(viewData.oldWorld.portMarkers, hasLength(1));
+      expect(viewData.oldWorld.portMarkers.single.x, 0);
+      expect(viewData.oldWorld.portMarkers.single.y, 1);
+      expect(viewData.oldWorld.portMarkers.single.provinceId, 'p1');
+      expect(viewData.oldWorld.portMarkers.single.seaboardKey, 'oldWorld|p1|seaboard');
+    });
   });
 }

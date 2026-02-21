@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Computes per-player resource extraction each turn by resolving tile connectivity and applying the extraction formula from game rules. Game rules: [extraction-and-improvements.md](../game/extraction-and-improvements.md).
+Computes per-player resource extraction each turn by resolving tile connectivity and applying the extraction formula from game rules. Game rules: [extraction-and-improvements.md](../game/extraction-and-improvements.md). Connectivity rules are defined in [capital-and-connectivity.md](../game/capital-and-connectivity.md).
 
 ---
 
@@ -18,9 +18,11 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 ### Connectivity Resolver
 
-**Input:** World state (provinces, owners, capital per player, tile map, per-tile roads/transport, ports per province/seaboard), topology.
+**Input:** World state (provinces, owners, capital per player, tile map, per-tile road level / transport, ports per province/seaboard), topology (including S–S edges for sea paths).
 
-**Algorithm:** From each player's capital tile, BFS on the tile graph. Tiles are nodes; edges require adjacency plus road/railroad path to capital (same region) or road path to a port on the correct seaboard (overseas). Re-run each turn. Phase 2: blockade stub (no effect).
+**Algorithm:** A port is connected to the capital iff (1) capital is on the seaboard (capital tile adjacent to sea), or (2) there is a road/rail path from capital to that port. Overseas tiles are connected if they have a road path to a port in that province that is connected to the capital (by (1) or (2)). Same region: from capital tile, BFS on the tile graph (edges: adjacency; expand only from capital or tiles with road/railroad/port). Overseas: ports whose sea zone is reachable from the capital's sea zone via sea–sea edges in topology are "sea-connected"; from those ports, BFS by road/rail within the province. Transport level is read from the same per-tile state (road level; port = 4) for extraction. Re-run each turn. Phase 2: blockade stub (no effect). See [capital-and-connectivity.md](../game/capital-and-connectivity.md).
+
+**Implementation notes:** (1) **Capital on seaboard:** If capital tile is adjacent to sea, all owned ports reachable via sea-path (BFS on topology over sea zones, S–S edges) from the capital's sea zone are connected for the overseas-tile step. (2) **Capital not on seaboard:** Only ports reachable by road/rail from capital (land BFS) count. Same-region ports: if capital on seaboard, treat as connected via sea-path graph; if not, only by road/rail path. (3) **Sea path:** From capital's port(s), collect sea zone IDs; BFS on topology over sea zones (nodes = sea zones, edges = S–S); mark all sea zones reachable from capital's zones; any port in an owned province whose sea zone is in that set is "sea-connected". Use that set for both same-region and overseas port connectivity.
 
 **Output:** Per player, set of connected tile keys.
 
@@ -32,7 +34,7 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 1. Check mineral gating: if mineral resource, tile must be in player's prospected set (per game/fog-and-exploration.md). Skip if not.
 2. Production = min(improvement level, owner tech cap).
-3. Effective yield = min(production, transport level) — per game/extraction-and-improvements.md.
+3. Effective yield = min(production, transport level) — transport level is the tile's road level (or 4 for port); per game/extraction-and-improvements.md.
 4. Sum by commodity; split same-region vs overseas using player's capital region.
 
 **Output:** Per player, land totals and overseas totals (commodity → quantity).

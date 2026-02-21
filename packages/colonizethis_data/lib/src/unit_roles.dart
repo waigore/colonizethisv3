@@ -6,6 +6,7 @@ enum UnitRole {
   civilianWorker,
   explorer,
   merchant,
+  spy,
   naval,
 }
 
@@ -17,8 +18,9 @@ const Map<String, UnitRole> _explicitUnitRoles = {
   'Explorer': UnitRole.explorer,
   'Builder': UnitRole.civilianWorker,
   'Engineer': UnitRole.civilianWorker,
-  // Merchant and naval types can be filled in when they enter scope.
+  'Spy': UnitRole.spy,
   'Merchant': UnitRole.merchant,
+  'Rail Builder': UnitRole.civilianWorker,
 };
 
 /// Returns the [UnitRole] for a given unit [type] id, or null if unknown.
@@ -44,6 +46,9 @@ bool isCivilianWorkerUnit(String type) =>
 
 bool isMerchantUnit(String type) =>
     unitRoleForType(type) == UnitRole.merchant;
+
+bool isSpyUnit(String type) =>
+    unitRoleForType(type) == UnitRole.spy;
 
 bool isNavalUnit(String type) => unitRoleForType(type) == UnitRole.naval;
 

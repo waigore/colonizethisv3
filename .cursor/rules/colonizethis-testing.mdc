@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Coverage
 
-- **90% per package.** Enforce in CI where applicable (e.g. `tool/test_coverage.sh` and fail if any package is below threshold).
+- **90% per package.** Enforce in CI where applicable (e.g. `tool/test_coverage.py` and fail if any package is below threshold).
 
 ## Layers
 

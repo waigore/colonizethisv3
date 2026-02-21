@@ -95,3 +95,6 @@ Desktop.ini
 .directory
 .Trash
 .Trash-1000
+
+# Cursor debug logs
+.cursor/debug*.log

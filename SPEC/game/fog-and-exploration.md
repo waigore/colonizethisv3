@@ -40,7 +40,7 @@ Explorer with work order target `prospect` prospects the tile under the unit. On
 
 **Known from terrain when visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
 
-Mineral-eligible terrain: swamp, hills, mountain. See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
+Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
 
 ### Fog Decay
 

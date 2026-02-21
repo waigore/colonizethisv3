@@ -16,19 +16,13 @@ Per Imperialism II: "commodities produced in these terrain tiles move to your wa
 3. **Consumption:** Workers, military, and navy consume food and materials from stockpile.
 
 ### Capacity
-Capacity limits may apply per commodity or total; configurable per era. Overflow: excess sold at market or discarded (per design).
+Capacity for all commodities is infinite; no limit on the amount of each commodity for the player.
 
 ### Relations
 - **Player** → **Stockpile** (commodity quantities).
 - Extraction in provinces → owning player's stockpile (via transport network).
 - Production: stockpile inputs + labour → stockpile outputs.
 
-## Configurable Values
-
-| Parameter | Default | Notes |
-|-----------|---------|-------|
-| Capacity per commodity | TBD | Per era |
-| Overflow behavior | Sell at market | Configurable |
 
 ## Interactions
 - [commodity-catalog.md](commodity-catalog.md) — commodity definitions

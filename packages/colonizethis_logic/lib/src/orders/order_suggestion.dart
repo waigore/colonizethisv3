@@ -168,10 +168,14 @@ List<WorkOrder> suggestWorkOrders(
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
 
   for (final unit in view.ownUnits) {
+    if (unit.currentWork != null) continue;
+
     final type = unit.type;
     final isExplorer = isExplorerUnit(type);
     final isWorker = isCivilianWorkerUnit(type);
-    if (!isExplorer && !isWorker) continue;
+    final isSpy = isSpyUnit(type);
+    final isMerchant = isMerchantUnit(type);
+    if (!isExplorer && !isWorker && !isSpy && !isMerchant) continue;
 
     final regionId = _regionIdForUnit(view, unit);
     final provinceId = unit.locationProvinceId;
@@ -241,26 +245,70 @@ List<WorkOrder> suggestWorkOrders(
       continue;
     }
 
-    if (tilesInProvince.isEmpty) continue;
+    if (isWorker && tilesInProvince.isNotEmpty) {
+      final allowedTargets = workOrderTargetsByUnitType[type];
+      if (allowedTargets != null) {
+        for (final target in allowedTargets) {
+          final existing = existingTargetsByUnit[unit.id];
+          if (existing != null && existing.contains(target)) continue;
 
-    for (final target in const [
-      'build_improvement',
-      'upgrade_town',
-      'build_road',
-      'build_port',
-      'build_fort',
-      'build_rail',
-    ]) {
-      final existing = existingTargetsByUnit[unit.id];
-      if (existing != null && existing.contains(target)) continue;
+          final targetTileKey = tilesInProvince.first;
+          final candidate = WorkOrder(unitId: unit.id, target: target, targetTileKey: targetTileKey);
+          if (_isWorkOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+            _log.d('logic: suggestWorkOrders candidate=$candidate');
+            suggestions.add(candidate);
+          } else {
+            _log.d('logic: suggestWorkOrders rejected candidate=$candidate');
+          }
+        }
+      }
+    }
 
-      final targetTileKey = tilesInProvince.first;
-      final candidate = WorkOrder(unitId: unit.id, target: target, targetTileKey: targetTileKey);
-      if (_isWorkOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
-        _log.d('logic: suggestWorkOrders candidate=$candidate');
-        suggestions.add(candidate);
-      } else {
-        _log.d('logic: suggestWorkOrders rejected candidate=$candidate');
+    if (isSpy && tilesInProvince.isNotEmpty) {
+      final allowedTargets = workOrderTargetsByUnitType[type];
+      if (allowedTargets != null) {
+        if (allowedTargets.contains('counter_spy') && ownerId == playerId) {
+          final targetTileKey = tilesInProvince.first;
+          final candidate = WorkOrder(unitId: unit.id, target: 'counter_spy', targetTileKey: targetTileKey);
+          if (_isWorkOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+            suggestions.add(candidate);
+          }
+        }
+        if (allowedTargets.contains('steal_tech')) {
+          for (final other in game.players) {
+            if (other.id == playerId || other.capitalProvinceId == null) continue;
+            final capProvinceId = other.capitalProvinceId!;
+            final capRegionId = ProvinceId.regionIdFrom(capProvinceId);
+            final capTiles = tileKeysByRegion[capRegionId]?[capProvinceId] ?? const [];
+            if (capTiles.isEmpty) continue;
+            final candidate = WorkOrder(unitId: unit.id, target: 'steal_tech', targetTileKey: capTiles.first);
+            if (_isWorkOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+              suggestions.add(candidate);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (isMerchant) {
+      final allowedTargets = workOrderTargetsByUnitType[type];
+      if (allowedTargets != null && allowedTargets.contains('purchase_land')) {
+        final resourceByTile = game.worldState.resourceByTileKey;
+        final playerIds = game.players.map((p) => p.id).toSet();
+        for (final p in [...game.worldState.oldWorld.provinces, ...game.worldState.newWorld.provinces]) {
+          if (p.ownerId == null || playerIds.contains(p.ownerId!)) continue;
+          final regionId = p.regionId;
+          final tiles = tileKeysByRegion[regionId]?[p.id] ?? const [];
+          for (final tk in tiles) {
+            if (resourceByTile[tk] == null) continue;
+            final candidate = WorkOrder(unitId: unit.id, target: 'purchase_land', targetTileKey: tk);
+            if (_isWorkOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+              suggestions.add(candidate);
+              break;
+            }
+          }
+        }
       }
     }
   }
@@ -301,7 +349,7 @@ List<BuildUnitOrder> suggestBuildOrders(
     final unitType = entry.key;
     final candidate = BuildUnitOrder(
       unitType: unitType,
-      isMilitary: true,
+      isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
       spawnProvinceId: capitalId,
     );
 

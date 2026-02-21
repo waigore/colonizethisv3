@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -10,9 +12,11 @@ import '../world/player_view.dart';
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
 ///
-/// When [topology] is provided, ship builds (BuildUnitOrder with ship unit type) spawn in home fleet.
-/// - BuildUnitOrder: when isMilitary, consumes one peasant if available;
-///   when ship type, deducts cost and adds ship to home fleet at capital port.
+/// When [topology] is provided, ship builds spawn in home fleet.
+/// BuildUnitOrder is applied by unit type category (civilian / military / naval) per buildUnitCategoryForUnitType.
+/// - Civilian: deduct treasury + paper, add unit with tileKey.
+/// - Military: deduct cost + worker, add unit.
+/// - Naval: deduct cost, add ship to home fleet at capital port.
 /// - WorkOrder: sets the unit status to working; no terrain change yet.
 Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) {
   final buildOrders = orders.buildUnitOrdersByPlayerId;
@@ -29,6 +33,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
   var tileState = game.worldState.tileState;
   var visibilityByTile = game.worldState.playerVisibilityByTile;
   var portsByProvinceSeaboard = Map<String, String>.from(game.worldState.portsByProvinceSeaboard);
+  var purchasedTilesByTileKey = Map<String, String>.from(game.worldState.purchasedTilesByTileKey);
   var oldProvinces = List<Province>.from(game.worldState.oldWorld.provinces);
   var newProvinces = List<Province>.from(game.worldState.newWorld.provinces);
 
@@ -50,17 +55,32 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
       ..[playerId] = vis;
   }
 
-  void applyCompletedWorkTarget(Unit u, CurrentWork cw, List<Province> Function() getProvinces, void Function(List<Province>) setProvinces) {
+  void applyCompletedWorkTarget(Unit u, CurrentWork cw, List<Province> Function() getProvinces, void Function(List<Province>) setProvinces, Game gameForPlayer) {
     switch (cw.workTarget) {
       case 'build_improvement':
-      case 'upgrade_town':
         final level = tileState.improvementLevel(cw.tileKey);
         tileState = tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
+        break;
+      case 'upgrade_town':
+        final provinces = getProvinces();
+        final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
+        if (idx >= 0) {
+          final p = provinces[idx];
+          setProvinces(List<Province>.from(provinces)
+            ..[idx] = p.copyWith(townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4)));
+        }
+        break;
       case 'explore':
         applyExploreCompletion(u, ProvinceId.regionIdFrom(u.locationProvinceId));
-      case 'build_road':
-        final level = tileState.roadLevel(cw.tileKey);
-        tileState = tileState.setRoadLevel(cw.tileKey, (level + 1).clamp(0, 2));
+        break;
+      case 'build_road': {
+        final roadLevel = tileState.roadLevel(cw.tileKey);
+        final player = gameForPlayer.players.where((p) => p.id == u.ownerId).firstOrNull;
+        final hasRoadConstruction = player?.techUnlocked?['road_construction'] == true;
+        final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
+        tileState = tileState.setRoadLevel(cw.tileKey, nextLevel);
+        break;
+      }
       case 'build_port':
         if (topology != null) {
           final parts = cw.tileKey.split('|');
@@ -73,6 +93,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
             tileState = tileState.setRoadLevel(cw.tileKey, 4);
           }
         }
+        break;
       case 'build_fort':
         final provinces = getProvinces();
         final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
@@ -81,25 +102,78 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
           setProvinces(List<Province>.from(provinces)
             ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)));
         }
+        break;
       case 'build_rail':
         tileState = tileState.setRoadLevel(cw.tileKey, 4);
+        break;
+      case 'steal_tech':
+        // Resolved in processWorkUnits with roll and tech grant
+        break;
+      case 'counter_spy':
+        // Ongoing; per-turn kill resolved in processWorkUnits
+        break;
       default:
         break;
     }
   }
 
-  void processWorkUnits(
+  Game processWorkUnits(
+    Game gameForPlayer,
     Map<String, Unit> unitsById,
     List<Province> Function() getProvinces,
     void Function(List<Province>) setProvinces,
   ) {
+    var currentGame = gameForPlayer;
+    final rand = gameForPlayer.globalGameSeed != null
+        ? Random(gameForPlayer.globalGameSeed! + (gameForPlayer.worldState.turnState.turnNumber * 1000))
+        : Random();
     for (final entry in unitsById.entries) {
       final u = entry.value;
       if (u.currentWork == null) continue;
       final cw = u.currentWork!;
+      if (cw.workTarget == 'counter_spy') {
+        // Per-turn: 5% per friendly spy (cap 30%) to kill one enemy spy in province
+        final provinceId = u.locationProvinceId;
+        final friendlySpies = unitsById.values.where((x) =>
+            x.ownerId == u.ownerId && isSpyUnit(x.type) &&
+            x.currentWork?.workTarget == 'counter_spy' &&
+            x.locationProvinceId == provinceId).length;
+        final killChance = (friendlySpies * 5).clamp(0, 30) / 100.0;
+        final enemySpies = unitsById.entries.where((e) {
+          final x = e.value;
+          return x.ownerId != u.ownerId && isSpyUnit(x.type) && x.locationProvinceId == provinceId;
+        }).toList();
+        if (enemySpies.isNotEmpty && rand.nextDouble() < killChance) {
+          final toRemove = enemySpies.first.key;
+          unitsById.remove(toRemove);
+        }
+        continue;
+      }
       final nextRemaining = cw.remainingTurns - 1;
       if (nextRemaining <= 0) {
-        applyCompletedWorkTarget(u, cw, getProvinces, setProvinces);
+        if (cw.workTarget == 'steal_tech') {
+          final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
+          final otherPlayer = currentGame.players.where((p) =>
+              p.id != u.ownerId && p.capitalProvinceId == targetProvinceId).firstOrNull;
+          if (otherPlayer != null) {
+            final ourTech = currentGame.playerById(u.ownerId)?.techUnlocked ?? {};
+            final theirTech = otherPlayer.techUnlocked ?? {};
+            final missing = theirTech.entries.where((e) => e.value == true && ourTech[e.key] != true).map((e) => e.key).toList();
+            if (missing.isNotEmpty && rand.nextDouble() < 0.08) {
+              final granted = missing[rand.nextInt(missing.length)];
+              final player = currentGame.players.where((p) => p.id == u.ownerId).firstOrNull;
+              if (player != null) {
+                final updated = Map<String, bool>.from(player.techUnlocked ?? {})..[granted] = true;
+                currentGame = currentGame.copyWith(
+                  players: currentGame.players.map((p) =>
+                      p.id == u.ownerId ? p.copyWith(techUnlocked: updated) : p).toList(),
+                );
+              }
+            }
+          }
+        } else {
+          applyCompletedWorkTarget(u, cw, getProvinces, setProvinces, currentGame);
+        }
         unitsById[entry.key] = u.copyWith(status: UnitStatus.idle, currentWork: null);
       } else {
         unitsById[entry.key] = u.copyWith(
@@ -107,15 +181,17 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
         );
       }
     }
+    return currentGame;
   }
 
-  processWorkUnits(oldUnitsById, () => oldProvinces, (p) => oldProvinces = p);
-  processWorkUnits(newUnitsById, () => newProvinces, (p) => newProvinces = p);
+  game = processWorkUnits(game, oldUnitsById, () => oldProvinces, (p) => oldProvinces = p);
+  game = processWorkUnits(game, newUnitsById, () => newProvinces, (p) => newProvinces = p);
   game = game.copyWith(
     worldState: game.worldState.copyWith(
       tileState: tileState,
       playerVisibilityByTile: visibilityByTile,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
       oldWorld: RegionData(provinces: oldProvinces, units: oldUnitsById.values.toList()),
       newWorld: RegionData(provinces: newProvinces, units: newUnitsById.values.toList()),
     ),
@@ -128,56 +204,39 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
     var workers = player.workerPool;
     var treasury = player.treasury;
 
-    // Build units for this player.
+    // Build units for this player. Branch on unit type category (civilian / military / naval).
     for (final order in buildOrders[player.id] ?? const []) {
-      if (order.isMilitary) {
-        final econ = RegimentEconomyCatalog.byId[order.unitType];
-        if (econ == null) {
-          // Unknown regiment id; skip.
-          continue;
-        }
+      final category = buildUnitCategoryForUnitType(order.unitType);
+      if (category == BuildUnitCategory.unknown) continue;
 
-        // Tech gate: regiment buildable only if unlocking tech is in techUnlocked.
-        // Catalog: colonizethis_data.unlockingTechByRegimentId. SPEC/game/tech-tree-military.md.
+      if (category == BuildUnitCategory.military) {
+        final econ = RegimentEconomyCatalog.byId[order.unitType];
+        if (econ == null) continue;
+
         final techUnlocked = player.techUnlocked ?? const {};
         final unlockingTechId = unlockingTechByRegimentId[order.unitType];
         if (unlockingTechId != null && techUnlocked[unlockingTechId] != true) {
           continue;
         }
 
-        // Require at least one peasant to recruit a regiment.
-        if (workers.peasants <= 0) {
-          continue;
-        }
+        if (workers.peasants <= 0) continue;
+        if (treasury < econ.buildTreasuryCost) continue;
 
-        // Require sufficient treasury to pay the training cost.
-        if (treasury < econ.buildTreasuryCost) {
-          continue;
-        }
-
-        // Require sufficient stockpile for all material inputs.
         var hasAllInputs = true;
         for (final entry in econ.buildInputs.entries) {
-          final available = stockpile.quantityOf(entry.key);
-          if (available < entry.value) {
+          if (stockpile.quantityOf(entry.key) < entry.value) {
             hasAllInputs = false;
             break;
           }
         }
-        if (!hasAllInputs) {
-          continue;
-        }
+        if (!hasAllInputs) continue;
 
-        // Apply costs: treasury, materials, and one worker.
         treasury -= econ.buildTreasuryCost;
         for (final entry in econ.buildInputs.entries) {
           stockpile = stockpile.applyDelta(entry.key, -entry.value);
         }
         workers = workers.copyWith(peasants: workers.peasants - 1);
-      }
-
-      // Ship build: spawn in home fleet at capital port. SPEC/program/naval-movement-resolution.md.
-      if (!order.isMilitary && isShipUnitType(order.unitType) && topology != null) {
+      } else if (category == BuildUnitCategory.naval) {
         final shipEcon = ShipEconomyCatalog.byId[order.unitType];
         if (shipEcon == null) continue;
         final capProvinceId = player.capitalProvinceId;
@@ -198,7 +257,9 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
         }
 
         final regionId = ProvinceId.regionIdFrom(capProvinceId);
-        final seaZoneId = seaZoneIdForProvince(topology, ProvinceId.localIdFrom(capProvinceId));
+        final seaZoneId = topology != null
+            ? seaZoneIdForProvince(topology, ProvinceId.localIdFrom(capProvinceId))
+            : null;
         if (seaZoneId == null) continue;
 
         var fleets = List<Fleet>.from(game.worldState.fleets);
@@ -221,8 +282,31 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
           worldState: game.worldState.copyWith(fleets: fleets),
         );
         continue;
+      } else if (category == BuildUnitCategory.civilian) {
+        final econ = CivilianEconomyCatalog.byId[order.unitType];
+        if (econ == null) continue;
+
+        final unlockingTechId = unlockingTechByCivilianId[order.unitType];
+        if (unlockingTechId != null && (player.techUnlocked?[unlockingTechId] != true)) {
+          continue;
+        }
+        if (treasury < econ.buildTreasuryCost) continue;
+        var hasAllInputs = true;
+        for (final entry in econ.buildInputs.entries) {
+          if (stockpile.quantityOf(entry.key) < entry.value) {
+            hasAllInputs = false;
+            break;
+          }
+        }
+        if (!hasAllInputs) continue;
+
+        treasury -= econ.buildTreasuryCost;
+        for (final entry in econ.buildInputs.entries) {
+          stockpile = stockpile.applyDelta(entry.key, -entry.value);
+        }
       }
 
+      // Spawn unit for military and civilian (naval already continued above).
       final spawnProvinceId = order.spawnProvinceId;
       final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
       final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
@@ -235,7 +319,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
         type: order.unitType,
         ownerId: player.id,
         provinceId: spawnProvinceId,
-        tileKey: order.isMilitary ? null : firstTileInSpawn,
+        tileKey: category == BuildUnitCategory.civilian ? firstTileInSpawn : null,
       );
 
       if (regionId == kRegionNewWorld) {
@@ -259,11 +343,68 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
     String regionForUnit(String unitId) =>
         oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
 
+    Province? provinceById(String id) =>
+        game.worldState.oldWorld.provinces.where((p) => p.id == id).firstOrNull ??
+        game.worldState.newWorld.provinces.where((p) => p.id == id).firstOrNull;
+
+    bool canAffordMaterialCost(WorkOrderCost cost) {
+      for (final e in cost.entries) {
+        if (stockpile.quantityOf(e.key) < e.value) return false;
+      }
+      return true;
+    }
+
+    void deductMaterialCost(WorkOrderCost cost) {
+      for (final e in cost.entries) {
+        stockpile = stockpile.applyDelta(e.key, -e.value);
+      }
+    }
+
     for (final order in workOrders[player.id] ?? const []) {
       final u = lookupUnit(order.unitId);
       if (u == null) continue;
       final targetTileKey = order.targetTileKey;
       final hasValidTarget = targetTileKey.isNotEmpty;
+
+      if (order.target == 'purchase_land' && isWorkOrderTargetAllowedForUnitType(u.type, 'purchase_land') && hasValidTarget) {
+        final resourceId = game.worldState.resourceByTileKey[targetTileKey];
+        if (resourceId != null) {
+          final cost = 15 * landPurchaseBasePrice(resourceId);
+          if (treasury >= cost) {
+            treasury -= cost;
+            purchasedTilesByTileKey[targetTileKey] = player.id;
+          }
+        }
+        continue;
+      }
+
+      if (order.target == 'steal_tech' && isWorkOrderTargetAllowedForUnitType(u.type, 'steal_tech') && u.currentWork == null && hasValidTarget) {
+        updateUnit(order.unitId, u.copyWith(
+          status: UnitStatus.working,
+          tileKey: targetTileKey,
+          currentWork: CurrentWork(
+            workTarget: 'steal_tech',
+            tileKey: targetTileKey,
+            totalTurns: 5,
+            remainingTurns: 5,
+          ),
+        ));
+        continue;
+      }
+
+      if (order.target == 'counter_spy' && isWorkOrderTargetAllowedForUnitType(u.type, 'counter_spy') && u.currentWork == null && hasValidTarget) {
+        updateUnit(order.unitId, u.copyWith(
+          status: UnitStatus.working,
+          tileKey: targetTileKey,
+          currentWork: CurrentWork(
+            workTarget: 'counter_spy',
+            tileKey: targetTileKey,
+            totalTurns: 0,
+            remainingTurns: 1,
+          ),
+        ));
+        continue;
+      }
 
       if (order.target == 'prospect' && hasValidTarget) {
         final existing = game.worldState.playerProspectedTiles[player.id] ?? const {};
@@ -278,18 +419,25 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
         );
       }
       if (order.target == 'build_improvement' &&
+          isWorkOrderTargetAllowedForUnitType(u.type, 'build_improvement') &&
           u.currentWork == null &&
           hasValidTarget) {
-        updateUnit(order.unitId, u.copyWith(
-          status: UnitStatus.working,
-          tileKey: targetTileKey,
-          currentWork: CurrentWork(
-            workTarget: 'build_improvement',
+        final improvementLevel = tileState.improvementLevel(targetTileKey);
+        final cost = workOrderMaterialCost('build_improvement', improvementLevel: improvementLevel);
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('build_improvement', improvementLevel: improvementLevel);
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
             tileKey: targetTileKey,
-            totalTurns: 1,
-            remainingTurns: 1,
-          ),
-        ));
+            currentWork: CurrentWork(
+              workTarget: 'build_improvement',
+              tileKey: targetTileKey,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+        }
         continue;
       }
       if (order.target == 'explore' &&
@@ -320,15 +468,12 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
           continue;
         }
       }
-      const engineerTargets = {'build_road', 'build_port', 'build_fort'};
-      const railBuilderTargets = {'build_rail'};
-      const builderTargets = {'upgrade_town'};
       final workTarget = order.target;
-      if ((engineerTargets.contains(workTarget) && u.type == 'Engineer') ||
-          (railBuilderTargets.contains(workTarget) && u.type == 'Rail Builder') ||
-          (builderTargets.contains(workTarget) && u.type == 'Builder')) {
-        if (u.currentWork == null && hasValidTarget) {
-          const totalTurns = 1;
+      if (workTarget == 'build_road' && isWorkOrderTargetAllowedForUnitType(u.type, 'build_road') && u.currentWork == null && hasValidTarget) {
+        final cost = workOrderMaterialCost('build_road');
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('build_road');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -339,13 +484,83 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
               remainingTurns: totalTurns,
             ),
           ));
-          continue;
         }
+        continue;
       }
-      updateUnit(order.unitId, u.copyWith(
-        status: UnitStatus.working,
-        movementPoints: u.movementPoints,
-      ));
+      if (workTarget == 'build_port' && isWorkOrderTargetAllowedForUnitType(u.type, 'build_port') && u.currentWork == null && hasValidTarget) {
+        final cost = workOrderMaterialCost('build_port');
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('build_port');
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
+            tileKey: targetTileKey,
+            currentWork: CurrentWork(
+              workTarget: workTarget,
+              tileKey: targetTileKey,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+        }
+        continue;
+      }
+      if (workTarget == 'build_fort' && isWorkOrderTargetAllowedForUnitType(u.type, 'build_fort') && u.currentWork == null && hasValidTarget) {
+        final prov = provinceById(u.locationProvinceId);
+        final fortLevel = prov?.fortLevel ?? 0;
+        final cost = workOrderMaterialCost('build_fort', fortLevel: fortLevel);
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('build_fort', fortLevel: fortLevel);
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
+            tileKey: targetTileKey,
+            currentWork: CurrentWork(
+              workTarget: workTarget,
+              tileKey: targetTileKey,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+        }
+        continue;
+      }
+      if (workTarget == 'build_rail' && isWorkOrderTargetAllowedForUnitType(u.type, 'build_rail') && u.currentWork == null && hasValidTarget) {
+        final cost = workOrderMaterialCost('build_rail');
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('build_rail');
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
+            tileKey: targetTileKey,
+            currentWork: CurrentWork(
+              workTarget: workTarget,
+              tileKey: targetTileKey,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+        }
+        continue;
+      }
+      if (workTarget == 'upgrade_town' && isWorkOrderTargetAllowedForUnitType(u.type, 'upgrade_town') && u.currentWork == null && hasValidTarget) {
+        final cost = workOrderMaterialCost('upgrade_town');
+        if (cost != null && canAffordMaterialCost(cost)) {
+          deductMaterialCost(cost);
+          final totalTurns = totalTurnsForWork('upgrade_town');
+          updateUnit(order.unitId, u.copyWith(
+            status: UnitStatus.working,
+            tileKey: targetTileKey,
+            currentWork: CurrentWork(
+              workTarget: workTarget,
+              tileKey: targetTileKey,
+              totalTurns: totalTurns,
+              remainingTurns: totalTurns,
+            ),
+          ));
+        }
+        continue;
+      }
     }
 
     updatedPlayers.add(
@@ -369,6 +584,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
   return game.copyWith(
     players: updatedPlayers,
     worldState: game.worldState.copyWith(
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
       oldWorld: updatedOldWorld,
       newWorld: updatedNewWorld,
     ),

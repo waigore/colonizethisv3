@@ -20,5 +20,5 @@
 ## Effect Semantics
 
 - **Diplomatic Expertise:** Unlocks embassy overture and allows civilian units to work in Minor Nations with embassy.
-- **Merchant Companies:** Unlocks building Merchant civilian unit; required for land purchase in Minor Nations and New World.
+- **Merchant Companies:** Unlocks building Merchant civilian unit. **Purchasing land** (Merchant `purchase_land` work order) in a Minor Nation or Tribe requires Merchant Companies **and** an **embassy** with that Minor/Tribe (see [diplomacy.md](diplomacy.md), [civilian-units.md](civilian-units.md)).
 - **Empire Building:** Unlocks Join Empire (GP can ask another GP to join when nearly defeated). See [diplomacy.md](diplomacy.md).

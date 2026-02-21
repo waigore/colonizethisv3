@@ -182,7 +182,7 @@ Game resolveTurnForGame({
         state = _runMovementPhase(state, topology, orders);
         break;
       case TurnPhase.navalInterceptionCombat:
-        state = _runNavalInterceptionCombatPhase(state, topology);
+        state = _runNavalInterceptionCombatPhase(state, topology, orders.navalMoveOrdersByPlayerId);
         break;
       case TurnPhase.combat:
         state = _runCombatPhase(state, orders, feedingCoverageByPlayerId);
@@ -314,8 +314,43 @@ Game _runEndOfTurnPhase(Game game) {
     );
   }
 
+  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/fog-and-exploration-resolution.md.
+  var visibilityByTile = Map<String, Map<String, String>>.from(
+    game.worldState.playerVisibilityByTile.map(
+      (k, v) => MapEntry(k, Map<String, String>.from(v)),
+    ),
+  );
+  final nextSpyTimers = <String, Map<String, int>>{};
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  for (final entry in game.worldState.spyRevealTurnsByPlayer.entries) {
+    final playerId = entry.key;
+    final byProvince = entry.value;
+    final newByProvince = <String, int>{};
+    final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+    for (final provEntry in byProvince.entries) {
+      final provinceId = provEntry.key;
+      final turns = provEntry.value;
+      if (turns <= 1) {
+        final regionId = ProvinceId.regionIdFrom(provinceId);
+        final tileKeys = tileKeysByRegion[regionId]?[provinceId] ?? [];
+        for (final tk in tileKeys) {
+          vis[tk] = VisibilityLevel.fogged.name;
+        }
+      } else {
+        newByProvince[provinceId] = turns - 1;
+      }
+    }
+    if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;
+    visibilityByTile[playerId] = vis;
+  }
+  var stateForFog = game.copyWith(
+    worldState: game.worldState.copyWith(
+      playerVisibilityByTile: visibilityByTile,
+      spyRevealTurnsByPlayer: nextSpyTimers,
+    ),
+  );
   // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/fog-and-exploration-resolution.md.
-  final nextVisibility = _applyFogDecay(game);
+  final nextVisibility = _applyFogDecay(stateForFog);
 
   return game.copyWith(
     worldState: game.worldState.copyWith(
@@ -324,6 +359,7 @@ Game _runEndOfTurnPhase(Game game) {
         phase: TurnPhase.orders,
       ),
       playerVisibilityByTile: nextVisibility,
+      spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
 }
@@ -340,17 +376,19 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
 
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
   for (final u in game.worldState.oldWorld.units) {
-    if (explorerTypes.contains(u.type)) {
+    if (explorerTypes.contains(u.type.toLowerCase())) {
+      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(u.provinceId);
+          .add(localId);
     }
   }
   for (final u in game.worldState.newWorld.units) {
-    if (explorerTypes.contains(u.type)) {
+    if (explorerTypes.contains(u.type.toLowerCase())) {
+      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(u.provinceId);
+          .add(localId);
     }
   }
 
@@ -566,10 +604,34 @@ Game _runMovementPhase(
       regionId: kRegionNewWorld,
       tileKeysByRegionAndProvince: tileKeysByRegion,
     );
+    // Spy leave province: set 5-turn reveal timer for (owner, left province). SPEC/fog-and-exploration-resolution.md.
+    final spyTimers = Map<String, Map<String, int>>.from(
+      state.worldState.spyRevealTurnsByPlayer.map(
+        (k, v) => MapEntry(k, Map<String, int>.from(v)),
+      ),
+    );
+    void recordSpyLeft(String ownerId, String provinceId) {
+      spyTimers.putIfAbsent(ownerId, () => {})[provinceId] = 5;
+    }
+    for (final u in state.worldState.oldWorld.units) {
+      if (!isSpyUnit(u.type)) continue;
+      final after = oldWorld.units.where((x) => x.id == u.id).firstOrNull;
+      if (after != null && after.locationProvinceId != u.locationProvinceId) {
+        recordSpyLeft(u.ownerId, u.locationProvinceId);
+      }
+    }
+    for (final u in state.worldState.newWorld.units) {
+      if (!isSpyUnit(u.type)) continue;
+      final after = newWorld.units.where((x) => x.id == u.id).firstOrNull;
+      if (after != null && after.locationProvinceId != u.locationProvinceId) {
+        recordSpyLeft(u.ownerId, u.locationProvinceId);
+      }
+    }
     state = state.copyWith(
       worldState: state.worldState.copyWith(
         oldWorld: oldWorld,
         newWorld: newWorld,
+        spyRevealTurnsByPlayer: spyTimers,
       ),
     );
   }
@@ -680,15 +742,26 @@ Game _applyNavalMovesAndShipReveal(
 }
 
 /// Naval Interception & Naval Combat phase. SPEC/program/turn-resolution-phases.md, naval-combat-resolution.md.
-Game _runNavalInterceptionCombatPhase(Game game, MapTopology topology) {
-  final battles = detectNavalConflicts(game);
+/// [navalMoveOrdersByPlayerId] used to filter battles by interception (mover vs Patrol/Blockade).
+Game _runNavalInterceptionCombatPhase(
+  Game game,
+  MapTopology topology,
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
+) {
+  var battles = detectNavalConflicts(game);
+  final movedFleetIds = <String>{
+    for (final list in navalMoveOrdersByPlayerId.values)
+      for (final order in list) order.fleetId,
+  };
+  var seed = (game.globalGameSeed ?? 0) ^ (game.worldState.turnState.turnNumber * 0x9E3779B1);
+  battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
-  var seed = (state.globalGameSeed ?? 0) ^ (state.worldState.turnState.turnNumber * 0x9E3779B1);
   for (final battle in battles) {
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
-    state = applyNavalBattleResults(state, battle, result, regionId);
+    state = applyNavalBattleResults(state, battle, result, regionId, topology: topology);
   }
   return state;
 }

@@ -51,12 +51,29 @@ Map<CommodityId, int> allocateOverseasToStockpile(
 }
 
 // --- Trade/transport interception (Phase 6). Only when interceptor is at war with owner. ---
+// SPEC/game/ships-and-naval.md § Trade and Transport Interception.
 
 /// Civilian target bonus for cargo interception. SPEC: 1.25–1.5.
 const double civilianTargetBonus = 1.25;
 
-/// Action factor for patrol (baseline). Blockade 0.9 only for port-targeted; we use patrol here.
+/// Action factor for patrol (baseline).
 const double actionFactorPatrol = 0.5;
+
+/// Blockade bonus multiplier when interceptor has Blockade mission (vs Patrol).
+const double blockadeBonusFactor = 1.5;
+
+/// Escort protection: max loss reduction from strong escorts. SPEC: 50%.
+const double escortFactorMax = 0.5;
+
+/// Escort strength weight in loss reduction formula. SPEC: escortStrength/cargoStrength × 0.3.
+const double escortStrengthWeight = 0.3;
+
+/// Civilian ships twice as vulnerable to ship loss. SPEC: civilianPenalty = 2.0.
+const double civilianShipLossPenalty = 2.0;
+
+/// Raid efficiency range (min–max) for cargo loss. SPEC: 0.3 to 0.7 depending on relative strength.
+const double raidEfficiencyMin = 0.3;
+const double raidEfficiencyMax = 0.7;
 
 /// Result of applying trade interception: reduced delivered amounts and fleet updates.
 class TradeInterceptionResult {
@@ -80,17 +97,19 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
   return set;
 }
 
-/// Sum intercept rating for fleets that are (owner in [enemyIds]) and mission patrol/blockade.
-int _interceptScoreForEnemyFleets(List<Fleet> fleets, Set<String> enemyIds) {
+/// Intercept score and whether any enemy has Blockade mission.
+(int interceptScore, bool hasBlockade) _interceptScoreAndBlockade(List<Fleet> fleets, Set<String> enemyIds) {
   var sum = 0;
+  var hasBlockade = false;
   for (final f in fleets) {
     if (!enemyIds.contains(f.ownerId)) continue;
     if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) continue;
+    if (f.mission == FleetMission.blockade) hasBlockade = true;
     for (final typeId in f.shipTypeIds) {
       sum += NavalStatsCatalog.get(typeId).interceptRating;
     }
   }
-  return sum;
+  return (sum, hasBlockade);
 }
 
 /// Sum flee rating for all ships of [playerId].
@@ -103,6 +122,32 @@ int _evasionScoreForPlayer(List<Fleet> fleets, String playerId) {
     }
   }
   return sum;
+}
+
+/// Merchant ship type ids (civilian); others count as escort/warship. SPEC/game/ships-and-naval.md.
+const Set<String> _merchantShipTypes = {'fluyte', 'carrack'};
+
+/// Escort strength = sum of fleeRating for non-merchant ships of [playerId].
+/// Cargo strength = max(1, total cargo units) for escort factor denominator.
+(double escortStrength, double cargoStrength) _escortAndCargoStrength(
+  List<Fleet> fleets,
+  String playerId,
+  Map<CommodityId, int> overseasDelivered,
+) {
+  var escortStrength = 0.0;
+  var cargoHolds = 0;
+  for (final f in fleets) {
+    if (f.ownerId != playerId) continue;
+    for (final typeId in f.shipTypeIds) {
+      if (_merchantShipTypes.contains(typeId)) {
+        cargoHolds += 1; // 1 cargo hold per merchant ship
+      } else {
+        escortStrength += NavalStatsCatalog.get(typeId).fleeRating;
+      }
+    }
+  }
+  final cargoStrength = cargoHolds > 0 ? cargoHolds.toDouble() : 1.0;
+  return (escortStrength, cargoStrength);
 }
 
 /// Apply trade interception: reduce delivered cargo and optionally remove merchant ships.
@@ -129,7 +174,7 @@ TradeInterceptionResult applyTradeInterception(
   }
 
   final fleets = game.worldState.fleets;
-  final interceptScore = _interceptScoreForEnemyFleets(fleets, enemies);
+  final (interceptScore, hasBlockade) = _interceptScoreAndBlockade(fleets, enemies);
   final evasionScore = _evasionScoreForPlayer(fleets, playerId);
 
   if (interceptScore <= 0) {
@@ -141,16 +186,27 @@ TradeInterceptionResult applyTradeInterception(
 
   final total = interceptScore + evasionScore;
   final ratio = total > 0 ? interceptScore / total : 1.0;
+
+  // Escort protection: lossReduction = min(0.5, escortStrength/cargoStrength × 0.3). SPEC.
+  final (escortStrength, cargoStrength) = _escortAndCargoStrength(fleets, playerId, overseasDelivered);
+  final escortFactor = (escortStrength / cargoStrength * escortStrengthWeight).clamp(0.0, escortFactorMax);
+
   double base = actionFactorPatrol * ratio * civilianTargetBonus;
+  if (hasBlockade) base *= blockadeBonusFactor;
+  base *= (1.0 - escortFactor);
   base = base.clamp(0.0, 1.0);
 
-  final pCargo = (1.2 * base).clamp(0.1, 0.9);
-  final pShip = (0.4 * base).clamp(0.02, 0.5);
+  final pIntercept = (1.2 * base).clamp(0.1, 0.9);
+  final raidEfficiency = raidEfficiencyMin + ratio * (raidEfficiencyMax - raidEfficiencyMin);
+  final pCargoEffective = (pIntercept * raidEfficiency).clamp(0.0, 1.0);
+
+  final pShipBase = (0.4 * base).clamp(0.0, 1.0);
+  final pShip = (pShipBase * (1.0 - escortFactor) * civilianShipLossPenalty).clamp(0.02, 0.5);
 
   final reducedDelivered = <CommodityId, int>{};
   for (final entry in overseasDelivered.entries) {
     final qty = entry.value;
-    final keep = (qty * (1.0 - pCargo)).round();
+    final keep = (qty * (1.0 - pCargoEffective)).round();
     if (keep > 0) reducedDelivered[entry.key] = keep;
   }
 

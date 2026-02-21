@@ -118,11 +118,17 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
       effDef += emplaced;
     }
 
-    final total = effAtt + effDef;
+    var effAttForRatio = effAtt;
+    if (fortLevel >= 1 && fortLevel <= 3) {
+      final wallHp = wallHpByFortLevel[fortLevel];
+      effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+    }
+
+    final total = effAttForRatio + effDef;
     double pAtt = 0.5;
     double pDef = 0.5;
     if (total > 0) {
-      pAtt = (effAtt / total).clamp(hitProbabilityMin, hitProbabilityMax);
+      pAtt = (effAttForRatio / total).clamp(hitProbabilityMin, hitProbabilityMax);
       pDef = (effDef / total).clamp(hitProbabilityMin, hitProbabilityMax);
     }
 

@@ -204,6 +204,9 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
   );
 
+  // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
+  game = _assignProvinceTowns(game: game);
+
   // Apply historically inspired naming from default ruleset (after capitals are set).
   game = _applyNaming(
     game: game,
@@ -317,6 +320,153 @@ Game _applyInitialVisibility({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
   );
   return game.copyWith(worldState: updatedWorldState);
+}
+
+/// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
+/// same region = tile with shortest path to capital; overseas = port tile or first tile. SPEC/program/game-setup-pipeline.md.
+Game _assignProvinceTowns({required Game game}) {
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final ports = game.worldState.portsByProvinceSeaboard;
+
+  // Capital tile key and capital province id per faction (ownerId).
+  final capitalTileKeyByOwner = <String, String>{};
+  final capitalProvinceIdByOwner = <String, String>{};
+  for (final p in game.players) {
+    if (p.capitalProvinceId != null && p.capitalTile != null) {
+      capitalProvinceIdByOwner[p.id] = p.capitalProvinceId!;
+      capitalTileKeyByOwner[p.id] = p.capitalTile!.toTileKey();
+    }
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalProvinceId != null && m.capitalTile != null) {
+      capitalProvinceIdByOwner[m.id] = m.capitalProvinceId!;
+      capitalTileKeyByOwner[m.id] = m.capitalTile!.toTileKey();
+    }
+  }
+  for (final t in game.tribes) {
+    if (t.capitalProvinceId != null && t.capitalTile != null) {
+      capitalProvinceIdByOwner[t.id] = t.capitalProvinceId!;
+      capitalTileKeyByOwner[t.id] = t.capitalTile!.toTileKey();
+    }
+  }
+
+  // Build (regionId, x, y) -> tileKey for BFS.
+  final coordToKey = <String, Map<String, String>>{};
+  for (final regionEntry in tileKeysByRegion.entries) {
+    final regionId = regionEntry.key;
+    final byProvince = regionEntry.value;
+    final m = <String, String>{};
+    for (final list in byProvince.values) {
+      for (final tk in list) {
+        final parts = tk.split('|');
+        if (parts.length >= 4) {
+          final x = parts[2];
+          final y = parts[3];
+          m['$x|$y'] = tk;
+        }
+      }
+    }
+    coordToKey[regionId] = m;
+  }
+
+  // BFS from start tile key; returns map tileKey -> distance (in same region).
+  Map<String, int> bfsDistances(String regionId, String startTileKey) {
+    final result = <String, int>{};
+    final parts = startTileKey.split('|');
+    if (parts.length < 4) return result;
+    final m = coordToKey[regionId];
+    if (m == null) return result;
+    int x = int.tryParse(parts[2]) ?? 0;
+    int y = int.tryParse(parts[3]) ?? 0;
+    final queue = <List<dynamic>>[];
+    final key = '${parts[2]}|${parts[3]}';
+    if (m[key] != null) {
+      queue.add([x, y, 0]);
+      result[m[key]!] = 0;
+    }
+    while (queue.isNotEmpty) {
+      final item = queue.removeAt(0);
+      final cx = item[0] as int;
+      final cy = item[1] as int;
+      final d = item[2] as int;
+      for (final delta in [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        final nx = cx + delta[0];
+        final ny = cy + delta[1];
+        final nk = '$nx|$ny';
+        final tileKey = m[nk];
+        if (tileKey != null && !result.containsKey(tileKey)) {
+          result[tileKey] = d + 1;
+          queue.add([nx, ny, d + 1]);
+        }
+      }
+    }
+    return result;
+  }
+
+  // Port tile in province (any port whose key starts with provinceId|).
+  String? portTileInProvince(String provinceId) {
+    for (final entry in ports.entries) {
+      if (entry.key.startsWith('$provinceId|')) return entry.value;
+    }
+    return null;
+  }
+
+  String? townTileKeyForProvince(Province p) {
+    final ownerId = p.ownerId;
+    if (ownerId == null) {
+      final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
+      return tiles.isNotEmpty ? tiles.first : null;
+    }
+    final capProvinceId = capitalProvinceIdByOwner[ownerId];
+    final capTileKey = capitalTileKeyByOwner[ownerId];
+    if (p.id == capProvinceId && capTileKey != null) return capTileKey;
+    final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
+    if (tiles.isEmpty) return null;
+    final sameRegion = capProvinceId != null &&
+        ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
+    if (sameRegion && capTileKey != null) {
+      final distances = bfsDistances(p.regionId, capTileKey);
+      String? best;
+      int bestD = 999999;
+      for (final tk in tiles) {
+        final d = distances[tk] ?? 999999;
+        if (d < bestD) {
+          bestD = d;
+          best = tk;
+        }
+      }
+      return best ?? tiles.first;
+    }
+    final portTile = portTileInProvince(p.id);
+    return portTile ?? tiles.first;
+  }
+
+  final oldProvinces = game.worldState.oldWorld.provinces.map((p) {
+    final tk = townTileKeyForProvince(p);
+    return tk != null ? p.copyWith(townTileKey: tk) : p;
+  }).toList();
+  final newProvinces = game.worldState.newWorld.provinces.map((p) {
+    final tk = townTileKeyForProvince(p);
+    return tk != null ? p.copyWith(townTileKey: tk) : p;
+  }).toList();
+
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      oldWorld: RegionData(
+        provinces: oldProvinces,
+        units: game.worldState.oldWorld.units,
+      ),
+      newWorld: RegionData(
+        provinces: newProvinces,
+        units: game.worldState.newWorld.units,
+      ),
+    ),
+  );
 }
 
 Game _applyNaming({

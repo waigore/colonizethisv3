@@ -25,8 +25,8 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 ## Recruiting and Training
 
-- **Recruiting:** fabric → new Peasant. Adds to worker pool.
-- **Training:** worker + paper + cash → next tier. Worker is out of pool that turn. Requires tech per tier.
+- **Recruiting:** fabric → new Peasant. Adds to worker pool. **CLARIFICATION NEEDED:** How much fabric per Peasant? Need Imperialism II reference.
+- **Training:** worker + paper + cash → next tier. Worker is out of pool that turn. Requires tech per tier. **CLARIFICATION NEEDED:** What quantities of paper and cash? Need Imperialism II reference.
 - **Military/naval construction:** regiments and ships consume a worker when built.
 
 ---
@@ -51,3 +51,5 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 ## Implementation
 
 Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets in MVP).
+
+**MVP scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). Luxury consumption (sugar, cigars, fur hats) and worker tier training (paper + cash → next tier) are deferred until Recruiting/Training quantities are defined or an MVP simplification is chosen.

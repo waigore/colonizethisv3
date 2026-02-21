@@ -20,13 +20,13 @@ Engineers build forts on the town tile using `WorkOrder` target `build_fort`. Ea
 
 All damage to defenders on or behind the wall is reduced by a percentage based on fort level:
 
-| Fort Level | Damage Reduction |
-|---|---|
-| 1 (Wood) | ? |
-| 2 (Stone) | ? |
-| 3 (Modern) | ? |
+| Fort Level  | Damage Reduction | Rationale             |
+| ----------- | ---------------- | --------------------- |
+| 0 (no fort) | 0%               | Baseline              |
+| 1 (Wood)    | 25%              | Modest protection     |
+| 2 (Stone)   | 45%              | Significant advantage |
+| 3 (Modern)  | 60%              | Very hard to crack    |
 
-> **REQUIRES CLARIFICATION:** Exact damage reduction percentages per fort level. Imp2 confirms the mechanic (percentage-based, scales with fort level) but provides no numeric values.
 
 - **Units on the wall** (adjacent to wall hex): Can be hit by firearms and artillery (at reduced damage per table above).
 - **Units behind the wall** (not manning): Cannot be damaged except by enemy artillery; only artillery can return fire.
@@ -60,3 +60,5 @@ There is no separate “unfortified siege” mode: the presence or absence of a 
 ## Gates and Sortie
 
 Forts have three gates. Friendly units can sortie or retreat through gates. Enemy units cannot use gates; walls must be breached to enter.
+
+**Quick Battle (lane-based) interpretation:** In the current lane-based Quick Battle resolver, all defender units are treated as benefiting from wall damage reduction and emplaced artillery. Explicit "units on the wall" vs "units behind the wall" targeting (artillery-only damage to behind-wall) and gate/sortie actions are deferred to a future tactical expansion when lane/position model supports it.

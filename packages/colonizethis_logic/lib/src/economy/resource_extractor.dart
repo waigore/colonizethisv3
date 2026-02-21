@@ -15,7 +15,8 @@ class ExtractionTotals {
 /// Computes per-player extraction from connected tiles. SPEC/game/extraction-and-improvements.
 ///
 /// For each connected tile: production = min(improvementLevel, techCap);
-/// transportLevel = road level (0/1/2/4); effective = min(production, transportLevel).
+/// transportLevel = road level (0/1/2/4); town development level caps yield (SPEC capital-and-connectivity).
+/// effective = min(production, transportLevel, province.townDevelopmentLevel).
 /// Sums by commodity; splits land (same region as capital) vs overseas.
 Map<String, ExtractionTotals> computeExtraction({
   required Game game,
@@ -67,6 +68,11 @@ Map<String, ExtractionTotals> computeExtraction({
       if (isMineral && !prospected.contains(tileKey)) {
         continue;
       }
+      final provinceId = '$regionId|${parts[1]}';
+      final province = game.worldState.oldWorld.provinces.where((p) => p.id == provinceId).firstOrNull ??
+          game.worldState.newWorld.provinces.where((p) => p.id == provinceId).firstOrNull;
+      final townDevelopmentCap = province?.townDevelopmentLevel ?? 4;
+
       final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);
       final roadLevel = game.worldState.tileState.roadLevel(tileKey);
       final isPort = game.worldState.portsByProvinceSeaboard.values.contains(tileKey);
@@ -74,12 +80,13 @@ Map<String, ExtractionTotals> computeExtraction({
 
       final production = (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
       final effective = (production < transportLevel ? production : transportLevel).clamp(0, 4);
-      if (effective <= 0) continue;
+      final effectiveCapped = (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(0, 4);
+      if (effectiveCapped <= 0) continue;
 
       if (regionId == capitalRegionId) {
-        landTotals[commodityId] = (landTotals[commodityId] ?? 0) + effective;
+        landTotals[commodityId] = (landTotals[commodityId] ?? 0) + effectiveCapped;
       } else {
-        overseasTotals[commodityId] = (overseasTotals[commodityId] ?? 0) + effective;
+        overseasTotals[commodityId] = (overseasTotals[commodityId] ?? 0) + effectiveCapped;
       }
     }
 

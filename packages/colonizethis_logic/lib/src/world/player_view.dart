@@ -126,6 +126,22 @@ PlayerView buildPlayerView(
     visibilityByTile[tileKey] = level;
   });
 
+  // Spy presence reveal: while a Spy is in a non-owner province, that province is fully visible. SPEC/fog-and-exploration-resolution.md.
+  for (final u in ownUnitsById.values) {
+    if (!isSpyUnit(u.type)) continue;
+    final provId = u.locationProvinceId;
+    final regionId = ProvinceId.regionIdFrom(provId);
+    final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[provId] ?? [];
+    if (tileKeys.isEmpty) continue;
+    final province = provincesById[provId];
+    if (province == null || province.ownerId == null || province.ownerId == playerId) {
+      continue;
+    }
+    for (final tk in tileKeys) {
+      visibilityByTile[tk] = VisibilityLevel.fullyVisible;
+    }
+  }
+
   final prospectedTiles =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
 

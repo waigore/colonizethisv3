@@ -48,7 +48,16 @@ Each battalion group (lane + line) has a **cohesion** value on a 0–3 integer s
 
 **Effective combat power per group:** `basePower * (cohesion / 3)`, where `basePower = Σ (FPN_eff + FPM_eff) * medalMult` for regiments in that group, adjusted by terrain modifier for the lane.
 
-> **REQUIRES CLARIFICATION:** Exact terrain modifier values per lane type (OPEN, HILL, WOODS, TOWN, SWAMP) for attack and defense. Imp2 confirms light infantry take reduced damage in terrain but gives no numeric modifiers.
+**Percentage adjustments to combat power**
+
+| Terrain | Attacker | Defender | Rationale                                     |
+| ------- | -------- | -------- | --------------------------------------------- |
+| OPEN    | 100%     | 100%     | Baseline                                      |
+| HILL    | 75%      | 120%     | Hard to attack uphill                         |
+| WOODS   | 80%      | 110%     | Cover benefits defense, impedes movement      |
+| TOWN    | 60%      | 130%     | Strong defensive positions                    |
+| SWAMP   | 70%      | 90%      | Bad for everyone, slightly worse for attacker |
+
 
 ## Turn structure and actions
 

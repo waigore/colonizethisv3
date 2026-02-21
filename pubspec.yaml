@@ -19,6 +19,8 @@ workspace:
   - tool/sim_economy
   - tool/sim_combat
   - tool/sim_combat_montecarlo
+  - tool/sim_scenarios
+  - tool/show_tech
 
 dev_dependencies:
   melos: ^7.0.0
@@ -40,3 +42,6 @@ melos:
     sim_combat_montecarlo:
       description: Monte Carlo combat simulation CLI. SPEC/program/sim-combat-montecarlo.md.
       run: dart run sim_combat_montecarlo
+    sim_scenarios:
+      description: Batch scenario test driver for game integration testing. SPEC/program/sim-scenarios.md.
+      run: dart run tool/sim_scenarios/bin/sim_scenarios.dart

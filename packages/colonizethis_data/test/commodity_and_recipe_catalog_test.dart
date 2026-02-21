@@ -43,6 +43,14 @@ void main() {
     });
   });
 
+  group('ResourceRules defaultRules', () {
+    test('diamonds allowed on desert (SPEC resource-terrain-region-rules)', () {
+      final rules = ResourceRules.defaultRules;
+      expect(rules.isAllowedOnTerrain(Resource.diamonds, TerrainType.desert), isTrue);
+      expect(rules.isAllowedOnTerrain(Resource.diamonds, TerrainType.swamp), isFalse);
+    });
+  });
+
   group('ProductionRecipesCatalog', () {
     test('all recipe ids are unique', () {
       final ids = ProductionRecipesCatalog.all.map((r) => r.id).toList();

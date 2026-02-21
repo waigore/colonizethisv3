@@ -12,6 +12,8 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Prospected state:** `Map<playerId, Set<tileKey>>` — tiles the player has prospected. Only mineral-eligible terrain per game rules.
 
+**Spy reveal timer:** `Map<playerId, Map<provinceKey, int>>` — for each player, provinces that were previously revealed by a Spy and are now fog-decaying: value = turns left until tiles in that province are set back to fogged (0 = already fogged). When a Spy **leaves** a non-owner province, set timer to 5 for (Spy owner, that province). Stored on WorldState.
+
 **Source province:** A unit's source province is derived from its tileKey (for civilians) or provinceId. Must not be unknown; raises exception if so.
 
 ---
@@ -29,10 +31,15 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 1. For each Explorer with work order `prospect` on tile T, verify T is mineral-eligible.
 2. Add T to player's prospected set. One turn.
 
+**Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as the Spy is there.
+
+**Fog decay (Spy):** When a Spy **leaves** a province (move or removal), start a 5-turn timer for (Spy owner, that province). At end of turn: decrement all spy-reveal timers; for each (player, province) where timer reaches 0, set all tiles in that province to fogged for that player. (Explorer/Spy fog decay: if no Explorer/Spy remain in an other-faction province, also set tiles to fogged unless a Spy timer is active.)
+
 **Fog decay** (End-of-turn phase):
 
-1. For each other-faction province where player had Explorer/Spy, if none remain, set all tiles to fogged (retain last-known state).
-2. Own provinces never decay.
+1. Decrement spy reveal timers; where timer hits 0, set that province's tiles to fogged for that player.
+2. For each other-faction province where player had Explorer/Spy, if none remain (and no Spy timer), set all tiles to fogged (retain last-known state).
+3. Own provinces never decay.
 
 **Ship reveal** (Naval Movement phase):
 
@@ -42,6 +49,8 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 **PlayerView construction:**
 
 `buildPlayerView(game, topology, playerId)` derives a per-player view from authoritative world state. Includes: tile visibility map, prospected set, last-known terrain/resources/improvements, province ownership, player's own units/economy/research. All AI and order suggestion logic must read through PlayerView, never directly from world state. See [player-view.md](player-view.md).
+
+**Spy invisibility:** When building PlayerView for player P, any unit of type Spy owned by **another** player is **excluded** from P's view (unit list and province occupancy). Spy locations are never visible to other players; only the Spy's owner sees their own Spies.
 
 ---
 

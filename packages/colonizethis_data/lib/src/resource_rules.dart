@@ -94,7 +94,7 @@ class ResourceRules {
         Resource.silver: [TerrainType.hills],
         Resource.gold: [TerrainType.mountain],
         Resource.gems: [TerrainType.mountain],
-        Resource.diamonds: [TerrainType.swamp],
+        Resource.diamonds: [TerrainType.desert],
       },
       defaultMarketPrice: {
         Resource.grain: 50,

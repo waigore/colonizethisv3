@@ -60,8 +60,14 @@ QuickBattleResult resolveQuickBattle(
       effDef += emplaced;
     }
 
+    var effAttForRatio = effAtt;
+    if (input.fortLevel >= 1 && input.fortLevel <= 3) {
+      final wallHp = wallHpByFortLevel[input.fortLevel];
+      effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+    }
+
     // Round casualties using strength ratio (deterministic from seed).
-    final ratio = effDef > 0 ? effAtt / effDef : 10.0;
+    final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
     var attLossFraction = 0.4;
     var defLossFraction = 0.4;
     if (ratio >= 1.5) {

@@ -41,13 +41,14 @@ Game resolveResearchPhase(Game game, Orders orders) {
         case ResearchFundingLevel.none:
           return 0;
         case ResearchFundingLevel.low:
-          return 10;
+          return 100;
         case ResearchFundingLevel.medium:
-          return 20;
+          return 300;
         case ResearchFundingLevel.high:
-          return 40;
+          return 800;
         case ResearchFundingLevel.maximum:
-          return 60;
+          // Maximum funding has 2.5x efficiency bonus
+          return 2500;
       }
     }
 
@@ -56,13 +57,13 @@ Game resolveResearchPhase(Game game, Orders orders) {
         case ResearchFundingLevel.none:
           return 0;
         case ResearchFundingLevel.low:
-          return 10;
+          return 50;
         case ResearchFundingLevel.medium:
-          return 20;
+          return 150;
         case ResearchFundingLevel.high:
-          return 40;
+          return 400;
         case ResearchFundingLevel.maximum:
-          return 60;
+          return 1000;
       }
     }
 

@@ -323,6 +323,8 @@ String _terrainLabel(TerrainType t) {
       return 'Mountain';
     case TerrainType.swamp:
       return 'Swamp';
+    case TerrainType.desert:
+      return 'Desert';
   }
 }
 

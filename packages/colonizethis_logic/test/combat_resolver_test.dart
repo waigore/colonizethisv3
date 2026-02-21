@@ -165,5 +165,47 @@ void main() {
         reason: 'Underfed attacker should not perform better than well-fed attacker',
       );
     });
+
+    test('resolveBattleContext updates newWorld when regionId is newWorld', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: 'N1', regionId: 'newWorld', ownerId: 'def'),
+            ],
+            units: const [
+              Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'N1', medals: 0),
+              Unit(id: 'a1', type: 'grenadiers', ownerId: 'att', provinceId: 'N1', medals: 3),
+              Unit(id: 'a2', type: 'grenadiers', ownerId: 'att', provinceId: 'N1', medals: 2),
+            ],
+          ),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'N1',
+        regionId: 'newWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2'], generalMedals: 0),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final result = resolveBattleContext(game, ctx);
+      expect(result.worldState.newWorld.provinces.single.id, 'N1');
+      expect(
+        result.worldState.newWorld.units.length,
+        greaterThanOrEqualTo(1),
+        reason: 'attacker should win and have at least one surviving unit',
+      );
+    });
   });
 }

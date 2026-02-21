@@ -25,7 +25,7 @@
 | silver | NW only | hills | 100 |
 | gold | NW only | mountain | 166 |
 | gems | NW only | mountain | 250 |
-| diamonds | NW only | swamp | 500 |
+| diamonds | NW only | desert | 500 |
 
 Spawn weight = 1 / default market price (higher price = rarer).
 
@@ -42,5 +42,5 @@ On each map (oldWorld and newWorld), at most 30% of placed resources may be mult
 ## Notes
 
 - **Fish:** Water tiles only. Pass 7 assigns resources to land cells only. Fish is future scope (water-resource pass or separate handling).
-- **Diamonds:** Imperialism II has Desert terrain; current TerrainType has no Desert. Diamonds use swamp as proxy until Desert terrain exists.
+- **Diamonds:** Spawn on desert terrain (New World only). Imperialism II Terrain and Development table.
 - **Riches:** silver, gold, gems, diamonds, spices align with riches-to-treasury base prices (defined in ruleset config).

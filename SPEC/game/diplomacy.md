@@ -15,7 +15,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 ### Tribe vs Minor War Rule
 
 - **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
-- **Tribes (New World):** No declaration required unless another GP has invested in the target province; then war must be declared on that GP.
+- **Tribes (New World):** No declaration required unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe in that province; then war must be declared on that GP.
 
 ### GP–GP Rules
 
@@ -27,6 +27,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 ### GP–Minor Rules
 
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (free, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation.
+- **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
 - **Intervention:** When a Minor with the player's Embassy is attacked by another GP: **Intervene** (Minor joins player, war on attacker), **Do Nothing** (Minor may fall, relations reset), or **Diplomatic Protest** (relation penalty with attacker).
 - **Peace:** Minors never refuse peace offers.
@@ -35,6 +36,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 
 - No war required for invasion (see Tribe vs Minor war rule).
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
+- **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
 - Tribes react to nearby conquest (relation/trade effects).
 
 ### Diplomatic Order Types

@@ -38,6 +38,7 @@ const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
   TerrainType.hills: (160, 130, 90),
   TerrainType.mountain: (120, 120, 120),
   TerrainType.swamp: (70, 100, 90),
+  TerrainType.desert: (210, 190, 140),
 };
 
 /// Returns the single-letter legend glyph for a resource id (e.g. grain → 'g'), or null if unknown.

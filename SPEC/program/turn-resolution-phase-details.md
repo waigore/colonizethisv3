@@ -54,13 +54,13 @@ Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship 
 
 ## Combat
 
-(1) **Minor military parity:** compute `maxGreatPowerMilitaryLevel`; set each Minor Nation/Tribe `effectiveMilitaryLevel` ([factions.md](../game/factions.md)). (2) **Conflict detection:** group units by faction per province; if two+ factions, build BattleContext (one defender, one+ attackers). (3) Run combat resolver chain; collect casualties and province owners. (4) **Apply:** remove casualties; set `province.ownerId` for conquered provinces. Reference: [combat.md](../game/combat.md), [combat-resolution.md](combat-resolution.md).
+(1) **Minor military parity:** compute `maxGreatPowerMilitaryLevel`; set each Minor Nation/Tribe `effectiveMilitaryLevel` ([factions.md](../game/factions.md)). (2) **Conflict detection:** group units by faction per province; if two+ factions, build BattleContext (one defender, one+ attackers). (3) Run combat resolver chain; collect casualties and province owners. (4) **Apply:** remove casualties; set `province.ownerId` for conquered provinces. (5) **Capital reassignment:** For each Great Power that no longer owns their capital province, run capital reassignment using the **same shared API as game init** (DRY): choose new capital in original region from owned provinces, prefer seaboard, then call shared capital-placement logic (pick province + tile, apply port/road, apply road path from port to capital). Per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Capital loss and reassignment, [game-setup-pipeline.md](game-setup-pipeline.md) § 7b. If the player has no provinces in the original region, leave capital null; document in spec. Reference: [combat.md](../game/combat.md), [combat-resolution.md](combat-resolution.md).
 
 ---
 
 ## Build / work
 
-BuildUnitOrder: deduct cost, add unit; worker for military. WorkOrder: exploration/prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
+BuildUnitOrder: by unit type category — civilian: deduct cash from treasury and paper from stockpile per [civilian-units.md](../game/civilian-units.md), add unit; military: deduct cost, consume worker, add unit; naval: deduct cost, add ship to home fleet. WorkOrder: exploration/prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
 
 ---
 

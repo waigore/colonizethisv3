@@ -270,6 +270,97 @@ void main() {
         expect(u!.provinceId, 'oldWorld|p1');
       }
     });
+
+    test('suggestBuildOrders returns list', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1',
+        workerPool: const WorkerPool(peasants: 2),
+        treasury: 500,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestBuildOrders(view, game, topology, const Orders());
+      expect(suggestions, isA<List<BuildUnitOrder>>());
+    });
+
+    test('suggestResearchOrders returns list', () {
+      const playerId = 'gp1';
+      final player = const Player(id: playerId, displayName: 'GP', isHuman: false, treasury: 1000);
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(nodes: const [], edges: const []);
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestResearchOrders(view, game, topology, const Orders());
+      expect(suggestions, isA<List<ResearchOrder>>());
+    });
+
+    test('suggestNavalMoveOrders returns list', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = const Player(id: playerId, displayName: 'GP', isHuman: false);
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        fleets: [
+          Fleet(id: 'fleet_gp1', ownerId: playerId, seaZoneId: 'sea1', regionId: ow, shipTypeIds: ['fluyte']),
+        ],
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'sea2', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestNavalMoveOrders(view, game, topology, const Orders());
+      expect(suggestions, isA<List<NavalMoveOrder>>());
+    });
+
+    test('suggestNavalMissionOrders returns list', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = const Player(id: playerId, displayName: 'GP', isHuman: false);
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        fleets: [
+          Fleet(id: 'fleet_gp1', ownerId: playerId, seaZoneId: 'sea1', regionId: ow, shipTypeIds: ['fluyte']),
+        ],
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestNavalMissionOrders(view, game, topology, const Orders());
+      expect(suggestions, isA<List<NavalMissionOrder>>());
+    });
   });
 }
 

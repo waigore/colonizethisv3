@@ -30,7 +30,7 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 
 **Timing:** At the start of each Combat phase (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)), compute `maxGreatPowerMilitaryLevel` from all Great Powers. For every Minor Nation and Tribe, set `effectiveMilitaryLevel = maxGreatPowerMilitaryLevel`. The combat resolver reads this when computing defender strength. Parity affects **defence and recruitment quality**, not army count caps or general bonuses.
 
-> **REQUIRES CLARIFICATION:** How "upgraded in-place" works. Imp2 does not have minor parity upgrades. Specifically: (a) Do existing regiment units transform to higher-era equivalents within their category, or is only the combat stat lookup changed? (b) If units transform, what happens to partially damaged units? (c) Are recruit templates regenerated each Combat phase or cached?
+**Upgrading in place:** If minor nations' units are eligible for upgrade due to change in **effective military level**, their existing regiments become higher-tier versions. However, damaged regiments stay damaged. Templates are regenerated each Combat phase. 
 
 ---
 

@@ -720,6 +720,74 @@ void main() {
       );
     });
 
+    test('skipFillLakes true logs Fill lakes skipped', () {
+      final logLines = <String>[];
+      TileMapGenerator(
+        params: TileMapParams(
+          width: 10,
+          height: 10,
+          seed: 1,
+          seaFraction: 0.6,
+          skipFillLakes: true,
+        ),
+      ).generate(
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        onLog: (msg) => logLines.add(msg),
+      );
+      expect(
+        logLines.any((s) => s.contains('Fill lakes') && s.contains('skipped')),
+        isTrue,
+      );
+    });
+
+    test('borderNoise greater than zero applies border noise', () {
+      final logLines = <String>[];
+      final (result, _) = TileMapGenerator(
+        params: TileMapParams(
+          width: 20,
+          height: 20,
+          seed: 2,
+          seaFraction: 0.6,
+          borderNoise: 0.5,
+        ),
+      ).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+        resourceRules: ResourceRules.defaultRules,
+        onLog: (msg) => logLines.add(msg),
+      );
+      expect(result.terrainGrid, isNotNull);
+      expect(
+        logLines.any((s) => s.contains('Border noise') || s.contains('Pass 5')),
+        isTrue,
+      );
+    });
+
+    test('jitter params produce terrain and resource grids', () {
+      final (result, _) = TileMapGenerator(
+        params: TileMapParams(
+          width: 24,
+          height: 24,
+          seed: 3,
+          seaFraction: 0.6,
+          jitterHomogeneityThreshold: 0.5,
+          jitterProbability: 0.5,
+          jitterMaxFraction: 0.2,
+        ),
+      ).generate(
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
+      expect(result.terrainGrid, isNotNull);
+      expect(result.resourceGrid, isNotNull);
+      expect(result.terrainGrid!.length, result.height);
+      expect(result.resourceGrid!.length, result.height);
+    });
 
     test('inferred topology matches grid adjacencies', () {
       final (result, topology) = TileMapGenerator(

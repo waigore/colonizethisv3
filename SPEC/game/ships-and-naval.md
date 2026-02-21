@@ -61,7 +61,42 @@ Interception and battle contexts are created when:
 - A patrolling or blockading fleet successfully intercepts a hostile fleet moving through its zone or entering/leaving a blockaded port.
 - Enemy fleets end Movement in the same sea zone (including at a beachhead or port).
 
-> **REQUIRES CLARIFICATION:** (a) Naval strength aggregation formula: how FRP, RNG, ARM, HULL, MV combine into side strength/durability. (b) Retreat probability formula. (c) Naval interception probability: baseline for patrol vs blockade, how escort strength reduces losses. Imp2 confirms factors (range most important, escorts help, blockade > patrol) but provides no numeric formulas.
+## Naval Strength Aggregation Formula
+
+This defines how ship stats (FRP, RNG, ARM, HULL, MV) combine into combat strength.
+
+| Stat | Weight          | Rationale                         |
+| ---- | --------------- | --------------------------------- |
+| FRP  | 1.0             | Baseline firepower                |
+| RNG  | 0.4 per point   | "Usually most important" per Imp2 |
+| ARM  | 0.15 per point  | Damage reduction                  |
+| HULL | Durability pool | Hits before sinking               |
+| MV   | 0.1 per point   | Initiative/initiative             |
+
+Durability is defined as `HULL × (1 + ARM/10)`
+
+## Naval Retreat Formula
+
+This defines when a fleet can retreat from naval combat. Refer to the following pseudo-code:
+
+```
+canRetreat = existsFriendlyOrNeutralAdjacentZone()
+if canRetreat:
+retreatSuccess = baseChance + speedAdvantage - enemyAggression
+baseChance = 0.6
+speedAdvantage = (ownAvgMV - enemyAvgMV) × 0.1 # +/- 0.2 typical
+enemyAggression = 0.1 if enemyMission == Patrol else 0.2 # Blockade harder to escape
+```
+
+## Naval Interception Probability
+
+Patrol vs blockade interception chances; how escorts reduce losses
+
+| Mission  | Base Intercept | Modifiers                                                     |
+| -------- | -------------- | ------------------------------------------------------------- |
+| Patrol   | 30%            | +10% if superior force, -10% if inferior                      |
+| Blockade | 50%            | +15% if superior force, target entering/leaving specific port |
+
 
 ---
 
@@ -73,4 +108,20 @@ Only **home fleet** ships (in the capital port sea zone) carry a faction's trans
 - Patrolling or blockading fleets in relevant sea zones can intercept **cargo** (reducing delivered quantities) and **civilian ships** (higher vulnerability than warships).
 - Escorts: warships accompanying the home fleet reduce both cargo and ship loss probabilities.
 
-> **REQUIRES CLARIFICATION:** Exact interception probability formulas for trade/transport raids. Imp2 confirms escort and patrol/blockade factors but gives no numbers.
+Escort protection
+
+```
+lossReduction = min(0.5, escortStrength / cargoStrength × 0.3)
+# Max 50% loss reduction from strong escorts
+```
+
+Exact formulas for cargo/ship losses during overseas transport
+
+```
+interceptionChance = base × blockadeBonus × (1 - escortFactor)
+cargoLost = interceptedAmount × raidEfficiency
+shipLossChance = baseShipLoss × (1 - escortFactor) × civilianPenalty
+
+civilianPenalty = 2.0 # Civilian ships twice as vulnerable
+raidEfficiency = 0.3 to 0.7 depending on relative strength
+```

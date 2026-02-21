@@ -30,8 +30,8 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 | Parameter | Default | Notes |
 |---|---|---|
-| W_cav | TBD | Initiative cavalry weight |
-| W_medal | TBD | Initiative medal weight |
+| W_cav | 1.0 | Initiative cavalry weight — **CLARIFICATION NEEDED:** verify against Imperialism II |
+| W_medal | 0.5 | Initiative medal weight — **CLARIFICATION NEEDED:** verify against Imperialism II |
 | Medal multipliers | 1.0 / 1.1 / 1.2 / 1.3 / 1.4 | Per medal level 0–4 |
 | DEF divisor | 9 | Durability scaling |
 | Recovery % | 20% (ceil) | Mutual-annihilation garrison |

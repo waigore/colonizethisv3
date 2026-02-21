@@ -32,14 +32,15 @@ void main() {
       return Game(id: 'g', worldState: world, players: [player]);
     }
 
-    Orders _ordersFor(String unitType) {
+    Orders _ordersFor(String unitType, {String? spawnProvinceId}) {
+      final spawn = spawnProvinceId ?? 'oldWorld|P1';
       return Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
               unitType: unitType,
-              isMilitary: true,
-              spawnProvinceId: 'oldWorld|P1',
+              isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
+              spawnProvinceId: spawn,
             ),
           ],
         },
@@ -182,7 +183,7 @@ void main() {
           'p1': [
             BuildUnitOrder(
               unitType: 'fluyte',
-              isMilitary: false,
+              isMilitary: buildUnitCategoryForUnitType('fluyte') == BuildUnitCategory.military,
               spawnProvinceId: 'oldWorld|P1',
             ),
           ],
@@ -191,6 +192,977 @@ void main() {
       final next = applyBuildAndWorkOrders(gameWithStock, orders, topology: topology);
       expect(next.worldState.fleets, isNotEmpty);
       expect(next.worldState.fleets.any((f) => f.ownerId == 'p1' && f.shipTypeIds.contains('fluyte')), isTrue);
+    });
+  });
+
+  group('applyBuildAndWorkOrders (civilian training costs)', () {
+    Game _civilianGame({
+      required int treasury,
+      required int paper,
+      Map<String, bool>? techUnlocked,
+    }) {
+      const playerId = 'p1';
+      var stockpile = const Stockpile();
+      if (paper > 0) {
+        stockpile = stockpile.applyDelta(CommodityCatalog.paper.id, paper);
+      }
+      final player = Player(
+        id: playerId,
+        displayName: 'Player 1',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|P1',
+        stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: treasury,
+        techUnlocked: techUnlocked,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: 'P1', regionId: 'oldWorld', ownerId: playerId),
+          ],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      return Game(id: 'g', worldState: world, players: [player]);
+    }
+
+    test('rejects civilian build when treasury insufficient', () {
+      final game = _civilianGame(treasury: 999, paper: 2);
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary: buildUnitCategoryForUnitType('Builder') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+      expect(next.players.single.treasury, game.players.single.treasury);
+      expect(next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
+          game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id));
+    });
+
+    test('rejects civilian build when paper insufficient', () {
+      final game = _civilianGame(treasury: 1000, paper: 0);
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary: buildUnitCategoryForUnitType('Builder') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+      expect(next.players.single.treasury, game.players.single.treasury);
+    });
+
+    test('applies treasury and paper cost when civilian build valid', () {
+      const cash = 1000;
+      const paperQty = 2;
+      final game = _civilianGame(treasury: cash + 100, paper: paperQty + 1);
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary: buildUnitCategoryForUnitType('Builder') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units.length, 1);
+      expect(next.worldState.oldWorld.units.single.type, 'Builder');
+      expect(next.players.single.treasury, game.players.single.treasury - cash);
+      expect(next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
+          game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id) - paperQty);
+    });
+
+    test('Merchant requires merchant_companies tech', () {
+      const cash = 2000;
+      const paperQty = 4;
+      final gameNoTech = _civilianGame(treasury: cash + 100, paper: paperQty + 1, techUnlocked: {});
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Merchant',
+              isMilitary: buildUnitCategoryForUnitType('Merchant') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final nextNoTech = applyBuildAndWorkOrders(gameNoTech, orders);
+      expect(nextNoTech.worldState.oldWorld.units, isEmpty);
+      expect(nextNoTech.players.single.treasury, gameNoTech.players.single.treasury);
+
+      final gameWithTech = _civilianGame(
+        treasury: cash + 100,
+        paper: paperQty + 1,
+        techUnlocked: {'merchant_companies': true},
+      );
+      final nextWithTech = applyBuildAndWorkOrders(gameWithTech, orders);
+      expect(nextWithTech.worldState.oldWorld.units.length, 1);
+      expect(nextWithTech.worldState.oldWorld.units.single.type, 'Merchant');
+      expect(nextWithTech.players.single.treasury, gameWithTech.players.single.treasury - cash);
+      expect(nextWithTech.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
+          gameWithTech.players.single.stockpile.quantityOf(CommodityCatalog.paper.id) - paperQty);
+    });
+  });
+
+  group('applyBuildAndWorkOrders work completion', () {
+    const ow = 'oldWorld';
+    const tileKey = 'oldWorld|P1|0|0';
+    const provinceId = 'oldWorld|P1';
+
+    // Non-empty orders so applyBuildAndWorkOrders does not return early (empty build list still counts).
+    Orders _ordersToTriggerProcessWork() => Orders(
+          buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]},
+        );
+
+    test('build_improvement completion increases improvement level and clears currentWork', () {
+      final tileState = TileMapState().setImprovement(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_improvement',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(next.worldState.tileState.improvementLevel(tileKey), 1);
+    });
+
+    test('multi-turn work decrements remainingTurns and completes only when zero', () {
+      final tileState = TileMapState().setImprovement(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: CurrentWork(
+          workTarget: 'build_improvement',
+          tileKey: tileKey,
+          totalTurns: 2,
+          remainingTurns: 2,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final afterFirst = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(afterFirst.worldState.tileState.improvementLevel(tileKey), 0);
+      final uAfterFirst = afterFirst.worldState.oldWorld.units.single;
+      expect(uAfterFirst.currentWork!.remainingTurns, 1);
+      final afterSecond = applyBuildAndWorkOrders(afterFirst, _ordersToTriggerProcessWork());
+      expect(afterSecond.worldState.tileState.improvementLevel(tileKey), 1);
+    });
+
+    test('explore completion sets visibility and clears currentWork', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'explore',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {provinceId: [tileKey]},
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKey],
+        VisibilityLevel.fullyVisible.name,
+      );
+    });
+
+    test('build_road completion increases road level', () {
+      final tileState = TileMapState().setRoadLevel(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_road',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(next.worldState.tileState.roadLevel(tileKey), 1);
+    });
+
+    test('build_port completion sets port and road level 4 when topology has sea', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
+      );
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_port',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork(), topology: topology);
+      expect(next.worldState.tileState.roadLevel(tileKey), 4);
+      expect(
+        next.worldState.portsByProvinceSeaboard.keys.any((k) => k.startsWith(provinceId)),
+        isTrue,
+      );
+    });
+
+    test('build_fort completion increases province fortLevel', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_fort',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 0),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(
+        next.worldState.oldWorld.provinces.single.fortLevel,
+        1,
+      );
+    });
+
+    test('build_rail completion sets road level to 4', () {
+      final tileState = TileMapState().setRoadLevel(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Rail Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_rail',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      expect(next.worldState.tileState.roadLevel(tileKey), 4);
+    });
+  });
+
+  group('applyBuildAndWorkOrders work order application', () {
+    const ow = 'oldWorld';
+    const provinceId = 'oldWorld|P1';
+    const tileKey = 'oldWorld|P1|0|0';
+
+    test('prospect adds tile to playerProspectedTiles', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(
+        next.worldState.playerProspectedTiles['p1'],
+        contains(tileKey),
+      );
+    });
+
+    test('build_improvement work order sets currentWork', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final cost = workOrderCostBuildImprovement(0);
+      var stockpile = const Stockpile();
+      for (final e in cost.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, stockpile: stockpile),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+      expect(u.currentWork, isNotNull);
+      expect(u.currentWork!.workTarget, 'build_improvement');
+      expect(u.currentWork!.remainingTurns, 1);
+    });
+
+    test('explore work order sets currentWork when province has tiles', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {provinceId: [tileKey, 'oldWorld|P1|1|0']},
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'explore',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+      expect(u.currentWork, isNotNull);
+      expect(u.currentWork!.workTarget, 'explore');
+      expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
+    });
+
+    test('Engineer build_road work order sets currentWork', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final cost = workOrderCostBuildRoad;
+      var stockpile = const Stockpile();
+      for (final e in cost.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, stockpile: stockpile),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'build_road',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+      expect(u.currentWork, isNotNull);
+      expect(u.currentWork!.workTarget, 'build_road');
+      expect(u.currentWork!.remainingTurns, 1);
+    });
+
+    test('unknown work target is skipped and unit stays idle', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'unknown_target',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+      expect(u.status, UnitStatus.idle);
+      expect(u.currentWork, isNull);
+    });
+  });
+
+  group('applyBuildAndWorkOrders military and ship skip branches', () {
+    test('skips build when unitType unknown in RegimentEconomyCatalog', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: Stockpile(),
+            workerPool: WorkerPool(peasants: 5),
+            treasury: 1000,
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'unknown_regiment_xyz',
+              isMilitary: buildUnitCategoryForUnitType('unknown_regiment_xyz') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+    });
+
+    test('skips military build when zero peasants', () {
+      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: stockpile,
+            workerPool: const WorkerPool(peasants: 0),
+            treasury: econ.buildTreasuryCost + 10,
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: buildUnitCategoryForUnitType('peasant_levies') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+    });
+
+    test('skips military build when tech not unlocked', () {
+      final regimentWithTech = unlockingTechByRegimentId.keys.firstOrNull;
+      if (regimentWithTech == null) return; // no regiment with tech in catalog
+      final econ = RegimentEconomyCatalog.byId[regimentWithTech];
+      if (econ == null) return;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: stockpile,
+            workerPool: const WorkerPool(peasants: 3),
+            treasury: econ.buildTreasuryCost + 10,
+            techUnlocked: {}, // none unlocked
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: regimentWithTech,
+              isMilitary: buildUnitCategoryForUnitType(regimentWithTech) == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+    });
+
+    test('ship build with topology null does not add fleet', () {
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|P1',
+        stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: shipEcon.buildTreasuryCost + 10,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary: buildUnitCategoryForUnitType('fluyte') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders); // no topology
+      expect(next.worldState.fleets, isEmpty);
+    });
+
+    test('ship build with capitalProvinceId null does not add fleet', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
+      );
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: null, // no capital
+        stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: shipEcon.buildTreasuryCost + 10,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary: buildUnitCategoryForUnitType('fluyte') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders, topology: topology);
+      expect(next.worldState.fleets, isEmpty);
+    });
+
+    test('ship build with capital not adjacent to sea does not add ship', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [], // P1 not connected to sea
+      );
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|P1',
+        stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: shipEcon.buildTreasuryCost + 10,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary: buildUnitCategoryForUnitType('fluyte') == BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders, topology: topology);
+      expect(next.worldState.fleets, isEmpty);
+    });
+  });
+
+  group('applyBuildAndWorkOrders civilian and New World spawn', () {
+    test('civilian spawn gets firstTileInSpawn when tileKeysByRegionAndProvince has tile', () {
+      const ow = 'oldWorld';
+      const provinceId = 'oldWorld|P1';
+      const firstTile = 'oldWorld|P1|0|0';
+      final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
+      var stockpile = const Stockpile();
+      for (final e in explorerEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {provinceId: [firstTile, 'oldWorld|P1|1|0']},
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: stockpile,
+            workerPool: const WorkerPool(peasants: 1),
+            treasury: explorerEcon.buildTreasuryCost + 100,
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Explorer',
+              isMilitary: buildUnitCategoryForUnitType('Explorer') == BuildUnitCategory.military,
+              spawnProvinceId: provinceId,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.units.length, 1);
+      expect(next.worldState.oldWorld.units.single.tileKey, firstTile);
+    });
+
+    test('New World spawn adds unit to newWorld', () {
+      const nw = 'newWorld';
+      const provinceId = 'newWorld|N1';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: nw, ownerId: 'p1')],
+            units: [],
+          ),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: Stockpile(),
+            workerPool: WorkerPool(peasants: 1),
+            treasury: 500,
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'peasant_levies',
+              isMilitary: buildUnitCategoryForUnitType('peasant_levies') == BuildUnitCategory.military,
+              spawnProvinceId: provinceId,
+            ),
+          ],
+        },
+      );
+      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final gameWithStock = game.copyWith(
+        players: [
+          game.players.single.copyWith(stockpile: stockpile, treasury: econ.buildTreasuryCost + 10),
+        ],
+      );
+      final next = applyBuildAndWorkOrders(gameWithStock, orders);
+      expect(next.worldState.oldWorld.units, isEmpty);
+      expect(next.worldState.newWorld.units.length, 1);
+      expect(next.worldState.newWorld.units.single.provinceId, provinceId);
     });
   });
 }

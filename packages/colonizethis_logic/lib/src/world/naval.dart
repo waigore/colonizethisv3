@@ -20,6 +20,15 @@ bool isAdjacentSeaZone(
   return false;
 }
 
+/// First sea zone id adjacent to [seaZoneId], or null if none. Used for naval retreat.
+String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
+  for (final e in topology.edges) {
+    if (e.id1 == seaZoneId) return e.id2;
+    if (e.id2 == seaZoneId) return e.id1;
+  }
+  return null;
+}
+
 /// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet location.
 String? seaZoneIdForProvince(MapTopology topology, String provinceId) {
   final nodesById = {for (final n in topology.nodes) n.id: n};

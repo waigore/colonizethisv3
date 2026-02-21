@@ -144,6 +144,77 @@ void main() {
       final o2 = generateOrdersForGame(game, topology);
       expect(o1, equals(o2));
     });
+
+    test('generateOrdersForPlayer returns empty for human player', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: const [
+            Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+        ],
+      );
+      final orders = generateOrdersForPlayer(game, _simpleTopology(), 'gp1');
+      expect(orders, equals(const Orders()));
+    });
+
+    test('generateOrdersForGameFullAI aggregates orders including naval and diplo', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: const [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: const [
+            Fleet(
+              id: 'f1',
+              ownerId: 'gp1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 1,
+        aiSeedByGpId: const {'gp1': 1},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [],
+      );
+      final orders = generateOrdersForGameFullAI(game, topology);
+      expect(orders.moveOrdersByPlayerId, isNotNull);
+      expect(orders.buildUnitOrdersByPlayerId, isNotNull);
+      expect(orders.researchOrdersByPlayerId, isNotNull);
+      expect(orders.navalMoveOrdersByPlayerId, isNotNull);
+      expect(orders.diplomaticOrdersByPlayerId, isNotNull);
+      expect(
+        orders.researchOrdersByPlayerId['gp1'],
+        isNotEmpty,
+        reason: 'full AI should produce at least research when no capital',
+      );
+    });
   });
 }
 

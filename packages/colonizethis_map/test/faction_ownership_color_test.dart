@@ -37,5 +37,25 @@ void main() {
       expect(map['gp1'], (10, 20, 30));
       expect(map['gp2'], (40, 50, 60));
     });
+
+    test('minor nations get a color from palette', () {
+      final map = factionOwnershipColorMap(
+        greatPowerIds: [],
+        minorNationIds: ['minor1'],
+        tribeIds: [],
+      );
+      expect(map['minor1'], isNotNull);
+      expect(map['minor1'], isA<(int, int, int)>());
+    });
+
+    test('tribes get a color from palette', () {
+      final map = factionOwnershipColorMap(
+        greatPowerIds: [],
+        minorNationIds: [],
+        tribeIds: ['tribe1'],
+      );
+      expect(map['tribe1'], isNotNull);
+      expect(map['tribe1'], isA<(int, int, int)>());
+    });
   });
 }

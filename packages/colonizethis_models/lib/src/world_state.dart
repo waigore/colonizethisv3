@@ -15,6 +15,9 @@ class WorldState {
     this.playerProspectedTiles = const {},
     this.fleets = const [],
     this.tileKeysByRegionAndProvince = const {},
+    this.spyRevealTurnsByPlayer = const {},
+    this.purchasedTilesByTileKey = const {},
+    this.resourceByTileKey = const {},
   });
 
   final TurnState turnState;
@@ -43,6 +46,15 @@ class WorldState {
   /// SPEC/program/fog-and-exploration-resolution.md.
   final Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince;
 
+  /// Spy reveal timers: playerId -> (provinceKey -> turns left until fog returns). SPEC/program/fog-and-exploration-resolution.md.
+  final Map<String, Map<String, int>> spyRevealTurnsByPlayer;
+
+  /// Purchased tiles (Merchant purchase_land): tileKey -> buyer playerId. Minor/Tribe tiles bought by GP. SPEC/game/civilian-units.md.
+  final Map<String, String> purchasedTilesByTileKey;
+
+  /// Resource (commodity id) per tile key. Populated at game setup from tile map. Used for purchase_land validation.
+  final Map<String, String> resourceByTileKey;
+
   Map<String, dynamic> toJson() => {
         'turnState': turnState.toJson(),
         'oldWorld': oldWorld.toJson(),
@@ -63,6 +75,9 @@ class WorldState {
               byProvince.map((provinceId, keys) => MapEntry(provinceId, keys)),
             ),
           ),
+        if (spyRevealTurnsByPlayer.isNotEmpty) 'spyRevealTurnsByPlayer': spyRevealTurnsByPlayer,
+        if (purchasedTilesByTileKey.isNotEmpty) 'purchasedTilesByTileKey': purchasedTilesByTileKey,
+        if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
       };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -126,6 +141,30 @@ class WorldState {
       });
     }
 
+    final spyRevealRaw = json['spyRevealTurnsByPlayer'];
+    final spyRevealTurnsByPlayer = <String, Map<String, int>>{};
+    if (spyRevealRaw is Map) {
+      spyRevealRaw.forEach((playerId, inner) {
+        if (inner is Map) {
+          spyRevealTurnsByPlayer[playerId.toString()] = inner.map(
+            (k, v) => MapEntry(k.toString(), (v is int) ? v : (v as num).toInt()),
+          );
+        }
+      });
+    }
+
+    final purchasedRaw = json['purchasedTilesByTileKey'];
+    final purchasedTilesByTileKey = purchasedRaw is Map
+        ? Map<String, String>.from(
+            purchasedRaw.map((k, v) => MapEntry(k.toString(), v.toString())))
+        : <String, String>{};
+
+    final resourceRaw = json['resourceByTileKey'];
+    final resourceByTileKey = resourceRaw is Map
+        ? Map<String, String>.from(
+            resourceRaw.map((k, v) => MapEntry(k.toString(), v.toString())))
+        : <String, String>{};
+
     return WorldState(
       turnState: TurnState.fromJson(Map<String, dynamic>.from(json['turnState'] as Map)),
       oldWorld: RegionData.fromJson(Map<String, dynamic>.from(json['oldWorld'] as Map)),
@@ -136,6 +175,9 @@ class WorldState {
       playerProspectedTiles: prospected,
       fleets: fleets,
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
+      resourceByTileKey: resourceByTileKey,
     );
   }
 
@@ -149,6 +191,9 @@ class WorldState {
     Map<String, Set<String>>? playerProspectedTiles,
     List<Fleet>? fleets,
     Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+    Map<String, Map<String, int>>? spyRevealTurnsByPlayer,
+    Map<String, String>? purchasedTilesByTileKey,
+    Map<String, String>? resourceByTileKey,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -161,6 +206,9 @@ class WorldState {
       fleets: fleets ?? this.fleets,
       tileKeysByRegionAndProvince:
           tileKeysByRegionAndProvince ?? this.tileKeysByRegionAndProvince,
+      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer ?? this.spyRevealTurnsByPlayer,
+      purchasedTilesByTileKey: purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
+      resourceByTileKey: resourceByTileKey ?? this.resourceByTileKey,
     );
   }
 
@@ -178,7 +226,10 @@ class WorldState {
           _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
           _listEqualsFleet(fleets, other.fleets) &&
           _tileKeysByRegionEquals(
-              tileKeysByRegionAndProvince, other.tileKeysByRegionAndProvince);
+              tileKeysByRegionAndProvince, other.tileKeysByRegionAndProvince) &&
+          _spyRevealEquals(spyRevealTurnsByPlayer, other.spyRevealTurnsByPlayer) &&
+          _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
+          _mapEquals(resourceByTileKey, other.resourceByTileKey);
 
   @override
   int get hashCode => Object.hash(
@@ -205,6 +256,11 @@ class WorldState {
                 ))),
           ),
         ),
+        Object.hashAll(spyRevealTurnsByPlayer.entries.map(
+          (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
+        )),
+        Object.hashAll(purchasedTilesByTileKey.entries),
+        Object.hashAll(resourceByTileKey.entries),
       );
 
   static bool _tileKeysByRegionEquals(
@@ -261,6 +317,21 @@ class WorldState {
       final otherInner = b[entry.key];
       if (otherInner == null || !_mapEquals(entry.value, otherInner)) {
         return false;
+      }
+    }
+    return true;
+  }
+
+  static bool _spyRevealEquals(
+    Map<String, Map<String, int>> a,
+    Map<String, Map<String, int>> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      final otherInner = b[entry.key];
+      if (otherInner == null || otherInner.length != entry.value.length) return false;
+      for (final innerEntry in entry.value.entries) {
+        if (otherInner[innerEntry.key] != innerEntry.value) return false;
       }
     }
     return true;

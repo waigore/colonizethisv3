@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Check per-package line coverage against a threshold (default 90%).
-# Run after tool/test_coverage.sh. Requires lcov.
+# Check per-target line coverage against a threshold (default 90%).
+# Checks app, ctdev, and packages only (not tool/ packages). Run after tool/test_coverage.py. Requires lcov.
 # Usage: tool/check_coverage_threshold.sh [threshold]
 # Example: tool/check_coverage_threshold.sh 90
 set -e
@@ -13,10 +13,10 @@ if ! command -v lcov &>/dev/null; then
 fi
 
 FAILED=()
-for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map app; do
+for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map app ctdev; do
   lcov_file="$ROOT/$dir/coverage/lcov.info"
   if [ ! -f "$lcov_file" ]; then
-    echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.sh first)"
+    echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.py first)"
     continue
   fi
   summary=$(lcov --summary "$lcov_file" 2>/dev/null) || true
@@ -36,5 +36,5 @@ if [ ${#FAILED[@]} -gt 0 ]; then
   printf '  %s\n' "${FAILED[@]}"
   exit 1
 fi
-echo "All packages at or above ${THRESHOLD}% line coverage."
+echo "All checked targets (app, ctdev, packages) at or above ${THRESHOLD}% line coverage."
 exit 0

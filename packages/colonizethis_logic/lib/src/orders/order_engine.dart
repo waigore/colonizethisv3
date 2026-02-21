@@ -261,10 +261,10 @@ class OrderEngine {
       final destProvince = tryGetProvince(game.worldState, o.destinationProvinceId);
       final destOwnerId = destProvince?.ownerId;
       if (!isMilitaryUnit(unit.type) && destOwnerId != null && destOwnerId != playerId) {
-        if (_ownerIsGreatPower(destOwnerId)) {
+        if (_ownerIsGreatPower(destOwnerId) && !isSpyUnit(unit.type)) {
           return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Civilian cannot enter other Great Power territory');
         }
-        if (_ownerIsMinorOrTribe(destOwnerId) && !isExplorerUnit(unit.type) && !isMerchantUnit(unit.type)) {
+        if (_ownerIsMinorOrTribe(destOwnerId) && !isExplorerUnit(unit.type) && !isMerchantUnit(unit.type) && !isSpyUnit(unit.type)) {
           return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Civilian cannot enter Minor/Tribe territory');
         }
       }
@@ -293,30 +293,77 @@ class OrderEngine {
       if (player.capitalProvinceId == null) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'No capital to spawn unit');
       }
-      if (!o.isMilitary) {
-        return const OrderValidationResult(status: OrderValidationStatus.accepted);
-      }
-      final econ = RegimentEconomyCatalog.byId[o.unitType];
-      if (econ == null) {
-        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
-      }
-      if (workers.peasants <= 0) {
-        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
-      }
-      if (treasury < econ.buildTreasuryCost) {
-        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
-      }
-      for (final e in econ.buildInputs.entries) {
-        if (stockpile.quantityOf(e.key) < e.value) {
+      final category = buildUnitCategoryForUnitType(o.unitType);
+      switch (category) {
+        case BuildUnitCategory.civilian:
+          final econ = CivilianEconomyCatalog.byId[o.unitType];
+          if (econ == null) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          final unlockingTechId = unlockingTechByCivilianId[o.unitType];
+          if (unlockingTechId != null && (player.techUnlocked?[unlockingTechId] != true)) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          if (treasury < econ.buildTreasuryCost) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          for (final e in econ.buildInputs.entries) {
+            if (stockpile.quantityOf(e.key) < e.value) {
+              return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+            }
+          }
+          treasury -= econ.buildTreasuryCost;
+          for (final e in econ.buildInputs.entries) {
+            stockpile = stockpile.applyDelta(e.key, -e.value);
+          }
+          return const OrderValidationResult(status: OrderValidationStatus.accepted);
+        case BuildUnitCategory.military:
+          final econ = RegimentEconomyCatalog.byId[o.unitType];
+          if (econ == null) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          final regimentUnlockTech = unlockingTechByRegimentId[o.unitType];
+          if (regimentUnlockTech != null && (player.techUnlocked?[regimentUnlockTech] != true)) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          if (workers.peasants <= 0) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          if (treasury < econ.buildTreasuryCost) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          for (final e in econ.buildInputs.entries) {
+            if (stockpile.quantityOf(e.key) < e.value) {
+              return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+            }
+          }
+          treasury -= econ.buildTreasuryCost;
+          for (final e in econ.buildInputs.entries) {
+            stockpile = stockpile.applyDelta(e.key, -e.value);
+          }
+          workers = workers.copyWith(peasants: workers.peasants - 1);
+          return const OrderValidationResult(status: OrderValidationStatus.accepted);
+        case BuildUnitCategory.naval:
+          final shipEcon = ShipEconomyCatalog.byId[o.unitType];
+          if (shipEcon == null) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          if (treasury < shipEcon.buildTreasuryCost) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+          }
+          for (final e in shipEcon.buildInputs.entries) {
+            if (stockpile.quantityOf(e.key) < e.value) {
+              return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
+            }
+          }
+          treasury -= shipEcon.buildTreasuryCost;
+          for (final e in shipEcon.buildInputs.entries) {
+            stockpile = stockpile.applyDelta(e.key, -e.value);
+          }
+          return const OrderValidationResult(status: OrderValidationStatus.accepted);
+        case BuildUnitCategory.unknown:
           return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient resources');
-        }
       }
-      treasury -= econ.buildTreasuryCost;
-      for (final e in econ.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(e.key, -e.value);
-      }
-      workers = workers.copyWith(peasants: workers.peasants - 1);
-      return const OrderValidationResult(status: OrderValidationStatus.accepted);
     }
 
     for (final o in builds) {
@@ -334,27 +381,111 @@ class OrderEngine {
       if (unit == null || unit.ownerId != playerId) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Unit not found');
       }
+      if (unit.currentWork != null) {
+        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Unit already has a work order; cancel first');
+      }
       final type = unit.type;
-      const explorerTargets = {'explore', 'prospect'};
-      const workerTargets = {'build_improvement', 'upgrade_town', 'build_road', 'build_port', 'build_fort', 'build_rail'};
-      final targetOk = (isExplorerUnit(type) && explorerTargets.contains(o.target)) ||
-          (isCivilianWorkerUnit(type) && workerTargets.contains(o.target));
-      if (!targetOk) {
+      if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid work target for unit type');
       }
       if (o.targetTileKey.isEmpty) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Work order requires a target tile');
       }
-      if (!isExplorerUnit(type)) {
-        final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
-        final province = targetProvinceId != null
-            ? tryGetProvince(game.worldState, targetProvinceId)
-            : null;
-        final ownerId = province?.ownerId;
+      final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
+      final province = targetProvinceId != null
+          ? tryGetProvince(game.worldState, targetProvinceId)
+          : null;
+      final ownerId = province?.ownerId;
+
+      // steal_tech: target must be another GP's capital province; that GP must have tech we lack
+      if (o.target == 'steal_tech') {
+        if (targetProvinceId == null) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid target for steal_tech');
+        }
+        final otherPlayer = game.players.where((p) => p.id != playerId && p.capitalProvinceId == targetProvinceId).firstOrNull;
+        if (otherPlayer == null) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'steal_tech target must be another Great Power capital province');
+        }
+        final ourTech = player.techUnlocked ?? {};
+        final theirTech = otherPlayer.techUnlocked ?? {};
+        final hasTechWeLack = theirTech.entries.any((e) => e.value == true && ourTech[e.key] != true);
+        if (!hasTechWeLack) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Target has no technology you lack');
+        }
+      } else if (o.target == 'counter_spy') {
+        if (ownerId != playerId) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'counter_spy target must be your own province');
+        }
+      } else if (o.target == 'purchase_land') {
+        if (ownerId == null || ownerId == playerId) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'purchase_land target must be a Minor or Tribe province');
+        }
+        final isMinor = game.minorNations.any((m) => m.id == ownerId);
+        final isTribe = game.tribes.any((t) => t.id == ownerId);
+        if (!isMinor && !isTribe) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'purchase_land target must be a Minor or Tribe province');
+        }
+        final rel = game.diplomacyRelations.where((r) =>
+            (r.factionId1 == playerId && r.factionId2 == ownerId) ||
+            (r.factionId2 == playerId && r.factionId1 == ownerId)).firstOrNull;
+        if (rel != null && rel.atWar) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Cannot purchase land: at war with that faction');
+        }
+        final overture = game.overtureStates.where((ov) =>
+            ov.gpId == playerId && ov.targetId == ownerId).firstOrNull;
+        if (overture == null || !overture.hasEmbassy) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Cannot purchase land: embassy required with that Minor/Tribe');
+        }
+        final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
+        if (resourceId == null || resourceId.isEmpty) {
+          return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Tile has no resource');
+        }
+        const mineralIds = {'iron', 'copper', 'tin', 'coal', 'silver', 'gold', 'gems', 'diamonds'};
+        if (mineralIds.contains(resourceId)) {
+          final prospected = game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+          if (!prospected.contains(o.targetTileKey)) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Mineral tile must be prospected first');
+          }
+        }
+        final cost = 15 * landPurchaseBasePrice(resourceId);
+        if (treasury < cost) {
+          return OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient treasury for purchase_land (need $cost)');
+        }
+      } else if (!isExplorerUnit(type)) {
+        // Builder, Engineer, Rail Builder: must work in owned province
         if (ownerId != null && ownerId != playerId) {
           return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Cannot work in foreign province');
         }
       }
+
+      // Cost validation: materials for build_* and upgrade_town; treasury for purchase_land already checked above
+      if (o.target != 'steal_tech' && o.target != 'counter_spy' && o.target != 'purchase_land') {
+        final improvementLevel = o.target == 'build_improvement'
+            ? (game.worldState.tileState.improvementLevel(o.targetTileKey))
+            : 0;
+        final fortLevel = province?.fortLevel ?? 0;
+        final roadLevel = game.worldState.tileState.roadLevel(o.targetTileKey);
+        if (o.target == 'build_road' && roadLevel >= 1) {
+          final hasRoadConstruction = player.techUnlocked?['road_construction'] == true;
+          if (!hasRoadConstruction) {
+            return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Road Construction tech required for transport level 2');
+          }
+        }
+        final costMap = workOrderMaterialCost(
+          o.target,
+          improvementLevel: improvementLevel,
+          fortLevel: fortLevel,
+          roadLevel: roadLevel,
+        );
+        if (costMap != null) {
+          for (final entry in costMap.entries) {
+            if (stockpile.quantityOf(entry.key) < entry.value) {
+              return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Insufficient materials for work order');
+            }
+          }
+        }
+      }
+
       if (!workOrderVisibilityOk(view, unit, o.target, o.targetTileKey)) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Province or tile not visible for this work');
       }
@@ -368,7 +499,33 @@ class OrderEngine {
       }
       final r = validateWork(o);
       results.add(r);
-      if (!r.isAccepted) rejected = true;
+      if (!r.isAccepted) {
+        rejected = true;
+      } else {
+        // Project cost so subsequent work orders see updated stockpile/treasury
+        final unit = unitsById[o.unitId];
+        if (unit != null && o.target == 'purchase_land') {
+          final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
+          if (resourceId != null && resourceId.isNotEmpty) {
+            final cost = 15 * landPurchaseBasePrice(resourceId);
+            treasury -= cost;
+          }
+        } else if (unit != null && o.target != 'steal_tech' && o.target != 'counter_spy') {
+          final provId = Unit.provinceIdFromTileKey(o.targetTileKey);
+          final province = provId != null ? tryGetProvince(game.worldState, provId) : null;
+          final improvementLevel = o.target == 'build_improvement' ? game.worldState.tileState.improvementLevel(o.targetTileKey) : 0;
+          final fortLevel = province?.fortLevel ?? 0;
+          final roadLevel = game.worldState.tileState.roadLevel(o.targetTileKey);
+          final costMap = workOrderMaterialCost(o.target, improvementLevel: improvementLevel, fortLevel: fortLevel, roadLevel: roadLevel);
+          if (costMap != null) {
+            for (final entry in costMap.entries) {
+              if (stockpile.quantityOf(entry.key) >= entry.value) {
+                stockpile = stockpile.applyDelta(entry.key, -entry.value);
+              }
+            }
+          }
+        }
+      }
     }
 
     final fleetById = {for (final f in game.worldState.fleets) f.id: f};
