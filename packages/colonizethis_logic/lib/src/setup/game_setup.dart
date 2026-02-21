@@ -512,12 +512,7 @@ Game _applyNaming({
               : '$fallbackPrefix ${i + 1}');
       if (name.isEmpty) name = generateFallback(rngSeed + i);
       if (p.id != capitalProvinceId && pool.isNotEmpty) poolIndex++;
-      final updated = Province(
-        id: p.id,
-        regionId: p.regionId,
-        ownerId: p.ownerId,
-        displayName: name,
-      );
+      final updated = p.copyWith(displayName: name);
       outById[p.id] = updated;
     }
   }

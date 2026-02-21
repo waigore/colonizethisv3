@@ -3,30 +3,46 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 
+/// Result of connectivity resolution: connected tile set and per-tile path transport cap.
+/// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
+/// capped by min transport level along path to town then to capital; [pathTransportCap]
+/// is that cap (max over paths of min road level on path).
+class ConnectivityResult {
+  const ConnectivityResult({
+    required this.connected,
+    this.pathTransportCap = const {},
+  });
+
+  final Set<String> connected;
+  final Map<String, int> pathTransportCap;
+}
+
 /// Resolves which tiles are connected to each player's capital. SPEC/game/capital-and-connectivity.
 ///
 /// Connectivity: from capital, BFS over land; edges are same-province adjacency;
 /// we expand only from capital or tiles with road/port. Overseas: ports connected
 /// by shared sea zone; from those ports, BFS within province by road/adjacency.
+/// Also computes [ConnectivityResult.pathTransportCap]: for each connected tile,
+/// the maximum over paths from capital of (min road/port level on that path).
 
-/// Returns per player id the set of connected tile keys (format "regionId|provinceId|x|y").
-/// Players without capital or with no tile map get an empty set.
-Map<String, Set<String>> resolveConnectivity({
+/// Returns per player id [ConnectivityResult] (connected set + path transport cap).
+/// Players without capital or with no tile map get an empty result.
+Map<String, ConnectivityResult> resolveConnectivity({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
 }) {
   final provinceIdsByType = _provinceIdsFromTopology(topology);
-  final result = <String, Set<String>>{};
+  final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      result[player.id] = {};
+      result[player.id] = ConnectivityResult(connected: {});
       continue;
     }
 
-    final connected = _connectedTilesForPlayer(
+    final cr = _connectedTilesForPlayer(
       game: game,
       playerId: player.id,
       capital: capital,
@@ -34,7 +50,7 @@ Map<String, Set<String>> resolveConnectivity({
       topology: topology,
       provinceIdsByType: provinceIdsByType,
     );
-    result[player.id] = connected;
+    result[player.id] = cr;
   }
 
   return result;
@@ -147,7 +163,14 @@ Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
   return out;
 }
 
-Set<String> _connectedTilesForPlayer({
+int _transportLevelAtTile(WorldState worldState, String tileKey) {
+  final portInfo = _portToProvinceSeaZone(worldState);
+  if (portInfo.containsKey(tileKey)) return 4;
+  final r = worldState.tileState.roadLevel(tileKey);
+  return r > 0 ? r : 0;
+}
+
+ConnectivityResult _connectedTilesForPlayer({
   required Game game,
   required String playerId,
   required CapitalTile capital,
@@ -158,17 +181,20 @@ Set<String> _connectedTilesForPlayer({
   final worldState = game.worldState;
   final tileState = worldState.tileState;
   final owned = _ownedProvinceIdsForPlayer(game, playerId);
-  if (!owned.contains(capital.provinceId)) return {};
+  if (!owned.contains(capital.provinceId)) {
+    return const ConnectivityResult(connected: {});
+  }
 
   final capitalRegionId = capital.regionId;
   final mapOpt = tileMapByRegion[capitalRegionId];
-  if (mapOpt == null) return {};
+  if (mapOpt == null) return const ConnectivityResult(connected: {});
 
   final capitalKey = capital.toTileKey();
-  final connected = <String>{capitalKey};
-  final queue = <String>[capitalKey];
-
   final portInfo = _portToProvinceSeaZone(worldState);
+  final connected = <String>{capitalKey};
+  final pathCap = <String, int>{};
+  pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey);
+  final queue = <String>[capitalKey];
 
   while (queue.isNotEmpty) {
     final key = queue.removeAt(0);
@@ -192,10 +218,24 @@ Set<String> _connectedTilesForPlayer({
 
     if (!canExpand) continue;
 
+    final bottleneckU = pathCap[key] ?? 0;
     for (final n in _adjacentTileKeys(regionId, localProvinceId, x, y, map, provinceIdsByType)) {
-      if (connected.contains(n)) continue;
-      connected.add(n);
-      queue.add(n);
+      final transportN = _transportLevelAtTile(worldState, n);
+      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
+      final existing = pathCap[n] ?? -1;
+      if (candidate > existing) {
+        pathCap[n] = candidate;
+        if (!connected.contains(n)) {
+          connected.add(n);
+          queue.add(n);
+        } else {
+          queue.add(n);
+        }
+      } else if (!connected.contains(n)) {
+        connected.add(n);
+        pathCap[n] = candidate;
+        queue.add(n);
+      }
     }
   }
 
@@ -248,6 +288,7 @@ Set<String> _connectedTilesForPlayer({
     if (x < 0 || y < 0) continue;
 
     connected.add(portKey);
+    pathCap[portKey] = 4;
     queue.add(portKey);
   }
 
@@ -269,14 +310,28 @@ Set<String> _connectedTilesForPlayer({
     final map = tileMapByRegion[regionId];
     if (map == null) continue;
 
+    final bottleneckU = pathCap[key] ?? 0;
     for (final n in _adjacentTileKeys(regionId, provinceId, x, y, map, provinceIdsByType)) {
-      if (connected.contains(n)) continue;
-      connected.add(n);
-      queue.add(n);
+      final transportN = _transportLevelAtTile(worldState, n);
+      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
+      final existing = pathCap[n] ?? -1;
+      if (candidate > existing) {
+        pathCap[n] = candidate;
+        if (!connected.contains(n)) {
+          connected.add(n);
+          queue.add(n);
+        } else {
+          queue.add(n);
+        }
+      } else if (!connected.contains(n)) {
+        connected.add(n);
+        pathCap[n] = candidate;
+        queue.add(n);
+      }
     }
   }
 
-  return connected;
+  return ConnectivityResult(connected: connected, pathTransportCap: pathCap);
 }
 
 /// Adjacent tile keys (4-neighbour). Includes tiles in same or neighbouring provinces (any land cell). Tile key uses neighbour's province id.

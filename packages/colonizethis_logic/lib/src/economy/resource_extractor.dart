@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/connectivity_resolver.dart';
+
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
   const ExtractionTotals({
@@ -15,22 +17,25 @@ class ExtractionTotals {
 /// Computes per-player extraction from connected tiles. SPEC/game/extraction-and-improvements.
 ///
 /// For each connected tile: production = min(improvementLevel, techCap);
-/// transportLevel = road level (0/1/2/4); town development level caps yield (SPEC capital-and-connectivity).
-/// effective = min(production, transportLevel, province.townDevelopmentLevel).
+/// effective = min(production, pathTransportCap, province.townDevelopmentLevel).
+/// Path transport cap = min road/port level along path to town then to capital (from [connectivityResult]);
+/// when absent, falls back to tile's own transport level.
 /// Sums by commodity; splits land (same region as capital) vs overseas.
 Map<String, ExtractionTotals> computeExtraction({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
-  required Map<String, Set<String>> connectivityResult,
+  required Map<String, ConnectivityResult> connectivityResult,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
 }) {
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
-    final connected = connectivityResult[player.id];
+    final cr = connectivityResult[player.id];
+    final connected = cr?.connected;
     if (connected == null || connected.isEmpty) {
       out[player.id] = const ExtractionTotals();
       continue;
     }
+    final pathTransportCap = cr!.pathTransportCap;
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
     final techCap = techCapForPlayer(player.id);
@@ -76,10 +81,11 @@ Map<String, ExtractionTotals> computeExtraction({
       final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);
       final roadLevel = game.worldState.tileState.roadLevel(tileKey);
       final isPort = game.worldState.portsByProvinceSeaboard.values.contains(tileKey);
-      final transportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
+      final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
+      final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
 
       final production = (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
-      final effective = (production < transportLevel ? production : transportLevel).clamp(0, 4);
+      final effective = (production < pathCap ? production : pathCap).clamp(0, 4);
       final effectiveCapped = (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(0, 4);
       if (effectiveCapped <= 0) continue;
 

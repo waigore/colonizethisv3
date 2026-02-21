@@ -43,12 +43,13 @@ void main() {
         topology: topology,
       );
       expect(result['pl1'], isNotNull);
-      expect(result['pl1']!.length, 5);
-      expect(result['pl1']!.contains('oldWorld|p1|1|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|0|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|2|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|1|0'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|1|2'), true);
+      final connected = result['pl1']!.connected;
+      expect(connected.length, 5);
+      expect(connected.contains('oldWorld|p1|1|1'), true);
+      expect(connected.contains('oldWorld|p1|0|1'), true);
+      expect(connected.contains('oldWorld|p1|2|1'), true);
+      expect(connected.contains('oldWorld|p1|1|0'), true);
+      expect(connected.contains('oldWorld|p1|1|2'), true);
     });
 
     test('road extends connectivity beyond capital-adjacent', () {
@@ -93,10 +94,11 @@ void main() {
         tileMapByRegion: {'oldWorld': tileMap},
         topology: topology,
       );
-      expect(result['pl1']!.contains('oldWorld|p1|1|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|0|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|0|0'), true);
-      expect(result['pl1']!.length, greaterThanOrEqualTo(6));
+      final connected = result['pl1']!.connected;
+      expect(connected.contains('oldWorld|p1|1|1'), true);
+      expect(connected.contains('oldWorld|p1|0|1'), true);
+      expect(connected.contains('oldWorld|p1|0|0'), true);
+      expect(connected.length, greaterThanOrEqualTo(6));
     });
 
     test('player without capital gets empty set', () {
@@ -124,7 +126,7 @@ void main() {
         tileMapByRegion: {'oldWorld': tileMap},
         topology: topology,
       );
-      expect(result['pl1'], isEmpty);
+      expect(result['pl1']!.connected, isEmpty);
     });
 
     test('overseas province with port connected via sea', () {
@@ -188,10 +190,11 @@ void main() {
         },
         topology: topology,
       );
-      expect(result['pl1']!.contains('oldWorld|p1|0|0'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|1|0'), true);
-      expect(result['pl1']!.contains('newWorld|p2|0|0'), true);
-      expect(result['pl1']!.length, greaterThanOrEqualTo(3));
+      final connected = result['pl1']!.connected;
+      expect(connected.contains('oldWorld|p1|0|0'), true);
+      expect(connected.contains('oldWorld|p1|1|0'), true);
+      expect(connected.contains('newWorld|p2|0|0'), true);
+      expect(connected.length, greaterThanOrEqualTo(3));
     });
 
     test('capital not on seaboard: only ports reachable by road from capital connected', () {
@@ -247,9 +250,10 @@ void main() {
         },
         topology: topology,
       );
-      expect(result['pl1']!.contains('oldWorld|p1|1|1'), true);
-      expect(result['pl1']!.contains('oldWorld|p1|0|0'), true);
-      expect(result['pl1']!.contains('newWorld|p2|0|0'), false);
+      final connected = result['pl1']!.connected;
+      expect(connected.contains('oldWorld|p1|1|1'), true);
+      expect(connected.contains('oldWorld|p1|0|0'), true);
+      expect(connected.contains('newWorld|p2|0|0'), false);
     });
 
     test('sea path multi-zone: S1–S2 edge, capital on S1, overseas port on S2 connected', () {
@@ -296,8 +300,90 @@ void main() {
         },
         topology: topology,
       );
-      expect(result['pl1']!.contains('oldWorld|p1|0|0'), true);
-      expect(result['pl1']!.contains('newWorld|p2|0|0'), true);
+      final connected = result['pl1']!.connected;
+      expect(connected.contains('oldWorld|p1|0|0'), true);
+      expect(connected.contains('newWorld|p2|0|0'), true);
+    });
+
+    test('severed road: losing province on path to capital removes tiles beyond it', () {
+      const ow = 'oldWorld';
+      final grid = [
+        ['p1', 'p2', 'p3'],
+        ['p1', 'p2', 'p3'],
+      ];
+      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
+      final tileState = TileMapState()
+          .setRoadLevel('oldWorld|p1|0|0', 1)
+          .setRoadLevel('oldWorld|p1|1|0', 1)
+          .setRoadLevel('oldWorld|p2|1|0', 1)
+          .setRoadLevel('oldWorld|p2|2|0', 1)
+          .setRoadLevel('oldWorld|p3|2|0', 1);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+        ],
+      );
+      final tileMapByRegion = {'oldWorld': tileMap};
+      var result = resolveConnectivity(game: game, tileMapByRegion: tileMapByRegion, topology: topology);
+      expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), true);
+
+      final gameP2Lost = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'other'),
+            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+        ],
+      );
+      result = resolveConnectivity(game: gameP2Lost, tileMapByRegion: tileMapByRegion, topology: topology);
+      expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), false);
+
+      final gameP2Restored = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+        ],
+      );
+      result = resolveConnectivity(game: gameP2Restored, tileMapByRegion: tileMapByRegion, topology: topology);
+      expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), true);
     });
   });
 }
