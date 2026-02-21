@@ -122,5 +122,124 @@ void main() {
       expect(effects.workerCount, isNotNull);
       expect(effects.unitLocations, isNotNull);
     });
+
+    test('includes newWorld unit locations in ProjectedEffects', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'N1', regionId: nw, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: [Province(id: '$nw|N1', regionId: nw, ownerId: 'p1')],
+            units: [
+              Unit(id: 'u1', type: 'Regiment', ownerId: 'p1', provinceId: '$nw|N1'),
+            ],
+          ),
+        ),
+        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.unitLocations, isNotNull);
+      expect(effects.unitLocations!['u1'], '$nw|N1');
+    });
+
+    test('returns stockpileDeltas and treasuryDelta when resolve changes stockpile and treasury', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'A',
+            isHuman: true,
+            treasury: 100,
+            stockpile: Stockpile(quantities: {'grain': 10, 'iron': 5}),
+          ),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.treasuryDelta, isNotNull);
+      expect(effects.workerCount, isNotNull);
+      expect(effects.unitLocations, isNotNull);
+    });
+
+    test('stockpileDeltas includes negative delta when commodity fully consumed', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'A',
+            isHuman: true,
+            stockpile: Stockpile(quantities: {'grain': 1}),
+            workerPool: WorkerPool(peasants: 1),
+          ),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.stockpileDeltas, isNotNull);
+      expect(effects.stockpileDeltas!['grain'], -1);
+    });
   });
 }

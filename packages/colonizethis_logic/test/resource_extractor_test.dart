@@ -324,5 +324,34 @@ void main() {
       expect(result['pl1']!.overseas['sugarCane'], 1);
       expect(result['pl1']!.land, isEmpty);
     });
+
+    test('returns empty ExtractionTotals when player has no connected tiles', () {
+      final player = Player(
+        id: 'pl1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'p1',
+        capitalTile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final result = computeExtraction(
+        game: game,
+        tileMapByRegion: const {},
+        connectivityResult: {'pl1': {}},
+        techCapForPlayer: (_) => 4,
+      );
+      expect(result['pl1']!.land, isEmpty);
+      expect(result['pl1']!.overseas, isEmpty);
+    });
   });
 }

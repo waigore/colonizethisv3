@@ -193,6 +193,63 @@ void main() {
       expect(next.worldState.fleets, isNotEmpty);
       expect(next.worldState.fleets.any((f) => f.ownerId == 'p1' && f.shipTypeIds.contains('fluyte')), isTrue);
     });
+
+    test('second naval build adds ship to existing home fleet', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'Sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'Sea1')],
+      );
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value * 2 + 1);
+      }
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: '$ow|P1',
+        stockpile: stockpile,
+        treasury: shipEcon.buildTreasuryCost * 2 + 10,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+          units: const [],
+        ),
+        newWorld: const RegionData(),
+        fleets: [
+          Fleet(
+            id: 'fleet_p1',
+            ownerId: 'p1',
+            seaZoneId: 'Sea1',
+            regionId: ow,
+            shipTypeIds: ['fluyte'],
+          ),
+        ],
+      );
+      final game = Game(id: 'g', worldState: world, players: [player]);
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary: buildUnitCategoryForUnitType('fluyte') == BuildUnitCategory.military,
+              spawnProvinceId: '$ow|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders, topology: topology);
+      final p1Fleet = next.worldState.fleets.where((f) => f.ownerId == 'p1').single;
+      expect(p1Fleet.shipTypeIds.length, 2);
+      expect(p1Fleet.shipTypeIds, contains('fluyte'));
+    });
   });
 
   group('applyBuildAndWorkOrders (civilian training costs)', () {

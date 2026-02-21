@@ -226,6 +226,45 @@ void main() {
       );
     });
 
+    test('prospect suggestion when province fogged and tiles in province', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = const Player(id: playerId, displayName: 'GP', isHuman: false);
+      final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: playerId,
+        provinceId: '$ow|p1',
+      );
+      const tileKey = 'oldWorld|p1|0|0';
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1], units: [unit]),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: const {
+          playerId: {tileKey: 'fogged'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {'$ow|p1': [tileKey]},
+        },
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestWorkOrders(view, game, topology, const Orders());
+      expect(
+        suggestions.where((o) => o.target == 'prospect'),
+        isNotEmpty,
+      );
+      expect(suggestions.firstWhere((o) => o.target == 'prospect').targetTileKey, tileKey);
+    });
+
     test('work suggestions only for unit current province', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
@@ -338,6 +377,97 @@ void main() {
       final view = buildPlayerView(game, topology, playerId);
       final suggestions = suggestNavalMoveOrders(view, game, topology, const Orders());
       expect(suggestions, isA<List<NavalMoveOrder>>());
+    });
+
+    test('counter_spy work suggested for Spy in owned province with tiles', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = const Player(id: playerId, displayName: 'GP', isHuman: false);
+      final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+      const tileKey = 'oldWorld|p1|0|0';
+      final unit = Unit(
+        id: 'u1',
+        type: 'Spy',
+        ownerId: playerId,
+        provinceId: '$ow|p1',
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1], units: [unit]),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: const {playerId: {tileKey: 'fullyVisible'}},
+        tileKeysByRegionAndProvince: {ow: {'$ow|p1': [tileKey]}},
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestWorkOrders(view, game, topology, const Orders());
+      expect(
+        suggestions.where((o) => o.target == 'counter_spy'),
+        isNotEmpty,
+      );
+    });
+
+    test('purchase_land work suggested for Merchant when minor province has resource tile', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        treasury: 500,
+      );
+      final ownProvince = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+      final minorProvince = Province(id: '$ow|minor1', regionId: ow, ownerId: 'minor1');
+      const tileKey = 'oldWorld|minor1|0|0';
+      final unit = Unit(
+        id: 'u1',
+        type: 'Merchant',
+        ownerId: playerId,
+        provinceId: '$ow|p1',
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [ownProvince, minorProvince],
+          units: [unit],
+        ),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: const {
+          playerId: {'oldWorld|p1|0|0': 'fullyVisible', tileKey: 'fullyVisible'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {'$ow|p1': ['oldWorld|p1|0|0'], '$ow|minor1': [tileKey]},
+        },
+        resourceByTileKey: {tileKey: 'grain'},
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: world,
+        players: [player],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        overtureStates: const [
+          OvertureState(gpId: 'gp1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0),
+        ],
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'minor1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestWorkOrders(view, game, topology, const Orders());
+      expect(
+        suggestions.where((o) => o.target == 'purchase_land'),
+        isNotEmpty,
+      );
     });
 
     test('suggestNavalMissionOrders returns list', () {

@@ -69,6 +69,51 @@ void main() {
       final updated = applyMoveOrdersToRegion(region, topology, orders);
       expect(updated.units.single.provinceId, 'P2');
     });
+
+    test('civilian unit move sets tileKey when tileKeysByRegionAndProvince provided', () {
+      const regionId = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+      const destTileKey = 'oldWorld|P2|0|0';
+      final region = RegionData(
+        provinces: const [
+          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
+        ],
+        units: const [
+          Unit(
+            id: 'u1',
+            type: 'Merchant',
+            ownerId: 'p1',
+            provinceId: 'P1',
+            tileKey: 'oldWorld|P1|0|0',
+          ),
+        ],
+      );
+      final orders = {
+        'p1': [
+          const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+        ],
+      };
+      final updated = applyMoveOrdersToRegion(
+        region,
+        topology,
+        orders,
+        regionId: regionId,
+        tileKeysByRegionAndProvince: {
+          regionId: {'P2': [destTileKey]},
+        },
+      );
+      expect(updated.units.single.provinceId, 'P2');
+      expect(updated.units.single.tileKey, destTileKey);
+    });
   });
 }
 

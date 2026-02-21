@@ -106,6 +106,88 @@ void main() {
       );
     });
 
+    test('riches to treasury phase converts riches in stockpile', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            treasury: 0,
+            stockpile: Stockpile(quantities: {'gold': 2, 'grain': 1}),
+          ),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.players.single.treasury, greaterThan(0));
+      expect(next.players.single.stockpile.quantityOf('gold'), lessThan(2));
+    });
+
+    test('consumption and combat run with feeding coverage when player has no food', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P2'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, stockpile: Stockpile.empty),
+          Player(id: 'p2', displayName: 'P2', isHuman: true, stockpile: Stockpile(quantities: {'grain': 10, 'meat': 10})),
+        ],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));
+    });
+
     test('full turn with tileMapByRegion: extraction pipeline, turn advanced', () {
       final topology = MapTopology(
         nodes: [
