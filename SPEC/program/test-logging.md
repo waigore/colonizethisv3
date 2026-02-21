@@ -35,4 +35,4 @@ Any package or app that has tests adds **colonizethis_test** as a **dev_dependen
 ## Coverage
 
 - Run **`tool/test_coverage.py`** to run all package and app tests with coverage. Output is written to each package’s `coverage/` and optionally merged to `coverage_merged/` when `lcov` is installed. The script prints a per-package and overall line-coverage summary.
-- To enforce a minimum line coverage (e.g. 90%), run **`tool/check_coverage_threshold.sh [threshold]`** after `tool/test_coverage.py`. Example: `tool/check_coverage_threshold.sh 90`. It exits with code 1 if any package is below the threshold.
+- To enforce a minimum line coverage (e.g. 90%), run **`tool/check_coverage_threshold.sh [threshold] [dir1 [dir2 ...]]`** after `tool/test_coverage.py`. If no directories are given, all app, ctdev, and packages are checked. Example: `tool/check_coverage_threshold.sh 90`. To check only a specific target: `tool/check_coverage_threshold.sh 90 packages/colonizethis_logic`. It exits with code 1 if any checked target is below the threshold.

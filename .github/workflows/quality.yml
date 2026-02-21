@@ -1,0 +1,27 @@
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Run tests with coverage
+        run: python3 tool/test_coverage.py
+
+      - name: Coverage gate (colonizethis_logic >= 90%)
+        run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic
