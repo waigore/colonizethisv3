@@ -72,6 +72,31 @@ void main() {
   });
 
   group('generateOrdersWithSimpleHeuristics', () {
+    test('returns empty Orders when player not in game', () {
+      final game = Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'nonexistent',
+        12345,
+      );
+      expect(orders.moveOrdersByPlayerId, isEmpty);
+      expect(orders.workOrdersByPlayerId, isEmpty);
+      expect(orders.buildUnitOrdersByPlayerId, isEmpty);
+      expect(orders.researchOrdersByPlayerId, isEmpty);
+    });
+
     test('returns only valid orders for player', () {
       final game = Game(
         id: 'g1',
@@ -131,5 +156,213 @@ void main() {
       }
     });
 
+    test('filters out move to Minor nation province when no relation', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+              Province(id: '$ow|M1', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|M1|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor', capitalProvinceId: 'M1'),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: {'gp1': 42},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'M1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [TopologyEdge(id1: 'P1', id2: 'M1')],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
+      for (final m in moves) {
+        expect(m.destinationProvinceId, isNot('$ow|M1'),
+            reason: 'move to Minor province should be filtered when no relation');
+      }
+    });
+
+    test('filters out move to province of faction at peace (diplomacy filter)', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'gp2'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+          Player(id: 'gp2', displayName: 'Other', isHuman: true),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: {'gp1': 42},
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
+      for (final m in moves) {
+        expect(m.destinationProvinceId, isNot('$ow|P2'),
+            reason: 'move to gp2 province should be filtered when at peace');
+      }
+    });
+
+    test('can generate research order when only research suggestions available', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'AI',
+            isHuman: false,
+            capitalProvinceId: 'P1',
+            capitalTile: CapitalTile(regionId: ow, provinceId: 'P1', x: 0, y: 0),
+          ),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: {'gp1': 123},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      expect(orders.researchOrdersByPlayerId['gp1'], isNotNull);
+    });
+
+    test('includes newWorld provinces in province owner map', () {
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: '$nw|N1', regionId: nw, ownerId: 'gp1'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: '$nw|N1',
+              ),
+            ],
+          ),
+          playerVisibilityByTile: const {
+            'gp1': {'newWorld|N1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: {'gp1': 1},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'N1', regionId: nw, type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      expect(orders, isNotNull);
+      expect(orders.diplomaticOrdersByPlayerId, isEmpty);
+    });
   });
 }

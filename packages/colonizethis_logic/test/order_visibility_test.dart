@@ -180,6 +180,31 @@ void main() {
       expect(workOrderVisibilityOk(view, unit, 'unknown_work'), isFalse);
     });
 
+    test('counter_spy allows owned province without fogged', () {
+      const r = 'oldWorld', p = 'p1';
+      final fullId = '$r|$p';
+      final view = _view(
+        provincesById: {
+          fullId: Province(
+            id: fullId,
+            regionId: r,
+            displayName: 'P1',
+            ownerId: 'gp1',
+          ),
+        },
+      );
+      const unit = Unit(
+        id: 'u1',
+        type: 'Spy',
+        ownerId: 'gp1',
+        provinceId: 'oldWorld|p1',
+      );
+      expect(
+        workOrderVisibilityOk(view, unit, 'counter_spy'),
+        isTrue,
+      );
+    });
+
     test('build_fort with fogged visibility on owned province', () {
       const r = 'oldWorld', p = 'p1';
       final fullId = '$r|$p';

@@ -162,6 +162,43 @@ void main() {
       expect(viewP2.ownUnitsById, isEmpty);
       expect(viewP2.ownUnitsById.containsKey('spy1'), isFalse);
     });
+
+    test('Spy in other-faction province makes that province tiles fully visible for Spy owner', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|p2|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+            ],
+            units: [
+              Unit(
+                id: 'spy1',
+                type: 'Spy',
+                ownerId: 'gp1',
+                provinceId: '$ow|p2',
+                tileKey: tileKeyP2,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {'$ow|p2': [tileKeyP2]},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+        ],
+      );
+      final topology = MapTopology(nodes: const [], edges: const []);
+      final viewGp1 = buildPlayerView(game, topology, 'gp1');
+      expect(viewGp1.visibilityForTile(tileKeyP2), VisibilityLevel.fullyVisible);
+    });
   });
 }
 
