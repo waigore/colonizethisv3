@@ -11,9 +11,11 @@ dependencies:
   colonizethis_data:
   colonizethis_logic:
   colonizethis_models:
+  logger: ^2.0.2
 
 dev_dependencies:
   colonizethis_test:
+  path: ^1.9.0
   test: ^1.24.0
 
 executables:
