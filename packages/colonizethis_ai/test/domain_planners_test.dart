@@ -13,6 +13,7 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     required this.research,
     required this.navalMove,
     required this.navalMission,
+    this.diplomatic = const [],
   });
 
   final List<WorkOrder> work;
@@ -21,6 +22,7 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
   final List<ResearchOrder> research;
   final List<NavalMoveOrder> navalMove;
   final List<NavalMissionOrder> navalMission;
+  final List<DiplomaticOrder> diplomatic;
 
   @override
   List<MoveOrder> suggestMoveOrders(
@@ -75,6 +77,15 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders,
   ) =>
       navalMission;
+
+  @override
+  List<DiplomaticOrder> suggestDiplomaticOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) =>
+      diplomatic;
 }
 
 void main() {

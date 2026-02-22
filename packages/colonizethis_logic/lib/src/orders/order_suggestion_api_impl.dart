@@ -76,4 +76,15 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     _log.i('logic: order suggestion API suggestNavalMissionOrders player=${view.playerId}');
     return suggestion.suggestNavalMissionOrders(view, game, topology, currentOrders);
   }
+
+  @override
+  List<DiplomaticOrder> suggestDiplomaticOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) {
+    _log.i('logic: order suggestion API suggestDiplomaticOrders player=${view.playerId}');
+    return suggestion.suggestDiplomaticOrders(view, game, topology, currentOrders);
+  }
 }
