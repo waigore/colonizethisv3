@@ -25,7 +25,7 @@ Techs are grouped by **category**: gathering, transport, labour, diplomatic, nav
 
 ## Prerequisites
 
-The tree is a **DAG**. Each tech lists zero or more **prerequisite tech ids**. A tech is available for research only when all prerequisites are in the player's `techUnlocked` set. A tech cannot start in the same turn its prerequisite completes.
+The tree is a **DAG**. Each tech lists zero or more **prerequisite tech ids**. Prerequisites may be techs from **any category** (defined in this doc’s category sub-docs). A tech is available for research only when all prerequisites are in the player's `techUnlocked` set. A tech cannot start in the same turn its prerequisite completes.
 
 ---
 
