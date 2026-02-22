@@ -11,7 +11,7 @@ Execute the research phase of turn resolution: validate orders, deduct spending,
 - AI research orders from active AI backend (Phase 4 minimal or Phase 6 full).
 
 ### Research Orders Structure
-Per player, per turn: slot assignments (slot index → tech id) and funding level per slot (per [tech-tree.md](../game/tech-tree.md) presets). Merged with other order types per [order-engine.md](order-engine.md).
+Per player, per turn: slot assignments (slot index → tech id) and funding level per slot (per [tech-tree.md](../game/tech-tree.md) presets). Merged with other order types per [order-engine.md](order-engine.md). **One order per slot:** if the merged list contains more than one order for the same slot index, the resolver applies exactly one per slot (last in list wins); no double spend or dual progress for that slot.
 
 ## Algorithm / Flow
 
