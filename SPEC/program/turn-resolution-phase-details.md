@@ -4,6 +4,18 @@
 
 ---
 
+## Orders
+
+Phase 1. Gather and validate orders; Great Powers only submit. Merge human and AI orders; resolve cross-player effects before application. Order types, validation, and application are defined in [order-engine.md](order-engine.md) and [orders.md](orders.md). Phase-details below start at Diplomacy (phase 2).
+
+---
+
+## Diplomacy
+
+Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
+
+---
+
 ## Extraction
 
 (1) **Connectivity:** Recompute per-player connectivity (see [extraction-pipeline.md](extraction-pipeline.md)). (2) **Extract:** Per-tile effective extraction: min(improvement, tech cap), then min(..., transport level); minerals only from prospected tiles per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); sum by commodity; separate same-region vs overseas. (3) **Land:** Add same-region totals to stockpile. (4) **Sea:** Allocate overseas totals by priority, capped by cargo holds (stub); add to stockpile. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-pipeline.md](extraction-pipeline.md).
@@ -31,12 +43,6 @@ Military regiments consume food upkeep **before** workers and navy. Per player: 
 ## Research
 
 (1) Read orders (slot → techId, funding). (2) Validate treasury and prerequisites; reject/reduce per [research-resolution.md](research-resolution.md). (3) Deduct spending. (4) Add progress per slot. (5) Where progress ≥ cost: mark researched, update techUnlocked and derived state, clear slot. (6) Tech assignable only if prerequisites in techUnlocked.
-
----
-
-## Diplomacy
-
-Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
 
 ---
 
