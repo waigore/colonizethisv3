@@ -45,6 +45,9 @@ export 'src/orders/orders_application.dart';
 // Diplomacy
 export 'src/diplomacy/diplomacy_resolver.dart';
 
+// Dossier (evidence rules)
+export 'src/dossier/evidence_rules.dart';
+
 // AI
 export 'src/ai/ai_planner.dart';
 export 'src/ai/sim_game_ai.dart';
