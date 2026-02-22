@@ -23,11 +23,11 @@
 
 ---
 
-## 2. Evidence accumulation — **IMPLEMENTED** (diplomacy phase)
+## 2. Evidence accumulation — **IMPLEMENTED** (diplomacy + combat)
 
 **Spec:** SPEC/ai/hidden-agendas.md — "When the game or AI performs an action, evidence rules may add points to that agenda's suspicion counter". SPEC/program/ai-events-and-dossier.md — "Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook)."
 
-**Current:** `colonizethis_logic/lib/src/dossier/evidence_rules.dart` defines evidence rules. Diplomacy resolver calls them when applying declare war and offer peace: **declare war** → warmonger +2 if target is weaker GP (by military level), backstabber +2 if target was allied; **offer peace** → peacemaker +1. Evidence is appended to `game.dossierEvidenceEntries` per (observer, subject, agenda type); only human observers receive entries, and only when the actor (subject) is AI-controlled. Combat/other actions not yet hooked.
+**Current:** `colonizethis_logic/lib/src/dossier/evidence_rules.dart` defines evidence rules. **Diplomacy:** declare war → warmonger +2 if target is weaker GP, backstabber +2 if target was allied; offer peace → peacemaker +1. **Combat:** Land battle victory (AI wins as attacker, province flips) → warmonger +1, or +2 if defender was weaker GP; naval battle victory (one side eliminated) → warmonger +1. Evidence is appended to `game.dossierEvidenceEntries` per (observer, subject, agenda type); only human observers receive entries, and only when the actor (subject) is AI-controlled. Turn resolver calls evidence after each land battle (quick and auto-resolve) and each naval battle.
 
 ---
 
@@ -119,7 +119,7 @@ Tests in `perception_test.dart` cover threats (including neighbor/capital with t
 | # | Area | Status | Priority |
 |---|------|--------|----------|
 | 1 | Naval mission orders dropped in full-AI aggregation | Fixed | High |
-| 2 | Evidence accumulation | Implemented (diplomacy) | High |
+| 2 | Evidence accumulation | Implemented (diplomacy + combat) | High |
 | 3 | Dossier (basic intel, behavioral notes, timeline) | Implemented | Medium |
 | 4 | Dialogue and mood | Partial (diplomatic + mood machine + base mood) | Medium |
 | 5 | Tactical Quick Battle state-aware | Implemented | Medium |
