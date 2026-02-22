@@ -31,13 +31,11 @@
 
 ---
 
-## 3. Dossier projection incomplete
+## 3. Dossier projection incomplete — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/ai-dossier.md — Dossier sections: **Basic intel** (personality/archetype, relation, relative military/economic strength), **Hidden agenda analysis** (suspicion scores, bands, best-guess agenda id and confidence %), **Evidence list**, **Behavioral notes** (war history, diplomatic pattern, military buildup), **Timeline** (chronological notable actions).
 
-**Current:** `DossierView` in `colonizethis_ai/lib/src/dossier.dart` has only `subjectId`, `suspicionByAgendaType`, `evidenceList`. Basic intel (personality, relation, relative strength), behavioral notes, and timeline are not exposed. No "best-guess agenda id and confidence %" derived from suspicion.
-
-**Missing:** Extend dossier projection (and optionally storage) to include basic intel, behavioral notes, timeline; add best-guess agenda id + confidence % from suspicion bands for display.
+**Current:** `DossierView` in `colonizethis_ai/lib/src/dossier.dart` includes **basic intel** (`DossierBasicIntel`: relation level/state, relative military/economic strength, personality archetype from config), **best-guess agenda** (`DossierBestGuessAgenda`: agenda type with highest suspicion + confidence % from bands), **evidence list**, **behavioral notes** (summary from evidence, e.g. "Declared war (2).", "Offered peace (1)."), and **timeline** (chronological notable actions from evidence). `colonizethis_data` exposes `getArchetypeDisplayNameForLeader(leaderId)` for display names (e.g. "Fortifier", "Explorer"). All PlayerView-safe; true hidden agenda never exposed.
 
 ---
 
@@ -129,7 +127,7 @@
 |---|------|--------|----------|
 | 1 | Naval mission orders dropped in full-AI aggregation | Fixed | High |
 | 2 | Evidence accumulation | Implemented (diplomacy) | High |
-| 3 | Dossier (basic intel, behavioral notes, timeline) | Partial | Medium |
+| 3 | Dossier (basic intel, behavioral notes, timeline) | Implemented | Medium |
 | 4 | Dialogue and mood | Stub only | Medium |
 | 5 | Tactical Quick Battle state-aware | Missing | Medium |
 | 6 | Perception (threats/opportunities) | Partial | Medium |

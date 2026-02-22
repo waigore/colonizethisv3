@@ -107,3 +107,20 @@ PersonalityGoalWeights getGoalWeightsForLeader(String leaderId) {
 PersonalityThresholds getThresholdsForLeader(String leaderId) {
   return personalityThresholds[leaderId] ?? defaultThresholds;
 }
+
+/// Display name for personality archetype (e.g. "Fortifier", "Explorer").
+/// Used by dossier basic intel. SPEC/ai/ai-dossier.md, ai-personalities.md.
+const Map<String, String> personalityArchetypeDisplayName = {
+  'victoria': 'Industrial Trader',
+  'napoleon': 'Fortifier',
+  'isabella': 'Explorer',
+  'henry': 'Navigator',
+  'deruyter': 'Merchant',
+  'frederick': 'Defender',
+  'gustavus': 'Tactician',
+};
+
+/// Returns human-readable archetype name for [leaderId], or null if unknown.
+String? getArchetypeDisplayNameForLeader(String leaderId) {
+  return personalityArchetypeDisplayName[leaderId];
+}
