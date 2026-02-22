@@ -273,6 +273,7 @@ Orders _runDiplomacyPlanner({
         s += (thresholds.allianceTendency - 50);
         break;
       case DiplomaticOrderType.declareWar:
+        s += agendaConquerModifier(agendaId);
         s += agendaTreatyBreakingModifier(agendaId);
         s += (thresholds.warLikelihood - 50);
         break;
