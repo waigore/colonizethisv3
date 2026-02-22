@@ -767,6 +767,45 @@ void main() {
       expect(eventDialogue.length, lessThanOrEqualTo(2));
     });
 
+    test('endOfTurn era transition invokes onDialogue with event era_change', () {
+      // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI One', isHuman: false),
+          Player(id: 'gp2', displayName: 'AI Two', isHuman: false),
+        ],
+        turnTimeMapping: TurnTimeMapping.gdd01,
+      );
+      final dialogueEvents = <DialogueEvent>[];
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        onDialogue: dialogueEvents.add,
+      );
+      expect(next.worldState.turnState.turnNumber, 101);
+      final eraChange = dialogueEvents
+          .where((e) => e.category == 'event' && e.situation == 'era_change')
+          .toList();
+      expect(eraChange.length, 2);
+      for (final e in eraChange) {
+        expect(e.era, 'imperial');
+        expect(e.variables['previousEra'], 'earlyModern');
+      }
+    });
+
     test('resolveTurnForGameFromOrderEngine integrates order engine output', () {
       final topology = MapTopology(
         nodes: [
