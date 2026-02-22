@@ -46,6 +46,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
   bool _showImprovements = false;
   bool _showUnits = false;
 
+  /// When set, victory overlay is hidden (View final state); game.victory still set.
+  int? _dismissedVictoryTurnNumber;
+
   @override
   void initState() {
     super.initState();
@@ -209,7 +212,8 @@ class _RunningGameScreenState extends State<RunningGameScreen>
               ),
             ],
           ),
-          if (victory != null) _buildVictoryOverlay(context, victory),
+          if (victory != null && _dismissedVictoryTurnNumber != victory.turnNumber)
+            _buildVictoryOverlay(context, victory),
         ],
       ),
     );
@@ -251,7 +255,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
                     const SizedBox(width: 16),
                     OutlinedButton(
                       onPressed: () {
-                        setState(() {});
+                        setState(() {
+                          _dismissedVictoryTurnNumber = victory.turnNumber;
+                        });
                       },
                       child: const Text('View final state'),
                     ),

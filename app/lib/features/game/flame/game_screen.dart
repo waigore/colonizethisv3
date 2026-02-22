@@ -63,18 +63,46 @@ class GameScreen extends ConsumerWidget {
             ),
           ],
           if (game != null && victory != null)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: Center(
-                  child: _VictoryPanel(
-                    game: game,
-                    victory: victory,
-                  ),
-                ),
-              ),
+            _VictoryOverlay(
+              game: game!,
+              victory: victory!,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
+class _VictoryOverlay extends StatefulWidget {
+  const _VictoryOverlay({
+    required this.game,
+    required this.victory,
+  });
+
+  final ct_models.Game game;
+  final ct_models.VictoryState victory;
+
+  @override
+  State<_VictoryOverlay> createState() => _VictoryOverlayState();
+}
+
+class _VictoryOverlayState extends State<_VictoryOverlay> {
+  bool _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black54,
+        child: Center(
+          child: _VictoryPanel(
+            game: widget.game,
+            victory: widget.victory,
+            onViewFinalState: () => setState(() => _dismissed = true),
+          ),
+        ),
       ),
     );
   }
@@ -84,10 +112,12 @@ class _VictoryPanel extends StatelessWidget {
   const _VictoryPanel({
     required this.game,
     required this.victory,
+    this.onViewFinalState,
   });
 
   final ct_models.Game game;
   final ct_models.VictoryState victory;
+  final VoidCallback? onViewFinalState;
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +159,7 @@ class _VictoryPanel extends StatelessWidget {
                 const SizedBox(width: 12),
                 TextButton(
                   onPressed: () {
-                    // Simply close the panel; map remains visible but game is finished.
-                    Navigator.of(context).maybePop();
+                    onViewFinalState?.call();
                   },
                   child: const Text('View final state'),
                 ),
