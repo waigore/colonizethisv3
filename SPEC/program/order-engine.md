@@ -34,6 +34,8 @@ Validation is per-player only. No cross-player conflict resolution at this stage
 
 Supports a **dry-run**: apply orders via the resolver (which returns **new** state); return projected effects for UI (worker count, treasury delta, unit locations, stockpile deltas). The engine does **not** mutate the passed-in game; the caller may pass the live game. No mutation of real state.
 
+`projectedEffects` accepts an optional `tileMapByRegion`. When omitted or empty, the dry-run uses no tile maps and **expected extraction is zero**; callers (e.g. SimGameController) may pass tile maps when available so projected extraction is non-zero. See [order-projections.md](order-projections.md).
+
 ---
 
 ## Turn Resolution Integration

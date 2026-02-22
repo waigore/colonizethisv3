@@ -550,19 +550,25 @@ class OrderEngine {
 
   /// Dry-run: apply orders via resolver (no mutation of [game]); return projected effects.
   /// Uses [projectOrderEffects] for worker count, treasury delta, unit locations, stockpile deltas.
+  /// When [tileMapByRegion] is null or omitted, an empty map is used and projected extraction is zero
+  /// (caller may pass tile maps when available so expected extraction is non-zero).
   ProjectedEffects projectedEffects(
     Game game,
     MapTopology topology,
     String playerId, {
     List<AssignedRecipe> defaultAssignments = const [],
+    Map<String, TileMapResult>? tileMapByRegion,
   }) {
     final orders = _copyOrders(_orders);
-    const tileMapByRegion = <String, TileMapResult>{};
+    final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
+    if (tileMaps.isEmpty) {
+      _log.d('logic: projectedEffects called with no tileMapByRegion; expected extraction will be zero');
+    }
     return projectOrderEffects(
       game: game,
       orders: orders,
       topology: topology,
-      tileMapByRegion: tileMapByRegion,
+      tileMapByRegion: tileMaps,
       playerId: playerId,
       defaultAssignments: defaultAssignments,
     );

@@ -1,10 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../economy/economy_production.dart';
 import '../constants.dart';
 import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
+
+final Logger _log = Logger();
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.
@@ -19,6 +22,10 @@ ProjectedEffects projectOrderEffects({
   required String playerId,
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
+  _log.d('logic: projectOrderEffects run for player $playerId');
+  if (tileMapByRegion.isEmpty) {
+    _log.d('logic: projectOrderEffects with empty tileMapByRegion; extraction will be zero');
+  }
   final next = resolveTurnForGame(
     game: game,
     topology: topology,
