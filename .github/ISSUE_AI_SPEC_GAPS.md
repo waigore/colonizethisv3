@@ -23,15 +23,11 @@
 
 ---
 
-## 2. Evidence accumulation not implemented
+## 2. Evidence accumulation — **IMPLEMENTED** (diplomacy phase)
 
 **Spec:** SPEC/ai/hidden-agendas.md — "When the game or AI performs an action, evidence rules may add points to that agenda's suspicion counter". SPEC/program/ai-events-and-dossier.md — "Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook)."
 
-**Current:** `Game.dossierEvidenceEntries` and `DossierEvidenceEntry` exist; `getDossierForSubject` reads them. **No code** in `colonizethis_logic` (or elsewhere) appends evidence when actions occur (e.g. declare war on weaker neighbor → +2 Warmonger suspicion). Diplomacy resolver, turn resolver, and combat resolution do not call any evidence-rule evaluation.
-
-**Missing:**  
-- Define evidence rules (e.g. "declared war on weaker neighbor" → warmonger +2; "broke alliance" → backstabber +2).  
-- Hook into turn resolution (or post-resolution) so that when a diplomatic/combat action is applied, relevant evidence is appended to `game.dossierEvidenceEntries` (per observer: only human observers need evidence stored; spec says per (observer, subject, agenda type)).
+**Current:** `colonizethis_logic/lib/src/dossier/evidence_rules.dart` defines evidence rules. Diplomacy resolver calls them when applying declare war and offer peace: **declare war** → warmonger +2 if target is weaker GP (by military level), backstabber +2 if target was allied; **offer peace** → peacemaker +1. Evidence is appended to `game.dossierEvidenceEntries` per (observer, subject, agenda type); only human observers receive entries, and only when the actor (subject) is AI-controlled. Combat/other actions not yet hooked.
 
 ---
 
@@ -136,7 +132,7 @@
 | # | Area | Status | Priority |
 |---|------|--------|----------|
 | 1 | Naval mission orders dropped in full-AI aggregation | Fixed | High |
-| 2 | Evidence accumulation | Missing | High |
+| 2 | Evidence accumulation | Implemented (diplomacy) | High |
 | 3 | Dossier (basic intel, behavioral notes, timeline) | Partial | Medium |
 | 4 | Dialogue and mood | Stub only | Medium |
 | 5 | Tactical Quick Battle state-aware | Missing | Medium |

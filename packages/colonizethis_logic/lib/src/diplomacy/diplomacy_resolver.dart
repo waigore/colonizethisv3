@@ -5,6 +5,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/conflict_detection.dart';
+import '../dossier/evidence_rules.dart';
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -290,6 +291,7 @@ Game _processWarAndPeace(
         final rel = getRelation(game, gpId, targetId);
         final atPeace = rel == null || rel.atPeace;
         if (atPeace) {
+          final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
           final ids = _pairIds(gpId, targetId);
           relations = upsertRelation(relations, gpId, targetId, (existing) {
             if (existing == null) {
@@ -312,12 +314,16 @@ Game _processWarAndPeace(
               level: scoreToLevel(newScore),
             );
           });
-          game = game.copyWith(diplomacyRelations: relations);
+          game = game.copyWith(
+            diplomacyRelations: relations,
+            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
+          );
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
         if (rel != null && rel.atWar) {
+          final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
           relations = upsertRelation(relations, gpId, targetId, (existing) {
             return existing!.copyWith(
               state: RelationState.atPeace,
@@ -325,7 +331,10 @@ Game _processWarAndPeace(
               lastInteractionTurn: turn,
             );
           });
-          game = game.copyWith(diplomacyRelations: relations);
+          game = game.copyWith(
+            diplomacyRelations: relations,
+            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
+          );
         }
       }
     }
