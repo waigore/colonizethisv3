@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'ai_config.dart';
 import 'domain_planners.dart';
 import 'goal_manager.dart';
+import 'mood_state_machine.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
@@ -46,6 +47,7 @@ Orders generateStrategicOrders({
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
   Logger().i('ai: generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount');
   // Optional dialogue/mood emission (deterministic from dialogueSeed).
+  // SPEC/ai/dialogue-and-mood.md: PortraitMoodEvent optionally when opening/closing diplomacy with base mood.
   if (onDialogue != null && seeds.dialogueSeed % 7 == 0) {
     onDialogue(DialogueEvent(
       leaderId: config.leaderId,
@@ -53,6 +55,14 @@ Orders generateStrategicOrders({
       situation: 'comment',
       era: 'earlyModern',
       variables: const {},
+    ));
+  }
+  if (onMood != null && seeds.dialogueSeed % 7 == 0) {
+    onMood(PortraitMoodEvent(
+      leaderId: config.leaderId,
+      fromMood: kDefaultMood,
+      toMood: kDefaultMood,
+      durationMs: 0,
     ));
   }
   return orders;

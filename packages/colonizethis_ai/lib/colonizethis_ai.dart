@@ -5,6 +5,7 @@ export 'src/dossier.dart';
 export 'src/domain_planners.dart';
 export 'src/goal_manager.dart';
 export 'src/hidden_agenda.dart';
+export 'src/mood_state_machine.dart';
 export 'src/perception.dart';
 export 'src/seed_bundle.dart';
 export 'src/strategic_ai.dart';
