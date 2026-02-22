@@ -208,7 +208,12 @@ Game resolveTurnForGame({
         );
         break;
       case TurnPhase.buildWork:
-        state = applyBuildAndWorkOrders(state, orders, topology: topology);
+        state = applyBuildAndWorkOrders(
+          state,
+          orders,
+          topology: topology,
+          onDialogue: onDialogue,
+        );
         break;
       case TurnPhase.endOfTurn:
         state = _runEndOfTurnPhase(state, onDialogue: onDialogue);

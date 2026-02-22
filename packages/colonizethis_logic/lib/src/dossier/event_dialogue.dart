@@ -1,7 +1,9 @@
 // Event dialogue: emit DialogueEvent when game events trigger commentary.
-// SPEC/ai/dialogue-and-mood.md (event: battle result, era transition), SPEC/program/ai-events-and-dossier.md.
-// Only AI leaders emit; deterministic given game state and seed.
+// SPEC/ai/dialogue-and-mood.md (event: battle result, era transition, reactive, negotiation),
+// SPEC/program/ai-events-and-dossier.md.
+// Only AI leaders emit for event/reactive; deterministic given game state and seed.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'evidence_rules.dart';
@@ -103,4 +105,86 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
     ));
   }
   return events;
+}
+
+/// Neighbor province local ids in [regionId] that share an edge with [localId]. Province nodes only.
+List<String> neighborProvinceLocalIds(MapTopology topology, String regionId, String localId) {
+  final nodesInRegion = topology.nodes
+      .where((n) => n.regionId == regionId && n.type == TopologyNodeType.province)
+      .toList();
+  if (nodesInRegion.any((n) => n.id == localId) == false) return [];
+  final neighborIds = <String>{};
+  for (final edge in topology.edges) {
+    final other = edge.id1 == localId ? edge.id2 : (edge.id2 == localId ? edge.id1 : null);
+    if (other == null) continue;
+    final otherNode = nodesInRegion.where((n) => n.id == other).firstOrNull;
+    if (otherNode != null) neighborIds.add(other);
+  }
+  return neighborIds.toList();
+}
+
+String? _ownerOfProvince(Game game, String fullProvinceId) {
+  for (final p in game.worldState.oldWorld.provinces) {
+    if (p.id == fullProvinceId) return p.ownerId;
+  }
+  for (final p in game.worldState.newWorld.provinces) {
+    if (p.id == fullProvinceId) return p.ownerId;
+  }
+  return null;
+}
+
+/// Reactive dialogue when a human builds a fort on a province adjacent to an AI.
+/// Emits one [DialogueEvent] per AI leader who owns a neighboring province. SPEC/ai/dialogue-and-mood.md (reactive).
+List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
+  Game game,
+  MapTopology topology,
+  String builderPlayerId,
+  String provinceId,
+  int seed,
+) {
+  final builder = game.players.where((p) => p.id == builderPlayerId).firstOrNull;
+  if (builder == null || builder.isHuman != true) return [];
+  final regionId = ProvinceId.regionIdFrom(provinceId);
+  final localId = ProvinceId.localIdFrom(provinceId);
+  final neighborLocalIds = neighborProvinceLocalIds(topology, regionId, localId);
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final year = mapping.yearAtTurn(game.worldState.turnState.turnNumber);
+  final era = eraFromYear(year);
+  final events = <DialogueEvent>[];
+  final seenAi = <String>{};
+  for (final neighborLocal in neighborLocalIds) {
+    final fullId = ProvinceId.full(regionId, neighborLocal);
+    final ownerId = _ownerOfProvince(game, fullId);
+    if (ownerId == null || !isAiControlledForEvidence(game, ownerId) || !seenAi.add(ownerId)) {
+      continue;
+    }
+    events.add(DialogueEvent(
+      leaderId: ownerId,
+      category: 'reactive',
+      situation: 'forts_on_border',
+      era: era,
+      variables: {'otherNation': builderPlayerId, 'province': provinceId},
+    ));
+  }
+  return events;
+}
+
+/// Builds a [DialogueEvent] for negotiation (opening, counter_offer, accepting, rejecting).
+/// UI or negotiation flow calls this to get the event; then passes to onDialogue or displays.
+/// SPEC/ai/dialogue-and-mood.md (negotiation).
+DialogueEvent dialogueEventForNegotiation({
+  required String leaderId,
+  required String situation,
+  required String era,
+  String? mood,
+  Map<String, String> variables = const {},
+}) {
+  return DialogueEvent(
+    leaderId: leaderId,
+    category: 'negotiation',
+    situation: situation,
+    era: era,
+    mood: mood,
+    variables: variables,
+  );
 }
