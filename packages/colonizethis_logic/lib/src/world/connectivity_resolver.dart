@@ -1,7 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../constants.dart';
+
+final Logger _log = Logger();
 
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
 /// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
@@ -32,12 +35,14 @@ Map<String, ConnectivityResult> resolveConnectivity({
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
 }) {
+  _log.d('logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}');
   final provinceIdsByType = _provinceIdsFromTopology(topology);
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
+      _log.d('logic: connectivity resolve player=${player.id} skipped (no capital)');
       result[player.id] = ConnectivityResult(connected: {});
       continue;
     }
@@ -53,6 +58,10 @@ Map<String, ConnectivityResult> resolveConnectivity({
     result[player.id] = cr;
   }
 
+  final summary = result.entries
+      .map((e) => '${e.key}:${e.value.connected.length}')
+      .join(' ');
+  _log.d('logic: connectivity resolve end $summary');
   return result;
 }
 
