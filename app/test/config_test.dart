@@ -1,7 +1,11 @@
+// Log suppression first (SPEC/program/test-logging.md); then Flutter test API.
+import 'package:colonizethis_test/test.dart' as _;
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:flutter/material.dart';
+
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('HiveBoxNames', () {
