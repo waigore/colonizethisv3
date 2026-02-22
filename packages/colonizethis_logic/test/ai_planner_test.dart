@@ -216,6 +216,61 @@ void main() {
         reason: 'full AI should produce at least research when no capital',
       );
     });
+
+    test('generateOrdersForGameFullAI preserves naval mission orders from per-player AI', () {
+      // Regression for gap #1: naval mission orders must be aggregated, not dropped.
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: const [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: const [
+            Fleet(
+              id: 'f1',
+              ownerId: 'gp1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 1,
+        aiSeedByGpId: const {'gp1': 1},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [],
+      );
+      final singleOrders = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+      final gameOrders = generateOrdersForGameFullAI(game, topology);
+      expect(
+        gameOrders.navalMissionOrdersByPlayerId['gp1'],
+        equals(singleOrders.navalMissionOrdersByPlayerId['gp1']),
+        reason: 'full-AI aggregation must include naval mission orders (SPEC gap #1)',
+      );
+      expect(
+        gameOrders.navalMoveOrdersByPlayerId['gp1'],
+        equals(singleOrders.navalMoveOrdersByPlayerId['gp1']),
+        reason: 'full-AI aggregation must include naval move orders',
+      );
+    });
   });
 }
 
