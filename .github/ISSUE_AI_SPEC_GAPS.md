@@ -89,13 +89,11 @@
 
 ---
 
-## 8. Hidden agenda modifiers incomplete — **PARTIAL** (tech_thief, envy build/research)
+## 8. Hidden agenda modifiers incomplete — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/hidden-agendas.md — Behavior modifiers per agenda: war declaration, peace acceptance, alliance acceptance, build/order choice (e.g. tech_thief: spy/research; envy: mirror human), treaty breaking.
 
-**Current:** `hidden_agenda.dart` implements `agendaConquerModifier`, `agendaDiplomacyModifier`, **`agendaResearchModifier`** (tech_thief +35), and **`agendaBuildOrderModifier`** (envy +20). Domain planners use them: tech_thief lowers the research domain threshold so research is chosen more often; envy lowers the economy threshold so build orders are chosen more often. No modifiers for peace acceptance, alliance acceptance, or treaty breaking; no spy-order type yet (research boost only). Envy "mirror human" is expressed as build-order tendency boost; full mirroring of human builds/targets can use this weight when visibility exists.
-
-**Missing:** Peace/alliance/treaty-breaking thresholds or weights for diplomacy planner. Spy order type and tech_thief boost for spy when available.
+**Current:** `hidden_agenda.dart` implements `agendaConquerModifier`, `agendaDiplomacyModifier`, `agendaResearchModifier` (tech_thief +35), `agendaBuildOrderModifier` (envy +20), **`agendaPeaceAcceptanceModifier`** (peacemaker +30, warmonger -25), **`agendaAllianceAcceptanceModifier`** (isolationist -40, peacemaker +10), **`agendaTreatyBreakingModifier`** (backstabber +25, warmonger +20), and **`agendaSpyOrderModifier`** (tech_thief +25). Domain planners: research and build use existing modifiers; diplomacy planner scores offer peace / alliance / declare war by these modifiers (weighted choice); work planner lowers threshold when spy work (steal_tech, counter_spy) exists and tech_thief prefers spy work. Envy "mirror human" remains build-order tendency boost; full mirroring can use this when visibility exists.
 
 ---
 
@@ -138,7 +136,7 @@
 | 5 | Tactical Quick Battle state-aware | Missing | Medium |
 | 6 | Perception (threats/opportunities) | Partial | Medium |
 | 7 | Diplomacy domain planner + API | Missing | High |
-| 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Partial (tech_thief/envy research/build) | Medium |
+| 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Implemented | Medium |
 | 9 | Personality thresholds (war/peace/alliance/research) | Missing | Medium |
 | 10 | Behavior tree vs weighted random | Design choice | Low |
 | 11 | OrderSuggestionAPI diplomatic | Implemented | High (for #7) |
