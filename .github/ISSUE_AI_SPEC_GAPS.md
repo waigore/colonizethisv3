@@ -86,11 +86,10 @@
 
 **Spec:** SPEC/ai/ai-architecture.md — Domain planning: economy, military, diplomacy, research planners; each emits candidate orders. SPEC/program/ai-systems-impl.md — AI uses suggestion API for all order types; when naval in scope, API exposes naval candidates.
 
-**Current:** `runDomainPlanners` runs economy (work/build), movement, naval (move + mission), and research. There is **no diplomacy planner**; full AI never produces `DiplomaticOrder`s. Order suggestion API has no `suggestDiplomaticOrders`; even if it did, domain_planners does not call it.
+**Current:** `runDomainPlanners` runs economy (work/build), movement, naval (move + mission), and research. The order suggestion API **does** provide `suggestDiplomaticOrders` (see gap #11); domain_planners calls it. The diplomacy planner is a **stub**: it picks one candidate at random from the list rather than scoring by personality/agenda. Full AI can produce `DiplomaticOrder`s via this path but selection is not utility-based.
 
 **Missing:**  
-- Add diplomatic order suggestion (e.g. in OrderSuggestionAPI / DefaultOrderSuggestionAPI) so AI can get candidates (declare war, offer peace, alliance, overture, grant aid, etc.) consistent with visibility and rules.  
-- Add a diplomacy domain planner that, when goal is diplomacy/conquer/trade, scores and selects diplomatic orders using personality and agenda modifiers (e.g. war likelihood, peace tendency, alliance tendency from ai-personalities.md).
+- Replace the stub diplomacy planner with one that, when goal is diplomacy/conquer/trade, scores and selects diplomatic orders using personality and agenda modifiers (e.g. war likelihood, peace tendency, alliance tendency from ai-personalities.md).
 
 ---
 
@@ -124,13 +123,11 @@
 
 ---
 
-## 11. Order suggestion API has no diplomatic suggestions
+## 11. Order suggestion API has no diplomatic suggestions — **IMPLEMENTED**
 
 **Spec:** SPEC/program/ai-systems-impl.md — "AI calls the suggestion API with PlayerView and current orders"; "When naval is in scope, API also exposes naval candidates."
 
-**Current:** `OrderSuggestionAPI` has suggestMoveOrders, suggestWorkOrders, suggestBuildOrders, suggestResearchOrders, suggestNavalMoveOrders, suggestNavalMissionOrders. No method for diplomatic order candidates.
-
-**Missing:** Add `suggestDiplomaticOrders(PlayerView, Game, MapTopology, Orders)` (or equivalent) returning candidate `DiplomaticOrder`s that are valid and visible, so a diplomacy domain planner can score and select them.
+**Current:** `OrderSuggestionAPI` in `colonizethis_logic` exposes `suggestDiplomaticOrders(PlayerView, Game, MapTopology, Orders)`. `order_suggestion.dart` implements it: returns candidate `DiplomaticOrder`s that are valid and visible (declare war, offer peace, alliance, establish overture, grant aid, set subsidy) using game relations and overture state. `DefaultOrderSuggestionAPI` delegates to it; `domain_planners.dart` calls it for the diplomacy planner. Tests in `order_suggestion_api_impl_test.dart` cover each order type.
 
 ---
 
@@ -148,4 +145,4 @@
 | 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Partial | Medium |
 | 9 | Personality thresholds (war/peace/alliance/research) | Missing | Medium |
 | 10 | Behavior tree vs weighted random | Design choice | Low |
-| 11 | OrderSuggestionAPI diplomatic | Missing | High (for #7) |
+| 11 | OrderSuggestionAPI diplomatic | Implemented | High (for #7) |
