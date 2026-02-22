@@ -96,5 +96,55 @@ void main() {
       expect(captured!.leaderId, 'victoria');
       expect(captured!.category, 'agenda');
     });
+
+    test('invokes onMood when dialogueSeed % 7 == 0', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [], units: []),
+          newWorld: RegionData(provinces: [], units: []),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'England', isHuman: false, leaderKey: 'victoria'),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'industrial_trader',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final base = AISeedBundle.fromTurnSeed(0);
+      final seeds = AISeedBundle(
+        perceptionSeed: base.perceptionSeed,
+        goalSeed: base.goalSeed,
+        economySeed: base.economySeed,
+        militarySeed: base.militarySeed,
+        diplomacySeed: base.diplomacySeed,
+        researchSeed: base.researchSeed,
+        tacticalSeed: base.tacticalSeed,
+        dialogueSeed: 7,
+        agendaSeed: base.agendaSeed,
+      );
+      const api = DefaultOrderSuggestionAPI();
+      PortraitMoodEvent? captured;
+      final orders = generateStrategicOrders(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        config: config,
+        seeds: seeds,
+        suggestionAPI: api,
+        onMood: (e) => captured = e,
+      );
+      expect(orders, isNotNull);
+      expect(captured, isNotNull);
+      expect(captured!.leaderId, 'victoria');
+      expect(captured!.fromMood, 'considering');
+      expect(captured!.toMood, 'considering');
+    });
   });
 }
