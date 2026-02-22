@@ -13,7 +13,7 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     required this.research,
     required this.navalMove,
     required this.navalMission,
-    this.diplomatic = const [],
+    required this.diplomatic,
   });
 
   final List<WorkOrder> work;
@@ -214,6 +214,7 @@ void main() {
         ],
         navalMove: const [NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 's2')],
         navalMission: const [NavalMissionOrder(fleetId: 'f1', mission: 'patrol')],
+        diplomatic: const [],
       );
 
       final game = Game(
