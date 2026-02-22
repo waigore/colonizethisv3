@@ -122,5 +122,128 @@ void main() {
       final declareWar = list.where((o) => o.type == DiplomaticOrderType.declareWar).toList();
       expect(declareWar.any((o) => o.targetFactionId == 'gp2'), isTrue);
     });
+
+    test('returns offerPeace when at war with another GP', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atWar,
+            level: RelationLevel.hostile,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final offerPeace = list.where((o) => o.type == DiplomaticOrderType.offerPeace).toList();
+      expect(offerPeace.any((o) => o.targetFactionId == 'gp2'), isTrue);
+    });
+
+    test('returns alliance candidate when at peace and not allied', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.friendly,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final alliance = list.where((o) => o.type == DiplomaticOrderType.alliance).toList();
+      expect(alliance.any((o) => o.targetFactionId == 'gp2'), isTrue);
+    });
+
+    test('returns establishOverture for minor when treasury suffices', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(id: 'gp1', displayName: 'A', isHuman: false)
+              .copyWith(treasury: 600),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final overture = list
+          .where((o) => o.type == DiplomaticOrderType.establishOverture)
+          .toList();
+      expect(overture.any((o) => o.targetFactionId == 'minor1'), isTrue);
+      expect(
+        overture.any((o) =>
+            o.targetFactionId == 'minor1' && o.overtureStage == OvertureStage.tradeConsulate),
+        isTrue,
+      );
+    });
+
+    test('returns grantAid and setSubsidy when overture has embassy and treasury >= 100', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(id: 'gp1', displayName: 'A', isHuman: false)
+              .copyWith(treasury: 200),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final grantAid = list.where((o) => o.type == DiplomaticOrderType.grantAid).toList();
+      final setSubsidy = list.where((o) => o.type == DiplomaticOrderType.setSubsidy).toList();
+      expect(grantAid.any((o) => o.targetFactionId == 'minor1' && o.amount == 100), isTrue);
+      expect(setSubsidy.any((o) => o.targetFactionId == 'minor1' && o.amount == 100), isTrue);
+    });
   });
 }
