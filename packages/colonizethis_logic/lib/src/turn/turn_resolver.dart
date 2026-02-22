@@ -211,7 +211,7 @@ Game resolveTurnForGame({
         state = applyBuildAndWorkOrders(state, orders, topology: topology);
         break;
       case TurnPhase.endOfTurn:
-        state = _runEndOfTurnPhase(state);
+        state = _runEndOfTurnPhase(state, onDialogue: onDialogue);
         break;
     }
     _log.d('logic: phase ${phase.name} end');
@@ -317,7 +317,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
   );
 }
 
-Game _runEndOfTurnPhase(Game game) {
+Game _runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
   // If victory is already set, keep the turn state stable.
   if (game.victory != null) {
     return game;
@@ -332,6 +332,18 @@ Game _runEndOfTurnPhase(Game game) {
         turnNumber: game.worldState.turnState.turnNumber,
       ),
     );
+  }
+
+  // Era-change dialogue: emit when calendar era changes after this turn. SPEC/ai/dialogue-and-mood.md.
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final nextTurn = currentTurn + 1;
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
+  final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
+  if (previousEra != newEra && onDialogue != null) {
+    final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
+    final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
+    for (final e in events) onDialogue(e);
   }
 
   // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/fog-and-exploration-resolution.md.

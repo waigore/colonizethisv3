@@ -15,6 +15,18 @@ class TurnTimeMapping {
   final int yearsPerTurnBeforeCutoff;
   final int yearsPerTurnAfterCutoff;
 
+  /// Calendar year at the start of [turn]. SPEC/game/turn-time-mapping.md.
+  /// Turn 1 → startYear; after cutoff, 1 year per turn.
+  int yearAtTurn(int turn) {
+    final turnsBeforeCutoff =
+        (cutoffYear - startYear) ~/ yearsPerTurnBeforeCutoff;
+    if (turn <= turnsBeforeCutoff) {
+      return startYear + (turn - 1) * yearsPerTurnBeforeCutoff;
+    }
+    return cutoffYear +
+        (turn - 1 - turnsBeforeCutoff) * yearsPerTurnAfterCutoff;
+  }
+
   /// GDD 01 / Imperialism II default: 1500 start, 2 years/turn until 1700, 1 year/turn after.
   static const TurnTimeMapping gdd01 = TurnTimeMapping(
     startYear: 1500,

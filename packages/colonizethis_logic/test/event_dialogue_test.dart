@@ -125,4 +125,63 @@ void main() {
       expect(events.first.leaderId, 'gp2');
     });
   });
+
+  group('eraFromYear', () {
+    test('maps year to dialogue era bands', () {
+      expect(eraFromYear(1599), 'discovery');
+      expect(eraFromYear(1600), 'earlyModern');
+      expect(eraFromYear(1699), 'earlyModern');
+      expect(eraFromYear(1700), 'imperial');
+      expect(eraFromYear(1799), 'imperial');
+      expect(eraFromYear(1800), 'industrial');
+    });
+  });
+
+  group('dialogueEventsForEraChange', () {
+    test('emits one event per AI leader with era_change situation', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+          Player(id: 'gp3', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final events = dialogueEventsForEraChange(
+        game, 'earlyModern', 'imperial', 42,
+      );
+      expect(events.length, 2);
+      for (final e in events) {
+        expect(e.category, 'event');
+        expect(e.situation, 'era_change');
+        expect(e.era, 'imperial');
+        expect(e.variables['previousEra'], 'earlyModern');
+        expect(['gp2', 'gp3'], contains(e.leaderId));
+      }
+    });
+
+    test('emits no events when all players are human', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'Human', isHuman: true),
+        ],
+      );
+      final events = dialogueEventsForEraChange(
+        game, 'earlyModern', 'imperial', 0,
+      );
+      expect(events, isEmpty);
+    });
+  });
 }

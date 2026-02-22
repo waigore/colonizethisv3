@@ -1,5 +1,5 @@
 // Event dialogue: emit DialogueEvent when game events trigger commentary.
-// SPEC/ai/dialogue-and-mood.md (event: battle result), SPEC/program/ai-events-and-dossier.md.
+// SPEC/ai/dialogue-and-mood.md (event: battle result, era transition), SPEC/program/ai-events-and-dossier.md.
 // Only AI leaders emit; deterministic given game state and seed.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -7,6 +7,40 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'evidence_rules.dart';
 
 const String _eraDefault = 'earlyModern';
+
+/// Era names for dialogue (SPEC/ai/dialogue-and-mood.md: discovery | earlyModern | imperial | industrial).
+const List<String> kDialogueEras = ['discovery', 'earlyModern', 'imperial', 'industrial'];
+
+/// Maps calendar year to dialogue era. SPEC/game/turn-time-mapping.md, SPEC/ai/dialogue-and-mood.md.
+/// Bands: discovery < 1600, earlyModern 1600–1699, imperial 1700–1799, industrial >= 1800.
+String eraFromYear(int year) {
+  if (year < 1600) return 'discovery';
+  if (year < 1700) return 'earlyModern';
+  if (year < 1800) return 'imperial';
+  return 'industrial';
+}
+
+/// Dialogue events for era transition. Emit one per AI leader when game era changes at end of turn.
+/// Deterministic given [game] and [seed]. SPEC/ai/dialogue-and-mood.md (event: era transition).
+List<DialogueEvent> dialogueEventsForEraChange(
+  Game game,
+  String previousEra,
+  String newEra,
+  int seed,
+) {
+  final events = <DialogueEvent>[];
+  for (final p in game.players) {
+    if (!isAiControlledForEvidence(game, p.id)) continue;
+    events.add(DialogueEvent(
+      leaderId: p.id,
+      category: 'event',
+      situation: 'era_change',
+      era: newEra,
+      variables: {'previousEra': previousEra},
+    ));
+  }
+  return events;
+}
 
 /// Dialogue events for land battle result. Victor/loser are GP ids.
 /// Emits battle_won for AI victor, battle_lost for AI loser. Deterministic.
