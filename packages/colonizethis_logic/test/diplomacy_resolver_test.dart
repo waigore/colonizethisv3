@@ -536,6 +536,121 @@ void main() {
     });
   });
 
+  group('dialogue (Phase 6)', () {
+    test('AI declare war invokes onDialogue with diplomatic declare_war', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+          Player(id: 'gp3', displayName: 'Other', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp2',
+            factionId2: 'gp3',
+            score: 50,
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp2': const [
+            DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp3'),
+          ],
+        },
+      );
+      DialogueEvent? captured;
+      resolveDiplomacyPhase(game, orders, onDialogue: (e) => captured = e);
+      expect(captured, isNotNull);
+      expect(captured!.leaderId, 'gp2');
+      expect(captured!.category, 'diplomatic');
+      expect(captured!.situation, 'declare_war');
+      expect(captured!.era, 'earlyModern');
+      expect(captured!.variables['otherNation'], 'gp3');
+    });
+
+    test('AI offer peace invokes onDialogue with diplomatic peace_offer', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+          Player(id: 'gp3', displayName: 'Other', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp2',
+            factionId2: 'gp3',
+            score: 40,
+            level: RelationLevel.neutral,
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp2': const [
+            DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'gp3'),
+          ],
+        },
+      );
+      DialogueEvent? captured;
+      resolveDiplomacyPhase(game, orders, onDialogue: (e) => captured = e);
+      expect(captured, isNotNull);
+      expect(captured!.leaderId, 'gp2');
+      expect(captured!.category, 'diplomatic');
+      expect(captured!.situation, 'peace_offer');
+      expect(captured!.variables['otherNation'], 'gp3');
+    });
+
+    test('human declare war does not invoke onDialogue', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 50,
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp2'),
+          ],
+        },
+      );
+      var callCount = 0;
+      resolveDiplomacyPhase(game, orders, onDialogue: (_) => callCount++);
+      expect(callCount, 0);
+    });
+  });
+
   group('intervention helpers', () {
     test('needsInterventionChoice returns gp id with embassy for attacked minor', () {
       final game = Game(

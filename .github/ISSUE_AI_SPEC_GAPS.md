@@ -39,16 +39,16 @@
 
 ---
 
-## 4. Dialogue and mood mostly stubs
+## 4. Dialogue and mood — **PARTIAL** (diplomatic dialogue implemented)
 
 **Spec:** SPEC/ai/dialogue-and-mood.md — Dialogue categories: diplomatic, reactive, event, agenda, negotiation. Emit `DialogueEvent` on diplomatic actions, game events, reactive banter, agenda-flavour (keys + context; content in data assets). Emit `PortraitMoodEvent` on negotiation mood transition (mood state machine: current mood, offerQualityDelta, stallCounter → next mood).
 
 **Current:**  
-- **Dialogue:** Only one emission in `generateStrategicOrders`: when `dialogueSeed % 7 == 0`, a single generic `DialogueEvent(leaderId, category: 'agenda', situation: 'comment', era: 'earlyModern')`. No diplomatic, reactive, event, or negotiation dialogue; no use of actual situation/era/variables from context.  
+- **Dialogue:** (1) In `generateStrategicOrders`: when `dialogueSeed % 7 == 0`, a generic `DialogueEvent(leaderId, category: 'agenda', situation: 'comment', era: 'earlyModern')`. (2) **Diplomatic:** When an AI applies declare war or offer peace in the diplomacy phase, `resolveDiplomacyPhase` invokes optional `onDialogue` with `DialogueEvent(leaderId: gpId, category: 'diplomatic', situation: 'declare_war' | 'peace_offer', era: 'earlyModern', variables: {'otherNation': targetId})`. Callback is threaded via `resolveTurnForGame` / `resolveTurnForGameFromOrderEngine` / `validateOrdersAndResolveTurn`.  
 - **Mood:** `PortraitMoodEvent` is never emitted. No mood state machine, no negotiation offer/quality/stall inputs.
 
 **Missing:**  
-- Emit dialogue on actual events (declare war, peace offer, battle result, etc.) with correct category/situation/era/variables.  
+- Emit dialogue on reactive/event/negotiation (battle result, era change, reactive banter) with correct category/situation/era/variables.  
 - Implement negotiation mood state machine and emit `PortraitMoodEvent` on transition.  
 - (Optional) Dialogue content keys/catalog in data package per spec.
 
@@ -126,7 +126,7 @@
 | 1 | Naval mission orders dropped in full-AI aggregation | Fixed | High |
 | 2 | Evidence accumulation | Implemented (diplomacy) | High |
 | 3 | Dossier (basic intel, behavioral notes, timeline) | Implemented | Medium |
-| 4 | Dialogue and mood | Stub only | Medium |
+| 4 | Dialogue and mood | Partial (diplomatic) | Medium |
 | 5 | Tactical Quick Battle state-aware | Implemented | Medium |
 | 6 | Perception (threats/opportunities) | Partial | Medium |
 | 7 | Diplomacy domain planner + API | Missing | High |
