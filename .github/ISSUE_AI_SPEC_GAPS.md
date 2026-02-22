@@ -101,13 +101,13 @@
 
 ---
 
-## 10. Goal selection is weighted random, not behavior tree
+## 10. Goal selection is weighted random, not behavior tree — **DOCUMENTED**
 
 **Spec:** SPEC/ai/ai-architecture.md — "Behavior trees pick top-level goals"; "Behavior trees pick long-term strategy (expand, defend, trade, conquer, tech, diplomacy)."
 
 **Current:** `goal_manager.dart` implements **weighted random** choice over `StrategicGoal` using personality goal weights, agenda modifiers, and snapshot situational modifiers. No actual behavior tree (nodes, sequences, selectors).
 
-**Note:** This may be acceptable if "behavior tree" is interpreted as "hierarchical goal selection"; the spec also says "utility AI scores and selects concrete objectives". If strict behavior-tree structure is required (e.g. for designer-editable trees), replace weighted random with a small tree (e.g. selector over defend/expand/conquer/trade/tech/diplomacy) that uses the same weights as inputs.
+**Spec clarification (ai-architecture.md):** Goal selection may be implemented as **weighted choice** over strategic goals; this satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure is optional for designer-editable trees.
 
 ---
 
@@ -132,5 +132,5 @@
 | 7 | Diplomacy domain planner + API | Missing | High |
 | 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Implemented | Medium |
 | 9 | Personality thresholds (war/peace/alliance/research) | Implemented | Medium |
-| 10 | Behavior tree vs weighted random | Design choice | Low |
+| 10 | Goal selection (weighted choice vs behavior tree) | Documented | Low |
 | 11 | OrderSuggestionAPI diplomatic | Implemented | High (for #7) |
