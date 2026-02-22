@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 /// Dialog for choosing combat mode (Auto-Resolve vs Quick Battle).
-/// SPEC/project/phase-4-project-tasks. Capital sieges force Quick Battle.
+/// SPEC/program/quick-battle-resolution. Capital sieges force Quick Battle.
 class CombatModeChoiceDialog extends StatelessWidget {
   const CombatModeChoiceDialog({
     super.key,

@@ -1,10 +1,10 @@
 # Victory
 
-**SPEC/game** — Victory conditions and resolution. Reference: GDD 01. Phase 5: military victory only.
+**SPEC/game** — Victory conditions and resolution. Reference: GDD 01. Current scope: military victory only.
 
 ---
 
-## Phase 5 Scope: Military Victory Only
+## Current scope: Military Victory Only
 
 - **Condition:** A Great Power controls **31 or more Old World provinces**.
 - **Eligibility:** Only Great Powers are eligible. Minor Nations and Tribes do not win.
@@ -28,6 +28,6 @@
 
 ---
 
-## Out of Scope (Phase 5)
+## Out of scope
 
 Alternative victory types (Economic, Scientific, Peaceful, Score) are not implemented. They may be added in a later phase per GDD.

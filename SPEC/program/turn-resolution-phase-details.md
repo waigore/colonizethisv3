@@ -36,7 +36,7 @@ Military regiments consume food upkeep **before** workers and navy. Per player: 
 
 ## Diplomacy
 
-Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat. Combat in scope Phase 3+; diplomacy Phase 4+.
+Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
 
 ---
 
@@ -46,7 +46,7 @@ Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship 
 
 ---
 
-## Naval Interception & Naval Combat (Phase 6+)
+## Naval Interception & Naval Combat
 
 (1) Resolve patrol/blockade interceptions, trade/transport raids, conflicts between hostile fleets per [naval-movement-resolution.md](naval-movement-resolution.md). (2) For contested sea zones: build BattleContextSea; resolve per [naval-combat-resolution.md](naval-combat-resolution.md); update fleet compositions and locations. (3) Beachhead fleets resolved before associated land invasions.
 

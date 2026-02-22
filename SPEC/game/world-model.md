@@ -6,7 +6,7 @@
 
 ## Regions
 
-MVP: **Old World** (victory; e.g. 31+ provinces) and **New World** (frontier, colonies). Fixed maps per region; Asia post-MVP. Regions use stable ids (e.g. `oldWorld`, `newWorld`). New World provinces owned like Old World; **colonies** = owned New World provinces.
+**Old World** (victory; e.g. 31+ provinces) and **New World** (frontier, colonies). Fixed maps per region; Asia later. Regions use stable ids (e.g. `oldWorld`, `newWorld`). New World provinces owned like Old World; **colonies** = owned New World provinces.
 
 ---
 
@@ -33,7 +33,7 @@ Each province **contains** terrain tiles (terrain type, optional resource, impro
 | **Tile map** | Per-region 2D grid; cells → province or sea zone. |
 | **Unit** | Military or civilian. Owner, type. Location: civilian = tileKey; military = province id; naval = fleet/sea zone. |
 | **Player** | Great Power. Id, name, stockpile, capitalProvinceId, capitalTile. Orders and victory-eligible. See [factions.md](factions.md). |
-| **Orders** | Per–Great Power orders (movement, build). Phase 1 may be stub. |
+| **Orders** | Per–Great Power orders (movement, build). May be stub. |
 
 Models: data and serialization only; no game logic.
 
@@ -51,7 +51,7 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 
 ---
 
-## Invariants (Phase 1)
+## Invariants
 
 - Every province has region id. Every unit has owner and location.
 - Province lookup: always regionId + provinceId (or prefixed id). See [world-model-identity.md](world-model-identity.md).

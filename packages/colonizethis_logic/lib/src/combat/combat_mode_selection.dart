@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'conflict_detection.dart';
 
-/// Combat mode selection per phase-4-project-tasks. SPEC/program/quick-battle-resolution.
+/// Combat mode selection. SPEC/program/quick-battle-resolution.
 ///
 /// Capital sieges always use Quick Battle. Otherwise use per-battle override or
 /// game-settings default. Default Auto-Resolve.

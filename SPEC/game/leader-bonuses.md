@@ -19,7 +19,7 @@ Leader bonuses apply in:
 - **Auto-resolve combat** (main game turn resolution): when resolving a BattleContext, the combat resolver reads the defender’s and each attacker’s GP, looks up each player’s leaderKey, and applies the corresponding bonus to that side’s strength (or modifiers) before resolving the engagement.
 - **Quick Battle** (ctdev or in-game quick battle): same rule; both sides get their GP’s leader bonus.
 
-Bonuses are **combat-only** in Phase 5 (no economy or research bonus from leader).
+Bonuses are **combat-only** (no economy or research bonus from leader).
 
 ---
 

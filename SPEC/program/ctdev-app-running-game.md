@@ -16,10 +16,10 @@ Reached via Start Game (Sim) from Init Game Map Debug. User may navigate back to
 
 | Tab | Content |
 |-----|---------|
-| **Map** | OW + NW. Sub-views: **Default** (ownership/geographic, capitals, ports); **Improvements** (per-tile improvement and transport level); **Units** (army markers per province per player). Phase 6+: fleet/navy state (locations, mission icons). |
+| **Map** | OW + NW. Sub-views: **Default** (ownership/geographic, capitals, ports); **Improvements** (per-tile improvement and transport level); **Units** (army markers per province per player). Fleet/navy state (locations, mission icons). |
 | **Game Overview** | Turn, year; owned province list per GP; military strength ([military-strength.md](military-strength.md)); diplomatic states. **Turn seed** `turnSeed[P, T]` per GP for reproducibility. |
 | **Orders (AI history)** | Per-turn, per-GP scrollable view: movement, build, work, diplomatic, naval orders; validation status (accepted/rejected + reason) per [order-engine.md](order-engine.md). Naval combat outcomes when applicable. |
-| **Player (GP) tabs** | One tab per GP. Per-player map via [player-view.md](player-view.md): Unknown (black), Revealed (grey), Fogged (ownership + grey stripes), Fully visible. Only viewing player's units. Below map: stockpiles, `techUnlocked` (Phase 5 stubs: `currentResearchTechId`, `researchableTechIds`); expected extraction/production ([order-projections.md](order-projections.md)); pending orders; available orders ([order-engine.md](order-engine.md)). |
+| **Player (GP) tabs** | One tab per GP. Per-player map via [player-view.md](player-view.md): Unknown (black), Revealed (grey), Fogged (ownership + grey stripes), Fully visible. Only viewing player's units. Below map: stockpiles, `techUnlocked` (stubs: `currentResearchTechId`, `researchableTechIds`); expected extraction/production ([order-projections.md](order-projections.md)); pending orders; available orders ([order-engine.md](order-engine.md)). |
 
 All tabs read from `SimGameController.game` and `pendingOrdersByPlayerId`; refresh on Next Player / Next Turn.
 
@@ -33,7 +33,7 @@ AI choice made on Init Map Debug before Start Game. **Player-by-player:** Next P
 
 ## Display and Logging
 
-After each resolved turn: map updates from `Game.worldState`; panel shows turn/year, land combat events (province, sides, winner, casualties, flips), naval combat events (Phase 6+). Fast-forward 10 may compress to summary.
+After each resolved turn: map updates from `Game.worldState`; panel shows turn/year, land combat events (province, sides, winner, casualties, flips), naval combat events. Fast-forward 10 may compress to summary.
 
 **In-memory Sim Log:** Last 10 lines at info+; cleared at start of each turn. Full detail in session log file ([ctdev-logging.md](ctdev-logging.md)).
 

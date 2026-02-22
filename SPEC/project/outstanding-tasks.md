@@ -8,10 +8,10 @@
 
 | Priority | Meaning |
 |----------|---------|
-| **P0** | Critical blocker — blocks MVP completion or causes incorrect gameplay |
+| **P0** | Critical blocker — blocks completion or causes incorrect gameplay |
 | **P1** | High priority — significant feature gap，影响核心玩法 |
 | **P2** | Medium priority — noticeable gap but not blocking |
-| **P3** | Nice to have — can be deferred to post-MVP |
+| **P3** | Nice to have — can be deferred |
 
 **Complexity Key**
 
@@ -23,7 +23,7 @@
 
 ---
 
-## P0: Critical — Blocks MVP or Causes Incorrect Gameplay
+## P0: Critical — Blocks Completion or Causes Incorrect Gameplay
 
 No outstanding P0 tasks.
 
@@ -92,7 +92,7 @@ No outstanding P0 tasks.
 
 ### Task: Verify and Complete Worker/Population Model
 
-**Status:** Food consumption and starvation verified and tested (economy_consumption_test, economy_logic_test). Luxury and training deferred per spec MVP note.
+**Status:** Food consumption and starvation verified and tested (economy_consumption_test, economy_logic_test). Luxury and training deferred per spec.
 
 **Gap:** Worker model exists (`WorkerPool`). Food and starvation implemented; luxury and training deferred.
 
@@ -100,7 +100,7 @@ No outstanding P0 tasks.
 |-----------|----------------|--------|
 | Worker tiers (Peasant/Journeyman/Master) | `workers-and-population.md` | **Done** — model and consumption |
 | Food consumption | `workers-and-population.md` | **Done** — 1/2 food per tier, tested |
-| Luxury consumption | `workers-and-population.md` | Deferred (MVP scope) |
+| Luxury consumption | `workers-and-population.md` | Deferred |
 | Starvation (worker death) | `workers-and-population.md` | **Done** — order peasants first, tested |
 | Training (tier upgrade) | `workers-and-population.md` | Deferred (CLARIFICATION NEEDED) |
 
@@ -172,7 +172,7 @@ No outstanding P0 tasks.
 
 ---
 
-## P3: Nice to Have — Post-MVP
+## P3: Nice to Have — Deferred
 
 No outstanding P3 tasks.
 
