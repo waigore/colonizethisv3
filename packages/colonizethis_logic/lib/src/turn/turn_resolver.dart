@@ -25,6 +25,7 @@ import '../economy/sea_transport.dart';
 import 'research_resolver.dart';
 import '../world/naval.dart';
 import '../combat/naval_combat_resolver.dart';
+import '../dossier/evidence_rules.dart';
 import '../world/player_view.dart';
 
 final Logger _log = Logger();
@@ -769,11 +770,28 @@ Game _runNavalInterceptionCombatPhase(
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
+  final turn = game.worldState.turnState.turnNumber;
   for (final battle in battles) {
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
     state = applyNavalBattleResults(state, battle, result, regionId, topology: topology);
+    // Evidence: AI won naval battle (one side eliminated). SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
+    String? victorId;
+    String? loserId;
+    if (result.survivingShipTypeIdsSide1.isEmpty && result.survivingShipTypeIdsSide2.isNotEmpty) {
+      victorId = battle.side2.ownerId;
+      loserId = battle.side1.ownerId;
+    } else if (result.survivingShipTypeIdsSide2.isEmpty && result.survivingShipTypeIdsSide1.isNotEmpty) {
+      victorId = battle.side1.ownerId;
+      loserId = battle.side2.ownerId;
+    }
+    if (victorId != null && loserId != null) {
+      final evidence = evidenceForNavalBattleVictory(state, victorId, loserId, turn);
+      if (evidence.isNotEmpty) {
+        state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+      }
+    }
   }
   return state;
 }
@@ -789,6 +807,7 @@ Game _runCombatPhase(
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
+  final turn = state.worldState.turnState.turnNumber;
   for (final ctx in battles) {
     final mode = resolveCombatModeForBattle(
       state,
@@ -802,12 +821,32 @@ Game _runCombatPhase(
       final input = buildQuickBattleInput(state, ctx, seed: state.worldState.turnState.turnNumber);
       final qbResult = resolveQuickBattle(input);
       state = applyQuickBattleResultToGame(state, ctx, qbResult);
+      // Evidence: AI won land battle as attacker. SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
+      if (qbResult.winner == QuickBattleWinner.attacker &&
+          qbResult.provinceFlips &&
+          ctx.attackers.isNotEmpty) {
+        final victorId = ctx.attackers.first.factionId;
+        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        if (evidence.isNotEmpty) {
+          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+        }
+      }
     } else {
       state = resolveBattleContext(
         state,
         ctx,
         feedingCoverageByPlayerId: feedingCoverageByPlayerId,
       );
+      // Evidence: AI won land battle (province flipped). Same spec refs.
+      final region = ctx.regionId == kRegionOldWorld ? state.worldState.oldWorld : state.worldState.newWorld;
+      final province = region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
+      final victorId = province?.ownerId;
+      if (victorId != null && victorId != ctx.defenderFactionId) {
+        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        if (evidence.isNotEmpty) {
+          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+        }
+      }
     }
   }
   // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
