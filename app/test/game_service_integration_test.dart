@@ -1,4 +1,7 @@
+// Log suppression first (SPEC/program/test-logging.md); then Flutter test API.
+import 'package:colonizethis_test/test.dart' as _;
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';

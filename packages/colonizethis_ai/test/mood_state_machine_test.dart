@@ -1,5 +1,6 @@
+import 'package:colonizethis_test/test.dart';
+
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('computeNextNegotiationMood', () {
