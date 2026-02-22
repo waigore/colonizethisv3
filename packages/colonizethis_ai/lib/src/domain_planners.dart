@@ -69,6 +69,19 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
   );
 
+  // Diplomacy: suggest diplomatic orders; weight by diplomacy domain and goal.
+  orders = _runDiplomacyPlanner(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+  );
+
   // Research: suggest research; weight by tech domain.
   final researchCandidates = suggestionAPI.suggestResearchOrders(view, game, topology, orders);
   if (researchCandidates.isNotEmpty && (primaryGoal == StrategicGoal.tech || domainWeights.research >= 40)) {
@@ -190,5 +203,39 @@ Orders _appendNavalMissionOrders(Orders o, String playerId, List<NavalMissionOrd
   final existing = o.navalMissionOrdersByPlayerId[playerId] ?? const [];
   return o.copyWith(
     navalMissionOrdersByPlayerId: {...o.navalMissionOrdersByPlayerId, playerId: [...existing, ...list]},
+  );
+}
+
+Orders _runDiplomacyPlanner({
+  required String nationId,
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+}) {
+  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final weight = primaryGoal == StrategicGoal.diplomacy ||
+      primaryGoal == StrategicGoal.conquer ||
+      primaryGoal == StrategicGoal.trade
+      ? domainWeights.diplomacy
+      : 40;
+  if (weight < 25) return orders;
+
+  final diploCandidates = suggestionAPI.suggestDiplomaticOrders(view, game, topology, orders);
+  if (diploCandidates.isEmpty) return orders;
+
+  final rng = math.Random(seeds.diplomacySeed);
+  final idx = rng.nextInt(diploCandidates.length);
+  return _appendDiplomaticOrders(orders, nationId, [diploCandidates[idx]]);
+}
+
+Orders _appendDiplomaticOrders(Orders o, String playerId, List<DiplomaticOrder> list) {
+  final existing = o.diplomaticOrdersByPlayerId[playerId] ?? const [];
+  return o.copyWith(
+    diplomaticOrdersByPlayerId: {...o.diplomaticOrdersByPlayerId, playerId: [...existing, ...list]},
   );
 }
