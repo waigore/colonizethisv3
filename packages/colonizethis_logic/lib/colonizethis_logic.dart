@@ -45,8 +45,9 @@ export 'src/orders/orders_application.dart';
 // Diplomacy
 export 'src/diplomacy/diplomacy_resolver.dart';
 
-// Dossier (evidence rules)
+// Dossier (evidence rules, event dialogue)
 export 'src/dossier/evidence_rules.dart';
+export 'src/dossier/event_dialogue.dart';
 
 // AI
 export 'src/ai/ai_planner.dart';
