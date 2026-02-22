@@ -34,6 +34,17 @@ void main() {
     });
   });
 
+  group('getArchetypeDisplayNameForLeader', () {
+    test('returns display name for known leader', () {
+      expect(getArchetypeDisplayNameForLeader('napoleon'), 'Fortifier');
+      expect(getArchetypeDisplayNameForLeader('victoria'), 'Industrial Trader');
+      expect(getArchetypeDisplayNameForLeader('isabella'), 'Explorer');
+    });
+    test('returns null for unknown leader', () {
+      expect(getArchetypeDisplayNameForLeader('unknown'), isNull);
+    });
+  });
+
   group('PersonalityThresholds', () {
     test('default constructor uses 50 for all fields', () {
       const t = PersonalityThresholds();

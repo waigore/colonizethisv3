@@ -117,5 +117,119 @@ void main() {
       final d = getDossierForSubject(game, 'obs', 'subj');
       expect(d.evidenceList, ['Turn 1: For obs-subj']);
     });
+
+    test('includes basic intel when players and relation exist', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'obs', displayName: 'Observer', isHuman: true, militaryLevel: 2, treasury: 100),
+          Player(id: 'napoleon', displayName: 'France', isHuman: false, militaryLevel: 3, treasury: 50),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'obs',
+            factionId2: 'napoleon',
+            score: 40,
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+          ),
+        ],
+        dossierEvidenceEntries: [],
+      );
+      final d = getDossierForSubject(game, 'obs', 'napoleon');
+      expect(d.basicIntel, isNotNull);
+      expect(d.basicIntel!.relationLevel, RelationLevel.neutral);
+      expect(d.basicIntel!.relationState, RelationState.atPeace);
+      expect(d.basicIntel!.relativeMilitaryStrength, RelativeStrength.stronger);
+      expect(d.basicIntel!.relativeEconomicStrength, RelativeStrength.weaker);
+      expect(d.basicIntel!.personalityArchetype, 'Fortifier');
+    });
+
+    test('includes best-guess agenda and confidence from highest suspicion', () {
+      final game = _gameWithEvidence([
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'warmonger',
+          turnNumber: 1,
+          description: 'declared war on weaker neighbor',
+          scoreDelta: 6,
+        ),
+      ]);
+      final d = getDossierForSubject(game, 'obs', 'subj');
+      expect(d.bestGuessAgenda, isNotNull);
+      expect(d.bestGuessAgenda!.agendaType, 'warmonger');
+      expect(d.bestGuessAgenda!.confidencePercent, 60);
+    });
+
+    test('confidencePercentFromScore returns 0 for 0-2, 25 for 3-5, 60 for 6-8, 85 for 9-10, 100 for 11+', () {
+      expect(confidencePercentFromScore(0), 0);
+      expect(confidencePercentFromScore(2), 0);
+      expect(confidencePercentFromScore(3), 25);
+      expect(confidencePercentFromScore(5), 25);
+      expect(confidencePercentFromScore(6), 60);
+      expect(confidencePercentFromScore(8), 60);
+      expect(confidencePercentFromScore(9), 85);
+      expect(confidencePercentFromScore(10), 85);
+      expect(confidencePercentFromScore(11), 100);
+    });
+
+    test('behavioral notes summarize evidence', () {
+      final game = _gameWithEvidence([
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'warmonger',
+          turnNumber: 1,
+          description: 'declared war on weaker neighbor',
+          scoreDelta: 2,
+        ),
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'warmonger',
+          turnNumber: 3,
+          description: 'declared war on weaker neighbor',
+          scoreDelta: 2,
+        ),
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'peacemaker',
+          turnNumber: 2,
+          description: 'offered peace',
+          scoreDelta: 1,
+        ),
+      ]);
+      final d = getDossierForSubject(game, 'obs', 'subj');
+      expect(d.behavioralNotes, contains('Declared war (2).'));
+      expect(d.behavioralNotes, contains('Offered peace (1).'));
+    });
+
+    test('timeline is chronological', () {
+      final game = _gameWithEvidence([
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'backstabber',
+          turnNumber: 5,
+          description: 'B',
+        ),
+        const DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'warmonger',
+          turnNumber: 2,
+          description: 'A',
+        ),
+      ]);
+      final d = getDossierForSubject(game, 'obs', 'subj');
+      expect(d.timeline, ['Turn 2: A', 'Turn 5: B']);
+    });
   });
 }
