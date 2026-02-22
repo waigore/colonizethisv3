@@ -26,7 +26,7 @@ Orders generateStrategicOrders({
 }) {
   final turn = game.worldState.turnState.turnNumber;
   Logger().i('ai: generateStrategicOrders nationId=$nationId turn=$turn');
-  final snapshot = AIWorldSnapshot.fromPlayerView(view);
+  final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
   final primaryGoal = selectPrimaryGoal(snapshot, config, seeds.goalSeed);
   Logger().d('ai: primaryGoal=$primaryGoal');
   final orders = runDomainPlanners(

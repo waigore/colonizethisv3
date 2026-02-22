@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
@@ -62,10 +63,12 @@ class AIWorldSnapshot {
   /// Relation state keyed by other faction id (war, peace, etc.).
   final Map<String, DiplomacyRelation> relations;
 
-  /// Builds snapshot from [view]. Deterministic: same view → same snapshot.
-  static AIWorldSnapshot fromPlayerView(PlayerView view) {
-    final threats = _buildThreatSummary(view);
-    final opportunities = _buildOpportunitySummary(view);
+  /// Builds snapshot from [view]. When [topology] is provided, computes
+  /// neighborProvincesHostile, capitalThreatened, weakNeighbors, and
+  /// richUnexploitedProvinces from view + topology. Deterministic: same view → same snapshot.
+  static AIWorldSnapshot fromPlayerView(PlayerView view, {MapTopology? topology}) {
+    final threats = _buildThreatSummary(view, topology);
+    final opportunities = _buildOpportunitySummary(view, topology);
     final economy = _buildEconomySummary(view);
     return AIWorldSnapshot(
       playerId: view.playerId,
@@ -76,7 +79,7 @@ class AIWorldSnapshot {
     );
   }
 
-  static ThreatSummary _buildThreatSummary(PlayerView view) {
+  static ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {
     final atWarWith = <String>[];
     for (final e in view.diplomacyByOtherId.entries) {
       final rel = e.value;
@@ -84,17 +87,118 @@ class AIWorldSnapshot {
         atWarWith.add(e.key);
       }
     }
-    // Neighbor hostility and capital threat would need topology + visibility;
-    // stub for now.
-    return ThreatSummary(atWarWith: atWarWith);
+    if (topology == null) {
+      return ThreatSummary(atWarWith: atWarWith);
+    }
+    final ownedIds = <String>{};
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
+    }
+    int neighborProvincesHostile = 0;
+    final neighborProvinceIds = _neighborProvinceIdsFromTopology(topology, ownedIds, view);
+    for (final neighborFullId in neighborProvinceIds) {
+      final prov = view.provincesById[neighborFullId];
+      if (prov == null) continue;
+      final ownerId = prov.ownerId;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
+      final rel = view.diplomacyByOtherId[ownerId];
+      if (rel != null && rel.state == RelationState.atWar) {
+        neighborProvincesHostile++;
+      }
+    }
+    bool capitalThreatened = false;
+    final capitalId = view.player.capitalProvinceId;
+    if (capitalId != null && capitalId.isNotEmpty && ownedIds.contains(capitalId)) {
+      final capitalNeighbors = _neighborProvinceIdsFromTopology(
+        topology,
+        {capitalId},
+        view,
+      );
+      for (final neighborFullId in capitalNeighbors) {
+        final prov = view.provincesById[neighborFullId];
+        if (prov == null) continue;
+        final ownerId = prov.ownerId;
+        if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
+        final rel = view.diplomacyByOtherId[ownerId];
+        if (rel != null && rel.state == RelationState.atWar) {
+          capitalThreatened = true;
+          break;
+        }
+      }
+    }
+    return ThreatSummary(
+      atWarWith: atWarWith,
+      neighborProvincesHostile: neighborProvincesHostile,
+      capitalThreatened: capitalThreatened,
+    );
   }
 
-  static OpportunitySummary _buildOpportunitySummary(PlayerView view) {
-    int unclaimed = 0;
-    for (final p in view.provincesById.values) {
-      if (p.ownerId == null || p.ownerId!.isEmpty) unclaimed++;
+  /// Returns full province ids of provinces adjacent to [ownedFullIds] per [topology].
+  static Set<String> _neighborProvinceIdsFromTopology(
+    MapTopology topology,
+    Set<String> ownedFullIds,
+    PlayerView view,
+  ) {
+    final out = <String>{};
+    for (final fullId in ownedFullIds) {
+      final regionId = ProvinceId.regionIdFrom(fullId);
+      final localId = ProvinceId.localIdFrom(fullId);
+      for (final edge in topology.edges) {
+        String? neighborLocalId;
+        if (edge.id1 == localId) {
+          neighborLocalId = edge.id2;
+        } else if (edge.id2 == localId) {
+          neighborLocalId = edge.id1;
+        }
+        if (neighborLocalId == null) continue;
+        TopologyNode? neighborNode;
+        for (final n in topology.nodes) {
+          if (n.id == neighborLocalId) {
+            neighborNode = n;
+            break;
+          }
+        }
+        if (neighborNode == null || neighborNode.type != TopologyNodeType.province) continue;
+        if (neighborNode.regionId != regionId) continue;
+        final neighborFullId = ProvinceId.full(neighborNode.regionId, neighborNode.id);
+        if (!ownedFullIds.contains(neighborFullId)) out.add(neighborFullId);
+      }
     }
-    return OpportunitySummary(unclaimedProvinces: unclaimed);
+    return out;
+  }
+
+  static OpportunitySummary _buildOpportunitySummary(PlayerView view, MapTopology? topology) {
+    int unclaimed = 0;
+    int richUnexploited = 0;
+    for (final p in view.provincesById.values) {
+      if (p.ownerId == null || p.ownerId!.isEmpty) {
+        unclaimed++;
+        richUnexploited++;
+      } else if (p.ownerId != view.playerId && p.townDevelopmentLevel > 0) {
+        richUnexploited++;
+      }
+    }
+    final weakNeighbors = <String>[];
+    if (topology != null) {
+      final ownedIds = <String>{};
+      for (final p in view.provincesById.entries) {
+        if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
+      }
+      final neighborIds = _neighborProvinceIdsFromTopology(topology, ownedIds, view);
+      for (final fid in neighborIds) {
+        final prov = view.provincesById[fid];
+        if (prov == null) continue;
+        final ownerId = prov.ownerId;
+        if (ownerId != null && ownerId.isNotEmpty && ownerId != view.playerId) {
+          if (!weakNeighbors.contains(ownerId)) weakNeighbors.add(ownerId);
+        }
+      }
+    }
+    return OpportunitySummary(
+      weakNeighbors: weakNeighbors,
+      richUnexploitedProvinces: richUnexploited,
+      unclaimedProvinces: unclaimed,
+    );
   }
 
   static EconomySummary _buildEconomySummary(PlayerView view) {
