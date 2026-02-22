@@ -228,6 +228,29 @@ void main() {
       expect(next.players.single.treasury, 500);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
     });
+
+    test('duplicate slotIndex: only one order per slot applied (last wins), no double spend', () {
+      // SPEC: one assignment per slot. If list has two orders for same slot, resolver uses one (last wins).
+      final game = _baseGame(treasury: 2000, techUnlocked: const {});
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(slotIndex: 0, techId: 'gathering_1', funding: ResearchFundingLevel.low),
+            ResearchOrder(slotIndex: 0, techId: 'gathering_1', funding: ResearchFundingLevel.maximum),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      );
+      final player = next.players.single;
+      // Last wins => maximum only: 1000 spent, 2500 RP => gathering_1 (cost 80) unlocks.
+      expect(player.treasury, 1000);
+      expect(player.techUnlocked!['gathering_1'], isTrue);
+      // If both were applied we would have 1050 spent and dual progress; so no double spend.
+    });
   });
 }
 
