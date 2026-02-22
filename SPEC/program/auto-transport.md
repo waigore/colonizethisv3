@@ -24,7 +24,7 @@ All **same-region** extracted goods are added to the player's stockpile. Extract
 
 ## Sea Transport (Overseas Only)
 
-**Cargo-hold limit (per Imp2):** Each cargo hold carries **1 unit of any commodity per turn**. Total cargo holds = sum over the player's ships. Phase 2: **stub** = fixed number per player (e.g. 24). Allocate overseas extraction to stockpile by **priority** (food, raw materials, riches, trade goods) until cargo full; rest is left behind (not delivered this turn). Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/commodity-catalog.md)).
+**Cargo-hold limit (per Imp2):** Each cargo hold carries **1 unit of any commodity per turn**. Total cargo holds = sum over the player's ships. **Stub:** fixed number per player (e.g. 24). Allocate overseas extraction to stockpile by **priority** (food, raw materials, riches, trade goods) until cargo full; rest is left behind (not delivered this turn). Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/commodity-catalog.md)).
 
 **Priority ordering within categories in case of limited cargo capacity**
 
@@ -37,7 +37,7 @@ All **same-region** extracted goods are added to the player's stockpile. Extract
 | 5        | Trade Goods        | Textiles, Spices   | Discretionary income    |
 | 6        | Luxury             | Wine, Tobacco      | Nice to have            |
 
-**MVP:** Implementation uses `CommodityCategory` order (food, rawMaterial, riches, manufactured, luxury, advanced). Grain and meat are the only food commodities in the catalog; Critical Food vs Food Variety sub-ordering applies when fish/dairy are added. Cargo-hold limit uses a fixed stub per player; sum-of-ships can be wired when fleet cargo capacity is available.
+**Note:** Implementation uses `CommodityCategory` order (food, rawMaterial, riches, manufactured, luxury, advanced). Grain and meat are the only food commodities in the catalog; Critical Food vs Food Variety sub-ordering applies when fish/dairy are added. Cargo-hold limit uses a fixed stub per player; sum-of-ships can be wired when fleet cargo capacity is available.
 
 ---
 

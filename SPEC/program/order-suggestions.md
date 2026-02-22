@@ -35,9 +35,9 @@ For every suggested order `o`, appending it to the current list and validating v
 
 ## Consumers
 
-- Phase 4 minimal AIPlanner (see [ai-planner.md](ai-planner.md))
+- Minimal AIPlanner (see [ai-planner.md](ai-planner.md))
 - Sim-game default AI (see [sim-game-default-ai.md](sim-game-default-ai.md))
-- Phase 6 full AI (see [ai-systems-impl.md](ai-systems-impl.md))
+- Full AI (see [ai-systems-impl.md](ai-systems-impl.md))
 
 ---
 

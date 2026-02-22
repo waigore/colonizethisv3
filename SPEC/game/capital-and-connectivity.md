@@ -43,7 +43,7 @@ A tile T is **connected** to the capital for a player iff there is a path of roa
 
 **Road level** on a tile is the same as **transport level** used for extraction (effective yield = min(production, transport level)); railroads are a higher road/transport level gated by tech (see [extraction-and-improvements.md](extraction-and-improvements.md), [tech-tree-transport.md](tech-tree-transport.md)).
 
-**Overseas provinces:** A tile in an overseas province is connected if it has a road/rail path to **a port in that province that is connected to the capital** (per the port-connection rule above). Blockade can intercept cargo; Phase 2: blockade is stubbed (no effect).
+**Overseas provinces:** A tile in an overseas province is connected if it has a road/rail path to **a port in that province that is connected to the capital** (per the port-connection rule above). Blockade can intercept cargo; blockade is currently stubbed (no effect).
 
 ---
 

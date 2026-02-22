@@ -50,6 +50,6 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 ## Implementation
 
-Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets in MVP).
+Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets).
 
-**MVP scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). Luxury consumption (sugar, cigars, fur hats) and worker tier training (paper + cash → next tier) are deferred until Recruiting/Training quantities are defined or an MVP simplification is chosen.
+**Current scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). Luxury consumption (sugar, cigars, fur hats) and worker tier training (paper + cash → next tier) are deferred until Recruiting/Training quantities are defined or a simplification is chosen.

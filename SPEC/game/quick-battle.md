@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-Quick Battle is a **one-province attacker vs defender** tactical mini-game that replaces pure auto-resolve when players choose the Quick Battle mode. It offers a short, command-point-based, turn-by-turn system that preserves Phase 3 combat stats and formulas while giving players meaningful tactical choices (terrain, maneuvers, focus fire, timing of assaults). Output is compatible with the existing combat casualty/flip pipeline.
+Quick Battle is a **one-province attacker vs defender** tactical mini-game that replaces pure auto-resolve when players choose the Quick Battle mode. It offers a short, command-point-based, turn-by-turn system that preserves tactical combat stats and formulas while giving players meaningful tactical choices (terrain, maneuvers, focus fire, timing of assaults). Output is compatible with the existing combat casualty/flip pipeline.
 
 Constraints:
 
@@ -27,7 +27,7 @@ Province terrain provides a base context; each lane is tagged with a single terr
 - `TOWN` — very strong defense; modest penalties to movement and some artillery fire.
 - `SWAMP` — very poor footing; bad for both attack and defense; hard to maneuver.
 
-Lane terrain is used as a modifier on top of existing tactical stats (FPN, FPM, RNG, DEF, MVR) from Phase 3.
+Lane terrain is used as a modifier on top of existing tactical stats (FPN, FPM, RNG, DEF, MVR).
 
 ## Cohesion (morale) model
 
@@ -63,7 +63,7 @@ Each battalion group (lane + line) has a **cohesion** value on a 0–3 integer s
 
 Quick Battle proceeds in at most **3 rounds**. In each round:
 
-1. Determine which side acts first (initiative, consistent with Phase 3 combat rules; ties may alternate).
+1. Determine which side acts first (initiative, consistent with combat rules; ties may alternate).
 2. Side A receives **2–3 CP** and spends them on actions.
 3. Side B receives **2–3 CP** and spends them on actions.
 4. Resolve all fire, charges, maneuver consequences, casualties, cohesion changes, and possible lane collapses.
@@ -95,7 +95,7 @@ After up to 3 rounds (or earlier if one side collapses), the Quick Battle produc
 Quick Battle does **not** change the underlying combat formula; it supplies structured inputs (lane-level strengths, modifiers, cohesion effects) into the existing resolution pipeline and receives standard outputs:
 
 - Casualty lists for both sides.
-- Whether the province flips to the attacker or remains with the defender (consistent with Phase 3 combat and siege rules).
+- Whether the province flips to the attacker or remains with the defender (consistent with combat and siege rules).
 
 The game then applies casualties and province ownership changes using the same world-state update logic as auto-resolve.
 

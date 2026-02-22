@@ -29,7 +29,7 @@ On submit: validate constraints; call `runInitGame(config, options)` with fixed 
 
 ## Pre–Start Game (Sim)
 
-Map, legend, toggles, **AI selector** (Sim Game AI | AI Planner; when AI Planner: "Use full AI (Phase 6)" checkbox), **Start Game (Sim)** button. No Next Player / Resolve Turn / Next Turn / Fast-forward (those are on [ctdev-app-running-game.md](ctdev-app-running-game.md)).
+Map, legend, toggles, **AI selector** (Sim Game AI | AI Planner; when AI Planner: "Use full AI" checkbox), **Start Game (Sim)** button. No Next Player / Resolve Turn / Next Turn / Fast-forward (those are on [ctdev-app-running-game.md](ctdev-app-running-game.md)).
 
 ---
 

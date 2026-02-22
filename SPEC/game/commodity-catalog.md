@@ -33,7 +33,7 @@ Riches (gold, silver, gems, diamonds, spices) convert to treasury each turn in a
 
 ## Where Stored
 
-The **commodity catalog** (id list, category per commodity, default price for spawn-weight and market) is defined in ruleset config (program-level constants in MVP; no JSON rulesets).
+The **commodity catalog** (id list, category per commodity, default price for spawn-weight and market) is defined in ruleset config (program-level constants; no JSON rulesets).
 
 ---
 

@@ -1,5 +1,5 @@
 /// Combat UI: mode choice, Quick Battle deployment, action selection, result.
-/// SPEC/project/phase-4-project-tasks.
+/// SPEC/program/quick-battle-resolution.
 library;
 
 export 'combat_mode_choice_dialog.dart';

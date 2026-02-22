@@ -6,7 +6,7 @@
 
 ## Per-Player Tech
 
-Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<String, bool>` or equivalent). The same **static list** of tech ids is defined for all players in program-level config (no JSON rulesets in MVP).
+Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<String, bool>` or equivalent). The same **static list** of tech ids is defined for all players in program-level config (no JSON rulesets).
 
 ---
 
@@ -14,4 +14,4 @@ Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<Stri
 
 The **max effective extraction level** (1–4) per resource or improvement type is **derived from the tech tree catalog**: which techs grant which max improvement level for each resource (grain, timber, iron, coal, etc.). Effective extraction per tile = min(improvement level, **owner’s tech cap** for that resource). The improvement level on the tile is unchanged; only the amount that counts for extraction is capped.
 
-**Fallback:** When the full tech model is not yet loaded or a resource has no tech-gated cap, use a **constant cap** (e.g. 4) per player from config so extraction resolution can run. Phase 2 used this exclusively; Phase 5+ derive cap from [tech-tree.md](tech-tree.md) and category sub-docs.
+**Fallback:** When the full tech model is not yet loaded or a resource has no tech-gated cap, use a **constant cap** (e.g. 4) per player from config so extraction resolution can run. Full model derives cap from [tech-tree.md](tech-tree.md) and category sub-docs.
