@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter/material.dart';
 
+import '../save_service.dart';
 import 'init_game_debug_map_screen.dart';
 
 class InitGameScreen extends StatefulWidget {
@@ -128,11 +129,14 @@ class _InitGameScreenState extends State<InitGameScreen> {
         options: options,
       );
       if (!mounted) return;
+      await saveGameAndMapData(result.game, result);
+      if (!mounted) return;
+      final baseSeed = result.game.globalGameSeed ?? _seed;
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => InitGameDebugMapScreen(
             initResult: result,
-            baseSeed: _seed,
+            baseSeed: baseSeed,
           ),
         ),
       );

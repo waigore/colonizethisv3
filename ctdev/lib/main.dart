@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 
 import 'ctdev_log.dart';
 import 'screens/init_game_screen.dart';
+import 'screens/load_savegame_screen.dart';
 
 void main() {
   initCtdevLogging();
@@ -55,7 +56,11 @@ class CtDevHomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                // Placeholder for Load Savegame flow.
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LoadSavegameScreen(),
+                  ),
+                );
               },
               child: const Text('Load Savegame'),
             ),

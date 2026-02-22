@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   logger: ^2.0.2
+  colonizethis_data:
   colonizethis_models:
   hive: ^2.2.3
 

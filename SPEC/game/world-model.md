@@ -26,7 +26,7 @@ Each province **contains** terrain tiles (terrain type, optional resource, impro
 
 | Entity | Responsibility |
 |--------|----------------|
-| **Game** | Top-level. Game id, metadata, current **WorldState**, **Player**s (Great Powers), **Minor Nation**s, **Tribe**s, optional resolved config. |
+| **Game** | Top-level. Game id, metadata, current **WorldState**, **Player**s (Great Powers), **Minor Nation**s, **Tribe**s, optional resolved config. May carry optional **greatPowerColorOverride** (setup-time GP map colours) for display; when present, map visualizers and ctdev use it; when absent, GDD default colours apply. |
 | **WorldState** | Snapshot. Turn state (phase, turn), region data (provinces, units), player visibility, prospected tiles, **spy reveal timers** (playerId → provinceKey → turns until fog returns), optional **purchased tiles** (tileKey → buyer playerId for Minor/Tribe tiles purchased by GP). See [fog-and-exploration.md](fog-and-exploration.md). |
 | **Province** | Land region. Id, region id, **owner** (faction id). Optional **townTileKey** (tile key of province's town for extraction). Tiles; neighbours from topology. |
 | **SeaZone** | Water region. Id, region id. Adjacency from topology. |

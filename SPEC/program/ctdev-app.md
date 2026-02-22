@@ -14,7 +14,7 @@
 ## Main Flows
 
 - **Init Game:** Home → Init Game Config Screen (form mirrors `GameSetupConfig`). On submit: validate, call `runInitGame`, save game, navigate to Init Game Map Debug. See [ctdev-app-init-map.md](ctdev-app-init-map.md).
-- **Load Savegame:** Select saved game, load via colonizethis_save, build `InitGameMapViewData`, navigate to Init Game Map Debug.
+- **Load Savegame:** Select saved game, load via colonizethis_save, build `InitGameMapViewData` with the game's `greatPowerColorOverride` (if any) so ownership colours match the setup that was used when the game was created; when the save has no override (legacy), GDD default colours are used. Navigate to Init Game Map Debug. Saves created by ctdev Init Game include map data (tile maps, topology); legacy saves without map data show a message and cannot open the map view.
 - **Start Game (Sim):** From Init Game Map Debug, press Start Game → creates Sim Game controller, navigates to Running Game Screen. See [ctdev-app-running-game.md](ctdev-app-running-game.md).
 
 ---
