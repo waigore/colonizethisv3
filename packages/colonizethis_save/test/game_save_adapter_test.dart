@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -51,7 +52,7 @@ void main() {
       expect(adapter.load(box, 'missing'), isNull);
     });
 
-    test('listGameIds returns saved ids', () {
+    test('listGameIds returns saved ids and excludes map-data keys', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -63,7 +64,74 @@ void main() {
       );
       adapter.save(box, game);
       adapter.save(box, game.copyWith(id: 'g2'));
+      final tileMap = TileMapResult(width: 2, height: 2, grid: [
+        ['p1', 'p1'],
+        ['p2', 's1'],
+      ]);
+      final topo = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [],
+      );
+      adapter.saveMapData(
+        box,
+        'g1',
+        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+        topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+        combinedTopology: topo,
+      );
       expect(adapter.listGameIds(box), containsAll(['g1', 'g2']));
+      expect(adapter.listGameIds(box).length, 2);
+    });
+
+    test('saveMapData then loadMapData returns same data', () {
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 'p2'],
+          ['s1', 's1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains, TerrainType.forest],
+          [null, null],
+        ],
+        resourceGrid: [
+          [Resource.grain, null],
+          [null, null],
+        ],
+      );
+      final topo = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
+      );
+      adapter.saveMapData(
+        box,
+        'mapGame',
+        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+        topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+        combinedTopology: topo,
+      );
+      final loaded = adapter.loadMapData(box, 'mapGame');
+      expect(loaded, isNotNull);
+      expect(loaded!.tileMapByRegion['oldWorld']!.width, 2);
+      expect(loaded.tileMapByRegion['oldWorld']!.height, 2);
+      expect(loaded.tileMapByRegion['oldWorld']!.cell(0, 0), 'p1');
+      expect(loaded.tileMapByRegion['oldWorld']!.terrainAt(0, 0), TerrainType.plains);
+      expect(loaded.tileMapByRegion['oldWorld']!.resourceAt(0, 0), Resource.grain);
+      expect(loaded.combinedTopology.nodes.length, 3);
+      expect(loaded.combinedTopology.edges.length, 1);
+    });
+
+    test('loadMapData returns null for legacy save without map data', () {
+      expect(adapter.loadMapData(box, 'noMapData'), isNull);
     });
 
     test('delete removes game', () {
