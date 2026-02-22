@@ -21,5 +21,10 @@ void main() {
     test('yearAtTurn turn 102 returns year after cutoff', () {
       expect(TurnTimeMapping.gdd01.yearAtTurn(102), 1701);
     });
+
+    test('yearAtTurn turn 0 (boundary, spec undefined)', () {
+      // Turn 0 not defined by GDD; implementation yields startYear - yearsPerTurnBeforeCutoff.
+      expect(TurnTimeMapping.gdd01.yearAtTurn(0), 1498);
+    });
   });
 }
