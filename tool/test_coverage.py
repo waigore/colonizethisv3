@@ -16,8 +16,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+# Filter test output: box-drawing, common emoji, and ctdev-logging prefixes (SPEC/program/ctdev-logging.md).
 LOG_FILTER = re.compile(
-    r"[\u250c\u251c\u2500\u2514\u2502]|\u2139|\u1f41b|\u26a0\ufe0f|save: |logic: |map: "
+    r"[\u250c\u251c\u2500\u2514\u2502]|\u2139|\u1f41b|\u26a0\ufe0f"
+    r"|ctdev: |logic: |ai: |data: |map: |save: "
 )
 
 PACKAGES = [
