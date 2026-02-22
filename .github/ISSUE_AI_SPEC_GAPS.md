@@ -62,26 +62,22 @@
 
 ---
 
-## 6. Perception summary incomplete
+## 6. Perception summary incomplete — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/ai-architecture.md — Perception: threats, opportunities, economy, relations from PlayerView only.
 
-**Current:** `AIWorldSnapshot` / `ThreatSummary` / `OpportunitySummary` in `perception.dart`:  
-- `ThreatSummary`: `atWarWith` is populated; `neighborProvincesHostile` and `capitalThreatened` are never set (comment: "stub for now").  
-- `OpportunitySummary`: `unclaimedProvinces` is set; `weakNeighbors` and `richUnexploitedProvinces` are always empty.
-
-**Missing:** Compute `neighborProvincesHostile` and `capitalThreatened` from topology + visibility (and optionally unit positions). Populate `weakNeighbors` and `richUnexploitedProvinces` from view data where observable.
+**Current:** `AIWorldSnapshot.fromPlayerView(view, topology: topology)` in `perception.dart` computes all fields from PlayerView (and topology when provided).  
+- `ThreatSummary`: `atWarWith` from diplomacy; when topology is provided, `neighborProvincesHostile` counts neighbor provinces owned by nations at war, and `capitalThreatened` is true if the player's capital has an adjacent province owned by a nation at war.  
+- `OpportunitySummary`: `unclaimedProvinces` counts provinces with no owner; `richUnexploitedProvinces` counts unclaimed plus other-owned provinces with `townDevelopmentLevel > 0`; when topology is provided, `weakNeighbors` lists faction ids that own provinces adjacent to our provinces.  
+Tests in `perception_test.dart` cover threats (including neighbor/capital with topology), opportunities (weakNeighbors, richUnexploitedProvinces).
 
 ---
 
-## 7. No diplomacy domain planner
+## 7. No diplomacy domain planner — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/ai-architecture.md — Domain planning: economy, military, diplomacy, research planners; each emits candidate orders. SPEC/program/ai-systems-impl.md — AI uses suggestion API for all order types; when naval in scope, API exposes naval candidates.
 
-**Current:** `runDomainPlanners` runs economy (work/build), movement, naval (move + mission), and research. The order suggestion API **does** provide `suggestDiplomaticOrders` (see gap #11); domain_planners calls it. The diplomacy planner is a **stub**: it picks one candidate at random from the list rather than scoring by personality/agenda. Full AI can produce `DiplomaticOrder`s via this path but selection is not utility-based.
-
-**Missing:**  
-- Replace the stub diplomacy planner with one that, when goal is diplomacy/conquer/trade, scores and selects diplomatic orders using personality and agenda modifiers (e.g. war likelihood, peace tendency, alliance tendency from ai-personalities.md).
+**Current:** `_runDiplomacyPlanner` in `domain_planners.dart` calls `suggestDiplomaticOrders`, then scores each candidate by order type: **offerPeace** → `agendaPeaceAcceptanceModifier` + (peaceTendency − 50); **alliance** → `agendaAllianceAcceptanceModifier` + (allianceTendency − 50); **declareWar** → `agendaConquerModifier` + `agendaTreatyBreakingModifier` + (warLikelihood − 50). Other order types use base score 50. Weighted random choice selects one candidate; only runs when diplomacy/conquer/trade goal or domain weight ≥ 25. Deterministic given seeds.
 
 ---
 
@@ -128,8 +124,8 @@
 | 3 | Dossier (basic intel, behavioral notes, timeline) | Implemented | Medium |
 | 4 | Dialogue and mood | Partial (diplomatic) | Medium |
 | 5 | Tactical Quick Battle state-aware | Implemented | Medium |
-| 6 | Perception (threats/opportunities) | Partial | Medium |
-| 7 | Diplomacy domain planner + API | Missing | High |
+| 6 | Perception (threats/opportunities) | Implemented | Medium |
+| 7 | Diplomacy domain planner + API | Implemented | High |
 | 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Implemented | Medium |
 | 9 | Personality thresholds (war/peace/alliance/research) | Implemented | Medium |
 | 10 | Goal selection (weighted choice vs behavior tree) | Documented | Low |
