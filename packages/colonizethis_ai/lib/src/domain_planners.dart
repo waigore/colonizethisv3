@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'ai_config.dart';
 import 'goal_manager.dart';
+import 'hidden_agenda.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
@@ -36,7 +37,8 @@ Orders runDomainPlanners({
     final idx = rng.nextInt(workCandidates.length);
     orders = _appendWorkOrders(orders, nationId, [workCandidates[idx]]);
   }
-  if (buildCandidates.isNotEmpty && domainWeights.economy >= 30) {
+  final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
+  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
     final rng = math.Random(seeds.economySeed + 1);
     final idx = rng.nextInt(buildCandidates.length);
     orders = _appendBuildOrders(orders, nationId, [buildCandidates[idx]]);
@@ -82,9 +84,11 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
   );
 
-  // Research: suggest research; weight by tech domain.
+  // Research: suggest research; weight by tech domain and agenda (tech_thief boost).
   final researchCandidates = suggestionAPI.suggestResearchOrders(view, game, topology, orders);
-  if (researchCandidates.isNotEmpty && (primaryGoal == StrategicGoal.tech || domainWeights.research >= 40)) {
+  final researchThreshold = 40 - agendaResearchModifier(config.hiddenAgendaId);
+  if (researchCandidates.isNotEmpty &&
+      (primaryGoal == StrategicGoal.tech || domainWeights.research >= researchThreshold)) {
     final rng = math.Random(seeds.researchSeed);
     final idx = rng.nextInt(researchCandidates.length);
     orders = _appendResearchOrders(orders, nationId, [researchCandidates[idx]]);
