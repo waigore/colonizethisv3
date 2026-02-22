@@ -208,6 +208,7 @@ void main() {
       expect(orders.buildUnitOrdersByPlayerId, isNotNull);
       expect(orders.researchOrdersByPlayerId, isNotNull);
       expect(orders.navalMoveOrdersByPlayerId, isNotNull);
+      expect(orders.navalMissionOrdersByPlayerId, isNotNull);
       expect(orders.diplomaticOrdersByPlayerId, isNotNull);
       expect(
         orders.researchOrdersByPlayerId['gp1'],
