@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../dossier/event_dialogue.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
 
@@ -13,12 +14,18 @@ import '../world/player_view.dart';
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
 ///
 /// When [topology] is provided, ship builds spawn in home fleet.
+/// When [onDialogue] is provided, reactive dialogue (e.g. forts_on_border) may be emitted for AI leaders.
 /// BuildUnitOrder is applied by unit type category (civilian / military / naval) per buildUnitCategoryForUnitType.
 /// - Civilian: deduct treasury + paper, add unit with tileKey.
 /// - Military: deduct cost + worker, add unit.
 /// - Naval: deduct cost, add ship to home fleet at capital port.
 /// - WorkOrder: sets the unit status to working; no terrain change yet.
-Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) {
+Game applyBuildAndWorkOrders(
+  Game game,
+  Orders orders, {
+  MapTopology? topology,
+  void Function(DialogueEvent)? onDialogue,
+}) {
   final buildOrders = orders.buildUnitOrdersByPlayerId;
   final workOrders = orders.workOrdersByPlayerId;
   if (buildOrders.isEmpty && workOrders.isEmpty) {
@@ -94,7 +101,7 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
           }
         }
         break;
-      case 'build_fort':
+      case 'build_fort': {
         final provinces = getProvinces();
         final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
         if (idx >= 0) {
@@ -102,7 +109,21 @@ Game applyBuildAndWorkOrders(Game game, Orders orders, {MapTopology? topology}) 
           setProvinces(List<Province>.from(provinces)
             ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)));
         }
+        if (topology != null && onDialogue != null) {
+          final seed = ((gameForPlayer.globalGameSeed ?? 0) ^
+                  (gameForPlayer.worldState.turnState.turnNumber * 0x9E3779B1))
+              .toInt();
+          final events = dialogueEventsForReactiveFortsOnBorder(
+            gameForPlayer,
+            topology,
+            u.ownerId,
+            u.locationProvinceId,
+            seed,
+          );
+          for (final e in events) onDialogue(e);
+        }
         break;
+      }
       case 'build_rail':
         tileState = tileState.setRoadLevel(cw.tileKey, 4);
         break;

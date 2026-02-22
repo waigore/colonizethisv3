@@ -1,5 +1,6 @@
-// Tests for event dialogue (battle result). SPEC/ai/dialogue-and-mood.md, SPEC/program/ai-events-and-dossier.md.
+// Tests for event dialogue (battle result, reactive, negotiation). SPEC/ai/dialogue-and-mood.md, SPEC/program/ai-events-and-dossier.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -182,6 +183,100 @@ void main() {
         game, 'earlyModern', 'imperial', 0,
       );
       expect(events, isEmpty);
+    });
+  });
+
+  group('dialogueEventsForReactiveFortsOnBorder', () {
+    test('returns empty when builder is AI', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'ow', type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: 'ow', type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'ow|P1', regionId: 'ow', ownerId: 'gp2'),
+            Province(id: 'ow|P2', regionId: 'ow', ownerId: 'gp1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final events = dialogueEventsForReactiveFortsOnBorder(
+        game, topology, 'gp2', 'ow|P2', 0,
+      );
+      expect(events, isEmpty);
+    });
+
+    test('emits one event per AI neighbor when human builds fort on border', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'ow', type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: 'ow', type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'ow|P1', regionId: 'ow', ownerId: 'gp2'),
+            Province(id: 'ow|P2', regionId: 'ow', ownerId: 'gp1'),
+          ]),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final events = dialogueEventsForReactiveFortsOnBorder(
+        game, topology, 'gp1', 'ow|P2', 0,
+      );
+      expect(events.length, 1);
+      expect(events.first.leaderId, 'gp2');
+      expect(events.first.category, 'reactive');
+      expect(events.first.situation, 'forts_on_border');
+      expect(events.first.variables['otherNation'], 'gp1');
+      expect(events.first.variables['province'], 'ow|P2');
+    });
+  });
+
+  group('dialogueEventForNegotiation', () {
+    test('builds event with category negotiation and optional mood', () {
+      final e = dialogueEventForNegotiation(
+        leaderId: 'gp1',
+        situation: 'counter_offer',
+        era: 'earlyModern',
+        mood: 'skeptical',
+        variables: {'offer': 'gold'},
+      );
+      expect(e.leaderId, 'gp1');
+      expect(e.category, 'negotiation');
+      expect(e.situation, 'counter_offer');
+      expect(e.era, 'earlyModern');
+      expect(e.mood, 'skeptical');
+      expect(e.variables['offer'], 'gold');
+    });
+
+    test('builds event without mood', () {
+      final e = dialogueEventForNegotiation(
+        leaderId: 'gp2',
+        situation: 'opening',
+        era: 'imperial',
+      );
+      expect(e.category, 'negotiation');
+      expect(e.situation, 'opening');
+      expect(e.mood, isNull);
     });
   });
 }
