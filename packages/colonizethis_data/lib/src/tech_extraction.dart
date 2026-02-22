@@ -19,6 +19,7 @@ const List<String> techIds = [
   'recruit_steppe_horsemen',
   'horse_artillery',
   'siege_engineering',
+  'university',
 ];
 
 /// Default max effective extraction level when player has no tech or no extraction-cap tech.
@@ -137,6 +138,14 @@ const Map<String, TechDefinition> techCatalog = {
     category: 'military',
     cost: 120,
     regimentUnlockIds: ['royal_artillery'],
+  ),
+  // Labour/economy (SPEC/game/tech-tree-labour-economy.md). University grants 4th research slot.
+  'university': TechDefinition(
+    id: 'university',
+    era: 3,
+    category: 'labour',
+    cost: 200,
+    prerequisiteIds: const [],
   ),
 };
 

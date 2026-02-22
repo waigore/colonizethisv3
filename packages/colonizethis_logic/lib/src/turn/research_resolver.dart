@@ -146,6 +146,9 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
+    // SPEC/game/tech-tree.md: 4 slots with University tech.
+    final nextResearchSlots =
+        (nextUnlockedForLevel['university'] == true) ? 4 : null;
 
     updatedPlayers.add(
       player.copyWith(
@@ -153,6 +156,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
         techUnlocked: nextUnlocked,
         researchProgressByTechId: nextProgress,
         militaryLevel: militaryLevel,
+        researchSlots: nextResearchSlots ?? player.researchSlots,
       ),
     );
   }
