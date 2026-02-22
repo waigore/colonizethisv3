@@ -2,6 +2,8 @@
 
 **Summary:** Comparison of current AI implementation (`colonizethis_ai`, `colonizethis_logic` AI paths) against SPEC/ai and SPEC/program AI docs. Identifies missing or partial features for Phase 6 full AI.
 
+**Issue #18 resolution:** All gaps listed in GitHub issue #18 are addressed: gaps 1–3, 5–9, 11 are implemented; gap 10 is documented (weighted choice satisfies spec). Gap 4 (dialogue and mood) is partial by design: optional reactive situations (attack on ally, tech first, colony founded, threat ignored, gift, spies caught) are deferred until game hooks exist; negotiation remains UI-driven via `dialogueEventForNegotiation`. See SPEC/ai/dialogue-and-mood.md.
+
 ## Specs consulted
 
 - **SPEC/ai/ai-architecture.md** — Hybrid stack, turn pipeline, tactical rules, seeding
