@@ -26,6 +26,7 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed,
 ) {
   final weights = getGoalWeightsForLeader(config.leaderId);
+  final thresholds = getThresholdsForLeader(config.leaderId);
 
   // Situational modifiers from snapshot.
   int defend = weights.defend;
@@ -37,6 +38,9 @@ StrategicGoal selectPrimaryGoal(
 
   conquer += agendaConquerModifier(config.hiddenAgendaId);
   diplomacy += agendaDiplomacyModifier(config.hiddenAgendaId);
+  // Personality thresholds: war likelihood boosts conquer; peace/alliance boost diplomacy goal.
+  conquer += (thresholds.warLikelihood - 50);
+  diplomacy += ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) - 50;
 
   if (snapshot.threats.atWarWith.isNotEmpty) {
     defend += 30;
