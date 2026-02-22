@@ -128,6 +128,7 @@ Orders generateOrdersForGameFullAI(
   final researchByPlayer = <String, List<ResearchOrder>>{};
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
   final navalByPlayer = <String, List<NavalMoveOrder>>{};
+  final missionByPlayer = <String, List<NavalMissionOrder>>{};
 
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
@@ -147,6 +148,7 @@ Orders generateOrdersForGameFullAI(
     add(researchByPlayer, player.id, ordersForPlayer.researchOrdersByPlayerId[player.id]);
     add(diploByPlayer, player.id, ordersForPlayer.diplomaticOrdersByPlayerId[player.id]);
     add(navalByPlayer, player.id, ordersForPlayer.navalMoveOrdersByPlayerId[player.id]);
+    add(missionByPlayer, player.id, ordersForPlayer.navalMissionOrdersByPlayerId[player.id]);
   }
 
   return Orders(
@@ -156,5 +158,6 @@ Orders generateOrdersForGameFullAI(
     diplomaticOrdersByPlayerId: diploByPlayer,
     researchOrdersByPlayerId: researchByPlayer,
     navalMoveOrdersByPlayerId: navalByPlayer,
+    navalMissionOrdersByPlayerId: missionByPlayer,
   );
 }
