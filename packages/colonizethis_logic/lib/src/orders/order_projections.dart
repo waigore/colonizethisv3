@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../economy/economy_production.dart';
 import '../constants.dart';
-import 'order_engine.dart';
+import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.

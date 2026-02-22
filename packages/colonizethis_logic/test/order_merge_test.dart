@@ -287,6 +287,24 @@ void main() {
       expect(merged.moveOrdersByPlayerId['p1']!.map((o) => o.unitId), containsAll(['u1', 'u1b']));
       expect(merged.moveOrdersByPlayerId['p2']!.map((o) => o.unitId), containsAll(['u2', 'u2b']));
     });
+
+    test('merge uses stable player ordering', () {
+      final human = Orders(
+        moveOrdersByPlayerId: {
+          'p2': [const MoveOrder(unitId: 'u2', destinationProvinceId: 'D2')],
+          'p1': [const MoveOrder(unitId: 'u1', destinationProvinceId: 'D1')],
+        },
+      );
+      final ai = Orders(
+        moveOrdersByPlayerId: {
+          'p2': [const MoveOrder(unitId: 'u2b', destinationProvinceId: 'D2b')],
+          'p1': [const MoveOrder(unitId: 'u1b', destinationProvinceId: 'D1b')],
+        },
+      );
+      final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
+      final playerIds = merged.moveOrdersByPlayerId.keys.toList();
+      expect(playerIds, ['p1', 'p2']);
+    });
   });
 }
 

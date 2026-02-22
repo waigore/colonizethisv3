@@ -36,6 +36,7 @@ export 'src/economy/sea_transport.dart';
 // Orders
 export 'src/orders/order_engine.dart';
 export 'src/orders/order_merge.dart';
+export 'src/orders/projected_effects.dart';
 export 'src/orders/order_projections.dart';
 export 'src/orders/order_suggestion.dart';
 export 'src/orders/order_suggestion_api_impl.dart';
