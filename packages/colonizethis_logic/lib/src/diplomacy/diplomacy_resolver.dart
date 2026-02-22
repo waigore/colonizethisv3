@@ -87,7 +87,13 @@ bool _isGreatPower(Game game, String factionId) {
 }
 
 /// Resolves Diplomacy phase. Runs before Movement per turn-resolution-phases.
-Game resolveDiplomacyPhase(Game game, Orders orders) {
+/// When an AI applies declare war or offer peace, [onDialogue] is invoked with
+/// a [DialogueEvent] (SPEC/ai/dialogue-and-mood.md).
+Game resolveDiplomacyPhase(
+  Game game,
+  Orders orders, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   final turn = game.worldState.turnState.turnNumber;
   var state = game;
 
@@ -106,7 +112,7 @@ Game resolveDiplomacyPhase(Game game, Orders orders) {
   state = _processAlliances(state, diploByPlayer, turn);
 
   // 5. Process Declare War and Peace
-  state = _processWarAndPeace(state, diploByPlayer, turn);
+  state = _processWarAndPeace(state, diploByPlayer, turn, onDialogue: onDialogue);
 
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
@@ -279,8 +285,9 @@ Game _processAlliances(
 Game _processWarAndPeace(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
   for (final entry in diploByPlayer.entries) {
@@ -291,6 +298,15 @@ Game _processWarAndPeace(
         final rel = getRelation(game, gpId, targetId);
         final atPeace = rel == null || rel.atPeace;
         if (atPeace) {
+          if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
+            onDialogue(DialogueEvent(
+              leaderId: gpId,
+              category: 'diplomatic',
+              situation: 'declare_war',
+              era: 'earlyModern',
+              variables: {'otherNation': targetId},
+            ));
+          }
           final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
           final ids = _pairIds(gpId, targetId);
           relations = upsertRelation(relations, gpId, targetId, (existing) {
@@ -323,6 +339,15 @@ Game _processWarAndPeace(
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
         if (rel != null && rel.atWar) {
+          if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
+            onDialogue(DialogueEvent(
+              leaderId: gpId,
+              category: 'diplomatic',
+              situation: 'peace_offer',
+              era: 'earlyModern',
+              variables: {'otherNation': targetId},
+            ));
+          }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
           relations = upsertRelation(relations, gpId, targetId, (existing) {
             return existing!.copyWith(

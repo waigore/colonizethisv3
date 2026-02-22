@@ -89,6 +89,7 @@ Game resolveTurnForGameFromOrderEngine({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
 }) {
   final merged = mergeOrderLists(
     humanOrders: orderEngine.orders,
@@ -98,6 +99,7 @@ Game resolveTurnForGameFromOrderEngine({
     game: game,
     topology: topology,
     orders: merged,
+    onDialogue: onDialogue,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
@@ -120,6 +122,7 @@ Game validateOrdersAndResolveTurn({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
 }) {
   final engine = OrderEngine(initialOrders: orders);
   final filtered = _filterAcceptedOrdersForAllPlayers(
@@ -129,6 +132,7 @@ Game validateOrdersAndResolveTurn({
   );
   return resolveTurnForGame(
     game: game,
+    onDialogue: onDialogue,
     topology: topology,
     orders: filtered,
     tileMapByRegion: tileMapByRegion,
@@ -144,6 +148,7 @@ Game resolveTurnForGame({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
@@ -177,7 +182,7 @@ Game resolveTurnForGame({
         state = resolveResearchPhase(state, orders);
         break;
       case TurnPhase.diplomacy:
-        state = resolveDiplomacyPhase(state, orders);
+        state = resolveDiplomacyPhase(state, orders, onDialogue: onDialogue);
         break;
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);

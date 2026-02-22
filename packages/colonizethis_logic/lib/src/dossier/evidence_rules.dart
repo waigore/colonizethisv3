@@ -15,8 +15,9 @@ List<String> _humanObserverIds(Game game) {
       .toList();
 }
 
-/// True if [playerId] is AI-controlled (evidence is only for AI subjects).
-bool _isAiControlled(Game game, String playerId) {
+/// True if [playerId] is AI-controlled (evidence/dialogue only for AI subjects).
+/// Named to avoid export clash with ai_planner.isAiControlled.
+bool isAiControlledForEvidence(Game game, String playerId) {
   final explicit = game.aiControlByGpId[playerId];
   if (explicit != null) return explicit;
   final p = _getPlayer(game, playerId);
@@ -56,7 +57,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!_isAiControlled(game, actorGpId)) return [];
+  if (!isAiControlledForEvidence(game, actorGpId)) return [];
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
@@ -101,7 +102,7 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!_isAiControlled(game, actorGpId)) return [];
+  if (!isAiControlledForEvidence(game, actorGpId)) return [];
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
