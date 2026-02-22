@@ -80,6 +80,12 @@ Game resolveBattleContext(
       break;
     }
 
+    // Deployment limit per side. SPEC/game/military-generals.md.
+    final attackerLimit = _deploymentLimitForFaction(game, attacker.factionId, attacker.generalMedals);
+    final defenderLimit = _deploymentLimitForFaction(game, defenderFactionId, 0);
+    final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
+    final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
+
     final defenderEffectiveLevel = _defenderEffectiveLevel(game, defenderFactionId);
     final attackerCoverage =
         feedingCoverageByPlayerId[attacker.factionId] ?? 1.0;
@@ -88,8 +94,8 @@ Game resolveBattleContext(
     final attackerLeaderMult = _leaderBonusForFaction(game, attacker.factionId);
     final defenderLeaderMult = _leaderBonusForFaction(game, defenderFactionId);
     final outcome = resolveEngagement(
-      attackerUnits: attackerUnits,
-      defenderUnits: defenderUnits,
+      attackerUnits: cappedAttackerUnits,
+      defenderUnits: cappedDefenderUnits,
       generalMedals: attacker.generalMedals,
       fortLevel: ctx.fortLevel,
       terrain: ctx.terrain,
@@ -107,6 +113,7 @@ Game resolveBattleContext(
       allCasualties.add(id);
     }
 
+    // Casualties apply to full defender list; engagement was fought with capped subset.
     defenderUnitIds =
         defenderUnits.map((u) => u.id).where((id) => !outcome.defenderCasualties.contains(id)).toList();
 
@@ -240,6 +247,15 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
     if (t.id == defenderFactionId) return t.effectiveMilitaryLevel;
   }
   return 4;
+}
+
+/// Max regiments that can participate per side in one engagement.
+/// SPEC/game/military-generals.md: base 10; Nationalism tech → 12; +1 per general medal.
+int _deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
+  final baseLimit = game.playerById(factionId)?.techUnlocked?[kTechIdNationalism] == true
+      ? deploymentLimitWithNationalism
+      : deploymentLimitBase;
+  return baseLimit + generalMedals;
 }
 
 /// Leader combat bonus for a faction. GPs use Player.leaderKey; minors/tribes get 1.0.

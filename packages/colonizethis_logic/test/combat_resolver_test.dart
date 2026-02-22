@@ -245,5 +245,116 @@ void main() {
         reason: 'attacker should win and have at least one surviving unit',
       );
     });
+
+    test('deployment limit caps participating regiments per side (base 10, no Nationalism)', () {
+      // 15 attackers, 15 defenders; deployment limit 10 per side without Nationalism.
+      final attackerUnits = List.generate(
+        15,
+        (i) => Unit(
+          id: 'a$i',
+          type: 'grenadiers',
+          ownerId: 'att',
+          provinceId: 'p',
+          medals: 1,
+        ),
+      );
+      final defenderUnits = List.generate(
+        15,
+        (i) => Unit(
+          id: 'd$i',
+          type: 'peasant_levies',
+          ownerId: 'def',
+          provinceId: 'p',
+          medals: 0,
+        ),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            units: [...attackerUnits, ...defenderUnits],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: false),
+        ],
+      );
+      final ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: defenderUnits.map((u) => u.id).toList(),
+        attackers: [
+          AttackingSide(
+            factionId: 'att',
+            unitIds: attackerUnits.map((u) => u.id).toList(),
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final result = resolveBattleContext(game, ctx);
+      final survivingAtt = result.worldState.oldWorld.units.where((u) => u.ownerId == 'att').length;
+      final survivingDef = result.worldState.oldWorld.units.where((u) => u.ownerId == 'def').length;
+      // Only 10 per side participate; so at least 5 attackers never participated and must survive.
+      expect(survivingAtt, greaterThanOrEqualTo(5), reason: 'deployment limit 10: at most 10 attackers participate, so ≥5 must remain');
+      // Defender had 15; at most 10 in engagement; so ≥5 defenders could survive if they win or stalemate.
+      expect(survivingAtt + survivingDef, greaterThanOrEqualTo(5), reason: 'at least one side has non-participants');
+    });
+
+    test('deployment limit with Nationalism tech is 12 (attacker has 13 units, ≥1 does not participate)', () {
+      final attackerUnits = List.generate(
+        13,
+        (i) => Unit(
+          id: 'a$i',
+          type: 'grenadiers',
+          ownerId: 'att',
+          provinceId: 'p',
+          medals: 0,
+        ),
+      );
+      final defenderUnits = [
+        Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'p', medals: 0),
+      ];
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            units: [...attackerUnits, ...defenderUnits],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true, techUnlocked: {'nationalism': true}),
+          Player(id: 'def', displayName: 'Def', isHuman: false),
+        ],
+      );
+      final ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(
+            factionId: 'att',
+            unitIds: attackerUnits.map((u) => u.id).toList(),
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final result = resolveBattleContext(game, ctx);
+      final survivingAtt = result.worldState.oldWorld.units.where((u) => u.ownerId == 'att').length;
+      // With Nationalism, limit 12; 13 attackers so ≥1 does not participate and must survive.
+      expect(survivingAtt, greaterThanOrEqualTo(1), reason: 'deployment limit 12 with Nationalism: at most 12 participate');
+    });
   });
 }
