@@ -32,10 +32,18 @@ Orders runDomainPlanners({
   // Economy: build/work suggestions weighted by economy domain.
   final workCandidates = suggestionAPI.suggestWorkOrders(view, game, topology, orders);
   final buildCandidates = suggestionAPI.suggestBuildOrders(view, game, topology, orders);
-  if (workCandidates.isNotEmpty && (primaryGoal == StrategicGoal.expand || domainWeights.economy >= 40)) {
+  final hasSpyWork = workCandidates.any((o) => o.target == 'steal_tech' || o.target == 'counter_spy');
+  final workThreshold = 40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  if (workCandidates.isNotEmpty &&
+      (primaryGoal == StrategicGoal.expand || domainWeights.economy >= workThreshold)) {
+    final agendaId = config.hiddenAgendaId;
+    final pickFrom = (agendaId == 'tech_thief' && hasSpyWork)
+        ? workCandidates.where((o) => o.target == 'steal_tech' || o.target == 'counter_spy').toList()
+        : workCandidates;
+    final list = pickFrom.isNotEmpty ? pickFrom : workCandidates;
     final rng = math.Random(seeds.economySeed);
-    final idx = rng.nextInt(workCandidates.length);
-    orders = _appendWorkOrders(orders, nationId, [workCandidates[idx]]);
+    final idx = rng.nextInt(list.length);
+    orders = _appendWorkOrders(orders, nationId, [list[idx]]);
   }
   final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
@@ -232,8 +240,32 @@ Orders _runDiplomacyPlanner({
   final diploCandidates = suggestionAPI.suggestDiplomaticOrders(view, game, topology, orders);
   if (diploCandidates.isEmpty) return orders;
 
+  final agendaId = config.hiddenAgendaId;
+  final scores = diploCandidates.map((o) {
+    var s = 50;
+    switch (o.type) {
+      case DiplomaticOrderType.offerPeace:
+        s += agendaPeaceAcceptanceModifier(agendaId);
+        break;
+      case DiplomaticOrderType.alliance:
+        s += agendaAllianceAcceptanceModifier(agendaId);
+        break;
+      case DiplomaticOrderType.declareWar:
+        s += agendaTreatyBreakingModifier(agendaId);
+        break;
+      default:
+        break;
+    }
+    return math.max(1, s);
+  }).toList();
+  final total = scores.reduce((a, b) => a + b);
   final rng = math.Random(seeds.diplomacySeed);
-  final idx = rng.nextInt(diploCandidates.length);
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < scores.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
   return _appendDiplomaticOrders(orders, nationId, [diploCandidates[idx]]);
 }
 

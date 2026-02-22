@@ -119,4 +119,50 @@ void main() {
       expect(agendaBuildOrderModifier('warmonger'), 0);
     });
   });
+
+  group('agendaPeaceAcceptanceModifier', () {
+    test('peacemaker positive', () {
+      expect(agendaPeaceAcceptanceModifier('peacemaker'), 30);
+    });
+    test('warmonger negative', () {
+      expect(agendaPeaceAcceptanceModifier('warmonger'), -25);
+    });
+    test('others return 0', () {
+      expect(agendaPeaceAcceptanceModifier('tech_thief'), 0);
+    });
+  });
+
+  group('agendaAllianceAcceptanceModifier', () {
+    test('isolationist negative', () {
+      expect(agendaAllianceAcceptanceModifier('isolationist'), -40);
+    });
+    test('peacemaker positive', () {
+      expect(agendaAllianceAcceptanceModifier('peacemaker'), 10);
+    });
+    test('others return 0', () {
+      expect(agendaAllianceAcceptanceModifier('warmonger'), 0);
+    });
+  });
+
+  group('agendaTreatyBreakingModifier', () {
+    test('backstabber positive', () {
+      expect(agendaTreatyBreakingModifier('backstabber'), 25);
+    });
+    test('warmonger positive', () {
+      expect(agendaTreatyBreakingModifier('warmonger'), 20);
+    });
+    test('others return 0', () {
+      expect(agendaTreatyBreakingModifier('peacemaker'), 0);
+    });
+  });
+
+  group('agendaSpyOrderModifier', () {
+    test('tech_thief positive', () {
+      expect(agendaSpyOrderModifier('tech_thief'), 25);
+    });
+    test('others return 0', () {
+      expect(agendaSpyOrderModifier('warmonger'), 0);
+      expect(agendaSpyOrderModifier('envy'), 0);
+    });
+  });
 }
