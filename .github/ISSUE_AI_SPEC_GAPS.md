@@ -97,13 +97,11 @@
 
 ---
 
-## 9. Personality thresholds not implemented
+## 9. Personality thresholds not implemented — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/ai-personalities.md — Personality also adjusts **thresholds**: War likelihood, Peace tendency, Alliance tendency, Research preference (weights per tech category). "Applied when scoring actions (e.g. declare war, accept peace, choose research slot)."
 
-**Current:** Personality config in `colonizethis_data` provides only **domain weights** (economy, military, diplomacy, research) and **goal weights** (defend, expand, conquer, trade, tech, diplomacy). No war likelihood, peace tendency, alliance tendency, or per-category research preference.
-
-**Missing:** Add personality (and optionally agenda) threshold/weight config for war, peace, alliance, and research category; use them in goal selection and in diplomacy/research planners when scoring actions.
+**Current:** `colonizethis_data` defines `PersonalityThresholds` (warLikelihood, peaceTendency, allianceTendency, researchNaval/Military/Economic/Exploration) and `personalityThresholds` map per leader; `getThresholdsForLeader(leaderId)` returns thresholds or defaults. **Goal manager:** conquer weight is adjusted by (warLikelihood - 50), diplomacy weight by (peaceTendency + allianceTendency)/2 - 50. **Diplomacy planner:** offerPeace/declareWar/alliance order scores are adjusted by the corresponding threshold. **Research planner:** research candidates are weighted by tech category (transport→naval, military→military, gathering→economic, else→exploration) and selected by weighted random. Tests in `ai_personality_config_test.dart`.
 
 ---
 
@@ -137,6 +135,6 @@
 | 6 | Perception (threats/opportunities) | Partial | Medium |
 | 7 | Diplomacy domain planner + API | Missing | High |
 | 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Implemented | Medium |
-| 9 | Personality thresholds (war/peace/alliance/research) | Missing | Medium |
+| 9 | Personality thresholds (war/peace/alliance/research) | Implemented | Medium |
 | 10 | Behavior tree vs weighted random | Design choice | Low |
 | 11 | OrderSuggestionAPI diplomatic | Implemented | High (for #7) |

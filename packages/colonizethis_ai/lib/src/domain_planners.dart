@@ -92,13 +92,32 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
   );
 
-  // Research: suggest research; weight by tech domain and agenda (tech_thief boost).
+  // Research: suggest research; weight by tech domain, agenda (tech_thief boost), and personality research preference.
   final researchCandidates = suggestionAPI.suggestResearchOrders(view, game, topology, orders);
   final researchThreshold = 40 - agendaResearchModifier(config.hiddenAgendaId);
   if (researchCandidates.isNotEmpty &&
       (primaryGoal == StrategicGoal.tech || domainWeights.research >= researchThreshold)) {
+    final thresholds = getThresholdsForLeader(config.leaderId);
+    final scores = researchCandidates.map((o) {
+      final tech = techById(o.techId);
+      final category = tech?.category ?? '';
+      final w = category == 'transport'
+          ? thresholds.researchNaval
+          : category == 'military'
+              ? thresholds.researchMilitary
+              : category == 'gathering'
+                  ? thresholds.researchEconomic
+                  : thresholds.researchExploration;
+      return math.max(1, w);
+    }).toList();
+    final total = scores.reduce((a, b) => a + b);
     final rng = math.Random(seeds.researchSeed);
-    final idx = rng.nextInt(researchCandidates.length);
+    var r = rng.nextInt(total);
+    var idx = 0;
+    for (; idx < scores.length && r >= scores[idx]; idx++) {
+      r -= scores[idx];
+    }
+    if (idx >= researchCandidates.length) idx = researchCandidates.length - 1;
     orders = _appendResearchOrders(orders, nationId, [researchCandidates[idx]]);
   }
 
@@ -241,17 +260,21 @@ Orders _runDiplomacyPlanner({
   if (diploCandidates.isEmpty) return orders;
 
   final agendaId = config.hiddenAgendaId;
+  final thresholds = getThresholdsForLeader(config.leaderId);
   final scores = diploCandidates.map((o) {
     var s = 50;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
         s += agendaPeaceAcceptanceModifier(agendaId);
+        s += (thresholds.peaceTendency - 50);
         break;
       case DiplomaticOrderType.alliance:
         s += agendaAllianceAcceptanceModifier(agendaId);
+        s += (thresholds.allianceTendency - 50);
         break;
       case DiplomaticOrderType.declareWar:
         s += agendaTreatyBreakingModifier(agendaId);
+        s += (thresholds.warLikelihood - 50);
         break;
       default:
         break;
