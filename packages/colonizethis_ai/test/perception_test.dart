@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -91,6 +92,85 @@ void main() {
       final snap = AIWorldSnapshot.fromPlayerView(view);
       expect(snap.relations.length, 1);
       expect(snap.relations['gp2'], isNotNull);
+    });
+
+    test('with topology: neighborProvincesHostile and capitalThreatened when neighbor at war', () {
+      const r = 'oldWorld';
+      final view = _view(
+        playerId: 'gp1',
+        diplomacyByOtherId: {
+          'gp2': DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atWar,
+          ),
+        },
+        provincesById: {
+          '$r|p1': Province(id: 'p1', regionId: r, ownerId: 'gp1', displayName: 'P1'),
+          '$r|p2': Province(id: 'p2', regionId: r, ownerId: 'gp2', displayName: 'P2'),
+        },
+      );
+      final playerWithCapital = view.player.copyWith(capitalProvinceId: '$r|p1');
+      final viewWithCapital = PlayerView(
+        playerId: view.playerId,
+        player: playerWithCapital,
+        ownUnitsById: view.ownUnitsById,
+        provincesById: view.provincesById,
+        visibilityByTile: view.visibilityByTile,
+        prospectedTiles: view.prospectedTiles,
+        diplomacyByOtherId: view.diplomacyByOtherId,
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: r, type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: r, type: TopologyNodeType.province),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
+      );
+      final snap = AIWorldSnapshot.fromPlayerView(viewWithCapital, topology: topology);
+      expect(snap.threats.neighborProvincesHostile, 1);
+      expect(snap.threats.capitalThreatened, true);
+    });
+
+    test('with topology: weakNeighbors lists faction ids owning adjacent provinces', () {
+      const r = 'oldWorld';
+      final view = _view(
+        playerId: 'gp1',
+        provincesById: {
+          '$r|p1': Province(id: 'p1', regionId: r, ownerId: 'gp1', displayName: 'P1'),
+          '$r|p2': Province(id: 'p2', regionId: r, ownerId: 'gp2', displayName: 'P2'),
+          '$r|p3': Province(id: 'p3', regionId: r, ownerId: null, displayName: 'P3'),
+        },
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: r, type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: r, type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: r, type: TopologyNodeType.province),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+          TopologyEdge(id1: 'p1', id2: 'p3'),
+        ],
+      );
+      final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+      expect(snap.opportunities.weakNeighbors, contains('gp2'));
+      expect(snap.opportunities.weakNeighbors.length, 1);
+    });
+
+    test('richUnexploitedProvinces counts unclaimed and others with development', () {
+      const r = 'oldWorld';
+      final view = _view(
+        playerId: 'gp1',
+        provincesById: {
+          '$r|p1': Province(id: 'p1', regionId: r, ownerId: 'gp1', displayName: 'P1'),
+          '$r|p2': Province(id: 'p2', regionId: r, ownerId: 'gp2', displayName: 'P2', townDevelopmentLevel: 2),
+          '$r|p3': Province(id: 'p3', regionId: r, ownerId: null, displayName: 'P3'),
+        },
+      );
+      final snap = AIWorldSnapshot.fromPlayerView(view);
+      expect(snap.opportunities.unclaimedProvinces, 1);
+      expect(snap.opportunities.richUnexploitedProvinces, 2); // unclaimed p3 + gp2's p2 with development
     });
   });
 }
