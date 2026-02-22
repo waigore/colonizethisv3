@@ -26,6 +26,7 @@ import 'research_resolver.dart';
 import '../world/naval.dart';
 import '../combat/naval_combat_resolver.dart';
 import '../dossier/evidence_rules.dart';
+import '../dossier/event_dialogue.dart';
 import '../world/player_view.dart';
 
 final Logger _log = Logger();
@@ -189,7 +190,12 @@ Game resolveTurnForGame({
         state = _runMovementPhase(state, topology, orders);
         break;
       case TurnPhase.navalInterceptionCombat:
-        state = _runNavalInterceptionCombatPhase(state, topology, orders.navalMoveOrdersByPlayerId);
+        state = _runNavalInterceptionCombatPhase(
+          state,
+          topology,
+          orders.navalMoveOrdersByPlayerId,
+          onDialogue: onDialogue,
+        );
         break;
       case TurnPhase.combat:
         state = _runCombatPhase(
@@ -198,6 +204,7 @@ Game resolveTurnForGame({
           feedingCoverageByPlayerId,
           topology,
           tileMapByRegion,
+          onDialogue: onDialogue,
         );
         break;
       case TurnPhase.buildWork:
@@ -759,8 +766,9 @@ Game _applyNavalMovesAndShipReveal(
 Game _runNavalInterceptionCombatPhase(
   Game game,
   MapTopology topology,
-  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
-) {
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   var battles = detectNavalConflicts(game);
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
@@ -771,6 +779,7 @@ Game _runNavalInterceptionCombatPhase(
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
+  var battleIndex = 0;
   for (final battle in battles) {
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
@@ -791,7 +800,13 @@ Game _runNavalInterceptionCombatPhase(
       if (evidence.isNotEmpty) {
         state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
       }
+      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final events = dialogueEventsForNavalBattleResult(state, victorId, loserId, turn, dialogueSeed);
+      if (onDialogue != null && events.isNotEmpty) {
+        for (final e in events) onDialogue(e);
+      }
     }
+    battleIndex++;
   }
   return state;
 }
@@ -801,13 +816,16 @@ Game _runCombatPhase(
   Orders orders,
   Map<String, double> feedingCoverageByPlayerId,
   MapTopology topology,
-  Map<String, TileMapResult>? tileMapByRegion,
-) {
+  Map<String, TileMapResult>? tileMapByRegion, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   final turn = state.worldState.turnState.turnNumber;
+  var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
+  var battleIndex = 0;
   for (final ctx in battles) {
     final mode = resolveCombatModeForBattle(
       state,
@@ -830,6 +848,30 @@ Game _runCombatPhase(
         if (evidence.isNotEmpty) {
           state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
         }
+        final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+        final events = dialogueEventsForLandBattleResult(
+          state, victorId, ctx.defenderFactionId, ctx.provinceId, turn, dialogueSeed,
+        );
+        if (onDialogue != null && events.isNotEmpty) {
+          for (final e in events) onDialogue(e);
+        }
+      } else {
+        // Quick battle ended with defender holding or draw: loser is attacker, victor is defender.
+        final victorId = qbResult.winner == QuickBattleWinner.defender
+            ? ctx.defenderFactionId
+            : (qbResult.provinceFlips && ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null);
+        final loserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+            ? ctx.attackers.first.factionId
+            : (victorId != null ? ctx.defenderFactionId : null);
+        if (victorId != null && loserId != null) {
+          final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+          final events = dialogueEventsForLandBattleResult(
+            state, victorId, loserId, ctx.provinceId, turn, dialogueSeed,
+          );
+          if (onDialogue != null && events.isNotEmpty) {
+            for (final e in events) onDialogue(e);
+          }
+        }
       }
     } else {
       state = resolveBattleContext(
@@ -847,7 +889,20 @@ Game _runCombatPhase(
           state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
         }
       }
+      final effectiveVictorId = victorId ?? ctx.defenderFactionId;
+      final effectiveLoserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+          ? ctx.attackers.first.factionId
+          : ctx.defenderFactionId;
+      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final events = dialogueEventsForLandBattleResult(
+        state, effectiveVictorId, effectiveLoserId, ctx.provinceId, turn, dialogueSeed,
+      );
+      if (onDialogue != null && events.isNotEmpty) {
+        for (final e in events) onDialogue(e);
+      }
     }
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    battleIndex++;
   }
   // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
