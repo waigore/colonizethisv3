@@ -43,6 +43,19 @@ void main() {
     });
   });
 
+  group('landPurchaseBasePrice', () {
+    test('riches use richesBasePrice (spices 50)', () {
+      expect(landPurchaseBasePrice('spices'), 50);
+    });
+    test('non-riches use landPurchaseDefaultBasePrice (10)', () {
+      expect(landPurchaseBasePrice('grain'), landPurchaseDefaultBasePrice);
+      expect(landPurchaseBasePrice('grain'), 10);
+    });
+    test('landPurchaseDefaultBasePrice is 10 (SPEC civilian-units)', () {
+      expect(landPurchaseDefaultBasePrice, 10);
+    });
+  });
+
   group('ResourceRules defaultRules', () {
     test('diamonds allowed on desert (SPEC resource-terrain-region-rules)', () {
       final rules = ResourceRules.defaultRules;
