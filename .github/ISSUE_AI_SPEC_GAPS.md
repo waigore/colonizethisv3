@@ -54,13 +54,11 @@
 
 ---
 
-## 5. Tactical (Quick Battle) not state-aware
+## 5. Tactical (Quick Battle) not state-aware — **IMPLEMENTED**
 
 **Spec:** SPEC/ai/ai-architecture.md — Tactical behavior rules: prefer good terrain (hill, town, woods) with high-value units; avoid fragile units in swamp; use Volley Fire / Defend when outmatched or holding key lanes; use Maneuver / Fall Back to rotate damaged units; use Assault / Charge when enemy lane disrupted and terrain favorable. SPEC/program/ai-systems-impl.md — `decideQuickBattleActions(QuickBattleState, nationId, config, tacticalSeed)` returns CP-based actions per lane; deterministic given state and seed.
 
-**Current:** `decideQuickBattleActions` in `colonizethis_ai/lib/src/tactical_ai.dart` takes `QuickBattleInput` (and nationId, config, tacticalSeed) but **ignores** input state. It picks a random strategy from a fixed list of action lists. No use of lane state, strength, terrain, or unit health.
-
-**Missing:** Use `QuickBattleInput` (and any extended state) to choose actions per spec: e.g. when outmatched or holding center → Volley Fire / Defend; when damaged → Maneuver / Fall Back; when enemy disrupted and terrain favorable → Assault / Charge. Remain deterministic via `tacticalSeed`.
+**Current:** `decideQuickBattleActions` in `colonizethis_ai/lib/src/tactical_ai.dart` uses `QuickBattleInput` and `nationId` to identify our vs enemy deployment, computes effective strength (mirroring resolver formula with terrain and cohesion), and chooses actions by situation: **damaged** → Maneuver / Fall Back; **enemy disrupted and terrain favorable** → Assault / Charge; **outmatched or holding center** → Volley Fire / Defend; else weighted mix. Deterministic given `tacticalSeed`. Tests cover outmatched, damaged, and assault-favorable cases.
 
 ---
 
@@ -129,7 +127,7 @@
 | 2 | Evidence accumulation | Implemented (diplomacy) | High |
 | 3 | Dossier (basic intel, behavioral notes, timeline) | Implemented | Medium |
 | 4 | Dialogue and mood | Stub only | Medium |
-| 5 | Tactical Quick Battle state-aware | Missing | Medium |
+| 5 | Tactical Quick Battle state-aware | Implemented | Medium |
 | 6 | Perception (threats/opportunities) | Partial | Medium |
 | 7 | Diplomacy domain planner + API | Missing | High |
 | 8 | Hidden agenda (tech_thief, envy; peace/alliance/treaty) | Implemented | Medium |
