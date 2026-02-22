@@ -48,8 +48,9 @@ class TechDefinition {
 
 /// Minimal tech catalog backing extraction and research for Phase 5.
 ///
-/// The full catalog is described in SPEC/game/tech-tree-catalog.md; this
-/// structure is a program-level representation.
+/// The full catalog is defined in SPEC/game/tech-tree.md and category sub-docs
+/// (e.g. SPEC/game/tech-tree-gathering.md); this structure is a program-level
+/// representation.
 const Map<String, TechDefinition> techCatalog = {
   'road_construction': TechDefinition(
     id: 'road_construction',
@@ -148,9 +149,16 @@ TechDefinition? techById(String id) => techCatalog[id];
 /// - gathering_2 => cap 3
 /// - gathering_3 => cap 4
 ///
-/// When no gathering tech is unlocked, [defaultExtractionCap] is used.
+/// When no gathering tech is unlocked (null, empty, or only non-gathering techs),
+/// [defaultExtractionCap] is used per SPEC/game/tech-and-extraction-cap.md.
 int extractionCapForUnlocked(Map<String, bool>? techUnlocked) {
   if (techUnlocked == null || techUnlocked.isEmpty) {
+    return defaultExtractionCap;
+  }
+  final hasGathering = techUnlocked['gathering_1'] == true ||
+      techUnlocked['gathering_2'] == true ||
+      techUnlocked['gathering_3'] == true;
+  if (!hasGathering) {
     return defaultExtractionCap;
   }
   var cap = 1;
@@ -162,9 +170,6 @@ int extractionCapForUnlocked(Map<String, bool>? techUnlocked) {
   }
   if (techUnlocked['gathering_3'] == true) {
     cap = cap < 4 ? 4 : cap;
-  }
-  if (cap <= 0) {
-    return defaultExtractionCap;
   }
   return cap;
 }
