@@ -1,5 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final Logger _log = Logger();
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
@@ -78,6 +81,7 @@ ProductionResult resolveProduction({
     current = current.applyDelta(recipe.outputCommodityId, totalOutput);
   }
 
+  _log.d('logic: production assignments=${assignments.length}');
   return ProductionResult(
     stockpile: current,
     workerPool: workers,

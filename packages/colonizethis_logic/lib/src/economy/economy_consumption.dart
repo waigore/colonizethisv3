@@ -1,5 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final Logger _log = Logger();
 
 /// Consumption resolution helpers.
 /// SPEC/game/workers-and-population.md
@@ -137,6 +140,9 @@ ConsumptionResult resolveConsumption({
     masters: fedMasters,
   );
 
+  _log.d(
+    'logic: consumption totalRegiments=$totalRegiments fullyFedRegiments=$fullyFedRegiments',
+  );
   return ConsumptionResult(
     stockpile: current,
     workerPool: updatedWorkers,
