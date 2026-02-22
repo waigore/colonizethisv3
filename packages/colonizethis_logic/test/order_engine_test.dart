@@ -83,6 +83,65 @@ void main() {
       expect(effects.workerCount, isNotNull);
     });
 
+    test('projectedEffects returns unitLocations when engine has move order', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final engine = OrderEngine();
+      engine.addMoveOrder('p1', const MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'));
+      final effects = engine.projectedEffects(game, topology, 'p1');
+      expect(effects.unitLocations, isNotNull);
+      expect(effects.unitLocations!['u1'], '$ow|P2');
+    });
+
+    test('projectedEffects does not mutate passed-in game', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final turnBefore = game.worldState.turnState.turnNumber;
+      final engine = OrderEngine();
+      engine.projectedEffects(game, topology, 'p1');
+      expect(game.worldState.turnState.turnNumber, turnBefore);
+    });
+
     test('addMoveOrderWithContext uses world-state validation', () {
       const ow = 'oldWorld';
       final topology = MapTopology(

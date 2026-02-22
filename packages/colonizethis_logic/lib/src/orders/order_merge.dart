@@ -58,28 +58,8 @@ bool _isEmpty(Orders o) =>
 Map<String, List<MoveOrder>> _mergeMoveOrders(
   Map<String, List<MoveOrder>> human,
   Map<String, List<MoveOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<MoveOrder>>{};
-  final humanUnitsWithMove = <String>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    humanUnitsWithMove.clear();
-    for (final o in humanList) {
-      humanUnitsWithMove.add(o.unitId);
-    }
-    final merged = [...humanList];
-    for (final o in aiList) {
-      if (!humanUnitsWithMove.contains(o.unitId)) {
-        merged.add(o);
-        humanUnitsWithMove.add(o.unitId);
-      }
-    }
-    if (merged.isNotEmpty) result[playerId] = merged;
-  }
-  return result;
-}
+) =>
+    _mergeByConflictKey(human, ai, (o) => o.unitId);
 
 Map<String, List<BuildUnitOrder>> _mergeBuildOrders(
   Map<String, List<BuildUnitOrder>> human,
@@ -104,28 +84,8 @@ Map<String, List<BuildUnitOrder>> _mergeBuildOrders(
 Map<String, List<WorkOrder>> _mergeWorkOrders(
   Map<String, List<WorkOrder>> human,
   Map<String, List<WorkOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<WorkOrder>>{};
-  final humanUnitsWithWork = <String>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    humanUnitsWithWork.clear();
-    for (final o in humanList) {
-      humanUnitsWithWork.add(o.unitId);
-    }
-    final merged = [...humanList];
-    for (final o in aiList) {
-      if (!humanUnitsWithWork.contains(o.unitId)) {
-        merged.add(o);
-        humanUnitsWithWork.add(o.unitId);
-      }
-    }
-    if (merged.isNotEmpty) result[playerId] = merged;
-  }
-  return result;
-}
+) =>
+    _mergeByConflictKey(human, ai, (o) => o.unitId);
 
 Map<String, List<DiplomaticOrder>> _mergeDiplomaticOrders(
   Map<String, List<DiplomaticOrder>> human,
@@ -175,48 +135,35 @@ Map<String, List<ResearchOrder>> _mergeResearchOrders(
 Map<String, List<NavalMoveOrder>> _mergeNavalMoveOrders(
   Map<String, List<NavalMoveOrder>> human,
   Map<String, List<NavalMoveOrder>> ai,
-) {
-  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<NavalMoveOrder>>{};
-  final humanFleetIds = <String>{};
-  for (final playerId in allPlayerIds) {
-    final humanList = human[playerId] ?? [];
-    final aiList = ai[playerId] ?? [];
-    humanFleetIds.clear();
-    for (final o in humanList) {
-      humanFleetIds.add(o.fleetId);
-    }
-    final merged = [...humanList];
-    for (final o in aiList) {
-      if (!humanFleetIds.contains(o.fleetId)) {
-        merged.add(o);
-        humanFleetIds.add(o.fleetId);
-      }
-    }
-    if (merged.isNotEmpty) result[playerId] = merged;
-  }
-  return result;
-}
+) =>
+    _mergeByConflictKey(human, ai, (o) => o.fleetId);
 
 Map<String, List<NavalMissionOrder>> _mergeNavalMissionOrders(
   Map<String, List<NavalMissionOrder>> human,
   Map<String, List<NavalMissionOrder>> ai,
+) =>
+    _mergeByConflictKey(human, ai, (o) => o.fleetId);
+
+Map<String, List<T>> _mergeByConflictKey<T>(
+  Map<String, List<T>> human,
+  Map<String, List<T>> ai,
+  String Function(T) conflictKey,
 ) {
   final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
-  final result = <String, List<NavalMissionOrder>>{};
-  final humanFleetIds = <String>{};
+  final result = <String, List<T>>{};
+  final humanKeys = <String>{};
   for (final playerId in allPlayerIds) {
     final humanList = human[playerId] ?? [];
     final aiList = ai[playerId] ?? [];
-    humanFleetIds.clear();
+    humanKeys.clear();
     for (final o in humanList) {
-      humanFleetIds.add(o.fleetId);
+      humanKeys.add(conflictKey(o));
     }
-    final merged = [...humanList];
+    final merged = List<T>.from(humanList);
     for (final o in aiList) {
-      if (!humanFleetIds.contains(o.fleetId)) {
+      if (!humanKeys.contains(conflictKey(o))) {
         merged.add(o);
-        humanFleetIds.add(o.fleetId);
+        humanKeys.add(conflictKey(o));
       }
     }
     if (merged.isNotEmpty) result[playerId] = merged;
