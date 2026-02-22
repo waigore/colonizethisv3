@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/naval.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
@@ -563,6 +564,110 @@ bool _isNavalMissionOrderAccepted(
   return result.isAccepted;
 }
 
+/// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
+OvertureStage? _nextOvertureStage(OvertureStage current) {
+  switch (current) {
+    case OvertureStage.none:
+      return OvertureStage.tradeConsulate;
+    case OvertureStage.tradeConsulate:
+      return OvertureStage.embassy;
+    case OvertureStage.embassy:
+      return OvertureStage.nap;
+    case OvertureStage.nap:
+      return OvertureStage.joinEmpire;
+    case OvertureStage.joinEmpire:
+      return null;
+  }
+}
+
+/// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
+/// SPEC/program/ai-systems-impl.md; .github/ISSUE_AI_SPEC_GAPS.md item 11.
+List<DiplomaticOrder> suggestDiplomaticOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders,
+) {
+  _log.d('logic: suggestDiplomaticOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <DiplomaticOrder>[];
+  final player = view.player;
+  final treasury = player.treasury;
+
+  final otherGps = game.players.where((p) => p.id != playerId).map((p) => p.id).toList();
+  final minorIds = game.minorNations.map((m) => m.id).toList();
+  final tribeIds = game.tribes.map((t) => t.id).toList();
+  final allTargets = <String>[...otherGps, ...minorIds, ...tribeIds];
+
+  for (final targetId in allTargets) {
+    if (targetId == playerId) continue;
+    final rel = getRelation(game, playerId, targetId);
+    final atPeace = rel == null || rel.atPeace;
+    if (atPeace) {
+      suggestions.add(DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: targetId));
+    }
+    if (rel != null && rel.atWar) {
+      suggestions.add(DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: targetId));
+    }
+  }
+
+  for (final targetId in otherGps) {
+    final rel = getRelation(game, playerId, targetId);
+    if (rel != null && rel.atPeace && rel.level != RelationLevel.allied) {
+      suggestions.add(DiplomaticOrder(type: DiplomaticOrderType.alliance, targetFactionId: targetId));
+    }
+  }
+
+  for (final targetId in [...minorIds, ...tribeIds]) {
+    final existing = getOverture(game, playerId, targetId);
+    final current = existing?.stage ?? OvertureStage.none;
+    final next = _nextOvertureStage(current);
+    if (next == null) continue;
+    if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
+      final cost = next == OvertureStage.tradeConsulate ? overtureConsulateCost : overtureEmbassyCost;
+      if (treasury < cost) continue;
+    }
+    if (next == OvertureStage.joinEmpire) {
+      final rel = getRelation(game, playerId, targetId);
+      final score = rel?.score ?? 50;
+      if (score < 51) continue;
+    }
+    suggestions.add(DiplomaticOrder(
+      type: DiplomaticOrderType.establishOverture,
+      targetFactionId: targetId,
+      overtureStage: next,
+    ));
+  }
+
+  final overtureStates = game.overtureStates;
+  for (final o in overtureStates) {
+    if (o.gpId != playerId) continue;
+    final targetId = o.targetId;
+    if (o.hasEmbassy && treasury >= 100) {
+      suggestions.add(DiplomaticOrder(
+        type: DiplomaticOrderType.grantAid,
+        targetFactionId: targetId,
+        amount: 100,
+      ));
+    }
+    if (o.hasConsulate && treasury >= 100) {
+      suggestions.add(DiplomaticOrder(
+        type: DiplomaticOrderType.setSubsidy,
+        targetFactionId: targetId,
+        amount: 100,
+      ));
+    }
+  }
+
+  suggestions.sort((a, b) {
+    final t = a.type.index.compareTo(b.type.index);
+    if (t != 0) return t;
+    return a.targetFactionId.compareTo(b.targetFactionId);
+  });
+  _log.d('logic: suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}');
+  return suggestions;
+}
+
 /// Abstract order suggestion API for AI. SPEC/program/order-engine.md, ai-systems-impl.md.
 /// colonizethis_ai calls this to get candidate orders; logic provides the implementation.
 abstract class OrderSuggestionAPI {
@@ -597,6 +702,12 @@ abstract class OrderSuggestionAPI {
     Orders currentOrders,
   );
   List<NavalMissionOrder> suggestNavalMissionOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  );
+  List<DiplomaticOrder> suggestDiplomaticOrders(
     PlayerView view,
     Game game,
     MapTopology topology,

@@ -93,5 +93,34 @@ void main() {
       final list = api.suggestNavalMissionOrders(view, game, topology, emptyOrders);
       expect(list, isA<List<NavalMissionOrder>>());
     });
+
+    test('suggestDiplomaticOrders returns list', () {
+      const api = DefaultOrderSuggestionAPI();
+      final list = api.suggestDiplomaticOrders(view, game, topology, emptyOrders);
+      expect(list, isA<List<DiplomaticOrder>>());
+    });
+  });
+
+  group('suggestDiplomaticOrders', () {
+    test('returns declareWar candidates for other GPs when at peace', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final declareWar = list.where((o) => o.type == DiplomaticOrderType.declareWar).toList();
+      expect(declareWar.any((o) => o.targetFactionId == 'gp2'), isTrue);
+    });
   });
 }
