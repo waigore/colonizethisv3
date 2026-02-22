@@ -99,4 +99,24 @@ void main() {
       expect(agendaDiplomacyModifier('backstabber'), 0);
     });
   });
+
+  group('agendaResearchModifier', () {
+    test('tech_thief positive', () {
+      expect(agendaResearchModifier('tech_thief'), 35);
+    });
+    test('others return 0', () {
+      expect(agendaResearchModifier('warmonger'), 0);
+      expect(agendaResearchModifier('envy'), 0);
+    });
+  });
+
+  group('agendaBuildOrderModifier', () {
+    test('envy positive', () {
+      expect(agendaBuildOrderModifier('envy'), 20);
+    });
+    test('others return 0', () {
+      expect(agendaBuildOrderModifier('tech_thief'), 0);
+      expect(agendaBuildOrderModifier('warmonger'), 0);
+    });
+  });
 }

@@ -60,3 +60,25 @@ int agendaDiplomacyModifier(String agendaId) {
       return 0;
   }
 }
+
+/// Returns modifier for research/spy order tendency (positive = more likely to pick research).
+/// SPEC: tech_thief "prioritizes espionage tech; high spy usage".
+int agendaResearchModifier(String agendaId) {
+  switch (agendaId) {
+    case 'tech_thief':
+      return 35;
+    default:
+      return 0;
+  }
+}
+
+/// Returns modifier for build/order choice when mirroring human (positive = boost build tendency).
+/// SPEC: envy "mirrors player builds and objectives".
+int agendaBuildOrderModifier(String agendaId) {
+  switch (agendaId) {
+    case 'envy':
+      return 20;
+    default:
+      return 0;
+  }
+}
