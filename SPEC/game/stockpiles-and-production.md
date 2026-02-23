@@ -21,7 +21,7 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
 
 ### Relations
 - **Player** → **Stockpile** (commodity quantities).
-- Extraction in provinces → owning player's stockpile (via transport network).
+- Extraction in provinces → owning player's stockpile (via transport network). Province and tile identity (owned provinces, extraction locations) follow [world-model-identity.md](world-model-identity.md) for province id format and region-scoped lookup.
 - Production: stockpile inputs (commodities) + WorkerPool labour → stockpile outputs.
 
 
