@@ -62,6 +62,52 @@ void main() {
       expect(viewOverride, isNotNull);
       expect(viewOverride![overriddenPlayer.id], overrideColor);
     });
+
+    test('markdown contains Faction Setup and Starting State tables', () {
+      final config = GameSetupConfig.defaultConfig;
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      expect(result.markdown, contains('## Faction Setup'));
+      expect(result.markdown, contains('## Faction Starting State'));
+      expect(result.markdown, contains('| Faction | Type | Capital Province | Provinces Owned |'));
+      expect(result.markdown, contains('| Faction | Stockpile | Workers | Treasury | Units |'));
+    });
+
+    test('skipFillLakes=true runs without throwing', () {
+      final config = GameSetupConfig.defaultConfig;
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(
+          cellSize: 8,
+          renderPng: false,
+          skipFillLakes: true,
+        ),
+      );
+      expect(result.game, isNotNull);
+      expect(result.markdown, isNotEmpty);
+    });
+
+    test('throws ArgumentError when OW provinces fewer than Great Powers', () {
+      // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws.
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        numProvincesOldWorld: 2,
+        numProvincesNewWorld: 5,
+      );
+      expect(
+        () => runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        ),
+        throwsA(isA<ArgumentError>().having(
+          (e) => e.message,
+          'message',
+          contains('Great Powers need at least one each'),
+        )),
+      );
+    });
   });
 }
 

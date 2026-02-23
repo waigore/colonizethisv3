@@ -6,7 +6,7 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 
 ## Data Model
 
-- **InitGameOptions:** `cellSize` (int, default 24), `skipFillLakes` (bool, default false), `renderPng` (bool, default true).
+- **InitGameOptions:** `cellSize` (int, default 24), `skipFillLakes` (bool, default false), `renderPng` (bool, default true). Implementation may extend options (e.g. `greatPowerColorOverride` for ctdev).
 - CLI sets `renderPng` based on whether `--output-map` is provided.
 
 ## CLI Interface
@@ -18,17 +18,18 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 | `--config <path>` | JSON config overriding GameSetupConfig. Optional. |
 | `--output-map <path>` | Path for combined OW+NW map PNG. Optional. |
 | `--output-markdown <path>` | Path for faction setup markdown. Optional. |
-| `--output-game <path>` | Path for saving the game (colonizethis_save). Optional. |
-| `--no-save` | Skip saving the game. Overrides `--output-game`. |
+| `--output-game <path>` | Path for saving the game (colonizethis_save). Optional. Save is written when this is set unless `--no-save` is given. |
+| `--no-save` | Do not save the game. Overrides `--output-game`. |
 | `--seed <int>` | RNG seed; overrides config seed. Non-zero = reproducible; 0/absent = time-based. |
 | `--great-powers id1,id2,...` | Comma-separated GP semantic ids. Overrides selectedGreatPowerIds. |
 | `--great-power-count N` | First N default GP ids (backward compat; superseded by `--great-powers`). |
+| `--prussia-leader ID` | When prussia is selected: leader variant (e.g. frederick_the_great \| frederick_william). |
 | `--minor-nation-count N` | Override Minor Nation count. |
 | `--tribe-count N` | Override Tribe count. |
 | `--num-provinces-old-world N` | Override OW province count. |
 | `--num-provinces-new-world N` | Override NW province count. |
 
-JSON config supports `selectedGreatPowerIds` (array) and `greatPowerCount` (fallback). Paths relative to repo root.
+**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`. Keys not listed (e.g. `minProvincesPerMinor`) are not read. Paths (config and outputs) are relative to the **current working directory** unless absolute.
 
 ## Output Artifacts
 
@@ -45,5 +46,5 @@ JSON config supports `selectedGreatPowerIds` (array) and `greatPowerCount` (fall
 
 ## Constraints
 
-- Validation errors abort with clear messages.
+- **Error handling:** On validation or setup failure the CLI catches errors from `runInitGame` (and downstream), prints a short user-facing message to stderr, and exits with a non-zero code. No raw stack trace is shown to the user.
 - Seed handling delegated to `runInitGame`; CLI passes through to GameSetupConfig.seed.

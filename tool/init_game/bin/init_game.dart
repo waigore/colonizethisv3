@@ -186,36 +186,44 @@ Future<void> main(List<String> arguments) async {
     );
   }
 
-  print('=== init_game ===');
-  print('Running game setup...');
-  final shouldRenderPng =
-      outputMapPath != null && outputMapPath.isNotEmpty;
-  final result = runInitGame(
-    config: config,
-    options: InitGameOptions(
-      cellSize: 24,
-      renderPng: shouldRenderPng,
-    ),
-  );
-  print('Game created: ${result.game.id}');
+  try {
+    print('=== init_game ===');
+    print('Running game setup...');
+    final shouldRenderPng =
+        outputMapPath != null && outputMapPath.isNotEmpty;
+    final result = runInitGame(
+      config: config,
+      options: InitGameOptions(
+        cellSize: 24,
+        renderPng: shouldRenderPng,
+      ),
+    );
+    print('Game created: ${result.game.id}');
 
-  if (outputMapPath != null && outputMapPath.isNotEmpty) {
-    File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
-    print('Map PNG: $outputMapPath');
+    if (outputMapPath != null && outputMapPath.isNotEmpty) {
+      File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
+      print('Map PNG: $outputMapPath');
+    }
+
+    if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
+      File(outputMarkdownPath).writeAsStringSync(result.markdown);
+      print('Markdown: $outputMarkdownPath');
+    }
+
+    if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
+      await _saveGame(result.game, outputGamePath);
+      print('Game saved: $outputGamePath');
+    }
+
+    print('');
+    print(result.markdown);
+  } catch (e) {
+    final message = e is ArgumentError
+        ? (e.message ?? e.toString())
+        : 'Game setup failed: $e';
+    stderr.writeln('Error: $message');
+    exit(1);
   }
-
-  if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
-    File(outputMarkdownPath).writeAsStringSync(result.markdown);
-    print('Markdown: $outputMarkdownPath');
-  }
-
-  if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
-    await _saveGame(result.game, outputGamePath);
-    print('Game saved: $outputGamePath');
-  }
-
-  print('');
-  print(result.markdown);
 }
 
 Future<void> _saveGame(Game game, String path) async {
@@ -242,7 +250,7 @@ void _printUsage() {
   print('  --config <path>         JSON config (optional)');
   print('  --output-map <path>     Write map PNG');
   print('  --output-markdown <path>  Write faction setup markdown');
-  print('  --output-game <path>    Save game (requires --output-game when not --no-save)');
+  print('  --output-game <path>    Save game to path when set (unless --no-save)');
   print('  --no-save               Do not save game');
   print('  --seed <n>              RNG seed');
   print('  --great-powers id1,id2  Comma-separated Great Power ids (e.g. england,france,spain)');
