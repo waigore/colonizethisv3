@@ -33,7 +33,7 @@ For a given `Game`, `MapTopology`, and `playerId`:
   - Prospected tiles: `Set<TileKey>` indicating where minerals are known.
 - **Map knowledge**
   - Known provinces with at least `revealed` visibility, including:
-    - Province id and owner id (or `null` if unknown).
+    - Province id (prefixed form per [world-model-identity.md](../game/world-model-identity.md)) and owner id (or `null` if unknown).
     - Whether this is one of `P`'s own provinces (always fully visible).
     - Last-known terrain/resources/improvements for tiles with `fogged` or `fullyVisible` visibility.
 - **Own state**
