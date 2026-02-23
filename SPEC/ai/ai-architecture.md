@@ -25,9 +25,11 @@ Characterful, deterministic AI using only observable game state. Difficulty affe
 
 Behavior trees pick top-level goals; utility AI scores and selects concrete objectives; tactical layer produces combat and movement orders.
 
+**Goal selection implementation:** Goal selection may be implemented as **weighted choice** over strategic goals (expand, defend, trade, conquer, tech, diplomacy) using personality weights, agenda modifiers, and situational snapshot. This satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure (sequences, selectors) is optional and may be used where designer-editable trees are desired.
+
 ### Turn Pipeline (per AI Great Power)
 1. **Perception** — Derive observable snapshot: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
-2. **Goal selection** — Behavior tree chooses strategy using personality weights and hidden agenda modifiers.
+2. **Goal selection** — Choose strategy (e.g. weighted choice over goals) using personality weights and hidden agenda modifiers.
 3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders.
 4. **Execution** — Combine, cap, and validate orders; emit dialogue/mood events.
 5. **Tactical** — Quick Battle: CP-based actions per lane, deterministic given state and seed.
@@ -44,6 +46,7 @@ AI uses the order suggestion API and applies:
 - **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
+- **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 Seeded randomness selects among acceptable candidates; personality weights bias selection.
 
@@ -54,5 +57,6 @@ Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds:
 - [ai-personalities.md](ai-personalities.md) — per-leader weights
 - [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
 - [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
+- [world-model-identity.md](../game/world-model-identity.md) — province identity (prefixed id) in AI context
 - Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
 - Program: [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, APIs

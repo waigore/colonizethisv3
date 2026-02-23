@@ -1,12 +1,25 @@
-// ignore_for_file: avoid_print
 /// CLI: Monte Carlo combat simulation. Runs many trials, aggregates results.
 /// SPEC/program/sim-combat-montecarlo.md.
+library;
+
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
+
+/// Fixed defender effective military level for sim (SPEC: same for all script types).
+const int _simDefenderEffectiveLevel = 4;
+
+void _errExit(String message) {
+  _log.e(message);
+  stderr.writeln(message);
+  exit(1);
+}
 
 void main(List<String> arguments) {
   String? scriptPath;
@@ -18,7 +31,7 @@ void main(List<String> arguments) {
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
     if (arg == '--help' || arg == '-h') {
-      _printUsage();
+      _log.i(_usage);
       exit(0);
     } else if (arg == '--script' && i + 1 < arguments.length) {
       scriptPath = arguments[++i];
@@ -27,29 +40,25 @@ void main(List<String> arguments) {
     } else if (arg == '--trials' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null || v < 1) {
-        print('Error: --trials must be a positive integer');
-        exit(1);
+        _errExit('logic: sim_combat_montecarlo: --trials must be a positive integer');
       }
-      trials = v;
+      trials = v!;
     } else if (arg.startsWith('--trials=')) {
       final v = int.tryParse(arg.substring('--trials='.length).trim());
       if (v == null || v < 1) {
-        print('Error: --trials must be a positive integer');
-        exit(1);
+        _errExit('logic: sim_combat_montecarlo: --trials must be a positive integer');
       }
-      trials = v;
+      trials = v!;
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null) {
-        print('Error: --seed requires an integer');
-        exit(1);
+        _errExit('logic: sim_combat_montecarlo: --seed requires an integer');
       }
       seed = v;
     } else if (arg.startsWith('--seed=')) {
       final v = int.tryParse(arg.substring('--seed='.length).trim());
       if (v == null) {
-        print('Error: --seed requires an integer');
-        exit(1);
+        _errExit('logic: sim_combat_montecarlo: --seed requires an integer');
       }
       seed = v;
     } else if (arg == '--output' && i + 1 < arguments.length) {
@@ -64,31 +73,48 @@ void main(List<String> arguments) {
   }
 
   if (scriptPath == null || scriptPath.isEmpty) {
-    print('Error: --script <path> is required');
-    _printUsage();
+    _log.e('logic: sim_combat_montecarlo: --script <path> is required');
+    _log.i(_usage);
+    stderr.writeln('logic: sim_combat_montecarlo: --script <path> is required');
+    stderr.writeln(_usage);
     exit(1);
   }
 
   final file = File(scriptPath);
   if (!file.existsSync()) {
-    print('Error: script file not found: $scriptPath');
-    exit(1);
+    _errExit('logic: sim_combat_montecarlo: script file not found: $scriptPath');
   }
 
-  final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+  Map<String, dynamic> decoded;
+  try {
+    decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+  } catch (e, st) {
+    _log.e('logic: sim_combat_montecarlo: malformed script JSON', error: e, stackTrace: st);
+    stderr.writeln('logic: sim_combat_montecarlo: malformed script JSON: $e');
+    exit(1);
+  }
   final metadata = decoded['metadata'] as String? ?? 'sim_combat_montecarlo';
-  final battlesRaw = decoded['battles'] as List<dynamic>? ?? [];
+  final battlesRaw = decoded['battles'];
+  if (battlesRaw is! List<dynamic>) {
+    _errExit('logic: sim_combat_montecarlo: script must have "battles" array');
+  }
   final baseSeed = seed ?? DateTime.now().millisecondsSinceEpoch;
 
   final aggregatedResults = <Map<String, dynamic>>[];
 
   for (var idx = 0; idx < battlesRaw.length; idx++) {
-    final b = Map<String, dynamic>.from(battlesRaw[idx] as Map);
-    final id = b['id'] as String? ?? 'battle_$idx';
-    final attackerRaw = b['attacker'] as Map<String, dynamic>? ?? {};
-    final defenderRaw = b['defender'] as Map<String, dynamic>? ?? {};
-    final provinceRaw = b['province'] as Map<String, dynamic>? ?? {};
-    final defenderFaction = b['defenderFaction'] as String? ?? 'greatPower';
+    final entry = battlesRaw[idx];
+    if (entry is! Map) {
+      _errExit('logic: sim_combat_montecarlo: battle $idx must be an object');
+    }
+    final b = Map<String, dynamic>.from(entry as Map);
+    _validateBattleKeys(b, idx);
+    final id = b['id'] as String;
+    final attackerRaw = b['attacker'] as Map<String, dynamic>;
+    final defenderRaw = b['defender'] as Map<String, dynamic>;
+    final provinceRaw = b['province'] as Map<String, dynamic>;
+    final attackerGeneralMedals = (attackerRaw['generalMedals'] as int?) ?? 0;
+    // Defender generalMedals parsed for script format parity; resolver uses attacker's only.
 
     final attackerUnits = _parseUnits(attackerRaw, 'attacker', id);
     final defenderUnits = _parseUnits(defenderRaw, 'defender', id);
@@ -96,12 +122,8 @@ void main(List<String> arguments) {
     final terrain = provinceRaw['terrain'] as String? ?? 'plains';
 
     if (fortLevel < 0 || fortLevel > 3) {
-      print('Error: battle $id: fortLevel must be 0-3, got $fortLevel');
-      exit(1);
+      _errExit('logic: sim_combat_montecarlo: battle $id: fortLevel must be 0-3, got $fortLevel');
     }
-
-    final defenderEffectiveLevel =
-        defenderFaction == 'greatPower' ? 4 : 4;
 
     var attWins = 0;
     var defWins = 0;
@@ -116,9 +138,10 @@ void main(List<String> arguments) {
       final outcome = resolveEngagementProbabilistic(
         attackerUnits: attackerUnits,
         defenderUnits: defenderUnits,
+        generalMedals: attackerGeneralMedals,
         fortLevel: fortLevel,
         terrain: terrain,
-        defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
+        defenderEffectiveMilitaryLevel: _simDefenderEffectiveLevel,
         seed: baseSeed + t,
       );
 
@@ -172,11 +195,39 @@ void main(List<String> arguments) {
 
   final outPath = outputPath ?? 'sim_combat_montecarlo.md';
   File(outPath).writeAsStringSync(markdown);
-  print('Wrote Markdown report to ${File(outPath).absolute.path}');
+  _log.i('logic: sim_combat_montecarlo: wrote Markdown report to ${File(outPath).absolute.path}');
 
   if (jsonOutputPath != null && jsonOutputPath.isNotEmpty) {
     File(jsonOutputPath).writeAsStringSync(jsonEncode(aggregatedResults));
-    print('Wrote JSON log to ${File(jsonOutputPath).absolute.path}');
+    _log.i('logic: sim_combat_montecarlo: wrote JSON log to ${File(jsonOutputPath).absolute.path}');
+  }
+}
+
+/// Validates required battle keys per SPEC/program/sim-combat-montecarlo.md.
+void _validateBattleKeys(Map<String, dynamic> b, int idx) {
+  final idVal = b['id'];
+  if (idVal == null || idVal is! String) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "id" missing or not a string',
+    );
+  }
+  final att = b['attacker'];
+  if (att == null || att is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "attacker" missing or not an object',
+    );
+  }
+  final def = b['defender'];
+  if (def == null || def is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "defender" missing or not an object',
+    );
+  }
+  final prov = b['province'];
+  if (prov == null || prov is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "province" missing or not an object',
+    );
   }
 }
 
@@ -191,8 +242,7 @@ List<Unit> _parseUnits(
     final u = Map<String, dynamic>.from(unitsRaw[i] as Map);
     final type = u['type'] as String? ?? 'peasant_levies';
     if (regimentStatsById(type) == null) {
-      print('Error: battle $battleId: unknown unit type "$type"');
-      exit(1);
+      _errExit('logic: sim_combat_montecarlo: battle $battleId: unknown unit type "$type"');
     }
     final medals = (u['medals'] as int?) ?? 0;
     units.add(Unit(
@@ -251,11 +301,4 @@ String _buildMarkdownReport({
   return buffer.toString();
 }
 
-void _printUsage() {
-  print('Usage:');
-  print(
-    '  melos run sim_combat_montecarlo -- --script <path> [--trials N] [--seed <int>] [--output <path>] [--json-output <path>]',
-  );
-  print('');
-  print('Monte Carlo combat simulation. Runs many trials, aggregates results. SPEC/program/sim-combat-montecarlo.md.');
-}
+const _usage = 'Usage: melos run sim_combat_montecarlo -- --script <path> [--trials N] [--seed <int>] [--output <path>] [--json-output <path>]. Monte Carlo combat simulation. SPEC/program/sim-combat-montecarlo.md.';

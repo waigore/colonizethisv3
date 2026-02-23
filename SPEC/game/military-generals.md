@@ -32,3 +32,13 @@ Per-regiment values follow the same era/category progression as the tactical sta
 - **Army definition:** An army is a set of regiments in a province led by exactly one general. Units are always part of armies; armies are always headed by a general. Armies are inferred by grouping units in a province by owner and matching to the general in that province.
 - **Location invariant:** Armies are always located in a province. A player's armies must always be located within provinces they own. When at peace, a player's units remain in their owned provinces.
 - **Movement into non-owned province:** Moving an army into a province the player does not own is an act of war. War declaration is triggered during turn resolution (Diplomacy phase) before Movement; the combat and province-flip logic then applies when units enter enemy-held territory. See [combat.md](combat.md) and [movement.md](../program/movement.md).
+
+---
+
+## Acceptance criteria
+
+1. **Deployment limit:** Participating regiments per side in each engagement are capped to base (10, or 12 with Nationalism tech) + general medals; excess units do not participate in that engagement.
+2. **Initiative:** Ordering uses general medals and cavalry share per [combat.md](combat.md) when general/medal state is populated.
+3. **General morale aura:** Applies when general/medal state exists (deferred until modelled).
+4. **Army / no general:** Army = units in province under one general; no general = no army for field forces (enforcement deferred).
+5. **GDD 05 (era-based general caps):** External; general count/cap is out of scope until modelled.

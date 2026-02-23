@@ -1,13 +1,13 @@
 # sim_economy — Economy Simulation Tool
 
 ## Responsibility
-Standalone CLI tool to simulate a single player's economy loop over N turns using Phase 2 rules. No map, movement, combat, diplomacy, AI, or trade. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [workers-and-population.md](../game/workers-and-population.md).
+Standalone CLI tool to simulate a single player's economy loop over N turns using phases 3–6 (Extraction, Riches to treasury, Production, Consumption) per [turn-resolution-phases.md](turn-resolution-phases.md). No map, movement, combat, diplomacy, AI, or trade. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [workers-and-population.md](../game/workers-and-population.md).
 
 ## Data Model
 
 ### CLI Interface
 
-Command: `melo sim_economy`
+Command: `melos run sim_economy`
 
 | Argument | Required | Description |
 |----------|----------|-------------|
@@ -26,7 +26,7 @@ Top-level: `metadata`, `initialState` (stockpile, workers, optional military/tre
 
 ## Algorithm / Flow
 
-Per turn, runs the Phase 2 economy sequence per [turn-resolution-phases.md](turn-resolution-phases.md):
+Per turn, runs the economy sequence (phases 3–6) per [turn-resolution-phases.md](turn-resolution-phases.md):
 
 1. **Actions** — Recruit/train workers, optional build unit.
 2. **Extraction** — Add to stockpile (auto-transport semantics).

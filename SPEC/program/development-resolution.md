@@ -2,6 +2,8 @@
 
 **SPEC/program** — Multi-turn resolution of civilian work orders that change terrain (improvements, roads, ports, forts, rails). Game rules: [civilian-units.md](../game/civilian-units.md), [extraction-and-improvements.md](../game/extraction-and-improvements.md), [siege-mechanics.md](../game/siege-mechanics.md), Imperialism II 02-economy and 03-units-civilian.
 
+**Province identity:** Province ids (e.g. in build_port mapping, province ownership) and tile keys (targetTileKey, unit location) use the prefixed format and lookup rules in [world-model-identity.md](../game/world-model-identity.md).
+
 ---
 
 ### State Model
@@ -61,4 +63,13 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
   - Updated improvement levels, road/rail levels, ports, and fort levels.
   - Updated visibility and prospected tiles for exploration/prospecting.
 - This guarantees that simulations exercise identical development rules and multi-turn timing as regular play.
+
+---
+
+### Acceptance criteria
+
+- **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
+- **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
+- **build_port:** Completion requires topology to be defined (topology-null behaviour is documented in a dedicated issue); port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
+- **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
 

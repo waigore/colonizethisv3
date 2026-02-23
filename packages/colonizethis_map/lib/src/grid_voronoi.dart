@@ -1,4 +1,4 @@
-// Reusable Voronoi assignment for grid cells. SPEC/program/tile-map-generation.md § Voronoi assignment.
+// Reusable Voronoi assignment for grid cells. SPEC/program/tile-map-gen-algorithm.md § Voronoi assignment.
 
 /// Deterministic noise in [-1, 1] for Voronoi boundary irregularity.
 /// Same formula as tile_map_generator so land/province/sea boundaries behave consistently.

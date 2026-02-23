@@ -14,7 +14,7 @@ Four levels per player per tile:
 
 - **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
 - **Revealed:** Province boundary and owner known; terrain and resources unknown.
-- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay is immediate when units leave.
+- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay: immediate when the last Explorer leaves; for Spy, a 5-turn timer applies (see Fog Decay).
 - **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible.
 
 ### Own vs Other Provinces
@@ -28,7 +28,7 @@ Own provinces are always fully visible and never decay. Fogged applies only to o
 
 ### Exploration (Province-Level)
 
-Explorer with work order target `explore` reveals all tiles in a province. Turns required: `ceil(3 * tilesInProvince / maxTilesInAnyProvince)` (up to 3 turns). On completion, all tiles set to fully visible for that player.
+Explorer with work order target `explore` reveals all tiles in a province. **Turns required:** `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (up to 3 turns), where the scale is the maximum tile count in any province **in that region** (so exploration time is comparable within the same region). On completion, all tiles set to fully visible for that player.
 
 ### Prospecting (Tile-Level)
 
@@ -44,7 +44,10 @@ Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [re
 
 ### Fog Decay
 
-When a player's last Explorer/Spy leaves another faction's province, all tiles in that province immediately revert to fogged (retaining last-known state). Own provinces never decay.
+- **Explorer:** When the last Explorer leaves an other-faction province, tiles in that province immediately revert to fogged (retaining last-known state).
+- **Spy:** When a Spy leaves an other-faction province, a 5-turn timer starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province.
+
+Own provinces never decay.
 
 ### Explorer vs Spy
 
@@ -93,3 +96,4 @@ Mineral resources may only be extracted from tiles that are (a) connected and (b
 - Resource/terrain rules: [resource-terrain-region-rules.md](resource-terrain-region-rules.md)
 - Extraction gating: [extraction-and-improvements.md](extraction-and-improvements.md)
 - World model (tile positioning): [world-model.md](world-model.md)
+- Province and tile identity (prefixed ids, tile keys): [world-model-identity.md](world-model-identity.md)

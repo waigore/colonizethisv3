@@ -1,7 +1,7 @@
 import 'terrain_type.dart';
 import 'resource.dart';
 
-/// Result of tile-based map generation. SPEC/program/tile-map-generation.md.
+/// Result of tile-based map generation. SPEC/program/tile-map-gen-resources.md, SPEC/program/map-data.md.
 /// Per-region 2D grid: each cell has a region id (province or sea zone).
 /// Optionally terrain and resource per cell (Phase 1+).
 class TileMapResult {
@@ -57,4 +57,55 @@ class TileMapResult {
 
   static String _pairKey(String a, String b) =>
       a.compareTo(b) < 0 ? '$a|$b' : '$b|$a';
+
+  /// Serializes for save/load (e.g. ctdev Load Savegame). SPEC/project/plan-update-gp-colours-save-load.
+  Map<String, dynamic> toJson() {
+    return {
+      'width': width,
+      'height': height,
+      'grid': grid,
+      if (terrainGrid != null)
+        'terrainGrid': terrainGrid!
+            .map((row) => row.map((t) => t?.name).toList())
+            .toList(),
+      if (resourceGrid != null)
+        'resourceGrid': resourceGrid!
+            .map((row) => row.map((r) => r?.name).toList())
+            .toList(),
+    };
+  }
+
+  /// Deserializes from JSON. Returns a valid [TileMapResult] or throws.
+  static TileMapResult fromJson(Map<String, dynamic> json) {
+    final width = json['width'] as int;
+    final height = json['height'] as int;
+    final grid = (json['grid'] as List<dynamic>)
+        .map((row) => (row as List<dynamic>).map((e) => e as String).toList())
+        .toList();
+    List<List<TerrainType?>>? terrainGrid;
+    final tg = json['terrainGrid'] as List<dynamic>?;
+    if (tg != null) {
+      terrainGrid = tg
+          .map((row) => (row as List<dynamic>)
+              .map((e) => e == null ? null : TerrainType.values.byName(e as String))
+              .toList())
+          .toList();
+    }
+    List<List<Resource?>>? resourceGrid;
+    final rg = json['resourceGrid'] as List<dynamic>?;
+    if (rg != null) {
+      resourceGrid = rg
+          .map((row) => (row as List<dynamic>)
+              .map((e) => e == null ? null : Resource.values.byName(e as String))
+              .toList())
+          .toList();
+    }
+    return TileMapResult(
+      width: width,
+      height: height,
+      grid: grid,
+      terrainGrid: terrainGrid,
+      resourceGrid: resourceGrid,
+    );
+  }
 }

@@ -46,6 +46,30 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 
 ---
 
+## Logging
+
+Per [ctdev-logging.md](ctdev-logging.md): diplomacy is in **logic** scope. Phase start/end are logged by the turn resolver (`logic: phase diplomacy start` / `logic: phase diplomacy end`). The diplomacy resolver logs **key outcomes** with the `logic:` prefix so that flows and state changes are grep-friendly:
+
+- **Phase boundaries:** Diplomacy resolver logs phase start and end at debug (redundant with turn resolver but allows filtering by file).
+- **Key outcomes (info):** Overture payment applied (gpId, targetId, stage); Join Empire/Colony applied; alliance formed (faction pair); war declared (faction pair); peace offered (faction pair); agreements terminated due to war; GrantAid/SetSubsidy applied when modifier changes relation or treasury.
+
+Rejections and validation failures are logged by the order engine; diplomacy resolution logs only applied state changes.
+
+---
+
+## Acceptance criteria
+
+- **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–7 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → terminate agreements on war → relation modifiers and score update).
+- **Overture payments:** Consulate/Embassy orders: when GP has sufficient treasury and is at the previous overture stage, cost is deducted and stage is advanced; NAP and Join Empire are free.
+- **Join Empire/Colony:** Requires NAP stage and relation score ≥ 51 (Friendly/Allied); absorption (Minor) or colony (Tribe) applied per game rules.
+- **Alliances:** GP–GP only; relation set to allied (score ≥ 76), state atPeace.
+- **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable.
+- **Agreements on war:** Overtures between a faction pair at war are terminated.
+- **GrantAid / SetSubsidy:** GrantAid requires Embassy; SetSubsidy requires Consulate or Embassy. Payer treasury deducted; SetSubsidy to GP adds to target treasury, to Minor/Tribe improves relation modifier.
+- **Logging:** Phase start and end at debug with `logic:` prefix; key outcomes at info (overture applied, join empire, alliance formed, war declared, peace offered, agreements terminated, GrantAid/SetSubsidy applied). Rejections and validation failures are logged by the order engine only.
+
+---
+
 ## Constraints
 
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.

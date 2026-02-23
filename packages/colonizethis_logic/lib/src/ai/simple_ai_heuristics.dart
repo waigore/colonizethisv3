@@ -38,16 +38,21 @@ enum _SuggestionCategory {
   research,
 }
 
+/// Builds a map from full province id (regionId|localId) to owner faction id.
+/// Keys must match [MoveOrder.destinationProvinceId] format from the order
+/// suggestion API (SPEC/game/world-model-identity.md).
 Map<String, String> _provinceOwnerMap(Game game) {
   final out = <String, String>{};
   for (final p in game.worldState.oldWorld.provinces) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      out[p.id] = p.ownerId!;
+      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      out[key] = p.ownerId!;
     }
   }
   for (final p in game.worldState.newWorld.provinces) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      out[p.id] = p.ownerId!;
+      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      out[key] = p.ownerId!;
     }
   }
   return out;
@@ -73,6 +78,8 @@ Orders generateOrdersWithSimpleHeuristics(
   var current = const Orders();
   final view = buildPlayerView(game, topology, player.id);
 
+  /// Max iterations per player per turn (cap to avoid unbounded loops).
+  /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
     final moveSuggestions = suggestMoveOrders(view, game, topology, current);
@@ -153,7 +160,8 @@ Orders generateOrdersWithSimpleHeuristics(
         );
         break;
       case _SuggestionCategory.research:
-        final chosen = researchSuggestions.first;
+        final idx = rng.nextInt(researchSuggestions.length);
+        final chosen = researchSuggestions[idx];
         final list = <ResearchOrder>[
           ...current.researchOrdersByPlayerId[player.id] ?? const [],
           chosen,

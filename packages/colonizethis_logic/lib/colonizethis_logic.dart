@@ -36,6 +36,7 @@ export 'src/economy/sea_transport.dart';
 // Orders
 export 'src/orders/order_engine.dart';
 export 'src/orders/order_merge.dart';
+export 'src/orders/projected_effects.dart';
 export 'src/orders/order_projections.dart';
 export 'src/orders/order_suggestion.dart';
 export 'src/orders/order_suggestion_api_impl.dart';
@@ -45,8 +46,9 @@ export 'src/orders/orders_application.dart';
 // Diplomacy
 export 'src/diplomacy/diplomacy_resolver.dart';
 
-// Dossier (evidence rules)
+// Dossier (evidence rules, event dialogue)
 export 'src/dossier/evidence_rules.dart';
+export 'src/dossier/event_dialogue.dart';
 
 // AI
 export 'src/ai/ai_planner.dart';

@@ -67,8 +67,16 @@ Game resolveResearchPhase(Game game, Orders orders) {
       }
     }
 
-    // 1–4: validate, deduct treasury, and add progress per slot.
+    // One order per slot (SPEC: each slot holds at most one active tech). Duplicate slotIndex
+    // in the list: last wins, so only one assignment per slot is applied and no double spend.
+    final bySlot = <int, ResearchOrder>{};
     for (final order in playerOrders) {
+      bySlot[order.slotIndex] = order;
+    }
+    final ordersPerSlot = bySlot.values.toList();
+
+    // 1–4: validate, deduct treasury, and add progress per slot.
+    for (final order in ordersPerSlot) {
       if (order.slotIndex < 0 || order.slotIndex >= slots) {
         continue;
       }
@@ -138,6 +146,9 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
+    // SPEC/game/tech-tree.md: 4 slots with University tech.
+    final nextResearchSlots =
+        (nextUnlockedForLevel['university'] == true) ? 4 : null;
 
     updatedPlayers.add(
       player.copyWith(
@@ -145,6 +156,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
         techUnlocked: nextUnlocked,
         researchProgressByTechId: nextProgress,
         militaryLevel: militaryLevel,
+        researchSlots: nextResearchSlots ?? player.researchSlots,
       ),
     );
   }

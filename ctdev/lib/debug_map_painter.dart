@@ -5,8 +5,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
 /// Visual scale factor applied to logical cellSize from RegionMapViewData.
-/// Keeps tiles readable while fitting more of the map in a typical viewport.
-/// In ctdev, we default this to 1.0 so tiles are easy to inspect without zooming.
+/// Default 0.25 so both regions fit side-by-side in a typical viewport; zoom min 0.25.
 const double kDebugMapScale = 0.25;
 
 

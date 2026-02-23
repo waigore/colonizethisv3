@@ -49,6 +49,24 @@ void main() {
         expect(seaZoneIdForProvince(topology, 'p2'), 'sea1');
       });
 
+      test('when regionId is provided, lookup is region-scoped (world-model-identity)', () {
+        final multiRegion = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
+            TopologyNode(id: 'sea2', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 'sea1'),
+            TopologyEdge(id1: 'p1', id2: 'sea2'),
+          ],
+        );
+        expect(seaZoneIdForProvince(multiRegion, 'p1', regionId: 'oldWorld'), 'sea1');
+        expect(seaZoneIdForProvince(multiRegion, 'p1', regionId: 'newWorld'), 'sea2');
+        expect(seaZoneIdForProvince(multiRegion, 'p1'), isNotNull);
+      });
+
       test('returns null for province with no sea edge', () {
         final inland = MapTopology(
           nodes: const [

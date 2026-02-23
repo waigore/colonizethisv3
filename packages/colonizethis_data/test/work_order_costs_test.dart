@@ -53,25 +53,25 @@ void main() {
       expect(cost[CommodityCatalog.castIron.id], 1);
       expect(cost.length, 2);
     });
-    test('level 1: 1 lumber + 1 cast iron', () {
+    test('level 1: 4 lumber + 4 cast iron (SPEC)', () {
       final cost = workOrderCostBuildImprovement(1);
-      expect(cost[CommodityCatalog.lumber.id], 1);
-      expect(cost[CommodityCatalog.castIron.id], 1);
-    });
-    test('level 2: scale 2 (2 lumber + 2 cast iron)', () {
-      final cost = workOrderCostBuildImprovement(2);
-      expect(cost[CommodityCatalog.lumber.id], 2);
-      expect(cost[CommodityCatalog.castIron.id], 2);
-    });
-    test('level 3: scale 4 (4 lumber + 4 cast iron)', () {
-      final cost = workOrderCostBuildImprovement(3);
       expect(cost[CommodityCatalog.lumber.id], 4);
       expect(cost[CommodityCatalog.castIron.id], 4);
     });
-    test('level 4: scale 8 (8 lumber + 8 cast iron)', () {
-      final cost = workOrderCostBuildImprovement(4);
+    test('level 2: 8 lumber + 8 cast iron (SPEC)', () {
+      final cost = workOrderCostBuildImprovement(2);
       expect(cost[CommodityCatalog.lumber.id], 8);
       expect(cost[CommodityCatalog.castIron.id], 8);
+    });
+    test('level 3: 16 lumber + 16 cast iron (SPEC)', () {
+      final cost = workOrderCostBuildImprovement(3);
+      expect(cost[CommodityCatalog.lumber.id], 16);
+      expect(cost[CommodityCatalog.castIron.id], 16);
+    });
+    test('level 4+: clamped to 16 lumber + 16 cast iron (SPEC max level 4)', () {
+      final cost = workOrderCostBuildImprovement(4);
+      expect(cost[CommodityCatalog.lumber.id], 16);
+      expect(cost[CommodityCatalog.castIron.id], 16);
     });
   });
 
@@ -139,11 +139,11 @@ void main() {
       expect(workOrderMaterialCost('counter_spy'), isNull);
       expect(workOrderMaterialCost('purchase_land'), isNull);
     });
-    test('build_improvement returns cost for improvementLevel', () {
+    test('build_improvement returns cost for improvementLevel (SPEC scaling)', () {
       final cost = workOrderMaterialCost('build_improvement', improvementLevel: 2);
       expect(cost, isNotNull);
-      expect(cost![CommodityCatalog.lumber.id], 2);
-      expect(cost[CommodityCatalog.castIron.id], 2);
+      expect(cost![CommodityCatalog.lumber.id], 8);
+      expect(cost[CommodityCatalog.castIron.id], 8);
     });
     test('build_improvement defaults improvementLevel to 0', () {
       final cost = workOrderMaterialCost('build_improvement');

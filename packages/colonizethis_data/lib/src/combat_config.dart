@@ -401,3 +401,10 @@ const Map<DifficultyLevel, double> difficultyDefenderMultiplier = {
 /// generalMedalWeight: weight per general medal.
 const double initiativeCavalryShareWeight = 50.0;
 const double initiativeGeneralMedalWeight = 10.0;
+
+/// Deployment limit per side in battle. SPEC/game/military-generals.md.
+/// Base regiments per side; +1 per general medal (added in resolver).
+const int deploymentLimitBase = 10;
+const int deploymentLimitWithNationalism = 12;
+/// Tech id that raises base deployment to [deploymentLimitWithNationalism]. SPEC/game/tech-tree-diplomacy-civilian.md.
+const String kTechIdNationalism = 'nationalism';

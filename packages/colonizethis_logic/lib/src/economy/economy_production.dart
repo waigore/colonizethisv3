@@ -1,5 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final Logger _log = Logger();
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
@@ -19,10 +22,14 @@ class ProductionResult {
   const ProductionResult({
     required this.stockpile,
     required this.workerPool,
+    this.productionByRecipe = const {},
   });
 
   final Stockpile stockpile;
   final WorkerPool workerPool;
+
+  /// Recipe id → quantity produced (output units). For projection API. SPEC/program/order-projections.md.
+  final Map<String, int> productionByRecipe;
 }
 
 /// Resolves production for a single player for one turn.
@@ -40,11 +47,13 @@ ProductionResult resolveProduction({
   required List<AssignedRecipe> assignments,
 }) {
   Stockpile current = stockpile;
+  final productionByRecipe = <String, int>{};
 
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      continue; // unknown recipe id; ignore
+      _log.w('logic: production skip unknown recipe id ${assignment.recipeId}');
+      continue;
     }
     if (assignment.assignedLabour <= 0) continue;
 
@@ -67,6 +76,9 @@ ProductionResult resolveProduction({
     final runs = maxByInputs;
     if (runs <= 0) continue;
 
+    productionByRecipe[assignment.recipeId] =
+        (productionByRecipe[assignment.recipeId] ?? 0) + runs;
+
     // Deduct inputs.
     for (final entry in recipe.inputQuantities.entries) {
       final totalNeeded = entry.value * runs;
@@ -78,9 +90,11 @@ ProductionResult resolveProduction({
     current = current.applyDelta(recipe.outputCommodityId, totalOutput);
   }
 
+  _log.d('logic: production assignments=${assignments.length}');
   return ProductionResult(
     stockpile: current,
     workerPool: workers,
+    productionByRecipe: productionByRecipe,
   );
 }
 

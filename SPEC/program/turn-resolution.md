@@ -1,6 +1,6 @@
 # Turn Resolution
 
-**SPEC/program** — Turn phases, state, and resolution sequence. Implementation: colonizethis_logic. World state: [SPEC/game/world-model.md](../game/world-model.md).
+**SPEC/program** — Turn phases, state, and resolution sequence. Implementation: colonizethis_logic. World state: [SPEC/game/world-model.md](../game/world-model.md). Province ids in turn state and phase resolution use the prefixed format and lookup rules in [SPEC/game/world-model-identity.md](../game/world-model-identity.md).
 
 ---
 

@@ -3,29 +3,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
+import '../world/movement.dart';
 import '../world/naval.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
 import '../world/player_view.dart';
 
 final Logger _log = Logger();
-
-/// Resolves regionId for [unit]: from tileKey, or from compound provinceId, or by
-/// looking up [unit].provinceId in [view].provincesById (handles short province ids).
-String _regionIdForUnit(PlayerView view, Unit unit) {
-  if (unit.tileKey != null && unit.tileKey!.isNotEmpty) {
-    return Unit.requireRegionIdFromTileKey(unit.tileKey);
-  }
-  if (ProvinceId.isPrefixed(unit.provinceId)) {
-    return ProvinceId.regionIdFrom(unit.provinceId);
-  }
-  for (final key in view.provincesById.keys) {
-    if (key == unit.provinceId || key.endsWith('|${unit.provinceId}')) {
-      return ProvinceId.regionIdFrom(key);
-    }
-  }
-  return ProvinceId.regionIdFrom(unit.provinceId);
-}
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
@@ -48,7 +32,7 @@ List<MoveOrder> suggestMoveOrders(
   }
 
   for (final unit in view.ownUnits) {
-    final unitRegion = _regionIdForUnit(view, unit);
+    final unitRegion = regionIdForUnit(view, unit);
     final fromProvinceId = unit.locationProvinceId;
     final fromLocalId = ProvinceId.localIdFrom(fromProvinceId);
 
@@ -59,27 +43,9 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
-    // Enumerate neighboring provinces via topology (neighbors use local ids in same region).
-    for (final edge in topology.edges) {
-      String? neighborLocalId;
-      if (edge.id1 == fromLocalId) {
-        neighborLocalId = edge.id2;
-      } else if (edge.id2 == fromLocalId) {
-        neighborLocalId = edge.id1;
-      }
-      if (neighborLocalId == null) continue;
-
-      // Only consider neighbors that are provinces.
-      final neighborNode = topology.nodes.firstWhere(
-        (n) => n.id == neighborLocalId,
-        orElse: () => const TopologyNode(
-          id: '',
-          regionId: '',
-          type: TopologyNodeType.seaZone,
-        ),
-      );
-      if (neighborNode.type != TopologyNodeType.province) continue;
-
+    // Enumerate neighboring provinces in unit's region (region-scoped adjacency).
+    for (final neighborLocalId
+        in neighborProvinceIdsInRegion(topology, unitRegion, fromLocalId)) {
       final destinationProvinceId = ProvinceId.full(unitRegion, neighborLocalId);
 
       // Skip duplicates for this unit.
@@ -178,7 +144,7 @@ List<WorkOrder> suggestWorkOrders(
     final isMerchant = isMerchantUnit(type);
     if (!isExplorer && !isWorker && !isSpy && !isMerchant) continue;
 
-    final regionId = _regionIdForUnit(view, unit);
+    final regionId = regionIdForUnit(view, unit);
     final provinceId = unit.locationProvinceId;
     final localId = ProvinceId.localIdFrom(provinceId);
     final province = view.provinceByRegionAndId(regionId, provinceId);

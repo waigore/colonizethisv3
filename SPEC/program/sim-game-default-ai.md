@@ -23,13 +23,8 @@ Orders defaultSimGameAi({
 });
 ```
 
-- **Input:**
-  - `game` — full current game state at the start of the turn.
-  - `player` — the Great Power for whom we are generating orders.
-  - `topology` — map adjacency information for movement validation.
-  - `baseSeed` — used as fallback when computing the turn seed when `game.aiSeedByGpId[player.id]` is missing for that GP (Option A). The function derives `turnSeed = hash(globalGameSeed, aiSeed[P], T)` with the same formula as AIPlanner; if `aiSeedByGpId[player.id]` is absent, `baseSeed` is used so that Option A (same seed when same role) holds.
-- **Output:**
-  - An `Orders` value containing move, build, work, and research orders **for that player only**, all produced by the shared simple heuristics and passing validation.
+- **Input:** `game` (current state), `player` (GP), `topology` (adjacency), `baseSeed` (fallback when `game.aiSeedByGpId[player.id]` is missing; same turnSeed formula as AIPlanner).
+- **Output:** `Orders` for that player only (move, build, work, research from shared heuristics, validated).
 
 The function must be **pure and side-effect free**: it does not mutate `game` or any global state; it only inspects inputs and returns a new `Orders`.
 
@@ -40,8 +35,9 @@ The function must be **pure and side-effect free**: it does not mutate `game` or
 All order types (MoveOrders, BuildUnitOrders, WorkOrders, ResearchOrders) are produced by the **shared simple heuristics** used by both AIPlanner and defaultSimGameAi:
 
 - Build [PlayerView](player-view.md) for the player; call the **order suggestion API** for candidate move, work, build, and research orders.
-- Apply the same category preference (moves → work → build → research) and seeded random choice within category.
-- Apply the **diplomacy post-filter** to moves: drop moves to provinces owned by factions at peace; drop moves to minors when relation is unknown.
+- Apply the same category preference (moves → work → build → research) and **seeded random choice within category** (including research when multiple options exist).
+- Apply the **diplomacy post-filter** to moves: drop moves to provinces owned by factions at peace; drop moves to minors when relation is unknown. Province owner lookup uses full province id (regionId|localId) per [world-model-identity.md](../game/world-model-identity.md).
+- **Iteration cap:** Heuristics cap iterations per player per turn (constant in code, e.g. 32) to avoid unbounded loops.
 - No raw construction from topology; every order comes from the suggestion API and is valid by construction after validation.
 
 ---
@@ -54,10 +50,15 @@ All order types (MoveOrders, BuildUnitOrders, WorkOrders, ResearchOrders) are pr
 
 ---
 
+## Acceptance criteria
+
+- Same `(game, player, topology, baseSeed)` and turn number → same `Orders`.
+- Function does not mutate `game` or global state.
+- Category order (moves → work → build → research) and diplomacy post-filter are applied; province owner lookup uses full province id so moves to GPs at peace or to minors (unknown relation) are dropped correctly.
+- Run-level determinism when sim calls in fixed GP order each turn.
+
+---
+
 ## References
 
-- [sim-game.md](sim-game.md) — Consuming spec; turn loop invokes this behaviour to obtain Orders each turn.
-- [ai-planner.md](ai-planner.md) — Shared simple heuristics and control rules.
-- [order-engine.md](order-engine.md) — Order suggestion API.
-- [player-view.md](player-view.md) — Visibility and world state for the AI.
-- [combat-resolution.md](combat-resolution.md) — Attacker = faction that moved in; defender = province owner.
+[sim-game.md](sim-game.md) · [ai-planner.md](ai-planner.md) · [order-engine.md](order-engine.md) · [player-view.md](player-view.md) · [combat-resolution.md](combat-resolution.md)

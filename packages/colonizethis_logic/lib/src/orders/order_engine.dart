@@ -6,10 +6,11 @@ import '../economy/economy_production.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
 import 'order_visibility.dart';
+import 'order_projections.dart';
 import '../world/player_view.dart';
 import '../constants.dart';
 import '../world/province_lookup.dart';
-import '../turn/turn_resolver.dart';
+import 'projected_effects.dart';
 
 final Logger _log = Logger();
 
@@ -29,21 +30,6 @@ class OrderValidationResult {
   final String? reason;
 
   bool get isAccepted => status == OrderValidationStatus.accepted;
-}
-
-/// Projected effects after dry-run of orders. For UI feedback.
-class ProjectedEffects {
-  const ProjectedEffects({
-    this.workerCount,
-    this.unitLocations,
-    this.stockpileDeltas,
-    this.treasuryDelta,
-  });
-
-  final int? workerCount;
-  final Map<String, String>? unitLocations;
-  final Map<String, int>? stockpileDeltas;
-  final int? treasuryDelta;
 }
 
 /// Order engine: holds per-player orders, validates in submission order,
@@ -117,6 +103,7 @@ class OrderEngine {
     String orderLabel,
   ) {
     _appendOrder(playerId, order, getter, updater);
+    _log.d('logic: validating orders with context player=$playerId');
     final results = validatePlayerOrdersWithContext(game, topology, playerId);
     if (results.isEmpty) {
       return const OrderValidationResult(status: OrderValidationStatus.accepted);
@@ -253,9 +240,14 @@ class OrderEngine {
       final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
           ? Unit.requireRegionIdFromTileKey(unit.tileKey)
           : ProvinceId.regionIdFrom(resolveToFullProvinceId(game.worldState, unit.provinceId));
+      final destFullId = resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
+      final destRegion = ProvinceId.regionIdFrom(destFullId);
+      if (destRegion != unitRegion) {
+        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid move');
+      }
       final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
-      final destLocalId = ProvinceId.localIdFrom(o.destinationProvinceId);
-      if (!isValidLandMove(topology, unitLocalId, destLocalId)) {
+      final destLocalId = ProvinceId.localIdFrom(destFullId);
+      if (!isValidLandMoveInRegion(topology, unitRegion, unitLocalId, destLocalId)) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid move');
       }
       final destProvince = tryGetProvince(game.worldState, o.destinationProvinceId);
@@ -561,30 +553,29 @@ class OrderEngine {
     return results;
   }
 
-  /// Dry-run: apply orders to copy of game, return projected effects.
+  /// Dry-run: apply orders via resolver (no mutation of [game]); return projected effects.
+  /// Uses [projectOrderEffects] for worker count, treasury delta, unit locations, stockpile deltas.
+  /// When [tileMapByRegion] is null or omitted, an empty map is used and projected extraction is zero
+  /// (caller may pass tile maps when available so expected extraction is non-zero).
   ProjectedEffects projectedEffects(
     Game game,
     MapTopology topology,
     String playerId, {
     List<AssignedRecipe> defaultAssignments = const [],
+    Map<String, TileMapResult>? tileMapByRegion,
   }) {
     final orders = _copyOrders(_orders);
-    final tileMapByRegion = <String, TileMapResult>{};
-    final next = resolveTurnForGame(
+    final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
+    if (tileMaps.isEmpty) {
+      _log.d('logic: projectedEffects called with no tileMapByRegion; expected extraction will be zero');
+    }
+    return projectOrderEffects(
       game: game,
-      topology: topology,
       orders: orders,
-      tileMapByRegion: tileMapByRegion.isEmpty ? null : tileMapByRegion,
+      topology: topology,
+      tileMapByRegion: tileMaps,
+      playerId: playerId,
       defaultAssignments: defaultAssignments,
-    );
-    final player = next.playerById(playerId);
-    if (player == null) return const ProjectedEffects();
-
-    final origPlayer = game.playerById(playerId);
-
-    return ProjectedEffects(
-      workerCount: player.workerPool.totalWorkers,
-      treasuryDelta: origPlayer != null ? player.treasury - origPlayer.treasury : null,
     );
   }
 }

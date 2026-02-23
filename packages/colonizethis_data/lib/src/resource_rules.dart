@@ -9,7 +9,7 @@ enum ResourceRegionRule {
 }
 
 /// Resource–region and resource–terrain rules plus default market price for spawn weights.
-/// SPEC/program/tile-map-generation.md, TDD 04b. SPEC/game/resource-terrain-region-rules.md.
+/// SPEC/program/tile-map-gen-resources.md, SPEC/game/resource-terrain-region-rules.md.
 class ResourceRules {
   ResourceRules({
     required this.regionRule,

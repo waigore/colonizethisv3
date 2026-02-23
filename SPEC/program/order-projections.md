@@ -37,10 +37,11 @@ colonizethis_logic (extend OrderEngine or a dedicated service) provides an API t
 - `stockpile` or `stockpileDeltas` — commodity quantities (or deltas) after resolution
 - `unitLocations` — map of unit id → province id after movement
 
-Optionally, when feasible:
+- `productionByRecipe` — when projection runs with production assignments (`defaultAssignments`), recipe id → quantity produced for the projected player (optional; null or empty when no assignments or production skipped).
+
+Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects` but are not yet populated):
 
 - `extractionByCommodity` — projected extraction per commodity
-- `productionByRecipe` — projected production outputs
 
 ---
 

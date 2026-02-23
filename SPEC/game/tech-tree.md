@@ -25,7 +25,7 @@ Techs are grouped by **category**: gathering, transport, labour, diplomatic, nav
 
 ## Prerequisites
 
-The tree is a **DAG**. Each tech lists zero or more **prerequisite tech ids**. A tech is available for research only when all prerequisites are in the player's `techUnlocked` set. A tech cannot start in the same turn its prerequisite completes.
+The tree is a **DAG**. Each tech lists zero or more **prerequisite tech ids**. Prerequisites may be techs from **any category** (defined in this doc’s category sub-docs). A tech is available for research only when all prerequisites are in the player's `techUnlocked` set. A tech cannot start in the same turn its prerequisite completes.
 
 ---
 
@@ -43,7 +43,7 @@ Each tech has: **id** (slug), **display name**, **era**, **category**, **prerequ
 | Military (Infantry, Cavalry, Artillery) | [tech-tree-military.md](tech-tree-military.md) |
 | New World Resources | [tech-tree-new-world.md](tech-tree-new-world.md) |
 
-**Regiment buildability:** A regiment is buildable iff the unlocking tech is in `techUnlocked`. **Extraction cap** per resource = max level from any researched tech (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)).
+**Regiment buildability:** A regiment is buildable iff the unlocking tech is in `techUnlocked`. **Ship buildability:** A ship type is buildable iff it has no unlocking tech or that tech is in `techUnlocked`. See [tech-tree-naval.md](tech-tree-naval.md), [ships-and-naval.md](ships-and-naval.md). **Extraction cap** per resource = max level from any researched tech (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)).
 
 ---
 
@@ -54,6 +54,7 @@ Techs grant **effects** when researched (no separate "apply" step):
 - **Extraction cap:** Max improvement level (1-4) per resource. Effective yield = min(improvement, tech cap). See [tech-and-extraction-cap.md](tech-and-extraction-cap.md).
 - **Transport:** Allows building higher transport levels. See [extraction-and-improvements.md](extraction-and-improvements.md).
 - **Regiment unlocks:** Tech id -> regiment id(s). No era gate. See [military-units.md](military-units.md).
+- **Ship unlocks:** Tech id -> ship type id(s). Starting ships (e.g. Carrack) have no prerequisite. See [tech-tree-naval.md](tech-tree-naval.md), [ships-and-naval.md](ships-and-naval.md).
 - **Civilian unit unlocks:** e.g. Merchant, Rail Builder. See [civilian-units.md](civilian-units.md).
 - **Diplomatic options:** e.g. embassies, Join Empire. See [diplomacy.md](diplomacy.md).
 - **Labour / economy:** Worker tiers, trade slots, fourth research slot (University).

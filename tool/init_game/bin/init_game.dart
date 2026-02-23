@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 /// CLI: run game creation (map gen, province/capital assignment), export PNG and markdown.
 /// SPEC/program/init-game-tool.md. Thin facade over colonizethis_logic.
+/// Operational/diagnostic output via logger (SPEC/program/ctdev-logging.md); usage/help to stdout.
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
 
 Future<void> main(List<String> arguments) async {
   String? configPath;
@@ -52,14 +56,14 @@ Future<void> main(List<String> arguments) async {
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null) {
-        print('Error: --seed requires an integer');
+        stderr.writeln('Error: --seed requires an integer');
         exit(1);
       }
       seedOverride = v;
     } else if (arg.startsWith('--seed=')) {
       final v = int.tryParse(arg.substring(7).trim());
       if (v == null) {
-        print('Error: --seed requires an integer');
+        stderr.writeln('Error: --seed requires an integer');
         exit(1);
       }
       seedOverride = v;
@@ -107,7 +111,7 @@ Future<void> main(List<String> arguments) async {
   if (configPath != null && configPath.isNotEmpty) {
     final f = File(configPath);
     if (!f.existsSync()) {
-      print('Error: config file not found: $configPath');
+      stderr.writeln('Error: config file not found: $configPath');
       exit(1);
     }
     final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
@@ -170,7 +174,7 @@ Future<void> main(List<String> arguments) async {
           prussiaLeaderOverride == prussiaVariantFrederickWilliam) {
         leaderVariantByGpId = {...leaderVariantByGpId, 'prussia': prussiaLeaderOverride};
       } else {
-        print('Error: --prussia-leader must be $prussiaVariantFrederickTheGreat or $prussiaVariantFrederickWilliam');
+        stderr.writeln('Error: --prussia-leader must be $prussiaVariantFrederickTheGreat or $prussiaVariantFrederickWilliam');
         exit(1);
       }
     }
@@ -186,36 +190,43 @@ Future<void> main(List<String> arguments) async {
     );
   }
 
-  print('=== init_game ===');
-  print('Running game setup...');
-  final shouldRenderPng =
-      outputMapPath != null && outputMapPath.isNotEmpty;
-  final result = runInitGame(
-    config: config,
-    options: InitGameOptions(
-      cellSize: 24,
-      renderPng: shouldRenderPng,
-    ),
-  );
-  print('Game created: ${result.game.id}');
+  try {
+    _log.i('logic: init_game start');
+    _log.i('logic: Running game setup...');
+    final shouldRenderPng =
+        outputMapPath != null && outputMapPath.isNotEmpty;
+    final result = runInitGame(
+      config: config,
+      options: InitGameOptions(
+        cellSize: 24,
+        renderPng: shouldRenderPng,
+      ),
+    );
+    _log.i('logic: Game created: ${result.game.id}');
 
-  if (outputMapPath != null && outputMapPath.isNotEmpty) {
-    File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
-    print('Map PNG: $outputMapPath');
+    if (outputMapPath != null && outputMapPath.isNotEmpty) {
+      File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
+      _log.d('logic: Map PNG: $outputMapPath');
+    }
+
+    if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
+      File(outputMarkdownPath).writeAsStringSync(result.markdown);
+      _log.d('logic: Markdown: $outputMarkdownPath');
+    }
+
+    if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
+      await _saveGame(result.game, outputGamePath);
+      _log.d('logic: Game saved: $outputGamePath');
+    }
+
+    _log.i('logic: Faction setup:\n${result.markdown}');
+  } catch (e) {
+    final message = e is ArgumentError
+        ? (e.message ?? e.toString())
+        : 'Game setup failed: $e';
+    stderr.writeln('Error: $message');
+    exit(1);
   }
-
-  if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
-    File(outputMarkdownPath).writeAsStringSync(result.markdown);
-    print('Markdown: $outputMarkdownPath');
-  }
-
-  if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
-    await _saveGame(result.game, outputGamePath);
-    print('Game saved: $outputGamePath');
-  }
-
-  print('');
-  print(result.markdown);
 }
 
 Future<void> _saveGame(Game game, String path) async {
@@ -233,6 +244,7 @@ Future<void> _saveGame(Game game, String path) async {
 }
 
 void _printUsage() {
+  // Usage/help to stdout per CLI contract (SPEC/program/init-game-tool.md).
   print('Usage:');
   print('  melos run init_game -- [options]');
   print('');
@@ -242,7 +254,7 @@ void _printUsage() {
   print('  --config <path>         JSON config (optional)');
   print('  --output-map <path>     Write map PNG');
   print('  --output-markdown <path>  Write faction setup markdown');
-  print('  --output-game <path>    Save game (requires --output-game when not --no-save)');
+  print('  --output-game <path>    Save game to path when set (unless --no-save)');
   print('  --no-save               Do not save game');
   print('  --seed <n>              RNG seed');
   print('  --great-powers id1,id2  Comma-separated Great Power ids (e.g. england,france,spain)');

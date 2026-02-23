@@ -8,6 +8,7 @@ environment:
   sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
+  logger: ^2.0.2
   colonizethis_models:
   colonizethis_data:
   colonizethis_logic:

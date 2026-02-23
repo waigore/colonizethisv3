@@ -6,10 +6,11 @@ Orchestrates game creation from config through map generation, province/capital 
 
 ## Data Model
 
-- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)).
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)). (MVP: program-level only; Base → Difficulty → Scenario merge deferred until ruleset loader is implemented per ruleset-config.md / #57.)
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`.
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData.
+- **Province identity:** Province ids in Game, WorldState, InitGameResult, and capital/town assignment use the prefixed form (`regionId|localId`); topology and map lookups during setup are per-region. See [world-model-identity.md](../game/world-model-identity.md).
 
 ## Algorithm / Flow
 
@@ -28,6 +29,7 @@ Steps implement the phases from [game-setup.md](../game/game-setup.md):
    - **7b. Capital auto-choice** — (1) Run per-faction capital algorithm from [capital-choice-phase.md](../game/capital-choice-phase.md). Set `capitalProvinceId` and `capitalTile`; apply border-avoidance heuristic; place capital port (on capital tile if coastal, else on nearest coastal tile in province). (2) **Then** for each Great Power (and optionally Minor/Tribe) capital where a port was placed off-tile, compute shortest path on the province tile graph from port to capital and set road level on every tile along that path. Reference [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Capital Setup. **Implementation (DRY):** Use a shared capital-placement API used by both init and capital reassignment (Combat phase, see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Combat). Init and reassignment must call the same logic: choose province + tile (e.g. `pickCapitalForFaction`), then apply port/road (e.g. `applyCapitalPortAndRoad`), then apply road path from port to capital (shortest path on province tiles; set road level on each tile). Pathfinding and road placement in one place (e.g. capital_choice or shared setup module). Current code only sets road on capital and port tiles (stub); add pathfinding and set road level on every tile along the path (e.g. level 1).
    - **7d. Province town assignment** — For each province, set the province's **town** tile: if the province is that faction's capital province, town = capital tile; else town = tile in that province with shortest path (on province tile graph) to (capital if same region, else a port in that province). Store in province (`townTileKey`) or in a region-level map (provinceId → townTileKey). Reference [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province.
    - **7c. Province naming** — Apply naming from active ruleset per [naming.md](../game/naming.md). Applies to all provinces owned at setup; provinces acquired later retain existing display name.
+   - **7e. Turn-time mapping** — Set `Game.turnTimeMapping` from the resolved ruleset when present; otherwise default to GDD 01 (`TurnTimeMapping.gdd01`) for MVP. See [turn-time-mapping.md](../game/turn-time-mapping.md) and [ruleset-config.md](ruleset-config.md).
 8. **Persist or pass** — Save via colonizethis_save or hand off to app. Tile maps and topology are static; store with game or regenerate from seed.
 
 Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [init-game-tool.md](init-game-tool.md).

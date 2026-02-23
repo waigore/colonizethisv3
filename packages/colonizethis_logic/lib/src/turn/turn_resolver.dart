@@ -25,6 +25,8 @@ import '../economy/sea_transport.dart';
 import 'research_resolver.dart';
 import '../world/naval.dart';
 import '../combat/naval_combat_resolver.dart';
+import '../dossier/evidence_rules.dart';
+import '../dossier/event_dialogue.dart';
 import '../world/player_view.dart';
 
 final Logger _log = Logger();
@@ -89,6 +91,7 @@ Game resolveTurnForGameFromOrderEngine({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
 }) {
   final merged = mergeOrderLists(
     humanOrders: orderEngine.orders,
@@ -98,6 +101,7 @@ Game resolveTurnForGameFromOrderEngine({
     game: game,
     topology: topology,
     orders: merged,
+    onDialogue: onDialogue,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
@@ -120,6 +124,7 @@ Game validateOrdersAndResolveTurn({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
 }) {
   final engine = OrderEngine(initialOrders: orders);
   final filtered = _filterAcceptedOrdersForAllPlayers(
@@ -129,6 +134,7 @@ Game validateOrdersAndResolveTurn({
   );
   return resolveTurnForGame(
     game: game,
+    onDialogue: onDialogue,
     topology: topology,
     orders: filtered,
     tileMapByRegion: tileMapByRegion,
@@ -144,6 +150,9 @@ Game resolveTurnForGame({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  void Function(DialogueEvent)? onDialogue,
+  /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
@@ -168,7 +177,11 @@ Game resolveTurnForGame({
         state = _runRichesToTreasuryPhase(state);
         break;
       case TurnPhase.production:
-        state = _runProductionPhase(state, defaultAssignments);
+        state = _runProductionPhase(
+          state,
+          defaultAssignments,
+          onProductionComplete,
+        );
         break;
       case TurnPhase.consumption:
         state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
@@ -177,13 +190,18 @@ Game resolveTurnForGame({
         state = resolveResearchPhase(state, orders);
         break;
       case TurnPhase.diplomacy:
-        state = resolveDiplomacyPhase(state, orders);
+        state = resolveDiplomacyPhase(state, orders, onDialogue: onDialogue);
         break;
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);
         break;
       case TurnPhase.navalInterceptionCombat:
-        state = _runNavalInterceptionCombatPhase(state, topology, orders.navalMoveOrdersByPlayerId);
+        state = _runNavalInterceptionCombatPhase(
+          state,
+          topology,
+          orders.navalMoveOrdersByPlayerId,
+          onDialogue: onDialogue,
+        );
         break;
       case TurnPhase.combat:
         state = _runCombatPhase(
@@ -192,13 +210,19 @@ Game resolveTurnForGame({
           feedingCoverageByPlayerId,
           topology,
           tileMapByRegion,
+          onDialogue: onDialogue,
         );
         break;
       case TurnPhase.buildWork:
-        state = applyBuildAndWorkOrders(state, orders, topology: topology);
+        state = applyBuildAndWorkOrders(
+          state,
+          orders,
+          topology: topology,
+          onDialogue: onDialogue,
+        );
         break;
       case TurnPhase.endOfTurn:
-        state = _runEndOfTurnPhase(state);
+        state = _runEndOfTurnPhase(state, onDialogue: onDialogue);
         break;
     }
     _log.d('logic: phase ${phase.name} end');
@@ -304,7 +328,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
   );
 }
 
-Game _runEndOfTurnPhase(Game game) {
+Game _runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
   // If victory is already set, keep the turn state stable.
   if (game.victory != null) {
     return game;
@@ -321,7 +345,19 @@ Game _runEndOfTurnPhase(Game game) {
     );
   }
 
-  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/fog-and-exploration-resolution.md.
+  // Era-change dialogue: emit when calendar era changes after this turn. SPEC/ai/dialogue-and-mood.md.
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final nextTurn = currentTurn + 1;
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
+  final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
+  if (previousEra != newEra && onDialogue != null) {
+    final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
+    final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
+    for (final e in events) onDialogue(e);
+  }
+
+  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/program/fog-and-exploration-resolution.md.
   var visibilityByTile = Map<String, Map<String, String>>.from(
     game.worldState.playerVisibilityByTile.map(
       (k, v) => MapEntry(k, Map<String, String>.from(v)),
@@ -356,7 +392,7 @@ Game _runEndOfTurnPhase(Game game) {
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
-  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/fog-and-exploration-resolution.md.
+  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/program/fog-and-exploration-resolution.md.
   final nextVisibility = _applyFogDecay(stateForFog);
 
   return game.copyWith(
@@ -381,21 +417,20 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
     for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
   };
 
+  // Use full province id (regionId|localId) per SPEC/game/world-model-identity.md.
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
   for (final u in game.worldState.oldWorld.units) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
-      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(localId);
+          .add(u.locationProvinceId);
     }
   }
   for (final u in game.worldState.newWorld.units) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
-      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(localId);
+          .add(u.locationProvinceId);
     }
   }
 
@@ -408,10 +443,10 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
     for (final tileKey in visibility.keys.toList()) {
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
-      final provinceId = parts[1];
-      final ownerId = owOwnerByProvince[provinceId] ?? nwOwnerByProvince[provinceId];
+      final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
+      final ownerId = owOwnerByProvince[fullProvinceId] ?? nwOwnerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(provinceId)) {
+      if (!hasExplorerIn.contains(fullProvinceId)) {
         visibility[tileKey] = VisibilityLevel.fogged.name;
       }
     }
@@ -507,8 +542,13 @@ Game _runExtractionPhase(
   return currentState.copyWith(players: updatedPlayers);
 }
 
-Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
+Game _runProductionPhase(
+  Game game,
+  List<AssignedRecipe> defaultAssignments,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
+) {
   final updatedPlayers = <Player>[];
+  final productionByRecipeByPlayerId = <String, Map<String, int>>{};
 
   for (final player in game.players) {
     final result = resolveProduction(
@@ -516,6 +556,10 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
       workers: player.workerPool,
       assignments: defaultAssignments,
     );
+    if (result.productionByRecipe.isNotEmpty) {
+      productionByRecipeByPlayerId[player.id] =
+          Map<String, int>.from(result.productionByRecipe);
+    }
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,
@@ -524,6 +568,7 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
     );
   }
 
+  onProductionComplete?.call(productionByRecipeByPlayerId);
   return game.copyWith(players: updatedPlayers);
 }
 
@@ -611,7 +656,7 @@ Game _runMovementPhase(
       regionId: kRegionNewWorld,
       tileKeysByRegionAndProvince: tileKeysByRegion,
     );
-    // Spy leave province: set 5-turn reveal timer for (owner, left province). SPEC/fog-and-exploration-resolution.md.
+    // Spy leave province: set 5-turn reveal timer for (owner, left province). SPEC/program/fog-and-exploration-resolution.md.
     final spyTimers = Map<String, Map<String, int>>.from(
       state.worldState.spyRevealTurnsByPlayer.map(
         (k, v) => MapEntry(k, Map<String, int>.from(v)),
@@ -753,8 +798,9 @@ Game _applyNavalMovesAndShipReveal(
 Game _runNavalInterceptionCombatPhase(
   Game game,
   MapTopology topology,
-  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
-) {
+  Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   var battles = detectNavalConflicts(game);
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
@@ -764,11 +810,35 @@ Game _runNavalInterceptionCombatPhase(
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
+  final turn = game.worldState.turnState.turnNumber;
+  var battleIndex = 0;
   for (final battle in battles) {
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
     state = applyNavalBattleResults(state, battle, result, regionId, topology: topology);
+    // Evidence: AI won naval battle (one side eliminated). SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
+    String? victorId;
+    String? loserId;
+    if (result.survivingShipTypeIdsSide1.isEmpty && result.survivingShipTypeIdsSide2.isNotEmpty) {
+      victorId = battle.side2.ownerId;
+      loserId = battle.side1.ownerId;
+    } else if (result.survivingShipTypeIdsSide2.isEmpty && result.survivingShipTypeIdsSide1.isNotEmpty) {
+      victorId = battle.side1.ownerId;
+      loserId = battle.side2.ownerId;
+    }
+    if (victorId != null && loserId != null) {
+      final evidence = evidenceForNavalBattleVictory(state, victorId, loserId, turn);
+      if (evidence.isNotEmpty) {
+        state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+      }
+      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final events = dialogueEventsForNavalBattleResult(state, victorId, loserId, turn, dialogueSeed);
+      if (onDialogue != null && events.isNotEmpty) {
+        for (final e in events) onDialogue(e);
+      }
+    }
+    battleIndex++;
   }
   return state;
 }
@@ -778,12 +848,16 @@ Game _runCombatPhase(
   Orders orders,
   Map<String, double> feedingCoverageByPlayerId,
   MapTopology topology,
-  Map<String, TileMapResult>? tileMapByRegion,
-) {
+  Map<String, TileMapResult>? tileMapByRegion, {
+  void Function(DialogueEvent)? onDialogue,
+}) {
   // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
+  final turn = state.worldState.turnState.turnNumber;
+  var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
+  var battleIndex = 0;
   for (final ctx in battles) {
     final mode = resolveCombatModeForBattle(
       state,
@@ -797,13 +871,70 @@ Game _runCombatPhase(
       final input = buildQuickBattleInput(state, ctx, seed: state.worldState.turnState.turnNumber);
       final qbResult = resolveQuickBattle(input);
       state = applyQuickBattleResultToGame(state, ctx, qbResult);
+      // Evidence: AI won land battle as attacker. SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
+      if (qbResult.winner == QuickBattleWinner.attacker &&
+          qbResult.provinceFlips &&
+          ctx.attackers.isNotEmpty) {
+        final victorId = ctx.attackers.first.factionId;
+        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        if (evidence.isNotEmpty) {
+          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+        }
+        final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+        final events = dialogueEventsForLandBattleResult(
+          state, victorId, ctx.defenderFactionId, ctx.provinceId, turn, dialogueSeed,
+        );
+        if (onDialogue != null && events.isNotEmpty) {
+          for (final e in events) onDialogue(e);
+        }
+      } else {
+        // Quick battle ended with defender holding or draw: loser is attacker, victor is defender.
+        final victorId = qbResult.winner == QuickBattleWinner.defender
+            ? ctx.defenderFactionId
+            : (qbResult.provinceFlips && ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null);
+        final loserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+            ? ctx.attackers.first.factionId
+            : (victorId != null ? ctx.defenderFactionId : null);
+        if (victorId != null && loserId != null) {
+          final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+          final events = dialogueEventsForLandBattleResult(
+            state, victorId, loserId, ctx.provinceId, turn, dialogueSeed,
+          );
+          if (onDialogue != null && events.isNotEmpty) {
+            for (final e in events) onDialogue(e);
+          }
+        }
+      }
     } else {
       state = resolveBattleContext(
         state,
         ctx,
         feedingCoverageByPlayerId: feedingCoverageByPlayerId,
       );
+      // Evidence: AI won land battle (province flipped). Same spec refs.
+      final region = ctx.regionId == kRegionOldWorld ? state.worldState.oldWorld : state.worldState.newWorld;
+      final province = region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
+      final victorId = province?.ownerId;
+      if (victorId != null && victorId != ctx.defenderFactionId) {
+        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        if (evidence.isNotEmpty) {
+          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+        }
+      }
+      final effectiveVictorId = victorId ?? ctx.defenderFactionId;
+      final effectiveLoserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+          ? ctx.attackers.first.factionId
+          : ctx.defenderFactionId;
+      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final events = dialogueEventsForLandBattleResult(
+        state, effectiveVictorId, effectiveLoserId, ctx.provinceId, turn, dialogueSeed,
+      );
+      if (onDialogue != null && events.isNotEmpty) {
+        for (final e in events) onDialogue(e);
+      }
     }
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    battleIndex++;
   }
   // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {

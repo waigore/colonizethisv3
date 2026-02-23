@@ -3,6 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+const String _lumberRecipeId = 'lumber_from_timber';
+
 void main() {
   group('projectOrderEffects', () {
     test('returns empty ProjectedEffects when player not in game', () {
@@ -60,7 +62,7 @@ void main() {
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -86,7 +88,7 @@ void main() {
       );
       expect(effects.workerCount, isNotNull);
       expect(effects.unitLocations, isNotNull);
-      expect(effects.unitLocations!['u1'], 'P2');
+      expect(effects.unitLocations!['u1'], 'oldWorld|P2');
     });
 
     test('returns ProjectedEffects with workerCount and unitLocations after full resolve', () {
@@ -240,6 +242,83 @@ void main() {
       );
       expect(effects.stockpileDeltas, isNotNull);
       expect(effects.stockpileDeltas!['grain'], -1);
+    });
+
+    test('productionByRecipe populated when defaultAssignments provided', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      // lumber_from_timber: 2 timber → 1 lumber, 2 labour per output. Assign 4 labour → 2 runs.
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'A',
+            isHuman: true,
+            stockpile: Stockpile(quantities: {'timber': 4}),
+            workerPool: WorkerPool(peasants: 2),
+          ),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+        defaultAssignments: const [
+          AssignedRecipe(recipeId: _lumberRecipeId, assignedLabour: 4),
+        ],
+      );
+      expect(effects.productionByRecipe, isNotNull);
+      expect(effects.productionByRecipe![_lumberRecipeId], 2);
+    });
+
+    test('productionByRecipe null when no defaultAssignments', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final effects = projectOrderEffects(
+        game: game,
+        orders: const Orders(),
+        topology: topology,
+        tileMapByRegion: const {},
+        playerId: 'p1',
+      );
+      expect(effects.productionByRecipe, isNull);
     });
   });
 }

@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_print
 /// CLI: simulate a single player's economy over N turns.
 /// SPEC/program/sim-economy.md
 import 'dart:convert';
@@ -8,6 +7,9 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
 
 void main(List<String> arguments) {
   String? scriptPath;
@@ -29,28 +31,28 @@ void main(List<String> arguments) {
       final value = arguments[++i];
       turns = int.tryParse(value);
       if (turns == null || turns < 1) {
-        print('Error: --turns must be a positive integer, got: $value');
+        _log.e('logic: sim_economy: Error: --turns must be a positive integer, got: $value');
         exit(1);
       }
     } else if (arg.startsWith('--turns=')) {
       final value = arg.substring('--turns='.length).trim();
       turns = int.tryParse(value);
       if (turns == null || turns < 1) {
-        print('Error: --turns must be a positive integer, got: $value');
+        _log.e('logic: sim_economy: Error: --turns must be a positive integer, got: $value');
         exit(1);
       }
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final value = arguments[++i];
       seed = int.tryParse(value);
       if (seed == null) {
-        print('Error: --seed requires an integer, got: $value');
+        _log.e('logic: sim_economy: Error: --seed requires an integer, got: $value');
         exit(1);
       }
     } else if (arg.startsWith('--seed=')) {
       final value = arg.substring('--seed='.length).trim();
       seed = int.tryParse(value);
       if (seed == null) {
-        print('Error: --seed requires an integer, got: $value');
+        _log.e('logic: sim_economy: Error: --seed requires an integer, got: $value');
         exit(1);
       }
     } else if (arg == '--output' && i + 1 < arguments.length) {
@@ -66,7 +68,7 @@ void main(List<String> arguments) {
 
   final useScript = scriptPath != null && scriptPath.isNotEmpty;
   if (!useScript && turns == null) {
-    print('Error: --turns is required when no --script is provided.');
+    _log.e('logic: sim_economy: Error: --turns is required when no --script is provided.');
     _printUsage();
     exit(1);
   }
@@ -84,7 +86,7 @@ void main(List<String> arguments) {
   if (useScript) {
     final file = File(scriptPath);
     if (!file.existsSync()) {
-      print('Error: script file not found: $scriptPath');
+      _log.e('logic: sim_economy: Error: script file not found: $scriptPath');
       exit(1);
     }
     final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
@@ -185,21 +187,21 @@ void main(List<String> arguments) {
 
   final markdownFile = File(outputConfig.markdownPath);
   markdownFile.writeAsStringSync(markdown);
-  print('Wrote Markdown report to ${markdownFile.absolute.path}');
+  _log.i('logic: sim_economy: Wrote Markdown report to ${markdownFile.absolute.path}');
 
   if (outputConfig.jsonPath != null) {
     final jsonFile = File(outputConfig.jsonPath!);
     jsonFile.writeAsStringSync(jsonEncode(turnsLog));
-    print('Wrote JSON log to ${jsonFile.absolute.path}');
+    _log.i('logic: sim_economy: Wrote JSON log to ${jsonFile.absolute.path}');
   }
 }
 
 void _printUsage() {
-  print('Usage:');
-  print(
-      '  melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]');
-  print('');
-  print('Simulates a single player economy using Phase 2 rules.');
+  _log.i('logic: sim_economy: Usage:');
+  _log.i(
+      'logic: sim_economy:   melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]');
+  _log.i('logic: sim_economy: ');
+  _log.i('logic: sim_economy: Simulates a single player economy using Phase 2 rules.');
 }
 
 Map<String, int> _quantitiesFromStockpile(Stockpile stockpile) {

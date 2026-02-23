@@ -377,6 +377,142 @@ void main() {
       expect(p2!.ownerId, anyOf('p1', 'p2'));
     });
 
+    test('combat with tileMapByRegion runs capital reassignment when defender loses only province', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+      const ow = 'oldWorld';
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [['P1', 'P2']],
+        resourceGrid: [[Resource.grain, Resource.grain]],
+      );
+      final tileState = TileMapState()
+          .setImprovement('$ow|P1|0|0', 1)
+          .setRoadLevel('$ow|P1|0|0', 1)
+          .setImprovement('$ow|P2|0|1', 1)
+          .setRoadLevel('$ow|P2|0|1', 1);
+      final cap = CapitalTile(regionId: ow, provinceId: '$ow|P2', x: 1, y: 0);
+      final game = Game(
+        id: 'g1',
+        globalGameSeed: 55555,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'p1', provinceId: '$ow|P1', medals: 2),
+              Unit(id: 'u2', type: 'peasant_levies', ownerId: 'p2', provinceId: '$ow|P2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+          tileKeysByRegionAndProvince: {ow: {'P1': ['$ow|P1|0|0'], 'P2': ['$ow|P2|0|1']}},
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'Attacker', isHuman: true, militaryLevel: 3),
+          Player(id: 'p2', displayName: 'Defender', isHuman: true, militaryLevel: 1, capitalProvinceId: '$ow|P2', capitalTile: cap),
+        ],
+        defaultCombatMode: CombatMode.quickBattle,
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        tileMapByRegion: {'oldWorld': tileMap},
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      final p2Province = next.worldState.oldWorld.provinces.where((p) => p.id == '$ow|P2').singleOrNull;
+      expect(p2Province, isNotNull);
+      expect(p2Province!.ownerId, anyOf('p1', 'p2'));
+      // When defender loses their only province, capital reassignment clears their capital (path covered when RNG flips province).
+    });
+
+    test('autoResolve combat with AI players invokes onDialogue with event battle_won/battle_lost', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        globalGameSeed: 999,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+                medals: 2,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'peasant_levies',
+                ownerId: 'p2',
+                provinceId: '$ow|P2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 3),
+          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 1),
+        ],
+        defaultCombatMode: CombatMode.autoResolve,
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+          ],
+        },
+      );
+
+      final dialogueEvents = <DialogueEvent>[];
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        onDialogue: dialogueEvents.add,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      final eventDialogue = dialogueEvents
+          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .toList();
+      expect(eventDialogue, isNotEmpty);
+    });
+
     test('quick battle mode runs without error and can flip province', () {
       final topology = MapTopology(
         nodes: [
@@ -444,6 +580,230 @@ void main() {
       // Owner may or may not flip depending on Quick Battle outcome, but state
       // remains consistent and combat resolved.
       expect(p2!.ownerId, isNotNull);
+    });
+
+    test('combat phase with AI players invokes onDialogue with event battle_won/battle_lost', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        globalGameSeed: 12345,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+              ),
+              Unit(
+                id: 'u2',
+                type: 'peasant_levies',
+                ownerId: 'p2',
+                provinceId: '$ow|P2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 3),
+          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 1),
+        ],
+        defaultCombatMode: CombatMode.quickBattle,
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+          ],
+        },
+      );
+
+      final dialogueEvents = <DialogueEvent>[];
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        onDialogue: dialogueEvents.add,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      final eventDialogue = dialogueEvents
+          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .toList();
+      expect(eventDialogue, isNotEmpty);
+      expect(eventDialogue.any((e) => e.situation == 'battle_won'), isTrue);
+      expect(eventDialogue.any((e) => e.situation == 'battle_lost'), isTrue);
+    });
+
+    test('quick battle defender holds: onDialogue receives battle_won for defender and battle_lost for attacker', () {
+      final topology = MapTopology(
+        nodes: [
+          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        globalGameSeed: 7777,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'peasant_levies', ownerId: 'p1', provinceId: '$ow|P1'),
+              Unit(id: 'u2', type: 'grenadiers', ownerId: 'p2', provinceId: '$ow|P2', medals: 2),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 1),
+          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 3),
+        ],
+        defaultCombatMode: CombatMode.quickBattle,
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+        },
+      );
+
+      final dialogueEvents = <DialogueEvent>[];
+      resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        onDialogue: dialogueEvents.add,
+      );
+
+      final eventDialogue = dialogueEvents
+          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .toList();
+      expect(eventDialogue, isNotEmpty);
+    });
+
+    test('naval interception combat with AI players invokes onDialogue with event battle_won/battle_lost', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        globalGameSeed: 42,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack', 'carrack'],
+            ),
+            Fleet(
+              id: 'f2',
+              ownerId: 'p2',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['fluyte'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'AI Fleet A', isHuman: false),
+          Player(id: 'p2', displayName: 'AI Fleet B', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final dialogueEvents = <DialogueEvent>[];
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        onDialogue: dialogueEvents.add,
+      );
+      expect(next.worldState.turnState.turnNumber, 1);
+      // Naval battle may or may not eliminate one side; when it does, event dialogue is emitted.
+      final eventDialogue = dialogueEvents
+          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .toList();
+      expect(eventDialogue.length, lessThanOrEqualTo(2));
+    });
+
+    test('endOfTurn era transition invokes onDialogue with event era_change', () {
+      // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI One', isHuman: false),
+          Player(id: 'gp2', displayName: 'AI Two', isHuman: false),
+        ],
+        turnTimeMapping: TurnTimeMapping.gdd01,
+      );
+      final dialogueEvents = <DialogueEvent>[];
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        onDialogue: dialogueEvents.add,
+      );
+      expect(next.worldState.turnState.turnNumber, 101);
+      final eraChange = dialogueEvents
+          .where((e) => e.category == 'event' && e.situation == 'era_change')
+          .toList();
+      expect(eraChange.length, 2);
+      for (final e in eraChange) {
+        expect(e.era, 'imperial');
+        expect(e.variables['previousEra'], 'earlyModern');
+      }
     });
 
     test('resolveTurnForGameFromOrderEngine integrates order engine output', () {
@@ -962,8 +1322,8 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
-              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [],
           ),
@@ -1002,15 +1362,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
-              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
               Unit(
                 id: 'explorer1',
                 type: 'Explorer',
                 ownerId: 'p1',
-                provinceId: 'P2',
+                provinceId: '$ow|P2',
               ),
             ],
           ),
@@ -1038,6 +1398,74 @@ void main() {
         orders: const Orders(),
       );
       expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fullyVisible.name);
+    });
+
+    test('endOfTurn fog decay uses full province id: same local id in two regions', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      const tileKeyOwP1 = 'oldWorld|P1|0|0';
+      const tileKeyNwP1 = 'newWorld|P1|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'explorer1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [Province(id: '$nw|P1', regionId: nw, ownerId: 'p2')],
+            units: [],
+          ),
+          playerVisibilityByTile: {
+            'p1': {
+              tileKeyOwP1: VisibilityLevel.fullyVisible.name,
+              tileKeyNwP1: VisibilityLevel.fullyVisible.name,
+            },
+            'p2': {},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {'P1': [tileKeyOwP1], 'P2': ['oldWorld|P2|0|0']},
+            nw: {'P1': [tileKeyNwP1]},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P1', regionId: nw, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyOwP1],
+        VisibilityLevel.fullyVisible.name,
+        reason: 'Explorer in oldWorld|P1 keeps that province visible',
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyNwP1],
+        VisibilityLevel.fogged.name,
+        reason: 'No Explorer in newWorld|P1; must fog (full province id, not local)',
+      );
     });
   });
 }

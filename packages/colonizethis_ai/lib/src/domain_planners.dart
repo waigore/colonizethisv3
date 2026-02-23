@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'ai_config.dart';
 import 'goal_manager.dart';
+import 'hidden_agenda.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
@@ -31,12 +32,21 @@ Orders runDomainPlanners({
   // Economy: build/work suggestions weighted by economy domain.
   final workCandidates = suggestionAPI.suggestWorkOrders(view, game, topology, orders);
   final buildCandidates = suggestionAPI.suggestBuildOrders(view, game, topology, orders);
-  if (workCandidates.isNotEmpty && (primaryGoal == StrategicGoal.expand || domainWeights.economy >= 40)) {
+  final hasSpyWork = workCandidates.any((o) => o.target == 'steal_tech' || o.target == 'counter_spy');
+  final workThreshold = 40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  if (workCandidates.isNotEmpty &&
+      (primaryGoal == StrategicGoal.expand || domainWeights.economy >= workThreshold)) {
+    final agendaId = config.hiddenAgendaId;
+    final pickFrom = (agendaId == 'tech_thief' && hasSpyWork)
+        ? workCandidates.where((o) => o.target == 'steal_tech' || o.target == 'counter_spy').toList()
+        : workCandidates;
+    final list = pickFrom.isNotEmpty ? pickFrom : workCandidates;
     final rng = math.Random(seeds.economySeed);
-    final idx = rng.nextInt(workCandidates.length);
-    orders = _appendWorkOrders(orders, nationId, [workCandidates[idx]]);
+    final idx = rng.nextInt(list.length);
+    orders = _appendWorkOrders(orders, nationId, [list[idx]]);
   }
-  if (buildCandidates.isNotEmpty && domainWeights.economy >= 30) {
+  final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
+  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
     final rng = math.Random(seeds.economySeed + 1);
     final idx = rng.nextInt(buildCandidates.length);
     orders = _appendBuildOrders(orders, nationId, [buildCandidates[idx]]);
@@ -82,11 +92,32 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
   );
 
-  // Research: suggest research; weight by tech domain.
+  // Research: suggest research; weight by tech domain, agenda (tech_thief boost), and personality research preference.
   final researchCandidates = suggestionAPI.suggestResearchOrders(view, game, topology, orders);
-  if (researchCandidates.isNotEmpty && (primaryGoal == StrategicGoal.tech || domainWeights.research >= 40)) {
+  final researchThreshold = 40 - agendaResearchModifier(config.hiddenAgendaId);
+  if (researchCandidates.isNotEmpty &&
+      (primaryGoal == StrategicGoal.tech || domainWeights.research >= researchThreshold)) {
+    final thresholds = getThresholdsForLeader(config.leaderId);
+    final scores = researchCandidates.map((o) {
+      final tech = techById(o.techId);
+      final category = tech?.category ?? '';
+      final w = category == 'transport'
+          ? thresholds.researchNaval
+          : category == 'military'
+              ? thresholds.researchMilitary
+              : category == 'gathering'
+                  ? thresholds.researchEconomic
+                  : thresholds.researchExploration;
+      return math.max(1, w);
+    }).toList();
+    final total = scores.reduce((a, b) => a + b);
     final rng = math.Random(seeds.researchSeed);
-    final idx = rng.nextInt(researchCandidates.length);
+    var r = rng.nextInt(total);
+    var idx = 0;
+    for (; idx < scores.length && r >= scores[idx]; idx++) {
+      r -= scores[idx];
+    }
+    if (idx >= researchCandidates.length) idx = researchCandidates.length - 1;
     orders = _appendResearchOrders(orders, nationId, [researchCandidates[idx]]);
   }
 
@@ -228,8 +259,37 @@ Orders _runDiplomacyPlanner({
   final diploCandidates = suggestionAPI.suggestDiplomaticOrders(view, game, topology, orders);
   if (diploCandidates.isEmpty) return orders;
 
+  final agendaId = config.hiddenAgendaId;
+  final thresholds = getThresholdsForLeader(config.leaderId);
+  final scores = diploCandidates.map((o) {
+    var s = 50;
+    switch (o.type) {
+      case DiplomaticOrderType.offerPeace:
+        s += agendaPeaceAcceptanceModifier(agendaId);
+        s += (thresholds.peaceTendency - 50);
+        break;
+      case DiplomaticOrderType.alliance:
+        s += agendaAllianceAcceptanceModifier(agendaId);
+        s += (thresholds.allianceTendency - 50);
+        break;
+      case DiplomaticOrderType.declareWar:
+        s += agendaConquerModifier(agendaId);
+        s += agendaTreatyBreakingModifier(agendaId);
+        s += (thresholds.warLikelihood - 50);
+        break;
+      default:
+        break;
+    }
+    return math.max(1, s);
+  }).toList();
+  final total = scores.reduce((a, b) => a + b);
   final rng = math.Random(seeds.diplomacySeed);
-  final idx = rng.nextInt(diploCandidates.length);
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < scores.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
   return _appendDiplomaticOrders(orders, nationId, [diploCandidates[idx]]);
 }
 

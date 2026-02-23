@@ -9,7 +9,7 @@
 | Priority | Meaning |
 |----------|---------|
 | **P0** | Critical blocker — blocks completion or causes incorrect gameplay |
-| **P1** | High priority — significant feature gap，影响核心玩法 |
+| **P1** | High priority — significant feature gap; affects core gameplay |
 | **P2** | Medium priority — noticeable gap but not blocking |
 | **P3** | Nice to have — can be deferred |
 
@@ -47,16 +47,14 @@ No outstanding P0 tasks.
 - [SPEC/game/combat.md](SPEC/game/combat.md) — Battle Mode section
 
 **What needs to be done:**
-1. Define exact damage reduction percentages in spec (currently TBD):
-   - Fort 0: 0%
-   - Fort 1 (Wood): 25%
-   - Fort 2 (Stone): 45%
-   - Fort 3 (Modern): 60%
-2. Implement wall HP and breach mechanics in `CombatResolver`
-3. Implement emplaced artillery fire during siege (bonus to defender)
-4. Implement gate mechanics — units can sortie/retreat through gates
-5. Implement "units on wall" vs "units behind wall" targeting rules
-6. Update combat mode selection to use siege rules when `fortLevel >= 1`
+1. ~~Define exact damage reduction percentages in spec~~ — **Done.** 0/25/45/60% in combat_config, combat_resolver.
+2. ~~Implement wall HP and breach mechanics in `CombatResolver`~~ — **Done.** wallHpByFortLevel, fortGunCount in resolver.
+3. ~~Implement emplaced artillery fire during siege (bonus to defender)~~ — **Done.** Emplaced artillery resolution in resolver.
+4. Implement gate mechanics — units can sortie/retreat through gates (deferred to future tactical expansion)
+5. Implement "units on wall" vs "units behind wall" targeting rules (deferred to future tactical expansion)
+6. Update combat mode selection to use siege rules when `fortLevel >= 1` (as needed)
+
+**Acceptance criteria:** Done when combat resolution uses fortLevel for damage reduction and wall HP; tests assert percentages and wall HP by level; gates/sortie and on-wall vs behind-wall behavior remain deferred per spec.
 
 **Complexity:** Large
 
@@ -80,11 +78,13 @@ No outstanding P0 tasks.
 - [SPEC/program/naval-combat-resolution.md](SPEC/program/naval-combat-resolution.md)
 
 **What needs to be done:**
-1. Implement interception probability calculation with base values and modifiers
-2. Implement force comparison (superior/inferior detection)
-3. Implement Beachhead mission — fleet establishes landing site, enables invasion next turn
-4. Implement naval retreat logic with speed advantage and aggression modifiers
-5. Wire naval missions into TurnResolver's Naval Interception & Combat phase
+1. ~~Implement interception probability calculation with base values and modifiers~~ — **Done.** naval_combat_resolver (Patrol 30%, Blockade 50%, superior/inferior modifiers).
+2. ~~Implement force comparison (superior/inferior detection)~~ — **Done.** kNavalInterceptSuperiorBonus / InferiorPenalty.
+3. Implement Beachhead mission — fleet establishes landing site, enables invasion next turn (deferred)
+4. ~~Implement naval retreat logic with speed advantage and aggression modifiers~~ — **Done.** resolveSeaBattle: base 0.6, speed, aggression.
+5. ~~Wire naval missions into TurnResolver's Naval Interception & Combat phase~~ — **Done.** Naval phase uses resolver.
+
+**Acceptance criteria:** Done when interception (base + modifiers) and retreat are exercised in tests; Beachhead landing/invasion enablement remains deferred per spec.
 
 **Complexity:** Medium
 
@@ -112,6 +112,8 @@ No outstanding P0 tasks.
 2. Verify luxury consumption for trained workers (sugar, cigars, furs)
 3. Verify starvation removes workers when food cannot be met
 4. Implement worker training (fabric + paper + cash → next tier)
+
+**Acceptance criteria:** Done when economy_consumption_test (and related tests) assert food per tier, starvation order, and luxury/training behavior per workers-and-population.md; training implementation or deferral documented.
 
 **Complexity:** Medium
 
@@ -141,6 +143,8 @@ No outstanding P0 tasks.
 3. Wire terrain modifiers from province to lane
 4. Connect resolver output to combat casualty pipeline
 
+**Acceptance criteria:** Done when player can enter tactical mode from combat, select lanes and spend CP, and resolver output affects casualties; terrain modifiers wired per quick-battle.md.
+
 **Complexity:** Large (UI integration)
 
 ---
@@ -168,6 +172,8 @@ No outstanding P0 tasks.
 4. ~~Implement Foreign Aid~~ — **Done.** GrantAid in diplomacy_resolver.
 5. Wire Intervention — needsInterventionChoice/applyInterventionChoice exist; call from combat/turn flow when Minor with Embassy is attacked
 
+**Acceptance criteria:** Done when Join Empire and Alliance (mutual defense) are implemented and tested; Intervention wired from combat/turn flow when Minor with Embassy is attacked; Subsidies and GrantAid remain verified.
+
 **Complexity:** Medium
 
 ---
@@ -180,7 +186,7 @@ No outstanding P3 tasks.
 
 ## Test Coverage Summary
 
-### colonizethis_logic: Files Without Dedicated Tests
+### colonizethis_logic: Key modules and test files
 
 | Module | File | Priority | Note |
 |--------|------|----------|------|
@@ -195,11 +201,11 @@ No outstanding P3 tasks.
 
 ### Coverage Status
 
-- **Total lib files:** 37
-- **Test files:** 40 (including characterization tests)
-- **Files without dedicated tests:** 8 (22%)
+- **Total lib files:** 42
+- **Test files:** 46 (including characterization tests)
+- **Files without dedicated tests:** Run `tool/test_coverage.py` for current count. The table above lists key modules and their corresponding test files.
 
-Target: **90% coverage** per project rules. Current gap is primarily in economy modules.
+Target: **90% coverage** per project rules. Current gap is primarily in economy and other modules not yet covered by dedicated tests.
 
 ---
 
@@ -207,7 +213,7 @@ Target: **90% coverage** per project rules. Current gap is primarily in economy 
 
 ## Completed (Verified)
 
-Tasks below have been verified against the codebase and are implemented. Date: 2025-02.
+Tasks below have been verified against the codebase and are implemented. Date: 2026-02.
 
 | Task | Verification |
 |------|--------------|

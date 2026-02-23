@@ -28,21 +28,27 @@ For each province with units from multiple factions:
 
 Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending; tie-break by faction id.
 
-### 3. Per-Engagement Resolver
+### 3. Deployment Limit (per side)
 
-**Input:** One attacker side, current defender side, province snapshot, ruleset config, optional RNG seed.
+Before running the per-engagement resolver, cap each side’s participating regiments to the deployment limit per [military-generals.md](../game/military-generals.md): **base 10** (or **12** if the faction has Nationalism tech) **+1 per general medal**. Only the capped subset participates in strength and casualty computation; excess units do not take or deal damage in that engagement. Defender general medals are not yet modelled (treated as 0).
+
+### 4. Per-Engagement Resolver
+
+**Input:** One attacker side (capped unit list), current defender side (capped unit list), province snapshot, ruleset config, optional RNG seed.
 
 Steps:
 
 1. Aggregate strength per side per game/combat.md § Rules (Strength).
 2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
 3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
-4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers).
+4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
 5. Compute winner and casualties. Pure function; no side effects.
 
 **Output:** EngagementResult.
 
-### 4. Resolution Chain
+**Deferred:** General medals are not yet read from game state (conflict detection passes 0); initiative still uses cavalry share. When general/medal state exists, populate `AttackingSide.generalMedals` in conflict detection and apply general morale aura in step 4. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
+
+### 5. Resolution Chain
 
 Per BattleContext:
 
@@ -55,8 +61,11 @@ Per BattleContext:
 3. After chain completes, apply to world state in a single pass:
    - Remove casualty units.
    - Flip province ownership if defender eliminated per game/combat.md § Rules (Province Flip).
+   - **Fort downgrade (when implemented):** When the fort-downgrade condition is defined and implemented (per [siege-mechanics.md](../game/siege-mechanics.md) and issue #25), apply it in this same pass: if the condition holds for the battle province (e.g. all emplaced guns destroyed), set `province.fortLevel = (current - 1).clamp(0, 3)` when building the updated province list for that BattleContext.
 
-### 5. Probabilistic Resolver (Simulation Only)
+**Where ownership and fort level are applied:** The same application step that updates province ownership and unit lists is the single place that must also apply fort level change when the condition holds. In the main game loop this is the logic inside `resolveBattleContext` that builds the updated region (provinces and units). The quick-battle path (`applyQuickBattleResultToGame`) applies outcomes in a separate code path; when fort downgrade is implemented, that path must apply the same fort-level update so both resolution paths keep the TDD as source of truth. See issue #24 for implementation.
+
+### 6. Probabilistic Resolver (Simulation Only)
 
 Separate resolver for simulation and Monte Carlo analysis; **not** used in the main game loop.
 

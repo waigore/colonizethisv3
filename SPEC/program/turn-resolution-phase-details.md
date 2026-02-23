@@ -4,6 +4,18 @@
 
 ---
 
+## Orders
+
+Phase 1. Gather and validate orders; Great Powers only submit. Merge human and AI orders; resolve cross-player effects before application. Order types, validation, and application are defined in [order-engine.md](order-engine.md) and [orders.md](orders.md). Phase-details below start at Diplomacy (phase 2).
+
+---
+
+## Diplomacy
+
+Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
+
+---
+
 ## Extraction
 
 (1) **Connectivity:** Recompute per-player connectivity (see [extraction-pipeline.md](extraction-pipeline.md)). (2) **Extract:** Per-tile effective extraction: min(improvement, tech cap), then min(..., transport level); minerals only from prospected tiles per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); sum by commodity; separate same-region vs overseas. (3) **Land:** Add same-region totals to stockpile. (4) **Sea:** Allocate overseas totals by priority, capped by cargo holds (stub); add to stockpile. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-pipeline.md](extraction-pipeline.md).
@@ -34,12 +46,6 @@ Military regiments consume food upkeep **before** workers and navy. Per player: 
 
 ---
 
-## Diplomacy
-
-Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
-
----
-
 ## Movement
 
 Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship reveal on fleet enter sea zone per [naval-movement-resolution.md](naval-movement-resolution.md)); set unit/fleet location and active missions.
@@ -66,4 +72,4 @@ BuildUnitOrder: by unit type category — civilian: deduct cash from treasury an
 
 ## End-of-turn
 
-Fog decay: for each other-faction province where player had Explorer/Spy, if none remains → fogged. Increment WorldState turn number. Clear or carry over orders as designed.
+(1) **Victory check** — If `Game.victory` is null, evaluate military victory: count Old World provinces per Great Power; if any GP has ≥31 OW provinces, set `Game.victory` (winner, type military, turn number). If victory already set, skip. See [victory.md](../game/victory.md) and [#86](https://github.com/waigore/colonizethisv3/issues/86). (2) **Era-change dialogue** — When the calendar era changes on the next turn, emit dialogue events per [dialogue-and-mood.md](../ai/dialogue-and-mood.md). (3) **Spy 5-turn fog decay** — Decrement spy-reveal timers; for each (player, province) where timer reaches 0, set that province’s tiles to fogged for that player. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Fog decay (Spy). (4) **Explorer/Spy fog decay** — For each other-faction province where a player had Explorer/Spy, if none remain (and no Spy timer active), set tiles to fogged. (5) **Turn advance** — Increment WorldState turn number; set phase to Orders. (6) **Orders** — The current-turn order list is cleared after turn resolve (not carried over). The caller that owns the order list or OrderEngine clears it after TurnResolver returns. See [order-engine.md](order-engine.md) § End-of-turn order list. Merge and apply of orders for the next turn happen when that turn's Orders phase runs.

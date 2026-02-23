@@ -15,8 +15,9 @@ List<String> _humanObserverIds(Game game) {
       .toList();
 }
 
-/// True if [playerId] is AI-controlled (evidence is only for AI subjects).
-bool _isAiControlled(Game game, String playerId) {
+/// True if [playerId] is AI-controlled (evidence/dialogue only for AI subjects).
+/// Named to avoid export clash with ai_planner.isAiControlled.
+bool isAiControlledForEvidence(Game game, String playerId) {
   final explicit = game.aiControlByGpId[playerId];
   if (explicit != null) return explicit;
   final p = _getPlayer(game, playerId);
@@ -56,7 +57,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!_isAiControlled(game, actorGpId)) return [];
+  if (!isAiControlledForEvidence(game, actorGpId)) return [];
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
@@ -101,7 +102,7 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
   String targetFactionId,
   int turnNumber,
 ) {
-  if (!_isAiControlled(game, actorGpId)) return [];
+  if (!isAiControlledForEvidence(game, actorGpId)) return [];
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
@@ -117,5 +118,66 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
     ));
   }
   _log.d('data: evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}');
+  return entries;
+}
+
+/// Evidence entries for "AI won land battle as attacker". Warmonger; +2 if defender was weaker GP.
+/// SPEC/ai/hidden-agendas.md: observable actions add suspicion (e.g. attacks weaker neighbors).
+List<DossierEvidenceEntry> evidenceForLandBattleVictory(
+  Game game,
+  String victorGpId,
+  String defenderFactionId,
+  int turnNumber,
+) {
+  if (!isAiControlledForEvidence(game, victorGpId)) return [];
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) return [];
+
+  final targetIsGp = _getPlayer(game, defenderFactionId) != null;
+  final weaker = targetIsGp && _isWeakerGp(game, victorGpId, defenderFactionId);
+  final scoreDelta = weaker ? 2 : 1;
+
+  final entries = <DossierEvidenceEntry>[];
+  for (final observerId in observers) {
+    entries.add(DossierEvidenceEntry(
+      observerId: observerId,
+      subjectId: victorGpId,
+      agendaType: 'warmonger',
+      turnNumber: turnNumber,
+      description: weaker ? 'won battle vs weaker neighbor' : 'won battle as attacker',
+      scoreDelta: scoreDelta,
+    ));
+  }
+  if (entries.isNotEmpty) {
+    _log.d('data: evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}');
+  }
+  return entries;
+}
+
+/// Evidence entries for "AI won naval battle" (one side eliminated). Warmonger tendency.
+List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
+  Game game,
+  String victorOwnerId,
+  String loserOwnerId,
+  int turnNumber,
+) {
+  if (!isAiControlledForEvidence(game, victorOwnerId)) return [];
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) return [];
+
+  final entries = <DossierEvidenceEntry>[];
+  for (final observerId in observers) {
+    entries.add(DossierEvidenceEntry(
+      observerId: observerId,
+      subjectId: victorOwnerId,
+      agendaType: 'warmonger',
+      turnNumber: turnNumber,
+      description: 'won naval battle',
+      scoreDelta: 1,
+    ));
+  }
+  if (entries.isNotEmpty) {
+    _log.d('data: evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}');
+  }
   return entries;
 }

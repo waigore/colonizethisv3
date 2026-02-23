@@ -34,6 +34,29 @@ class PersonalityGoalWeights {
   final int diplomacy;
 }
 
+/// Thresholds applied when scoring actions (declare war, accept peace, alliance, research).
+/// SPEC/ai/ai-personalities.md — "Behavioral modifiers": war likelihood, peace tendency,
+/// alliance tendency, research preference per category.
+class PersonalityThresholds {
+  const PersonalityThresholds({
+    this.warLikelihood = 50,
+    this.peaceTendency = 50,
+    this.allianceTendency = 50,
+    this.researchNaval = 50,
+    this.researchMilitary = 50,
+    this.researchEconomic = 50,
+    this.researchExploration = 50,
+  });
+
+  final int warLikelihood;
+  final int peaceTendency;
+  final int allianceTendency;
+  final int researchNaval;
+  final int researchMilitary;
+  final int researchEconomic;
+  final int researchExploration;
+}
+
 /// Personality config per leader id. Used by colonizethis_ai for goal and utility scoring.
 const Map<String, PersonalityDomainWeights> personalityDomainWeights = {
   'victoria': PersonalityDomainWeights(economy: 70, military: 30, diplomacy: 80, research: 50),
@@ -56,9 +79,22 @@ const Map<String, PersonalityGoalWeights> personalityGoalWeights = {
   'gustavus': PersonalityGoalWeights(defend: 50, expand: 50, conquer: 60, trade: 40, tech: 60, diplomacy: 50),
 };
 
+/// Thresholds per leader (war/peace/alliance tendency; research category weights).
+/// Used when scoring diplomatic actions and research slot choice. See SPEC/ai/ai-personalities.md.
+const Map<String, PersonalityThresholds> personalityThresholds = {
+  'victoria': PersonalityThresholds(warLikelihood: 20, peaceTendency: 80, allianceTendency: 80, researchMilitary: 40, researchNaval: 70, researchEconomic: 50, researchExploration: 60),
+  'napoleon': PersonalityThresholds(warLikelihood: 80, peaceTendency: 35, allianceTendency: 25, researchMilitary: 90, researchNaval: 40, researchEconomic: 50, researchExploration: 40),
+  'isabella': PersonalityThresholds(warLikelihood: 50, peaceTendency: 50, allianceTendency: 40, researchMilitary: 50, researchNaval: 60, researchEconomic: 60, researchExploration: 80),
+  'henry': PersonalityThresholds(warLikelihood: 10, peaceTendency: 70, allianceTendency: 75, researchMilitary: 30, researchNaval: 80, researchEconomic: 50, researchExploration: 80),
+  'deruyter': PersonalityThresholds(warLikelihood: 25, peaceTendency: 65, allianceTendency: 70, researchMilitary: 35, researchNaval: 60, researchEconomic: 85, researchExploration: 50),
+  'frederick': PersonalityThresholds(warLikelihood: 55, peaceTendency: 45, allianceTendency: 50, researchMilitary: 85, researchNaval: 45, researchEconomic: 40, researchExploration: 45),
+  'gustavus': PersonalityThresholds(warLikelihood: 55, peaceTendency: 50, allianceTendency: 50, researchMilitary: 75, researchNaval: 55, researchEconomic: 50, researchExploration: 55),
+};
+
 /// Default when leader id is unknown.
 const PersonalityDomainWeights defaultDomainWeights = PersonalityDomainWeights();
 const PersonalityGoalWeights defaultGoalWeights = PersonalityGoalWeights();
+const PersonalityThresholds defaultThresholds = PersonalityThresholds();
 
 PersonalityDomainWeights getDomainWeightsForLeader(String leaderId) {
   return personalityDomainWeights[leaderId] ?? defaultDomainWeights;
@@ -66,4 +102,25 @@ PersonalityDomainWeights getDomainWeightsForLeader(String leaderId) {
 
 PersonalityGoalWeights getGoalWeightsForLeader(String leaderId) {
   return personalityGoalWeights[leaderId] ?? defaultGoalWeights;
+}
+
+PersonalityThresholds getThresholdsForLeader(String leaderId) {
+  return personalityThresholds[leaderId] ?? defaultThresholds;
+}
+
+/// Display name for personality archetype (e.g. "Fortifier", "Explorer").
+/// Used by dossier basic intel. SPEC/ai/ai-dossier.md, ai-personalities.md.
+const Map<String, String> personalityArchetypeDisplayName = {
+  'victoria': 'Industrial Trader',
+  'napoleon': 'Fortifier',
+  'isabella': 'Explorer',
+  'henry': 'Navigator',
+  'deruyter': 'Merchant',
+  'frederick': 'Defender',
+  'gustavus': 'Tactician',
+};
+
+/// Returns human-readable archetype name for [leaderId], or null if unknown.
+String? getArchetypeDisplayNameForLeader(String leaderId) {
+  return personalityArchetypeDisplayName[leaderId];
 }
