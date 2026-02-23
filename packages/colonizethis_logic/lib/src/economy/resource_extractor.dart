@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 
 final Logger _log = Logger();
@@ -77,9 +78,14 @@ Map<String, ExtractionTotals> computeExtraction({
       if (isMineral && !prospected.contains(tileKey)) {
         continue;
       }
+      // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
       final provinceId = '$regionId|${parts[1]}';
-      final province = game.worldState.oldWorld.provinces.where((p) => p.id == provinceId).firstOrNull ??
-          game.worldState.newWorld.provinces.where((p) => p.id == provinceId).firstOrNull;
+      final regionData = regionId == kRegionOldWorld
+          ? game.worldState.oldWorld
+          : regionId == kRegionNewWorld
+              ? game.worldState.newWorld
+              : null;
+      final province = regionData?.provinces.where((p) => p.id == provinceId).firstOrNull;
       final townDevelopmentCap = province?.townDevelopmentLevel ?? 4;
 
       final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);
