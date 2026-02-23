@@ -1,0 +1,11 @@
+[
+  {
+    "id": "ct_main_menu",
+    "name": "CtMainMenu",
+    "dart_file_path": "lib/widgets/main_menu.dart",
+    "constructor_props": "variant: MainMenuVariant, state: MainMenuState, version: String, onNewGame: VoidCallback, onLoadGame: VoidCallback, onSettings: VoidCallback, onQuit: VoidCallback",
+    "category": "screen",
+    "source": "pipeline",
+    "widgetbook_story_path": "Main Menu"
+  }
+]

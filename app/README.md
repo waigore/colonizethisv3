@@ -1,16 +1,7 @@
-# colonizethis_app
+# Colonize This — App
 
-A new Flutter project.
+Flutter app shell for the turn-based strategy game.
 
-## Getting Started
+## Widget catalog
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The **widget catalog** lives at `app/widget_catalog.json`. It uses the UXD 07 schema (per UXD 07 UI Mockup Pipeline): each entry has `id`, `name` (Ct-prefixed), `dart_file_path`, `constructor_props`, `category` (atom | molecule | screen), `source` (gdd12 | pipeline), and optional `widgetbook_story_path`. Update the catalog when adding or changing catalog widgets so components remain discoverable and reusable.

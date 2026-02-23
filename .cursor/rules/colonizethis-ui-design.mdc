@@ -35,6 +35,7 @@ UI specs live in `SPEC/ui/` and derive from GDD/TDD per the spec-required rule. 
 ## Pixel art and PixelLab
 
 - When **new components** require pixel art, the spec must define **what images are required** and the **spec for generation** (e.g. for PixelLab MCP: subject, size, pixellab_type).
+- **Exact prompts:** For every pixel art asset generated via PixelLab (or similar), the UI spec must record the **exact wording** used for generation (e.g. the full PixelLab `description` and, if used, outline/shading/detail). Record **layout constraints** (e.g. max content width in dp) and **asset pixel dimensions** (width×height) that match the layout so assets are not upscaled and stay crisp.
 - **Ration generation:** Pixel art generation (e.g. PixelLab MCP) is expensive. **Check the assets folder first**; if a suitable asset already exists, **do not regenerate**. Only request generation for missing or intentionally replaced assets.
 - Follow UXD 04 (workflow, 0→1 vs 1→N), UXD 05 (PixelLab technical spec), and UXD 07 (asset manifest, post-approval phase).
 
