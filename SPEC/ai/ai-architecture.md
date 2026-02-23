@@ -60,3 +60,14 @@ Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds:
 - [world-model-identity.md](../game/world-model-identity.md) — province identity (prefixed id) in AI context
 - Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
 - Program: [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, APIs
+
+### Implementation (turn pipeline)
+AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).
+
+## Acceptance criteria
+- **Determinism:** Same game state and seeds produce the same AI decisions and orders; per-turn seed and sub-seeds as in § Seeding.
+- **PlayerView-only:** AI reads only observable state; no hidden tiles or enemy-only data.
+- **Turn pipeline:** AI emits orders that are merged with human orders in the Orders phase; phase sequence and application order per [turn-resolution-phases.md](../program/turn-resolution-phases.md), [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md).
+- **Goal selection and domains:** Behavior tree or weighted goal selection drives strategy; utility AI (economy, military, diplomacy, research) scores candidates; personality and hidden agendas bias selection per § Rules.
+- **Province identity:** Movement targets, build provinces, and visibility use prefixed form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
+- **Difficulty:** Difficulty affects starting parameters and ruleset modifiers only, not AI logic or personality.
