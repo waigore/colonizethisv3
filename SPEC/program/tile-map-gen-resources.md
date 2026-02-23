@@ -43,3 +43,14 @@ After all passes: `MapTopology inferTopologyFromTileMap(TileMapResult result, St
 
 - Resource rules required for Pass 7; when omitted, terrain/resource grids are null.
 - Province and sea zone ids follow Voronoi; balanced land per continent yields balanced province sizes.
+
+---
+
+## Acceptance criteria
+
+- **Pass 7 (resources):** Each land cell has **at most one** resource; any assigned resource is allowed for that cell’s **region + terrain** per [resource-terrain-region-rules.md](../game/resource-terrain-region-rules.md). Spawn weights are the inverse of default market price (higher price ⇒ lower spawn weight). Multi‑region resources respect the global cap (default **0.30**): when both‑count/total ≥ cap, resource selection prefers region‑only options when available.
+- **Pass 8–9 (provinces):** Exactly **one province seed per province** is placed on land. After Voronoi assignment, every land cell holds a **province id** (p+digits); the land sentinel is fully replaced. Sea cells retain their **sea zone id** (s+digits).
+- **Pass 11 (sea subdivision):** Sea cells are partitioned into **4‑connected components**. For each component, if its size ≤ `maxSeaZoneFraction × S` (default **0.05** of total sea cells), it receives a single sea zone id; otherwise the component is subdivided via Voronoi into multiple ids. All sea zone ids follow the `s1`, `s2`, … pattern.
+- **Topology inference:** `inferTopologyFromTileMap` builds nodes from **unique grid ids** only. Node type is inferred from the id pattern (`s` + digits = sea zone, `p` + digits = province). Edges are derived exclusively from `TileMapResult.adjacentRegionPairs()`.
+- **Optional passes (Join, 10b):** When enabled, Join and province‑aware terrain jitter preserve the invariants above: province/sea ids remain valid; mountains and existing resources are not altered; resource rules and null‑grid constraints still hold. Thresholds and jitter details may be implementation‑defined.
+- **Missing resource rules:** When resource rules are omitted, Pass 7 is effectively disabled and the terrain/resource grids are **null**, consistent with Constraints.
