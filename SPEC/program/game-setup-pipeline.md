@@ -10,6 +10,7 @@ Orchestrates game creation from config through map generation, province/capital 
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`.
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData.
+- **Province identity:** Province ids in Game, WorldState, InitGameResult, and capital/town assignment use the prefixed form (`regionId|localId`); topology and map lookups during setup are per-region. See [world-model-identity.md](../game/world-model-identity.md).
 
 ## Algorithm / Flow
 
