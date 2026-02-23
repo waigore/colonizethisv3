@@ -44,7 +44,7 @@ melos:
       run: dart run sim_combat_montecarlo
     sim_scenarios:
       description: Batch scenario test driver for game integration testing. SPEC/program/sim-scenarios.md.
-      run: dart run tool/sim_scenarios/bin/sim_scenarios.dart
+      run: dart run sim_scenarios
     show_tech:
       description: Technology tree diagram and query (SPEC/program/show-tech-tool.md).
       run: dart run show_tech
