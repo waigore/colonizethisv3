@@ -96,9 +96,13 @@ RegionData applyMoveOrdersToRegion(
           ProvinceId.regionIdFrom(destProvinceId) != regionId) {
         continue; // Land move cannot cross regions.
       }
+      // Normalize to prefixed form when regionId known (SPEC/game/world-model-identity.md).
+      final destFullId = regionId != null && !ProvinceId.isPrefixed(destProvinceId)
+          ? ProvinceId.full(regionId, destProvinceId)
+          : destProvinceId;
       // Topology uses local province ids; validate using region-scoped adjacency when region known.
       final fromLocal = ProvinceId.localIdFrom(currentProvinceId);
-      final toLocal = ProvinceId.localIdFrom(destProvinceId);
+      final toLocal = ProvinceId.localIdFrom(destFullId);
       final valid = regionId != null
           ? isValidLandMoveInRegion(topology, regionId!, fromLocal, toLocal)
           : isValidLandMove(topology, fromLocal, toLocal);
@@ -108,16 +112,16 @@ RegionData applyMoveOrdersToRegion(
       final isCivilian = unit.tileKey != null && unit.tileKey!.isNotEmpty;
       final firstTileInDest = regionId != null &&
               tileKeysByRegionAndProvince != null &&
-              (tileKeysByRegionAndProvince[regionId]?[destProvinceId]?.isNotEmpty ?? false)
-          ? tileKeysByRegionAndProvince[regionId]![destProvinceId]!.first
+              (tileKeysByRegionAndProvince[regionId]?[destFullId]?.isNotEmpty ?? false)
+          ? tileKeysByRegionAndProvince[regionId]![destFullId]!.first
           : null;
       if (isCivilian && firstTileInDest != null) {
         unitsById[unit.id] = unit.copyWith(
-          provinceId: destProvinceId,
+          provinceId: destFullId,
           tileKey: firstTileInDest,
         );
       } else {
-        unitsById[unit.id] = unit.copyWith(provinceId: destProvinceId);
+        unitsById[unit.id] = unit.copyWith(provinceId: destFullId);
       }
     }
   }

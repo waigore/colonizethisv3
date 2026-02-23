@@ -62,7 +62,7 @@ void main() {
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -88,7 +88,7 @@ void main() {
       );
       expect(effects.workerCount, isNotNull);
       expect(effects.unitLocations, isNotNull);
-      expect(effects.unitLocations!['u1'], 'P2');
+      expect(effects.unitLocations!['u1'], 'oldWorld|P2');
     });
 
     test('returns ProjectedEffects with workerCount and unitLocations after full resolve', () {
