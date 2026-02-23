@@ -11,23 +11,6 @@ import '../world/player_view.dart';
 
 final Logger _log = Logger();
 
-/// Resolves regionId for [unit]: from tileKey, or from compound provinceId, or by
-/// looking up [unit].provinceId in [view].provincesById (handles short province ids).
-String _regionIdForUnit(PlayerView view, Unit unit) {
-  if (unit.tileKey != null && unit.tileKey!.isNotEmpty) {
-    return Unit.requireRegionIdFromTileKey(unit.tileKey);
-  }
-  if (ProvinceId.isPrefixed(unit.provinceId)) {
-    return ProvinceId.regionIdFrom(unit.provinceId);
-  }
-  for (final key in view.provincesById.keys) {
-    if (key == unit.provinceId || key.endsWith('|${unit.provinceId}')) {
-      return ProvinceId.regionIdFrom(key);
-    }
-  }
-  return ProvinceId.regionIdFrom(unit.provinceId);
-}
-
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
 List<MoveOrder> suggestMoveOrders(
@@ -49,7 +32,7 @@ List<MoveOrder> suggestMoveOrders(
   }
 
   for (final unit in view.ownUnits) {
-    final unitRegion = _regionIdForUnit(view, unit);
+    final unitRegion = regionIdForUnit(view, unit);
     final fromProvinceId = unit.locationProvinceId;
     final fromLocalId = ProvinceId.localIdFrom(fromProvinceId);
 
@@ -161,7 +144,7 @@ List<WorkOrder> suggestWorkOrders(
     final isMerchant = isMerchantUnit(type);
     if (!isExplorer && !isWorker && !isSpy && !isMerchant) continue;
 
-    final regionId = _regionIdForUnit(view, unit);
+    final regionId = regionIdForUnit(view, unit);
     final provinceId = unit.locationProvinceId;
     final localId = ProvinceId.localIdFrom(provinceId);
     final province = view.provinceByRegionAndId(regionId, provinceId);
