@@ -18,7 +18,7 @@ Future<Box<dynamic>> _ensureBox() async {
   final dir = await getApplicationDocumentsDirectory();
   Hive.init(dir.path);
   _box = await Hive.openBox<dynamic>('games');
-  _log.d('map: Hive box opened at ${dir.path}');
+  _log.d('save: Hive box opened at ${dir.path}');
   return _box!;
 }
 
@@ -28,7 +28,7 @@ final _adapter = GameSaveAdapter();
 Future<List<String>> listGameIds() async {
   final box = await _ensureBox();
   final ids = _adapter.listGameIds(box);
-  _log.d('map: listGameIds count=${ids.length}');
+  _log.d('save: listGameIds count=${ids.length}');
   return ids;
 }
 
@@ -59,5 +59,5 @@ Future<void> saveGameAndMapData(Game game, InitGameResult result) async {
     topologyByRegion: result.topologyByRegion,
     combinedTopology: result.combinedTopology,
   );
-  _log.i('map: saved gameId=${game.id} with map data');
+  _log.i('save: saved gameId=${game.id} with map data');
 }
