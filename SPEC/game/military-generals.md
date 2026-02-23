@@ -14,6 +14,8 @@ Each general has **medals** (0–4), earned through successful battles (see [com
 - **Morale aura:** Regiments in the general's army receive a morale/strength bonus that scales with general medals (configurable percent per medal).
 - **Initiative:** Army initiative rating increases with general medals and cavalry share; higher-medal generals tend to act earlier in multi-attacker chains.
 
+**Implementation:** The deployment formula (base 10/12 + general medals) and per-side cap are applied in [combat-resolution.md](../program/combat-resolution.md) § Deployment Limit (per side). Defender general medals are not yet modelled (treated as 0) per that spec § Deferred.
+
 ---
 
 ## Regiment Economy (Training & Upkeep)
@@ -24,6 +26,8 @@ Each regiment type has **training cost** and **food upkeep** defined in ruleset 
 - **Upkeep (food):** Per-turn food demand per regiment, consumed during the Consumption phase. Light infantry and early-era units have lower upkeep; cavalry, artillery, and late-era elites have higher upkeep.
 
 Per-regiment values follow the same era/category progression as the tactical stats table in [military-units.md](military-units.md).
+
+**Implementation:** Training cost (cash, materials, worker) is applied at build time when BuildUnitOrder (military) is resolved per [orders.md](../program/orders.md). Food upkeep is consumed during the Consumption phase per [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Consumption and [economy-models.md](../program/economy-models.md).
 
 ---
 
