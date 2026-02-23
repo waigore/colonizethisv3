@@ -5,6 +5,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_test/test.dart';
+import 'package:path/path.dart' as p;
+
+/// Package root: tool/init_game. Works when run from package dir or repo root.
+String get _packageRoot {
+  final cwd = Directory.current.path;
+  final inPackage = File(p.join(cwd, 'bin', 'init_game.dart')).existsSync();
+  return inPackage ? cwd : p.join(cwd, 'tool', 'init_game');
+}
 
 void main() {
   group('init_game CLI', () {
@@ -23,7 +31,7 @@ void main() {
           'dart',
           ['run', 'bin/init_game.dart', '--config', configFile.path, '--no-save'],
           runInShell: false,
-          workingDirectory: Directory.current.path,
+          workingDirectory: _packageRoot,
           stderrEncoding: utf8,
           stdoutEncoding: utf8,
         );
@@ -41,7 +49,7 @@ void main() {
         'dart',
         ['run', 'bin/init_game.dart', '--config', '/nonexistent/config.json', '--no-save'],
         runInShell: false,
-        workingDirectory: Directory.current.path,
+        workingDirectory: _packageRoot,
         stderrEncoding: utf8,
         stdoutEncoding: utf8,
       );

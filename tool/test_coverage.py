@@ -35,6 +35,7 @@ TOOL_PACKAGES = [
     "tool/sim_combat_montecarlo",
     "tool/sim_combat",
     "tool/generate_map",
+    "tool/init_game",
     "tool/sim_economy",
     "tool/show_tech",
 ]
