@@ -50,7 +50,7 @@ QuickBattleDecisions decideQuickBattleActions({
 Returns CP-based actions per lane. Deterministic given state and seed.
 
 ### Order Suggestion API Usage
-AI calls the suggestion API with PlayerView and current orders, scores candidates via utility AI (personality + agenda weights), selects a subset, and repeats. When naval is in scope, API also exposes naval candidates. AI does not construct raw orders; all go through the suggestion API for validation.
+AI calls the suggestion API with PlayerView and current orders, scores candidates via utility AI (personality + agenda weights), selects a subset, and repeats. When naval is in scope, API also exposes naval candidates. AI does not construct raw orders; all go through the suggestion API for validation. Province identifiers in API inputs and returned candidates use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 ## Integration
 
@@ -62,3 +62,4 @@ AI calls the suggestion API with PlayerView and current orders, scores candidate
 - AI reads only via PlayerView; no hidden data access.
 - All decisions deterministic given seeds.
 - No Flutter or platform dependencies.
+- Province ids (suggestion API and AI): full id (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).

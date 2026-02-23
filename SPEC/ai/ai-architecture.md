@@ -46,6 +46,7 @@ AI uses the order suggestion API and applies:
 - **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
+- **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 Seeded randomness selects among acceptable candidates; personality weights bias selection.
 
@@ -56,5 +57,6 @@ Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds:
 - [ai-personalities.md](ai-personalities.md) — per-leader weights
 - [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
 - [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
+- [world-model-identity.md](../game/world-model-identity.md) — province identity (prefixed id) in AI context
 - Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
 - Program: [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, APIs
