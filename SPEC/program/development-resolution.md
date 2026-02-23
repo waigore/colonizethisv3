@@ -2,6 +2,8 @@
 
 **SPEC/program** — Multi-turn resolution of civilian work orders that change terrain (improvements, roads, ports, forts, rails). Game rules: [civilian-units.md](../game/civilian-units.md), [extraction-and-improvements.md](../game/extraction-and-improvements.md), [siege-mechanics.md](../game/siege-mechanics.md), Imperialism II 02-economy and 03-units-civilian.
 
+**Province identity:** Province ids (e.g. in build_port mapping, province ownership) and tile keys (targetTileKey, unit location) use the prefixed format and lookup rules in [world-model-identity.md](../game/world-model-identity.md).
+
 ---
 
 ### State Model
