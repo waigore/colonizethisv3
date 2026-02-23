@@ -4,6 +4,12 @@
 
 ---
 
+## Catalog and implementation
+
+The **diplomacy and civilian tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and effects (embassy, civilian units, upgrade town, deployment limit, etc.). **Implementation:** The program-level tech catalog lives in code (e.g. `colonizethis_data`). Research order validation and completion use the catalog per [research-resolution.md](../program/research-resolution.md); build and work order validation use it per [orders.md](../program/orders.md). Builder **upgrade_town** (National Bureaucracy) and other civilian work targets are resolved in [development-resolution.md](../program/development-resolution.md).
+
+---
+
 ## Tech Table
 
 | id | name | era | prerequisites | effects |
