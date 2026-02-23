@@ -61,6 +61,9 @@ Per BattleContext:
 3. After chain completes, apply to world state in a single pass:
    - Remove casualty units.
    - Flip province ownership if defender eliminated per game/combat.md § Rules (Province Flip).
+   - **Fort downgrade (when implemented):** When the fort-downgrade condition is defined and implemented (per [siege-mechanics.md](../game/siege-mechanics.md) and issue #25), apply it in this same pass: if the condition holds for the battle province (e.g. all emplaced guns destroyed), set `province.fortLevel = (current - 1).clamp(0, 3)` when building the updated province list for that BattleContext.
+
+**Where ownership and fort level are applied:** The same application step that updates province ownership and unit lists is the single place that must also apply fort level change when the condition holds. In the main game loop this is the logic inside `resolveBattleContext` that builds the updated region (provinces and units). The quick-battle path (`applyQuickBattleResultToGame`) applies outcomes in a separate code path; when fort downgrade is implemented, that path must apply the same fort-level update so both resolution paths keep the TDD as source of truth. See issue #24 for implementation.
 
 ### 6. Probabilistic Resolver (Simulation Only)
 
