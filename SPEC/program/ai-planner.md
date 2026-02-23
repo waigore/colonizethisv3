@@ -43,6 +43,14 @@ Combined human + AI orders into deterministic list for turn resolution:
 - **Downstream:** Merged orders → TurnResolver.
 - **ctdev:** All GPs are AI-controlled in sim. User chooses Sim Game AI or AI Planner. Turn seed displayed for debugging. AI order history in Orders tab (read-only diagnostic). See [ctdev-app.md](ctdev-app.md).
 
+## Acceptance criteria
+
+- **Control rules:** Game state persists per-GP control type; AIPlanner only produces orders for AI-controlled Great Powers; human-controlled units never receive AI orders.
+- **Seeding and determinism:** Per-AI seeds and per-turn `turnSeed` (with documented sub-seeds) are the only randomness inputs; given the same game state and seeds, AIPlanner produces the same strategic and tactical decisions.
+- **Phase 4 behaviour:** Minimal AI uses PlayerView and the order suggestion API with the documented category order and caps; it does not construct raw orders, and Quick Battle actions depend only on `tacticalSeed` and battle state.
+- **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec.
+- **Order merge:** Merged order list preserves stable ordering (player → unit → type), respects human precedence, emits at most one AI order per unit, and is fully validated and deterministic.
+
 ## Constraints
 - AIPlanner only produces orders for AI-controlled GPs.
 - Phase 4 out of scope: long-term strategy, complex diplomacy, economic optimization, naval orders.
