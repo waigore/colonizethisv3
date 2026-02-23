@@ -6,7 +6,7 @@
 
 ## Current scope: Military Victory Only
 
-- **Condition:** A Great Power controls **31 or more Old World provinces**.
+- **Condition:** A Great Power controls **31 or more Old World provinces**. Control means the province’s owner is that Great Power (i.e. the province’s `ownerId` equals the GP’s player id).
 - **Eligibility:** Only Great Powers are eligible. Minor Nations and Tribes do not win.
 - **Tie-breaking:** If two or more GPs each control ≥31 OW provinces in the same turn, the winner is the one with the lexicographically smallest player id (deterministic).
 
