@@ -73,3 +73,13 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 - Visibility and prospected state are authoritative on WorldState; PlayerView is derived (read-only).
 - Extraction gating (mineral prospecting + connectivity) is enforced by the extraction pipeline, not this module.
 - Order visibility rules are defined in game/fog-and-exploration.md; this module enforces them at validation time via PlayerView.
+
+---
+
+## Acceptance criteria
+
+- **Exploration timing and scope:** Exploration work orders use the region-scoped timing formula (`ceil(3 * tilesInP / maxTilesInAnyProvinceInRegion)`) and, on completion, set all tiles in the target province to fullyVisible for the exploring player only.
+- **Prospecting:** Prospect work orders validate that the target tile is mineral-eligible per game rules; on completion the tile is added to the player's prospected set in WorldState and does not change visibility by itself.
+- **Spy reveal and decay:** While a Spy is present in a non-owner province, that province is fully visible to the Spy's owner via PlayerView; when the Spy leaves, a 5-turn per-(player, province) timer is started and, when it reaches 0, tiles in that province decay to fogged for that player (other-faction provinces only; own provinces never decay).
+- **Explorer/Spy fog decay:** At end of turn, for each other-faction province where the player previously had Explorer/Spy presence, if no Explorer/Spy remains and no Spy timer is active, all tiles in that province decay to fogged while preserving last-known state.
+- **Ship reveal and integration:** When a fleet enters a sea zone, coastal tiles of adjacent provinces become revealed for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
