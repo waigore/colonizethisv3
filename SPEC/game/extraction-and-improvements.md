@@ -2,7 +2,7 @@
 
 ## Overview
 
-Per-tile resource extraction using improvements, constrained by tech level and transport infrastructure. Civilian work orders build improvements, roads, ports, and railroads.
+Per-tile resource extraction using improvements, constrained by tech level and transport infrastructure. Civilian work orders build improvements, roads, ports, and railroads. Province and tile identity (e.g. owned provinces, tile keys, town and port lookup) follow [world-model-identity.md](world-model-identity.md).
 
 ---
 
@@ -86,6 +86,7 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
 
 ## Interactions
 
+- Province and tile identity: [world-model-identity.md](world-model-identity.md)
 - Connectivity: [capital-and-connectivity.md](capital-and-connectivity.md)
 - Stockpile flow: [stockpiles-and-production.md](stockpiles-and-production.md)
 - Transport tech: [tech-tree-transport.md](tech-tree-transport.md)
