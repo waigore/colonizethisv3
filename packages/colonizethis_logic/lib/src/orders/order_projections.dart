@@ -26,12 +26,16 @@ ProjectedEffects projectOrderEffects({
   if (tileMapByRegion.isEmpty) {
     _log.d('logic: projectOrderEffects with empty tileMapByRegion; extraction will be zero');
   }
+  Map<String, Map<String, int>>? productionByRecipeByPlayerId;
   final next = resolveTurnForGame(
     game: game,
     topology: topology,
     orders: orders,
     tileMapByRegion: tileMapByRegion,
     defaultAssignments: defaultAssignments,
+    onProductionComplete: defaultAssignments.isNotEmpty
+        ? (map) => productionByRecipeByPlayerId = map
+        : null,
   );
   final player = next.playerById(playerId);
   if (player == null) return const ProjectedEffects();
@@ -62,10 +66,15 @@ ProjectedEffects projectOrderEffects({
     }
   }
 
+  final productionByRecipe = productionByRecipeByPlayerId?[playerId];
+
   return ProjectedEffects(
     workerCount: player.workerPool.totalWorkers,
     treasuryDelta: origPlayer != null ? player.treasury - origPlayer.treasury : null,
     unitLocations: unitLocations,
     stockpileDeltas: stockpileDeltas.isNotEmpty ? stockpileDeltas : null,
+    productionByRecipe: productionByRecipe != null && productionByRecipe.isNotEmpty
+        ? productionByRecipe
+        : null,
   );
 }
