@@ -12,7 +12,7 @@ Assign resources and provinces to land, subdivide sea zones, infer topology.
 
 ## Algorithm (Passes 7–11)
 
-7. **Pass 7 — Resource assignment:** For each land cell with terrain, assign at most one resource from allowed set (map region + terrain). Weights per TDD 04b. **Multi-region resource cap:** when both-count/total ≥ cap (default 0.30), restrict to region-only when possible.
+7. **Pass 7 — Resource assignment:** For each land cell with terrain, assign at most one resource from allowed set (map region + terrain). Weights per [resource-terrain-region-rules.md](../game/resource-terrain-region-rules.md): spawn weight = 1 / default market price (higher price = rarer). **Multi-region resource cap:** when both-count/total ≥ cap (default 0.30), restrict to region-only when possible.
 
 8. **Pass 8 — Province seed placement:** One seed per province (p1..pN) on land. Seeds per continent using province-to-continent map; some near coast for P–S adjacencies.
 
