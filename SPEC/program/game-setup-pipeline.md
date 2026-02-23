@@ -6,7 +6,7 @@ Orchestrates game creation from config through map generation, province/capital 
 
 ## Data Model
 
-- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)).
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)). (MVP: program-level only; Base → Difficulty → Scenario merge deferred until ruleset loader is implemented per ruleset-config.md / #57.)
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`.
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData.
