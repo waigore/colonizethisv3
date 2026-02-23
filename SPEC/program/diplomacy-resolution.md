@@ -46,6 +46,17 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 
 ---
 
+## Logging
+
+Per [ctdev-logging.md](ctdev-logging.md): diplomacy is in **logic** scope. Phase start/end are logged by the turn resolver (`logic: phase diplomacy start` / `logic: phase diplomacy end`). The diplomacy resolver logs **key outcomes** with the `logic:` prefix so that flows and state changes are grep-friendly:
+
+- **Phase boundaries:** Diplomacy resolver logs phase start and end at debug (redundant with turn resolver but allows filtering by file).
+- **Key outcomes (info):** Overture payment applied (gpId, targetId, stage); Join Empire/Colony applied; alliance formed (faction pair); war declared (faction pair); peace offered (faction pair); agreements terminated due to war; GrantAid/SetSubsidy applied when modifier changes relation or treasury.
+
+Rejections and validation failures are logged by the order engine; diplomacy resolution logs only applied state changes.
+
+---
+
 ## Constraints
 
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
