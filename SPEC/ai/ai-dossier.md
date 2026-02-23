@@ -27,7 +27,7 @@ Spy reports (if in scope) add evidence or special entries; format TBD in impleme
 ## PlayerView-safe rules
 
 - **Never expose** `hiddenAgenda[subjectId]` to the observer. Only suspicion scores and evidence-derived labels are visible.
-- **Confidence %** is derived from suspicion score bands (e.g. 0–2 → 0%, 3–5 → low %, 6–8 → medium %, 9–10 → high %, 10+ → “Confirmed” with 100% display). “Confirmed” means suspicion passed threshold; it does not mean the game reveals the true agenda value.
+- **Confidence %** is derived from suspicion score bands. Exact mapping: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Evidence and Dossier (0–2 → 0%; 3–5 → 25%; 6–8 → 60%; 9–10 → 85%; 11+ → 100%). “Confirmed” means suspicion passed threshold; it does not mean the game reveals the true agenda value.
 - Evidence and timeline entries must only reference **observable** events (e.g. war declared, treaty broken, visible army movement). No “internal AI intent” fields.
 
 ---
@@ -46,7 +46,7 @@ Storage may be part of game state (e.g. per-observer dossier cache) or computed 
 
 - **PlayerView safety:** The dossier exposes only PlayerView-safe data. True hidden agenda (`hiddenAgenda[subjectId]`) is never exposed to the observer. Only suspicion scores, evidence-derived labels, and observable-event summaries are visible.
 - **Sections:** Dossier has logical sections: Basic intel (personality/archetype, relation, relative strength); Hidden agenda analysis (per-agenda suspicion score, display bands Unknown/Possible/Likely/Almost certain/Confirmed, best-guess agenda id and confidence %); Evidence list (capped, chronological, human-readable entries); Behavioral notes; Timeline. All sections computable from observable state.
-- **Confidence %:** Derived from suspicion score bands (e.g. 0–2 → 0%, 3–5 → low %, 6–8 → medium %, 9–10 → high %, 10+ → “Confirmed” with 100% display). “Confirmed” means suspicion passed threshold; it does not reveal the true agenda value.
+- **Confidence %:** Derived from suspicion score bands; exact mapping in [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Evidence and Dossier (0–2 → 0%; 3–5 → 25%; 6–8 → 60%; 9–10 → 85%; 11+ → 100%). “Confirmed” means suspicion passed threshold; it does not reveal the true agenda value.
 - **Evidence and timeline:** Evidence list and timeline entries reference only **observable** events (e.g. war declared, treaty broken, visible army movement). No internal AI intent or hidden state in entries.
 - **Update cadence:** Basic intel when relation or strength comparison changes (at least once per turn if dossier is viewed). Hidden agenda analysis when new evidence is added for that subject. Behavioral notes and timeline when new observable events occur (turn resolution or event hooks).
 - **Implementation:** Dossier projection, evidence rules, and storage/on-demand contract: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Evidence and Dossier.
