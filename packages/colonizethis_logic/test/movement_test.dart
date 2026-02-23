@@ -109,6 +109,7 @@ void main() {
         ],
       );
       const destTileKey = 'oldWorld|P2|0|0';
+      final destFullId = ProvinceId.full(regionId, 'P2');
       final region = RegionData(
         provinces: const [
           Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
@@ -119,7 +120,7 @@ void main() {
             id: 'u1',
             type: 'Merchant',
             ownerId: 'p1',
-            provinceId: 'P1',
+            provinceId: 'oldWorld|P1',
             tileKey: 'oldWorld|P1|0|0',
           ),
         ],
@@ -135,10 +136,10 @@ void main() {
         orders,
         regionId: regionId,
         tileKeysByRegionAndProvince: {
-          regionId: {'P2': [destTileKey]},
+          regionId: {destFullId: [destTileKey]},
         },
       );
-      expect(updated.units.single.provinceId, 'P2');
+      expect(updated.units.single.provinceId, destFullId);
       expect(updated.units.single.tileKey, destTileKey);
     });
   });

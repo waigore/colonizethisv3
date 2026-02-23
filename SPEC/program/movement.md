@@ -1,6 +1,12 @@
 # Movement
 
-**SPEC/program** — Movement rules and validation. Reference: [SPEC/game/map-topology.md](../game/map-topology.md), [turn-resolution.md](turn-resolution.md).
+**SPEC/program** — Movement rules and validation. Reference: [SPEC/game/map-topology.md](../game/map-topology.md), [turn-resolution.md](turn-resolution.md), [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Province identity (world-model-identity)
+
+MoveOrder `destinationProvinceId` and unit `provinceId` (game state) must use **prefixed** form (`regionId|localId`). See [SPEC/game/world-model-identity.md](../game/world-model-identity.md). The map `tileKeysByRegionAndProvince[regionId]` is keyed by **prefixed** province id (as built in game setup). Validation uses **local** ids for topology lookups; game state and orders use **prefixed** ids.
 
 ---
 
@@ -34,8 +40,16 @@ Invalid moves are rejected; unit location unchanged.
 
 ## Resolution
 
-TurnResolver runs a **movement** step that applies validated move orders. Order of application (e.g. by player, by unit) is deterministic. See [turn-resolution-phases.md](turn-resolution-phases.md).
+TurnResolver runs a **movement** step that applies validated move orders. **Application order:** Deterministic. Orders are applied by **player** (iteration order of `moveOrdersByPlayerId`), then by **order list index** within each player. This defines determinism and replay. See [turn-resolution-phases.md](turn-resolution-phases.md).
 
-- **Civilian units:** Set the unit’s **tileKey** to a valid tile in the **destination province** (e.g. first tile in `tileKeysByRegionAndProvince[regionId][order.destinationProvinceId]`); province is derived from tileKey.
-- **Military units:** Update the unit’s **provinceId** to the destination (no tileKey).
+- **Civilian units:** Set the unit’s **tileKey** to a valid tile in the **destination province** (e.g. first tile in `tileKeysByRegionAndProvince[regionId][fullProvinceId]` where destination is in prefixed form); set unit **provinceId** to that prefixed id.
+- **Military units:** Update the unit’s **provinceId** to the destination (prefixed; no tileKey).
 - **Naval:** Movement remains at sea zone / fleet level; no tileKey for ships.
+
+---
+
+## Acceptance criteria
+
+- **Land movement:** Destination is adjacent (P–P); unit `provinceId` is updated to the destination (prefixed). For civilian units, `tileKey` is set to a tile in the destination when `tileKeysByRegionAndProvince` and `regionId` are provided. Invalid moves leave unit location unchanged.
+- **Validation (order engine):** Rejects non-adjacent, wrong unit/owner, and visibility violations; uses the same topology as resolution. Province id: validation uses **local** ids for topology; game state and orders use **prefixed** ids (see [world-model-identity.md](../game/world-model-identity.md)).
+- **Province id:** Stored and looked up using prefixed form; `tileKeysByRegionAndProvince[regionId]` is keyed by prefixed province id.
