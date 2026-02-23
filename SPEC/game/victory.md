@@ -18,6 +18,7 @@
 - **When:** At the **end of each turn**, after all phases (Orders through Build/Work) have run, during the **End-of-turn** phase.
 - **Logic:** Count Old World provinces by owner; if any GP has count ≥ 31, set the game’s victory state (winner player id, victory type military, turn number). If victory is already set, leave it unchanged (no re-check).
 - **State:** `Game.victory` holds `VictoryState` (winnerPlayerId, type, turnNumber). When non-null, the game is finished.
+- **Implementation:** See [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § End-of-turn (step (1)).
 
 ---
 
