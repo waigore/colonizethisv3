@@ -53,7 +53,7 @@ Connected tiles' effective yields are summed by commodity. **Same-region:** adde
 
 1 lumber + 1 cast iron per tile (transport level 1). **Improved road (level 2):** requires **Road Construction** tech; validation and completion must check tech before setting road level to 2.
 
-### Railroad Costs (Engineer)
+### Railroad Costs (Rail Builder)
 
 2 lumber + 2 cast iron per tile
 
