@@ -357,7 +357,7 @@ Game _runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
     for (final e in events) onDialogue(e);
   }
 
-  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/fog-and-exploration-resolution.md.
+  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/program/fog-and-exploration-resolution.md.
   var visibilityByTile = Map<String, Map<String, String>>.from(
     game.worldState.playerVisibilityByTile.map(
       (k, v) => MapEntry(k, Map<String, String>.from(v)),
@@ -392,7 +392,7 @@ Game _runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
-  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/fog-and-exploration-resolution.md.
+  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/program/fog-and-exploration-resolution.md.
   final nextVisibility = _applyFogDecay(stateForFog);
 
   return game.copyWith(
@@ -656,7 +656,7 @@ Game _runMovementPhase(
       regionId: kRegionNewWorld,
       tileKeysByRegionAndProvince: tileKeysByRegion,
     );
-    // Spy leave province: set 5-turn reveal timer for (owner, left province). SPEC/fog-and-exploration-resolution.md.
+    // Spy leave province: set 5-turn reveal timer for (owner, left province). SPEC/program/fog-and-exploration-resolution.md.
     final spyTimers = Map<String, Map<String, int>>.from(
       state.worldState.spyRevealTurnsByPlayer.map(
         (k, v) => MapEntry(k, Map<String, int>.from(v)),
