@@ -8,7 +8,7 @@
 
 Reached via Start Game (Sim) from Init Game Map Debug. User may navigate back to Init Map Debug.
 
-**Control bar:** Session ID and log path (`logs/ctdev-sim-<sessionId>.log`). Next Player | Resolve Turn | Next Turn | Fast-forward 10. Disabled while resolving.
+**Control bar:** Session ID and log path (current day file per [ctdev-logging.md](ctdev-logging.md): `logs/YYYY-MM-DD.log`). Next Player | Resolve Turn | Next Turn | Fast-forward 10. Disabled while resolving.
 
 ---
 
