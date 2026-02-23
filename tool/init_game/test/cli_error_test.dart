@@ -46,8 +46,8 @@ void main() {
         stdoutEncoding: utf8,
       );
       expect(result.exitCode, 1);
-      expect(result.stdout, contains('Error:'));
-      expect(result.stdout, contains('not found'));
+      expect(result.stderr, contains('Error:'));
+      expect(result.stderr, contains('not found'));
     });
   });
 }

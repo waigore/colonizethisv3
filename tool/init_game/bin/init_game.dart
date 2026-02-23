@@ -52,14 +52,14 @@ Future<void> main(List<String> arguments) async {
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null) {
-        print('Error: --seed requires an integer');
+        stderr.writeln('Error: --seed requires an integer');
         exit(1);
       }
       seedOverride = v;
     } else if (arg.startsWith('--seed=')) {
       final v = int.tryParse(arg.substring(7).trim());
       if (v == null) {
-        print('Error: --seed requires an integer');
+        stderr.writeln('Error: --seed requires an integer');
         exit(1);
       }
       seedOverride = v;
@@ -107,7 +107,7 @@ Future<void> main(List<String> arguments) async {
   if (configPath != null && configPath.isNotEmpty) {
     final f = File(configPath);
     if (!f.existsSync()) {
-      print('Error: config file not found: $configPath');
+      stderr.writeln('Error: config file not found: $configPath');
       exit(1);
     }
     final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
@@ -170,7 +170,7 @@ Future<void> main(List<String> arguments) async {
           prussiaLeaderOverride == prussiaVariantFrederickWilliam) {
         leaderVariantByGpId = {...leaderVariantByGpId, 'prussia': prussiaLeaderOverride};
       } else {
-        print('Error: --prussia-leader must be $prussiaVariantFrederickTheGreat or $prussiaVariantFrederickWilliam');
+        stderr.writeln('Error: --prussia-leader must be $prussiaVariantFrederickTheGreat or $prussiaVariantFrederickWilliam');
         exit(1);
       }
     }
