@@ -44,6 +44,14 @@ Before applying orders, TurnResolver runs a **merge** step: combine per-player l
 
 ---
 
+## End-of-turn order list
+
+**(a) Clear or carry over:** After turn resolution, the current-turn order list is **cleared** (not carried over). Each turn starts with an empty order list; players submit orders for that turn; after End-of-turn those orders have been applied and are not reused for the next turn.
+
+**(b) Responsibility:** TurnResolver does not mutate the OrderEngine or the caller's order data; it only reads orders. The **caller** (app, ctdev, or scenario runner) that owns the order list or OrderEngine is responsible for clearing or replacing it after TurnResolver returns, so that the next turn starts with a fresh order list. Merge and apply for the next turn happen when that turn's Orders phase runs (see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn).
+
+---
+
 ## Determinism
 
 Submission order is stable. Merge uses stable ordering (player id, order type, order id) for deterministic replay.
