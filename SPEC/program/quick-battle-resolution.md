@@ -1,5 +1,7 @@
 # Quick Battle Resolution
 
+**SPEC/program** — Quick Battle resolution pipeline. Province identity: [world-model-identity.md](../game/world-model-identity.md).
+
 ## Responsibility
 
 Resolver for the Quick Battle tactical mini-game — a bounded, per-round loop that processes player/AI actions and produces casualties and province-flip outcomes compatible with the auto-resolve combat pipeline.
@@ -45,6 +47,7 @@ The resolver does not decide actions; it applies actions provided by the caller.
 
 ## Constraints
 
+- **Province identity:** Battle context province id and any province lookup (e.g. applying casualties or province flip) follow [world-model-identity.md](../game/world-model-identity.md): use prefixed form (`regionId|localId`); never look up by province id alone.
 - Deterministic for a given seed.
 - Must use the same config sources as auto-resolve (no divergence between modes).
 - Does not depend on global singletons; all data supplied or derived from shared config.
