@@ -28,7 +28,7 @@ Own provinces are always fully visible and never decay. Fogged applies only to o
 
 ### Exploration (Province-Level)
 
-Explorer with work order target `explore` reveals all tiles in a province. Turns required: `ceil(3 * tilesInProvince / maxTilesInAnyProvince)` (up to 3 turns). On completion, all tiles set to fully visible for that player.
+Explorer with work order target `explore` reveals all tiles in a province. **Turns required:** `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (up to 3 turns), where the scale is the maximum tile count in any province **in that region** (so exploration time is comparable within the same region). On completion, all tiles set to fully visible for that player.
 
 ### Prospecting (Tile-Level)
 
