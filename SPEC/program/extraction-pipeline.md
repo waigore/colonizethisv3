@@ -28,12 +28,12 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 ### Resource Extractor
 
-**Input:** World state (tile map with terrain, resource, improvement level, transport level; ports; owners; tech caps), connectivity result, player prospected sets.
+**Input:** World state (tile map with terrain, resource, improvement level, transport level; ports; owners; tech caps — per [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)), connectivity result, player prospected sets.
 
 **Algorithm:** For each player, for each connected tile with a resource:
 
 1. Check mineral gating: if mineral resource, tile must be in player's prospected set (per game/fog-and-exploration.md). Skip if not.
-2. Production = min(improvement level, owner tech cap).
+2. Production = min(improvement level, owner tech cap). Owner tech cap is derived per [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md) from the player's unlocked tech (or fallback constant).
 3. Province lookup for town development cap must be **region-scoped**: resolve province only within the tile's region (game/world-model-identity.md). Do not search regions in sequence.
 4. Effective yield = min(production, transport level, town development level) — transport level is the tile's road level (or 4 for port); per game/extraction-and-improvements.md.
 5. Sum by commodity; split same-region vs overseas using player's capital region.
