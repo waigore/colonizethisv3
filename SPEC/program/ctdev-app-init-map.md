@@ -21,7 +21,7 @@ On submit: validate constraints; call `runInitGame(config, options)` with fixed 
 
 **Input:** `InitGameMapViewData` plus optional seed/config summary.
 
-**Layout:** OW and NW regions side by side. `CustomPainter` over `RegionMapViewData`, `InteractiveViewer` for pan/zoom. `kDebugMapScale` 1.0.
+**Layout:** OW and NW regions side by side. `CustomPainter` over `RegionMapViewData`, `InteractiveViewer` for pan/zoom. `kDebugMapScale` 0.25 (fits both regions in view; zoom min 0.25).
 
 **Overlays:** Ownership (GP/Tribes vibrant, Minor Nations grey); legend as `displayName (factionId)`; province/sea borders; capitals (gold circles), ports (teal squares). Geographic view: terrain palette, resource glyphs (g, t, i, etc.) at tile centres; compact glyph reference and per-region counts (OW/NW). Per-cell inspection: tap/hover shows region, tile coords, Province, owner, terrain, resource; capital tiles show "Capital of [faction]." Toggleable layers: ownership, borders, capitals, ports, on-tile labels.
 
