@@ -58,6 +58,15 @@ AI calls the suggestion API with PlayerView and current orders, scores candidate
 - **Upstream:** PlayerView, order suggestion API, personality/agenda config.
 - **Downstream:** Orders → order merge → TurnResolver. Events → UI. Evidence → game state.
 
+## Acceptance criteria
+
+- **Module boundaries:** Implemented code respects the package ownership in the table above; colonizethis_ai owns perception, behavior-tree, planners, hidden agenda, dialogue/mood, dossier; colonizethis_logic owns game state, TurnResolver, OrderEngine, PlayerView and invokes AI for orders; no AI logic in colonizethis_data.
+- **Strategic order generation:** `generateStrategicOrders` is deterministic given Game, view, config, and seeds; returns valid Orders; dialogue/mood are emitted only via the provided callbacks.
+- **Tactical (quick battle):** `decideQuickBattleActions` is deterministic given state and tacticalSeed; returns CP-based actions per lane per [quick-battle-resolution](quick-battle-resolution.md).
+- **Order suggestion API:** AI obtains and submits orders only via the suggestion API; province identifiers in API inputs and candidates use prefixed form per [world-model-identity.md](../game/world-model-identity.md).
+- **Integration:** AI is invoked during turn resolution for each AI-controlled Great Power; reads world state only via PlayerView; no Flutter or platform dependencies.
+- **Consistency:** Behaviour and seeding align with [ai-planner.md](ai-planner.md) and referenced GDD/ai specs (personalities, dialogue/mood, hidden agendas).
+
 ## Constraints
 - AI reads only via PlayerView; no hidden data access.
 - All decisions deterministic given seeds.
