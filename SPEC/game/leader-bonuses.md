@@ -41,4 +41,14 @@ Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.
 
 - **Defender:** Use defender faction’s GP player (province owner); apply that player’s leader bonus to defender strength. Province owner lookup uses prefixed province ids and region-scoped lookup; see [world-model-identity.md](world-model-identity.md).
 - **Attacker:** For each attacking side, use that side’s GP player; apply that player’s leader bonus to that attacker’s strength.
-- Bonuses are symmetric (same multiplier type for attacker and defender); only the owning player’s leader matters for each side.
+- Bonuses are symmetric (same multiplier type for attacker and defender); only the owning player's leader matters for each side.
+
+---
+
+## Acceptance criteria
+
+- **Leader selection:** Each Great Power has exactly one leader for the game, chosen at game start (human via UI or default; AI from config). Leader is stored as leaderKey on the Player and serialized; no mid-game change.
+- **Combat-only:** Leader bonuses apply only in auto-resolve combat and Quick Battle; no economy or research effect.
+- **Bonus table:** The leaderKey → modifier mapping (e.g. napoleon +25%, frederick +15%, reserve/default 0%) is the source of truth. Unknown leaderKey is treated as no bonus.
+- **Application:** Defender uses province owner's GP leader (province lookup prefixed and region-scoped per [world-model-identity.md](world-model-identity.md)); each attacker side uses that side's GP leader. Bonuses are applied as multipliers to effective strength before resolution.
+- **Implementation:** Combat resolver and quick battle apply leader bonuses per [combat-resolution.md](../program/combat-resolution.md) and [quick-battle-resolution.md](../program/quick-battle-resolution.md).
