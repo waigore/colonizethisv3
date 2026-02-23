@@ -11,6 +11,7 @@ dependencies:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:
+  logger: ^2.0.2
 
 dev_dependencies:
   colonizethis_test:

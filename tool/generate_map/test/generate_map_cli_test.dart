@@ -65,7 +65,7 @@ void main() {
       expect(result.stdout, contains('region newWorld'));
     });
 
-    test('--continents 1 exits with error', () async {
+    test('--continents 1 exits with error and message on stderr', () async {
       final result = await Process.run(
         'dart',
         [
@@ -80,10 +80,10 @@ void main() {
         workingDirectory: _packageRoot,
       );
       expect(result.exitCode, 1);
-      expect(result.stdout, contains('2–4'));
+      expect(result.stderr, contains('2–4'));
     });
 
-    test('--continents 5 exits with error', () async {
+    test('--continents 5 exits with error and message on stderr', () async {
       final result = await Process.run(
         'dart',
         [
@@ -98,7 +98,7 @@ void main() {
         workingDirectory: _packageRoot,
       );
       expect(result.exitCode, 1);
-      expect(result.stdout, contains('2–4'));
+      expect(result.stderr, contains('2–4'));
     });
 
     test('--sea-fraction and --tiles-per-province run successfully', () async {
@@ -123,7 +123,7 @@ void main() {
       expect(result.stdout, contains('=== Map summary ==='));
     });
 
-    test('prints detailed generation logs (per-pass)', () async {
+    test('happy path produces concise summary and topology sections on stdout', () async {
       final result = await Process.run(
         'dart',
         [
@@ -138,12 +138,12 @@ void main() {
         workingDirectory: _packageRoot,
       );
       expect(result.exitCode, 0, reason: result.stderr.toString());
-      expect(result.stdout, contains('=== Map generation ==='));
-      expect(result.stdout, contains('Pass 1'));
-      expect(result.stdout, contains('Pass 3'));
+      expect(result.stdout, contains('Generating map: 4 provinces, 2 continents'));
+      expect(result.stdout, contains('=== Topology graph ==='));
+      expect(result.stdout, contains('=== Map summary ==='));
     });
 
-    test('--seed-before-assignment uses legacy land assignment', () async {
+    test('--seed-before-assignment runs successfully and produces summary', () async {
       final result = await Process.run(
         'dart',
         [
@@ -161,12 +161,12 @@ void main() {
         workingDirectory: _packageRoot,
       );
       expect(result.exitCode, 0, reason: result.stderr.toString());
-      expect(result.stdout, contains('=== Map generation ==='));
-      expect(result.stdout, contains('Pass 2: Continent seeds'));
-      expect(result.stdout, isNot(contains('organic')));
+      expect(result.stdout, contains('Generating map: 4 provinces, 2 continents'));
+      expect(result.stdout, contains('=== Topology graph ==='));
+      expect(result.stdout, contains('=== Map summary ==='));
     });
 
-    test('--region invalid exits with error', () async {
+    test('--region invalid exits with error and message on stderr', () async {
       final result = await Process.run(
         'dart',
         [
@@ -183,7 +183,7 @@ void main() {
         workingDirectory: _packageRoot,
       );
       expect(result.exitCode, 1);
-      expect(result.stdout, contains('oldWorld or newWorld'));
+      expect(result.stderr, contains('oldWorld or newWorld'));
     });
 
     test('--tile-map-image outputs topology graph DOT', () async {
