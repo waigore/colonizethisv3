@@ -59,3 +59,13 @@ Mood state machine (logic): given current mood, offerQualityDelta (-1..1), and s
 - **PortraitMoodEvent:** When negotiation mood transitions; optionally when opening/closing diplomacy screen with a base mood.
 
 Emission is synchronous from AI turn or from resolution hooks; no async side effects. Order of events is deterministic for replay.
+
+---
+
+## Acceptance criteria
+
+- **Emission by category:** DialogueEvent and PortraitMoodEvent are emitted per spec categories/situations: event, reactive, diplomatic, negotiation, agenda (see § Dialogue categories and § When to emit).
+- **Determinism:** Same game state and dialogue seed produce the same sequence of events; replay and save/load restore or recompute consistently.
+- **Province identity:** When DialogueEvent (or any event) variables include a province id, the value MUST be in prefixed form per [world-model-identity.md](../game/world-model-identity.md).
+- **Mood values:** PortraitMoodEvent and DialogueEvent mood fields use only the fixed set: considering, pleased, gracious, calculating, skeptical, impatient, irritated, dismissive.
+- **UI contract:** UI resolves event fields (leaderId, category, situation, era, mood, variables) to dialogue keys and localized text only; no asset paths or image references in events.
