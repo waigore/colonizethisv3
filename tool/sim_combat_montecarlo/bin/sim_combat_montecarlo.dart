@@ -108,10 +108,11 @@ void main(List<String> arguments) {
       _errExit('logic: sim_combat_montecarlo: battle $idx must be an object');
     }
     final b = Map<String, dynamic>.from(entry as Map);
-    final id = b['id'] as String? ?? 'battle_$idx';
-    final attackerRaw = b['attacker'] as Map<String, dynamic>? ?? {};
-    final defenderRaw = b['defender'] as Map<String, dynamic>? ?? {};
-    final provinceRaw = b['province'] as Map<String, dynamic>? ?? {};
+    _validateBattleKeys(b, idx);
+    final id = b['id'] as String;
+    final attackerRaw = b['attacker'] as Map<String, dynamic>;
+    final defenderRaw = b['defender'] as Map<String, dynamic>;
+    final provinceRaw = b['province'] as Map<String, dynamic>;
     final attackerGeneralMedals = (attackerRaw['generalMedals'] as int?) ?? 0;
     // Defender generalMedals parsed for script format parity; resolver uses attacker's only.
 
@@ -199,6 +200,34 @@ void main(List<String> arguments) {
   if (jsonOutputPath != null && jsonOutputPath.isNotEmpty) {
     File(jsonOutputPath).writeAsStringSync(jsonEncode(aggregatedResults));
     _log.i('logic: sim_combat_montecarlo: wrote JSON log to ${File(jsonOutputPath).absolute.path}');
+  }
+}
+
+/// Validates required battle keys per SPEC/program/sim-combat-montecarlo.md.
+void _validateBattleKeys(Map<String, dynamic> b, int idx) {
+  final idVal = b['id'];
+  if (idVal == null || idVal is! String) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "id" missing or not a string',
+    );
+  }
+  final att = b['attacker'];
+  if (att == null || att is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "attacker" missing or not an object',
+    );
+  }
+  final def = b['defender'];
+  if (def == null || def is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "defender" missing or not an object',
+    );
+  }
+  final prov = b['province'];
+  if (prov == null || prov is! Map) {
+    _errExit(
+      'logic: sim_combat_montecarlo: battle $idx: required key "province" missing or not an object',
+    );
   }
 }
 
