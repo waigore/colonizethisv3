@@ -8,7 +8,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 ## Data Model
 
-**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y`. Stored on WorldState.
+**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y`. Province and tile key formats: [world-model-identity.md](../game/world-model-identity.md). Stored on WorldState.
 
 **Prospected state:** `Map<playerId, Set<tileKey>>` — tiles the player has prospected. Only mineral-eligible terrain per game rules.
 
