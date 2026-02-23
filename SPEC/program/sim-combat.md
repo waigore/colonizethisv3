@@ -32,13 +32,13 @@ Top-level keys:
 - `metadata`: scenario name.
 - `battles`: array of battle objects.
 
-Each battle object:
+Each battle object (required keys: `id`, `attacker`, `defender`, `province`; missing or wrong type = validation error):
 
 - `id`: string identifier.
 - `attacker`: `{ "units": [ { "type": string, "medals": int } ], "generalMedals": int (optional) }`.
 - `defender`: same structure. `type` must match regiment ids from [military-units.md](../game/military-units.md).
 - `province`: `{ "fortLevel": 0|1|2|3, "terrain": string }` (terrain from config: e.g. plains, mountain, forest).
-- `defenderFaction`: `"greatPower" | "minorNation" | "tribe"` for parity rules.
+- `defenderFaction`: optional; `"greatPower" | "minorNation" | "tribe"` for parity rules.
 
 ---
 

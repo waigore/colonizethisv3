@@ -160,5 +160,29 @@ void main() {
       final out = result.stdout.toString() + result.stderr.toString();
       expect(out, contains('fortLevel'));
     });
+
+    test('CLI aborts with non-zero exit on malformed battle (missing required keys)',
+        () async {
+      final cwd = Directory.current.path;
+      final scriptPath =
+          p.join(cwd, 'test', 'fixtures', 'malformed_battle.json');
+      final binPath = p.join(cwd, 'bin', 'sim_combat_montecarlo.dart');
+      final result = await Process.run(
+        Platform.executable,
+        [
+          'run',
+          binPath,
+          '--script',
+          scriptPath,
+          '--trials',
+          '10',
+        ],
+        runInShell: false,
+        workingDirectory: cwd,
+      );
+      expect(result.exitCode, isNot(0));
+      final out = result.stdout.toString() + result.stderr.toString();
+      expect(out, contains('required key'));
+    });
   });
 }

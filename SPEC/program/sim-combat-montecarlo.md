@@ -13,8 +13,15 @@
 
 ## Script Format and Validation
 
-- Script format is the same as [sim-combat.md](sim-combat.md): `metadata`, `battles` array; each battle has `id`, `attacker`, `defender`, `province`, and optional `defenderFaction`. Attacker and defender each have `units` and optional `generalMedals`.
-- **Validation:** As in sim-combat, validation errors abort the run with non-zero exit and a clear error message. Invalid inputs: unknown unit type (not in regiment catalog), fortLevel outside 0–3, malformed script (e.g. missing required keys or wrong types).
+- Script format is the same as [sim-combat.md](sim-combat.md): top-level `metadata` (optional string), `battles` (required array of battle objects).
+- **Per-battle required keys:** Each battle object **must** have:
+  - `id`: string (battle identifier).
+  - `attacker`: object (may be empty `{}`; may contain `units` array and optional `generalMedals` int).
+  - `defender`: object (same structure as attacker).
+  - `province`: object (may contain `fortLevel` 0–3, `terrain` string; see defaults below).
+- **Optional:** `defenderFaction` (accepted for script parity; not used for resolver level in this tool).
+- **Defaults when optional fields are missing:** Within `attacker`/`defender`: `units` defaults to `[]`, `generalMedals` to 0. Within `province`: `fortLevel` defaults to 0, `terrain` to `plains`. Unit objects default `type` to `peasant_levies`, `medals` to 0.
+- **Validation:** Validation errors abort the run with non-zero exit and a clear error message. Invalid inputs: missing or wrong-type required battle key (`id`, `attacker`, `defender`, `province`), unknown unit type (not in regiment catalog), fortLevel outside 0–3, or other malformed script (e.g. battle not an object, `battles` not an array).
 
 ---
 
