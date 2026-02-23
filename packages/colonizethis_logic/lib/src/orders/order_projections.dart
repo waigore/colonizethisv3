@@ -38,13 +38,13 @@ ProjectedEffects projectOrderEffects({
 
   final origPlayer = game.playerById(playerId);
 
-  // Unit locations after resolution.
+  // Unit locations after resolution (province identity: use locationProvinceId per SPEC/game/world-model.md).
   final unitLocations = <String, String>{};
   for (final u in next.worldState.oldWorld.units) {
-    if (u.ownerId == playerId) unitLocations[u.id] = u.provinceId;
+    if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
   }
   for (final u in next.worldState.newWorld.units) {
-    if (u.ownerId == playerId) unitLocations[u.id] = u.provinceId;
+    if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
   }
 
   // Stockpile deltas (quantities after - quantities before).
