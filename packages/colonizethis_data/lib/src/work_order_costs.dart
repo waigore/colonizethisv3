@@ -39,7 +39,9 @@ int totalTurnsForWork(String workTarget, {int? improvementLevel, int? fortLevel}
 /// Material cost for build_improvement at given current level (cost to raise to level+1).
 /// SPEC: level 1 = 1 lumber + 1 cast iron; 2 = 4+4; 3 = 8+8; 4 = 16+16.
 WorkOrderCost workOrderCostBuildImprovement(int currentLevel) {
-  final scale = currentLevel == 0 ? 1 : (1 << (currentLevel - 1)).clamp(1, 16);
+  final clampedLevel = currentLevel.clamp(0, 3);
+  const scalesByNextLevel = [1, 4, 8, 16];
+  final scale = scalesByNextLevel[clampedLevel];
   return {
     CommodityCatalog.lumber.id: scale,
     CommodityCatalog.castIron.id: scale,
