@@ -1,6 +1,6 @@
 # Dialogue and Mood (Phase 6)
 
-**SPEC/ai** — Logic-level dialogue and portrait mood signaling. Source: GDD 10d, TDD 10. Implementation: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md). Portrait assets and UI layout are deferred to UI phases.
+**SPEC/ai** — Logic-level dialogue and portrait mood signaling. Source: GDD 10d, TDD 10. Implementation: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md). Portrait assets and UI layout are deferred to UI phases. Province identity (e.g. province id in DialogueEvent variables): [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -33,7 +33,7 @@ Emitted when a dialogue line should be shown. Consumed by UI or tooling.
 | situation | string | Sub-context (e.g. declare_war, peace_offer, battle_won). |
 | era | string | discovery \| earlyModern \| imperial \| industrial (for era-appropriate phrasing). |
 | mood | string? | Optional; e.g. for negotiation. |
-| variables | map string→string | Fill-in for templates (e.g. otherNation, province). |
+| variables | map string→string | Fill-in for templates (e.g. otherNation, province). When the key is `province` (or any province id), the value MUST be in prefixed form per [world-model-identity.md](../game/world-model-identity.md). |
 
 Selection must be **deterministic** given game state and dialogue seed (same state + seed → same event). UI resolves (leaderId, category, situation, era, mood, variables) to a dialogue key and then to localized text.
 
