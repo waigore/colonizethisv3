@@ -139,3 +139,32 @@ melos run sim_combat_montecarlo -- --script <path> [--trials N] [--seed <int>] [
 ```bash
 melos run sim_combat_montecarlo -- --script tmp/my_test_battle.json --trials 500 --seed 123
 ```
+
+---
+
+## show_tech
+
+Technology tree diagram and query. Outputs the full tech tree as markdown or runs interactive/query mode for a single tech (description, dependencies, effects). No game state required; reads from colonizethis_data tech catalog. Spec: [SPEC/program/show-tech-tool.md](../SPEC/program/show-tech-tool.md).
+
+**Invocation**
+
+```bash
+melos run show_tech -- [options]
+```
+
+**Options**
+
+- `--output <path>` — Write the markdown diagram to this path instead of stdout (default: diagram to stdout).
+- `--interactive` — REPL: prompt for tech id, print description/dependencies/effects, repeat until exit.
+- `--query <techId>` — Single-query mode: print info for the given tech id and exit. Unknown tech id prints an error and exits non-zero.
+
+If neither `--interactive` nor `--query` is set, the full diagram is emitted to stdout (or to `--output` if provided).
+
+**Examples**
+
+```bash
+melos run show_tech --
+melos run show_tech -- --output=./tech_tree.md
+melos run show_tech -- --query organised_regiments
+melos run show_tech -- --interactive
+```
