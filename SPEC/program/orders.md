@@ -1,6 +1,8 @@
 # Orders
 
-**SPEC/program** — Order types, validation, and resolution. Reference: [movement.md](movement.md), [civilian-units.md](../game/civilian-units.md), [military-units.md](../game/military-units.md).
+**SPEC/program** — Order types, validation, and resolution. Reference: [movement.md](movement.md), [civilian-units.md](../game/civilian-units.md), [military-units.md](../game/military-units.md), [world-model-identity.md](../game/world-model-identity.md).
+
+**Province identity:** Province ids in order payloads (e.g. destination province, spawn province, tile keys) use the **prefixed** form `regionId|localId` and must be resolved per [world-model-identity.md](../game/world-model-identity.md). Do not use bare province ids for lookup.
 
 ---
 
