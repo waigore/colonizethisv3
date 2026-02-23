@@ -9,7 +9,7 @@
 | Priority | Meaning |
 |----------|---------|
 | **P0** | Critical blocker — blocks completion or causes incorrect gameplay |
-| **P1** | High priority — significant feature gap，影响核心玩法 |
+| **P1** | High priority — significant feature gap; affects core gameplay |
 | **P2** | Medium priority — noticeable gap but not blocking |
 | **P3** | Nice to have — can be deferred |
 
