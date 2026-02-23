@@ -1399,5 +1399,73 @@ void main() {
       );
       expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fullyVisible.name);
     });
+
+    test('endOfTurn fog decay uses full province id: same local id in two regions', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      const tileKeyOwP1 = 'oldWorld|P1|0|0';
+      const tileKeyNwP1 = 'newWorld|P1|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'explorer1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [Province(id: '$nw|P1', regionId: nw, ownerId: 'p2')],
+            units: [],
+          ),
+          playerVisibilityByTile: {
+            'p1': {
+              tileKeyOwP1: VisibilityLevel.fullyVisible.name,
+              tileKeyNwP1: VisibilityLevel.fullyVisible.name,
+            },
+            'p2': {},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {'P1': [tileKeyOwP1], 'P2': ['oldWorld|P2|0|0']},
+            nw: {'P1': [tileKeyNwP1]},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P1', regionId: nw, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyOwP1],
+        VisibilityLevel.fullyVisible.name,
+        reason: 'Explorer in oldWorld|P1 keeps that province visible',
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyNwP1],
+        VisibilityLevel.fogged.name,
+        reason: 'No Explorer in newWorld|P1; must fog (full province id, not local)',
+      );
+    });
   });
 }

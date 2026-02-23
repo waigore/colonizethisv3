@@ -417,21 +417,20 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
     for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
   };
 
+  // Use full province id (regionId|localId) per SPEC/game/world-model-identity.md.
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
   for (final u in game.worldState.oldWorld.units) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
-      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(localId);
+          .add(u.locationProvinceId);
     }
   }
   for (final u in game.worldState.newWorld.units) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
-      final localId = ProvinceId.localIdFrom(u.locationProvinceId);
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
-          .add(localId);
+          .add(u.locationProvinceId);
     }
   }
 
@@ -447,7 +446,7 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
       final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
       final ownerId = owOwnerByProvince[fullProvinceId] ?? nwOwnerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(parts[1])) {
+      if (!hasExplorerIn.contains(fullProvinceId)) {
         visibility[tileKey] = VisibilityLevel.fogged.name;
       }
     }
