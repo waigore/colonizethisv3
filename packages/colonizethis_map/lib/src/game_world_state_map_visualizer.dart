@@ -15,9 +15,6 @@ import 'init_game_map_view_data.dart';
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
 
-/// Capital marker color (gold/yellow, distinct from terrain).
-const (int, int, int) capitalMarkerRgb = (255, 215, 0);
-
 /// Resolves terrain RGB for a cell (geographic fill). Uses terrainType or parses terrainTypeId.
 (int r, int g, int b) _terrainRgbForCell(
   CellViewData cell,
@@ -31,9 +28,6 @@ const (int, int, int) capitalMarkerRgb = (255, 215, 0);
   final rgb = region.terrainColors[terrain];
   return rgb ?? (128, 128, 128);
 }
-
-/// Port marker color (teal, distinct from capitals).
-const (int, int, int) portMarkerRgb = (0, 100, 140);
 
 /// Renders a single region (OW or NW) with ownership and capitals to PNG bytes.
 /// Used by renderInitGameMapToPng to render each region before composition.
@@ -103,97 +97,51 @@ Uint8List renderSingleRegionGameStateMapToPng({
 
   drawBorders(image, result, seaZoneIds, cellSize, seaZoneBorderColor);
 
-  // Port markers (filled square, teal, black outline) — drawn before capitals so capital on same tile stays on top
-  const portHalfSize = 4;
-  final portColor = image.getColor(
-    portMarkerRgb.$1,
-    portMarkerRgb.$2,
-    portMarkerRgb.$3,
+  drawPortMarkersOnImage(image, portTiles, cellSize);
+  drawCapitalMarkersOnImage(
+    image,
+    capitalTiles.map((c) => (x: c.x, y: c.y)),
+    cellSize,
   );
-  for (final pt in portTiles) {
-    final cx = pt.x * cellSize + cellSize ~/ 2;
-    final cy = pt.y * cellSize + cellSize ~/ 2;
-    img.fillRect(
-      image,
-      x1: cx - portHalfSize,
-      y1: cy - portHalfSize,
-      x2: cx + portHalfSize,
-      y2: cy + portHalfSize,
-      color: portColor,
-    );
-    img.drawRect(
-      image,
-      x1: cx - portHalfSize,
-      y1: cy - portHalfSize,
-      x2: cx + portHalfSize,
-      y2: cy + portHalfSize,
-      color: black,
-    );
-  }
-
-  // Capital markers (filled circle, gold, black outline)
-  const capitalRadius = 6;
-  final capitalColor = image.getColor(
-    capitalMarkerRgb.$1,
-    capitalMarkerRgb.$2,
-    capitalMarkerRgb.$3,
-  );
-  for (final cap in capitalTiles) {
-    final cx = cap.x * cellSize + cellSize ~/ 2;
-    final cy = cap.y * cellSize + cellSize ~/ 2;
-    img.fillCircle(image, x: cx, y: cy, radius: capitalRadius, color: capitalColor);
-    img.drawCircle(image, x: cx, y: cy, radius: capitalRadius, color: black);
-  }
 
   // Legend
   final legendY0 = mapH + legendPadding;
+  var legendY = legendY0;
   img.drawString(
     image,
     'Ownership by faction. Black = land borders; light blue = sea borders.',
     font: img.arial14,
     x: legendPadding,
-    y: legendY0,
+    y: legendY,
     color: black,
   );
+  legendY += legendLineHeight;
   img.drawString(
     image,
     'Capitals marked with gold circle.',
     font: img.arial14,
     x: legendPadding,
-    y: legendY0 + legendLineHeight,
+    y: legendY,
     color: black,
   );
+  legendY += legendLineHeight;
   if (portTiles.isNotEmpty) {
-    img.drawString(
-      image,
-      'Ports marked with teal square.',
-      font: img.arial14,
-      x: legendPadding,
-      y: legendY0 + 2 * legendLineHeight,
-      color: black,
-    );
+    legendY = drawPortsLegendLine(image, legendY);
   }
-  var row = titleLines + (portTiles.isNotEmpty ? 1 : 0);
   for (final fid in factionIds) {
-    final y = legendY0 + row * legendLineHeight;
     final c = factionColors[fid]!;
-    drawLegendSwatch(image, y, c.$1, c.$2, c.$3);
-    img.drawString(
-      image,
-      fid,
-      font: img.arial14,
-      x: legendPadding + swatchSize + swatchGap,
-      y: y,
-      color: black,
-    );
-    row++;
+    legendY = drawLegendLine(image, legendY, c.$1, c.$2, c.$3, fid);
   }
   if (capitalTiles.isNotEmpty) {
-    row++;
+    const capitalRadius = 6;
+    final capitalColor = image.getColor(
+      capitalMarkerRgb.$1,
+      capitalMarkerRgb.$2,
+      capitalMarkerRgb.$3,
+    );
     for (final cap in capitalTiles) {
-      final y = legendY0 + row * legendLineHeight;
       final cx = legendPadding + swatchSize ~/ 2;
-      final cy = y + swatchSize ~/ 2;
+      final cy = legendY + swatchSize ~/ 2;
       img.fillCircle(
         image,
         x: cx,
@@ -207,10 +155,10 @@ Uint8List renderSingleRegionGameStateMapToPng({
         'Capital of ${cap.displayName}',
         font: img.arial14,
         x: legendPadding + swatchSize + swatchGap,
-        y: y,
+        y: legendY,
         color: black,
       );
-      row++;
+      legendY += legendLineHeight;
     }
   }
 
@@ -425,59 +373,16 @@ Uint8List renderInitGameMapToPngFromViewData({
       }
     }
 
-    // Ports.
-    const portHalfSize = 4;
-    final portColor = image.getColor(
-      portMarkerRgb.$1,
-      portMarkerRgb.$2,
-      portMarkerRgb.$3,
+    drawPortMarkersOnImage(
+      image,
+      region.portMarkers.map((p) => (x: p.x, y: p.y)),
+      region.cellSize,
     );
-    for (final pt in region.portMarkers) {
-      final cx = pt.x * region.cellSize + region.cellSize ~/ 2;
-      final cy = pt.y * region.cellSize + region.cellSize ~/ 2;
-      img.fillRect(
-        image,
-        x1: cx - portHalfSize,
-        y1: cy - portHalfSize,
-        x2: cx + portHalfSize,
-        y2: cy + portHalfSize,
-        color: portColor,
-      );
-      img.drawRect(
-        image,
-        x1: cx - portHalfSize,
-        y1: cy - portHalfSize,
-        x2: cx + portHalfSize,
-        y2: cy + portHalfSize,
-        color: black,
-      );
-    }
-
-    // Capitals.
-    const capitalRadius = 6;
-    final capitalColor = image.getColor(
-      capitalMarkerRgb.$1,
-      capitalMarkerRgb.$2,
-      capitalMarkerRgb.$3,
+    drawCapitalMarkersOnImage(
+      image,
+      region.capitalMarkers.map((c) => (x: c.x, y: c.y)),
+      region.cellSize,
     );
-    for (final cap in region.capitalMarkers) {
-      final cx = cap.x * region.cellSize + region.cellSize ~/ 2;
-      final cy = cap.y * region.cellSize + region.cellSize ~/ 2;
-      img.fillCircle(
-        image,
-        x: cx,
-        y: cy,
-        radius: capitalRadius,
-        color: capitalColor,
-      );
-      img.drawCircle(
-        image,
-        x: cx,
-        y: cy,
-        radius: capitalRadius,
-        color: black,
-      );
-    }
 
     // Legend.
     var legendY = mapH + legendPadding;
@@ -491,40 +396,23 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      drawLegendSwatch(
+      legendY = drawLegendLine(
         image,
         legendY,
         seaColorRgb.$1,
         seaColorRgb.$2,
         seaColorRgb.$3,
-      );
-      img.drawString(
-        image,
         'Sea',
-        font: img.arial14,
-        x: legendPadding + swatchSize + swatchGap,
-        y: legendY,
-        color: black,
       );
-      legendY += legendLineHeight;
       for (final entry in region.terrainColors.entries) {
-        final y = legendY;
-        drawLegendSwatch(
+        legendY = drawLegendLine(
           image,
-          y,
+          legendY,
           entry.value.$1,
           entry.value.$2,
           entry.value.$3,
-        );
-        img.drawString(
-          image,
           entry.key.name,
-          font: img.arial14,
-          x: legendPadding + swatchSize + swatchGap,
-          y: y,
-          color: black,
         );
-        legendY += legendLineHeight;
       }
       img.drawString(
         image,
@@ -561,35 +449,18 @@ Uint8List renderInitGameMapToPngFromViewData({
       );
       legendY += legendLineHeight;
       for (final entry in region.factionColors.entries) {
-        final y = legendY;
-        drawLegendSwatch(
+        legendY = drawLegendLine(
           image,
-          y,
+          legendY,
           entry.value.$1,
           entry.value.$2,
           entry.value.$3,
-        );
-        img.drawString(
-          image,
           entry.key,
-          font: img.arial14,
-          x: legendPadding + swatchSize + swatchGap,
-          y: y,
-          color: black,
         );
-        legendY += legendLineHeight;
       }
     }
     if (region.portMarkers.isNotEmpty) {
-      img.drawString(
-        image,
-        'Ports marked with teal square.',
-        font: img.arial14,
-        x: legendPadding,
-        y: legendY,
-        color: black,
-      );
-      legendY += legendLineHeight;
+      legendY = drawPortsLegendLine(image, legendY);
     }
 
     return img.encodePng(image);
