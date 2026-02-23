@@ -62,8 +62,9 @@ bool moveDestVisibilityOk(
   return provinceHasAtLeastVisibility(view, regionId, provinceId, min);
 }
 
-/// Resolves regionId for [unit] when no tileKey: from compound provinceId, [view].provincesById, or visibility tile keys.
-String _regionIdForUnit(PlayerView view, Unit unit) {
+/// Resolves regionId for [unit]: from tileKey, compound provinceId, [view].provincesById, or visibility tile keys.
+/// Shared by order_suggestion and order_visibility (SPEC/program/order-suggestions.md, fog-and-exploration-resolution.md).
+String regionIdForUnit(PlayerView view, Unit unit) {
   if (unit.tileKey != null && unit.tileKey!.isNotEmpty) {
     return Unit.requireRegionIdFromTileKey(unit.tileKey);
   }
@@ -87,7 +88,7 @@ String _regionIdForUnit(PlayerView view, Unit unit) {
 bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [String? targetTileKey]) {
   final regionId = targetTileKey != null && targetTileKey.isNotEmpty
       ? Unit.requireRegionIdFromTileKey(targetTileKey)
-      : _regionIdForUnit(view, unit);
+      : regionIdForUnit(view, unit);
   final provinceId = targetTileKey != null && targetTileKey.isNotEmpty
       ? (Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId)
       : unit.locationProvinceId;
