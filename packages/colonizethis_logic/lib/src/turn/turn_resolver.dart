@@ -151,6 +151,8 @@ Game resolveTurnForGame({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   void Function(DialogueEvent)? onDialogue,
+  /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
@@ -175,7 +177,11 @@ Game resolveTurnForGame({
         state = _runRichesToTreasuryPhase(state);
         break;
       case TurnPhase.production:
-        state = _runProductionPhase(state, defaultAssignments);
+        state = _runProductionPhase(
+          state,
+          defaultAssignments,
+          onProductionComplete,
+        );
         break;
       case TurnPhase.consumption:
         state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
@@ -537,8 +543,13 @@ Game _runExtractionPhase(
   return currentState.copyWith(players: updatedPlayers);
 }
 
-Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
+Game _runProductionPhase(
+  Game game,
+  List<AssignedRecipe> defaultAssignments,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
+) {
   final updatedPlayers = <Player>[];
+  final productionByRecipeByPlayerId = <String, Map<String, int>>{};
 
   for (final player in game.players) {
     final result = resolveProduction(
@@ -546,6 +557,10 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
       workers: player.workerPool,
       assignments: defaultAssignments,
     );
+    if (result.productionByRecipe.isNotEmpty) {
+      productionByRecipeByPlayerId[player.id] =
+          Map<String, int>.from(result.productionByRecipe);
+    }
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,
@@ -554,6 +569,7 @@ Game _runProductionPhase(Game game, List<AssignedRecipe> defaultAssignments) {
     );
   }
 
+  onProductionComplete?.call(productionByRecipeByPlayerId);
   return game.copyWith(players: updatedPlayers);
 }
 

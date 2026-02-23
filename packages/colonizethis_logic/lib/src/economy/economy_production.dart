@@ -22,10 +22,14 @@ class ProductionResult {
   const ProductionResult({
     required this.stockpile,
     required this.workerPool,
+    this.productionByRecipe = const {},
   });
 
   final Stockpile stockpile;
   final WorkerPool workerPool;
+
+  /// Recipe id → quantity produced (output units). For projection API. SPEC/program/order-projections.md.
+  final Map<String, int> productionByRecipe;
 }
 
 /// Resolves production for a single player for one turn.
@@ -43,6 +47,7 @@ ProductionResult resolveProduction({
   required List<AssignedRecipe> assignments,
 }) {
   Stockpile current = stockpile;
+  final productionByRecipe = <String, int>{};
 
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
@@ -70,6 +75,9 @@ ProductionResult resolveProduction({
     final runs = maxByInputs;
     if (runs <= 0) continue;
 
+    productionByRecipe[assignment.recipeId] =
+        (productionByRecipe[assignment.recipeId] ?? 0) + runs;
+
     // Deduct inputs.
     for (final entry in recipe.inputQuantities.entries) {
       final totalNeeded = entry.value * runs;
@@ -85,6 +93,7 @@ ProductionResult resolveProduction({
   return ProductionResult(
     stockpile: current,
     workerPool: workers,
+    productionByRecipe: productionByRecipe,
   );
 }
 
