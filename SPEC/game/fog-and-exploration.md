@@ -96,3 +96,4 @@ Mineral resources may only be extracted from tiles that are (a) connected and (b
 - Resource/terrain rules: [resource-terrain-region-rules.md](resource-terrain-region-rules.md)
 - Extraction gating: [extraction-and-improvements.md](extraction-and-improvements.md)
 - World model (tile positioning): [world-model.md](world-model.md)
+- Province and tile identity (prefixed ids, tile keys): [world-model-identity.md](world-model-identity.md)
