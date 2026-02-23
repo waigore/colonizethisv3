@@ -27,6 +27,7 @@ For every suggested order `o`, appending it to the current list and validating v
 
 ## Rules
 
+- **Province / tile identity:** Province ids and tile keys in suggested orders (destination province, targetTileKey, spawn province, fleet/sea zone ids) use the **prefixed** form and resolution rules per [world-model-identity.md](../game/world-model-identity.md) (same as [orders.md](orders.md)).
 - **Work orders:** Suggested only for the unit's current province and tile. Never suggests work for a province the unit is not in.
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
