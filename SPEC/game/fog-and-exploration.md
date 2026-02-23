@@ -10,7 +10,7 @@ Per-player tile visibility governing what each Great Power knows about the map. 
 
 ### Visibility Levels
 
-Four levels per player per tile:
+Four levels per player per tile. Visibility state is keyed by player and by province (prefixed province id) or tile (tile key); see [world-model-identity.md](world-model-identity.md).
 
 - **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
 - **Revealed:** Province boundary and owner known; terrain and resources unknown.
