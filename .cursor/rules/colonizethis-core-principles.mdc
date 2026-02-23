@@ -5,36 +5,9 @@ alwaysApply: true
 
 # Core Principles
 
-## Stack
-
-- **Flutter** for UI and overlays (menus, HUD, screens).
-- **Flame** for game world, simulation, and entities.
-- **Dart** throughout. Keep UI and game-loop concerns **separated**.
-- For UI implementation (Widgetbook, catalog, style), see the UI design rule.
-
-## Typing and null safety
-
-- Strict Dart; no implicit `dynamic`.
-- Explicit null handling; use `?` and `!` deliberately; prefer early returns over defensive `!`.
-- Guard clauses and early returns; avoid deep nesting (extract when beyond ~2 levels).
-
-## Single responsibility and delegation
-
-- **Thin screens/pages:** orchestrate only; delegate data, state, and logic to services, controllers, or Flame components.
-- One main concern per file/class. Extract when a pattern appears in 2+ places or logic can be tested in isolation.
-
-## Logging
-
-- **Required:** All code must use Dart's `logger` package for logging; no `print` for operational or diagnostic output.
-- Follow project conventions: message prefixes (e.g. `logic:`, `ai:`, `data:`, `map:`, `save:`), appropriate levels (debug, info, warn, error), and `error`/`stackTrace` for exceptions.
-- See **SPEC/program/ctdev-logging.md** for scope, naming, and configuration.
-
-## Spec alignment
-
-- Game and AI behavior: follow the **GDD** (`SPEC/game/`).
-- Architecture and modules: follow the **TDD** (`SPEC/program/`).
-- See `colonizethis-spec-required.mdc` for SPEC structure and source-of-truth.
-
-## Province lookup (multi-region)
-
-- When locating provinces in logic, always use **(regionId, provinceId)** or a **prefixed** province id (`regionId|localId`). Never use province id alone; never assume oldWorld/newWorld as a default region. See **SPEC/game/world-model.md** (Province identity and lookup).
+- **Stack:** Flutter (UI, overlays, menus, HUD); Flame (game world, simulation, entities); Dart throughout. Keep UI and game-loop **separated**. UI details: see UI design rule.
+- **Typing:** Strict Dart; no implicit `dynamic`. Explicit null handling; early returns over defensive `!`; guard clauses; avoid nesting beyond ~2 levels (extract).
+- **Delegation:** Thin screens/pages — orchestrate only; delegate to services, controllers, or Flame components. One main concern per file/class; extract at 2+ uses or when testable in isolation.
+- **Logging:** Required: use Dart `logger`; no `print` for operational/diagnostic output. Use prefixes (e.g. `logic:`, `ai:`, `data:`, `map:`, `save:`), appropriate levels, and `error`/`stackTrace` for exceptions. See `SPEC/program/ctdev-logging.md`.
+- **Spec alignment:** Game/AI → GDD (`SPEC/game/`); architecture → TDD (`SPEC/program/`). See spec-required rule.
+- **Province lookup:** Always **(regionId, provinceId)** or **prefixed** id (`regionId|localId`). Never province id alone; never assume a default region. See `SPEC/game/world-model.md`.

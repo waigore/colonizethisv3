@@ -6,24 +6,11 @@ alwaysApply: false
 
 # Component Structure
 
-## Folder layout
+**Folder layout:**
+- `lib/game/` — Flame game, world, camera. `lib/game/components/` — Flame components (optional: `units/`, `map/`, `ui/`).
+- `lib/widgets/` or `lib/ui/` — Shared Flutter widgets. `lib/screens/` or `lib/pages/` — Full screens.
+- `lib/state/` or `lib/providers/` — State (e.g. Riverpod). `lib/services/` — Save/load, API, audio. `lib/models/` — Domain models, DTOs.
 
-- **`lib/game/`** — Flame game, world, camera; high-level game assembly.
-- **`lib/game/components/`** — Flame components (entities, effects, HUD). Optional subdirs: `units/`, `map/`, `ui/`.
-- **`lib/widgets/`** or **`lib/ui/`** — Shared Flutter widgets for overlays and menus.
-- **`lib/screens/`** or **`lib/pages/`** — Full Flutter screens (menus, settings, lobby).
-- **`lib/state/`** or **`lib/providers/`** — State management (e.g. Riverpod).
-- **`lib/services/`** — Non-Flame services (save/load, API, audio).
-- **`lib/models/`** — Domain models and DTOs (aligned with GDD where applicable).
+**Reuse:** Extract at 2+ places or when testable in isolation. Flame: small components, mixins (e.g. `Tappable`); keep rendering in components. Flutter: reusable widgets for loading/error/empty/list; thin screens. New Flutter widgets: catalog + Widgetbook (see UI design rule).
 
-## Reuse
-
-- Extract when a pattern appears in **2+ places** or when logic is **testable in isolation**.
-- **Flame:** Compose small components; use mixins for behavior (e.g. `Tappable`, `DragCallbacks`). Keep rendering in components.
-- **Flutter:** Shared patterns (loading, error, empty, list item) as reusable widgets; thin screens that delegate to widgets and state/providers.
-- New Flutter widgets must be registered in the widget catalog and have a Widgetbook story (see UI design rule).
-
-## Naming
-
-- **Flame:** `*Component` suffix where it clarifies (e.g. `UnitComponent`, `MapTileComponent`).
-- **Flutter:** `*Widget`, `*Screen`, or `*Page` where it clarifies intent.
+**Naming:** Flame: `*Component` when clarifying. Flutter: `*Widget`, `*Screen`, `*Page` when clarifying.
