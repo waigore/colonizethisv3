@@ -1,6 +1,6 @@
 # AI Personalities (Phase 6)
 
-**SPEC/ai** — Leader-specific behavior config for MVP. Source: GDD 10a. Application: [ai-architecture.md](ai-architecture.md).
+**SPEC/ai** — Leader-specific behavior config for MVP. Source: GDD 10a. Application: [ai-architecture.md](ai-architecture.md). Implementation: [ai-systems-impl.md](../program/ai-systems-impl.md) (config, domain planners, goal selection), [ai-planner.md](../program/ai-planner.md) (AIConfig supplied when generating orders).
 
 ---
 
@@ -61,6 +61,12 @@ These are applied when scoring actions (e.g. declare war, accept peace, choose r
 ## Difficulty
 
 Difficulty does **not** change personality or AI strength. It only affects **starting parameters and ruleset modifiers** (e.g. AI nation’s starting resources, production modifiers, unit strength modifiers). Same personality and same algorithm for all difficulty levels.
+
+---
+
+## Implementation
+
+Personality is loaded as config and supplied via **AIConfig** when the AI generates orders. [ai-systems-impl.md](../program/ai-systems-impl.md) defines where config holds personality and where domain planners and goal selection use it; [ai-planner.md](../program/ai-planner.md) describes integration and where AIConfig is built and supplied for order generation.
 
 ---
 
