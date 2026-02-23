@@ -1,6 +1,6 @@
-// ignore_for_file: avoid_print
-/// CLI: generate map from province/continent count, infer topology, output tile map and topology graph.
-/// SPEC/program/map-data.md. Thin facade over colonizethis_map and colonizethis_data.
+// CLI: generate map from province/continent count, infer topology, output tile map and topology graph.
+// SPEC/program/map-data.md. Thin facade over colonizethis_map and colonizethis_data.
+// Operational/diagnostic output via logger (SPEC/program/ctdev-logging.md); usage and summary to stdout.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -8,6 +8,15 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
+
+void _errExit(String message) {
+  stderr.writeln(message);
+  _log.w('map: $message');
+  exit(1);
+}
 
 const int _defaultProvinces = 60;
 const int _defaultContinents = 3;
@@ -67,108 +76,94 @@ void main(List<String> arguments) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 0) {
-        print('Error: --continent-buffer requires a non-negative integer, got: $value');
-        exit(1);
+        _errExit('Error: --continent-buffer requires a non-negative integer, got: $value');
       }
       continentBufferOverride = parsed;
     } else if (arg.startsWith('--continent-buffer=')) {
       final value = arg.substring('--continent-buffer='.length).trim();
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 0) {
-        print('Error: --continent-buffer requires a non-negative integer, got: $value');
-        exit(1);
+        _errExit('Error: --continent-buffer requires a non-negative integer, got: $value');
       }
       continentBufferOverride = parsed;
     } else if (arg == '--region' && i + 1 < arguments.length) {
       regionOverride = arguments[++i];
       if (regionOverride != 'oldWorld' && regionOverride != 'newWorld') {
-        print('Error: --region must be oldWorld or newWorld, got: $regionOverride');
-        exit(1);
+        _errExit('Error: --region must be oldWorld or newWorld, got: $regionOverride');
       }
     } else if (arg.startsWith('--region=')) {
       regionOverride = arg.substring(9).trim();
       if (regionOverride != 'oldWorld' && regionOverride != 'newWorld') {
-        print('Error: --region must be oldWorld or newWorld, got: $regionOverride');
-        exit(1);
+        _errExit('Error: --region must be oldWorld or newWorld, got: $regionOverride');
       }
     } else if (arg == '--provinces' && i + 1 < arguments.length) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --provinces requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --provinces requires a positive integer, got: $value');
       }
       provincesOverride = parsed;
     } else if (arg.startsWith('--provinces=')) {
       final value = arg.substring(12).trim();
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --provinces requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --provinces requires a positive integer, got: $value');
       }
       provincesOverride = parsed;
     } else if (arg == '--continents' && i + 1 < arguments.length) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < _minContinents || parsed > _maxContinents) {
-        print('Error: --continents must be $_minContinents–$_maxContinents, got: $value');
-        exit(1);
+        _errExit('Error: --continents must be $_minContinents–$_maxContinents, got: $value');
       }
       continentsOverride = parsed;
     } else if (arg.startsWith('--continents=')) {
       final value = arg.substring(13).trim();
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < _minContinents || parsed > _maxContinents) {
-        print('Error: --continents must be $_minContinents–$_maxContinents, got: $value');
-        exit(1);
+        _errExit('Error: --continents must be $_minContinents–$_maxContinents, got: $value');
       }
       continentsOverride = parsed;
     } else if (arg == '--tiles-per-province' && i + 1 < arguments.length) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --tiles-per-province requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --tiles-per-province requires a positive integer, got: $value');
       }
       tilesPerProvinceOverride = parsed;
     } else if (arg.startsWith('--tiles-per-province=')) {
       final value = arg.substring('--tiles-per-province='.length).trim();
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --tiles-per-province requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --tiles-per-province requires a positive integer, got: $value');
       }
       tilesPerProvinceOverride = parsed;
     } else if (arg == '--sea-fraction' && i + 1 < arguments.length) {
       final value = arguments[++i];
       final parsed = double.tryParse(value);
       if (parsed == null || parsed < 0 || parsed >= 1) {
-        print('Error: --sea-fraction must be in [0, 1), got: $value');
-        exit(1);
+        _errExit('Error: --sea-fraction must be in [0, 1), got: $value');
       }
       seaFractionOverride = parsed;
     } else if (arg.startsWith('--sea-fraction=')) {
       final value = arg.substring('--sea-fraction='.length).trim();
       final parsed = double.tryParse(value);
       if (parsed == null || parsed < 0 || parsed >= 1) {
-        print('Error: --sea-fraction must be in [0, 1), got: $value');
-        exit(1);
+        _errExit('Error: --sea-fraction must be in [0, 1), got: $value');
       }
       seaFractionOverride = parsed;
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null) {
-        print('Error: --seed requires an integer, got: $value');
-        exit(1);
+        _errExit('Error: --seed requires an integer, got: $value');
       }
       seedOverride = parsed;
     } else if (arg.startsWith('--seed=')) {
       final value = arg.substring(7).trim();
       final parsed = int.tryParse(value);
       if (parsed == null) {
-        print('Error: --seed requires an integer, got: $value');
-        exit(1);
+        _errExit('Error: --seed requires an integer, got: $value');
       }
       seedOverride = parsed;
     } else if (arg == '--world-state' && i + 1 < arguments.length) {
@@ -177,16 +172,14 @@ void main(List<String> arguments) {
       final value = arguments[++i];
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --tile-size requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --tile-size requires a positive integer, got: $value');
       }
       tileSizeOverride = parsed;
     } else if (arg.startsWith('--tile-size=')) {
       final value = arg.substring('--tile-size='.length).trim();
       final parsed = int.tryParse(value);
       if (parsed == null || parsed < 1) {
-        print('Error: --tile-size requires a positive integer, got: $value');
-        exit(1);
+        _errExit('Error: --tile-size requires a positive integer, got: $value');
       }
       tileSizeOverride = parsed;
     }
@@ -223,8 +216,9 @@ void main(List<String> arguments) {
     continentBufferTiles: mapGenParams.continentBufferTiles,
   );
 
-  print('=== Map generation ===');
-  print('Generating map: $numProvinces provinces, $numContinents continents, region $regionId (seed: $seedUsed)');
+  _log.i('map: === Map generation ===');
+  _log.i('map: Generating map: $numProvinces provinces, $numContinents continents, region $regionId (seed: $seedUsed)');
+  stdout.writeln('Generating map: $numProvinces provinces, $numContinents continents, region $regionId (seed: $seedUsed)');
   List<(int x, int y)>? landSeeds;
   List<int>? landSeedContinentIndices;
   List<(int x, int y)>? continentSeeds;
@@ -233,7 +227,7 @@ void main(List<String> arguments) {
     numContinents: numContinents,
     regionId: regionId,
     resourceRules: ResourceRules.defaultRules,
-    onLog: (msg) => print(msg),
+    onLog: (msg) => _log.i('map: $msg'),
     onLandSeedsPlaced: (s, indices) {
       landSeeds = List.from(s);
       landSeedContinentIndices = List.from(indices);
@@ -243,7 +237,7 @@ void main(List<String> arguments) {
 
   final tileCounts = computeTileCountsPerRegion(tileMapResult);
   final centroids = computeCentroidsPerRegion(tileMapResult);
-  print('Tile map seed: $seedUsed');
+  _log.i('map: Tile map seed: $seedUsed');
 
   if (withTileMapImage) {
     final cellSize = tileSizeOverride;
@@ -271,9 +265,10 @@ void main(List<String> arguments) {
       );
     }
     final opened = openInDefaultViewer(imagePath);
-    print('Tile map image: $imagePath');
+    _log.i('map: Tile map image: $imagePath');
+    stdout.writeln('Tile map image: $imagePath');
     if (!opened) {
-      print('Could not open in viewer. Saved to: $imagePath');
+      _log.w('map: Could not open in viewer. Saved to: $imagePath');
     }
   }
 
@@ -296,16 +291,17 @@ void main(List<String> arguments) {
     );
     final dotFile = dotPath ?? _tempDotPath();
     File(dotFile).writeAsStringSync(dotContent);
-    print('Topology graph (DOT): $dotFile');
+    _log.i('map: Topology graph (DOT): $dotFile');
+    stdout.writeln('Topology graph (DOT): $dotFile');
 
     try {
       final pngPath = dotFile.replaceAll(RegExp(r'\.dot$'), '.png');
       final proc = Process.runSync('neato', ['-n', '-Tpng', '-o', pngPath, dotFile]);
       if (proc.exitCode == 0) {
         final opened = openInDefaultViewer(pngPath);
-        print('Topology graph (PNG): $pngPath');
+        _log.i('map: Topology graph (PNG): $pngPath');
         if (!opened) {
-          print('Could not open topology graph in viewer. Saved to: $pngPath');
+          _log.w('map: Could not open topology graph in viewer. Saved to: $pngPath');
         }
       } else {
         _warnGraphviz();
@@ -319,8 +315,7 @@ void main(List<String> arguments) {
   if (worldStatePath != null) {
     final wsFile = File(worldStatePath);
     if (!wsFile.existsSync()) {
-      print('Error: world state file not found: $worldStatePath');
-      exit(1);
+      _errExit('Error: world state file not found: $worldStatePath');
     }
     final ws = WorldState.fromJson(
       jsonDecode(wsFile.readAsStringSync()) as Map<String, dynamic>,
@@ -354,7 +349,9 @@ String _tempDotPath() {
 }
 
 void _warnGraphviz() {
-  print('Warning: Graphviz not installed; run `brew install graphviz` to render topology graph to PNG.');
+  const msg = 'Warning: Graphviz not installed; run `brew install graphviz` to render topology graph to PNG.';
+  stderr.writeln(msg);
+  _log.w('map: $msg');
 }
 
 void _printUsage() {

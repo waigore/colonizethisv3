@@ -35,7 +35,7 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ## Map generation tool
 
-**Place:** `tool/generate_map/`. **Mode:** Generate from N and C via `--provinces`, `--continents`. Infer topology. Output: graph, summary, tile map PNG, topology DOT/PNG. **Options:** `--provinces`, `--continents`, `--region`, `--tiles-per-province`, `--sea-fraction`, `--interactive`, `--tile-map`, `--tile-map-image`, `--seed`, `--world-state`, `--join-continents`, `--seed-before-assignment`, `--skip-fill-lakes`, `--continent-buffer`. Topology graph: DOT export; map-aligned layout when tile map available. **Run:** `melos run generate_map -- [options]`.
+**Place:** `tool/generate_map/`. **Mode:** Generate from N and C via `--provinces`, `--continents`. Infer topology. Output: graph, summary, tile map PNG, topology DOT/PNG. **Options:** `--provinces`, `--continents`, `--region`, `--tiles-per-province`, `--sea-fraction`, `--interactive`, `--tile-map`, `--tile-map-image`, `--seed`, `--world-state`, `--join-continents`, `--seed-before-assignment`, `--skip-fill-lakes`, `--continent-buffer`. Topology graph: DOT export; map-aligned layout when tile map available. **Run:** `melos run generate_map -- [options]`. **Logging:** Operational and diagnostic output follows [ctdev-logging.md](ctdev-logging.md) (logger with `map:` prefix; errors to stderr and non-zero exit).
 
 ---
 
