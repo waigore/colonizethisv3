@@ -1,6 +1,6 @@
 # Turn Resolution — Per-Phase Details
 
-**SPEC/program** — Detailed behaviour for each turn-resolution phase. Overview: [turn-resolution-phases.md](turn-resolution-phases.md).
+**SPEC/program** — Detailed behaviour for each turn-resolution phase. Overview: [turn-resolution-phases.md](turn-resolution-phases.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -73,3 +73,9 @@ BuildUnitOrder: by unit type category — civilian: deduct cash from treasury an
 ## End-of-turn
 
 (1) **Victory check** — If `Game.victory` is null, evaluate military victory: count Old World provinces per Great Power; if any GP has ≥31 OW provinces, set `Game.victory` (winner, type military, turn number). If victory already set, skip. See [victory.md](../game/victory.md) and [#86](https://github.com/waigore/colonizethisv3/issues/86). (2) **Era-change dialogue** — When the calendar era changes on the next turn, emit dialogue events per [dialogue-and-mood.md](../ai/dialogue-and-mood.md). (3) **Spy 5-turn fog decay** — Decrement spy-reveal timers; for each (player, province) where timer reaches 0, set that province’s tiles to fogged for that player. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Fog decay (Spy). (4) **Explorer/Spy fog decay** — For each other-faction province where a player had Explorer/Spy, if none remain (and no Spy timer active), set tiles to fogged. (5) **Turn advance** — Increment WorldState turn number; set phase to Orders. (6) **Orders** — The current-turn order list is cleared after turn resolve (not carried over). The caller that owns the order list or OrderEngine clears it after TurnResolver returns. See [order-engine.md](order-engine.md) § End-of-turn order list. Merge and apply of orders for the next turn happen when that turn's Orders phase runs.
+
+---
+
+## Constraints
+
+- **Province identity:** Province ids used in phase behaviour (e.g. unit/fleet location, `province.ownerId`, capital, victory count, fog by province) follow [world-model-identity.md](../game/world-model-identity.md): use prefixed form (`regionId|localId`); never look up by province id alone.
