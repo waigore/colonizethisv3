@@ -1,6 +1,6 @@
 # Leader Bonuses
 
-**SPEC/game** — Per–Great Power leader selection and combat bonuses. Reference: GDD 09.
+**SPEC/game** — Per–Great Power leader selection and combat bonuses. Reference: GDD 09. Province identity (defender / province owner): [world-model-identity.md](world-model-identity.md).
 
 ---
 
@@ -39,6 +39,6 @@ Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.
 
 ## Application Rule
 
-- **Defender:** Use defender faction’s GP player (province owner); apply that player’s leader bonus to defender strength.
+- **Defender:** Use defender faction’s GP player (province owner); apply that player’s leader bonus to defender strength. Province owner lookup uses prefixed province ids and region-scoped lookup; see [world-model-identity.md](world-model-identity.md).
 - **Attacker:** For each attacking side, use that side’s GP player; apply that player’s leader bonus to that attacker’s strength.
 - Bonuses are symmetric (same multiplier type for attacker and defender); only the owning player’s leader matters for each side.
