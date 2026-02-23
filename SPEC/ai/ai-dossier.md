@@ -39,3 +39,14 @@ Spy reports (if in scope) add evidence or special entries; format TBD in impleme
 - Behavioral notes / timeline: when new observable events occur (turn resolution or event hooks).
 
 Storage may be part of game state (e.g. per-observer dossier cache) or computed on demand from game state and evidence logs; spec does not mandate storage format, only the logical sections and safety rules above.
+
+---
+
+## Acceptance criteria
+
+- **PlayerView safety:** The dossier exposes only PlayerView-safe data. True hidden agenda (`hiddenAgenda[subjectId]`) is never exposed to the observer. Only suspicion scores, evidence-derived labels, and observable-event summaries are visible.
+- **Sections:** Dossier has logical sections: Basic intel (personality/archetype, relation, relative strength); Hidden agenda analysis (per-agenda suspicion score, display bands Unknown/Possible/Likely/Almost certain/Confirmed, best-guess agenda id and confidence %); Evidence list (capped, chronological, human-readable entries); Behavioral notes; Timeline. All sections computable from observable state.
+- **Confidence %:** Derived from suspicion score bands (e.g. 0–2 → 0%, 3–5 → low %, 6–8 → medium %, 9–10 → high %, 10+ → “Confirmed” with 100% display). “Confirmed” means suspicion passed threshold; it does not reveal the true agenda value.
+- **Evidence and timeline:** Evidence list and timeline entries reference only **observable** events (e.g. war declared, treaty broken, visible army movement). No internal AI intent or hidden state in entries.
+- **Update cadence:** Basic intel when relation or strength comparison changes (at least once per turn if dossier is viewed). Hidden agenda analysis when new evidence is added for that subject. Behavioral notes and timeline when new observable events occur (turn resolution or event hooks).
+- **Implementation:** Dossier projection, evidence rules, and storage/on-demand contract: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
