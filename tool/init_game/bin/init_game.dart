@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 /// CLI: run game creation (map gen, province/capital assignment), export PNG and markdown.
 /// SPEC/program/init-game-tool.md. Thin facade over colonizethis_logic.
+/// Operational/diagnostic output via logger (SPEC/program/ctdev-logging.md); usage/help to stdout.
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
 
 Future<void> main(List<String> arguments) async {
   String? configPath;
@@ -187,8 +191,8 @@ Future<void> main(List<String> arguments) async {
   }
 
   try {
-    print('=== init_game ===');
-    print('Running game setup...');
+    _log.i('logic: init_game start');
+    _log.i('logic: Running game setup...');
     final shouldRenderPng =
         outputMapPath != null && outputMapPath.isNotEmpty;
     final result = runInitGame(
@@ -198,25 +202,24 @@ Future<void> main(List<String> arguments) async {
         renderPng: shouldRenderPng,
       ),
     );
-    print('Game created: ${result.game.id}');
+    _log.i('logic: Game created: ${result.game.id}');
 
     if (outputMapPath != null && outputMapPath.isNotEmpty) {
       File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
-      print('Map PNG: $outputMapPath');
+      _log.d('logic: Map PNG: $outputMapPath');
     }
 
     if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
       File(outputMarkdownPath).writeAsStringSync(result.markdown);
-      print('Markdown: $outputMarkdownPath');
+      _log.d('logic: Markdown: $outputMarkdownPath');
     }
 
     if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
       await _saveGame(result.game, outputGamePath);
-      print('Game saved: $outputGamePath');
+      _log.d('logic: Game saved: $outputGamePath');
     }
 
-    print('');
-    print(result.markdown);
+    _log.i('logic: Faction setup:\n${result.markdown}');
   } catch (e) {
     final message = e is ArgumentError
         ? (e.message ?? e.toString())
@@ -241,6 +244,7 @@ Future<void> _saveGame(Game game, String path) async {
 }
 
 void _printUsage() {
+  // Usage/help to stdout per CLI contract (SPEC/program/init-game-tool.md).
   print('Usage:');
   print('  melos run init_game -- [options]');
   print('');

@@ -47,4 +47,5 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 ## Constraints
 
 - **Error handling:** On validation or setup failure the CLI catches errors from `runInitGame` (and downstream), prints a short user-facing message to stderr, and exits with a non-zero code. No raw stack trace is shown to the user.
+- **Output:** Operational and diagnostic output (progress, paths, game id, faction setup summary) uses the Dart `logger` package per [ctdev-logging.md](ctdev-logging.md). Usage/help (`--help`) is printed to stdout.
 - Seed handling delegated to `runInitGame`; CLI passes through to GameSetupConfig.seed.
