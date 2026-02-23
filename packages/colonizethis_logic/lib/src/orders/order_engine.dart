@@ -240,9 +240,14 @@ class OrderEngine {
       final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
           ? Unit.requireRegionIdFromTileKey(unit.tileKey)
           : ProvinceId.regionIdFrom(resolveToFullProvinceId(game.worldState, unit.provinceId));
+      final destFullId = resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
+      final destRegion = ProvinceId.regionIdFrom(destFullId);
+      if (destRegion != unitRegion) {
+        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid move');
+      }
       final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
-      final destLocalId = ProvinceId.localIdFrom(o.destinationProvinceId);
-      if (!isValidLandMove(topology, unitLocalId, destLocalId)) {
+      final destLocalId = ProvinceId.localIdFrom(destFullId);
+      if (!isValidLandMoveInRegion(topology, unitRegion, unitLocalId, destLocalId)) {
         return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid move');
       }
       final destProvince = tryGetProvince(game.worldState, o.destinationProvinceId);

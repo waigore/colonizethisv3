@@ -4,6 +4,33 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
+  group('neighborProvinceIdsInRegion and isValidLandMoveInRegion', () {
+    test('duplicate local ids across regions: neighbors are region-scoped', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 'p2'), // same local ids in both regions
+        ],
+      );
+      expect(
+        neighborProvinceIdsInRegion(topology, 'oldWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(
+        neighborProvinceIdsInRegion(topology, 'newWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p2'), isTrue);
+      expect(isValidLandMoveInRegion(topology, 'newWorld', 'p1', 'p2'), isTrue);
+      expect(isValidLandMove(topology, 'p1', 'p2'), isFalse); // ambiguous: two nodes p1
+    });
+  });
+
   group('isValidLandMove', () {
     test('allows move to adjacent land province', () {
       final topology = MapTopology(

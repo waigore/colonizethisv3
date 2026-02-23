@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
+import '../world/movement.dart';
 import '../world/naval.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
@@ -59,27 +60,9 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
-    // Enumerate neighboring provinces via topology (neighbors use local ids in same region).
-    for (final edge in topology.edges) {
-      String? neighborLocalId;
-      if (edge.id1 == fromLocalId) {
-        neighborLocalId = edge.id2;
-      } else if (edge.id2 == fromLocalId) {
-        neighborLocalId = edge.id1;
-      }
-      if (neighborLocalId == null) continue;
-
-      // Only consider neighbors that are provinces.
-      final neighborNode = topology.nodes.firstWhere(
-        (n) => n.id == neighborLocalId,
-        orElse: () => const TopologyNode(
-          id: '',
-          regionId: '',
-          type: TopologyNodeType.seaZone,
-        ),
-      );
-      if (neighborNode.type != TopologyNodeType.province) continue;
-
+    // Enumerate neighboring provinces in unit's region (region-scoped adjacency).
+    for (final neighborLocalId
+        in neighborProvinceIdsInRegion(topology, unitRegion, fromLocalId)) {
       final destinationProvinceId = ProvinceId.full(unitRegion, neighborLocalId);
 
       // Skip duplicates for this unit.

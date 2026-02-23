@@ -6,6 +6,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/movement.dart';
 import 'evidence_rules.dart';
 
 const String _eraDefault = 'earlyModern';
@@ -109,18 +110,7 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
 
 /// Neighbor province local ids in [regionId] that share an edge with [localId]. Province nodes only.
 List<String> neighborProvinceLocalIds(MapTopology topology, String regionId, String localId) {
-  final nodesInRegion = topology.nodes
-      .where((n) => n.regionId == regionId && n.type == TopologyNodeType.province)
-      .toList();
-  if (nodesInRegion.any((n) => n.id == localId) == false) return [];
-  final neighborIds = <String>{};
-  for (final edge in topology.edges) {
-    final other = edge.id1 == localId ? edge.id2 : (edge.id2 == localId ? edge.id1 : null);
-    if (other == null) continue;
-    final otherNode = nodesInRegion.where((n) => n.id == other).firstOrNull;
-    if (otherNode != null) neighborIds.add(other);
-  }
-  return neighborIds.toList();
+  return neighborProvinceIdsInRegion(topology, regionId, localId).toList();
 }
 
 String? _ownerOfProvince(Game game, String fullProvinceId) {
