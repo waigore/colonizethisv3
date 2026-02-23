@@ -1,8 +1,8 @@
-// SPEC/program/tile-map-generation.md § Topology inference.
+// SPEC/program/tile-map-gen-resources.md § Topology inference.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-/// Infers MapTopology from a tile map result. SPEC/program/tile-map-generation.md § Topology inference.
+/// Infers MapTopology from a tile map result. SPEC/program/tile-map-gen-resources.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.
 MapTopology inferTopologyFromTileMap(
   TileMapResult result,
