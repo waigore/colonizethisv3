@@ -1,4 +1,4 @@
-/// Allowed terrain types per region. TDD 04b, SPEC/program/tile-map-generation.md.
+/// Allowed terrain types per region. SPEC/program/tile-map-gen-resources.md, SPEC/game/resource-terrain-region-rules.md.
 /// Canonical source: Imperialism II Terrain and Development table (OW-only, NW-only, Both).
 /// Phase 1: minimal mapping from current TerrainType enum; extend when terrain enum is expanded.
 

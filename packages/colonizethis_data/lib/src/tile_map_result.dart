@@ -1,7 +1,7 @@
 import 'terrain_type.dart';
 import 'resource.dart';
 
-/// Result of tile-based map generation. SPEC/program/tile-map-generation.md.
+/// Result of tile-based map generation. SPEC/program/tile-map-gen-resources.md, SPEC/program/map-data.md.
 /// Per-region 2D grid: each cell has a region id (province or sea zone).
 /// Optionally terrain and resource per cell (Phase 1+).
 class TileMapResult {
