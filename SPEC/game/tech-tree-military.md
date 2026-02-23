@@ -4,6 +4,12 @@
 
 ---
 
+## Catalog and implementation
+
+The **military tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and regiment/effect mapping. **Implementation:** The program-level tech catalog lives in code (e.g. `colonizethis_data`); build and research order validation use the catalog per [orders.md](../program/orders.md) and the order engine. The program-level catalog may be an **MVP subset** of the full GDD table; migration to a full catalog is a design target. Future ruleset-driven catalog per [ruleset-config.md](../program/ruleset-config.md).
+
+---
+
 ## Infantry
 
 | id | name | era | prerequisites | regiment / effect |
@@ -58,3 +64,12 @@
 
 - Bowmen, Knights, Lancers have no upgrade path (obsolete in later eras). Starting regiments (e.g. Peasant Levies, Pikemen, Arquebusiers, Culverin, Squires) are buildable from game start or earliest techs.
 - Military level for minor parity = highest era among regiment types any GP can build (per [factions.md](factions.md)).
+
+---
+
+## Acceptance criteria
+
+- **Regiment buildability:** A regiment type is buildable iff its unlocking tech (per this doc) is in the player's `techUnlocked` set.
+- **Military level:** Military level (1–4) = highest era among regiment types any Great Power can build; minors and tribes receive this as `effectiveMilitaryLevel` per [factions.md](factions.md).
+- **Table as source of truth:** The tech table in this doc is the source of truth for tech id, name, era, prerequisites, and regiment/effect mapping.
+- **Fort prerequisites:** Fort level 2 requires Mine Engineering (see [tech-tree-gathering.md](tech-tree-gathering.md)); fort level 3 requires Modern Forts (this doc). Build validation and resolution: [siege-mechanics.md](siege-mechanics.md), [development-resolution.md](../program/development-resolution.md).
