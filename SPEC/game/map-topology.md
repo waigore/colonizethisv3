@@ -1,6 +1,6 @@
 # Map Topology
 
-**SPEC/game** — Topology link semantics and cross-region adjacency. See [world-model.md](world-model.md) for entities; [tile-map-and-generation.md](tile-map-and-generation.md) for tile maps.
+**SPEC/game** — Topology link semantics and cross-region adjacency. See [world-model.md](world-model.md) for entities; [tile-map-and-generation.md](tile-map-and-generation.md) for tile maps. Province and sea zone identity (ids in game state, lookup): [world-model-identity.md](world-model-identity.md).
 
 ---
 
@@ -26,6 +26,12 @@ A province or sea zone in one region can be adjacent to a province or sea zone i
 ## Continents and tile map generation
 
 **Continents** are the connected components of the **land** subgraph (provinces and P–P edges only). Tile map generation places **land seeds** (one per continent) to define land shape; **province seeds** are placed on the land in a later pass. No path carving. Sea zones are **capped in size**: each sea zone is at most a configurable fraction (e.g. 5%) of total sea tiles; large water bodies are subdivided using Voronoi over sea seeds (Pass 11). See [SPEC/program/tile-map-gen-resources.md](../program/tile-map-gen-resources.md) § Pass 11 and [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md) § Voronoi assignment.
+
+---
+
+## Province and sea zone identity
+
+Province ids and sea zone ids used in game state (e.g. unit location, ownership, order payloads) use the **prefixed** form (`regionId|localId`) and **region-scoped lookup**; see [world-model-identity.md](world-model-identity.md). Topology and map data may use local ids per region; resolution and game state must use prefixed ids and never look up by id alone.
 
 ---
 
