@@ -79,7 +79,7 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
 |---|---|---|
 | Max improvement level | 4 | |
 | Transport levels | 0, 1, 2, 4 | |
-| Improvement cost scaling | ×2 per level | lumber + cast iron |
+| Improvement cost scaling | 1, 4, 8, 16 per level | lumber + cast iron |
 | Road cost | 1 lumber + 1 cast iron | Per tile |
 
 ---
