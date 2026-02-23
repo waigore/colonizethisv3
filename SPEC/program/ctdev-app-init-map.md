@@ -35,6 +35,6 @@ Map, legend, toggles, **AI selector** (Sim Game AI | AI Planner; when AI Planner
 
 ## Start Game Action
 
-On Start Game: (1) Generate sim session ID; create `logs/ctdev-sim-<sessionId>.log`; flush buffered logs. (2) Take `Game` from InitGameResult or loaded save. (3) Set `aiControlByGpId` true for all GPs. (4) Capture `MapTopology` and tile-map data. (5) Choose deterministic `baseSeed` (from init seed; optionally overridable). (6) Ensure `aiSeedByGpId` populated for all GPs (for `turnSeed[P, T]`). (7) Create Sim Game controller (Game, MapTopology, baseSeed, per-turn log). (8) Navigate to Running Game Screen.
+On Start Game: (1) Generate sim session ID; replay pre-sim buffer to the day file, then log to current day file per [ctdev-logging.md](ctdev-logging.md) (`logs/YYYY-MM-DD.log`). (2) Take `Game` from InitGameResult or loaded save. (3) Set `aiControlByGpId` true for all GPs. (4) Capture `MapTopology` and tile-map data. (5) Choose deterministic `baseSeed` (from init seed; optionally overridable). (6) Ensure `aiSeedByGpId` populated for all GPs (for `turnSeed[P, T]`). (7) Create Sim Game controller (Game, MapTopology, baseSeed, per-turn log). (8) Navigate to Running Game Screen.
 
 **Turn resolution:** `resolveTurnForGame` runs full TurnResolver ([turn-resolution-phases.md](turn-resolution-phases.md)), including Naval Interception & Naval Combat when naval is in scope.

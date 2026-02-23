@@ -41,3 +41,15 @@
 - **save:** Save/load calls (path, gameId, success); errors on failure.
 
 See [ctdev-app.md](ctdev-app.md) for UI behaviour (session ID display, Sim Log panel).
+
+---
+
+## Acceptance criteria
+
+- **Log directory:** `logs/` under project root (repo root when run from ctdev or root); created if missing.
+- **Log file:** One per calendar day: `logs/YYYY-MM-DD.log`; multiple sim sessions on the same day append.
+- **Session ID:** Generated at Start Game (Sim); displayed on Running Game screen; **Log:** shows path to the current day file.
+- **Pre-sim:** Events before Start Game buffered in memory; on Start Game replayed to the day file, then all subsequent events go to file.
+- **Levels:** File at debug and above; in-memory Sim Log at info and above, last 10 lines, cleared at start of every turn (resolve/step).
+- **Exceptions:** Log calls use `error` and `stackTrace` where applicable; uncaught errors in `runZonedGuarded` logged with stack.
+- **Scope:** ctdev, logic, ai, data, map, save each log key operations (start/end of flows, rejections, errors) with the specified prefixes; no `print` for operational/diagnostic output in ctdev and in-scope flows (or document exemptions).
