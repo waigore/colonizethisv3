@@ -76,6 +76,13 @@ BuildUnitOrder: by unit type category — civilian: deduct cash from treasury an
 
 ---
 
+## Acceptance criteria
+
+- **Phase ordering:** The implemented TurnResolver runs phases in the fixed sequence defined in [turn-resolution-phases.md](turn-resolution-phases.md); no extra phases mutate game state between these steps.
+- **Determinism:** Given the same starting WorldState, orders, ruleset, and random seeds, a full turn resolution (all phases) produces the same resulting WorldState and victory state.
+- **End-of-turn:** Military victory is evaluated once per turn (when `Game.victory` is null) and remains stable thereafter; era-change dialogue, fog decay, and turn/phase advance behave as described above.
+- **Consistency with specs:** Per-phase behaviour matches this document and its referenced specs (e.g. [diplomacy-resolution.md](diplomacy-resolution.md), [extraction-pipeline.md](extraction-pipeline.md), [combat-resolution.md](combat-resolution.md)); no phase performs work that belongs to another phase.
+
 ## Constraints
 
 - **Province identity:** Province ids used in phase behaviour (e.g. unit/fleet location, `province.ownerId`, capital, victory count, fog by province) follow [world-model-identity.md](../game/world-model-identity.md): use prefixed form (`regionId|localId`); never look up by province id alone.
