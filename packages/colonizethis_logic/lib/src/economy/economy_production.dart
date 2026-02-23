@@ -52,7 +52,8 @@ ProductionResult resolveProduction({
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      continue; // unknown recipe id; ignore
+      _log.w('logic: production skip unknown recipe id ${assignment.recipeId}');
+      continue;
     }
     if (assignment.assignedLabour <= 0) continue;
 
