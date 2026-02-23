@@ -1,7 +1,7 @@
 # Stockpiles & Production
 
 ## Overview
-Centralized commodity storage and multi-phase production flow per player.
+Centralized commodity storage and multi-phase production flow per player. Province identity and lookup (e.g. owned provinces, extraction locations) follow [world-model-identity.md](world-model-identity.md).
 
 ## Rules
 
@@ -31,5 +31,6 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
 - [extraction-and-improvements.md](extraction-and-improvements.md) — extraction yields
 - [workers-and-population.md](workers-and-population.md) — labour and consumption
 - [world-model.md](world-model.md) — province ownership, transport
+- [world-model-identity.md](world-model-identity.md) — province id format and lookup
 - Program: [economy-models.md](../program/economy-models.md) — data structures
 - Program: [turn-resolution-phases.md](../program/turn-resolution-phases.md) — phase order
