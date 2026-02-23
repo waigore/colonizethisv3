@@ -1322,8 +1322,8 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
-              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [],
           ),
@@ -1362,15 +1362,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'P1', regionId: ow, ownerId: 'p1'),
-              Province(id: 'P2', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
               Unit(
                 id: 'explorer1',
                 type: 'Explorer',
                 ownerId: 'p1',
-                provinceId: 'P2',
+                provinceId: '$ow|P2',
               ),
             ],
           ),

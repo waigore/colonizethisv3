@@ -438,10 +438,10 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
     for (final tileKey in visibility.keys.toList()) {
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
-      final provinceId = parts[1];
-      final ownerId = owOwnerByProvince[provinceId] ?? nwOwnerByProvince[provinceId];
+      final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
+      final ownerId = owOwnerByProvince[fullProvinceId] ?? nwOwnerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(provinceId)) {
+      if (!hasExplorerIn.contains(parts[1])) {
         visibility[tileKey] = VisibilityLevel.fogged.name;
       }
     }
