@@ -25,7 +25,7 @@ A province or sea zone in one region can be adjacent to a province or sea zone i
 
 ## Continents and tile map generation
 
-**Continents** are the connected components of the **land** subgraph (provinces and P–P edges only). Tile map generation places **land seeds** (one per continent) to define land shape; **province seeds** are placed on the land in a later pass. No path carving. Sea zones are **capped in size**: each sea zone is at most a configurable fraction (e.g. 5%) of total sea tiles; large water bodies are subdivided using Voronoi over sea seeds (Pass 11). See [SPEC/program/tile-map-gen-resources.md](../program/tile-map-gen-resources.md) § Pass 11 and [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md) § Voronoi assignment.
+**Continents** are the connected components of the **land** subgraph (provinces and P–P edges only). Topology inference and continent derivation (land subgraph from inferred graph): [SPEC/program/map-data.md](../program/map-data.md). Tile map generation places **land seeds** (one per continent) to define land shape; **province seeds** are placed on the land in a later pass. No path carving. Sea zones are **capped in size**: each sea zone is at most a configurable fraction (e.g. 5%) of total sea tiles; large water bodies are subdivided using Voronoi over sea seeds (Pass 11). See [SPEC/program/tile-map-gen-resources.md](../program/tile-map-gen-resources.md) § Pass 11 and [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md) § Voronoi assignment.
 
 ---
 
