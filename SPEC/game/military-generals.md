@@ -1,6 +1,6 @@
 # Military Generals, Armies, and Regiment Economy
 
-**SPEC/game** — Generals, medals, army definition, movement, and regiment costs. Part of land military design. See [military-units.md](military-units.md). Combat: [combat.md](combat.md).
+**SPEC/game** — Generals, medals, army definition, movement, and regiment costs. Part of land military design. See [military-units.md](military-units.md). Combat: [combat.md](combat.md). Province identity: [world-model-identity.md](world-model-identity.md).
 
 ---
 
@@ -32,6 +32,8 @@ Per-regiment values follow the same era/category progression as the tactical sta
 - **Army definition:** An army is a set of regiments in a province led by exactly one general. Units are always part of armies; armies are always headed by a general. Armies are inferred by grouping units in a province by owner and matching to the general in that province.
 - **Location invariant:** Armies are always located in a province. A player's armies must always be located within provinces they own. When at peace, a player's units remain in their owned provinces.
 - **Movement into non-owned province:** Moving an army into a province the player does not own is an act of war. War declaration is triggered during turn resolution (Diplomacy phase) before Movement; the combat and province-flip logic then applies when units enter enemy-held territory. See [combat.md](combat.md) and [movement.md](../program/movement.md).
+
+Province ids used for army/unit location and province ownership use the prefixed form and lookup rules in [world-model-identity.md](world-model-identity.md).
 
 ---
 
