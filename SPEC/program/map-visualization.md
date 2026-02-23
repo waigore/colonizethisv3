@@ -65,3 +65,14 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 ## Constraints
 
 - Terrain palette fixed (same as base PNG). Ownership lookup uses full province id (`regionId|localId`).
+
+---
+
+## Acceptance criteria
+
+- **Base PNG export:** Base tile map visualizer (`tile_map_visualization`) renders `TileMapResult` + `MapTopology` to PNG: fill by terrain or region, borders (land black, sea-zone light blue), legend (terrain, regions, seeds, resources when present). No game state. Used by generate_map.
+- **Game-world visualizer:** Game world state visualizer extends base with ownership overlay from `Province.ownerId`, capital markers from `Player.capitalTile`, port markers from `WorldState.portsByProvinceSeaboard`; input is `Game` + tile maps/topology or `InitGameMapViewData`. Province identity: full id (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+- **Ownership colours:** Faction colours per GDD 09 (GPs, minors grey, tribes vibrant); keys are runtime faction id; `greatPowerColorOverride` applied when present. Capitals: gold circle; ports: distinct marker; legend includes ownership, capitals, ports.
+- **View model:** `RegionMapViewData` and `InitGameMapViewData` provide per-cell and overlay data; `renderInitGameMapToPngFromViewData` supports geographic mode param. View modes: political (ownership fill) vs geographic (terrain, resource glyphs); same view model, UI toggle.
+- **Multi-region:** `renderMultiRegionMapToPng(oldWorld, newWorld, options)` renders OW left, NW right, shared legend below; used by init_game.
+- **Integration:** Implemented in colonizethis_map; consumed by generate_map, init_game, ctdev. Terrain palette and border/legend behaviour fixed as specified.
