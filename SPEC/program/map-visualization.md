@@ -31,10 +31,17 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 **Module:** `game_world_state_map_visualizer`. Extends base: ownership overlay, capital markers, port markers. Input: `Game` + tile maps and topology (or `InitGameMapViewData`). Ownership from `Province.ownerId`; capitals from `Player.capitalTile`, etc.; ports from `WorldState.portsByProvinceSeaboard` (value = tile key `regionId|provinceId|x|y`).
 
-- **Ownership colours:** Per faction (GDD 09 for GPs; grey for minors; vibrant for tribes). Keys: runtime faction id (`Player.id`, etc.), not semantic id. `greatPowerColorOverride` when present.
+- **Ownership colours:** Per faction (GDD 09 for GPs; grey for minors; vibrant for tribes). Keys: runtime faction id (`Player.id`, etc.), not semantic id. `greatPowerColorOverride` when present (see below).
 - **Capitals:** Gold circle. **Ports:** Distinct marker (e.g. diamond). Legend: capitals, ports.
 - **View modes:** Political (ownership fill) vs geographic (terrain fill, resource glyphs). Same view model; toggle is UI-only.
 - **PNG-from-view-data:** `renderInitGameMapToPngFromViewData` supports geographic mode param.
+
+**greatPowerColorOverride source and flow**
+
+- **Data model:** `Game.greatPowerColorOverride` (see [world-model.md](../game/world-model.md)) stores an optional map of GP semantic ids → RGB triples; when present, all map visualizers use it instead of GDD default GP colours.
+- **Init Game (ctdev):** The ctdev Init Game screen lets the user pick GP colours; selections are stored on `InitGameOptions.greatPowerColorOverride` and passed to `runInitGame` (see [ctdev-app-init-map.md](ctdev-app-init-map.md) and [init-game-tool.md](init-game-tool.md)). The init-game orchestrator persists this on `Game.greatPowerColorOverride` and passes a tuple-form override into `buildInitGameMapViewData`, which then feeds `game_world_state_map_visualizer`.
+- **Running game / load save (ctdev):** When ctdev loads a save, it reads `Game.greatPowerColorOverride` and converts it via `greatPowerColorOverrideFromGame` into the tuple map passed to `buildInitGameMapViewData` for both Init Game Map Debug and Running Game map views (see [ctdev-app.md](ctdev-app.md)).
+- **CLI behaviour:** CLI tools that call init-game without a ctdev front-end do not set `greatPowerColorOverride`; the visualizer sees `null` and falls back to the GDD default GP palette.
 
 ---
 
