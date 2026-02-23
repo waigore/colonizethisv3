@@ -3,9 +3,12 @@
 /// alliance proposals, Declare War/Peace, relation modifiers, score update.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
+
+final Logger _diploLog = Logger();
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -94,6 +97,7 @@ Game resolveDiplomacyPhase(
   Orders orders, {
   void Function(DialogueEvent)? onDialogue,
 }) {
+  _diploLog.d('logic: diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
   var state = game;
 
@@ -120,6 +124,7 @@ Game resolveDiplomacyPhase(
   // 7. Apply relation modifiers (grants, etc.) and update scores
   state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
 
+  _diploLog.d('logic: diplomacy phase end');
   return state;
 }
 
@@ -180,6 +185,7 @@ Game _processOverturePayments(
       } else {
         overtures = [...overtures, OvertureState(gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)];
       }
+      _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage');
     }
   }
 
@@ -236,6 +242,7 @@ Game _resolveJoinEmpireColony(
         overtures = List<OvertureState>.from(overtures);
         overtures[idx] = overtures[idx].copyWith(stage: OvertureStage.joinEmpire, sinceTurn: turn);
         game = game.copyWith(overtureStates: overtures);
+        _diploLog.i('logic: diplomacy join empire $gpId $targetId');
       }
     }
   }
@@ -277,6 +284,7 @@ Game _processAlliances(
               ),
       );
       game = game.copyWith(diplomacyRelations: relations);
+      _diploLog.i('logic: diplomacy alliance $gpId-$targetId');
     }
   }
   return game;
@@ -334,6 +342,7 @@ Game _processWarAndPeace(
             diplomacyRelations: relations,
             dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
           );
+          _diploLog.i('logic: diplomacy war declared $gpId vs $targetId');
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
@@ -360,6 +369,7 @@ Game _processWarAndPeace(
             diplomacyRelations: relations,
             dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
           );
+          _diploLog.i('logic: diplomacy peace $gpId-$targetId');
         }
       }
     }
@@ -379,6 +389,7 @@ Game _terminateAgreementsOnWar(Game game) {
   }
   if (overtures.length != game.overtureStates.length) {
     game = game.copyWith(overtureStates: overtures);
+    _diploLog.i('logic: diplomacy agreements terminated (war)');
   }
   return game;
 }
@@ -428,6 +439,7 @@ Game _applyRelationModifiersAndUpdateScores(
         return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
       });
       game = game.copyWith(players: players, diplomacyRelations: relations);
+      _diploLog.i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
   }
 
@@ -457,6 +469,7 @@ Game _applyRelationModifiersAndUpdateScores(
         if (receiverIdx >= 0) {
           players[receiverIdx] = players[receiverIdx].copyWith(treasury: players[receiverIdx].treasury + amount);
         }
+        _diploLog.i('logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (treasury)');
       } else {
         // Minor/Tribe: no treasury; apply relation modifier (+3 per subsidy per diplomacy.md-style)
         final ids = _pairIds(gpId, targetId);
@@ -474,6 +487,7 @@ Game _applyRelationModifiersAndUpdateScores(
           }
           return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
         });
+        _diploLog.i('logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (relation)');
       }
       game = game.copyWith(players: players, diplomacyRelations: relations);
     }
