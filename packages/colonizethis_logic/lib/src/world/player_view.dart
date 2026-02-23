@@ -126,7 +126,7 @@ PlayerView buildPlayerView(
     visibilityByTile[tileKey] = level;
   });
 
-  // Spy presence reveal: while a Spy is in a non-owner province, that province is fully visible. SPEC/fog-and-exploration-resolution.md.
+  // Spy presence reveal: while a Spy is in a non-owner province, that province is fully visible. SPEC/program/fog-and-exploration-resolution.md.
   for (final u in ownUnitsById.values) {
     if (!isSpyUnit(u.type)) continue;
     final provId = u.locationProvinceId;
