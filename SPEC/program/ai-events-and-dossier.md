@@ -1,12 +1,14 @@
 # AI Events and Dossier — Implementation (Phase 6)
 
+**SPEC/program** — Event data and flows for dialogue, mood, evidence, dossier. Province identity: [world-model-identity.md](../game/world-model-identity.md).
+
 ## Responsibility
 Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md).
 
 ## Data Model
 
 ### DialogueEvent
-Fields: `leaderId`, `category`, `situation`, `era`, `mood?`, `variables` (map string→string). Categories and situations per [dialogue-and-mood.md](../ai/dialogue-and-mood.md).
+Fields: `leaderId`, `category`, `situation`, `era`, `mood?`, `variables` (map string→string). Categories and situations per [dialogue-and-mood.md](../ai/dialogue-and-mood.md). When `variables` includes a `province` key (e.g. from event_dialogue), its value must be a **prefixed** province id per [world-model-identity.md](../game/world-model-identity.md); never a bare local id.
 
 ### PortraitMoodEvent
 Fields: `leaderId`, `fromMood`, `toMood`, `durationMs`. Mood values per [dialogue-and-mood.md](../ai/dialogue-and-mood.md).
@@ -33,7 +35,15 @@ Internal record appended when an action matches an evidence rule. Fields: observ
 - **Upstream:** AI order generation, turn resolution hooks.
 - **Downstream:** UI (dialogue, portrait mood), game state (evidence), dossier screen.
 
+## Acceptance criteria
+
+- **Phase:** Dialogue and mood events are emitted during AI order generation; evidence is accumulated during turn resolution (or post-resolution hook).
+- **Callback contract:** AI invokes `onDialogue(DialogueEvent)` and `onMood(PortraitMoodEvent)`; caller guarantees deterministic invocation order.
+- **Determinism:** Same game state and seeds produce the same events and evidence; replay and save/load restore or recompute consistently.
+- **Province id in dialogue:** When a DialogueEvent carries a `province` variable, it is in prefixed form (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+
 ## Constraints
 - All events and evidence reproducible: same state + seeds → same output.
 - Replay and save/load must restore or recompute evidence from persisted state.
 - True hidden agenda never exposed via events or dossier.
+- **Province identity:** The `province` variable in DialogueEvent (when present) must be prefixed; any code passing provinceId into variables (e.g. event_dialogue) must use prefixed form per [world-model-identity.md](../game/world-model-identity.md).
