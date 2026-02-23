@@ -1,6 +1,6 @@
 # Map Visualization: PNG Export and View Builders
 
-**SPEC/program** — PNG export, color schemes, legends, border rendering. Data model: [map-data.md](map-data.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md).
+**SPEC/program** — PNG export, color schemes, legends, border rendering. Data model: [map-data.md](map-data.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -71,7 +71,8 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 
 ## Constraints
 
-- Terrain palette fixed (same as base PNG). Ownership lookup uses full province id (`regionId|localId`).
+- Terrain palette fixed (same as base PNG).
+- **Province and tile identity:** Ownership lookup, province names, unit markers, and tile keys follow [world-model-identity.md](../game/world-model-identity.md): use full province id (`regionId|localId`), tile key format `regionId|localId|x|y`; never look up by province id alone.
 
 ---
 
