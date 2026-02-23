@@ -7,7 +7,7 @@ Standalone CLI tool to simulate a single player's economy loop over N turns usin
 
 ### CLI Interface
 
-Command: `melo sim_economy`
+Command: `melos run sim_economy`
 
 | Argument | Required | Description |
 |----------|----------|-------------|
