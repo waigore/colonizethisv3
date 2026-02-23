@@ -1,6 +1,6 @@
 # AI Dossier (Phase 6)
 
-**SPEC/ai** — Logical structure of the intelligence dossier. Source: GDD 10e. Implementation: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md). UI layout and visuals are deferred to UI phases.
+**SPEC/ai** — Logical structure of the intelligence dossier. Source: GDD 10e. Implementation (dossier projection and evidence): [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Evidence and Dossier. UI layout and visuals are deferred to UI phases.
 
 ---
 
@@ -49,4 +49,4 @@ Storage may be part of game state (e.g. per-observer dossier cache) or computed 
 - **Confidence %:** Derived from suspicion score bands (e.g. 0–2 → 0%, 3–5 → low %, 6–8 → medium %, 9–10 → high %, 10+ → “Confirmed” with 100% display). “Confirmed” means suspicion passed threshold; it does not reveal the true agenda value.
 - **Evidence and timeline:** Evidence list and timeline entries reference only **observable** events (e.g. war declared, treaty broken, visible army movement). No internal AI intent or hidden state in entries.
 - **Update cadence:** Basic intel when relation or strength comparison changes (at least once per turn if dossier is viewed). Hidden agenda analysis when new evidence is added for that subject. Behavioral notes and timeline when new observable events occur (turn resolution or event hooks).
-- **Implementation:** Dossier projection, evidence rules, and storage/on-demand contract: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
+- **Implementation:** Dossier projection, evidence rules, and storage/on-demand contract: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Evidence and Dossier.
