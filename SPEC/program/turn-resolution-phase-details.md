@@ -24,7 +24,7 @@ Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overture
 
 ## Riches to treasury
 
-For each riches commodity (gold, silver, gems, diamonds, spices): add quantity × basePrice to treasury; remove from stockpile. Base prices: spices = 50; others from spawn weights. Reference: Imperialism II 02-economy, GDD 04.
+For each riches commodity (gold, silver, gems, diamonds, spices): add quantity × basePrice × **richesCashMultiplier** to treasury; remove from stockpile. Base prices: spices = 50; others from spawn weights. **richesCashMultiplier** is optional (default 1.0); scenario or ruleset may override (e.g. Search for El Dorado 1.5). Where the value is defined: [ruleset-config.md](ruleset-config.md) (economy.riches_cash_multiplier). Reference: Imperialism II 02-economy, GDD 04.
 
 ---
 
