@@ -1,5 +1,5 @@
-/// Map resource (raw commodity on a tile). SPEC/game/tile-map-and-generation, GDD 04b.
-/// Full set per Imperialism II Terrain and Development table; see SPEC/game/resource-terrain-region-rules.md.
+/// Map resource (raw commodity on a tile).
+/// Full set per Imperialism II Terrain and Development table; see SPEC/game/resource-terrain-region-rules.md for resource/terrain table and spawn weights.
 enum Resource {
   grain,
   meat,
