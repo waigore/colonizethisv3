@@ -32,7 +32,7 @@
 ## Common Patterns
 
 - **Loading state:** Init-game and sim runs wrap work in a busy overlay; submit/controls disabled during resolution.
-- **Map rendering:** `CustomPainter` over `RegionMapViewData`, `InteractiveViewer` for pan/zoom; `kDebugMapScale` 1.0; ownership from `greatPowerColorOverride` when present.
+- **Map rendering:** `CustomPainter` over `RegionMapViewData`, `InteractiveViewer` for pan/zoom; `kDebugMapScale` 0.25 (default so both regions fit side-by-side; zoom min 0.25); ownership from `greatPowerColorOverride` when present.
 - **Data source:** All screens read from `InitGameResult`, loaded `Game`, or `SimGameController.game` / `SimGameController.pendingOrdersByPlayerId`.
 
 ---
