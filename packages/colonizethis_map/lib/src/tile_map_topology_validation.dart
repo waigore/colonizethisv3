@@ -1,8 +1,8 @@
-// SPEC/program/tile-map-generation.md § Topology verification.
+// SPEC/program/tile-map-gen-resources.md § Topology inference.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-/// Result of comparing grid adjacencies to topology. SPEC/program/tile-map-generation.md § Topology verification.
+/// Result of comparing grid adjacencies to topology. SPEC/program/tile-map-gen-resources.md § Topology inference.
 class TileMapTopologyValidationResult {
   TileMapTopologyValidationResult({
     required this.missing,
@@ -23,7 +23,7 @@ String _pairKey(String a, String b) =>
     a.compareTo(b) < 0 ? '$a|$b' : '$b|$a';
 
 /// Compares grid adjacencies to topology edges. Returns missing and extra pairs.
-/// SPEC/program/tile-map-generation.md § Topology verification.
+/// SPEC/program/tile-map-gen-resources.md § Topology inference.
 TileMapTopologyValidationResult validateTileMapTopology(
   MapTopology topology,
   TileMapResult result,
