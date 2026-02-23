@@ -22,6 +22,16 @@
 
 ---
 
+## Acceptance criteria
+
+- **Check timing:** Victory is evaluated once per turn during the End-of-turn phase, after all other phases (Orders through Build/Work) have run; see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § End-of-turn.
+- **Condition:** A Great Power wins (military victory) when it controls ≥31 Old World provinces; control is province `ownerId` equals that GP’s player id; province identity and counting use prefixed id and region-scoped lookup per [world-model-identity.md](world-model-identity.md).
+- **Idempotence:** If `Game.victory` is already set, the check does not overwrite it (no re-evaluation).
+- **Tie-breaking:** When two or more GPs each have ≥31 OW provinces in the same turn, the winner is the one with the lexicographically smallest player id.
+- **UI:** When `Game.victory != null`, the app shows the victory screen and does not allow further orders or turn advancement.
+
+---
+
 ## Victory Screen (UI)
 
 - When `Game.victory != null`, the app shows a **victory screen** (overlay or dedicated view).
