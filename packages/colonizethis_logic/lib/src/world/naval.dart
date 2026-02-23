@@ -29,8 +29,29 @@ String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
   return null;
 }
 
-/// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet location.
-String? seaZoneIdForProvince(MapTopology topology, String provinceId) {
+/// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet and build_port.
+///
+/// [provinceId] is the local province id (e.g. p1). When [regionId] is provided, lookup is
+/// region-scoped per SPEC/game/world-model-identity.md (required for multi-region world).
+/// When [regionId] is null, uses first matching node (single-region or legacy).
+String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? regionId}) {
+  if (regionId != null) {
+    final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
+    for (final n in topology.nodes) {
+      nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
+    }
+    final regionNodes = nodesByRegionAndId[regionId];
+    if (regionNodes == null) return null;
+    final provinceNode = regionNodes[provinceId];
+    if (provinceNode == null || provinceNode.type != TopologyNodeType.province) return null;
+    for (final e in topology.edges) {
+      if (e.id1 != provinceId && e.id2 != provinceId) continue;
+      final other = e.id1 == provinceId ? e.id2 : e.id1;
+      final otherNode = regionNodes[other];
+      if (otherNode?.type == TopologyNodeType.seaZone) return other;
+    }
+    return null;
+  }
   final nodesById = {for (final n in topology.nodes) n.id: n};
   for (final e in topology.edges) {
     if (e.id1 != provinceId && e.id2 != provinceId) continue;

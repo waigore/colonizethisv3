@@ -94,7 +94,7 @@ Game applyBuildAndWorkOrders(
           final regionIdFromTile = parts.isNotEmpty ? parts[0] : ProvinceId.regionIdFrom(u.locationProvinceId);
           final localId = parts.length > 1 ? parts[1] : ProvinceId.localIdFrom(u.locationProvinceId);
           final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
-          final seaZoneId = seaZoneIdForProvince(topology, localId);
+          final seaZoneId = seaZoneIdForProvince(topology, localId, regionId: regionIdFromTile);
           if (seaZoneId != null) {
             portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
             tileState = tileState.setRoadLevel(cw.tileKey, 4);
@@ -279,7 +279,7 @@ Game applyBuildAndWorkOrders(
 
         final regionId = ProvinceId.regionIdFrom(capProvinceId);
         final seaZoneId = topology != null
-            ? seaZoneIdForProvince(topology, ProvinceId.localIdFrom(capProvinceId))
+            ? seaZoneIdForProvince(topology, ProvinceId.localIdFrom(capProvinceId), regionId: regionId)
             : null;
         if (seaZoneId == null) continue;
 
