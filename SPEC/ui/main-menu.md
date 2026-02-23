@@ -4,11 +4,29 @@
 
 ---
 
+## Widget contract
+
+The CtMainMenu widget is presentational and accepts the following parameters. The **shell** (or parent) supplies these and handles navigation and app exit.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `variant` | `plain` \| `pixelArt` | **plain:** standard Flutter/colonial theme (no pixel-art assets). **pixelArt:** pixel-art assets per table below. |
+| `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled when saves exist. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** Load Game disabled with explanatory tooltip/helper text. |
+| `version` | string | Version text shown in footer (e.g. `v1.0.0`). |
+| `onNewGame` | callback | Invoked when user taps New Game. |
+| `onLoadGame` | callback | Invoked when user taps Load Game (when enabled). |
+| `onSettings` | callback | Invoked when user taps Settings. |
+| `onQuit` | callback | Invoked when user taps Quit. |
+
+---
+
 ## How this spec satisfies UXD 03a
 
 **User stories.** The main menu supports: single tap **New Game** (one action to start fresh); **Load Game** (continue or pick a save); **Settings** (open from menu); **Quit** (exit app). Return-from-in-game is satisfied by the shell/navigation: pause and Victory Screen (03l) navigate back to this screen, which is the destination.
 
 **Acceptance criteria.** (1) **Visibility:** The app shell shows the Main Menu as the first screen after any splash; the widget displays New Game, Load Game, Settings, and Quit. (2) **Load Game:** When no saves exist, Load Game is disabled and shows explanatory tooltip or helper text; when saves exist, it is enabled. (3) **Navigation:** The widget does not perform routing; it exposes callbacks (`onNewGame`, `onLoadGame`, `onSettings`, `onQuit`). The shell wires: New Game → Game Setup (03b), Load Game → Load list (03b), Settings → Settings (03c), Quit → app exit. (4) **Return from game:** Pause "Exit to Main Menu" and Victory "Return to Main Menu" both navigate to this screen; the shell clears in-memory game state as needed.
+
+**Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
 
 **Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
