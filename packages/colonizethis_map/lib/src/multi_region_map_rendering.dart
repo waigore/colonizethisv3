@@ -1,5 +1,5 @@
 // Multi-region map composition: Old World + New World side by side.
-// SPEC/program/map-data.md § Multi-region rendering.
+// SPEC/program/map-visualization.md § Multi-region rendering.
 
 import 'dart:typed_data';
 

@@ -1,4 +1,4 @@
-// Tile map to PNG with legend. SPEC/program/map-data.md § Tile map PNG export.
+// Tile map to PNG with legend. SPEC/program/map-visualization.md § Tile map PNG export.
 
 import 'dart:io';
 import 'dart:typed_data';
@@ -8,13 +8,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'tile_map_visualization_shared.dart';
 
-/// Deep blue for sea zones. SPEC/program/map-data.md § Tile map PNG export.
+/// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
 
-/// Light blue for sea zone borders (sea–sea). SPEC/program/map-data.md § Tile map PNG export.
+/// Light blue for sea zone borders (sea–sea). SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaZoneBorderRgb = (173, 216, 230);
 
-/// Red for on-map region id labels (e.g. p1, s1). SPEC/program/map-data.md § Tile map PNG export.
+/// Red for on-map region id labels (e.g. p1, s1). SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) regionIdLabelRgb = (220, 0, 0);
 
 const int _titleLines = 2;
@@ -31,7 +31,7 @@ Iterable<String> _regionIdsFromResult(TileMapResult result) sync* {
 /// When [result.terrainGrid] is present: fill by terrain (sea = deep blue), draw province/sea borders in black, terrain legend. Otherwise: region-colored fill and region legend.
 /// When [landSeedPositions] is provided, draws a marker at each cell center and adds a legend row for land seeds.
 /// When [landSeedContinentIndices] is provided and same length as [landSeedPositions], land seeds are colored by continent and the legend lists one row per continent.
-/// When [continentSeedPositions] is provided, draws a distinct marker at each and adds a legend row for continent seeds. SPEC/program/map-data.md § Tile map PNG export.
+/// When [continentSeedPositions] is provided, draws a distinct marker at each and adds a legend row for continent seeds. SPEC/program/map-visualization.md § Tile map PNG export.
 Uint8List renderTileMapToPng(
   TileMapResult result,
   MapTopology topology, {
