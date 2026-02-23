@@ -6,43 +6,12 @@ alwaysApply: false
 
 # UI Design
 
-UI specs live in `SPEC/ui/` and derive from GDD/TDD per the spec-required rule. In addition:
+UI specs in `SPEC/ui/` derive from GDD/TDD (spec-required rule).
 
-- When **implementing** UI: create a **Widgetbook** mockup for each new or changed component/screen so it is visually reviewable; register the widget in the **widget catalog** so it is discoverable. Maintain the catalog (e.g. Ct-prefixed widgets with name, category, path or story) so the team knows what is already designed/implemented and available for reuse.
-
-## Wireframe
-
-- Every UI spec must define a **wireframe** for the screen or flow.
-- **Positions, layout, and hierarchy** must be **visually accessible** to a human reviewer (e.g. diagram, ASCII, or structured spec with regions, positions, hierarchy).
-- Prefer the schema used in UXD 07 Layout Designer (canvas, regions, positions, hierarchy) so tooling and pipeline stay aligned.
-
-## Components
-
-- Define **which components** each screen uses. Follow **UXD 03 (UI Interaction Flows)** and **UXD 07 (UI Mockup Pipeline)**.
-- Use the **widget catalog** (Ct-prefix; reference by `library_id` or `generate_new` with a short spec). Prefer reuse; when adding new components, specify name, category, props and register in the catalog.
-- Components must be **reusable** where the same pattern appears in 2+ places.
-
-## Widgetbook and catalog
-
-- **Widgetbook:** When implementing UI, create a Widgetbook story for each catalog widget (or screen) so mockups are runnable and reviewable before wiring to full app.
-- **Widget catalog:** Maintain a single catalog (e.g. `widget_catalog.json` or equivalent per UXD 07) listing designed/implemented widgets: name (Ct-prefix), category, dart path, optional Widgetbook story path. Update it when adding or changing widgets so existing components are discoverable and reused.
-
-## Functional behaviors
-
-- Define the **functional behavior** of each component: inputs, outputs, callbacks, and user-visible outcomes (e.g. tap → navigate, onAdjust → update state).
-- Document in the UI spec or in an **interaction manifest** (per UXD 07) so reviewers can verify behavior before implementation.
-
-## Pixel art and PixelLab
-
-- When **new components** require pixel art, the spec must define **what images are required** and the **spec for generation** (e.g. for PixelLab MCP: subject, size, pixellab_type).
-- **Exact prompts:** For every pixel art asset generated via PixelLab (or similar), the UI spec must record the **exact wording** used for generation (e.g. the full PixelLab `description` and, if used, outline/shading/detail). Record **layout constraints** (e.g. max content width in dp) and **asset pixel dimensions** (width×height) that match the layout so assets are not upscaled and stay crisp.
-- **Ration generation:** Pixel art generation (e.g. PixelLab MCP) is expensive. **Check the assets folder first**; if a suitable asset already exists, **do not regenerate**. Only request generation for missing or intentionally replaced assets.
-- Follow UXD 04 (workflow, 0→1 vs 1→N), UXD 05 (PixelLab technical spec), and UXD 07 (asset manifest, post-approval phase).
-
-## Stylistic conventions
-
-- **Design and pixel art** must follow **UXD 02 (Stylistic Conventions)**: pixel art canon (1x grid, no anti-aliasing), 16th/17th century aesthetic, color palette, UI frames and buttons, typography in pixel context. Apply UXD 02 when designing components and when generating or selecting pixel art (PixelLab, fallback, or existing assets).
-
-## Flame/Flutter division
-
-- When implementing UI, respect the **Flame/Flutter division of labour**: **Flutter** for app shell, routes, overlays, menus, and list/form screens; **Flame** for game canvas and in-game pixel-art UI; communication via state and callbacks only. See core-principles and TDD 15 (or SPEC/program/repo-and-packages.md) for structure.
+- **Implementing UI:** Widgetbook story per new/changed component/screen; register in **widget catalog** (Ct-prefix, name, category, path/story). Keep catalog up to date for reuse.
+- **Wireframe:** Every UI spec has a wireframe; positions, layout, hierarchy visible to reviewers. Prefer UXD 07 schema (canvas, regions, positions, hierarchy).
+- **Components:** Define which components each screen uses (UXD 03, UXD 07). Use catalog; prefer reuse; new components: name, category, props, register. Reusable where pattern appears 2+ times.
+- **Behavior:** Define inputs, outputs, callbacks, user-visible outcomes; document in spec or interaction manifest (UXD 07).
+- **Pixel art:** Spec must define required images and generation spec (e.g. PixelLab: subject, size, type). Record **exact prompts** and asset dimensions in spec. **Check assets first** — do not regenerate if suitable asset exists (UXD 04, 05, 07).
+- **Style:** Follow UXD 02 (pixel canon, 1x grid, no AA, 16th/17th c. aesthetic, palette, typography).
+- **Flame/Flutter:** Flutter = shell, routes, overlays, menus, list/form screens; Flame = game canvas and in-game pixel UI. Communicate via state and callbacks only.
