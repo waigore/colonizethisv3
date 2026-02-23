@@ -16,9 +16,9 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 **Multi-Attacker Chain:** Sort attackers by initiative descending (tie-break: faction id). Resolve sequentially: defender vs highest-initiative attacker; winner (no heal) vs next attacker; repeat until no attackers remain or defender eliminated.
 
-**Strength:** Per-regiment FPN + FPM (from [military-units.md](military-units.md)). Medals (0–4) multiply by 1.0–1.4. DEF durability = DEF / 9. Damaged units: firepower ∝ remaining / starting health. Side strength = `Σ (FPN_eff + FPM_eff) × medalMult`, adjusted by modifiers.
+**Strength:** Per-regiment FPN + FPM (from [military-units.md](military-units.md)). Medals (0–4) multiply by 1.0–1.4. DEF durability = DEF / 9. Damaged units: firepower ∝ remaining / starting health. Side strength = `Σ (FPN_eff + FPM_eff) × medalMult`, adjusted by modifiers. **Current auto-resolve:** Strength aggregation uses (FPN + FPM) × medalMult only; DEF/9 and damaged-unit health scaling are deferred (no unit health field; casualty selection uses strength-weighted choice).
 
-**Modifiers:** Terrain (province type), fort (level 0–3; damage reduction + emplaced guns per [siege-mechanics.md](siege-mechanics.md)), difficulty (scales attacker/defender), general (+1 deployment per medal + initiative contribution), feeding coverage (see table below).
+**Modifiers:** Terrain (province type), fort (level 0–3; damage reduction + emplaced guns per [siege-mechanics.md](siege-mechanics.md)), difficulty (scales attacker/defender; deferred in auto-resolve until difficulty is wired from game config), general (+1 deployment per medal + initiative contribution), feeding coverage (see table below).
 
 **Resolution:** Compare total attacker vs defender strength after modifiers. Deterministic output: winner + casualties per side.
 

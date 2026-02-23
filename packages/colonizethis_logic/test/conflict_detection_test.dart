@@ -227,7 +227,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'player1': [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'P1'),
+            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1'),
           ],
         },
       );
