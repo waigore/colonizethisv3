@@ -2,11 +2,14 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
+
+final Logger _log = Logger();
 
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
@@ -63,6 +66,7 @@ Game applyBuildAndWorkOrders(
   }
 
   void applyCompletedWorkTarget(Unit u, CurrentWork cw, List<Province> Function() getProvinces, void Function(List<Province>) setProvinces, Game gameForPlayer) {
+    _log.d('logic: work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}');
     switch (cw.workTarget) {
       case 'build_improvement':
         final level = tileState.improvementLevel(cw.tileKey);
@@ -152,6 +156,13 @@ Game applyBuildAndWorkOrders(
       final u = entry.value;
       if (u.currentWork == null) continue;
       final cw = u.currentWork!;
+      // Cancel work if tile no longer owned by this player (SPEC: unit dead / tile no longer owned).
+      final purchasedByTile = gameForPlayer.worldState.purchasedTilesByTileKey;
+      if (purchasedByTile.containsKey(cw.tileKey) && purchasedByTile[cw.tileKey] != u.ownerId) {
+        unitsById[entry.key] = u.copyWith(status: UnitStatus.idle, currentWork: null);
+        _log.d('logic: work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}');
+        continue;
+      }
       if (cw.workTarget == 'counter_spy') {
         // Per-turn: 5% per friendly spy (cap 30%) to kill one enemy spy in province
         final provinceId = u.locationProvinceId;
@@ -166,6 +177,10 @@ Game applyBuildAndWorkOrders(
         }).toList();
         if (enemySpies.isNotEmpty && rand.nextDouble() < killChance) {
           final toRemove = enemySpies.first.key;
+          final removed = unitsById[toRemove];
+          if (removed?.currentWork != null) {
+            _log.d('logic: work cancelled unit=$toRemove reason=unit dead');
+          }
           unitsById.remove(toRemove);
         }
         continue;
@@ -400,27 +415,31 @@ Game applyBuildAndWorkOrders(
       }
 
       if (order.target == 'steal_tech' && isWorkOrderTargetAllowedForUnitType(u.type, 'steal_tech') && u.currentWork == null && hasValidTarget) {
+        const totalTurns = 5;
+        _log.d('logic: work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns');
         updateUnit(order.unitId, u.copyWith(
           status: UnitStatus.working,
           tileKey: targetTileKey,
           currentWork: CurrentWork(
             workTarget: 'steal_tech',
             tileKey: targetTileKey,
-            totalTurns: 5,
-            remainingTurns: 5,
+            totalTurns: totalTurns,
+            remainingTurns: totalTurns,
           ),
         ));
         continue;
       }
 
       if (order.target == 'counter_spy' && isWorkOrderTargetAllowedForUnitType(u.type, 'counter_spy') && u.currentWork == null && hasValidTarget) {
+        const totalTurns = 0;
+        _log.d('logic: work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns');
         updateUnit(order.unitId, u.copyWith(
           status: UnitStatus.working,
           tileKey: targetTileKey,
           currentWork: CurrentWork(
             workTarget: 'counter_spy',
             tileKey: targetTileKey,
-            totalTurns: 0,
+            totalTurns: totalTurns,
             remainingTurns: 1,
           ),
         ));
@@ -448,6 +467,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('build_improvement', improvementLevel: improvementLevel);
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=build_improvement targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -476,6 +496,7 @@ Game applyBuildAndWorkOrders(
           }
           if (maxTiles < 1) maxTiles = 1;
           final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -495,6 +516,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('build_road');
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=build_road targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -513,6 +535,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('build_port');
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=build_port targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -533,6 +556,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('build_fort', fortLevel: fortLevel);
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=build_fort targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -551,6 +575,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('build_rail');
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=build_rail targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
@@ -569,6 +594,7 @@ Game applyBuildAndWorkOrders(
         if (cost != null && canAffordMaterialCost(cost)) {
           deductMaterialCost(cost);
           final totalTurns = totalTurnsForWork('upgrade_town');
+          _log.d('logic: work order accepted and assigned unit=${order.unitId} target=upgrade_town targetTileKey=$targetTileKey totalTurns=$totalTurns');
           updateUnit(order.unitId, u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
