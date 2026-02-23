@@ -38,3 +38,14 @@ Province ids and sea zone ids used in game state (e.g. unit location, ownership,
 ## Movement rule
 
 Armies move only from one province to an **adjacent** province (P<->P). Naval movement uses P<->S and optionally S<->S. Order validation uses the topology graph; see [SPEC/program/turn-resolution.md](../program/turn-resolution.md) and [SPEC/program/map-data.md](../program/map-data.md).
+
+---
+
+## Acceptance criteria
+
+- **Graph semantics:** The map is an undirected graph. Nodes are provinces (P) or sea zones (S); edges are P–P (land neighbours), P–S (coast), or S–S (sea paths) only. No other node or edge types.
+- **Topology source:** Topology is inferred from the tile map (nodes = unique region ids from the grid, edges = adjacent region pairs). Format and ownership: [map-data.md](../program/map-data.md).
+- **Cross-region:** The world topology is one graph; a province or sea zone in one region may be adjacent to one in another region. Tile maps remain per region (one 2D grid per region).
+- **Continents:** Continents are the connected components of the land subgraph (provinces and P–P edges only). Inference and continent derivation: [map-data.md](../program/map-data.md).
+- **Province and sea zone identity:** Province and sea zone ids in game state (unit location, ownership, order payloads) use prefixed form and region-scoped lookup per [world-model-identity.md](world-model-identity.md). Topology/map data may use local ids per region; resolution and game state use prefixed ids.
+- **Movement:** Armies move only between adjacent provinces (P–P). Naval movement uses P–S and S–S. Order validation uses the topology graph per [turn-resolution.md](../program/turn-resolution.md) and [map-data.md](../program/map-data.md).
