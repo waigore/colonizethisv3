@@ -67,3 +67,9 @@ When the game or AI performs an action, **evidence rules** (defined per agenda) 
 - **Behavior modifiers:** Each agenda type has defined effects in the spec categories: war declaration, peace acceptance, alliance acceptance, build/order choice, treaty breaking. Expressed as weights or thresholds in config.
 - **Evidence and suspicion:** Evidence rules add points per (observer nation, subject AI, agenda type). Suspicion bands (Unknown, Possible, Likely, Almost certain, Confirmed) map total evidence score; display uses bands only. True agenda is never exposed to the player.
 - **Dossier contract:** Only suspicion scores and capped evidence log are exposed (PlayerView-safe). See [ai-dossier.md](ai-dossier.md) and [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
+
+## Implementation
+
+- **Assignment at game start:** Performed during setup; see [game-setup-pipeline.md](../program/game-setup-pipeline.md) (Build state or equivalent step).
+- **Evidence, dossier, and events:** Event data, evidence rules, and dossier projection are defined in [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
+- **Phase 6 AI:** Agenda is consumed in AI order generation; see [ai-planner.md](../program/ai-planner.md) (Phase 6, agenda sub-seed and behavior).
