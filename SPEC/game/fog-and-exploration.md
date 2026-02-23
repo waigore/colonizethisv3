@@ -14,7 +14,7 @@ Four levels per player per tile:
 
 - **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
 - **Revealed:** Province boundary and owner known; terrain and resources unknown.
-- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay is immediate when units leave.
+- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay: immediate when the last Explorer leaves; for Spy, a 5-turn timer applies (see Fog Decay).
 - **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible.
 
 ### Own vs Other Provinces
@@ -44,7 +44,10 @@ Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [re
 
 ### Fog Decay
 
-When a player's last Explorer/Spy leaves another faction's province, all tiles in that province immediately revert to fogged (retaining last-known state). Own provinces never decay.
+- **Explorer:** When the last Explorer leaves an other-faction province, tiles in that province immediately revert to fogged (retaining last-known state).
+- **Spy:** When a Spy leaves an other-faction province, a 5-turn timer starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province.
+
+Own provinces never decay.
 
 ### Explorer vs Spy
 
