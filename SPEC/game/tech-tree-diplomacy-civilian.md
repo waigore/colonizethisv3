@@ -36,3 +36,15 @@ The **diplomacy and civilian tech table in this doc is the GDD source of truth**
 ### Province and tile identity
 
 Effects that reference provinces (e.g. Builder upgrade town, Merchant purchase land) use **prefixed province ids** and **region-scoped lookup**; see [world-model-identity.md](world-model-identity.md).
+
+---
+
+## Acceptance criteria
+
+- **Merchant build:** Merchant unit is buildable iff `merchant_companies` is in the player's `techUnlocked` set (catalog per [research-resolution.md](../program/research-resolution.md); build validation per [orders.md](../program/orders.md)).
+- **Purchase land:** Merchant `purchase_land` work in a Minor Nation or Tribe requires Merchant Companies **and** an embassy with that Minor/Tribe **and** not at war; see [civilian-units.md](civilian-units.md), [diplomacy.md](diplomacy.md).
+- **Deployment limit (Nationalism):** When `nationalism` is unlocked, deployment limit in battle is 12 regiments (vs 10 base); general may add more per [military-generals.md](military-generals.md). Resolution: [combat-resolution.md](../program/combat-resolution.md).
+- **Builder upgrade_town:** Builder **upgrade_town** work requires `national_bureaucracy` in `techUnlocked` when that gate is enforced; resolution in [development-resolution.md](../program/development-resolution.md) (currently implementation may not enforce the gate).
+- **Join Empire:** Join Empire (GP ask) is gated by `empire_building`; see [diplomacy.md](diplomacy.md).
+- **Diplomatic Expertise:** Unlocks embassy overture to Minor Nations and allows civilian units (Merchants, Engineers, Builders) to work in Minor Nations with embassy; see [diplomacy.md](diplomacy.md), [civilian-units.md](civilian-units.md).
+- **Table as source of truth:** The tech table in this doc is the source of truth for tech id, name, era, prerequisites, and effects; program catalog (e.g. colonizethis_data) aligns with it per Catalog and implementation above.
