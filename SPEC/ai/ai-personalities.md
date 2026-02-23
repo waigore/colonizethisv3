@@ -61,3 +61,13 @@ These are applied when scoring actions (e.g. declare war, accept peace, choose r
 ## Difficulty
 
 Difficulty does **not** change personality or AI strength. It only affects **starting parameters and ruleset modifiers** (e.g. AI nation’s starting resources, production modifiers, unit strength modifiers). Same personality and same algorithm for all difficulty levels.
+
+---
+
+## Acceptance criteria
+
+- **Config and immutability:** Personalities are config data; read-only once the game is created. No mid-game change to a leader's personality.
+- **Leader binding:** Each Great Power has exactly one leader (canonical id per § Canonical leaders). Personality drives goal selection and utility scoring per that leader's archetype and domain weights.
+- **Domain weights:** Each leader has a defined domain-weight vector (economy, military, diplomacy, research). The vector biases behavior-tree goal selection and planner utility scores; relative weights matter.
+- **Behavioral modifiers:** Thresholds (war likelihood, peace tendency, alliance tendency, research preference) are applied when scoring actions (e.g. declare war, accept peace, choose research). Modifiers combine with hidden agendas per [hidden-agendas.md](hidden-agendas.md).
+- **Difficulty:** Difficulty level does not change personality or the AI algorithm; it only affects starting parameters and ruleset modifiers (e.g. resources, production, unit strength).
