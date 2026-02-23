@@ -1,8 +1,5 @@
 /// Builder for InitGameMapViewData from game + tile maps + topology.
-/// SPEC/program/map-data.md § Map view model for tools.
-
-import 'dart:convert';
-import 'dart:io';
+/// SPEC/program/map-visualization.md § Map view model for tools.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -13,39 +10,6 @@ import 'tile_map_visualization_shared.dart';
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
-
-// #region agent log
-const String _agentDebugLogPath =
-    '/Users/waigore/Documents/GitHub/colonizethisv3/.cursor/debug-9f02df.log';
-
-void _agentDebugLog({
-  required String runId,
-  required String hypothesisId,
-  required String location,
-  required String message,
-  required Map<String, Object?> data,
-}) {
-  try {
-    final payload = <String, Object?>{
-      'sessionId': '9f02df',
-      'runId': runId,
-      'hypothesisId': hypothesisId,
-      'location': location,
-      'message': message,
-      'data': data,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    };
-    final line = '${jsonEncode(payload)}\n';
-    File(_agentDebugLogPath).writeAsStringSync(
-      line,
-      mode: FileMode.append,
-      flush: false,
-    );
-  } catch (_) {
-    // Swallow all errors in debug logger.
-  }
-}
-// #endregion
 
 InitGameMapViewData buildInitGameMapViewData({
   required Game game,
@@ -118,23 +82,6 @@ RegionMapViewData _buildRegionViewData({
       provinceDisplayNameById[p.id] = p.displayName!;
     }
   }
-
-  // #region agent log
-  _agentDebugLog(
-    runId: 'pre-fix-1',
-    hypothesisId: 'H1-H2-H5',
-    location: 'init_game_map_view_builder.dart:_buildRegionViewData',
-    message: 'Province ownership mapping built for region',
-    data: {
-      'regionId': regionId,
-      'isOldWorld': isOldWorld,
-      'provinceCount': provinces.length,
-      'ownedProvinceCount': ownerByProvinceId.length,
-      'sampleProvinceIds': provinces.take(5).map((p) => p.id).toList(),
-      'sampleOwnerProvinceKeys': ownerByProvinceId.keys.take(5).toList(),
-    },
-  );
-  // #endregion
 
   // Collect faction ids by type for ownership colours.
   final greatPowerIds = <String>[];
