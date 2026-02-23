@@ -41,12 +41,12 @@ Steps:
 1. Aggregate strength per side per game/combat.md § Rules (Strength).
 2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
 3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
-4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled.
+4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
 5. Compute winner and casualties. Pure function; no side effects.
 
 **Output:** EngagementResult.
 
-**Deferred:** General medals are not yet read from game state (conflict detection passes 0); initiative still uses cavalry share. When general/medal state exists, populate `AttackingSide.generalMedals` in conflict detection and apply general morale aura in step 4.
+**Deferred:** General medals are not yet read from game state (conflict detection passes 0); initiative still uses cavalry share. When general/medal state exists, populate `AttackingSide.generalMedals` in conflict detection and apply general morale aura in step 4. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
 
 ### 5. Resolution Chain
 
