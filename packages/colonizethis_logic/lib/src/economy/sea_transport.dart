@@ -191,17 +191,20 @@ TradeInterceptionResult applyTradeInterception(
   final (escortStrength, cargoStrength) = _escortAndCargoStrength(fleets, playerId, overseasDelivered);
   final escortFactor = (escortStrength / cargoStrength * escortStrengthWeight).clamp(0.0, escortFactorMax);
 
-  double base = actionFactorPatrol * ratio * civilianTargetBonus;
-  if (hasBlockade) base *= blockadeBonusFactor;
-  base *= (1.0 - escortFactor);
-  base = base.clamp(0.0, 1.0);
+  // Base before escort: used for cargo (with escort) and for ship loss (escort applied once per GDD).
+  double baseBeforeEscort = actionFactorPatrol * ratio * civilianTargetBonus;
+  if (hasBlockade) baseBeforeEscort *= blockadeBonusFactor;
+  baseBeforeEscort = baseBeforeEscort.clamp(0.0, 1.0);
+
+  double base = baseBeforeEscort * (1.0 - escortFactor);
 
   final pIntercept = (1.2 * base).clamp(0.1, 0.9);
   final raidEfficiency = raidEfficiencyMin + ratio * (raidEfficiencyMax - raidEfficiencyMin);
   final pCargoEffective = (pIntercept * raidEfficiency).clamp(0.0, 1.0);
 
-  final pShipBase = (0.4 * base).clamp(0.0, 1.0);
-  final pShip = (pShipBase * (1.0 - escortFactor) * civilianShipLossPenalty).clamp(0.02, 0.5);
+  // GDD: shipLossChance = baseShipLoss × (1 - escortFactor) × civilianPenalty — escort applied once.
+  final baseShipLoss = (0.4 * baseBeforeEscort).clamp(0.0, 1.0);
+  final pShip = (baseShipLoss * (1.0 - escortFactor) * civilianShipLossPenalty).clamp(0.02, 0.5);
 
   final reducedDelivered = <CommodityId, int>{};
   for (final entry in overseasDelivered.entries) {
@@ -220,7 +223,7 @@ TradeInterceptionResult applyTradeInterception(
   final playerFleets = fleets.where((f) => f.ownerId == playerId).toList();
   var shipsToRemove = 0;
   for (final f in playerFleets) {
-    final merchantCount = f.shipTypeIds.where((id) => id == 'fluyte').length;
+    final merchantCount = f.shipTypeIds.where((id) => _merchantShipTypes.contains(id)).length;
     for (var i = 0; i < merchantCount; i++) {
       if (nextInt(100) < (pShip * 100)) shipsToRemove++;
     }
@@ -241,7 +244,7 @@ TradeInterceptionResult applyTradeInterception(
     }
     final types = List<String>.from(f.shipTypeIds);
     for (var i = types.length - 1; i >= 0 && remainingToRemove > 0; i--) {
-      if (types[i] == 'fluyte') {
+      if (_merchantShipTypes.contains(types[i])) {
         types.removeAt(i);
         remainingToRemove--;
       }
