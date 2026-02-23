@@ -23,7 +23,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Tribe Assignment:** Assign New World provinces to Tribes as contiguous clusters per tribe. Per-tribe count from even split of NW total (within ±1). Capital assigned at setup (any owned province; sea-bound not required).
 
-**Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game.
+**Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game. Province and capital ids use the prefixed format and lookup rules in [world-model-identity.md](world-model-identity.md).
 
 **Capital-Choice Phase:** Runs after setup for Great Powers only — each GP may confirm or override its capital province + tile (sea-bound). Minor Nations and Tribes do not participate; their capitals come from setup.
 
@@ -42,6 +42,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 ## Interactions
 
+- Province identity and lookup: [world-model-identity.md](world-model-identity.md)
 - World model and topology: [world-model.md](world-model.md)
 - Capital auto-choice and capital-choice phase: [capital-choice-phase.md](capital-choice-phase.md)
 - Ruleset configuration: [ruleset-config.md](ruleset-config.md)
