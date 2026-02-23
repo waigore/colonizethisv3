@@ -23,7 +23,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 **Exploration resolution** (Build/Work phase):
 
 1. For each Explorer with work order `explore` in province P, accumulate progress.
-2. Turns required per game rules: `ceil(3 * tilesInP / maxTilesInAnyProvince)`.
+2. Turns required per game rules: `ceil(3 * tilesInP / maxTilesInAnyProvinceInRegion)`, where `maxTilesInAnyProvinceInRegion` is the maximum tile count in any province **in the same region** as the Explorer's province.
 3. On completion, set all tiles in P to fullyVisible for that player.
 
 **Prospect resolution** (Build/Work phase):
