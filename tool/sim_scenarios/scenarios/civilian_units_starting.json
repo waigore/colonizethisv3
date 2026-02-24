@@ -1,0 +1,27 @@
+{
+  "name": "civilian_units_starting",
+  "description": "Verifies fresh game initialization spawns starting civilian units (2 Explorers, 2 Builders, 1 Engineer) for gp1 in its capital province per SPEC/game/civilian-units.md and StartingResourcesConfig.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_explorer_1" },
+    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_explorer_2" },
+    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_builder_1" },
+    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_builder_2" },
+    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_engineer_1" }
+  ]
+}
