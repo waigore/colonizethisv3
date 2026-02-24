@@ -143,6 +143,27 @@ void main() {
         expect(scenario.assertions[3].matchMin, 0);
         expect(scenario.assertions[3].matchMax, 5);
       });
+
+      test('parses capital assertions', () {
+        final json = {
+          'name': 'capital_assertions',
+          'init': {'type': 'fresh', 'config': {'seed': 42}},
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'capitalProvinceId': 'oldWorld|p1', 'capitalTileKey': 'oldWorld|p1|0|0'},
+            {'turn': 1, 'player': 'tribe1', 'capitalProvinceId': 'newWorld|p2'},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].capitalProvinceId, 'oldWorld|p1');
+        expect(scenario.assertions[0].capitalTileKey, 'oldWorld|p1|0|0');
+        expect(scenario.assertions[1].player, 'tribe1');
+        expect(scenario.assertions[1].capitalProvinceId, 'newWorld|p2');
+        expect(scenario.assertions[1].capitalTileKey, isNull);
+      });
     });
 
     group('parseScenarioFile', () {

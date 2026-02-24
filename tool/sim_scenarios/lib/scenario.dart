@@ -145,6 +145,8 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.capitalProvinceId,
+    this.capitalTileKey,
   });
 
   /// Which turn to check (null = final state)
@@ -153,6 +155,10 @@ class Assertion {
   final String? region;
   final String? province;
   final String? player;
+  /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
+  final String? capitalProvinceId;
+  /// Capital assertion: expected capital tile key (regionId|provinceId|x|y). Optional.
+  final String? capitalTileKey;
   final String? owner;
   /// Negative assertion: province must not be owned by this player id.
   final String? notOwner;
@@ -284,6 +290,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    capitalProvinceId: json['capitalProvinceId'] as String?,
+    capitalTileKey: json['capitalTileKey'] as String?,
   );
 }
 
