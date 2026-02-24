@@ -145,6 +145,14 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.relationWith,
+    this.relationState,
+    this.relationScore,
+    this.relationLevel,
+    this.relationSinceTurn,
+    this.relationLastInteractionTurn,
+    this.overtureStage,
+    this.capitalProvince,
   });
 
   /// Which turn to check (null = final state)
@@ -170,6 +178,19 @@ class Assertion {
   final double? maxBothFraction;
   /// Every tile's resource is allowed in its region per resource rules. Optional region scopes to one region.
   final bool? everyTileResourceAllowedInRegion;
+
+  /// Diplomacy assertions (SPEC/game/diplomacy.md)
+  /// Relation between [player] and [relationWith].
+  final String? relationWith;
+  final String? relationState;
+  final int? relationScore;
+  final String? relationLevel;
+  final int? relationSinceTurn;
+  final int? relationLastInteractionTurn;
+  /// Overture stage between GP [player] and Minor/Tribe [relationWith].
+  final String? overtureStage;
+  /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
+  final String? capitalProvince;
 }
 
 /// Type of value matching for assertions.
@@ -284,6 +305,14 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    relationWith: json['relationWith'] as String?,
+    relationState: json['relationState'] as String?,
+    relationScore: json['relationScore'] as int?,
+    relationLevel: json['relationLevel'] as String?,
+    relationSinceTurn: json['relationSinceTurn'] as int?,
+    relationLastInteractionTurn: json['relationLastInteractionTurn'] as int?,
+    overtureStage: json['overtureStage'] as String?,
+    capitalProvince: json['capitalProvince'] as String?,
   );
 }
 

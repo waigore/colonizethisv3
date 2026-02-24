@@ -148,7 +148,7 @@ class StateVerifier {
       }
     }
 
-    // Player-based assertions (stockpile, treasury)
+    // Player-based assertions (stockpile, treasury, diplomacy)
     if (assertion.player != null) {
       final player = game.players.firstWhere(
         (p) => p.id == assertion.player,
@@ -184,6 +184,79 @@ class StateVerifier {
           failures.add(
             'Player ${assertion.player} treasury: ${matchResult.message}',
           );
+        }
+      }
+
+      // Capital assertion (SPEC/game/capital-choice-phase.md): player's capital province
+      if (assertion.capitalProvince != null) {
+        final expected = assertion.capitalProvince!;
+        final actual = player.capitalProvinceId;
+        if (actual != expected) {
+          failures.add(
+            'Player ${assertion.player} capital: expected "$expected", got "${actual ?? "null"}"',
+          );
+        }
+      }
+
+      // Diplomacy relation assertions between [player] and [relationWith]
+      if (assertion.relationWith != null) {
+        final rel = _findRelation(game, assertion.player!, assertion.relationWith!);
+        if (rel == null) {
+          failures.add(
+            'Relation between ${assertion.player} and ${assertion.relationWith} not found',
+          );
+        } else {
+          if (assertion.relationState != null &&
+              rel.state.name != assertion.relationState) {
+            failures.add(
+              'Relation ${assertion.player}-${assertion.relationWith}: '
+              'expected state "${assertion.relationState}", got "${rel.state.name}"',
+            );
+          }
+          if (assertion.relationScore != null &&
+              rel.score != assertion.relationScore) {
+            failures.add(
+              'Relation ${assertion.player}-${assertion.relationWith}: '
+              'expected score ${assertion.relationScore}, got ${rel.score}',
+            );
+          }
+          if (assertion.relationLevel != null &&
+              rel.level.name != assertion.relationLevel) {
+            failures.add(
+              'Relation ${assertion.player}-${assertion.relationWith}: '
+              'expected level "${assertion.relationLevel}", got "${rel.level.name}"',
+            );
+          }
+          if (assertion.relationSinceTurn != null &&
+              rel.sinceTurn != assertion.relationSinceTurn) {
+            failures.add(
+              'Relation ${assertion.player}-${assertion.relationWith}: '
+              'expected sinceTurn ${assertion.relationSinceTurn}, got ${rel.sinceTurn}',
+            );
+          }
+          if (assertion.relationLastInteractionTurn != null &&
+              rel.lastInteractionTurn != assertion.relationLastInteractionTurn) {
+            failures.add(
+              'Relation ${assertion.player}-${assertion.relationWith}: '
+              'expected lastInteractionTurn ${assertion.relationLastInteractionTurn}, '
+              'got ${rel.lastInteractionTurn}',
+            );
+          }
+        }
+
+        // Overture stage (GP–Minor/Tribe) between [player] and [relationWith]
+        if (assertion.overtureStage != null) {
+          final overture = _findOverture(game, assertion.player!, assertion.relationWith!);
+          if (overture == null) {
+            failures.add(
+              'Overture between ${assertion.player} and ${assertion.relationWith} not found',
+            );
+          } else if (overture.stage.name != assertion.overtureStage) {
+            failures.add(
+              'Overture ${assertion.player}-${assertion.relationWith}: '
+              'expected stage "${assertion.overtureStage}", got "${overture.stage.name}"',
+            );
+          }
         }
       }
     }
@@ -383,6 +456,32 @@ class StateVerifier {
     }
 
     return _CountMatchResult(passed: passed, message: message);
+  }
+
+  /// Diplomacy helpers
+  DiplomacyRelation? _findRelation(
+    Game game,
+    String factionId1,
+    String factionId2,
+  ) {
+    String _pairKey(String a, String b) =>
+        a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
+    final key = _pairKey(factionId1, factionId2);
+    for (final r in game.diplomacyRelations) {
+      if (_pairKey(r.factionId1, r.factionId2) == key) return r;
+    }
+    return null;
+  }
+
+  OvertureState? _findOverture(
+    Game game,
+    String gpId,
+    String targetId,
+  ) {
+    for (final o in game.overtureStates) {
+      if (o.gpId == gpId && o.targetId == targetId) return o;
+    }
+    return null;
   }
 }
 
