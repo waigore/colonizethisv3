@@ -148,7 +148,7 @@ class StateVerifier {
       }
     }
 
-    // Player-based assertions (stockpile, treasury)
+    // Player-based assertions (stockpile, treasury, capital)
     if (assertion.player != null) {
       final player = game.players.firstWhere(
         (p) => p.id == assertion.player,
@@ -183,6 +183,76 @@ class StateVerifier {
         if (!matchResult.passed) {
           failures.add(
             'Player ${assertion.player} treasury: ${matchResult.message}',
+          );
+        }
+      }
+
+      if (assertion.capitalProvinceId != null) {
+        final actual = player.capitalProvinceId;
+        if (actual != assertion.capitalProvinceId) {
+          failures.add(
+            'Player ${assertion.player} capitalProvinceId: expected "${assertion.capitalProvinceId}", got "${actual ?? 'null'}"',
+          );
+        }
+      }
+
+      if (assertion.capitalTileKey != null) {
+        final actualKey = player.capitalTile?.toTileKey();
+        if (actualKey != assertion.capitalTileKey) {
+          failures.add(
+            'Player ${assertion.player} capitalTileKey: expected "${assertion.capitalTileKey}", got "${actualKey ?? 'null'}"',
+          );
+        }
+      }
+    }
+
+    // Minor Nation-based assertions (capital province, capital tile)
+    if (assertion.minor != null) {
+      final minor = game.minorNations.firstWhere(
+        (m) => m.id == assertion.minor,
+        orElse: () => throw StateError('MinorNation ${assertion.minor} not found'),
+      );
+
+      if (assertion.capitalProvinceId != null) {
+        final actual = minor.capitalProvinceId;
+        if (actual != assertion.capitalProvinceId) {
+          failures.add(
+            'Minor ${assertion.minor} capitalProvinceId: expected "${assertion.capitalProvinceId}", got "${actual ?? 'null'}"',
+          );
+        }
+      }
+
+      if (assertion.capitalTileKey != null) {
+        final actualKey = minor.capitalTile?.toTileKey();
+        if (actualKey != assertion.capitalTileKey) {
+          failures.add(
+            'Minor ${assertion.minor} capitalTileKey: expected "${assertion.capitalTileKey}", got "${actualKey ?? 'null'}"',
+          );
+        }
+      }
+    }
+
+    // Tribe-based assertions (capital province, capital tile)
+    if (assertion.tribe != null) {
+      final tribe = game.tribes.firstWhere(
+        (t) => t.id == assertion.tribe,
+        orElse: () => throw StateError('Tribe ${assertion.tribe} not found'),
+      );
+
+      if (assertion.capitalProvinceId != null) {
+        final actual = tribe.capitalProvinceId;
+        if (actual != assertion.capitalProvinceId) {
+          failures.add(
+            'Tribe ${assertion.tribe} capitalProvinceId: expected "${assertion.capitalProvinceId}", got "${actual ?? 'null'}"',
+          );
+        }
+      }
+
+      if (assertion.capitalTileKey != null) {
+        final actualKey = tribe.capitalTile?.toTileKey();
+        if (actualKey != assertion.capitalTileKey) {
+          failures.add(
+            'Tribe ${assertion.tribe} capitalTileKey: expected "${assertion.capitalTileKey}", got "${actualKey ?? 'null'}"',
           );
         }
       }

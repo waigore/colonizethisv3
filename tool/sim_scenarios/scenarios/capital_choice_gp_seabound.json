@@ -1,0 +1,40 @@
+{
+  "name": "capital_choice_gp_seabound",
+  "description": "Capital choice: Great Power with multiple sea-bound provinces selects first sea-bound by sorted id as capital (SPEC/game/capital-choice-phase.md).",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "sea1", "p2"],
+        ["p1", "p2", "p3"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "p2", "regionId": "oldWorld", "type": "province" },
+        { "id": "p3", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" },
+        { "id1": "p3", "id2": "sea1" },
+        { "id1": "p1", "id2": "p2" },
+        { "id1": "p2", "id2": "p3" }
+      ]
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "player": "gp1",
+      "capitalProvinceId": "oldWorld|p1"
+    }
+  ]
+}
+

@@ -110,6 +110,12 @@ Assertion fields:
 - `stockpile` — Resource stockpile amount
 - `treasury` — Treasury amount
 - `matchType` — `exact` (default), `range`, `atLeast`, `atMost`
+- `player` + `capitalProvinceId` — Expected capital province id for that player (SPEC/game/capital-choice-phase.md). Uses full id `regionId|localId` (e.g. `oldWorld|p1`).
+- `player` + `capitalTileKey` — Expected capital tile key for that player. Uses tile key format `regionId|localId|x|y` as produced by `CapitalTile.toTileKey()` (e.g. `oldWorld|p1|0|1`).
+- `minor` + `capitalProvinceId` — Expected capital province id for that Minor Nation. Uses full id `regionId|localId`.
+- `minor` + `capitalTileKey` — Expected capital tile key for that Minor Nation in tile key format `regionId|localId|x|y`.
+- `tribe` + `capitalProvinceId` — Expected capital province id for that Tribe. Uses full id `regionId|localId`.
+- `tribe` + `capitalTileKey` — Expected capital tile key for that Tribe in tile key format `regionId|localId|x|y`.
 
 **Resource-placement assertions** (SPEC/game/resource-terrain-region-rules.md):
 - `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.

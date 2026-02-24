@@ -132,6 +132,8 @@ class Assertion {
     this.region,
     this.province,
     this.player,
+    this.minor,
+    this.tribe,
     this.owner,
     this.notOwner,
     this.unitCount,
@@ -145,6 +147,8 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.capitalProvinceId,
+    this.capitalTileKey,
   });
 
   /// Which turn to check (null = final state)
@@ -153,6 +157,10 @@ class Assertion {
   final String? region;
   final String? province;
   final String? player;
+  /// Minor Nation id for minor-specific assertions (e.g., capital).
+  final String? minor;
+  /// Tribe id for tribe-specific assertions (e.g., capital).
+  final String? tribe;
   final String? owner;
   /// Negative assertion: province must not be owned by this player id.
   final String? notOwner;
@@ -170,6 +178,10 @@ class Assertion {
   final double? maxBothFraction;
   /// Every tile's resource is allowed in its region per resource rules. Optional region scopes to one region.
   final bool? everyTileResourceAllowedInRegion;
+  /// Expected capital province id for [player]. Full id: regionId|localId (e.g. oldWorld|p1). SPEC/game/capital-choice-phase.md.
+  final String? capitalProvinceId;
+  /// Expected capital tile key for player/minor/tribe. Tile key: regionId|localId|x|y (CapitalTile.toTileKey()).
+  final String? capitalTileKey;
 }
 
 /// Type of value matching for assertions.
@@ -271,6 +283,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     region: json['region'] as String?,
     province: json['province'] as String?,
     player: json['player'] as String?,
+    minor: json['minor'] as String?,
+    tribe: json['tribe'] as String?,
     owner: json['owner'] as String?,
     notOwner: json['notOwner'] as String?,
     unitCount: json['unitCount'] as int?,
@@ -284,6 +298,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    capitalProvinceId: json['capitalProvinceId'] as String?,
+    capitalTileKey: json['capitalTileKey'] as String?,
   );
 }
 

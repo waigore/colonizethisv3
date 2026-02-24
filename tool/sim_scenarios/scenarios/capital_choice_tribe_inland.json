@@ -1,0 +1,51 @@
+{
+  "name": "capital_choice_tribe_inland",
+  "description": "Capital choice: Tribe with only inland provinces selects first inland province by sorted id as capital (SPEC/game/capital-choice-phase.md).",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "tribeCount": 1,
+      "seed": 101
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "sea1", "p2"],
+        ["p1", "p2", "p3"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "p2", "regionId": "oldWorld", "type": "province" },
+        { "id": "p3", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" },
+        { "id1": "p3", "id2": "sea1" },
+        { "id1": "p1", "id2": "p2" },
+        { "id1": "p2", "id2": "p3" }
+      ]
+    },
+    "newWorld": {
+      "grid": [
+        ["np1", "np2"]
+      ],
+      "nodes": [
+        { "id": "np1", "regionId": "newWorld", "type": "province" },
+        { "id": "np2", "regionId": "newWorld", "type": "province" }
+      ],
+      "edges": []
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "tribe": "tribe1",
+      "capitalProvinceId": "newWorld|np1"
+    }
+  ]
+}
+
