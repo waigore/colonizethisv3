@@ -1,17 +1,7 @@
 // Negotiation mood state machine. SPEC/ai/dialogue-and-mood.md, SPEC/program/ai-events-and-dossier.md.
 // Given current mood, offerQualityDelta (-1..1), and stallCounter, compute next mood; deterministic given seed.
 
-/// Valid portrait mood values per SPEC/ai/dialogue-and-mood.md.
-const List<String> kPortraitMoodValues = [
-  'considering',
-  'pleased',
-  'gracious',
-  'calculating',
-  'skeptical',
-  'impatient',
-  'irritated',
-  'dismissive',
-];
+import 'package:colonizethis_data/colonizethis_data.dart' show kPortraitMoodValues;
 
 /// Default mood when no negotiation context (e.g. opening diplomacy).
 const String kDefaultMood = 'considering';
