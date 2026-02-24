@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, relations, Join Empire/Colony, intervention, and foreign aid. Derived from GDD 07 and Imperialism II.
+Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, relations, Join Empire/Colony, intervention, and foreign aid. Derived from GDD 07 and Imperialism II. Province identity (e.g. order targets, overture/province context, “in that province”): [world-model-identity.md](world-model-identity.md).
 
 ---
 
@@ -15,7 +15,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 ### Tribe vs Minor War Rule
 
 - **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
-- **Tribes (New World):** No declaration required unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe in that province; then war must be declared on that GP.
+- **Tribes (New World):** No declaration required unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe in that province; then war must be declared on that GP. Any province id used in diplomacy state or in orders (e.g. “in that province”, purchase_land target) must be in prefixed form and resolved per [world-model-identity.md](world-model-identity.md).
 
 ### GP–GP Rules
 
@@ -103,3 +103,4 @@ Diplomacy phase runs before Movement. Declarations and peace take effect for the
 - Tech gates: [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md), [tech-tree.md](tech-tree.md)
 - Turn sequence: see program/turn-resolution-phases.md
 - Combat validation: [combat.md](combat.md)
+- Province identity (prefixed ids, region-scoped lookup in state and orders): [world-model-identity.md](world-model-identity.md)
