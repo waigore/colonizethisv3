@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Resolves diplomatic orders, manages overture state machine, updates relation scores, and feeds AI evidence pipeline during the Diplomacy phase. Game rules: [diplomacy.md](../game/diplomacy.md).
+Resolves diplomatic orders, manages overture state machine, updates relation scores, and feeds AI evidence pipeline during the Diplomacy phase. Game rules: [diplomacy.md](../game/diplomacy.md). Province identity (e.g. in order payloads or state that reference a province) follows [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -75,3 +75,4 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
 - Resolution order is strict (steps 1–7); reordering may break precondition checks.
 - Overture stage transitions are linear; no stage may be skipped.
+- Any province id used in diplomacy state or in diplomatic order payloads must be in prefixed form and resolved per [world-model-identity.md](../game/world-model-identity.md).
