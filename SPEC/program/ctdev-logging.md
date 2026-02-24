@@ -21,6 +21,7 @@
   - **File:** Logs at **debug** and above (default).
   - **In-memory Sim Log (UI):** Logs at **info** and above; shows the **last 10 lines** only; **cleared at the start of every turn** (when resolving a turn or stepping a full turn).
 - **Exception capture:** All log calls use `error` and `stackTrace` parameters where applicable. Uncaught errors are handled in `runZonedGuarded` and logged with stack trace. The file format appends error and stack trace when present (e.g. on following lines).
+  - **CLI tools:** Init-game, map generation, and sim tools use the same logger configuration for **operational and diagnostic** output (`logic:`, `map:`, etc.). They may still write **usage, help text, and human-readable reports** to `stdout`/`print` as part of their CLI contract; these are exempt from the “no print for logging” rule.
 
 ---
 
