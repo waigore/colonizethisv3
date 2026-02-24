@@ -25,7 +25,7 @@ Internal record appended when an action matches an evidence rule. Fields: observ
 4. UI subscribes and resolves to text/portrait assets. No asset paths in events.
 
 ### Evidence and Dossier
-1. Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook). Rules per [hidden-agendas.md](../ai/hidden-agendas.md).
+1. Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook). Rules per [hidden-agendas.md](../ai/hidden-agendas.md). Which triggers are in scope (MVP) vs deferred is defined in that doc (§ Evidence rule coverage).
 2. Storage: per (observer, subject, agenda type) counter + optional (turn, description) list. Deterministic: same actions → same evidence.
 3. Dossier projection: read API returning PlayerView-safe data (basic intel, suspicion levels, evidence list, behavioral notes). True hidden agenda never exposed.
 4. **Confidence % mapping:** Best-guess agenda confidence (display %) is derived from the highest suspicion score for that agenda. Mapping: score 0–2 → 0%; 3–5 → 25%; 6–8 → 60%; 9–10 → 85%; 11+ → 100%. Implementation must use this mapping for consistency with display bands (see [ai-dossier.md](../ai/ai-dossier.md) § PlayerView-safe rules).
