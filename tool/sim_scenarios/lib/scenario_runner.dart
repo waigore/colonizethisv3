@@ -103,8 +103,13 @@ class ScenarioRunner {
       }
 
       // 2. Apply setup if specified (for saved-game scenarios)
+      var currentContext = context;
       if (scenario.setup != null) {
-        _applySetup(context.game, scenario.setup!);
+        currentContext = ScenarioContext(
+          game: _applySetup(currentContext.game, scenario.setup!),
+          topology: currentContext.topology,
+          tileMapByRegion: currentContext.tileMapByRegion,
+        );
       }
 
       // 3. Run each turn
@@ -112,13 +117,18 @@ class ScenarioRunner {
       
       for (final turnScript in scenario.turns) {
         // Parse orders
-        final orders = parseOrderCommands(turnScript.orders, context.game);
+        final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
-        // Resolve turn
-        await _resolveTurn(context, orders);
+        // Resolve turn (returns updated game)
+        final nextGame = _resolveTurn(currentContext, orders);
+        currentContext = ScenarioContext(
+          game: nextGame,
+          topology: currentContext.topology,
+          tileMapByRegion: currentContext.tileMapByRegion,
+        );
         
         // Verify assertions for this turn
-        final assertionResults = _verifyTurnAssertions(context.game, scenario.assertions, turnScript.turn);
+        final assertionResults = _verifyTurnAssertions(currentContext.game, scenario.assertions, turnScript.turn);
         
         turnResults[turnScript.turn] = TurnResult(
           turnNumber: turnScript.turn,
@@ -128,7 +138,7 @@ class ScenarioRunner {
 
       // 4. Verify final assertions (those without turn specified)
       final finalAssertions = scenario.assertions.where((a) => a.turn == null).toList();
-      final finalResult = verifier.verify(context.game, finalAssertions);
+      final finalResult = verifier.verify(currentContext.game, finalAssertions);
       
       final allFailures = <String>[];
       for (final tr in turnResults.values) {
@@ -144,7 +154,7 @@ class ScenarioRunner {
         scenarioName: scenario.name,
         passed: allFailures.isEmpty,
         failures: allFailures,
-        finalState: context.game,
+        finalState: currentContext.game,
         turnResults: turnResults,
       );
     } catch (e, stack) {
@@ -218,9 +228,52 @@ class ScenarioRunner {
     return null;
   }
 
-  void _applySetup(Game game, ScenarioSetup setup) {
-    // TODO: Implement unit injection for saved-game scenarios
-    // This would add units to provinces as specified in setup.units
+  /// Applies scenario setup (unit injection, etc.). Returns updated game.
+  Game _applySetup(Game game, ScenarioSetup setup) {
+    if (setup.units != null && setup.units!.isNotEmpty) {
+      final owUnits = <Unit>[];
+      final nwUnits = <Unit>[];
+      for (final placement in setup.units!) {
+        final fullProvinceId = placement.provinceId.contains('|')
+            ? placement.provinceId
+            : 'oldWorld|${placement.provinceId}';
+        final regionId = fullProvinceId.startsWith('newWorld|')
+            ? 'newWorld'
+            : 'oldWorld';
+        final type = placement.unitType;
+        for (var k = 0; k < placement.count; k++) {
+          final unitId =
+              '${placement.playerId}_${type.toLowerCase().replaceAll(' ', '_')}_$k';
+          final unit = Unit(
+            id: unitId,
+            type: type,
+            ownerId: placement.playerId,
+            provinceId: fullProvinceId,
+            status: UnitStatus.idle,
+            medals: 0,
+          );
+          if (regionId == 'oldWorld') {
+            owUnits.add(unit);
+          } else {
+            nwUnits.add(unit);
+          }
+        }
+      }
+      final newOw = RegionData(
+        provinces: game.worldState.oldWorld.provinces,
+        units: [...game.worldState.oldWorld.units, ...owUnits],
+      );
+      final newNw = RegionData(
+        provinces: game.worldState.newWorld.provinces,
+        units: [...game.worldState.newWorld.units, ...nwUnits],
+      );
+      game = game.copyWith(
+        worldState: game.worldState.copyWith(
+          oldWorld: newOw,
+          newWorld: newNw,
+        ),
+      );
+    }
     if (setup.stockpileOverrides != null) {
       for (final player in game.players) {
         final override = setup.stockpileOverrides![player.id];
@@ -230,23 +283,22 @@ class ScenarioRunner {
         }
       }
     }
+    return game;
   }
 
-  Future<void> _resolveTurn(ScenarioContext context, Orders orders) async {
+  /// Resolves one turn and returns the updated game.
+  Game _resolveTurn(ScenarioContext context, Orders orders) {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
     
-    // Create order engine with the orders
     final orderEngine = OrderEngine(initialOrders: orders);
-    
-    // Resolve turn - this modifies context.game in place
-    resolveTurnForGameFromOrderEngine(
+    return resolveTurnForGameFromOrderEngine(
       game: context.game,
       topology: topology,
       orderEngine: orderEngine,
-      aiOrders: null, // Deterministic: no AI orders
+      aiOrders: null,
       tileMapByRegion: context.tileMapByRegion,
     );
   }
