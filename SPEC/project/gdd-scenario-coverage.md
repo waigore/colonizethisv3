@@ -127,6 +127,19 @@ Implementing (1) gives the tool a way to **uncover** "spec marked covered but th
 
 ---
 
+## Acceptance criteria
+
+- **Mapping completeness:** The mapping file contains exactly one entry per file under `SPEC/game/*.md`. Given a new GDD spec added under `SPEC/game/`, when the coverage tool runs, then the tool treats the spec as uncovered until an entry (empty array or object with empty `scenarios`) is added.
+- **Covered vs uncovered:** A spec is **covered** when its entry exists and the scenario list (from a non-empty array or from `object.scenarios` when non-empty) has at least one scenario name. A spec is **uncovered** when the entry is missing or the scenario list is empty. Given the mapping in that state, when the tool runs, then the tool reports that spec in the correct category (covered or uncovered).
+- **Tool report:** When the tool runs, then it prints: total GDD spec count; covered and uncovered counts; the list of uncovered spec paths (so the coder can choose a target); for each covered spec whose entry has a non-empty `verifierIssues` array, the tool prints those issues.
+- **Scenario file validation:** When the tool runs, then it checks that every scenario filename listed in the mapping exists under `tool/sim_scenarios/scenarios/` and warns for any missing file. Missing files do not change the covered/uncovered status of a spec.
+- **Exit code:** When all SPEC/game specs are covered (each has at least one scenario), the tool exits with code 0. When at least one spec is uncovered, the tool exits with a non-zero code (so CI can enforce coverage growth).
+- **Coder workflow:** Given the tool report listing uncovered specs or covered specs with `verifierIssues`, the coder can pick one such spec, add or extend scenarios (and fix implementation as needed), update the mapping, clear or update `verifierIssues` for that spec, re-run the tool, and confirm the spec is covered and issues resolved.
+- **Verifier workflow:** Given the tool report, the verifier picks only a **covered** spec (no scenarios added by verifier), audits it line-by-line against the GDD and existing scenario assertions, and records gaps only in the mapping under `verifierIssues`; the verifier does not add or edit scenario files.
+- **Implementation:** Tool implementation: `tool/check_gdd_coverage/`. Scenario format and assertions: [sim-scenarios.md](../program/sim-scenarios.md).
+
+---
+
 ## References
 
 - [agentic-gdd-scenario-coverage.md](agentic-gdd-scenario-coverage.md) — Coder prompt (one spec at a time)
