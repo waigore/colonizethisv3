@@ -93,6 +93,9 @@ class OrderCommand {
     this.techId,
     this.slotIndex,
     this.targetFactionId,
+    this.diplomaticType,
+    this.amount,
+    this.overtureStage,
     this.fleetId,
     this.destinationSeaZoneId,
     this.mission,
@@ -116,6 +119,9 @@ class OrderCommand {
   final int? slotIndex;
   // Diplomatic fields
   final String? targetFactionId;
+  final String? diplomaticType;
+  final int? amount;
+  final String? overtureStage;
   // Naval move fields
   final String? fleetId;
   final String? destinationSeaZoneId;
@@ -278,6 +284,9 @@ OrderCommand _parseOrderCommand(Map<String, dynamic> json) {
     techId: json['techId'] as String?,
     slotIndex: json['slotIndex'] as int?,
     targetFactionId: json['targetFactionId'] as String?,
+    diplomaticType: json['diplomaticType'] as String?,
+    amount: json['amount'] as int?,
+    overtureStage: json['overtureStage'] as String?,
     fleetId: json['fleetId'] as String?,
     destinationSeaZoneId: json['destinationSeaZoneId'] as String?,
     mission: json['mission'] as String?,

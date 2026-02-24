@@ -4,7 +4,9 @@
   "game/civilian-units.md": ["civilian_units_starting.json"],
   "game/combat.md": ["combat_basic.json"],
   "game/commodity-catalog.md": [],
-  "game/diplomacy.md": [],
+  "game/diplomacy.md": [
+    "diplomacy_gp_gp_war_and_mutual_peace.json"
+  ],
   "game/extraction-and-improvements.md": [],
   "game/factions.md": [],
   "game/fog-and-exploration.md": [],

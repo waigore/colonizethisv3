@@ -156,6 +156,16 @@ GameSetupResult createGameFromGeneratedMaps({
       Tribe(id: tribeIds[i], displayName: 'Tribe ${i + 1}'),
   ];
 
+  // Initialize GP–GP diplomacy relations at peace per SPEC/game/diplomacy.md.
+  final diplomacyRelations = <DiplomacyRelation>[
+    for (var i = 0; i < gpIds.length; i++)
+      for (var j = i + 1; j < gpIds.length; j++)
+        DiplomacyRelation(
+          factionId1: gpIds[i],
+          factionId2: gpIds[j],
+        ),
+  ];
+
   var game = Game(
     id: gameId,
     worldState: worldState,
@@ -163,6 +173,7 @@ GameSetupResult createGameFromGeneratedMaps({
     minorNations: minorNations,
     tribes: tribes,
     turnTimeMapping: TurnTimeMapping.gdd01,
+    diplomacyRelations: diplomacyRelations,
   );
 
   // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.

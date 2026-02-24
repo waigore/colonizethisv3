@@ -1,0 +1,63 @@
+{
+  "name": "diplomacy_gp_gp_war_and_mutual_peace",
+  "description": "GP–GP declare war followed by mutual peace; verifies relationState and turn indices.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england", "france"],
+      "continentCount": 2,
+      "minorNationCount": 0,
+      "tribeCount": 0
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "declareWar",
+          "targetFactionId": "gp2"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "offerPeace",
+          "targetFactionId": "gp2"
+        },
+        {
+          "player": "gp2",
+          "type": "diplomatic",
+          "diplomaticType": "offerPeace",
+          "targetFactionId": "gp1"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "player": "gp1",
+      "relationWith": "gp2",
+      "relationState": "atWar",
+      "relationSinceTurn": 0,
+      "relationLastInteractionTurn": 0
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "gp2",
+      "relationState": "atPeace",
+      "relationSinceTurn": 1,
+      "relationLastInteractionTurn": 1
+    }
+  ]
+}
+
