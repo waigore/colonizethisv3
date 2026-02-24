@@ -11,7 +11,7 @@ Each **production recipe** has:
 - **Output:** One commodity, quantity per run (e.g. 1).
 - **Inputs:** Map of commodity id → quantity consumed per output unit.
 - **Labour:** Labour points required per output unit (e.g. 2 timber → 1 lumber = 2 labour). Production consumes labour from the player's WorkerPool.
-- **Turns per unit:** Optional; default 1 turn per output unit.
+- **Turns per unit:** Optional; default 1 turn per output unit. **MVP:** All recipes behave as 1 turn per output unit; multi-turn recipes (e.g. >1 turn per unit) are out of scope for MVP and deferred.
 
 Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. Insufficient inputs or labour: recipe does not run (no partial run).
 
@@ -30,6 +30,12 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 ## Where Stored
 
 **Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets in MVP.
+
+---
+
+## Scope (MVP vs deferred)
+
+- **MVP:** One turn per output unit only; recipe config may omit turns-per-unit (default 1). Multi-turn recipes are not implemented and are **deferred**.
 
 ---
 
