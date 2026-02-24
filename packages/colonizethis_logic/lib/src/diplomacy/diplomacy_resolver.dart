@@ -298,6 +298,21 @@ Game _processWarAndPeace(
 }) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
+  // Track GP–GP peace offers by unordered faction pair so we can require
+  // both sides to offer peace before switching AT_WAR to AT_PEACE.
+  final peaceOffersByPairKey = <String, Set<String>>{};
+  for (final entry in diploByPlayer.entries) {
+    final gpId = entry.key;
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.offerPeace) continue;
+      final targetId = order.targetFactionId;
+      if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId)) continue;
+      final key = _pairKey(gpId, targetId);
+      final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
+      offerers.add(gpId);
+    }
+  }
+
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
@@ -348,6 +363,20 @@ Game _processWarAndPeace(
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
         if (rel != null && rel.atWar) {
+          // SPEC/game/diplomacy.md:
+          // - GP–GP peace: both sides must agree (both offer peace in this phase).
+          // - Minors never refuse peace offers.
+          var bothSidesAgreed = true;
+          final isGpTarget = _isGreatPower(game, targetId);
+          if (isGpTarget && _isGreatPower(game, gpId)) {
+            final key = _pairKey(gpId, targetId);
+            final offerers = peaceOffersByPairKey[key] ?? const <String>{};
+            bothSidesAgreed = offerers.contains(gpId) && offerers.contains(targetId);
+          }
+          if (!bothSidesAgreed) {
+            continue;
+          }
+
           if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
             onDialogue(DialogueEvent(
               leaderId: gpId,
