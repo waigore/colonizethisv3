@@ -1,0 +1,35 @@
+{
+  "name": "world_model_identity_prefixed_provinces",
+  "description": "SPEC/game/world-model-identity.md: Province ids use prefixed form (regionId|localId). Given OW and NW each with a province, assertions use full id oldWorld|p1 and newWorld|p2; capital and owner checks verify no bare province id.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "tribeCount": 1
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"], ["p1", "p1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    },
+    "newWorld": {
+      "grid": [["p1", "sea2"], ["p1", "p1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "newWorld", "type": "province"},
+        {"id": "sea2", "regionId": "newWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea2"}]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"},
+    {"turn": 1, "province": "newWorld|p1", "owner": "tribe1"},
+    {"turn": 1, "player": "gp1", "capitalProvince": "oldWorld|p1"}
+  ]
+}
