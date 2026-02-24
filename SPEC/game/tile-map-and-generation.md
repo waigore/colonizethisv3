@@ -32,3 +32,19 @@ Input: province count (N), continent count (C), region, map params (target tiles
 ## Algorithm spec
 
 Generation is a **multi-pass pipeline**: **land seeds** = one **continent seed** per continent plus a **cluster** of land-shape seeds around it (count derived from province count; **Gaussian jitter** by default, cluster shape configurable). **Per-continent land budget** and optional **Voronoi noise** for irregular boundaries. Fill lakes; terrain and resources by **map region** (before provinces); **province seeds on land**; **province assignment** (Pass 9) uses the same **Voronoi assignment** as sea zones. Optional **join step** after Pass 9 when a continent has multiple land components (carve land bridges). **Sea zone subdivision** (Pass 11) uses the same Voronoi assignment; sea zones are capped at a max fraction of total sea (e.g. 5%). **Topology inference** runs after all passes (including join). Full pass list: [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md) and [tile-map-gen-resources.md](../program/tile-map-gen-resources.md). Config: [tile-map-gen-config.md](../program/tile-map-gen-config.md).
+
+---
+
+## Acceptance Criteria
+
+- Given map-generation input that specifies a region id, a province count `N`, a continent count `C`, and map parameters including a target tiles-per-province range  
+  When the System runs the tile-map generation pipeline for that region  
+  Then the System produces one 2D grid for that region, assigns each grid cell to either a province id or a sea zone id, and achieves an average number of land tiles per province that lies within the configured tiles-per-province range.
+
+- Given resource–terrain–region rules from [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and a chosen region  
+  When the System assigns terrain and at most one resource per land tile during generation for that region  
+  Then the System uses only terrain types allowed for that region, places resources only on tiles whose terrain type and region are allowed for that resource, and enforces the multi-region resource cap so that no more than the configured percentage of resources on the map are multi-region compatible.
+
+- Given generation input with a province count `N` and a continent count `C` for a region  
+  When the System generates continents, places province seeds, and assigns provinces as described in [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md)  
+  Then the System produces continents whose number of provinces is approximately `N/C` per continent (within a small integer tolerance) and derives province and sea-zone topology directly from the resulting grid without any separate hand-authored topology file.

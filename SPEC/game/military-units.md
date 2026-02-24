@@ -63,3 +63,19 @@ Stats are configurable per [ruleset-config.md](ruleset-config.md). Experience (m
 | Siege Guns | 17 | 2 | 12 | 3 | 3 | Heavy Artillery | 4 |
 
 Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
+
+---
+
+## Acceptance Criteria
+
+- Given the regiment table in this document and the global unit catalog in the implementation  
+  When the System loads or validates regiment definitions at startup  
+  Then the System ensures that each regiment id or type has exactly one entry with FPN, FPM, RNG, DEF, MVR, category, and era matching this table, and rejects any configuration that omits a listed regiment or defines duplicate regiment entries.
+
+- Given a player’s `techUnlocked` set on the Player object and the military tech table in [tech-tree-military.md](tech-tree-military.md) that maps tech ids to regiment unlocks  
+  When the System evaluates which regiment types the player may build during the build phase  
+  Then a regiment type is considered buildable if and only if its unlocking tech id is present in `techUnlocked` (or requires no tech), regardless of era, and regiment types whose unlocking tech is not in `techUnlocked` are not buildable.
+
+- Given a combat resolution or Quick Battle needs to compute land combat strength for a side using this regiment table and medal levels per unit  
+  When the System aggregates strength per side as described in [combat.md](combat.md) and [quick-battle.md](quick-battle.md)  
+  Then the System uses each regiment’s FPN and FPM values from this table, multiplies them by the appropriate medal multiplier, and never assumes or infers stats that contradict the values specified here.

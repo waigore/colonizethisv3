@@ -59,3 +59,19 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
 
 - **Fallback algorithm:** Combine a **word stub** (e.g. Tan, Ver, Ash) with a **place suffix** (e.g. ton, ville, ford) using a RNG seeded from the naming seed and faction/province context so the same setup yields the same names.
 - **Uniqueness:** During naming, all **generated** names are added to an in-memory set; when generating a new name, the implementation must ensure the name is not already in that set (re-roll or append ordinal until unique). Names from the ruleset (pool/capital) may repeat across factions; only procedural names are guaranteed unique.
+
+---
+
+## Acceptance Criteria
+
+- Given a naming config for the active ruleset that defines Great Power, Minor Nation, and Tribe entries as described in this document  
+  When the System loads naming data during game setup  
+  Then the System validates that each Great Power id has at least one leader variant, that province name pools and capital names (when present) are non-empty strings, and that Minor Nation and Tribe entries provide at least one province name each, rejecting the ruleset if required naming data is structurally invalid.
+
+- Given provinces have been assigned to factions during game setup per [game-setup.md](game-setup.md) and naming data has been loaded successfully  
+  When the System assigns names in the Naming phase  
+  Then every province receives a non-null `Province.displayName`, capital provinces receive the configured capital city name for their faction or the first entry from the province name pool as specified, and other provinces draw names from their faction’s pool using a RNG seeded from the setup seed so that identical seeds yield identical name assignments.
+
+- Given a faction or province lacks a matching entry or usable name pool in the naming config (for example, when there are more tribes than configured entries)  
+  When the System assigns names for that faction’s provinces  
+  Then the System invokes the deterministic fallback algorithm described here to generate unique, reproducible names per province using a naming seed and faction/province context, ensures that generated names are not reused across procedural names in the same game, and still guarantees that every province ends the setup process with a non-empty `Province.displayName`.

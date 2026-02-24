@@ -76,3 +76,19 @@ Techs grant **effects** when researched (no separate "apply" step):
 | Maximum | 1000      | 2500    | 2.5 RP/gold (efficiency bonus) |
 
 **Goal slot:** Optional goal tech for UI sorting only; no spending. **Cancel:** Clearing a slot **loses all progress** (per Imp2). Research phase runs after Production and Consumption; see [research-resolution.md](../program/research-resolution.md).
+
+---
+
+## Acceptance Criteria
+
+- Given a global tech catalog constructed from this doc and its category sub-docs, where each tech has an id, category, era, prerequisites list, and effect set  
+  When the System validates the catalog at startup  
+  Then the System ensures that every tech id is unique, that every prerequisite id refers to a tech present in the catalog, and that the directed graph formed by prerequisite edges is acyclic (a DAG), rejecting the catalog if any of these conditions fail.
+
+- Given a player has a `techUnlocked` set on the Player object as described in [research-state.md](research-state.md) and a current research slot assigned to a tech id whose prerequisites are all present in `techUnlocked`  
+  When the System completes research on that tech in the Research phase  
+  Then the System adds that tech id to `techUnlocked`, clears the research slot (losing any remaining progress if the slot is cancelled), and updates `researchableTechIds` to include any tech whose prerequisites are now all in `techUnlocked`.
+
+- Given a research slot is configured with one of the funding presets defined in the table above and a tech that has not yet been unlocked  
+  When the System advances the game by one turn and executes the Research phase  
+  Then the System deducts the configured gold-per-turn from the player treasury for that slot unless the preset is `None`, adds the configured RP-per-turn to that tech’s research progress, and, when the accumulated RP reaches or exceeds that tech’s cost, marks the tech as completed and unlocked at the end of that phase.

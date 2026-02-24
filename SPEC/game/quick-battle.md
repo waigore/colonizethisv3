@@ -99,3 +99,19 @@ Quick Battle does **not** change the underlying combat formula; it supplies stru
 
 The game then applies casualties and province ownership changes using the same world-state update logic as auto-resolve.
 
+---
+
+## Acceptance Criteria
+
+- Given a Quick Battle is initiated for a province with one attacking stack and one defending stack and the combat context includes terrain and lane assignments as described in this spec  
+  When the System sets up the Quick Battle battlefield  
+  Then the System assigns each side’s regiments to lanes and lines (`LEFT`, `CENTER`, `RIGHT`, `RESERVE` × `FRONT`/`SUPPORT`), tags each lane with a single terrain type from the allowed set (`OPEN`, `HILL`, `WOODS`, `TOWN`, `SWAMP`), and initializes each battalion group’s cohesion to 3 (Fresh).
+
+- Given a Quick Battle round begins and both sides have defined tech, regiment stats, medal levels, and lane terrain  
+  When the System computes effective combat power for each battalion group and side for that round  
+  Then the System uses `basePower = Σ(FPN_eff + FPM_eff) × medalMult` for the regiments in each group, multiplies by the terrain and cohesion multipliers from the tables in this spec, and uses these adjusted values to resolve fire, charges, casualties, and cohesion changes for that round.
+
+- Given a Quick Battle proceeds for up to 3 rounds or until a collapse condition is met  
+  When the System checks outcome conditions at the end of each round  
+  Then the System ends the battle immediately when the attacker collapse, defender collapse, or mutual exhaustion conditions from this spec are satisfied, computes casualties per side and a final battle result (decisive attacker win, decisive defender hold, or mutual exhaustion), and passes these results into the same province-flip and casualty application pipeline used by auto-resolve.
+

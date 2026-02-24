@@ -24,6 +24,27 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
 - Extraction in provinces → owning player's stockpile (via transport network). Province and tile identity (owned provinces, extraction locations) follow [world-model-identity.md](world-model-identity.md) for province id format and region-scoped lookup.
 - Production: stockpile inputs (commodities) + WorkerPool labour → stockpile outputs.
 
+---
+
+## Acceptance Criteria
+
+- Given a player owns one or more provinces and has at least one extractable resource tile connected to the capital as described in [extraction-and-improvements.md](extraction-and-improvements.md)  
+  When the System runs the Extraction phase of turn resolution  
+  Then the System sums the effective yields from all connected tiles for that player by commodity id and increases the player’s central stockpile quantities by exactly those sums without storing any additional per-province stockpile values.
+
+- Given a player has a non-negative integer quantity of each commodity in the central stockpile and the active ruleset does not define any stockpile capacity limits  
+  When any phase (Extraction, Riches-to-treasury, Production, or Consumption) adjusts stockpile quantities during a turn  
+  Then the System allows stockpile quantities to grow without applying any hard caps, discards, or automatic market sales, and ensures all adjustments preserve non-negative integer quantities for each commodity.
+
+- Given a player has enough input commodities and available labour in the WorkerPool to run one or more production recipes defined in [production-recipes.md](production-recipes.md)  
+  When the System executes the Production phase for that player  
+  Then the System consumes the required input quantities and labour from the stockpile and WorkerPool, adds the recipe outputs to the same central stockpile, and records which recipes ran so that a subsequent inspection can verify that input and output quantities satisfy each recipe’s definitions.
+
+- Given a player has workers and other consumers (such as army and navy) that require food and materials as described in [workers-and-population.md](workers-and-population.md)  
+  When the System executes the Consumption phase  
+  Then the System deducts required food and materials from the player’s central stockpile in the specified order, removes workers that starve when their required food cannot be met, and does not attempt to deduct from any non-existent per-province storage.
+
+---
 
 ## Interactions
 - [commodity-catalog.md](commodity-catalog.md) — commodity definitions

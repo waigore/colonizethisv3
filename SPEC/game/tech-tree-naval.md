@@ -37,3 +37,19 @@
 - Ship categories:
   - **Fast interceptors:** Sloops, Frigates, Raiders — higher base intercept and flee ratings; best on Patrol/Blockade.
   - **Battle ships:** Galleons, Ships-of-the-Line, Ironclads — high FRP/ARM/HULL; stronger in decisive fleet battles but weaker at chasing fast raiders.
+
+---
+
+## Acceptance Criteria
+
+- Given the naval tech table in this doc and the global tech catalog  
+  When the System validates the catalog at startup  
+  Then the System ensures that each naval tech id is unique, that its prerequisites refer to techs present in the catalog, and that each ship type unlocked by these techs has a corresponding ship definition in the naval unit specs referenced by [ships-and-naval.md](ships-and-naval.md).
+
+- Given a player has unlocked a naval tech such as `superior_hull_design`, `improved_sail_design`, `convoying`, `large_hulls`, `clipper_ships`, `paddlewheels`, `merchant_steamships`, `advanced_hull_design`, `ship_of_the_line`, `privateering_companies`, or `advanced_iron_working`  
+  When the System evaluates which ship types are buildable for that player during a build phase per [ships-and-naval.md](ships-and-naval.md)  
+  Then the System allows the player to build exactly the ship types listed in this table as effects of the unlocked techs (plus any baseline ships that require no tech) and forbids building ship types whose unlocking tech is not yet in the player’s `techUnlocked` set.
+
+- Given a player has unlocked `privateering_companies`  
+  When the System computes naval interception and trade-raid chances for that player’s fleets on Patrol or Blockade missions as described in the naval combat specs  
+  Then the System applies the privateering bonuses defined in the naval rules only when this tech is present in the player’s `techUnlocked` set and does not apply those bonuses when the tech is locked.

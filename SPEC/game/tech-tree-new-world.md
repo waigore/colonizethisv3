@@ -43,3 +43,19 @@
 
 - Discovery techs may be gated by game events (Explorer finds resource in a province); implementation may treat them as no-prereq until discovery condition is met.
 - Labour techs (Trained Journeymen, Master Artisans) depend on cigar_production and hat_production from this category.
+
+---
+
+## Acceptance Criteria
+
+- Given the New World tech table in this doc and a global tech catalog that includes all categories  
+  When the System validates the catalog at startup  
+  Then the System ensures that each New World tech id is unique, that its prerequisites (including discovery techs and cross-category techs such as `seed_drill`, `trained_journeymen`, and `early_steam_engine`) are present in the catalog, and that the effects in this table (resource levels, luxury unlocks) are consistent with [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and [workers-and-population.md](workers-and-population.md).
+
+- Given a player has unlocked a New World extraction tech such as `sugar_planting`, `large_tobacco_plantations`, `cotton_gin`, `riverboats`, or `excessive_fur_harvesting`  
+  When the System computes extraction caps and effective yields for the corresponding resources in New World provinces per [tech-and-extraction-cap.md](tech-and-extraction-cap.md) and [extraction-and-improvements.md](extraction-and-improvements.md)  
+  Then the System increases the maximum effective improvement level for those resources in line with the numeric effects described in this table (for example, `Sugar 3` for `large_sugar_plantations`) and applies those caps only after the required discovery tech and extraction tech are both unlocked.
+
+- Given a player has unlocked `sugar_refining`, `cigar_production`, or `hat_production` as listed in this table  
+  When the System computes which luxuries can be consumed by Apprentices, Journeymen, and Masters during the Consumption phase per [workers-and-population.md](workers-and-population.md)  
+  Then the System allows the corresponding luxury commodities (refined sugar, cigars, fur hats) to be produced via recipes and consumed by the appropriate worker tiers, and does not allow those luxuries to be consumed before the relevant tech has been unlocked.

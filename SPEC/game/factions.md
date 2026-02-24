@@ -56,3 +56,19 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 | Provinces count to victory | OW yes | Yes (for controller) | No |
 
 Extraction and ownership apply per faction; only Great Powers have stockpiles and receive extraction in the economy phase. Minors and Tribes' production may feed trade/market per economy spec.
+
+---
+
+## Acceptance Criteria
+
+- Given a new game is created with at least one Great Power, one Minor Nation, and one Tribe configured in the ruleset  
+  When the System runs the game-setup pipeline per [game-setup.md](game-setup.md)  
+  Then the System creates Faction records for each configured Great Power, Minor Nation, and Tribe, assigns them the correct faction type, and sets their capabilities (such as ability to submit orders, own provinces in specific regions, and win the game) according to the summary table in this document.
+
+- Given the combat system needs to compute `maxGreatPowerMilitaryLevel` and `effectiveMilitaryLevel` for Minors and Tribes as described under Minor Nations  
+  When the System starts a Combat phase per [turn-resolution-phases.md](../program/turn-resolution-phases.md)  
+  Then the System scans all Great Powers’ buildable regiment types per [military-units.md](military-units.md) and tech state, derives the highest available regiment era as `maxGreatPowerMilitaryLevel`, and sets each Minor Nation and Tribe’s `effectiveMilitaryLevel` to that value before resolving any battles that involve those factions.
+
+- Given a Minor Nation or Tribe’s `effectiveMilitaryLevel` increases because `maxGreatPowerMilitaryLevel` increased at the start of a Combat phase  
+  When the System generates or updates that faction’s unit templates for use in battles during that phase  
+  Then the System upgrades existing regiments to the appropriate higher-tier versions consistent with the new effective level while preserving any damage state those regiments already had, so that parity affects unit quality but not unit counts or general bonuses.

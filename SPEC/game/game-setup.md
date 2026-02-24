@@ -47,3 +47,19 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Capital auto-choice and capital-choice phase: [capital-choice-phase.md](capital-choice-phase.md)
 - Ruleset configuration: [ruleset-config.md](ruleset-config.md)
 - Province naming: [naming.md](naming.md)
+
+---
+
+## Acceptance Criteria
+
+- Given a ruleset or scenario defines Great Power count, continent count, Minor Nation count, Tribe count, and target province counts per region  
+  When the System runs the Config phase of game setup  
+  Then the System loads these values, validates that they are non-negative integers within sensible bounds, and either proceeds with world generation using them or surfaces a clear configuration error if validation fails.
+
+- Given Old World and New World province counts and continent count are loaded and the tile-map generation and topology specs in [tile-map-and-generation.md](tile-map-and-generation.md) and [map-topology.md](map-topology.md) are implemented  
+  When the System runs the World Generation phase  
+  Then the System generates exactly one tile map per region with the requested total province counts (within tolerances), infers topology from those grids, and produces contiguous landmasses and province graphs suitable for GP, Minor, and Tribe assignment.
+
+- Given world generation has completed successfully and Great Power, Minor Nation, and Tribe counts are known  
+  When the System runs the GP Assignment, Minor Nation Assignment, Tribe Assignment, and Faction & Initial State phases  
+  Then the System assigns contiguous clusters of Old World provinces to Great Powers and Minor Nations and New World provinces to Tribes as described in this document, ensures that each Great Power has at least one sea-bound province, sets up faction records and ownership, invokes the capital-choice phase per [capital-choice-phase.md](capital-choice-phase.md), applies naming per [naming.md](naming.md), and creates an initial `Game` and `WorldState` that satisfy all invariants in [world-model.md](world-model.md) and [world-model-identity.md](world-model-identity.md).

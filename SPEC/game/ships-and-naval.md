@@ -125,3 +125,23 @@ shipLossChance = baseShipLoss × (1 - escortFactor) × civilianPenalty
 civilianPenalty = 2.0 # Civilian ships twice as vulnerable
 raidEfficiency = 0.3 to 0.7 depending on relative strength
 ```
+
+---
+
+## Acceptance Criteria
+
+- Given a fleet moves into a sea zone during the Movement phase per [map-topology.md](map-topology.md) and that sea zone is adjacent to one or more coastal provinces  
+  When the System updates fog-of-war state for the moving player per [fog-and-exploration.md](fog-and-exploration.md)  
+  Then the System sets all coastal tiles of provinces adjacent to that sea zone to at least `revealed` for that player, enabling Explorer deployment into those provinces.
+
+- Given a fleet is assigned one of the missions `Move`, `Patrol`, `Blockade`, `Beachhead`, or `Defend` for a turn and the naval movement resolver runs per [naval-movement-resolution.md](../program/naval-movement-resolution.md)  
+  When the System processes that fleet’s orders  
+  Then the System either moves the fleet along valid P–S or S–S edges for `Move`, leaves it in place and evaluates interception chances for `Patrol` and `Blockade` using the base and modified probabilities in the interception table, or treats it as stationary and vulnerable for `Beachhead` and `Defend` while still allowing it to be attacked by enemy fleets in the same sea zone.
+
+- Given two opposing fleets with known ship stats (FRP, RNG, ARM, HULL, MV) and medals occupy the same sea zone and a naval battle is triggered  
+  When the System computes naval combat strength and resolves the battle  
+  Then the System uses the aggregation and durability formulas in this document (including RNG weighting and HULL × (1 + ARM/10)), applies any leader and tech modifiers as specified in related specs, and produces deterministic outcomes (winner, casualties, and possible retreats) for identical inputs across multiple runs.
+
+- Given a Great Power’s home fleet carries overseas cargo during Extraction/Trade and hostile fleets at war with that Great Power are patrolling or blockading relevant sea zones  
+  When the System resolves overseas transport and trade for that turn  
+  Then the System uses the interception probabilities and escort protection formulas in this document to determine whether cargo and civilian ships are lost, reduces delivered quantities and ship counts accordingly, and applies at most the documented maximum loss reduction from escorts.

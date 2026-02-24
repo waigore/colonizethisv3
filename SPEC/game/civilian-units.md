@@ -61,6 +61,50 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 
 ---
 
+## Acceptance Criteria
+
+- Given the player has sufficient treasury cash and stockpile paper for a civilian unit type in the Civilian Types and Roles table  
+  When the player issues a build order for that civilian unit and the order is accepted  
+  Then the system creates a civilian `Unit` with `type` equal to the requested civilian type, deducts the listed cash from the player's treasury, deducts the listed paper from the player's stockpile, and does not change any worker counts or food consumption.
+
+- Given the player submits a `WorkOrder` with `unitId` referencing a civilian unit and `action` equal to one of the Work Order Summary targets that is allowed for that unit type  
+  When the system applies Build/Work orders for the turn and the player has all required materials in treasury/stockpile  
+  Then the system marks that civilian unit's `status` as `working`, reserves or deducts the listed materials once at order application time, and starts multi-turn progress for that work without applying any improvement until progress completes.
+
+- Given a civilian unit has an active multi-turn `WorkOrder` and its work duration expires at the end of the current Build/Work phase  
+  When the system resolves development for that phase  
+  Then the system applies exactly one level of the specified effect to the `targetTileKey` (e.g., improvement level increase, road/rail/fort/port construction), sets the unit's `status` to `idle`, and clears the unit's active work so it does not continue on the next turn.
+
+- Given an Explorer civilian unit with `status = idle` is located in a province that still has fogged tiles  
+  When the player assigns an `explore` `WorkOrder` to that Explorer  
+  Then the system starts a multi-turn exploration process for that province and, on completion, reveals all tiles in that province to the Explorer's owner according to [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+
+- Given a Spy civilian unit controlled by the player is present in a province that is not owned by that player  
+  When the system evaluates visibility for that player's map each turn  
+  Then the system treats that province as fully visible for that player, and when the Spy leaves that province, the system starts a 5-turn countdown after which all tiles in that province revert to fogged unless revealed by another source.
+
+- Given a Spy civilian unit controlled by the player has an active `counter_spy` `WorkOrder` targeting an owned province and an enemy Spy is present in the same province  
+  When the system resolves counter-spy checks at end of turn  
+  Then the system computes a per-turn kill chance equal to 5% per friendly Spy in that province, capped at 30%, and removes the enemy Spy from the game if the random roll succeeds while leaving all friendly Spies in place.
+
+- Given a Merchant civilian unit controlled by the player has an active `purchase_land` `WorkOrder` targeting a tile in a Minor Nation or Tribe province that has a resource, the player is not at war with that Minor/Tribe, the player has an embassy with that Minor/Tribe, and any mineral resource on that tile has already been prospected by that player  
+  When the system resolves that `purchase_land` order  
+  Then the system deducts treasury cash equal to 15 times the resource base price, transfers ownership of that tile (and its resource) to the player, and leaves diplomatic status with that Minor/Tribe unchanged.
+
+- Given a Rail Builder civilian unit controlled by the player has an active `build_rail` `WorkOrder` targeting a tile that currently has a road and the required transport technology is unlocked  
+  When the system completes that work after the configured duration  
+  Then the system upgrades the tile's transport level to railroad (transport level 4), deducts the specified steel and lumber once for that work, and does not allow another `build_rail` order on that tile while it already has transport level 4.
+
+- Given a civilian `Unit` of any type exists on the map  
+  When the system evaluates that unit's `location` and any `WorkOrder.targetTileKey` for rules that depend on province or region identity  
+  Then the system derives province and region solely from the prefixed tile key format `regionId|provinceId|x|y` and never treats a bare `provinceId` without its `regionId` as a valid reference.
+
+- Given the system resolves the Build/Work phase for all civilians in a turn  
+  When it completes processing of all active `WorkOrder`s for that turn  
+  Then every civilian unit has `status` equal to either `idle` or `working` (no other values), with `working` only for units that still have an active, incomplete multi-turn `WorkOrder`.
+
+---
+
 ## Relations
 
 - **Unit** (type = civilian) → has owner (player id) and **location** = **tileKey** only (required, format `regionId|provinceId|x|y`); province and region are derived from tileKey. Work is ordered via WorkOrder (unitId, action, targetTileKey). Military and naval units do not have tileKey. See [fog-and-exploration.md](fog-and-exploration.md).
