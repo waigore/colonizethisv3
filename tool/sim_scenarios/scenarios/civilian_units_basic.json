@@ -1,0 +1,25 @@
+{
+  "name": "civilian_units_basic",
+  "description": "Covers SPEC/game/civilian-units.md: verifies that after fresh init GPs have civilian units in their capital (default starting civilians: Explorer, Builder, Engineer). Province identity uses prefixed id.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"},
+    {"turn": 1, "province": "oldWorld|p1", "hasPlayerUnits": "gp1", "unitCount": 5}
+  ]
+}
+

@@ -1,14 +1,20 @@
 {
-  "game/capital-and-connectivity.md": ["capital_and_connectivity_init.json"],
+  "game/capital-and-connectivity.md": [
+    "capital_and_connectivity_init.json"
+  ],
   "game/capital-choice-phase.md": [],
-  "game/civilian-units.md": [],
+  "game/civilian-units.md": [
+    "civilian_units_basic.json"
+  ],
   "game/combat.md": [],
   "game/commodity-catalog.md": [],
   "game/diplomacy.md": [],
   "game/extraction-and-improvements.md": [],
   "game/factions.md": [],
   "game/fog-and-exploration.md": [],
-  "game/game-setup.md": ["basic_turn_1.json"],
+  "game/game-setup.md": [
+    "basic_turn_1.json"
+  ],
   "game/leader-bonuses.md": [],
   "game/map-topology.md": [],
   "game/military-generals.md": [],
@@ -17,7 +23,13 @@
   "game/production-recipes.md": [],
   "game/quick-battle.md": [],
   "game/research-state.md": [],
-  "game/resource-terrain-region-rules.md": ["resource_ow_has_no_nw_only.json", "resource_nw_has_no_ow_only.json", "resource_every_tile_allowed_in_region.json", "resource_multi_region_cap.json", "resource_diamonds_nw_only.json"],
+  "game/resource-terrain-region-rules.md": [
+    "resource_ow_has_no_nw_only.json",
+    "resource_nw_has_no_ow_only.json",
+    "resource_every_tile_allowed_in_region.json",
+    "resource_multi_region_cap.json",
+    "resource_diamonds_nw_only.json"
+  ],
   "game/ruleset-config.md": [],
   "game/ships-and-naval.md": [],
   "game/siege-mechanics.md": [],
