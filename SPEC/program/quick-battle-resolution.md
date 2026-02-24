@@ -39,10 +39,12 @@ Resolver for the Quick Battle tactical mini-game — a bounded, per-round loop t
 
 The resolver does not decide actions; it applies actions provided by the caller.
 
+**Default round actions:** When the caller does not supply per-round actions (e.g. main game combat phase or simulation), the resolver may use default round actions so that resolution can complete without explicit player or AI input. The default is implementation-defined (e.g. Volley Fire for both sides each round). The main game path may therefore invoke the Quick Battle resolver without supplying round actions and still obtain a deterministic outcome.
+
 ## Integration
 
 - **Phase:** Combat phase, as alternative to auto-resolve ([turn-resolution-phases.md](turn-resolution-phases.md)).
-- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve.
+- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve. The main game path (turn resolver) typically invokes the resolver without supplying per-round actions and thus relies on default round actions; a future UI or AI may supply explicit round actions.
 - **Downstream:** Casualty lists and province-flip flag returned to the combat pipeline; WorldState mutation by turn resolver.
 
 ## Constraints
