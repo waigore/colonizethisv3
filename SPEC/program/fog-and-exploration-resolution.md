@@ -8,11 +8,11 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 ## Data Model
 
-**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y`. Province and tile key formats: [world-model-identity.md](../game/world-model-identity.md). Stored on WorldState.
+**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y`. Province and tile key formats: [world-model-identity.md](../game/world-model-identity.md). Any province id used in visibility or Spy timer state (e.g. keys keyed by province) must be the **prefixed** form (`regionId|localId`) per world-model-identity.md for multi-region correctness. Stored on WorldState.
 
 **Prospected state:** `Map<playerId, Set<tileKey>>` — tiles the player has prospected. Only mineral-eligible terrain per game rules.
 
-**Spy reveal timer:** `Map<playerId, Map<provinceKey, int>>` — for each player, provinces that were previously revealed by a Spy and are now fog-decaying: value = turns left until tiles in that province are set back to fogged (0 = already fogged). When a Spy **leaves** a non-owner province, set timer to the Spy fog decay turns (default 5; see [fog-and-exploration.md](../game/fog-and-exploration.md) § Configurable Values) for (Spy owner, that province). Stored on WorldState.
+**Spy reveal timer:** `Map<playerId, Map<provinceKey, int>>` — for each player, provinces that were previously revealed by a Spy and are now fog-decaying: value = turns left until tiles in that province are set back to fogged (0 = already fogged). `provinceKey` is the **prefixed** province id (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md). When a Spy **leaves** a non-owner province, set timer to the Spy fog decay turns (default 5; see [fog-and-exploration.md](../game/fog-and-exploration.md) § Configurable Values) for (Spy owner, that province). Stored on WorldState.
 
 **Source province:** A unit's source province is derived from its tileKey (for civilians) or provinceId. Must not be unknown; raises exception if so.
 
