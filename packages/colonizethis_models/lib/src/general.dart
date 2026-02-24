@@ -1,5 +1,6 @@
-/// General leading an army. SPEC/game/military-units.md.
-/// Phase 3: minimal model for initiative and combat.
+/// General leading an army. Generals, medals, and army definition:
+/// SPEC/game/military-generals.md. Regiment types and tactical stats:
+/// SPEC/game/military-units.md. Phase 3: minimal model for initiative and combat.
 class General {
   const General({
     required this.id,
@@ -11,10 +12,11 @@ class General {
   final String id;
   final String ownerId;
 
-  /// Experience medals (0–4); affects initiative and deployment. SPEC/game/military-units.md.
+  /// Experience medals (0–4); affects initiative and deployment. SPEC/game/military-generals.md.
   final int medals;
 
   /// Province where general is attached to an army. Null if unassigned.
+  /// When set, must be prefixed province id per world-model-identity.md.
   final String? provinceId;
 
   Map<String, dynamic> toJson() => {

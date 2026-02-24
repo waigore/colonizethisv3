@@ -3,10 +3,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'commodities.dart';
 
 /// Regiment training and upkeep configuration.
-/// SPEC/game/unit-types.md
-/// SPEC/game/military-units.md
-/// SPEC/program/orders.md
-/// SPEC/program/economy-models.md
+/// Training cost and food upkeep: SPEC/game/military-generals.md § Regiment Economy.
+/// Era/category progression aligns with tactical stats in SPEC/game/military-units.md.
+/// Worker consumed at build time is enforced in order application (orders.md BuildUnitOrder,
+/// development-resolution), not in this catalog.
+/// SPEC/program/orders.md, SPEC/program/economy-models.md.
 class RegimentEconomy {
   const RegimentEconomy({
     required this.id,
