@@ -1,0 +1,39 @@
+{
+  "name": "commodity_riches_to_treasury",
+  "description": "SPEC/game/commodity-catalog.md: Riches-to-treasury phase converts spices in stockpile to treasury at fixed base price 50; riches removed from stockpile.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1", "p2"], ["p1", "p1", "p2"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [
+        {"id1": "p1", "id2": "sea1"},
+        {"id1": "p1", "id2": "p2"}
+      ]
+    }
+  },
+  "setup": {
+    "initialWorkers": {
+      "gp1": {"peasants": 0, "apprentices": 0, "journeymen": 0, "masters": 0}
+    },
+    "initialStockpile": {
+      "gp1": {"spices": 4, "grain": 0}
+    }
+  },
+  "turns": [
+    {"turn": 1, "orders": []}
+  ],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "commodity": "spices", "stockpileCommodity": 0},
+    {"turn": 1, "player": "gp1", "treasury": 5200}
+  ]
+}

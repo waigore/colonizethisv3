@@ -3,7 +3,7 @@
   "game/capital-choice-phase.md": ["capital_choice_phase_basic.json"],
   "game/civilian-units.md": ["civilian_units_starting.json"],
   "game/combat.md": ["combat_basic.json"],
-  "game/commodity-catalog.md": [],
+  "game/commodity-catalog.md": ["commodity_riches_to_treasury.json"],
   "game/diplomacy.md": [],
   "game/extraction-and-improvements.md": [],
   "game/factions.md": [],
