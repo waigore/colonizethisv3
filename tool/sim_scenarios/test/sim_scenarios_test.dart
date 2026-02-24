@@ -188,6 +188,29 @@ void main() {
         expect(scenario.assertions[1].commodity, 'grain');
         expect(scenario.assertions[1].stockpileCommodity, 0);
       });
+
+      test('parses setup productionAssignments', () {
+        final json = {
+          'name': 'production_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'productionAssignments': [
+              {'recipeId': 'lumber_from_timber', 'assignedLabour': 4},
+              {'recipeId': 'castIron_from_timber_iron_coal', 'assignedLabour': 5},
+            ],
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.productionAssignments!.length, 2);
+        expect(scenario.setup!.productionAssignments![0].recipeId, 'lumber_from_timber');
+        expect(scenario.setup!.productionAssignments![0].assignedLabour, 4);
+        expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_timber_iron_coal');
+        expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
+      });
     });
 
     group('parseScenarioFile', () {

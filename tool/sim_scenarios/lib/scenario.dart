@@ -50,6 +50,7 @@ class ScenarioSetup {
     this.stockpileOverrides,
     this.initialWorkers,
     this.initialStockpile,
+    this.productionAssignments,
   });
 
   final List<UnitPlacement>? units;
@@ -58,6 +59,19 @@ class ScenarioSetup {
   final Map<String, Map<String, int>>? initialWorkers;
   /// Player id → { commodityId: quantity }. Replaces player stockpile.
   final Map<String, Map<String, int>>? initialStockpile;
+  /// Recipe assignments for Production phase (each turn). SPEC/game/stockpiles-and-production.md.
+  final List<ProductionAssignment>? productionAssignments;
+}
+
+/// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
+class ProductionAssignment {
+  const ProductionAssignment({
+    required this.recipeId,
+    required this.assignedLabour,
+  });
+
+  final String recipeId;
+  final int assignedLabour;
 }
 
 /// Placement of a unit in a province for scenario setup.
@@ -266,7 +280,24 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
+    productionAssignments: _parseProductionAssignments(json['productionAssignments']),
   );
+}
+
+List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
+  if (raw is! List<dynamic> || raw.isEmpty) return null;
+  final out = <ProductionAssignment>[];
+  for (final e in raw) {
+    if (e is! Map<String, dynamic>) continue;
+    final recipeId = e['recipeId'] as String?;
+    final labour = e['assignedLabour'];
+    if (recipeId == null || recipeId.isEmpty || labour == null) continue;
+    out.add(ProductionAssignment(
+      recipeId: recipeId,
+      assignedLabour: (labour as num).toInt(),
+    ));
+  }
+  return out.isEmpty ? null : out;
 }
 
 Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {

@@ -67,6 +67,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 ```
 - **initialWorkers:** Optional. Map player id → `{ "peasants", "apprentices", "journeymen", "masters" }`. Overrides that player's worker pool before the first turn. Used for consumption/starvation scenarios (SPEC/game/workers-and-population.md).
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
+- **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 
 ---
 
