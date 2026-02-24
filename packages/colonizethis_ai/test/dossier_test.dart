@@ -231,5 +231,25 @@ void main() {
       final d = getDossierForSubject(game, 'obs', 'subj');
       expect(d.timeline, ['Turn 2: A', 'Turn 5: B']);
     });
+
+    test('evidence list is chronological and capped to most recent entries', () {
+      const cap = 50; // kMaxDossierEvidenceEntries in colonizethis_data.
+      final entries = <DossierEvidenceEntry>[];
+      for (var turn = 1; turn <= cap + 10; turn++) {
+        entries.add(DossierEvidenceEntry(
+          observerId: 'obs',
+          subjectId: 'subj',
+          agendaType: 'warmonger',
+          turnNumber: turn,
+          description: 'E$turn',
+          scoreDelta: 1,
+        ));
+      }
+      final game = _gameWithEvidence(entries);
+      final d = getDossierForSubject(game, 'obs', 'subj');
+      expect(d.evidenceList.length, cap);
+      expect(d.evidenceList.first, 'Turn 11: E11');
+      expect(d.evidenceList.last, 'Turn 60: E60');
+    });
   });
 }

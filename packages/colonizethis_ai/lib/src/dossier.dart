@@ -176,19 +176,22 @@ DossierView getDossierForSubject(
   final entries = game.dossierEvidenceEntries
       .where((e) => e.observerId == observerId && e.subjectId == subjectId)
       .toList();
+  entries.sort((a, b) => a.turnNumber.compareTo(b.turnNumber));
+  final cappedEntries = entries.length > kMaxDossierEvidenceEntries
+      ? entries.sublist(entries.length - kMaxDossierEvidenceEntries)
+      : entries;
   final scoreByAgenda = <String, int>{};
-  for (final e in entries) {
+  for (final e in cappedEntries) {
     scoreByAgenda[e.agendaType] = (scoreByAgenda[e.agendaType] ?? 0) + e.scoreDelta;
   }
   final suspicionByAgendaType = <String, SuspicionBand>{};
   for (final e in scoreByAgenda.entries) {
     suspicionByAgendaType[e.key] = suspicionBandFromScore(e.value);
   }
-  final evidenceList = entries
+  final evidenceList = cappedEntries
       .map((e) => 'Turn ${e.turnNumber}: ${e.description}')
       .toList();
-  entries.sort((a, b) => a.turnNumber.compareTo(b.turnNumber));
-  final timeline = entries
+  final timeline = cappedEntries
       .map((e) => 'Turn ${e.turnNumber}: ${e.description}')
       .toList();
   return DossierView(
@@ -197,7 +200,7 @@ DossierView getDossierForSubject(
     evidenceList: evidenceList,
     basicIntel: _buildBasicIntel(game, observerId, subjectId),
     bestGuessAgenda: _buildBestGuessAgenda(scoreByAgenda),
-    behavioralNotes: _buildBehavioralNotes(entries),
+    behavioralNotes: _buildBehavioralNotes(cappedEntries),
     timeline: timeline,
   );
 }
