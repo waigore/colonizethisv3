@@ -41,7 +41,7 @@ Steps:
 1. Aggregate strength per side per game/combat.md § Rules (Strength).
 2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
 3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
-4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
+4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). Apply **leader bonus** per [leader-bonuses.md](../game/leader-bonuses.md): multiplier from each side's GP leaderKey (attackerLeaderMultiplier, defenderLeaderMultiplier). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
 5. Compute winner and casualties. Pure function; no side effects.
 
 **Output:** EngagementResult.
@@ -78,7 +78,7 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 ## Integration
 
 - **Phase:** Combat phase, after Movement.
-- **Upstream:** Movement phase (unit positions), ruleset config (tactical stats, modifiers).
+- **Upstream:** Movement phase (unit positions), ruleset config (tactical stats, modifiers). Leader bonus application: [leader-bonuses.md](../game/leader-bonuses.md).
 - **Downstream:** Province ownership updates, unit removal; connectivity and extraction recompute next turn.
 
 ## Constraints
