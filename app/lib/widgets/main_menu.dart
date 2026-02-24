@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {
@@ -198,7 +199,7 @@ class _PixelArtButton extends StatelessWidget {
                 _kAssetButton,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) {
-                  debugPrint('main_menu: button asset not found, using fallback');
+                  Logger().w('ctdev: main_menu button asset not found, using fallback');
                   return Container(
                     color: const Color(0xFF5D3A1A),
                   );
