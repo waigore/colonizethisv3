@@ -14,7 +14,7 @@ Four levels per player per tile. Visibility state is keyed by player and by prov
 
 - **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
 - **Revealed:** Province boundary and owner known; terrain and resources unknown.
-- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay: immediate when the last Explorer leaves; for Spy, a 5-turn timer applies (see Fog Decay).
+- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay: immediate when the last Explorer leaves; for Spy, a timer (Spy fog decay turns, default 5) applies (see Fog Decay).
 - **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible.
 
 ### Own vs Other Provinces
@@ -45,7 +45,7 @@ Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [re
 ### Fog Decay
 
 - **Explorer:** When the last Explorer leaves an other-faction province, tiles in that province immediately revert to fogged (retaining last-known state).
-- **Spy:** When a Spy leaves an other-faction province, a 5-turn timer starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province.
+- **Spy:** When a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5; see Configurable Values) starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province.
 
 Own provinces never decay.
 
@@ -84,6 +84,7 @@ Mineral resources may only be extracted from tiles that are (a) connected and (b
 |---|---|---|
 | Explore max turns | 3 | Scaled by province size |
 | Prospect turns per tile | 1 | |
+| Spy fog decay turns | 5 | When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
 | Old World initial visibility | fogged | Own = fully visible |
 | New World initial visibility | unknown | |
 
@@ -106,7 +107,7 @@ Mineral resources may only be extracted from tiles that are (a) connected and (b
 - **Initial visibility:** Old World starts fogged (own fully visible); New World starts unknown; coastal tiles reveal when ships enter adjacent sea zones per ships-and-naval.
 - **Exploration:** Explorer work `explore` uses region-scoped formula: turns = `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (max 3). On completion, all tiles in the province become fully visible for that player only.
 - **Prospecting:** Explorer work `prospect` is one turn per tile; minerals require prospecting before extraction; mineral-eligible terrain and prospect-required vs terrain-known resources are as listed in Rules.
-- **Fog decay:** Explorer: when the last Explorer leaves an other-faction province, tiles there immediately revert to fogged. Spy: when a Spy leaves, a 5-turn timer starts for (player, province); at timer 0, that province's tiles set to fogged for that player. Own provinces never decay.
+- **Fog decay:** Explorer: when the last Explorer leaves an other-faction province, tiles there immediately revert to fogged. Spy: when a Spy leaves, a timer (Spy fog decay turns, default 5) starts for (player, province); at timer 0, that province's tiles set to fogged for that player. Own provinces never decay.
 - **Order visibility:** Move orders require source and destination each with at least one tile not unknown. Work orders require minimum visibility per unit type and target (e.g. explore ≥ revealed, prospect ≥ fogged, build_* ≥ fogged); province and tile identity use prefixed form per world-model-identity.
 - **Extraction gating:** Minerals extractable only from connected, prospected tiles for that player; non-minerals unchanged.
 - **Implementation:** Visibility resolution, Spy timer, and PlayerView construction: [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
