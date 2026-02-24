@@ -52,3 +52,21 @@ The resolver does not decide actions; it applies actions provided by the caller.
 - Must use the same config sources as auto-resolve (no divergence between modes).
 - Does not depend on global singletons; all data supplied or derived from shared config.
 - Owned by colonizethis_logic.
+
+## Acceptance criteria
+
+- Given the same Quick Battle seed and identical inputs (battle context, lanes and groups per side, starting round, max rounds)  
+  When the resolver runs to completion twice  
+  Then the resolver returns the same battle outcome (ATTACKER, DEFENDER, or MUTUAL_EXHAUSTION), the same per-side casualties, the same provinceFlips and attackerRouts/defenderRouts flags, and the same final tactical state (surviving composition, cohesion, lane statuses).
+
+- Given the resolver has completed a Quick Battle run  
+  When the caller inspects the resolver output  
+  Then the output conforms to the Data Model § Output: per-side casualties (by unit type or battalion group), battle outcome, provinceFlips boolean, attackerRouts/defenderRouts booleans, and final tactical state with lane statuses INTACT, BROKEN, or EMPTY.
+
+- Given combat phase invokes Quick Battle as an alternative to auto-resolve for a province  
+  When the resolver returns casualty lists and province-flip flag  
+  Then the combat pipeline applies the result via the same integration point as auto-resolve (e.g. applyQuickBattleResultToGame or equivalent); WorldState mutation is performed by the turn resolver per [turn-resolution-phases.md](turn-resolution-phases.md).
+
+- Given the resolver receives battle context that includes a province id  
+  When the resolver or downstream pipeline applies casualties or province flip for that battle  
+  Then the province id is in prefixed form (`regionId|localId`) and any province lookup follows [world-model-identity.md](../game/world-model-identity.md); the resolver does not look up by province id alone or assume a default region.

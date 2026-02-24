@@ -115,3 +115,19 @@ The game then applies casualties and province ownership changes using the same w
   When the System checks outcome conditions at the end of each round  
   Then the System ends the battle immediately when the attacker collapse, defender collapse, or mutual exhaustion conditions from this spec are satisfied, computes casualties per side and a final battle result (decisive attacker win, decisive defender hold, or mutual exhaustion), and passes these results into the same province-flip and casualty application pipeline used by auto-resolve.
 
+- Given two Quick Battle runs with the same Quick Battle seed and identical battle context, lane composition, and initial cohesion  
+  When the System runs the Quick Battle resolver for both  
+  Then the System produces the same battle result (ATTACKER, DEFENDER, or MUTUAL_EXHAUSTION), the same per-side casualty counts, and the same provinceFlips value in both runs.
+
+- Given a Quick Battle has completed with a decisive attacker win and the resolver returns provinceFlips true  
+  When the combat pipeline applies the Quick Battle result to the game state  
+  Then the System flips province ownership to the attacker and applies casualties using the same world-state update logic as auto-resolve; given a defender hold or mutual exhaustion result, the System does not flip province ownership.
+
+- Given the System computes lane-level effective combat power for a Quick Battle round  
+  When the System applies terrain modifiers for each lane  
+  Then the System uses the attacker and defender percentage adjustments from the Percentage adjustments to combat power table in this spec (OPEN 100% / 100%, HILL 75% / 120%, WOODS 80% / 110%, TOWN 60% / 130%, SWAMP 70% / 90%).
+
+- Given a Quick Battle round is about to begin and both sides have regiments and optional general medals  
+  When the System determines which side acts first in that round  
+  Then the System computes initiative consistent with [combat.md](combat.md) § Rules (Initiative) (cavalryShare × W_cav + generalMedals × W_medal) and uses that ordering (or tie-break by faction id) to decide first-acting side.
+
