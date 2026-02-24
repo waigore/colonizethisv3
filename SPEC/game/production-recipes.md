@@ -1,6 +1,6 @@
 # Production Recipes
 
-**SPEC/game** — Recipe structure and location. Derived from GDD 04, TDD 04. Commodities: [commodity-catalog.md](commodity-catalog.md). Labour: [workers-and-population.md](workers-and-population.md).
+**SPEC/game** — Recipe structure and location. Cross-refs: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md). Commodities: [commodity-catalog.md](commodity-catalog.md). Labour: [workers-and-population.md](workers-and-population.md).
 
 ---
 
@@ -17,7 +17,7 @@ Industry consumes inputs and labour from stockpile and WorkerPool; produces outp
 
 ---
 
-## Examples (GDD 04)
+## Examples
 
 - Timber ×2, Iron ×2, Coal ×1 → Cast Iron (labour per unit from constants).
 - Wool or Cotton ×2 → Fabric.
