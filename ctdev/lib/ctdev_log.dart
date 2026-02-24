@@ -92,9 +92,12 @@ void startSimSession(String id) {
   if (!dir.existsSync()) {
     dir.createSync(recursive: true);
   }
+  final now = DateTime.now().toLocal();
+  final dateStr =
+      '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   final basicLogger = BasicLogger('ctdev');
   basicLogger.attachLogger(FileOutputLogger(
-    basicLogger.name,
+    dateStr,
     dir: logsDir,
     ext: '.log',
     bufferSize: 50,
@@ -118,4 +121,14 @@ void initCtdevLogging() {
       addUiLine(lines.first);
     }
   });
+}
+
+/// Test-only helper to reset in-memory ctdev logging state between tests.
+/// Not used by production code.
+void resetCtdevLoggingForTest() {
+  _preSimBuffer.clear();
+  _sessionId = null;
+  _fileLogger = null;
+  _logsDir = null;
+  _uiLogLines.clear();
 }
