@@ -13,7 +13,7 @@ Each **production recipe** has:
 - **Labour:** Labour points required per output unit (e.g. 2 timber → 1 lumber = 2 labour). Production consumes labour from the player's WorkerPool.
 - **Turns per unit:** Optional; default 1 turn per output unit. **MVP:** All recipes behave as 1 turn per output unit; multi-turn recipes (e.g. >1 turn per unit) are out of scope for MVP and deferred.
 
-Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. Insufficient inputs or labour: recipe does not run (no partial run).
+Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. When available inputs or labour do not allow all theoretically possible runs for a recipe, the System executes the recipe as many whole times as possible (maximum complete runs) and scales inputs and outputs accordingly; production-phase ordering and stockpile updates follow [stockpiles-and-production.md](stockpiles-and-production.md) and [economy-models.md](../program/economy-models.md).
 
 ---
 
@@ -41,7 +41,7 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 
 ## Acceptance Criteria
 
-Testable conditions for "done": recipe structure (output commodity + quantity, inputs map, labour per output, optional turns per unit default 1); recipes stored as program-level constants (no JSON rulesets in MVP); Production phase consumes inputs and labour and adds output to stockpile; insufficient inputs or labour → recipe does not run (no partial run); recipe-run results recorded (e.g. productionByRecipe) for inspection and order projections. Implementation: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md).
+Testable conditions for "done": recipe structure (output commodity + quantity, inputs map, labour per output, optional turns per unit default 1); recipes stored as program-level constants (no JSON rulesets in MVP); Production phase consumes inputs and labour and adds output to stockpile; insufficient inputs or labour for even a single run → recipe does not run; if inputs or labour limit the number of runs, the System executes an integer number of complete runs (no fractional runs) bounded by available inputs and labour; recipe-run results recorded (e.g. productionByRecipe) for inspection and order projections. Implementation: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md).
 
 - Given the program-level config defines a list or map of production recipes where each recipe has a non-empty output commodity id, a non-negative integer output quantity, a map of input commodity ids to non-negative integer quantities, a non-negative integer labour requirement, and optionally a positive integer turns per unit (default 1 when omitted)  
   When the System loads the economy configuration at game start  
@@ -54,6 +54,10 @@ Testable conditions for "done": recipe structure (output commodity + quantity, i
 - Given a player has insufficient input commodities or insufficient available labour to satisfy the full input and labour requirements of a recipe for even a single run  
   When the System evaluates which recipes to execute during the Production phase  
   Then the System does not execute that recipe (i.e. it produces zero units of the recipe’s output for that phase) and does not partially consume inputs in a way that leaves the recipe half-complete.
+
+- Given a player has a central stockpile and WorkerPool state as described in [stockpiles-and-production.md](stockpiles-and-production.md) and [workers-and-population.md](workers-and-population.md), and there exists a recipe where the current stockpile and WorkerPool allow at least one complete run but not an unbounded number of runs (because one or more required input commodities or available labour would reach zero)  
+  When the System executes the Production phase for that player  
+  Then the System computes the maximum integer number of complete runs that do not cause any required input commodity or labour count to drop below zero, runs the recipe exactly that many times, consumes the corresponding inputs and labour, and adds the corresponding total output quantity to the stockpile.
 
 - Given the System has executed the Production phase for a player and at least one recipe ran  
   When the phase completes  
