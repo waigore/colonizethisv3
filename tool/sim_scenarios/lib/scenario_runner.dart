@@ -119,8 +119,12 @@ class ScenarioRunner {
         // Parse orders
         final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
-        // Resolve turn (returns updated game)
-        final nextGame = _resolveTurn(currentContext, orders);
+        // Resolve turn (returns updated game); pass production assignments if specified
+        final nextGame = _resolveTurn(
+          currentContext,
+          orders,
+          turnScript.workerAssignments,
+        );
         currentContext = ScenarioContext(
           game: nextGame,
           topology: currentContext.topology,
@@ -278,21 +282,71 @@ class ScenarioRunner {
       for (final player in game.players) {
         final override = setup.stockpileOverrides![player.id];
         if (override != null) {
-          // Note: Player stockpile is final, need to create new instance
-          // This is a simplified implementation
+          // Legacy: single-value override not applied per-commodity; use initialStockpile instead.
         }
       }
+    }
+    if (setup.initialStockpile != null && setup.initialStockpile!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final quantities = setup.initialStockpile![player.id];
+        if (quantities == null || quantities.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        var stockpile = const Stockpile();
+        for (final entry in quantities.entries) {
+          if (entry.value > 0) {
+            stockpile = stockpile.applyDelta(entry.key, entry.value);
+          }
+        }
+        updatedPlayers.add(player.copyWith(stockpile: stockpile));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
+    if (setup.initialWorkers != null && setup.initialWorkers!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final counts = setup.initialWorkers![player.id];
+        if (counts == null || counts.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        final pool = WorkerPool(
+          peasants: counts['peasants'] ?? 0,
+          apprentices: counts['apprentices'] ?? 0,
+          journeymen: counts['journeymen'] ?? 0,
+          masters: counts['masters'] ?? 0,
+        );
+        updatedPlayers.add(player.copyWith(workerPool: pool));
+      }
+      game = game.copyWith(players: updatedPlayers);
     }
     return game;
   }
 
   /// Resolves one turn and returns the updated game.
-  Game _resolveTurn(ScenarioContext context, Orders orders) {
+  Game _resolveTurn(
+    ScenarioContext context,
+    Orders orders, [
+    List<WorkerAssignment>? workerAssignments,
+  ]) {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
-    
+
+    final defaultAssignments = workerAssignments != null
+        ? workerAssignments
+            .map(
+              (w) => AssignedRecipe(
+                recipeId: w.recipeId,
+                assignedLabour: w.assignedLabour,
+              ),
+            )
+            .toList()
+        : <AssignedRecipe>[];
+
     final orderEngine = OrderEngine(initialOrders: orders);
     return resolveTurnForGameFromOrderEngine(
       game: context.game,
@@ -300,6 +354,7 @@ class ScenarioRunner {
       orderEngine: orderEngine,
       aiOrders: null,
       tileMapByRegion: context.tileMapByRegion,
+      defaultAssignments: defaultAssignments,
     );
   }
 

@@ -49,13 +49,20 @@ Two initialization types:
 
 **From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
 
-For saved games, optional `setup` block injects units for specific test scenarios:
+For saved games (or fresh/fromTopology), optional `setup` block can inject units and/or set economy state:
+- `units` — list of unit placements (player, type, province, count).
+- `initialStockpile` — map from player id to map of commodity id → quantity; sets that player's central stockpile before turns.
+- `initialWorkers` — map from player id to worker counts (e.g. `{ "peasants": 2, "apprentices": 1 }`); sets that player's WorkerPool before turns.
+
+Example:
 ```json
 {
   "setup": {
     "units": [
       {"player": "france", "type": "infantry", "province": "normandy", "count": 3}
-    ]
+    ],
+    "initialStockpile": { "england": { "timber": 10, "wool": 5 } },
+    "initialWorkers": { "england": { "peasants": 2 } }
   }
 }
 ```
@@ -81,6 +88,8 @@ Each turn specifies orders for one or more players:
 ```
 
 Supported order types: `move`, `build`, `work`, `diplomatic`, `research`, `naval_move`, `naval_mission`.
+
+Each turn may optionally include **workerAssignments** (production phase): a list of `{ "recipeId": "<id>", "assignedLabour": <n> }`. These are passed as default production assignments for that turn so the Production phase can run recipes; see SPEC/game/production-recipes.md. Scenario setup may include **initialStockpile** and **initialWorkers** per player (map from player id to commodity quantities or worker counts) to set economy state before turns run.
 
 ---
 
@@ -108,6 +117,7 @@ Assertion fields:
 - `hasUnit` — Specific unit ID that must be present
 - `hasPlayerUnits` — Any units belonging to player must be present
 - `stockpile` — Resource stockpile amount (sum of all commodities in player stockpile)
+- `stockpileCommodity` — With `player` and `commodity` (commodity id): expected quantity of that commodity in the player's central stockpile. Supports `matchType`.
 - `treasury` — Treasury amount
 - `matchType` — `exact` (default), `range`, `atLeast`, `atMost`
 
@@ -127,6 +137,8 @@ Assertion fields:
 - `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.
 - `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile’s region per resource rules. Optional `region` restricts to one region.
 - `region` + `maxBothFraction` — **resourcePlacementCap:** in the given region, the fraction of placed resources that are “both” (timber, iron, copper, tin, coal) is ≤ this value (default 0.30). Example: `{"region": "oldWorld", "maxBothFraction": 0.30}`.
+
+**Economy / production assertions** (SPEC/game/production-recipes.md): use `player`, `commodity` (commodity id), and `stockpileCommodity` (expected quantity) to assert per-commodity stockpile after a turn or final state; supports `matchType`.
 
 ---
 

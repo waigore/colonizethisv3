@@ -1,0 +1,35 @@
+{
+  "name": "production_recipes_basic",
+  "description": "SPEC/game/production-recipes.md: Production phase runs recipe (lumber_from_timber: 2 timber + 2 labour -> 1 lumber); assert stockpile inputs consumed and output added.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 0,
+      "tribeCount": 0
+    }
+  },
+  "setup": {
+    "initialStockpile": {
+      "gp1": { "timber": 10 }
+    },
+    "initialWorkers": {
+      "gp1": { "peasants": 2 }
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [],
+      "workerAssignments": [
+        { "recipeId": "lumber_from_timber", "assignedLabour": 2 }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "player": "gp1", "commodity": "lumber", "stockpileCommodity": 1 },
+    { "turn": 1, "player": "gp1", "commodity": "timber", "stockpileCommodity": 8 }
+  ]
+}
