@@ -10,7 +10,13 @@
   "game/fog-and-exploration.md": [],
   "game/game-setup.md": ["basic_turn_1.json"],
   "game/leader-bonuses.md": [],
-  "game/map-topology.md": [],
+  "game/map-topology.md": [
+    "connectivity_ow_to_ow.json",
+    "connectivity_ow_separated_by_sea.json",
+    "connectivity_ow_to_nw.json",
+    "connectivity_no_road_to_capital.json",
+    "connectivity_no_road_to_port.json"
+  ],
   "game/military-generals.md": [],
   "game/military-units.md": [],
   "game/naming.md": [],
