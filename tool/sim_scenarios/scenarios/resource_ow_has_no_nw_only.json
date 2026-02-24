@@ -1,0 +1,26 @@
+{
+  "name": "resource_ow_has_no_nw_only",
+  "description": "Old World has no NW-only resources (SPEC/game/resource-terrain-region-rules.md). Negative assertions.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "region": "oldWorld", "resource": "sugarCane"},
+    {"turn": 1, "region": "oldWorld", "resource": "tobacco"},
+    {"turn": 1, "region": "oldWorld", "resource": "cotton"},
+    {"turn": 1, "region": "oldWorld", "resource": "furs"},
+    {"turn": 1, "region": "oldWorld", "resource": "spices"},
+    {"turn": 1, "region": "oldWorld", "resource": "silver"},
+    {"turn": 1, "region": "oldWorld", "resource": "gold"},
+    {"turn": 1, "region": "oldWorld", "resource": "gems"},
+    {"turn": 1, "region": "oldWorld", "resource": "diamonds"}
+  ]
+}

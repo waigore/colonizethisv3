@@ -28,12 +28,18 @@ class ScenarioInit {
     required this.type,
     this.config,
     this.gameId,
+    this.oldWorld,
+    this.newWorld,
   });
 
-  /// 'fresh' or 'saved'
+  /// 'fresh', 'saved', or 'fromTopology'
   final String type;
   final Map<String, dynamic>? config;
   final String? gameId;
+  /// For fromTopology: { grid, nodes, edges } for Old World.
+  final Map<String, dynamic>? oldWorld;
+  /// For fromTopology: { grid, nodes, edges } for New World (optional).
+  final Map<String, dynamic>? newWorld;
 }
 
 /// Setup for saved-game scenarios (unit injection, resource overrides).
@@ -127,6 +133,7 @@ class Assertion {
     this.province,
     this.player,
     this.owner,
+    this.notOwner,
     this.unitCount,
     this.hasUnit,
     this.hasPlayerUnits,
@@ -135,6 +142,9 @@ class Assertion {
     this.matchMin,
     this.matchMax,
     this.matchType = MatchType.exact,
+    this.resource,
+    this.maxBothFraction,
+    this.everyTileResourceAllowedInRegion,
   });
 
   /// Which turn to check (null = final state)
@@ -144,6 +154,8 @@ class Assertion {
   final String? province;
   final String? player;
   final String? owner;
+  /// Negative assertion: province must not be owned by this player id.
+  final String? notOwner;
   final int? unitCount;
   final String? hasUnit;
   final String? hasPlayerUnits;
@@ -152,6 +164,12 @@ class Assertion {
   final int? matchMin;
   final int? matchMax;
   final MatchType matchType;
+  /// With region: no tile in region has this resource (regionHasNoResource). SPEC/game/resource-terrain-region-rules.md.
+  final String? resource;
+  /// With region: fraction of placed resources that are "both" must be <= this (resourcePlacementCap).
+  final double? maxBothFraction;
+  /// Every tile's resource is allowed in its region per resource rules. Optional region scopes to one region.
+  final bool? everyTileResourceAllowedInRegion;
 }
 
 /// Type of value matching for assertions.
@@ -192,6 +210,8 @@ ScenarioInit _parseScenarioInit(Map<String, dynamic>? json) {
     type: json['type'] as String? ?? 'fresh',
     config: json['config'] as Map<String, dynamic>?,
     gameId: json['gameId'] as String?,
+    oldWorld: json['oldWorld'] as Map<String, dynamic>?,
+    newWorld: json['newWorld'] as Map<String, dynamic>?,
   );
 }
 
@@ -252,6 +272,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     province: json['province'] as String?,
     player: json['player'] as String?,
     owner: json['owner'] as String?,
+    notOwner: json['notOwner'] as String?,
     unitCount: json['unitCount'] as int?,
     hasUnit: json['hasUnit'] as String?,
     hasPlayerUnits: json['hasPlayerUnits'] as String?,
@@ -260,6 +281,9 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     matchMin: json['matchMin'] as int?,
     matchMax: json['matchMax'] as int?,
     matchType: _parseMatchType(json['matchType'] as String?),
+    resource: json['resource'] as String?,
+    maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
+    everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
   );
 }
 

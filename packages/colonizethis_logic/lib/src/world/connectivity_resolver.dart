@@ -72,6 +72,10 @@ Set<String> _provinceIdsFromTopology(MapTopology topology) {
       .toSet();
 }
 
+bool _topologyUsesPrefixedIds(MapTopology topology) {
+  return topology.nodes.any((n) => n.id.contains('|'));
+}
+
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
 Set<String> _seaZonesReachableBySeaPath(
   MapTopology topology,
@@ -265,8 +269,11 @@ ConnectivityResult _connectedTilesForPlayer({
     provinceIdsByType,
   );
   if (capitalOnSeaboard) {
-    final localProvinceId = ProvinceId.localIdFrom(capital.provinceId);
-    final capitalSeaZones = _seaZonesAdjacentToProvince(topology, localProvinceId);
+    final prefixedTopology = _topologyUsesPrefixedIds(topology);
+    final provinceIdForLookup = prefixedTopology
+        ? capital.provinceId
+        : ProvinceId.localIdFrom(capital.provinceId);
+    final capitalSeaZones = _seaZonesAdjacentToProvince(topology, provinceIdForLookup);
     final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
     for (final e in worldState.portsByProvinceSeaboard.entries) {
       final provSea = e.key;
@@ -275,7 +282,10 @@ ConnectivityResult _connectedTilesForPlayer({
       final seaZoneId = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : null);
       final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : (parts.length >= 2 ? parts[0] : null);
       if (seaZoneId == null || fullProvinceId == null) continue;
-      if (!seaReachable.contains(seaZoneId)) continue;
+      final seaZoneIdForReachable = prefixedTopology && parts.length >= 3
+          ? '${parts[0]}|$seaZoneId'
+          : seaZoneId;
+      if (!seaReachable.contains(seaZoneIdForReachable)) continue;
       if (!owned.contains(fullProvinceId)) continue;
       seaConnectedPortKeys.add(tileKey);
     }

@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import 'game_setup.dart';
+import 'warp_zone_generator.dart';
 
 final Logger _log = Logger();
 
@@ -22,6 +23,7 @@ class InitGameResult {
     required this.tileMapByRegion,
     required this.topologyByRegion,
     required this.combinedTopology,
+    this.warpLinks = const [],
     this.greatPowerColorOverride,
   });
 
@@ -33,8 +35,10 @@ class InitGameResult {
   final Map<String, TileMapResult> tileMapByRegion;
   /// Topology per region; used by visualizers and debug tooling.
   final Map<String, MapTopology> topologyByRegion;
-  /// Single topology merging OW and NW for resolveTurnForGame (movement, extraction).
+  /// Single topology with prefixed node ids and warp edges for resolveTurnForGame.
   final MapTopology combinedTopology;
+  /// Warp zone links between OW and NW. SPEC/game/map-topology.md.
+  final List<WarpLink> warpLinks;
   /// GP id → (r, g, b) used for map view; ctdev uses this when rebuilding view data.
   final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
@@ -109,6 +113,16 @@ InitGameResult runInitGame({
     resourceRules: ResourceRules.defaultRules,
   );
 
+  final warpLinks = generateWarpZones(
+    tileMapOldWorld: tileMapOW,
+    topologyOldWorld: topoOW,
+    tileMapNewWorld: tileMapNW,
+    topologyNewWorld: topoNW,
+    regionIdOld: kRegionOldWorld,
+    regionIdNew: kRegionNewWorld,
+    seed: effectiveSeed,
+  );
+
   final setupResult = createGameFromGeneratedMaps(
     config: config,
     tileMapOldWorld: tileMapOW,
@@ -117,6 +131,7 @@ InitGameResult runInitGame({
     topologyNewWorld: topoNW,
     gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
     namingSeed: effectiveSeed,
+    warpLinks: warpLinks,
   );
 
   // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids
@@ -183,6 +198,7 @@ InitGameResult runInitGame({
     tileMapByRegion: setupResult.tileMapByRegion,
     topologyByRegion: setupResult.topologyByRegion,
     combinedTopology: setupResult.combinedTopology,
+    warpLinks: setupResult.warpLinks,
     greatPowerColorOverride: effectiveGpColorOverride,
   );
 }

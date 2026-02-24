@@ -18,6 +18,7 @@ export 'src/terrain_type.dart';
 export 'src/tile_map_result.dart';
 export 'src/topology_describe.dart';
 export 'src/topology_node.dart';
+export 'src/warp_link.dart';
 export 'src/regiment_economy.dart';
 export 'src/ship_economy.dart';
 export 'src/civilian_economy.dart';

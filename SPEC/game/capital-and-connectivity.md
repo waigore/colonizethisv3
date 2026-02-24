@@ -49,7 +49,7 @@ A tile T is **connected** to the capital for a player iff there is a path of roa
 
 ## Sea paths
 
-Overseas (and same-region) port connectivity uses **sea zone topology**: the capital's seaboard belongs to one or more sea zones; another port (same or overseas) is connected to the capital by sea if its sea zone is the same as the capital's or reachable from it by a **path of sea–sea edges** in the topology. Reference [map-topology.md](map-topology.md). For overseas provinces, a tile is connected if it has a road path to a port in that province and that port's sea zone is reachable from the capital's sea (as above).
+Overseas (and same-region) port connectivity uses **sea zone topology**. Each region has its **own** topology graph; regions connect **only** via **warp zones** (see [map-topology.md](map-topology.md)). Within a region, the capital's seaboard belongs to one or more sea zones; another port in the **same region** is connected by sea if its sea zone is the same as the capital's or reachable by a **path of sea–sea edges** in that region's topology. An **overseas** port is connected to the capital iff its sea zone is reachable from the capital's sea by following **intra-region** S–S edges and **warp zone** links between regions. For overseas provinces, a tile is connected if it has a road path to a port in that province and that port's sea zone is reachable from the capital's sea (via sea paths within each region and warp zones between them).
 
 ---
 

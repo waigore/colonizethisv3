@@ -12,7 +12,7 @@
 
 ## Map Topology (summary)
 
-Graph: nodes = provinces (P) and sea zones (S); edges = **P↔P** (land adjacency), **P↔S** (coast). World topology is one graph; tile maps per region. See [map-topology.md](map-topology.md).
+Topology is **per region**: each region has its own graph. Nodes = provinces (P) and sea zones (S); edges = **P↔P** (land adjacency), **P↔S** (coast), **S↔S** (sea paths within region). Regions connect **only** via **warp zones**. Tile maps per region. See [map-topology.md](map-topology.md).
 
 ---
 

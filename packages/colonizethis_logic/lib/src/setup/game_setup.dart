@@ -13,6 +13,7 @@ import '../constants.dart';
 import '../world/player_view.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
+import 'warp_zone_generator.dart';
 
 final Logger _log = Logger();
 
@@ -23,13 +24,16 @@ class GameSetupResult {
     required this.tileMapByRegion,
     required this.topologyByRegion,
     required this.combinedTopology,
+    this.warpLinks = const [],
   });
 
   final Game game;
   final Map<String, TileMapResult> tileMapByRegion;
   final Map<String, MapTopology> topologyByRegion;
-  /// Single topology merging OW and NW for resolveTurnForGame (movement, extraction).
+  /// Single topology with prefixed node ids and warp edges for resolveTurnForGame (movement, extraction). SPEC/game/map-topology.md.
   final MapTopology combinedTopology;
+  /// Warp zone links between regions (OW↔NW). Empty if none generated.
+  final List<WarpLink> warpLinks;
 }
 
 /// Builds a new Game from pre-generated Old World and New World maps and config.
@@ -43,6 +47,7 @@ GameSetupResult createGameFromGeneratedMaps({
   required MapTopology topologyNewWorld,
   required String gameId,
   int? namingSeed,
+  List<WarpLink>? warpLinks,
 }) {
   _log.i('logic: game setup start gameId=$gameId');
   final tileMapByRegion = {
@@ -53,6 +58,7 @@ GameSetupResult createGameFromGeneratedMaps({
     kRegionOldWorld: topologyOldWorld,
     kRegionNewWorld: topologyNewWorld,
   };
+  final links = warpLinks ?? [];
 
   final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
   final nwProvinceIds = _provinceIdsFromTopology(topologyNewWorld);
@@ -218,9 +224,9 @@ GameSetupResult createGameFromGeneratedMaps({
   // Spawn starting units for each Great Power in their capital provinces.
   game = _addStartingUnits(game: game, config: config);
 
-  final combinedTopology = MapTopology(
-    nodes: [...topologyOldWorld.nodes, ...topologyNewWorld.nodes],
-    edges: [...topologyOldWorld.edges, ...topologyNewWorld.edges],
+  final combinedTopology = buildCombinedTopology(
+    topologyByRegion: topologyByRegion,
+    warpLinks: links,
   );
 
   _log.i('logic: game setup end gameId=${game.id}');
@@ -229,7 +235,42 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
     topologyByRegion: topologyByRegion,
     combinedTopology: combinedTopology,
+    warpLinks: links,
   );
+}
+
+/// Builds a single topology with prefixed node ids (regionId|localId) and warp edges.
+/// SPEC/game/map-topology.md: OW and NW are separate; connectivity across regions only via warp zones.
+MapTopology buildCombinedTopology({
+  required Map<String, MapTopology> topologyByRegion,
+  List<WarpLink> warpLinks = const [],
+}) {
+  final nodes = <TopologyNode>[];
+  final edges = <TopologyEdge>[];
+  for (final entry in topologyByRegion.entries) {
+    final regionId = entry.key;
+    final topo = entry.value;
+    for (final n in topo.nodes) {
+      nodes.add(TopologyNode(
+        id: '$regionId|${n.id}',
+        regionId: regionId,
+        type: n.type,
+      ));
+    }
+    for (final e in topo.edges) {
+      edges.add(TopologyEdge(
+        id1: '$regionId|${e.id1}',
+        id2: '$regionId|${e.id2}',
+      ));
+    }
+  }
+  for (final link in warpLinks) {
+    edges.add(TopologyEdge(
+      id1: link.prefixedKey,
+      id2: link.otherPrefixedKey,
+    ));
+  }
+  return MapTopology(nodes: nodes, edges: edges);
 }
 
 List<String> _provinceIdsFromTopology(MapTopology topology) {

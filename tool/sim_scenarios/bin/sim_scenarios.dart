@@ -108,7 +108,9 @@ void main(List<String> args) async {
       _log.i('logic: sim_scenarios: Running all scenarios in: $directory');
     }
     final batchResult = await runner.runAll(dir);
-    _log.i('logic: sim_scenarios:\n${formatBatchReport(batchResult)}');
+    final report = formatBatchReport(batchResult);
+    _log.i('logic: sim_scenarios:\n$report');
+    print(report);
     exit(batchResult.failed > 0 ? 1 : 0);
   }
 }
@@ -185,6 +187,9 @@ String _formatAssertion(Assertion assertion) {
     if (assertion.owner != null) {
       return 'province.${assertion.province}.owner == ${assertion.owner}';
     }
+    if (assertion.notOwner != null) {
+      return 'province.${assertion.province}.owner != ${assertion.notOwner}';
+    }
     if (assertion.unitCount != null) {
       final matchStr = assertion.matchType == MatchType.exact 
           ? '== ${assertion.unitCount}'
@@ -205,6 +210,19 @@ String _formatAssertion(Assertion assertion) {
   }
   if (assertion.treasury != null) {
     return 'treasury ${assertion.treasury}';
+  }
+  // Resource-placement assertions (SPEC/game/resource-terrain-region-rules.md)
+  if (assertion.region != null && assertion.resource != null &&
+      assertion.province == null && assertion.player == null) {
+    return 'region.${assertion.region}.hasNoResource.${assertion.resource}';
+  }
+  if (assertion.everyTileResourceAllowedInRegion == true) {
+    return assertion.region != null
+        ? 'everyTileResourceAllowedInRegion(region=${assertion.region})'
+        : 'everyTileResourceAllowedInRegion';
+  }
+  if (assertion.region != null && assertion.maxBothFraction != null) {
+    return 'region.${assertion.region}.maxBothFraction <= ${assertion.maxBothFraction}';
   }
   return 'unknown';
 }
