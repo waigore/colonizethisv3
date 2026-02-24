@@ -49,16 +49,24 @@ Two initialization types:
 
 **From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
 
-For saved games, optional `setup` block injects units for specific test scenarios:
+For saved games (or after fresh/fromTopology init), optional `setup` block injects units and can override player economy for specific test scenarios:
 ```json
 {
   "setup": {
     "units": [
       {"player": "france", "type": "infantry", "province": "normandy", "count": 3}
-    ]
+    ],
+    "initialWorkers": {
+      "gp1": { "peasants": 2, "apprentices": 0, "journeymen": 0, "masters": 0 }
+    },
+    "initialStockpile": {
+      "gp1": { "grain": 1, "meat": 0 }
+    }
   }
 }
 ```
+- **initialWorkers:** Optional. Map player id → `{ "peasants", "apprentices", "journeymen", "masters" }`. Overrides that player's worker pool before the first turn. Used for consumption/starvation scenarios (SPEC/game/workers-and-population.md).
+- **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 
 ---
 
@@ -110,6 +118,8 @@ Assertion fields:
 - `stockpile` — Resource stockpile amount (sum of all commodities in player stockpile)
 - `treasury` — Treasury amount
 - `matchType` — `exact` (default), `range`, `atLeast`, `atMost`
+
+**Worker and stockpile assertions** (SPEC/game/workers-and-population.md): use `player` with optional `workerPeasants`, `workerApprentices`, `workerJourneymen`, `workerMasters` (expected count each). Use `player` with `commodity` (commodity id, e.g. `grain`) and `stockpileCommodity` (expected quantity) for per-commodity stockpile checks.
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
 - Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.

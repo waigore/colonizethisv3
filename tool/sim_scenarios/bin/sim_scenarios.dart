@@ -208,6 +208,12 @@ String _formatAssertion(Assertion assertion) {
   if (assertion.stockpile != null) {
     return 'stockpile ${assertion.stockpile}';
   }
+  if (assertion.workerPeasants != null) {
+    return 'player.${assertion.player}.workerPeasants == ${assertion.workerPeasants}';
+  }
+  if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+    return 'player.${assertion.player}.stockpile.${assertion.commodity} == ${assertion.stockpileCommodity}';
+  }
   if (assertion.treasury != null) {
     return 'treasury ${assertion.treasury}';
   }

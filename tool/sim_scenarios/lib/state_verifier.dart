@@ -187,6 +187,47 @@ class StateVerifier {
         }
       }
 
+      // Worker pool assertions (SPEC/game/workers-and-population.md)
+      if (assertion.workerPeasants != null) {
+        if (player.workerPool.peasants != assertion.workerPeasants) {
+          failures.add(
+            'Player ${assertion.player} workerPeasants: expected ${assertion.workerPeasants}, got ${player.workerPool.peasants}',
+          );
+        }
+      }
+      if (assertion.workerApprentices != null) {
+        if (player.workerPool.apprentices != assertion.workerApprentices) {
+          failures.add(
+            'Player ${assertion.player} workerApprentices: expected ${assertion.workerApprentices}, got ${player.workerPool.apprentices}',
+          );
+        }
+      }
+      if (assertion.workerJourneymen != null) {
+        if (player.workerPool.journeymen != assertion.workerJourneymen) {
+          failures.add(
+            'Player ${assertion.player} workerJourneymen: expected ${assertion.workerJourneymen}, got ${player.workerPool.journeymen}',
+          );
+        }
+      }
+      if (assertion.workerMasters != null) {
+        if (player.workerPool.masters != assertion.workerMasters) {
+          failures.add(
+            'Player ${assertion.player} workerMasters: expected ${assertion.workerMasters}, got ${player.workerPool.masters}',
+          );
+        }
+      }
+
+      // Per-commodity stockpile (SPEC/game/workers-and-population.md)
+      if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+        final actual = player.stockpile.quantityOf(assertion.commodity!);
+        final expected = assertion.stockpileCommodity!;
+        if (actual != expected) {
+          failures.add(
+            'Player ${assertion.player} stockpile ${assertion.commodity}: expected $expected, got $actual',
+          );
+        }
+      }
+
       // Capital assertion (SPEC/game/capital-choice-phase.md): player's capital province
       if (assertion.capitalProvince != null) {
         final expected = assertion.capitalProvince!;

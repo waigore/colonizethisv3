@@ -43,14 +43,21 @@ class ScenarioInit {
 }
 
 /// Setup for saved-game scenarios (unit injection, resource overrides).
+/// initialWorkers / initialStockpile apply after init (fresh or fromTopology).
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
     this.stockpileOverrides,
+    this.initialWorkers,
+    this.initialStockpile,
   });
 
   final List<UnitPlacement>? units;
   final Map<String, int>? stockpileOverrides;
+  /// Player id → { peasants, apprentices, journeymen, masters }. SPEC/game/workers-and-population.md.
+  final Map<String, Map<String, int>>? initialWorkers;
+  /// Player id → { commodityId: quantity }. Replaces player stockpile.
+  final Map<String, Map<String, int>>? initialStockpile;
 }
 
 /// Placement of a unit in a province for scenario setup.
@@ -153,6 +160,12 @@ class Assertion {
     this.relationLastInteractionTurn,
     this.overtureStage,
     this.capitalProvince,
+    this.workerPeasants,
+    this.workerApprentices,
+    this.workerJourneymen,
+    this.workerMasters,
+    this.commodity,
+    this.stockpileCommodity,
   });
 
   /// Which turn to check (null = final state)
@@ -191,6 +204,14 @@ class Assertion {
   final String? overtureStage;
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
+  /// Worker pool assertions (SPEC/game/workers-and-population.md). Require [player].
+  final int? workerPeasants;
+  final int? workerApprentices;
+  final int? workerJourneymen;
+  final int? workerMasters;
+  /// Per-commodity stockpile: [player] + [commodity] (id) + [stockpileCommodity] (expected quantity).
+  final String? commodity;
+  final int? stockpileCommodity;
 }
 
 /// Type of value matching for assertions.
@@ -242,8 +263,36 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
         .toList(),
     stockpileOverrides: (json['stockpileOverrides'] as Map<String, dynamic>?)
-        ?.map((k, v) => MapEntry(k, v as int)),
+        ?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
+    initialWorkers: _parseInitialWorkers(json['initialWorkers']),
+    initialStockpile: _parseInitialStockpile(json['initialStockpile']),
   );
+}
+
+Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, Map<String, int>>{};
+  for (final entry in raw.entries) {
+    final inner = entry.value;
+    if (inner is! Map<String, dynamic>) continue;
+    out[entry.key] = {
+      for (final e in inner.entries) e.key: (e.value as num).toInt(),
+    };
+  }
+  return out.isEmpty ? null : out;
+}
+
+Map<String, Map<String, int>>? _parseInitialStockpile(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, Map<String, int>>{};
+  for (final entry in raw.entries) {
+    final inner = entry.value;
+    if (inner is! Map<String, dynamic>) continue;
+    out[entry.key] = {
+      for (final e in inner.entries) e.key: (e.value as num).toInt(),
+    };
+  }
+  return out.isEmpty ? null : out;
 }
 
 UnitPlacement _parseUnitPlacement(Map<String, dynamic> json) {
@@ -313,6 +362,12 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     relationLastInteractionTurn: json['relationLastInteractionTurn'] as int?,
     overtureStage: json['overtureStage'] as String?,
     capitalProvince: json['capitalProvince'] as String?,
+    workerPeasants: json['workerPeasants'] as int?,
+    workerApprentices: json['workerApprentices'] as int?,
+    workerJourneymen: json['workerJourneymen'] as int?,
+    workerMasters: json['workerMasters'] as int?,
+    commodity: json['commodity'] as String?,
+    stockpileCommodity: json['stockpileCommodity'] as int?,
   );
 }
 
