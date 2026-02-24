@@ -13,7 +13,7 @@ These rules are applied in every context; follow them for all changes.
 
 | Rule file | Summary |
 |-----------|---------|
-| **colonizethis-spec-required.mdc** | SPEC-first: specify before implementing; no behavior that contradicts specs. GDD `SPEC/game/`, TDD `SPEC/program/`, AI `SPEC/ai/`, UI `SPEC/ui/` (sub-specs, max 500 words). Source of truth: GDD for game/AI, TDD for architecture. Conflicts: resolve GDD/TDD first. Rulesets: configurable; specify where/how in GDD/TDD. New behavior: point to authorizing spec or add/extend spec first. |
+| **colonizethis-spec-required.mdc** | SPEC-first: specify before implementing; no behavior that contradicts specs. GDD `SPEC/game/`, TDD `SPEC/program/`, AI `SPEC/ai/`, UI `SPEC/ui/` (sub-specs, max 1000 words). Source of truth: GDD for game/AI, TDD for architecture. Conflicts: resolve GDD/TDD first. Rulesets: configurable; specify where/how in GDD/TDD. New behavior: point to authorizing spec or add/extend spec first. |
 | **colonizethis-core-principles.mdc** | Stack: Flutter (UI), Flame (game/simulation), Dart. Strict typing, null safety, logger (no `print`). Thin screens; delegate to services/controllers/Flame. Province lookup: always use `(regionId, provinceId)` or prefixed id; never province id alone. |
 
 ## Context-specific rules

@@ -30,3 +30,19 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 ## Where Stored
 
 **Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets.
+
+---
+
+## Acceptance Criteria
+
+- Given the program-level config defines a list or map of production recipes where each recipe has a non-empty output commodity id, a non-negative integer output quantity, a map of input commodity ids to non-negative integer quantities, and a non-negative integer labour requirement  
+  When the System loads the economy configuration at game start  
+  Then the System builds an in-memory recipe catalog that contains exactly those recipes, rejects any configuration that refers to an unknown commodity id in inputs or outputs with an error code such as `unknown_commodity_id_in_recipe`, and makes the loaded recipes available to the Production phase.
+
+- Given a player has a central stockpile and WorkerPool state as described in [stockpiles-and-production.md](stockpiles-and-production.md) and [workers-and-population.md](workers-and-population.md), and there exists a recipe whose input commodity quantities and labour requirement are fully satisfied by the current stockpile and WorkerPool  
+  When the System executes the Production phase for that player  
+  Then the System may run that recipe one or more times, consuming the required inputs and labour per run, adding the specified output quantity per run to the stockpile, and never allowing any input commodity or labour count to drop below zero.
+
+- Given a player has insufficient input commodities or insufficient available labour to satisfy the full input and labour requirements of a recipe for even a single run  
+  When the System evaluates which recipes to execute during the Production phase  
+  Then the System does not execute that recipe (i.e. it produces zero units of the recipe’s output for that phase) and does not partially consume inputs in a way that leaves the recipe half-complete.

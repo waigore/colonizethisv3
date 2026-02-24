@@ -72,3 +72,19 @@ Calendar year is derived from `WorldState.turnState.turnNumber` using the game's
 - Imperialism II 01-game-fundamentals (Obsidian).
 - [world-model.md](world-model.md) — Game holds optional turnTimeMapping.
 - [ruleset-config.md](../program/ruleset-config.md) — turnTimeMapping in config contract.
+
+---
+
+## Acceptance Criteria
+
+- Given a `TurnTimeMapping` configuration with `startYear = 1500`, `cutoffYear = 1700`, `yearsPerTurnBeforeCutoff = 2`, and `yearsPerTurnAfterCutoff = 1`  
+  When the System maps turn numbers to calendar years for display  
+  Then the System maps turn 1 to year 1500, maps turn 100 to year 1700, uses 2 years per turn for turns 1–100 inclusive, and uses 1 year per turn for all turns greater than 100.
+
+- Given a `TurnTimeMapping` object with integer fields `startYear`, `cutoffYear`, `yearsPerTurnBeforeCutoff`, and `yearsPerTurnAfterCutoff` that satisfy the constraints implied by the table in this doc  
+  When the System serializes a Game that includes this `turnTimeMapping` and later reloads it from storage  
+  Then the System restores the same mapping values and continues to derive calendar years from `WorldState.turnState.turnNumber` using the restored mapping without recalculating or changing the parameters mid-campaign.
+
+- Given a caller passes a turn number less than 1 to the calendar-year mapping function  
+  When the System applies the `TurnTimeMapping` formula  
+  Then the System may return a year outside the intended 1500–1850 range but does not throw an error or mutate game state, and callers that need meaningful years for narrative or UI only invoke the mapping with turn numbers greater than or equal to 1.

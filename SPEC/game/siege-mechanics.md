@@ -62,3 +62,19 @@ There is no separate “unfortified siege” mode: the presence or absence of a 
 Forts have three gates. Friendly units can sortie or retreat through gates. Enemy units cannot use gates; walls must be breached to enter.
 
 **Quick Battle (lane-based) interpretation:** In the current lane-based Quick Battle resolver, all defender units are treated as benefiting from wall damage reduction and emplaced artillery. Explicit "units on the wall" vs "units behind the wall" targeting (artillery-only damage to behind-wall) and gate/sortie actions are deferred to a future tactical expansion when lane/position model supports it.
+
+---
+
+## Acceptance Criteria
+
+- Given a province has a fort level of 0, 1, 2, or 3 stored in the world model and the combat resolver creates a BattleContext for a battle in that province  
+  When the System chooses the battle mode per [combat.md](combat.md)  
+  Then the System selects field battle rules when `fortLevel == 0` and siege rules from this document (including wall damage reduction and emplaced artillery) when `fortLevel ≥ 1`.
+
+- Given defenders are in a province with a fort level of 1, 2, or 3 and an incoming attack triggers siege combat  
+  When the System computes damage to defenders that are on or behind the wall  
+  Then the System reduces incoming damage by the percentage in the Wall Protection table for the current fort level and only allows non-artillery units with RNG 1 to inflict damage if defenders have sortie’d out of the fort according to the tactical rules.
+
+- Given a fort with level 1, 2, or 3 is present in a province and a siege battle is resolved there  
+  When the System initializes the battle  
+  Then the System creates 1, 2, or 3 emplaced artillery guns respectively, applies a +1 RNG bonus to those guns relative to comparable heavy artillery of the same era, excludes emplaced guns from the deployment limit, and automatically downgrades the fort by one level if all emplaced guns are destroyed during the battle even if the attackers lose.

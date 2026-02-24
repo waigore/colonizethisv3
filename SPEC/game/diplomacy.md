@@ -54,6 +54,36 @@ Diplomacy phase runs before Movement. Declarations and peace take effect for the
 
 ---
 
+## Acceptance Criteria
+
+- Given a new game has started with at least two Great Powers  
+  When the system initializes diplomatic relations at turn index 0  
+  Then the system sets each unordered Great Power pair to relation state `AT_PEACE`, relation score `50`, relation level `Neutral`, and records `sinceTurn = 0` and `lastInteractionTurn = 0`.
+
+- Given the Player is a Great Power at relation state `AT_PEACE` with a target Great Power and the current turn index is an integer `t ≥ 0`  
+  When the Player issues a `Declare War` diplomatic order targeting that Great Power in the Diplomacy phase of turn `t` and the order is valid  
+  Then the system changes the relation state between the two Great Powers to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t`, and uses this `AT_WAR` state for all Movement and Combat validation during turn `t`.
+
+- Given the Player is a Great Power at relation state `AT_WAR` with a target Great Power and the current turn index is `t`  
+  When both sides have accepted a peace offer between those two Great Powers in the Diplomacy phase of turn `t`  
+  Then the system changes the relation state between the two Great Powers to `AT_PEACE` with `sinceTurn = t`, updates `lastInteractionTurn = t`, leaves all province ownership unchanged, and uses `AT_PEACE` for Movement and Combat validation during turn `t`.
+
+- Given the Player controls a Great Power with a valid treasury balance in pounds as a non-negative integer and has no existing consulate or embassy with a target Minor Nation  
+  When the Player issues an `Establish Overture` order for a `Consulate` with that Minor and the treasury is greater than or equal to `Consulate cost` for the active ruleset  
+  Then the system deducts exactly the `Consulate cost` from the Player treasury, records a Consulate overture between the Great Power and that Minor, and unlocks the ability for the Player to offer an Embassy to that same Minor in later turns.
+
+- Given the Player controls a Great Power that already has an Embassy with a target Minor Nation or Tribe, is not at relation state `AT_WAR` with that faction, and has a Merchant unit assigned a `purchase_land` work order targeting a tile in that Minor or Tribe province  
+  When the system validates the `purchase_land` work order during turn resolution  
+  Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
+
+- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
+  When the system presents the Player with an Intervention choice and the Player selects **Intervene**  
+  Then the system changes the relation state between the Player’s Great Power and the attacking Great Power to `AT_WAR` with `sinceTurn = t`, adds the Minor’s provinces and units to the Player’s side in that war, and uses this war state for all Movement and Combat validation during turn `t`.
+
+- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
+  When the system presents the Player with an Intervention choice and the Player selects **Do Nothing**  
+  Then the system does not change the relation state between the Player’s Great Power and the attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed, and, if the Minor is eliminated, clears all diplomatic relations between the Player and that Minor from the game state.
+
 ## Configurable Values
 
 | Parameter | Default | Notes |

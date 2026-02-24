@@ -35,3 +35,27 @@ When turning topology/tile maps into view models (ownership fill, per-player map
 ## Lookup Rule
 
 Logic must never locate a province by province id alone. Use (regionId, provinceId) or a prefixed full id, and resolve the province only within that region. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found, treat it as a logic error; do not fall back to a default region.
+
+---
+
+## Acceptance Criteria
+
+- Given a WorldState with at least one region `oldWorld` and one region `newWorld`, and each region has a province with local id `p1`  
+  When the System constructs or stores province identifiers in game state  
+  Then the System represents the Old World province as `oldWorld|p1`, represents the New World province as `newWorld|p1`, and never stores or emits a bare province id `p1` without its region prefix in any field that refers to a province.
+
+- Given a WorldState that stores a military Unit whose location is a province, and that province belongs to region `oldWorld` with local id `p3`  
+  When the System serializes or deserializes the Unit’s location  
+  Then the System stores the Unit location as the full id `oldWorld|p3`, and on load it resolves `oldWorld|p3` only within the `oldWorld` region without scanning other regions for a matching local id.
+
+- Given a tile key such as `newWorld|nw7|12|5` stored in WorldState or a save file  
+  When the System interprets that tile key  
+  Then the System treats `newWorld` as the region id, `nw7` as the local province id, and `12` and `5` as tile coordinates, and it derives the full province id `newWorld|nw7` from the first two segments for any province-level lookup.
+
+- Given a map visualizer that is rendering a per-region tile map for region `oldWorld` and encounters a tile whose local province id is `p4`  
+  When the visualizer queries ownership, province name, or unit markers for that tile  
+  Then the visualizer first constructs the full province id `oldWorld|p4`, uses that full id to look up the Province and its owner in game state, and does not attempt to resolve `p4` in any other region.
+
+- Given any game logic that is asked to resolve a province identifier and provided with a string that does not contain a `|` prefix separator or a pair of `(regionId, provinceId)` values that match a known province  
+  When the System attempts to perform the lookup  
+  Then the System treats the request as a logic error and does not fall back to a default region, does not guess a region by name pattern, and does not silently resolve the identifier to a different region’s province.

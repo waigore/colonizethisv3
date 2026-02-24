@@ -53,3 +53,19 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets).
 
 **Current scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). Luxury consumption (sugar, cigars, fur hats) and worker tier training (paper + cash → next tier) are deferred until Recruiting/Training quantities are defined or a simplification is chosen.
+
+---
+
+## Acceptance Criteria
+
+- Given a player has a WorkerPool with non-negative integer counts for each worker tier and a central stockpile as described in [stockpiles-and-production.md](stockpiles-and-production.md)  
+  When the System executes the Consumption phase for that player  
+  Then the System deducts the required food quantities for each worker tier from the stockpile in the specified order, removes workers that starve when their required food cannot be met starting with Peasants and proceeding up through Apprentices, Journeymen, and Masters, and does not reduce any worker count below zero.
+
+- Given a trained worker (Apprentice, Journeyman, or Master) remains alive after the Consumption phase but the required luxury commodity for that tier is not fully available in the stockpile  
+  When the System computes available labour for the Production phase  
+  Then the System counts that worker’s labour contribution as zero for that turn while still leaving the worker in the WorkerPool for future turns.
+
+- Given a player has sufficient fabric (and, when defined, paper and cash) in the stockpile to recruit or train a worker according to the recruiting and training rules for a particular era  
+  When the System resolves a recruit or train action for that worker  
+  Then the System consumes the specified commodity quantities from the stockpile, updates the WorkerPool counts by adding the new or upgraded worker to the correct tier and removing the source worker in the case of training, and ensures that no stockpile quantity or worker count becomes negative as a result of the action.

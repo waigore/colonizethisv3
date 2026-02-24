@@ -1,0 +1,127 @@
+---
+description: Standard for writing machine-testable acceptance criteria in SPEC docs
+globs: "SPEC/ai/**,SPEC/game/**,SPEC/program/**,SPEC/ui/**"
+alwaysApply: false
+---
+
+# Acceptance Criteria for SPEC
+
+- **Scope:** Applies to all specs under `SPEC/game/`, `SPEC/program/`, `SPEC/ai/`, and `SPEC/ui/` whenever behavior is defined or changed.
+- **Goal:** Make every acceptance criterion (AC) unambiguous, machine-testable, and suitable for automated verification by AI agents and test frameworks.
+
+## Given–When–Then structure
+
+- **Format:** Each AC MUST be written as a single **Given–When–Then** triplet:
+  - **Given**: The initial state or context.
+  - **When**: The specific action or trigger.
+  - **Then**: The expected, measurable outcome.
+- **One behavior per AC:** If you describe more than one outcome, split into multiple ACs.
+- **Subjects are explicit:** Use `The Player`, `The System`, `The AI agent`, `The UI layer`, etc. Do NOT use ambiguous pronouns like `it` or `they`.
+
+Example (game rule):
+
+- Given the player controls a province with 10 food stored  
+  When the player ends the turn with consumption of 4 food  
+  Then the system reduces the stored food to 6 and records a turn log entry with type `food_consumption`
+
+Example (UI):
+
+- Given the user is on the login screen and the email field is empty  
+  When the user presses the “Log in” button  
+  Then the UI layer highlights the email field and shows the message `Email is required` under that field
+
+## Concrete data definitions
+
+AI agents cannot infer what “valid” means. Every AC MUST define inputs and state in concrete, checkable terms:
+
+- **Ranges:** Specify numeric constraints (e.g., “integer between 1 and 100 inclusive”, “population ≥ 0”).
+- **Formats:** Specify data formats (e.g., “ISO 8601 date `YYYY-MM-DD`”, “UUID v4 string”, “enum: `idle`, `moving`, `attacking`”).
+- **Null / empty / zero:** Explicitly define behavior when a field is blank, zero, or `null` according to the spec.
+
+Bad:
+
+- “The system accepts a valid turn number.”
+
+Good:
+
+- “The system accepts a turn index as an integer between 0 and 9999 inclusive. Given a value outside this range, the system rejects the request with error code `turn_index_out_of_range`.”
+
+## Explicit success vs. failure states
+
+- **Objective outcomes only:** Avoid subjective terms such as “fast”, “user-friendly”, or “intuitive” in ACs.
+- **Binary pass/fail:** Each AC MUST describe conditions that can clearly pass or fail.
+- **Make outcomes measurable:** Use numeric thresholds, exact messages, specific status codes, flags, or state changes.
+
+Prefer formulations like:
+
+- “Then the page reaches time-to-interactive in under 200 ms on target test hardware.”
+- “Then the system returns HTTP 400 with error code `invalid_email_format` and message `Invalid email format`.”
+- “Then the search results contain only provinces whose name or metadata include the search keyword (case-insensitive).”
+
+## Deterministic side effects
+
+Whenever an action changes state or triggers background work, ACs MUST state the expected side effects so integration tests can verify them:
+
+- **Data changes:**
+  - “Then the system creates a record in the `save_slots` table with `status = active` and `turn = 12`.”
+  - “Then the province’s stored food decreases by 4 and the region’s total food is updated accordingly.”
+- **External calls / integrations:**
+  - “Then the system sends a POST request to the `analytics/turn-ended` endpoint with `{ playerId, turnNumber }`.”
+- **State persistence:**
+  - “Then reloading the game from this save slot restores the same player resources and province ownership.”
+  - “Then refreshing the UI does not clear the unsaved form values for this screen.”
+
+Side effects MUST be deterministic: the same Given and When should always produce the same Then.
+
+## Best practices for AI readability
+
+- **Atomic criteria:** Each AC should describe exactly one behavior. If an AC mentions multiple independent behaviors (e.g., UI feedback AND database writes AND analytics), split into separate ACs that share the same Given–When but different Then clauses.
+- **Negative ACs:** For critical behaviors, include explicit negative or error-path ACs:
+  - “Given an invalid password, the system does not reveal whether the email exists and returns a generic `Invalid credentials` error.”
+  - “Given a province is not connected to the capital, when the player attempts to send trade, then the system rejects the action with reason `no_capital_connection`.”
+- **No ambiguous pronouns:** Always repeat the subject (`The Player`, `The System`, `The AI agent`, `The UI layer`) rather than `it` or `they` so the agent can track who acts and who reacts.
+
+## Examples by SPEC domain
+
+### Game (`SPEC/game/`)
+
+- Given the player owns a capital city and a province connected to that capital  
+  When the player assigns 20 units of grain to be transported from the capital to that province in a single turn  
+  Then the system decreases the capital’s stored grain by 20, increases the province’s stored grain by 20, and records a movement entry tagged `grain_transport`
+
+### AI (`SPEC/ai/`)
+
+- Given the AI agent controls three provinces with threat scores 10, 30, and 50, and total available militia of 40 units  
+  When the AI agent evaluates where to deploy new defenses  
+  Then the AI agent assigns at least 60% of the available militia to the province with threat score 50 and never assigns more than 20% to the province with threat score 10
+
+### Program / technical (`SPEC/program/`)
+
+- Given the player finishes turn 25 and the in-memory game state is marked as “dirty”  
+  When the system performs an autosave  
+  Then the system writes a save file with `turn = 25` and a monotonically increasing `saveVersion`, and a subsequent load from that file restores the same player resources, province ownership, and AI state present at autosave time
+
+### UI (`SPEC/ui/`)
+
+- Given the user is on the province detail screen with a province that has 0 available workers  
+  When the user attempts to increase the “assigned workers” slider above 0  
+  Then the UI layer prevents the slider from moving above 0 and shows a non-blocking warning message `No available workers to assign` within the screen
+
+## Integration with other rules
+
+- **SPEC-required:** This rule refines how behavior in `SPEC/game/`, `SPEC/program/`, `SPEC/ai/`, and `SPEC/ui/` must be expressed so it can be implemented and tested faithfully.
+- **Source of truth:** When there is a conflict between narrative text and ACs inside a SPEC document, the ACs are the authoritative description of expected behavior.
+- **Rulesets:** When behavior depends on configurable rulesets (e.g., difficulty levels, economy parameters), ACs MUST specify which ruleset is active and how it affects the Given–When–Then.
+- **Unclear or underspecified outcomes:** If a SPEC section does not clearly state what constitutes a correct outcome, the author or agent MUST first update the SPEC to define a **simple, sensible default behavior** (aligned with existing design and rulesets), and then update or add ACs to reflect that behavior in clear, testable terms.
+
+## Author checklist
+
+Before finalizing or updating a SPEC document under `SPEC/`, ensure:
+
+- Each important behavior has at least one AC written as Given–When–Then.
+- Inputs and state in ACs have explicit ranges, formats, and null/empty/zero behavior.
+- Success and failure outcomes are objectively testable with clear pass/fail conditions.
+- Deterministic side effects (data changes, integrations, persistence) are fully described.
+- Each AC is atomic (one behavior per AC), with negative/error-path ACs added where relevant.
+- Subjects are explicit; ACs avoid ambiguous pronouns like `it` or `they`.
+

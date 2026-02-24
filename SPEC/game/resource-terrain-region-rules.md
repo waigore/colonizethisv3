@@ -44,3 +44,23 @@ On each map (oldWorld and newWorld), at most 30% of placed resources may be mult
 - **Fish:** Water tiles only. Pass 7 assigns resources to land cells only. Fish is future scope (water-resource pass or separate handling).
 - **Diamonds:** Spawn on desert terrain (New World only). Imperialism II Terrain and Development table.
 - **Riches:** silver, gold, gems, diamonds, spices align with riches-to-treasury base prices (defined in ruleset config).
+
+---
+
+## Acceptance Criteria
+
+- Given the active ruleset defines a resource–terrain–region table where each row specifies a resource id, a region scope (`OW only`, `NW only`, or `both`), a non-empty set of terrain types, and a default market price  
+  When the System loads this table at game start  
+  Then the System validates that each resource id is unique, that terrain types listed for each row are valid terrain types for the specified region, and that default prices are positive integers, rejecting the ruleset with a clear error if any of these conditions fail.
+
+- Given a tile map for a region such as `oldWorld` with terrain types assigned to each land cell and the resource–terrain–region rules have been loaded successfully  
+  When the System assigns resources to land tiles according to these rules  
+  Then the System only assigns a resource to a tile if the tile’s region and terrain type match at least one table row for that resource, and it never places a resource on a tile whose region or terrain is not allowed by the table.
+
+- Given a map for `oldWorld` and `newWorld` and a configured multi-region cap of 30% for resources whose region scope is `both`  
+  When the System runs the resource placement pass that can choose between resources with scope `both` and resources with region-exclusive scope for a candidate tile  
+  Then the System ensures that no more than 30% of all placed resources on that map are `both`-scope resources, and when the cap has been reached it only considers region-exclusive resources for tiles that have both options available.
+
+- Given a land tile in the New World with desert terrain and no Old World-only resources that are legal on desert tiles in that region  
+  When the System assigns resources to land tiles for the New World  
+  Then the System may assign `diamonds` to that tile even if the multi-region cap for `both` resources has already been reached, because the cap is applied only when there is a choice between `both` and region-exclusive resources.

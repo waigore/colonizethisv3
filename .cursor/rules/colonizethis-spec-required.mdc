@@ -6,7 +6,7 @@ alwaysApply: true
 # SPEC Required
 
 - **SPEC-first:** Specify all game and technical behavior before implementation. Implement only what specs describe; no behavior that contradicts GDD or TDD.
-- **Layout:** Sub-specs only; max 500 words per document.
+- **Layout:** Sub-specs only; max 1000 words per document.
 
 | Domain | Path | Source of truth |
 |--------|------|-----------------|

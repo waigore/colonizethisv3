@@ -74,3 +74,71 @@ A province is **overseas** for a player if it is in a **different region** from 
 ## Capital loss and reassignment
 
 If a player no longer owns their capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). New capital is in the player's **original region** (region of the previous capital) from the player's **owned provinces** in that region. Prefer **seaboard** provinces; place capital along the seaboard when possible. If the player has no seaboard provinces in that region, choose any remaining owned province (inland capital). Apply port/road setup per § Capital Setup. Reference capital-choice heuristics (e.g. border-avoidance) for tile choice where applicable. If the player has no owned provinces in the original region, leave capital (and capital tile) null; no port/road setup is applied.
+
+---
+
+## Acceptance Criteria
+
+- Given a Great Power player selects a capital province and a capital tile `(regionId, provinceId, x, y)` that is adjacent to a sea tile in that region  
+  When the system initializes the game at the end of the capital-choice phase  
+  Then the system marks that tile as the player’s capital tile and creates a capital port on that tile, and sets the capital province’s `townTileKey` to that tile.
+
+- Given a Great Power player selects a capital province and a capital tile `(regionId, provinceId, x, y)` that is not adjacent to sea and the province contains at least one sea-adjacent land tile  
+  When the system initializes the game at the end of the capital-choice phase  
+  Then the system creates a port on the sea-adjacent tile in that province with the shortest path (by number of province tiles) to the capital tile and auto-builds a road along that shortest path from the port tile to the capital tile.
+
+- Given a Great Power player has a capital province with a capital tile already placed  
+  When the system initializes towns for all provinces  
+  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set to the tile in that province with the shortest valid road or rail path to either the capital tile in the same region or a port in that province for an overseas province.
+
+- Given a Great Power player has a capital province in region `R1` and an owned province `P2` in the same region `R1` with at least one tile reachable by a road or rail path to the capital tile  
+  When the system assigns a town for `P2`  
+  Then the system selects as `P2`’s `townTileKey` the tile in `P2` whose shortest road or rail path to the capital tile is minimal among tiles in `P2`, breaking ties deterministically according to the map-topology rules.
+
+- Given a Great Power player has an owned province `P3` in region `R2` that is overseas (region `R2` is different from the capital region `R1`) and at least one port tile in `P3` whose sea zone is reachable from the capital’s seaboard via sea-zone and warp-zone edges  
+  When the system assigns a town for `P3`  
+  Then the system selects as `P3`’s `townTileKey` the tile in `P3` with the shortest road or rail path to any such connected port in `P3`, and marks that port as used for extraction connectivity for that province.
+
+- Given a Great Power player has a capital tile and a port tile `portA` in the same region  
+  When the system evaluates whether `portA` is connected to the capital  
+  Then `portA` is considered connected if and only if either the capital tile is adjacent to sea or there exists a road or railroad path from the capital tile to `portA` using only tiles in that region.
+
+- Given a Great Power player has a capital tile on the seaboard with sea zone `S_cap` and a port tile `portB` in the same region with sea zone `S_port`  
+  When the system evaluates whether `portB` is connected to the capital by sea topology  
+  Then `portB` is considered sea-connected to the capital if and only if `S_port` is equal to `S_cap` or reachable from `S_cap` by following sea–sea edges in that region’s sea-topology graph.
+
+- Given a Great Power player has a capital tile in region `R1` with sea zone `S_cap`, a port `portC` in region `R2`, and a multi-region sea topology with warp-zone links  
+  When the system evaluates whether `portC` is connected to the capital  
+  Then `portC` is considered connected if and only if its sea zone is reachable from `S_cap` by a path that may cross warp-zone edges between regions and sea–sea edges within each region.
+
+- Given a tile `T` in a land province owned by a Great Power player and that province has a `townTileKey` with a valid path to the capital according to the connectivity rules  
+  When the system evaluates whether `T` is connected to the capital for extraction  
+  Then `T` is considered connected if and only if either `T` is the capital tile or directly edge-adjacent to the capital tile, or `T` lies on or is edge-adjacent to a road or rail tile that has a road or rail path to the province’s town tile, and the town tile has a path to the capital tile.
+
+- Given a tile `T_overseas` in an overseas province owned by a Great Power player, and that province has a port `P_over` that is road or rail connected to `T_overseas` and is itself connected to the capital by sea and land per the port-connection and sea-path rules  
+  When the system evaluates whether `T_overseas` is connected to the capital for extraction  
+  Then `T_overseas` is considered connected if and only if there exists a road or rail path from `T_overseas` to `P_over` and `P_over` is marked as connected to the capital.
+
+- Given a connected tile `T_conn` with base production `P`, technology cap `TechCap`, a town development level `TownLvl` for its province’s town tile, and a set of transport levels along the chosen connectivity path with minimum value `MinTransport`  
+  When the system computes the effective extracted yield for `T_conn`  
+  Then the effective yield is `min(P, TechCap, TownLvl, MinTransport)` and is attributed to the player’s stockpile for that turn.
+
+- Given a tile `T_multi` that has two or more distinct valid connectivity paths to the capital with per-path minimum transport levels `MinPath1`, `MinPath2`, …, `MinPathN`  
+  When the system computes the transport-limited cap for `T_multi`  
+  Then the system selects `max(MinPath1, MinPath2, …, MinPathN)` as the transport constraint used in the effective-yield calculation for that tile.
+
+- Given a Great Power player has a connected province chain from the capital to a remote province and then loses ownership of a province `P_cut` that lies on all road or rail paths between the capital and some other province’s town tile  
+  When the system recomputes connectivity during the next extraction phase  
+  Then every tile whose only paths to its town or to the capital passed through `P_cut` is marked as not connected and no longer contributes extraction to the player’s stockpile.
+
+- Given a previously disconnected province `P_retake` becomes owned again by a Great Power player during turn resolution, restoring at least one full path from remote tiles through `P_retake` to the capital  
+  When the system recomputes connectivity during the next extraction phase  
+  Then all tiles in provinces that now have a valid path via `P_retake` to their town and to the capital are marked as connected again and resume contributing extraction according to the normal yield rules.
+
+- Given a player’s capital province is conquered so the player owns zero tiles in that province at the end of combat resolution  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system selects a new capital province from the player’s owned provinces in the original capital region, preferring seaboard provinces when available, assigns a new capital tile using the capital-choice heuristics, applies capital port and road setup per the capital-setup rules, and updates all towns and connectivity based on the new capital before the next extraction phase.
+
+- Given a player has no owned provinces remaining in the original capital region after capital loss  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system sets the player’s capital province and capital tile to `null`, performs no new port or road setup, and in the subsequent extraction phase treats all tiles for that player as not connected for extraction until a new capital is defined by later rules.
