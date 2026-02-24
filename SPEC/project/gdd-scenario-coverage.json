@@ -1,7 +1,7 @@
 {
   "game/capital-and-connectivity.md": ["capital_and_connectivity_init.json"],
   "game/capital-choice-phase.md": [],
-  "game/civilian-units.md": [],
+  "game/civilian-units.md": ["civilian_units_basic.json"],
   "game/combat.md": [],
   "game/commodity-catalog.md": [],
   "game/diplomacy.md": [],

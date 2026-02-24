@@ -1,0 +1,21 @@
+{
+  "name": "civilian_units_basic",
+  "description": "SPEC/game/civilian-units.md: after fresh init each GP has starting civilian units in capital (default config: 2 Explorer, 2 Builder, 1 Engineer = 5 per GP). Asserts gp1 capital province owner and unit count.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    { "turn": 1, "province": "oldWorld|p1", "owner": "gp1" },
+    { "turn": 1, "province": "oldWorld|p1", "unitCount": 5 }
+  ]
+}
