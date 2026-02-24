@@ -13,7 +13,7 @@ Each **production recipe** has:
 - **Labour:** Labour points required per output unit (e.g. 2 timber → 1 lumber = 2 labour). Production consumes labour from the player's WorkerPool.
 - **Turns per unit:** Optional; default 1 turn per output unit.
 
-Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. Insufficient inputs or labour: recipe does not run (or partial run per design).
+Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. Insufficient inputs or labour: recipe does not run (no partial run).
 
 ---
 
@@ -29,13 +29,15 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 
 ## Where Stored
 
-**Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets.
+**Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets in MVP.
 
 ---
 
 ## Acceptance Criteria
 
-- Given the program-level config defines a list or map of production recipes where each recipe has a non-empty output commodity id, a non-negative integer output quantity, a map of input commodity ids to non-negative integer quantities, and a non-negative integer labour requirement  
+Testable conditions for "done": recipe structure (output commodity + quantity, inputs map, labour per output, optional turns per unit default 1); recipes stored as program-level constants (no JSON rulesets in MVP); Production phase consumes inputs and labour and adds output to stockpile; insufficient inputs or labour → recipe does not run (no partial run); recipe-run results recorded (e.g. productionByRecipe) for inspection and order projections. Implementation: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md).
+
+- Given the program-level config defines a list or map of production recipes where each recipe has a non-empty output commodity id, a non-negative integer output quantity, a map of input commodity ids to non-negative integer quantities, a non-negative integer labour requirement, and optionally a positive integer turns per unit (default 1 when omitted)  
   When the System loads the economy configuration at game start  
   Then the System builds an in-memory recipe catalog that contains exactly those recipes, rejects any configuration that refers to an unknown commodity id in inputs or outputs with an error code such as `unknown_commodity_id_in_recipe`, and makes the loaded recipes available to the Production phase.
 
@@ -46,3 +48,7 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 - Given a player has insufficient input commodities or insufficient available labour to satisfy the full input and labour requirements of a recipe for even a single run  
   When the System evaluates which recipes to execute during the Production phase  
   Then the System does not execute that recipe (i.e. it produces zero units of the recipe’s output for that phase) and does not partially consume inputs in a way that leaves the recipe half-complete.
+
+- Given the System has executed the Production phase for a player and at least one recipe ran  
+  When the phase completes  
+  Then the System records which recipes ran and the quantity produced per recipe (e.g. productionByRecipe: recipe id → quantity produced) so that order projections and inspection can use it; see [order-projections.md](../program/order-projections.md) (§ productionByRecipe) and [economy-models.md](../program/economy-models.md).
