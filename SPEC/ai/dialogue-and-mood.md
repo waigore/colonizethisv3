@@ -1,6 +1,6 @@
 # Dialogue and Mood (Phase 6)
 
-**SPEC/ai** — Logic-level dialogue and portrait mood signaling. Source: GDD 10d, TDD 10. Implementation: [ai-events-and-dossier.md](../program/ai-events-and-dossier.md). Portrait assets and UI layout are deferred to UI phases. Province identity (e.g. province id in DialogueEvent variables): [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/ai** — Logic-level dialogue and portrait mood signaling. Source: this document; implementation (events, mood state machine): [ai-events-and-dossier.md](../program/ai-events-and-dossier.md). Portrait assets and UI layout are deferred to UI phases. Province identity (e.g. province id in DialogueEvent variables): [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -46,7 +46,7 @@ AI emits **PortraitMoodEvent** when the portrait mood should change. No asset pa
 **Mood values:** considering, pleased, gracious, calculating, skeptical, impatient, irritated, dismissive.
 
 Used when:
-- **Negotiation** — During active deal-making, mood is driven by offer quality delta and stall count (see TDD 10 mood state machine). Transition triggers PortraitMoodEvent(to, from, durationMs).
+- **Negotiation** — During active deal-making, mood is driven by offer quality delta and stall count (see [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § Dialogue and Mood and the mood state machine in colonizethis_ai). On transition the system emits PortraitMoodEvent with fields leaderId, fromMood, toMood, durationMs per [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) § PortraitMoodEvent.
 - **Non-negotiation** — Base mood can be derived from relation level or last event (e.g. insulted → irritated). Optional emission for consistency.
 
 Mood state machine (logic): given current mood, offerQualityDelta (-1..1), and stallCounter, compute next mood; on transition, emit event. All inputs must be deterministic (seeded or from game state).
