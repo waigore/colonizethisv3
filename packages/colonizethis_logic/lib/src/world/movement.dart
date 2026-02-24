@@ -7,21 +7,29 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Province local ids in [regionId] that are adjacent to [localProvinceId] (P–P only).
 /// Use this when topology may have duplicate local ids across regions.
+/// Handles both prefixed (regionId|localId) and unprefixed topology node ids.
 Iterable<String> neighborProvinceIdsInRegion(
   MapTopology topology,
   String regionId,
   String localProvinceId,
 ) sync* {
-  final provinceIdsInRegion = topology.nodes
+  final nodeIdsInRegion = topology.nodes
       .where((n) =>
           n.regionId == regionId && n.type == TopologyNodeType.province)
       .map((n) => n.id)
       .toSet();
-  if (!provinceIdsInRegion.contains(localProvinceId)) return;
+  final localIdsInRegion = nodeIdsInRegion
+      .map((id) => ProvinceId.localIdFrom(id))
+      .toSet();
+  if (!localIdsInRegion.contains(localProvinceId)) return;
+  final idToMatch = nodeIdsInRegion.contains(localProvinceId)
+      ? localProvinceId
+      : ProvinceId.full(regionId, localProvinceId);
+  if (!nodeIdsInRegion.contains(idToMatch)) return;
   for (final edge in topology.edges) {
-    if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
-    final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
-    if (provinceIdsInRegion.contains(other)) yield other;
+    if (edge.id1 != idToMatch && edge.id2 != idToMatch) continue;
+    final other = edge.id1 == idToMatch ? edge.id2 : edge.id1;
+    if (nodeIdsInRegion.contains(other)) yield ProvinceId.localIdFrom(other);
   }
 }
 
