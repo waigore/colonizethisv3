@@ -29,6 +29,7 @@ Internal record appended when an action matches an evidence rule. Fields: observ
 2. Storage: per (observer, subject, agenda type) counter + optional (turn, description) list. Deterministic: same actions → same evidence.
 3. Dossier projection: read API returning PlayerView-safe data (basic intel, suspicion levels, evidence list, behavioral notes). True hidden agenda never exposed.
 4. **Confidence % mapping:** Best-guess agenda confidence (display %) is derived from the highest suspicion score for that agenda. Mapping: score 0–2 → 0%; 3–5 → 25%; 6–8 → 60%; 9–10 → 85%; 11+ → 100%. Implementation must use this mapping for consistency with display bands (see [ai-dossier.md](../ai/ai-dossier.md) § PlayerView-safe rules).
+5. **Evidence ordering and cap:** For each `(observerId, subjectId)` pair, dossier evidence entries are sorted by `turn` ascending and then capped to the most recent `kMaxDossierEvidenceEntries` items as defined in `colonizethis_data`. When the list would exceed this cap, the system drops the oldest entries so that both the evidence list and timeline remain capped and chronological.
 
 ## Integration
 
