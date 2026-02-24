@@ -274,16 +274,42 @@ class ScenarioRunner {
         ),
       );
     }
-    if (setup.stockpileOverrides != null) {
-      for (final player in game.players) {
-        final override = setup.stockpileOverrides![player.id];
-        if (override != null) {
-          // Note: Player stockpile is final, need to create new instance
-          // This is a simplified implementation
-        }
-      }
+    // Apply initialWorkers and initialStockpile (SPEC/game/workers-and-population.md).
+    var players = game.players;
+    if (setup.initialWorkers != null || setup.initialStockpile != null) {
+      players = [
+        for (final player in game.players)
+          _applyPlayerEconomyOverrides(player, setup),
+      ];
+    }
+    if (players != game.players) {
+      game = game.copyWith(players: players);
     }
     return game;
+  }
+
+  Player _applyPlayerEconomyOverrides(Player player, ScenarioSetup setup) {
+    var p = player;
+    if (setup.initialWorkers != null) {
+      final w = setup.initialWorkers![player.id];
+      if (w != null) {
+        p = p.copyWith(
+          workerPool: WorkerPool(
+            peasants: w['peasants'] ?? 0,
+            apprentices: w['apprentices'] ?? 0,
+            journeymen: w['journeymen'] ?? 0,
+            masters: w['masters'] ?? 0,
+          ),
+        );
+      }
+    }
+    if (setup.initialStockpile != null) {
+      final s = setup.initialStockpile![player.id];
+      if (s != null && s.isNotEmpty) {
+        p = p.copyWith(stockpile: Stockpile(quantities: Map<String, int>.from(s)));
+      }
+    }
+    return p;
   }
 
   /// Resolves one turn and returns the updated game.

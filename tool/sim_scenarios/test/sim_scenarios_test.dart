@@ -160,6 +160,34 @@ void main() {
         expect(scenario.assertions[0].player, 'gp1');
         expect(scenario.assertions[0].capitalProvince, 'oldWorld|p1');
       });
+
+      test('parses setup initialWorkers and initialStockpile', () {
+        final json = {
+          'name': 'workers_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialWorkers': {
+              'gp1': {'peasants': 2, 'apprentices': 0, 'journeymen': 0, 'masters': 0},
+            },
+            'initialStockpile': {
+              'gp1': {'grain': 1, 'meat': 0},
+            },
+          },
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'workerPeasants': 1},
+            {'turn': 1, 'player': 'gp1', 'commodity': 'grain', 'stockpileCommodity': 0},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.initialWorkers!['gp1']!['peasants'], 2);
+        expect(scenario.setup!.initialStockpile!['gp1']!['grain'], 1);
+        expect(scenario.assertions[0].workerPeasants, 1);
+        expect(scenario.assertions[1].commodity, 'grain');
+        expect(scenario.assertions[1].stockpileCommodity, 0);
+      });
     });
 
     group('parseScenarioFile', () {
