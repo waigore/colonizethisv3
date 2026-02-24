@@ -39,7 +39,7 @@ The **commodity catalog** (id list, category per commodity, default price for sp
 
 ## Overflow and Capacity
 
-Capacity limits may apply per commodity or to total stockpile; configurable per era. **Overflow rules:** excess sold at market or discarded, per design. Details in [stockpiles-and-production.md](stockpiles-and-production.md). Implementation may stub capacity (e.g. unlimited) until design is fixed.
+For the **MVP ruleset**, capacity for all commodities is effectively infinite: there is no per-commodity or total stockpile cap, and the System does **not** apply any overflow behavior such as discarding excess or auto-selling to market. Any future per-era capacity limits or overflow rules are **deferred**; if and when they are introduced, their authoritative behavior and acceptance criteria will be defined in [stockpiles-and-production.md](stockpiles-and-production.md), and this section will cross-reference that definition.
 
 ---
 
