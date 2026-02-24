@@ -49,13 +49,16 @@ Two initialization types:
 
 **From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
 
-For saved games, optional `setup` block injects units for specific test scenarios:
+For saved games (or fresh/fromTopology), optional `setup` block can inject units and add stockpile commodities:
+- **units** — list of unit placements (player, type, province, count).
+- **stockpileAdditions** — per-player commodity deltas (e.g. `{"gp1": {"paper": 2}}`) applied after init so scenarios can give a player resources (e.g. paper for civilian build).
 ```json
 {
   "setup": {
     "units": [
       {"player": "france", "type": "infantry", "province": "normandy", "count": 3}
-    ]
+    ],
+    "stockpileAdditions": {"gp1": {"paper": 2}}
   }
 }
 ```

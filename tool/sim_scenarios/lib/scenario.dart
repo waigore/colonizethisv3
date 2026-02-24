@@ -47,10 +47,14 @@ class ScenarioSetup {
   const ScenarioSetup({
     this.units,
     this.stockpileOverrides,
+    this.stockpileAdditions,
   });
 
   final List<UnitPlacement>? units;
   final Map<String, int>? stockpileOverrides;
+  /// Per-player commodity additions (playerId -> commodityId -> quantity to add).
+  /// Applied after init so e.g. gp1 can have paper for civilian build scenarios.
+  final Map<String, Map<String, int>>? stockpileAdditions;
 }
 
 /// Placement of a unit in a province for scenario setup.
@@ -237,12 +241,18 @@ ScenarioInit _parseScenarioInit(Map<String, dynamic>? json) {
 }
 
 ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
+  final stockpileAdditionsRaw = json['stockpileAdditions'] as Map<String, dynamic>?;
+  final stockpileAdditions = stockpileAdditionsRaw?.map((playerId, value) {
+    final inner = (value as Map<String, dynamic>).map((k, v) => MapEntry(k, v as int));
+    return MapEntry(playerId, inner);
+  });
   return ScenarioSetup(
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
         .toList(),
     stockpileOverrides: (json['stockpileOverrides'] as Map<String, dynamic>?)
         ?.map((k, v) => MapEntry(k, v as int)),
+    stockpileAdditions: stockpileAdditions,
   );
 }
 

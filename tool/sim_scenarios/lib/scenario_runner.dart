@@ -93,33 +93,37 @@ class ScenarioRunner {
   Future<ScenarioResult> run(Scenario scenario) async {
     try {
       // 1. Initialize game
-      final context = await _initializeGame(scenario);
-      if (context == null) {
+      final contextOrNull = await _initializeGame(scenario);
+      if (contextOrNull == null) {
         return ScenarioResult(
           scenarioName: scenario.name,
           passed: false,
           failures: ['Failed to initialize game'],
         );
       }
+      var ctx = contextOrNull;
 
-      // 2. Apply setup if specified (for saved-game scenarios)
+      // 2. Apply setup if specified (stockpile additions, unit injection, etc.)
       if (scenario.setup != null) {
-        _applySetup(context.game, scenario.setup!);
+        final gameAfterSetup = _applySetup(ctx.game, scenario.setup!);
+        ctx = ScenarioContext(
+          game: gameAfterSetup,
+          topology: ctx.topology,
+          tileMapByRegion: ctx.tileMapByRegion,
+        );
       }
 
       // 3. Run each turn
       final turnResults = <int, TurnResult>{};
-      
       for (final turnScript in scenario.turns) {
-        // Parse orders
-        final orders = parseOrderCommands(turnScript.orders, context.game);
-        
-        // Resolve turn
-        await _resolveTurn(context, orders);
-        
-        // Verify assertions for this turn
-        final assertionResults = _verifyTurnAssertions(context.game, scenario.assertions, turnScript.turn);
-        
+        final orders = parseOrderCommands(turnScript.orders, ctx.game);
+        final resolvedGame = await _resolveTurn(ctx, orders);
+        ctx = ScenarioContext(
+          game: resolvedGame,
+          topology: ctx.topology,
+          tileMapByRegion: ctx.tileMapByRegion,
+        );
+        final assertionResults = _verifyTurnAssertions(ctx.game, scenario.assertions, turnScript.turn);
         turnResults[turnScript.turn] = TurnResult(
           turnNumber: turnScript.turn,
           assertionResults: assertionResults,
@@ -128,8 +132,7 @@ class ScenarioRunner {
 
       // 4. Verify final assertions (those without turn specified)
       final finalAssertions = scenario.assertions.where((a) => a.turn == null).toList();
-      final finalResult = verifier.verify(context.game, finalAssertions);
-      
+      final finalResult = verifier.verify(ctx.game, finalAssertions);
       final allFailures = <String>[];
       for (final tr in turnResults.values) {
         for (final ar in tr.assertionResults) {
@@ -144,7 +147,7 @@ class ScenarioRunner {
         scenarioName: scenario.name,
         passed: allFailures.isEmpty,
         failures: allFailures,
-        finalState: context.game,
+        finalState: ctx.game,
         turnResults: turnResults,
       );
     } catch (e, stack) {
@@ -218,35 +221,41 @@ class ScenarioRunner {
     return null;
   }
 
-  void _applySetup(Game game, ScenarioSetup setup) {
-    // TODO: Implement unit injection for saved-game scenarios
-    // This would add units to provinces as specified in setup.units
-    if (setup.stockpileOverrides != null) {
+  /// Applies setup (stockpile additions, etc.) and returns updated game.
+  Game _applySetup(Game game, ScenarioSetup setup) {
+    // Stockpile additions: per-player commodity deltas (e.g. paper for civilian build).
+    if (setup.stockpileAdditions != null && setup.stockpileAdditions!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
       for (final player in game.players) {
-        final override = setup.stockpileOverrides![player.id];
-        if (override != null) {
-          // Note: Player stockpile is final, need to create new instance
-          // This is a simplified implementation
+        final additions = setup.stockpileAdditions![player.id];
+        if (additions == null || additions.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
         }
+        var stockpile = player.stockpile;
+        for (final entry in additions.entries) {
+          stockpile = stockpile.applyDelta(entry.key, entry.value);
+        }
+        updatedPlayers.add(player.copyWith(stockpile: stockpile));
       }
+      return game.copyWith(players: updatedPlayers);
     }
+    // TODO: Implement unit injection for saved-game scenarios (setup.units)
+    // TODO: Apply setup.stockpileOverrides if needed
+    return game;
   }
 
-  Future<void> _resolveTurn(ScenarioContext context, Orders orders) async {
+  Future<Game> _resolveTurn(ScenarioContext context, Orders orders) async {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
-    
-    // Create order engine with the orders
     final orderEngine = OrderEngine(initialOrders: orders);
-    
-    // Resolve turn - this modifies context.game in place
-    resolveTurnForGameFromOrderEngine(
+    return resolveTurnForGameFromOrderEngine(
       game: context.game,
       topology: topology,
       orderEngine: orderEngine,
-      aiOrders: null, // Deterministic: no AI orders
+      aiOrders: null,
       tileMapByRegion: context.tileMapByRegion,
     );
   }

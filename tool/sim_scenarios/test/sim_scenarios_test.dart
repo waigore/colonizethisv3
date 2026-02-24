@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:sim_scenarios/scenario.dart';
+import 'package:sim_scenarios/scenario_runner.dart';
 
 void main() {
   group('sim_scenarios', () {
@@ -86,6 +87,26 @@ void main() {
         expect(scenario.setup!.units![0].playerId, 'france');
         expect(scenario.setup!.units![0].provinceId, 'normandy');
         expect(scenario.setup!.units![0].count, 3);
+      });
+
+      test('parses scenario with stockpileAdditions', () {
+        final json = {
+          'name': 'stockpile_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'stockpileAdditions': {
+              'gp1': {'paper': 2},
+            },
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup, isNotNull);
+        expect(scenario.setup!.stockpileAdditions, isNotNull);
+        expect(scenario.setup!.stockpileAdditions!['gp1'], {'paper': 2});
       });
 
       test('parses all order types', () {
@@ -188,6 +209,24 @@ void main() {
         final scenarios = discoverScenarios(dir);
 
         expect(scenarios.length, greaterThan(0));
+      });
+    });
+
+    group('civilian_units_build_explorer', () {
+      test('scenario passes (GDD civilian-units training cost AC)', () async {
+        final file = File('scenarios/civilian_units_build_explorer.json');
+        if (!file.existsSync()) {
+          return;
+        }
+        final scenario = parseScenarioFile(file).single;
+        final runner = ScenarioRunner();
+        final result = await runner.run(scenario);
+        if (!result.passed) {
+          for (final f in result.failures) {
+            print('Failure: $f');
+          }
+        }
+        expect(result.passed, isTrue, reason: result.failures.join('; '));
       });
     });
   });
