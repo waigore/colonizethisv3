@@ -107,9 +107,21 @@ Assertion fields:
 - `unitCount` — Expected unit count (exact or range via `matchType`)
 - `hasUnit` — Specific unit ID that must be present
 - `hasPlayerUnits` — Any units belonging to player must be present
-- `stockpile` — Resource stockpile amount
+- `stockpile` — Resource stockpile amount (sum of all commodities in player stockpile)
 - `treasury` — Treasury amount
 - `matchType` — `exact` (default), `range`, `atLeast`, `atMost`
+
+**Capital assertions** (SPEC/game/capital-choice-phase.md):
+- Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.
+
+**Diplomacy assertions** (SPEC/game/diplomacy.md):
+- Use `player` for the first faction (typically a Great Power) and `relationWith` for the other faction id.
+- `relationState` — Expected relation state between `player` and `relationWith` (`atPeace` or `atWar`).
+- `relationScore` — Expected integer relation score (0–100).
+- `relationLevel` — Expected relation level (`hostile`, `neutral`, `friendly`, `allied`).
+- `relationSinceTurn` — Expected `sinceTurn` value on the relation.
+- `relationLastInteractionTurn` — Expected `lastInteractionTurn` value on the relation.
+- `overtureStage` — Expected overture stage between a Great Power (`player`) and a Minor/Tribe (`relationWith`): one of `none`, `tradeConsulate`, `embassy`, `nap`, `joinEmpire`.
 
 **Resource-placement assertions** (SPEC/game/resource-terrain-region-rules.md):
 - `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.
