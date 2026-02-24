@@ -1,5 +1,6 @@
 // AI behavior, planning, personalities. SPEC/ai/ai-architecture.md, SPEC/program/ai-systems-impl.md.
 
+export 'package:colonizethis_data/colonizethis_data.dart' show kPortraitMoodValues;
 export 'src/ai_config.dart';
 export 'src/dossier.dart';
 export 'src/domain_planners.dart';
