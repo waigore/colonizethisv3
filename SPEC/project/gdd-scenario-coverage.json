@@ -27,7 +27,7 @@
   "game/ruleset-config.md": [],
   "game/ships-and-naval.md": [],
   "game/siege-mechanics.md": [],
-  "game/stockpiles-and-production.md": [],
+  "game/stockpiles-and-production.md": ["stockpiles_production_central.json"],
   "game/tech-and-extraction-cap.md": [],
   "game/tech-tree.md": [],
   "game/tech-tree-diplomacy-civilian.md": [],

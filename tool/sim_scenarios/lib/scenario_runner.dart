@@ -120,7 +120,7 @@ class ScenarioRunner {
         final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
         // Resolve turn (returns updated game)
-        final nextGame = _resolveTurn(currentContext, orders);
+        final nextGame = _resolveTurn(currentContext, orders, scenario);
         currentContext = ScenarioContext(
           game: nextGame,
           topology: currentContext.topology,
@@ -313,12 +313,14 @@ class ScenarioRunner {
   }
 
   /// Resolves one turn and returns the updated game.
-  Game _resolveTurn(ScenarioContext context, Orders orders) {
+  Game _resolveTurn(ScenarioContext context, Orders orders, Scenario scenario) {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
-    
+
+    final defaultAssignments = _productionAssignments(scenario);
+
     final orderEngine = OrderEngine(initialOrders: orders);
     return resolveTurnForGameFromOrderEngine(
       game: context.game,
@@ -326,7 +328,20 @@ class ScenarioRunner {
       orderEngine: orderEngine,
       aiOrders: null,
       tileMapByRegion: context.tileMapByRegion,
+      defaultAssignments: defaultAssignments,
     );
+  }
+
+  /// Converts scenario setup productionAssignments to AssignedRecipe list for resolver.
+  List<AssignedRecipe> _productionAssignments(Scenario scenario) {
+    final list = scenario.setup?.productionAssignments;
+    if (list == null || list.isEmpty) return const [];
+    return list
+        .map((a) => AssignedRecipe(
+              recipeId: a.recipeId,
+              assignedLabour: a.assignedLabour,
+            ))
+        .toList();
   }
 
   List<AssertionResult> _verifyTurnAssertions(
