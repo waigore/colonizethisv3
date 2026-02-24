@@ -168,3 +168,24 @@ melos run show_tech -- --output=./tech_tree.md
 melos run show_tech -- --query organised_regiments
 melos run show_tech -- --interactive
 ```
+
+---
+
+## check_gdd_coverage
+
+Reports which GDD specs (SPEC/game) are covered by sim_scenarios. Reads the coverage mapping at SPEC/project/gdd-scenario-coverage.json and lists covered vs uncovered specs. Used by the agentic workflow to add scenario coverage one spec at a time. Spec: [SPEC/project/gdd-scenario-coverage.md](../SPEC/project/gdd-scenario-coverage.md).
+
+**Invocation**
+
+```bash
+melos run check_gdd_coverage
+```
+
+**Behaviour**
+
+- Discovers all SPEC/game/*.md files.
+- A spec is **covered** if it has at least one scenario listed in the mapping; otherwise **uncovered**.
+- Prints total, covered, and uncovered counts and lists uncovered spec paths.
+- Warns if a scenario file listed in the mapping is missing from tool/sim_scenarios/scenarios/.
+- Exit 0 if all specs covered; exit 1 if any uncovered (for CI).
+- If the mapping uses the extended format with `verifierIssues` for a covered spec, the tool prints those issues so the **coder** can rectify them (see [agentic-gdd-verifier.md](../SPEC/project/agentic-gdd-verifier.md) and [agentic-gdd-scenario-coverage.md](../SPEC/project/agentic-gdd-scenario-coverage.md)).

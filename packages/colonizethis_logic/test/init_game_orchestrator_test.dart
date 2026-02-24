@@ -89,6 +89,24 @@ void main() {
       expect(result.markdown, isNotEmpty);
     });
 
+    test('result includes warpLinks and combinedTopology has prefixed node ids', () {
+      final config = GameSetupConfig.defaultConfig;
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      expect(result.warpLinks, isA<List<WarpLink>>());
+      final combined = result.combinedTopology;
+      expect(combined.nodes, isNotEmpty);
+      for (final n in combined.nodes) {
+        expect(n.id.contains('|'), isTrue, reason: 'combined topology node id must be prefixed (regionId|localId)');
+      }
+      if (result.warpLinks.isNotEmpty) {
+        expect(result.warpLinks.first.regionId, anyOf('oldWorld', 'newWorld'));
+        expect(result.warpLinks.first.otherRegionId, anyOf('oldWorld', 'newWorld'));
+      }
+    });
+
     test('throws ArgumentError when OW provinces fewer than Great Powers', () {
       // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws.
       final config = GameSetupConfig(

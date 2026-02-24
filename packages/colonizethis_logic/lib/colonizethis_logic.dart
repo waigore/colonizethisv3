@@ -9,6 +9,7 @@ export 'src/turn_to_year.dart';
 export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';
 export 'src/setup/init_game_orchestrator.dart';
+export 'src/setup/warp_zone_generator.dart';
 export 'src/setup/province_assignment.dart';
 export 'src/setup/province_name_fallback.dart';
 

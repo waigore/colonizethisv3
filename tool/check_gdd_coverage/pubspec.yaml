@@ -1,0 +1,14 @@
+name: check_gdd_coverage
+description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  path: ^1.9.0
+
+executables:
+  check_gdd_coverage: bin/check_gdd_coverage.dart

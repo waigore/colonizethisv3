@@ -200,6 +200,13 @@ class ScenarioRunner {
         topology: result.topology,
         tileMapByRegion: result.tileMapByRegion,
       );
+    } else if (scenario.init.type == 'fromTopology') {
+      final result = await gameFactory.createFromTopology(scenario.init);
+      return ScenarioContext(
+        game: result.game,
+        topology: result.topology,
+        tileMapByRegion: result.tileMapByRegion,
+      );
     } else if (scenario.init.type == 'saved') {
       if (scenario.init.gameId != null) {
         final game = await gameFactory.loadSavedGame(scenario.init.gameId!);

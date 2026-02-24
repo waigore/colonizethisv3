@@ -361,6 +361,32 @@ void main() {
           reason: 'All sea cells should be reachable from edge (no lakes)');
     });
 
+    test('generated map has at least one sea zone on grid boundary (warp zone placement)', () {
+      // SPEC/game/map-topology.md § Warp zones: placement uses sea zones on the map edge.
+      final (result, topology) = TileMapGenerator(
+        params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
+      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+      final seaZoneIds = topology.nodes
+          .where((n) => n.type == TopologyNodeType.seaZone)
+          .map((n) => n.id)
+          .toSet();
+      if (seaZoneIds.isEmpty) return;
+      final boundaryIds = <String>{};
+      final w = result.width;
+      final h = result.height;
+      for (var x = 0; x < w; x++) {
+        boundaryIds.add(result.cell(x, 0));
+        boundaryIds.add(result.cell(x, h - 1));
+      }
+      for (var y = 0; y < h; y++) {
+        boundaryIds.add(result.cell(0, y));
+        boundaryIds.add(result.cell(w - 1, y));
+      }
+      final edgeSea = boundaryIds.where(seaZoneIds.contains).toSet();
+      expect(edgeSea, isNotEmpty,
+          reason: 'At least one sea zone should touch grid boundary for warp zone generation');
+    });
+
     test('Pass 11 subdivides sea: result has sea zone ids s1, s2, ...', () {
       final (result, topology) = TileMapGenerator(
         params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),

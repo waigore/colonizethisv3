@@ -12,11 +12,14 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ## Topology format
 
-**Region topology** is stored as a graph:
+**Topology is per region**: each region has its **own** graph. There is no single world graph with cross-region edges. Regions connect **only** via **warp zones** (see [map-topology.md](../game/map-topology.md)).
 
-- **Nodes:** List with id, region id, and type (province | sea zone). Cross-region: nodes may belong to different regions.
-- **Edges:** Undirected (id1, id2). Semantics: P↔P (contiguous land), P↔S (province–sea), optionally S↔S. Edges may be cross-region.
-- **Storage:** File per region or one world graph; format (JSON/YAML) implementation-defined. colonizethis_data owns loading. When generating maps, topology is **inferred** from the tile map.
+**Per-region topology:**
+
+- **Nodes:** List with id, region id, and type (province | sea zone). All nodes in a region graph belong to that region.
+- **Edges:** Undirected (id1, id2). Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths). All edges are **within** the same region.
+- **Warp zones:** Separate structure (warp links) that pairs a sea zone in one region with exactly one sea zone in another. Each link is 1:1; a sea zone can be a warp zone to one or more other maps (one link per other map). **Generation:** On each map, aim for **one warp zone per map edge**, each using a sea zone on the edge (tiles on the grid boundary); if not possible, the number of warp zones on each map must still be **equal** so every warp zone has exactly one counterpart on each linked map. **Warp links are produced during world generation** (after OW and NW topology are generated) per [game-setup-pipeline.md](game-setup-pipeline.md) step 4; they are stored with the init result and used when building combined topology / connectivity.
+- **Storage:** File per region (and optional warp link data); format (JSON/YAML) implementation-defined. colonizethis_data owns loading. When generating maps, topology is **inferred** from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
 
 ---
 

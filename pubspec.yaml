@@ -21,6 +21,7 @@ workspace:
   - tool/sim_combat_montecarlo
   - tool/sim_scenarios
   - tool/show_tech
+  - tool/check_gdd_coverage
 
 dev_dependencies:
   melos: ^7.0.0
@@ -48,3 +49,6 @@ melos:
     show_tech:
       description: Technology tree diagram and query (SPEC/program/show-tech-tool.md).
       run: dart run show_tech
+    check_gdd_coverage:
+      description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
+      run: dart run check_gdd_coverage

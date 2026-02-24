@@ -1,5 +1,6 @@
 // State verifier - assertion engine for verifying game state.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'scenario.dart';
@@ -47,6 +48,38 @@ class StateVerifier {
   VerificationResult _verifyAssertion(Game game, Assertion assertion) {
     final failures = <String>[];
 
+    // Resource-placement assertions (SPEC/game/resource-terrain-region-rules.md)
+    if (assertion.region != null && assertion.resource != null &&
+        assertion.province == null && assertion.player == null) {
+      final bad = _tilesInRegionWithResource(
+        game.worldState.resourceByTileKey,
+        assertion.region!,
+        assertion.resource!,
+      );
+      if (bad.isNotEmpty) {
+        failures.add(
+          'Region ${assertion.region}: expected no resource "${assertion.resource}", '
+          'but found on ${bad.length} tile(s), e.g. ${bad.first}',
+        );
+      }
+    } else if (assertion.everyTileResourceAllowedInRegion == true) {
+      final ruleFailures = _verifyEveryTileResourceAllowedInRegion(
+        game.worldState.resourceByTileKey,
+        assertion.region,
+      );
+      failures.addAll(ruleFailures);
+    } else if (assertion.region != null && assertion.maxBothFraction != null &&
+        assertion.province == null && assertion.player == null) {
+      final result = _checkResourcePlacementCap(
+        game.worldState.resourceByTileKey,
+        assertion.region!,
+        assertion.maxBothFraction!,
+      );
+      if (!result.passed) {
+        failures.add(result.message);
+      }
+    }
+
     // Province-based assertions
     if (assertion.province != null) {
       final province = _findProvince(game, assertion.region, assertion.province!);
@@ -61,6 +94,15 @@ class StateVerifier {
         if (province.ownerId != assertion.owner) {
           failures.add(
             'Province ${assertion.province}: expected owner "${assertion.owner}", got "${province.ownerId}"',
+          );
+        }
+      }
+
+      // Check notOwner (negative assertion)
+      if (assertion.notOwner != null) {
+        if (province.ownerId == assertion.notOwner) {
+          failures.add(
+            'Province ${assertion.province}: expected not owned by "${assertion.notOwner}", but it is',
           );
         }
       }
@@ -149,6 +191,90 @@ class StateVerifier {
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,
+    );
+  }
+
+  /// Tile key format: regionId|provinceId|x|y. Returns region id or empty if invalid.
+  static String _regionFromTileKey(String tileKey) {
+    final parts = tileKey.split('|');
+    return parts.isNotEmpty ? parts[0] : '';
+  }
+
+  /// Tile keys in [region] that have [resource].
+  List<String> _tilesInRegionWithResource(
+    Map<String, String> resourceByTileKey,
+    String region,
+    String resource,
+  ) {
+    final list = <String>[];
+    for (final entry in resourceByTileKey.entries) {
+      if (_regionFromTileKey(entry.key) == region && entry.value == resource) {
+        list.add(entry.key);
+      }
+    }
+    return list;
+  }
+
+  List<String> _verifyEveryTileResourceAllowedInRegion(
+    Map<String, String> resourceByTileKey,
+    String? scopeRegion,
+  ) {
+    final failures = <String>[];
+    final rules = ResourceRules.defaultRules;
+    for (final entry in resourceByTileKey.entries) {
+      final regionId = _regionFromTileKey(entry.key);
+      if (regionId.isEmpty) continue;
+      if (scopeRegion != null && regionId != scopeRegion) continue;
+      final resourceId = entry.value;
+      Resource resource;
+      try {
+        resource = Resource.values.byName(resourceId);
+      } catch (_) {
+        failures.add('Tile ${entry.key}: unknown resource "$resourceId"');
+        continue;
+      }
+      if (!rules.isAllowedInRegion(resource, regionId)) {
+        failures.add(
+          'Tile ${entry.key}: resource "$resourceId" not allowed in region "$regionId"',
+        );
+      }
+    }
+    return failures;
+  }
+
+  _CapResult _checkResourcePlacementCap(
+    Map<String, String> resourceByTileKey,
+    String region,
+    double maxBothFraction,
+  ) {
+    final rules = ResourceRules.defaultRules;
+    var bothCount = 0;
+    var totalCount = 0;
+    for (final entry in resourceByTileKey.entries) {
+      if (_regionFromTileKey(entry.key) != region) continue;
+      final resourceId = entry.value;
+      if (resourceId.isEmpty) continue;
+      totalCount++;
+      try {
+        final resource = Resource.values.byName(resourceId);
+        if (rules.regionRule[resource] == ResourceRegionRule.both) {
+          bothCount++;
+        }
+      } catch (_) {
+        // Unknown resource: count as non-both
+      }
+    }
+    if (totalCount == 0) {
+      return _CapResult(passed: true, message: '');
+    }
+    final fraction = bothCount / totalCount;
+    final passed = fraction <= maxBothFraction;
+    return _CapResult(
+      passed: passed,
+      message: passed
+          ? ''
+          : 'Region $region: both-fraction $fraction (${bothCount}/$totalCount) '
+              'exceeds maxBothFraction $maxBothFraction',
     );
   }
 
@@ -262,6 +388,12 @@ class StateVerifier {
 
 class _CountMatchResult {
   const _CountMatchResult({required this.passed, required this.message});
+  final bool passed;
+  final String message;
+}
+
+class _CapResult {
+  const _CapResult({required this.passed, required this.message});
   final bool passed;
   final String message;
 }

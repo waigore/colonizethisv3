@@ -47,6 +47,8 @@ Two initialization types:
 }
 ```
 
+**From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
+
 For saved games, optional `setup` block injects units for specific test scenarios:
 ```json
 {
@@ -101,12 +103,18 @@ Assertion fields:
 - `turn` — Which turn to check (optional, defaults to final state)
 - `province` — Province ID to check
 - `owner` — Expected owner player ID
+- `notOwner` — Negative assertion: province must not be owned by this player ID
 - `unitCount` — Expected unit count (exact or range via `matchType`)
 - `hasUnit` — Specific unit ID that must be present
 - `hasPlayerUnits` — Any units belonging to player must be present
 - `stockpile` — Resource stockpile amount
 - `treasury` — Treasury amount
 - `matchType` — `exact` (default), `range`, `atLeast`, `atMost`
+
+**Resource-placement assertions** (SPEC/game/resource-terrain-region-rules.md):
+- `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.
+- `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile’s region per resource rules. Optional `region` restricts to one region.
+- `region` + `maxBothFraction` — **resourcePlacementCap:** in the given region, the fraction of placed resources that are “both” (timber, iron, copper, tin, coal) is ≤ this value (default 0.30). Example: `{"region": "oldWorld", "maxBothFraction": 0.30}`.
 
 ---
 
