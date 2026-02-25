@@ -704,7 +704,7 @@ void main() {
       );
     }
 
-    test('prospect adds tile to playerProspectedTiles', () {
+    test('prospect adds tile to playerProspectedTiles when terrain eligible', () {
       final unit = Unit(
         id: 'u1',
         type: 'Explorer',
@@ -782,6 +782,88 @@ void main() {
         orders,
         tileMapByRegion: {ow: _tileMapWithTerrain(TerrainType.plains)},
       );
+      final prospected =
+          next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
+      expect(prospected, isNot(contains(tileKey)));
+    });
+
+    test('prospect adds tile when mineral resource present without tile map',
+        () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileKey: 'iron'},
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(
+        next.worldState.playerProspectedTiles['p1'],
+        contains(tileKey),
+      );
+    });
+
+    test(
+        'prospect does not add tile when non-mineral resource present without tile map',
+        () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileKey: 'grain'},
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+
+      final next = applyBuildAndWorkOrders(game, orders);
       final prospected =
           next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
       expect(prospected, isNot(contains(tileKey)));
