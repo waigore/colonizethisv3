@@ -31,7 +31,7 @@ Emitted when a dialogue line should be shown. Consumed by UI or tooling.
 | leaderId | string | Which leader is speaking. |
 | category | string | One of the categories above. |
 | situation | string | Sub-context (e.g. declare_war, peace_offer, battle_won). |
-| era | string | discovery \| earlyModern \| imperial \| industrial (for era-appropriate phrasing). |
+| era | string | discovery \| earlyModern \| imperial \| industrial (for era-appropriate phrasing). For events tied to a specific turn (e.g. battle_won / battle_lost, forts_on_border), the system derives this from the game’s turn-time mapping as `eraFromYear(mapping.yearAtTurn(turnNumber))` (see SPEC/game/turn-time-mapping.md). For era_change events, this is the new era value. |
 | mood | string? | Optional; e.g. for negotiation. |
 | variables | map string→string | Fill-in for templates (e.g. otherNation, province). When the key is `province` (or any province id), the value MUST be in prefixed form per [world-model-identity.md](../game/world-model-identity.md). |
 

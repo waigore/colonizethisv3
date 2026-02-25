@@ -8,7 +8,7 @@ Event data models and data flows for dialogue, mood, evidence, and dossier. Beha
 ## Data Model
 
 ### DialogueEvent
-Fields: `leaderId`, `category`, `situation`, `era`, `mood?`, `variables` (map string→string). Categories and situations per [dialogue-and-mood.md](../ai/dialogue-and-mood.md). When `variables` includes a `province` key (e.g. from event_dialogue), its value must be a **prefixed** province id per [world-model-identity.md](../game/world-model-identity.md); never a bare local id.
+Fields: `leaderId`, `category`, `situation`, `era`, `mood?`, `variables` (map string→string). Categories and situations per [dialogue-and-mood.md](../ai/dialogue-and-mood.md). When `variables` includes a `province` key (e.g. from event_dialogue), its value must be a **prefixed** province id per [world-model-identity.md](../game/world-model-identity.md); never a bare local id. For battle result and reactive border events that are tied to a specific turn, the emitter derives `era` from the game’s turn-time mapping as `eraFromYear(mapping.yearAtTurn(turnNumber))`; for era_change events, `era` is the new era value.
 
 ### PortraitMoodEvent
 Fields: `leaderId`, `fromMood`, `toMood`, `durationMs`. Mood values per [dialogue-and-mood.md](../ai/dialogue-and-mood.md).
