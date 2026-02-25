@@ -353,10 +353,11 @@ Uint8List renderInitGameMapToPngFromViewData({
     );
     drawBorders(image, tmpResult, seaZoneIds, region.cellSize, seaZoneBorderColor);
 
-    // Resource glyphs (geographic mode): g/t/i at cell centre.
+    // Resource glyphs (geographic mode): g/t/i only per SPEC/program/map-visualization.md § Geographic legend scope.
     if (geographicMode) {
+      const geographicLegendResources = {'grain': 'g', 'timber': 't', 'iron': 'i'};
       for (final cell in region.cells) {
-        final letter = resourceIdToLegendLetter(cell.resourceId);
+        final letter = cell.resourceId != null ? geographicLegendResources[cell.resourceId] : null;
         if (letter == null) continue;
         final cx = cell.x * region.cellSize + region.cellSize ~/ 2;
         final cy = cell.y * region.cellSize + region.cellSize ~/ 2;
