@@ -403,8 +403,67 @@ Game applyBuildAndWorkOrders(
       final hasValidTarget = targetTileKey.isNotEmpty;
 
       if (order.target == 'purchase_land' && isWorkOrderTargetAllowedForUnitType(u.type, 'purchase_land') && hasValidTarget) {
+        // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
+        // with the Minor/Tribe and the buyer must not be at war with that faction.
+        String? provinceOwnerId;
+        final provinceIdFromTile = Unit.provinceIdFromTileKey(targetTileKey);
+        if (provinceIdFromTile != null) {
+          provinceOwnerId = provinceById(provinceIdFromTile)?.ownerId;
+        }
+
+        var hasEmbassyWithOwner = false;
+        var atWarWithOwner = false;
+
+        if (provinceOwnerId != null) {
+          for (final o in game.overtureStates) {
+            if (o.gpId == player.id && o.targetId == provinceOwnerId && o.hasEmbassy) {
+              hasEmbassyWithOwner = true;
+              break;
+            }
+          }
+
+          for (final rel in game.diplomacyRelations) {
+            final a = rel.factionId1;
+            final b = rel.factionId2;
+            if ((a == player.id && b == provinceOwnerId) ||
+                (a == provinceOwnerId && b == player.id)) {
+              atWarWithOwner = rel.atWar;
+              break;
+            }
+          }
+        }
+
+        if (!hasEmbassyWithOwner || atWarWithOwner) {
+          continue;
+        }
+
         final resourceId = game.worldState.resourceByTileKey[targetTileKey];
         if (resourceId != null) {
+          final provinceId =
+              Unit.provinceIdFromTileKey(targetTileKey) ?? u.locationProvinceId;
+          final province = provinceById(provinceId);
+          final ownerId = province?.ownerId;
+          if (ownerId == null) {
+            continue;
+          }
+
+          final hasEmbassy = game.overtureStates.any(
+            (o) => o.gpId == player.id && o.targetId == ownerId && o.hasEmbassy,
+          );
+          if (!hasEmbassy) {
+            continue;
+          }
+
+          final atWar = game.diplomacyRelations.any((rel) {
+            final ids = {rel.factionId1, rel.factionId2};
+            return ids.contains(player.id) &&
+                ids.contains(ownerId) &&
+                rel.atWar;
+          });
+          if (atWar) {
+            continue;
+          }
+
           final cost = 15 * landPurchaseBasePrice(resourceId);
           if (treasury >= cost) {
             treasury -= cost;

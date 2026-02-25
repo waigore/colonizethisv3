@@ -128,6 +128,9 @@ class OrderCommand {
     this.techId,
     this.slotIndex,
     this.targetFactionId,
+    this.diplomaticType,
+    this.amount,
+    this.overtureStage,
     this.fleetId,
     this.destinationSeaZoneId,
     this.mission,
@@ -151,6 +154,9 @@ class OrderCommand {
   final int? slotIndex;
   // Diplomatic fields
   final String? targetFactionId;
+  final String? diplomaticType;
+  final int? amount;
+  final String? overtureStage;
   // Naval move fields
   final String? fleetId;
   final String? destinationSeaZoneId;
@@ -182,6 +188,8 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.capitalProvinceId,
+    this.capitalTileKey,
     this.relationWith,
     this.relationState,
     this.relationScore,
@@ -194,8 +202,6 @@ class Assertion {
     this.workerApprentices,
     this.workerJourneymen,
     this.workerMasters,
-    this.commodity,
-    this.stockpileCommodity,
   });
 
   /// Which turn to check (null = final state)
@@ -238,14 +244,15 @@ class Assertion {
   final String? overtureStage;
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
+  /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
+  final String? capitalProvinceId;
+  /// Capital assertion: expected capital tile key (regionId|provinceId|x|y). Optional.
+  final String? capitalTileKey;
   /// Worker pool assertions (SPEC/game/workers-and-population.md). Require [player].
   final int? workerPeasants;
   final int? workerApprentices;
   final int? workerJourneymen;
   final int? workerMasters;
-  /// Per-commodity stockpile: [player] + [commodity] (id) + [stockpileCommodity] (expected quantity).
-  final String? commodity;
-  final int? stockpileCommodity;
 }
 
 /// Type of value matching for assertions.
@@ -426,6 +433,9 @@ OrderCommand _parseOrderCommand(Map<String, dynamic> json) {
     techId: json['techId'] as String?,
     slotIndex: json['slotIndex'] as int?,
     targetFactionId: json['targetFactionId'] as String?,
+    diplomaticType: json['diplomaticType'] as String?,
+    amount: json['amount'] as int?,
+    overtureStage: json['overtureStage'] as String?,
     fleetId: json['fleetId'] as String?,
     destinationSeaZoneId: json['destinationSeaZoneId'] as String?,
     mission: json['mission'] as String?,
@@ -455,6 +465,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    capitalProvinceId: json['capitalProvinceId'] as String?,
+    capitalTileKey: json['capitalTileKey'] as String?,
     relationWith: json['relationWith'] as String?,
     relationState: json['relationState'] as String?,
     relationScore: json['relationScore'] as int?,
@@ -467,8 +479,6 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     workerApprentices: json['workerApprentices'] as int?,
     workerJourneymen: json['workerJourneymen'] as int?,
     workerMasters: json['workerMasters'] as int?,
-    commodity: json['commodity'] as String?,
-    stockpileCommodity: json['stockpileCommodity'] as int?,
   );
 }
 

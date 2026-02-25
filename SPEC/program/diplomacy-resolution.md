@@ -60,12 +60,15 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 ## Acceptance criteria
 
 - **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–7 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → terminate agreements on war → relation modifiers and score update).
+- **Upstream orders:** The diplomacy phase receives merged orders that include `diplomaticOrdersByPlayerId`; the turn resolver supplies the output of the order engine (see [order-engine.md](order-engine.md), [turn-resolution-phases.md](turn-resolution-phases.md)). The order engine must preserve diplomatic orders and pass them into the diplomacy phase input.
 - **Overture payments:** Consulate/Embassy orders: when GP has sufficient treasury and is at the previous overture stage, cost is deducted and stage is advanced; NAP and Join Empire are free.
 - **Join Empire/Colony:** Requires NAP stage and relation score ≥ 51 (Friendly/Allied); absorption (Minor) or colony (Tribe) applied per game rules.
 - **Alliances:** GP–GP only; relation set to allied (score ≥ 76), state atPeace.
 - **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable.
 - **Agreements on war:** Overtures between a faction pair at war are terminated.
 - **GrantAid / SetSubsidy:** GrantAid requires Embassy; SetSubsidy requires Consulate or Embassy. Payer treasury deducted; SetSubsidy to GP adds to target treasury, to Minor/Tribe improves relation modifier.
+- **Order validation:** Preconditions for each diplomatic order type (AT_PEACE/AT_WAR, overture stage, treasury, etc.) are checked at order submission by the order engine and again at resolution; invalid orders are rejected and not applied. See game/diplomacy.md § Diplomatic Order Types.
+- **Save/load:** Relation records (per faction-pair) and overture state (per Minor/Tribe per GP) are serialized in the game save and restored on load so that relation scores, levels, sinceTurn, lastInteractionTurn, relationState, and overture stages are preserved.
 - **Logging:** Phase start and end at debug with `logic:` prefix; key outcomes at info (overture applied, join empire, alliance formed, war declared, peace offered, agreements terminated, GrantAid/SetSubsidy applied). Rejections and validation failures are logged by the order engine only.
 
 ---

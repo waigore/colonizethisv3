@@ -47,10 +47,22 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
         break;
 
       case 'diplomatic':
-        // Use declareWar as default type
+        final typeName = cmd.diplomaticType ?? 'declareWar';
+        final diploType = DiplomaticOrderType.values.firstWhere(
+          (e) => e.name == typeName,
+          orElse: () => DiplomaticOrderType.declareWar,
+        );
+        final overtureStage = cmd.overtureStage != null
+            ? OvertureStage.values.firstWhere(
+                (e) => e.name == cmd.overtureStage,
+                orElse: () => OvertureStage.none,
+              )
+            : null;
         final diploOrder = DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
+          type: diploType,
           targetFactionId: cmd.targetFactionId ?? '',
+          amount: cmd.amount,
+          overtureStage: overtureStage,
         );
         diplomaticOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(diploOrder);
         break;

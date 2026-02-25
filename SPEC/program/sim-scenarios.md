@@ -93,6 +93,26 @@ Supported order types: `move`, `build`, `work`, `diplomatic`, `research`, `naval
 
 Each turn may optionally include **workerAssignments** (production phase): a list of `{ "recipeId": "<id>", "assignedLabour": <n> }`. These are passed as default production assignments for that turn so the Production phase can run recipes; see SPEC/game/production-recipes.md. Scenario setup may include **initialStockpile** and **initialWorkers** per player (map from player id to commodity quantities or worker counts) to set economy state before turns run.
 
+### Diplomatic orders
+
+Diplomatic orders use `type: "diplomatic"` with additional fields to select the diplomatic action:
+
+```json
+{
+  "player": "gp1",
+  "type": "diplomatic",
+  "diplomaticType": "declareWar",
+  "targetFactionId": "gp2"
+}
+```
+
+`diplomaticType` maps to `DiplomaticOrderType` (`declareWar`, `offerPeace`, `alliance`, `establishOverture`, `grantAid`, `setSubsidy`). Optional fields:
+
+- `amount` — for `grantAid` / `setSubsidy` orders (integer pounds)
+- `overtureStage` — for `establishOverture` (`tradeConsulate`, `embassy`, `nap`, `joinEmpire`)
+
+If `diplomaticType` is omitted, the parser defaults to `declareWar`.
+
 ---
 
 ## Assertions
@@ -127,6 +147,7 @@ Assertion fields:
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
 - Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.
+- `player` (faction id: `gp1`, `minor1`, `tribe1`, etc.) + `capitalProvinceId` — the faction's capital province must equal this full province id (e.g. `oldWorld|p1`). Optional `capitalTileKey` — the faction's capital tile must equal this key (format `regionId|provinceId|x|y`). Example: `{"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|0"}`.
 
 **Diplomacy assertions** (SPEC/game/diplomacy.md):
 - Use `player` for the first faction (typically a Great Power) and `relationWith` for the other faction id.
