@@ -5,7 +5,7 @@
   "game/combat.md": ["combat_basic.json"],
   "game/commodity-catalog.md": ["commodity_riches_to_treasury.json"],
   "game/diplomacy.md": ["diplomacy_initial_relations.json", "diplomacy_gp_gp_war_and_mutual_peace.json"],
-  "game/extraction-and-improvements.md": [],
+  "game/extraction-and-improvements.md": ["extraction_basic.json"],
   "game/factions.md": [],
   "game/fog-and-exploration.md": [],
   "game/game-setup.md": ["basic_turn_1.json"],
