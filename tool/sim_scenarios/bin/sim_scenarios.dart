@@ -232,5 +232,14 @@ String _formatAssertion(Assertion assertion) {
   if (assertion.region != null && assertion.maxBothFraction != null) {
     return 'region.${assertion.region}.maxBothFraction <= ${assertion.maxBothFraction}';
   }
+  // Fog/exploration (SPEC/game/fog-and-exploration.md)
+  if (assertion.player != null && assertion.tileKey != null) {
+    if (assertion.tileVisibility != null) {
+      return 'player.${assertion.player}.tile.${assertion.tileKey}.visibility == ${assertion.tileVisibility}';
+    }
+    if (assertion.tileProspected != null) {
+      return 'player.${assertion.player}.tile.${assertion.tileKey}.prospected == ${assertion.tileProspected}';
+    }
+  }
   return 'unknown';
 }
