@@ -1802,5 +1802,111 @@ void main() {
         VisibilityLevel.fogged.name,
       );
     });
+
+    test(
+        'Spy leaving other-faction province gains 5-turn fog decay grace period',
+        () {
+      const ow = 'oldWorld';
+      const tileKeyP1 = 'oldWorld|P1|0|0';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'spy1',
+                type: 'Spy',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+                tileKey: tileKeyP1,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              tileKeyP1: 'fullyVisible',
+              tileKeyP2: 'fogged',
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|P1': [tileKeyP1],
+              '$ow|P2': [tileKeyP2],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final moveOrders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'spy1', destinationProvinceId: '$ow|P2'),
+          ],
+        },
+      );
+
+      // Turn 1: Spy moves out of other-faction province; timer starts at 5 and is
+      // decremented to 4 at end-of-turn; province remains fully visible.
+      var current = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: moveOrders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(
+        current.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P1'],
+        4,
+      );
+      expect(
+        current.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
+        VisibilityLevel.fullyVisible.name,
+      );
+
+      // Turns 2–5: no further movement; timer counts down to 0 and province fogs
+      // only when the timer expires.
+      for (var i = 0; i < 4; i++) {
+        current = resolveTurnForGame(
+          game: current,
+          topology: topology,
+          orders: const Orders(),
+          extractedByPlayerId: const {},
+          defaultAssignments: const [],
+        );
+      }
+
+      expect(
+        current.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P1'],
+        isNull,
+      );
+      expect(
+        current.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
+        VisibilityLevel.fogged.name,
+      );
+    });
   });
 }
