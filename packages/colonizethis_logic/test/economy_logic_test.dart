@@ -73,12 +73,68 @@ void main() {
         ],
       );
 
-      // labourPerOutput = 5, assigned 20 => max 4 runs.
+      // labourPerOutput = 5, assigned 20, but effective labour from 10 peasants
+      // is 10 → max 2 runs.
       // Inputs per run: 2 timber, 2 iron, 1 coal.
-      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 4);
-      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 4);
-      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 10 - 2 * 4);
-      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5 - 1 * 4);
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 10 - 2 * 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5 - 1 * 2);
+    });
+
+    test('effective labour counts only trained workers with luxury', () {
+      // 1 apprentice, 0 peasants, 1 refinedSugar → effective labour = 4.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.timber.id, 10)
+          .applyDelta(CommodityCatalog.refinedSugar.id, 1);
+      const workers = WorkerPool(
+        peasants: 0,
+        apprentices: 1,
+        journeymen: 0,
+        masters: 0,
+      );
+
+      final result = resolveProduction(
+        stockpile: stockpile,
+        workers: workers,
+        assignments: const [
+          AssignedRecipe(
+            recipeId: 'lumber_from_timber',
+            assignedLabour: 4,
+          ),
+        ],
+      );
+
+      // labourPerOutput = 2, effective labour 4 ⇒ 2 runs.
+      expect(result.stockpile.quantityOf(CommodityCatalog.lumber.id), 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 2);
+    });
+
+    test('trained workers without luxury contribute zero effective labour', () {
+      // 1 apprentice, 0 peasants, 0 refinedSugar → effective labour = 0.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.timber.id, 10);
+      const workers = WorkerPool(
+        peasants: 0,
+        apprentices: 1,
+        journeymen: 0,
+        masters: 0,
+      );
+
+      final result = resolveProduction(
+        stockpile: stockpile,
+        workers: workers,
+        assignments: const [
+          AssignedRecipe(
+            recipeId: 'lumber_from_timber',
+            assignedLabour: 4,
+          ),
+        ],
+      );
+
+      // No luxury → no runs, inputs unchanged.
+      expect(result.stockpile.quantityOf(CommodityCatalog.lumber.id), 0);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10);
     });
   });
 
