@@ -24,7 +24,7 @@
   "game/quick-battle.md": [],
   "game/research-state.md": [],
   "game/resource-terrain-region-rules.md": ["resource_ow_has_no_nw_only.json", "resource_nw_has_no_ow_only.json", "resource_every_tile_allowed_in_region.json", "resource_multi_region_cap.json", "resource_diamonds_nw_only.json"],
-  "game/ruleset-config.md": [],
+  "game/ruleset-config.md": ["ruleset_config_counts.json"],
   "game/ships-and-naval.md": [],
   "game/siege-mechanics.md": [],
   "game/stockpiles-and-production.md": ["stockpiles_production_central.json"],
