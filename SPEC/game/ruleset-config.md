@@ -6,7 +6,7 @@ Data-driven game parameters organized in categories and layers, fixed at game cr
 ## Rules
 
 ### Categories
-Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (FPN, FPM, RNG, DEF, MVR; terrain/fort/difficulty modifiers; initiative weights; medal multipliers), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, Old World/New World province counts).
+Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (FPN, FPM, RNG, DEF, MVR; terrain/fort/difficulty modifiers; initiative weights; medal multipliers; leader bonus table — MVP: not in ruleset, see [leader-bonuses.md](leader-bonuses.md) § Where defined (MVP)), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, Old World/New World province counts).
 
 **Map:** Adjacency from topology graph ([world-model.md](world-model.md), [map-topology.md](map-topology.md)). Terrain, resources, and improvements may come from tile map or config overlays.
 

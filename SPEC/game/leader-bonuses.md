@@ -39,6 +39,8 @@ Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.
 
 **LeaderKey format and matching:** The value stored on the Player may be an exact key (`napoleon`, `frederick`, `reserve`) or a variant id (e.g. `france_napoleon_leader`, `prussia_frederick_leader`). Lookup is: (1) exact key in the table first; (2) if no exact match, case-insensitive substring: key containing `napoleon` → +25%, containing `frederick` → +15%. Any other or unknown key receives no bonus (multiplier 1.0).
 
+**Where defined (MVP):** The leaderKey → melee multiplier table above is the **source of truth** for design defaults. In the current (MVP) implementation, the program does **not** read this table from the ruleset. The mapping is implemented as **code constants** in `colonizethis_logic` (e.g. `leader_bonuses.dart`: `_leaderMeleeBonus` or equivalent). Ruleset-driven override for the leader bonus table is **deferred**. When added, the key path and loader contract will be specified in this document and in [ruleset-config.md](ruleset-config.md); program loading: [ruleset-config.md](../program/ruleset-config.md).
+
 ---
 
 ## Application Rule
