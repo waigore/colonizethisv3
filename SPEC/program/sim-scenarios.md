@@ -91,6 +91,26 @@ Each turn specifies orders for one or more players:
 
 Supported order types: `move`, `build`, `work`, `diplomatic`, `research`, `naval_move`, `naval_mission`.
 
+### Diplomatic orders
+
+Diplomatic orders use `type: "diplomatic"` with additional fields to select the diplomatic action:
+
+```json
+{
+  "player": "gp1",
+  "type": "diplomatic",
+  "diplomaticType": "declareWar",
+  "targetFactionId": "gp2"
+}
+```
+
+`diplomaticType` maps to `DiplomaticOrderType` (`declareWar`, `offerPeace`, `alliance`, `establishOverture`, `grantAid`, `setSubsidy`). Optional fields:
+
+- `amount` — for `grantAid` / `setSubsidy` orders (integer pounds)
+- `overtureStage` — for `establishOverture` (`tradeConsulate`, `embassy`, `nap`, `joinEmpire`)
+
+If `diplomaticType` is omitted, the parser defaults to `declareWar`.
+
 ---
 
 ## Assertions

@@ -298,6 +298,22 @@ Game _processWarAndPeace(
 }) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
+  // Precompute mutual peace offers per GP–GP pair so that peace only
+  // completes when both Great Powers have offered peace in the same turn.
+  final Map<String, Set<String>> peaceOffersByPair = {};
+  for (final entry in diploByPlayer.entries) {
+    final gpId = entry.key;
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.offerPeace) continue;
+      final targetId = order.targetFactionId;
+      if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId)) continue;
+      final key = _pairKey(gpId, targetId);
+      final existing = peaceOffersByPair[key] ?? <String>{};
+      existing.add(gpId);
+      peaceOffersByPair[key] = existing;
+    }
+  }
+
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
@@ -347,6 +363,12 @@ Game _processWarAndPeace(
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
+        final key = _pairKey(gpId, targetId);
+        final bothGreatPowers =
+            _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
+        final hasMutualOffer = bothGreatPowers
+            ? (peaceOffersByPair[key]?.length ?? 0) >= 2
+            : true;
         if (rel != null && rel.atWar) {
           if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
             onDialogue(DialogueEvent(
@@ -358,18 +380,30 @@ Game _processWarAndPeace(
             ));
           }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
-          relations = upsertRelation(relations, gpId, targetId, (existing) {
-            return existing!.copyWith(
-              state: RelationState.atPeace,
-              sinceTurn: turn,
-              lastInteractionTurn: turn,
+          if (hasMutualOffer) {
+            relations = upsertRelation(relations, gpId, targetId, (existing) {
+              return existing!.copyWith(
+                state: RelationState.atPeace,
+                sinceTurn: turn,
+                lastInteractionTurn: turn,
+              );
+            });
+            game = game.copyWith(
+              diplomacyRelations: relations,
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
             );
-          });
-          game = game.copyWith(
-            diplomacyRelations: relations,
-            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
-          );
-          _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+            _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+          } else {
+            game = game.copyWith(
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
+            );
+          }
         }
       }
     }
