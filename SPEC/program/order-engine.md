@@ -14,7 +14,7 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 **Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, adjacency, tech per [orders.md](orders.md)).
 
-**Scope:** The engine validates **move**, **build**, **work**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. **Diplomatic** orders are not validated or added by the engine; they are merge-only (see Turn Resolution Integration).
+**Scope:** The engine validates **move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
 **Rule:** Validate in **submission order**. First failure rejects that order and all after it. Orders 1..N-1 remain.
 
@@ -40,7 +40,7 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 ## Turn Resolution Integration
 
-Before applying orders, TurnResolver runs a **merge** step: combine per-player lists (human + AI) with **human over AI** precedence for conflicts. Merge includes **diplomatic** orders (human over AI per type+target); the order engine does not add or validate diplomatic orders. Then resolve cross-player effects (conflict detection, diplomacy). Then apply in phase order per [turn-resolution-phases.md](turn-resolution-phases.md). The order engine does not perform merge or application.
+Before applying orders, TurnResolver runs a **merge** step: combine per-player lists (human + AI) with **human over AI** precedence for conflicts. Merge includes **diplomatic** orders (human over AI per type+target), using only those diplomatic orders that passed OrderEngine validation for each player. Then resolve cross-player effects (conflict detection, diplomacy). Then apply in phase order per [turn-resolution-phases.md](turn-resolution-phases.md). The order engine does not perform merge or application.
 
 ---
 
@@ -61,6 +61,7 @@ Submission order is stable. Merge uses stable ordering (player id, order type, o
 ## Acceptance criteria
 
 - **Validation:** On add/remove with context, the full list for that player is validated in submission order; first rejection rejects that order and all subsequent; validation results (accepted/rejected + reason) are returned for UI.
+- **Diplomatic validation:** Diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, GrantAid, SetSubsidy) are validated by the engine with the same submission-order semantics as other orders. At a minimum, Declare War and Offer Peace respect current relationState preconditions, overtures respect the overture-stage chain and treasury costs, GrantAid requires an Embassy and SetSubsidy requires at least a Consulate, and `Establish Overture` orders targeting a faction currently at `AT_WAR` with the player are rejected and do not deduct treasury.
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns worker count, treasury delta, and when implemented unit locations and stockpile deltas for UI; no mutation of the passed-in game from the caller's perspective.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.

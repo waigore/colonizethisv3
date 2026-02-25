@@ -12,6 +12,8 @@ Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, r
 
 Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0–100), **relation level** (Hostile 0–25, Neutral 26–50, Friendly 51–75, Allied 76–100), **sinceTurn**, **lastInteractionTurn**. Initial: all GP–GP at peace, score 50. Updated by grants, trade, war, broken treaties.
 
+While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace.
+
 ### Tribe vs Minor War Rule
 
 - **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
@@ -31,6 +33,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
 - **Intervention:** When a Minor with the player's Embassy is attacked by another GP: **Intervene** (Minor joins player, war on attacker), **Do Nothing** (Minor may fall, relations reset), or **Diplomatic Protest** (relation penalty with attacker).
 - **Peace:** Minors never refuse peace offers.
+ - **War and overtures:** When a GP declares war on a Minor (relationState becomes `AT_WAR`), any existing overture state between that GP and that Minor (Trade Consulate, Embassy, NAP, or Join Empire) is **cleared to `none`**. While `AT_WAR`, the GP cannot establish any new overtures with that Minor; after peace, the overture chain must be rebuilt from `none` if the player wants renewed consulate/embassy status.
 
 ### GP–Tribe Rules
 
@@ -38,6 +41,7 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
 - Tribes react to nearby conquest (relation/trade effects).
+ - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
 
 ### Diplomatic Order Types
 
@@ -85,6 +89,14 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
   When the system presents the Player with an Intervention choice and the Player selects **Do Nothing**  
   Then the system does not change the relation state between the Player’s Great Power and the attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed, and, if the Minor is eliminated, clears all diplomatic relations between the Player and that Minor from the game state.
+
+- Given the Player controls a Great Power that currently has a Consulate or Embassy overture stage recorded with a target Minor Nation or Tribe and the current relation state between those two factions changes from `AT_PEACE` to `AT_WAR` in turn `t`  
+  When the Diplomacy phase for turn `t` completes  
+  Then the system removes any overture state between that Great Power and that Minor or Tribe so that subsequent state inspection reports `overtureStage = none` for that pair, and later peace between them does **not** restore the previous overture stage.
+
+- Given the Player controls a Great Power at relation state `AT_WAR` with a target Minor Nation or Tribe in turn `t` and the Player has at least the Consulate or Embassy cost in treasury  
+  When the Player issues an `Establish Overture` diplomatic order targeting that Minor or Tribe in the Diplomacy phase of turn `t`  
+  Then the system treats that order as **invalid** for the current turn, does **not** create or advance any overture state between those factions, and does **not** deduct any overture cost from the Player’s treasury for that order.
 
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
