@@ -1,4 +1,4 @@
-// SPEC/program/tile-map-gen-algorithm.md, tile-map-gen-resources.md, tile-map-gen-config.md. Reference: SPEC/archive/tile-based-map-generation.md.
+// SPEC/program/tile-map-gen-algorithm.md, tile-map-gen-resources.md, tile-map-gen-config.md.
 
 import 'dart:math';
 
