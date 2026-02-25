@@ -23,6 +23,16 @@ The **diplomacy and civilian tech table in this doc is the GDD source of truth**
 
 ---
 
+## Tech costs and prerequisites (MVP)
+
+Tech costs and prerequisite ids for diplomacy/civilian techs are defined by the **tech table in this doc** (source of truth). **Implementation:** The program-level tech catalog (e.g. `colonizethis_data`) uses the same structure as other techs: fixed `cost` and `prerequisiteIds` per this table. When diplomacy/civilian techs are added to the catalog, prerequisite ids such as `printing_press` and `money_lending` are defined there (or in a shared catalog that includes labour/civilian techs). **Ruleset override** for tech costs and prereqs is deferred; when added, document in [ruleset-config.md](ruleset-config.md) and in the program ruleset-config.
+
+## Propaganda effect (deferred)
+
+The **Propaganda** tech effect "Decreases diplomatic penalties for declaring war" is **not implemented** in MVP. When implemented, the application point will be in diplomacy resolution (e.g. relation modifiers when declaring war); formula and magnitude are owner decisions. See [diplomacy-resolution.md](../program/diplomacy-resolution.md).
+
+---
+
 ## Effect Semantics
 
 - **Diplomatic Expertise:** Unlocks embassy overture and allows civilian units to work in Minor Nations with embassy.

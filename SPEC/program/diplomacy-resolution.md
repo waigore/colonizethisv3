@@ -77,6 +77,8 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 
 Relation thresholds (score-to-level bands) and overture costs (Consulate £500, Embassy £1000) are currently **code constants** in the diplomacy resolver (`colonizethis_logic`: `overtureConsulateCost`, `overtureEmbassyCost`, `scoreToLevel`). The **default values** are defined in [diplomacy.md](../game/diplomacy.md) § Configurable Values; that table is the source of truth for design. Ruleset loading for these parameters is **not implemented** in MVP. When ruleset-driven config is added, the resolver will read from the resolved ruleset per [ruleset-config.md](ruleset-config.md) and the key path will be specified in the GDD and here.
 
+**Propaganda tech:** The effect "Decreases diplomatic penalties for declaring war" (Propaganda tech per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md)) is **not implemented** in MVP. When implemented, it would apply in step 6 (Apply relation modifiers) or in a war-declaration-specific modifier.
+
 ---
 
 ## Constraints
