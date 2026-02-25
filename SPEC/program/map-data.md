@@ -10,6 +10,12 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ---
 
+## Scope (MVP)
+
+For MVP, map topology and tile maps are **produced in-memory** by the map generation tool (`generate_map`) and/or by init_game when creating a new game. **Loading from static files** (e.g. hand-edited topology or tile-map JSON for custom scenarios) is **deferred**; when added, it will be tracked as a separate feature and this spec will define the loading API (file layout, schema, error handling). Optional map data stored **in saves** (round-trip with game save) is defined in [save-load.md](save-load.md); that path uses the same JSON structures and is for ctdev/init tooling, not standalone file load.
+
+---
+
 ## Topology format
 
 **Topology is per region**: each region has its **own** graph. There is no single world graph with cross-region edges. Regions connect **only** via **warp zones** (see [map-topology.md](../game/map-topology.md)).
@@ -19,7 +25,7 @@ Define topology format, tile map data structures, province identity, and tile ke
 - **Nodes:** List with id, region id, and type (province | sea zone). All nodes in a region graph belong to that region.
 - **Edges:** Undirected (id1, id2). Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths). All edges are **within** the same region.
 - **Warp zones:** Separate structure (warp links) that pairs a sea zone in one region with exactly one sea zone in another. Each link is 1:1; a sea zone can be a warp zone to one or more other maps (one link per other map). **Generation:** On each map, aim for **one warp zone per map edge**, each using a sea zone on the edge (tiles on the grid boundary); if not possible, the number of warp zones on each map must still be **equal** so every warp zone has exactly one counterpart on each linked map. **Warp links are produced during world generation** (after OW and NW topology are generated) per [game-setup-pipeline.md](game-setup-pipeline.md) step 4; they are stored with the init result and used when building combined topology / connectivity.
-- **Storage:** File per region (and optional warp link data); format (JSON/YAML) implementation-defined. colonizethis_data owns loading. When generating maps, topology is **inferred** from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
+- **Storage (MVP):** Topology is **not** loaded from standalone files in MVP; it is **inferred** from the tile map during generation (see Map generation tool). File-per-region storage and a colonizethis_data API to load topology/tile maps from static files are **deferred**. colonizethis_data owns the data structures and JSON (de)serialization; when static-file loading is added, this spec will define the loading contract (file layout, schema, error handling). When generating maps, topology is inferred from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
 
 ---
 
@@ -32,7 +38,7 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ## Tile map format
 
-**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. Produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or loaded from data.
+**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. For MVP, produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from init_game; optional map data in saves is per [save-load.md](save-load.md). Loading from static tile-map files is deferred.
 
 **Persistence (MVP):** The tile map is **not** part of the mandatory game save payload; only world state (e.g. province ownership) is required to load a game. When a save is created by **ctdev** or **init_game** with map output, tile maps may be stored as **optional map data** per [save-load.md](save-load.md) (keys `_tileMapByRegion`, etc.). That serialization uses the same TileMapResult JSON format and is for **ctdev/init tooling** (e.g. Load Savegame map view); the main game does not require map data to load. Format and semantics of the tile map are defined in this spec; the save/load contract for optional map data is in save-load.md.
 
@@ -83,7 +89,7 @@ There is no separate `--tile-map` flag: topology and map summary are always prod
 
 ## Integration
 
-colonizethis_data owns loading. colonizethis_map implements generation per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md). Consumed by App, init_game, ctdev.
+colonizethis_data owns the data structures and (de)serialization for topology and tile maps. For MVP, map data is produced by **generation** (colonizethis_map per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md)) or supplied from init_game; loading from static files is deferred. Consumed by App, init_game, ctdev.
 
 ---
 
