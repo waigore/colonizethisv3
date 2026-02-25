@@ -101,6 +101,10 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Consulate cost | £500 | |
 | Embassy cost | £1000 | |
 
+### Where defined (MVP)
+
+Default values for the parameters above are given in this table; the table is the **source of truth** for design defaults. In the current (MVP) implementation, the program does **not** read these from the ruleset. Relation thresholds (Hostile/Neutral/Friendly/Allied bands) and overture costs (Consulate, Embassy) are implemented as **code constants** in `colonizethis_logic` (see `diplomacy_resolver.dart`: `overtureConsulateCost`, `overtureEmbassyCost`, and the thresholds used in `scoreToLevel`). Ruleset-driven override for diplomacy parameters is **deferred**; when added, the key path and loader contract will be specified in this document and in [ruleset-config.md](ruleset-config.md); program loading: [ruleset-config.md](../program/ruleset-config.md).
+
 ---
 
 ## Interactions

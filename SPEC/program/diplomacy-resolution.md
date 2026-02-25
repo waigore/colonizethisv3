@@ -73,6 +73,12 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 
 ---
 
+## Config source (MVP)
+
+Relation thresholds (score-to-level bands) and overture costs (Consulate £500, Embassy £1000) are currently **code constants** in the diplomacy resolver (`colonizethis_logic`: `overtureConsulateCost`, `overtureEmbassyCost`, `scoreToLevel`). The **default values** are defined in [diplomacy.md](../game/diplomacy.md) § Configurable Values; that table is the source of truth for design. Ruleset loading for these parameters is **not implemented** in MVP. When ruleset-driven config is added, the resolver will read from the resolved ruleset per [ruleset-config.md](ruleset-config.md) and the key path will be specified in the GDD and here.
+
+---
+
 ## Constraints
 
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
