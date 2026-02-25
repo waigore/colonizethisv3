@@ -45,6 +45,28 @@ void main() {
     });
   });
 
+  group('canonicalLeaderIdForPersonality', () {
+    test('returns canonical id unchanged when already canonical', () {
+      expect(canonicalLeaderIdForPersonality('victoria'), 'victoria');
+      expect(canonicalLeaderIdForPersonality('napoleon'), 'napoleon');
+    });
+
+    test('maps variant leader keys from naming config to canonical ids', () {
+      expect(canonicalLeaderIdForPersonality('england_leader'), 'victoria');
+      expect(canonicalLeaderIdForPersonality('france_leader'), 'napoleon');
+      expect(canonicalLeaderIdForPersonality('spain_leader'), 'isabella');
+      expect(canonicalLeaderIdForPersonality('portugal_leader'), 'henry');
+      expect(canonicalLeaderIdForPersonality('netherlands_leader'), 'deruyter');
+      expect(canonicalLeaderIdForPersonality('prussia_leader'), 'frederick');
+      expect(canonicalLeaderIdForPersonality('prussia_reserve_leader'), 'frederick');
+      expect(canonicalLeaderIdForPersonality('sweden_leader'), 'gustavus');
+    });
+
+    test('falls back to input for unknown ids so defaults apply', () {
+      expect(canonicalLeaderIdForPersonality('unknown_leader'), 'unknown_leader');
+    });
+  });
+
   group('PersonalityThresholds', () {
     test('default constructor uses 50 for all fields', () {
       const t = PersonalityThresholds();
