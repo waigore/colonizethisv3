@@ -11,7 +11,8 @@ void main() {
           .applyDelta(CommodityCatalog.timber.id, 10)
           .applyDelta(CommodityCatalog.iron.id, 10)
           .applyDelta(CommodityCatalog.coal.id, 5);
-      const workers = WorkerPool(peasants: 10);
+      // 20 peasants → 20 labour (no luxury gating) so assignedLabour=20 can be fully used.
+      const workers = WorkerPool(peasants: 20);
 
       final result = resolveProduction(
         stockpile: stockpile,
@@ -35,7 +36,8 @@ void main() {
           .applyDelta(CommodityCatalog.timber.id, 4)
           .applyDelta(CommodityCatalog.iron.id, 20)
           .applyDelta(CommodityCatalog.coal.id, 20);
-      const workers = WorkerPool(peasants: 10);
+      // 20 peasants → 20 labour; inputs (timber) are the limiting factor.
+      const workers = WorkerPool(peasants: 20);
 
       final result = resolveProduction(
         stockpile: stockpile,
@@ -137,7 +139,8 @@ void main() {
           .applyDelta(CommodityCatalog.timber.id, 20)
           .applyDelta(CommodityCatalog.iron.id, 20)
           .applyDelta(CommodityCatalog.coal.id, 10);
-      const workers = WorkerPool(peasants: 20);
+      // 25 peasants → 25 labour; first assignment uses 15, second can use remaining 10.
+      const workers = WorkerPool(peasants: 25);
 
       final result = resolveProduction(
         stockpile: stockpile,

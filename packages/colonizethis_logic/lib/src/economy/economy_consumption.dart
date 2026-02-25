@@ -31,8 +31,8 @@ class ConsumptionResult {
 ///
 /// If food is insufficient, workers **starve** (removed from WorkerPool).
 /// Peasants are removed first, then apprentices, then journeymen, then masters.
-/// Luxury consumption and \"zero labour without luxuries\" are not yet
-/// modelled; they can be layered on top of this food resolution.
+/// After food and starvation, trained workers consume tier luxuries
+/// (refinedSugar/cigars/furHats) per SPEC/game/workers-and-population.md.
 ConsumptionResult resolveConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
@@ -138,6 +138,47 @@ ConsumptionResult resolveConsumption({
     apprentices: fedApprentices,
     journeymen: fedJourneymen,
     masters: fedMasters,
+  );
+
+  // --- Luxury consumption for trained workers ---
+  // SPEC/game/workers-and-population.md § Luxury consumption:
+  // - Apprentice → refinedSugar, Journeyman → cigars, Master → furHats.
+  // - During the Consumption phase, deduct up to 1 unit of the tier luxury
+  //   per surviving worker of that tier, capped by stockpile.
+  int _deductLuxury({
+    required int workerCount,
+    required CommodityId luxuryId,
+  }) {
+    if (workerCount <= 0) {
+      return 0;
+    }
+    final available = current.quantityOf(luxuryId);
+    if (available <= 0) {
+      return 0;
+    }
+    final toUse = workerCount < available ? workerCount : available;
+    if (toUse <= 0) {
+      return 0;
+    }
+    current = current.applyDelta(luxuryId, -toUse);
+    return toUse;
+  }
+
+  final refinedSugarId = CommodityCatalog.refinedSugar.id;
+  final cigarsId = CommodityCatalog.cigars.id;
+  final furHatsId = CommodityCatalog.furHats.id;
+
+  _deductLuxury(
+    workerCount: updatedWorkers.apprentices,
+    luxuryId: refinedSugarId,
+  );
+  _deductLuxury(
+    workerCount: updatedWorkers.journeymen,
+    luxuryId: cigarsId,
+  );
+  _deductLuxury(
+    workerCount: updatedWorkers.masters,
+    luxuryId: furHatsId,
   );
 
   _log.d(

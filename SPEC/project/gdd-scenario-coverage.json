@@ -40,7 +40,7 @@
   "game/tile-map-and-generation.md": [],
   "game/turn-time-mapping.md": [],
   "game/victory.md": [],
-  "game/workers-and-population.md": ["workers_consumption_starvation.json"],
+  "game/workers-and-population.md": ["workers_consumption_starvation.json", "workers_luxury_consumption.json", "workers_luxury_zero_labour.json"],
   "game/world-model.md": [],
   "game/world-model-identity.md": ["world_model_identity_prefixed_provinces.json"]
 }

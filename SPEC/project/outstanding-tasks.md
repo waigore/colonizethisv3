@@ -92,15 +92,15 @@ No outstanding P0 tasks.
 
 ### Task: Verify and Complete Worker/Population Model
 
-**Status:** Food consumption and starvation verified and tested (economy_consumption_test, economy_logic_test). Luxury and training deferred per spec.
+**Status:** Food consumption and starvation verified and tested (economy_consumption_test, economy_logic_test). Luxury consumption is in scope per spec (AC and scenarios added) and now implemented in logic (consumption + effective labour). Training remains deferred per spec.
 
-**Gap:** Worker model exists (`WorkerPool`). Food and starvation implemented; luxury and training deferred.
+**Gap:** Worker model exists (`WorkerPool`). Food and starvation implemented; luxury consumption specified and scenarios added (workers_luxury_consumption.json, workers_luxury_zero_labour.json) and now wired into `economy_consumption.dart` (tier luxuries) and `economy_production.dart` (effective labour). Training remains deferred.
 
 | Component | Spec Reference | Status |
 |-----------|----------------|--------|
 | Worker tiers (Peasant/Journeyman/Master) | `workers-and-population.md` | **Done** — model and consumption |
 | Food consumption | `workers-and-population.md` | **Done** — 1/2 food per tier, tested |
-| Luxury consumption | `workers-and-population.md` | Deferred |
+| Luxury consumption | `workers-and-population.md` | **Done** — AC and sim_scenarios added; implemented and tested (`economy_consumption.dart`, `economy_production.dart`, sim_scenarios workers_luxury_*.json) |
 | Starvation (worker death) | `workers-and-population.md` | **Done** — order peasants first, tested |
 | Training (tier upgrade) | `workers-and-population.md` | Deferred (CLARIFICATION NEEDED) |
 
@@ -108,12 +108,9 @@ No outstanding P0 tasks.
 - [SPEC/game/workers-and-population.md](SPEC/game/workers-and-population.md)
 
 **What needs to be done:**
-1. Verify food consumption in `economy_consumption.dart` matches spec (1 grain+meat per tier)
-2. Verify luxury consumption for trained workers (sugar, cigars, furs)
-3. Verify starvation removes workers when food cannot be met
-4. Implement worker training (fabric + paper + cash → next tier)
+1. Implement worker training (fabric + paper + cash → next tier) once quantities and tech gates are clarified in spec.
 
-**Acceptance criteria:** Done when economy_consumption_test (and related tests) assert food per tier, starvation order, and luxury/training behavior per workers-and-population.md; training implementation or deferral documented.
+**Acceptance criteria:** Done when training behaviour (recruit/upgrade costs, tier changes) is specified in `workers-and-population.md`, implemented in logic, and covered by tests, or explicitly deferred with AC updated.
 
 **Complexity:** Medium
 
