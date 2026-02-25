@@ -241,5 +241,9 @@ String _formatAssertion(Assertion assertion) {
       return 'player.${assertion.player}.tile.${assertion.tileKey}.prospected == ${assertion.tileProspected}';
     }
   }
+  // Leader (SPEC/game/leader-bonuses.md)
+  if (assertion.player != null && assertion.leaderKey != null) {
+    return 'player.${assertion.player}.leaderKey == ${assertion.leaderKey}';
+  }
   return 'unknown';
 }

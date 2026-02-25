@@ -9,7 +9,7 @@
   "game/factions.md": ["factions_basic.json"],
   "game/fog-and-exploration.md": ["fog_and_exploration_basic.json"],
   "game/game-setup.md": ["basic_turn_1.json"],
-  "game/leader-bonuses.md": [],
+  "game/leader-bonuses.md": ["leader_bonuses_basic.json"],
   "game/map-topology.md": [
     "connectivity_ow_to_ow.json",
     "connectivity_ow_separated_by_sea.json",

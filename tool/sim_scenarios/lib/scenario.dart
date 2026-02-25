@@ -45,6 +45,7 @@ class ScenarioInit {
 /// Setup for saved-game scenarios (unit injection, resource overrides).
 /// initialWorkers / initialStockpile apply after init (fresh or fromTopology).
 /// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
+/// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
@@ -53,6 +54,7 @@ class ScenarioSetup {
     this.initialStockpile,
     this.productionAssignments,
     this.initialTileState,
+    this.leaderKeys,
   });
 
   final List<UnitPlacement>? units;
@@ -65,6 +67,8 @@ class ScenarioSetup {
   final List<ProductionAssignment>? productionAssignments;
   /// Tile key → { improvementLevel: 0-4, roadLevel: 0|1|2|4 }. Applied to worldState.tileState for extraction scenarios.
   final Map<String, Map<String, int>>? initialTileState;
+  /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
+  final Map<String, String>? leaderKeys;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -212,6 +216,7 @@ class Assertion {
     this.tileKey,
     this.tileVisibility,
     this.tileProspected,
+    this.leaderKey,
   });
 
   /// Which turn to check (null = final state)
@@ -275,6 +280,9 @@ class Assertion {
   final String? tileKey;
   final String? tileVisibility;
   final bool? tileProspected;
+
+  /// Leader assertion (SPEC/game/leader-bonuses.md). With [player]: expected leaderKey for that Great Power.
+  final String? leaderKey;
 }
 
 /// Type of value matching for assertions.
@@ -379,7 +387,18 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
     productionAssignments: _parseProductionAssignments(json['productionAssignments']),
     initialTileState: _parseInitialTileState(json['initialTileState']),
+    leaderKeys: _parseLeaderKeys(json['leaderKeys']),
   );
+}
+
+Map<String, String>? _parseLeaderKeys(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, String>{};
+  for (final e in raw.entries) {
+    final v = e.value;
+    if (v != null && v.toString().isNotEmpty) out[e.key] = v.toString();
+  }
+  return out.isEmpty ? null : out;
 }
 
 List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
@@ -524,6 +543,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileKey: json['tileKey'] as String?,
     tileVisibility: json['tileVisibility'] as String?,
     tileProspected: json['tileProspected'] as bool?,
+    leaderKey: json['leaderKey'] as String?,
   );
 }
 

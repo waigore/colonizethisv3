@@ -69,6 +69,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
+- **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power’s `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
 
 ---
 
@@ -169,6 +170,8 @@ Assertion fields:
 **Faction count assertions** (SPEC/game/factions.md): use `greatPowerCount`, `minorNationCount`, `tribeCount` (expected integer counts) to verify that game setup created the configured Great Powers, Minor Nations, and Tribes. Example: `{"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1}`.
 
 **Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
+
+**Leader assertions** (SPEC/game/leader-bonuses.md): use `player` (Great Power id) and `leaderKey` (expected leader key, e.g. `napoleon`, `frederick`, `reserve`). Example: `{"turn": 1, "player": "gp1", "leaderKey": "napoleon"}`.
 
 ---
 
