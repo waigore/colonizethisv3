@@ -30,7 +30,7 @@ Both AIPlanner and the sim-game default AI share the same simple heuristics core
 ### Phase 6 (Full AI)
 Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply.
 
-**Hidden agenda assignment:** Games using full AI have hidden agendas assigned at setup or init, per [hidden-agendas.md](../ai/hidden-agendas.md). Before the first call to full AI order generation (`generateOrdersForPlayerFullAI`), the caller must invoke `assignHiddenAgendasForGame` (colonizethis_ai) so that `game.hiddenAgendaByGpId` is populated for all AI-controlled GPs. The caller is the game setup pipeline (main game) or the sim controller (ctdev). See [game-setup-pipeline.md](game-setup-pipeline.md) for init flow; ctdev calls assignment when starting a sim game.
+**Hidden agenda assignment:** Games using full AI have hidden agendas assigned at setup or init, per [hidden-agendas.md](../ai/hidden-agendas.md). Before the first call to full AI order generation (`generateOrdersForPlayerFullAI`), the caller must invoke `assignHiddenAgendasForGame` (colonizethis_ai) so that `game.hiddenAgendaByGpId` is populated for all AI-controlled GPs. **Where invoked:** Main game path: `runInitGame` (colonizethis_logic init_game_orchestrator) calls `assignHiddenAgendasForGame` before returning InitGameResult, so the main app receives a game with agendas set. Sim path: ctdev `SimGameController` calls it when `useFullAI` is true (when starting a sim game). See [game-setup-pipeline.md](game-setup-pipeline.md) step 9.
 
 ### Order Merge
 Combined human + AI orders into deterministic list for turn resolution:
