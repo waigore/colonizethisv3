@@ -225,6 +225,7 @@ class Assertion {
     this.tileVisibility,
     this.tileProspected,
     this.leaderKey,
+    this.provinceDisplayName,
   });
 
   /// Which turn to check (null = final state)
@@ -232,6 +233,8 @@ class Assertion {
   /// Region ID (e.g., "oldWorld", "newWorld") - optional, used with province
   final String? region;
   final String? province;
+  /// Province display name (SPEC/game/naming.md). Use with [province]: expected Province.displayName.
+  final String? provinceDisplayName;
   final String? player;
   final String? owner;
   /// Negative assertion: province must not be owned by this player id.
@@ -578,6 +581,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileVisibility: json['tileVisibility'] as String?,
     tileProspected: json['tileProspected'] as bool?,
     leaderKey: json['leaderKey'] as String?,
+    provinceDisplayName: json['provinceDisplayName'] as String?,
   );
 }
 

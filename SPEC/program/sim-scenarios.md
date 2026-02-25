@@ -151,6 +151,7 @@ Assertion fields:
 - `unitCount` — Expected unit count (exact or range via `matchType`)
 - `hasUnit` — Specific unit ID that must be present
 - `hasPlayerUnits` — Any units belonging to player must be present
+- `provinceDisplayName` — With `province`: expected `Province.displayName` (SPEC/game/naming.md). Verifies naming phase assigned the expected name (e.g. GP capital gets capital city name).
 - `stockpile` — Resource stockpile amount (sum of all commodities in player stockpile)
 - `stockpileCommodity` — With `player` and `commodity` (commodity id): expected quantity of that commodity in the player's central stockpile. Supports `matchType`.
 - `treasury` — Treasury amount

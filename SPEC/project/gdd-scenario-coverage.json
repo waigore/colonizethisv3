@@ -19,7 +19,7 @@
   ],
   "game/military-generals.md": ["military_generals_deployment_limit.json"],
   "game/military-units.md": ["military_units_buildability.json"],
-  "game/naming.md": [],
+  "game/naming.md": ["naming_basic.json"],
   "game/production-recipes.md": ["production_recipes_basic.json"],
   "game/quick-battle.md": ["quick_battle_basic.json"],
   "game/research-state.md": [],
