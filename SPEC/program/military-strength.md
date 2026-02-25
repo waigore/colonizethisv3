@@ -1,6 +1,6 @@
 # Military Strength Aggregation
 
-**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md), [combat_resolver.dart](../../packages/colonizethis_logic/lib/src/combat_resolver.dart).
+**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md), [combat_resolver.dart](../../packages/colonizethis_logic/lib/src/combat_resolver.dart). This API uses **faction id** for ownership only and does **not** use province id (no province lookup); for identity rules see [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -30,6 +30,16 @@ Effective era: Great Powers use era 4; Minor Nations and Tribes use `effectiveMi
 - **Output:** Total military strength (non-negative double).
 - **Units considered:** All military units in `RegionData.units` (OW + NW) where `ownerId == playerId`.
 - **Determinism:** Same inputs → same output. No RNG.
+
+---
+
+## Acceptance criteria
+
+- Given a `Game` and a faction id (player, minor, or tribe), when the system calls the aggregation API, then the output equals the sum of unit strengths for all military units owned by that faction, with effective-era downgrade and medal multiplier (0–4 medals; multiplier 1.0–1.4 per Formula).
+- Given the same `Game` and faction id, when the system calls the aggregation API multiple times, then the output is identical each time (deterministic; no RNG).
+- Given a `Game`, when the system aggregates military strength for a faction, then only units in Old World and New World `RegionData.units` with `ownerId ==` that faction id are included; only units that have regiment stats (FPN, FPM, medal multiplier) count—civilians and ships are skipped.
+- Given a Great Power faction, when the system applies effective era for strength calculation, then the effective era is 4. Given a Minor Nation or Tribe, then the effective era is that faction's `effectiveMilitaryLevel` per [factions.md](../game/factions.md).
+- Given any caller, when the system aggregates military strength, then the API uses faction id for ownership only and does not perform province id lookups; see [world-model-identity.md](../game/world-model-identity.md) for identity rules.
 
 ---
 
