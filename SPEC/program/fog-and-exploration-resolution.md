@@ -8,7 +8,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 ## Data Model
 
-**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y`. Province and tile key formats: [world-model-identity.md](../game/world-model-identity.md). Any province id used in visibility or Spy timer state (e.g. keys keyed by province) must be the **prefixed** form (`regionId|localId`) per world-model-identity.md for multi-region correctness. Stored on WorldState.
+**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y` (second segment = local province id; full province id = `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md)). Any province id used in visibility or Spy timer state (e.g. keys keyed by province) must be the **prefixed** form (`regionId|localId`) per world-model-identity.md for multi-region correctness. Stored on WorldState.
 
 **Prospected state:** `Map<playerId, Set<tileKey>>` — tiles the player has prospected. Only mineral-eligible terrain per game rules.
 
@@ -71,6 +71,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 ## Constraints
 
 - Visibility and prospected state are authoritative on WorldState; PlayerView is derived (read-only).
+- Ship coastal reveal and fog decay logic resolve provinces by `(regionId, provinceId)` or prefixed id only; see [world-model-identity.md](../game/world-model-identity.md).
 - Extraction gating (mineral prospecting + connectivity) is enforced by the extraction pipeline, not this module.
 - Order visibility rules are defined in game/fog-and-exploration.md; this module enforces them at validation time via PlayerView.
 
