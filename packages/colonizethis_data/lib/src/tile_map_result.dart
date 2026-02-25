@@ -58,7 +58,7 @@ class TileMapResult {
   static String _pairKey(String a, String b) =>
       a.compareTo(b) < 0 ? '$a|$b' : '$b|$a';
 
-  /// Serializes for save/load (e.g. ctdev Load Savegame). SPEC/project/plan-update-gp-colours-save-load.
+  /// Serializes when optional map data is saved (ctdev, init_game). See SPEC/program/save-load.md, SPEC/program/map-data.md.
   Map<String, dynamic> toJson() {
     return {
       'width': width,
