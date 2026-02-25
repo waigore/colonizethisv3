@@ -915,6 +915,72 @@ void main() {
       expect(u.currentWork!.remainingTurns, 1);
     });
 
+    test('steal_tech work order sets currentWork for Spy unit', () {
+      const targetProvinceId = 'oldWorld|P2';
+      const targetTileKey = 'oldWorld|P2|0|0';
+      final spy = Unit(
+        id: 'spy1',
+        type: 'Spy',
+        ownerId: 'p1',
+        provinceId: targetProvinceId,
+        tileKey: targetTileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              const Province(
+                  id: provinceId, regionId: ow, ownerId: 'p1'), // owner
+              const Province(
+                  id: targetProvinceId, regionId: ow, ownerId: 'p2'),
+            ],
+            units: [spy],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceId: [tileKey],
+              targetProvinceId: [targetTileKey],
+            }
+          },
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+          ),
+          Player(
+            id: 'p2',
+            displayName: 'P2',
+            isHuman: true,
+            capitalProvinceId: targetProvinceId,
+            techUnlocked: {'some_tech': true},
+          ),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+              unitId: 'spy1',
+              target: 'steal_tech',
+              targetTileKey: targetTileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final spyAfter = next.worldState.oldWorld.units.single;
+      expect(spyAfter.currentWork, isNotNull);
+      expect(spyAfter.currentWork!.workTarget, 'steal_tech');
+      expect(spyAfter.currentWork!.totalTurns, 5);
+      expect(spyAfter.currentWork!.remainingTurns, 5);
+    });
+
     test('explore work order sets currentWork when province has tiles', () {
       final unit = Unit(
         id: 'u1',
@@ -1004,6 +1070,60 @@ void main() {
       expect(u.currentWork!.remainingTurns, 1);
     });
 
+    test('build_port work order sets currentWork when materials sufficient',
+        () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final cost = workOrderMaterialCost('build_port');
+      expect(cost, isNotNull);
+      var stockpile = const Stockpile();
+      for (final e in cost!.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            stockpile: stockpile,
+          ),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'build_port',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+      expect(u.currentWork, isNotNull);
+      expect(u.currentWork!.workTarget, 'build_port');
+      expect(u.currentWork!.remainingTurns, greaterThanOrEqualTo(1));
+    });
+
     test('unknown work target is skipped and unit stays idle', () {
       final unit = Unit(
         id: 'u1',
@@ -1039,6 +1159,50 @@ void main() {
       final u = next.worldState.oldWorld.units.single;
       expect(u.status, UnitStatus.idle);
       expect(u.currentWork, isNull);
+    });
+
+    test('counter_spy work order sets currentWork for Spy unit', () {
+      final unit = Unit(
+        id: 'spy1',
+        type: 'Spy',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p2'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'spy1',
+              target: 'counter_spy',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      final spyAfter = next.worldState.oldWorld.units.single;
+      expect(spyAfter.currentWork, isNotNull);
+      expect(spyAfter.currentWork!.workTarget, 'counter_spy');
+      expect(spyAfter.currentWork!.totalTurns, 0);
+      expect(spyAfter.currentWork!.remainingTurns, 1);
     });
 
     test(
@@ -1105,6 +1269,133 @@ void main() {
       final next = applyBuildAndWorkOrders(game, orders);
       expect(next.worldState.purchasedTilesByTileKey[tileKeyMinor], 'p1');
       expect(next.players.single.treasury, game.players.single.treasury - cost);
+    });
+
+    test(
+        'purchase_land rejected when no Embassy with province owner (Minor/Tribe)',
+        () {
+      const minorProvinceId = 'oldWorld|M1';
+      const tileKeyMinor = 'oldWorld|M1|0|0';
+      const cost = 15 * 10; // grain base price 10
+      final unit = Unit(
+        id: 'merchant1',
+        type: 'Merchant',
+        ownerId: 'p1',
+        provinceId: minorProvinceId,
+        tileKey: tileKeyMinor,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKeyMinor: 'grain'},
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceId: [tileKey],
+              minorProvinceId: [tileKeyMinor]
+            }
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            treasury: cost + 100,
+          ),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        // No overtureStates → no Embassy with province owner.
+        overtureStates: const [],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+              unitId: 'merchant1',
+              target: 'purchase_land',
+              targetTileKey: tileKeyMinor,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.purchasedTilesByTileKey[tileKeyMinor], isNull);
+      expect(next.players.single.treasury, game.players.single.treasury);
+    });
+
+    test(
+        'purchase_land rejected when at war with province owner (Minor/Tribe)',
+        () {
+      const minorProvinceId = 'oldWorld|M1';
+      const tileKeyMinor = 'oldWorld|M1|0|0';
+      const cost = 15 * 10; // grain base price 10
+      final unit = Unit(
+        id: 'merchant1',
+        type: 'Merchant',
+        ownerId: 'p1',
+        provinceId: minorProvinceId,
+        tileKey: tileKeyMinor,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKeyMinor: 'grain'},
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceId: [tileKey],
+              minorProvinceId: [tileKeyMinor]
+            }
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            treasury: cost + 100,
+          ),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'minor1',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+              unitId: 'merchant1',
+              target: 'purchase_land',
+              targetTileKey: tileKeyMinor,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.purchasedTilesByTileKey[tileKeyMinor], isNull);
+      expect(next.players.single.treasury, game.players.single.treasury);
     });
 
     test(
