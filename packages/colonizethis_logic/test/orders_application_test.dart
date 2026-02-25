@@ -1249,10 +1249,11 @@ void main() {
         minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
         overtureStates: const [
           OvertureState(
-              gpId: 'p1',
-              targetId: 'minor1',
-              stage: OvertureStage.embassy,
-              sinceTurn: 0),
+            gpId: 'p1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
         ],
       );
       final orders = Orders(
