@@ -89,15 +89,29 @@ class UnitPlacement {
   final int count;
 }
 
+/// Production assignment for one recipe in a turn. SPEC/game/production-recipes.md.
+class WorkerAssignment {
+  const WorkerAssignment({
+    required this.recipeId,
+    required this.assignedLabour,
+  });
+
+  final String recipeId;
+  final int assignedLabour;
+}
+
 /// Scripted orders for a single turn.
 class TurnScript {
   const TurnScript({
     required this.turn,
     required this.orders,
+    this.workerAssignments,
   });
 
   final int turn;
   final List<OrderCommand> orders;
+  /// Production phase: recipe assignments for this turn (defaultAssignments).
+  final List<WorkerAssignment>? workerAssignments;
 }
 
 /// A single order command from a scenario.
@@ -165,6 +179,8 @@ class Assertion {
     this.hasUnit,
     this.hasPlayerUnits,
     this.stockpile,
+    this.stockpileCommodity,
+    this.commodity,
     this.treasury,
     this.matchMin,
     this.matchMax,
@@ -186,8 +202,6 @@ class Assertion {
     this.workerApprentices,
     this.workerJourneymen,
     this.workerMasters,
-    this.commodity,
-    this.stockpileCommodity,
   });
 
   /// Which turn to check (null = final state)
@@ -203,6 +217,10 @@ class Assertion {
   final String? hasUnit;
   final String? hasPlayerUnits;
   final int? stockpile;
+  /// With [player] and [commodity]: expected quantity of that commodity in stockpile. SPEC/game/production-recipes.md.
+  final int? stockpileCommodity;
+  /// Commodity id for [stockpileCommodity] assertion.
+  final String? commodity;
   final int? treasury;
   final int? matchMin;
   final int? matchMax;
@@ -235,9 +253,6 @@ class Assertion {
   final int? workerApprentices;
   final int? workerJourneymen;
   final int? workerMasters;
-  /// Per-commodity stockpile: [player] + [commodity] (id) + [stockpileCommodity] (expected quantity).
-  final String? commodity;
-  final int? stockpileCommodity;
 }
 
 /// Type of value matching for assertions.
@@ -284,6 +299,38 @@ ScenarioInit _parseScenarioInit(Map<String, dynamic>? json) {
 }
 
 ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
+  Map<String, Map<String, int>>? _parseInitialStockpile(dynamic raw) {
+    if (raw is! Map) return null;
+    final result = <String, Map<String, int>>{};
+    for (final entry in (raw as Map<String, dynamic>).entries) {
+      if (entry.value is Map) {
+        final inner = <String, int>{};
+        for (final e in (entry.value as Map).entries) {
+          final v = e.value;
+          inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
+        }
+        result[entry.key] = inner;
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
+  Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {
+    if (raw is! Map) return null;
+    final result = <String, Map<String, int>>{};
+    for (final entry in (raw as Map<String, dynamic>).entries) {
+      if (entry.value is Map) {
+        final inner = <String, int>{};
+        for (final e in (entry.value as Map).entries) {
+          final v = e.value;
+          inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
+        }
+        result[entry.key] = inner;
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
   return ScenarioSetup(
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
@@ -348,12 +395,28 @@ UnitPlacement _parseUnitPlacement(Map<String, dynamic> json) {
 }
 
 TurnScript _parseTurnScript(Map<String, dynamic> json) {
+  List<WorkerAssignment>? _parseWorkerAssignments(dynamic raw) {
+    if (raw is! List) return null;
+    final list = <WorkerAssignment>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      final m = Map<String, dynamic>.from(e);
+      final recipeId = m['recipeId'] as String?;
+      final labour = m['assignedLabour'] as int? ?? 0;
+      if (recipeId != null && recipeId.isNotEmpty && labour > 0) {
+        list.add(WorkerAssignment(recipeId: recipeId, assignedLabour: labour));
+      }
+    }
+    return list.isEmpty ? null : list;
+  }
+
   return TurnScript(
     turn: json['turn'] as int,
     orders: (json['orders'] as List<dynamic>?)
             ?.map((o) => _parseOrderCommand(o as Map<String, dynamic>))
             .toList() ??
         [],
+    workerAssignments: _parseWorkerAssignments(json['workerAssignments']),
   );
 }
 
@@ -393,6 +456,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     hasUnit: json['hasUnit'] as String?,
     hasPlayerUnits: json['hasPlayerUnits'] as String?,
     stockpile: json['stockpile'] as int?,
+    stockpileCommodity: json['stockpileCommodity'] as int?,
+    commodity: json['commodity'] as String?,
     treasury: json['treasury'] as int?,
     matchMin: json['matchMin'] as int?,
     matchMax: json['matchMax'] as int?,
@@ -414,8 +479,6 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     workerApprentices: json['workerApprentices'] as int?,
     workerJourneymen: json['workerJourneymen'] as int?,
     workerMasters: json['workerMasters'] as int?,
-    commodity: json['commodity'] as String?,
-    stockpileCommodity: json['stockpileCommodity'] as int?,
   );
 }
 

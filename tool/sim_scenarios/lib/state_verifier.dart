@@ -214,6 +214,22 @@ class StateVerifier {
         }
       }
 
+      if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+        final quantity = player.stockpile.quantityOf(assertion.commodity!);
+        final matchResult = _matchCount(
+          quantity,
+          assertion.stockpileCommodity!,
+          assertion.matchType,
+          assertion.matchMin,
+          assertion.matchMax,
+        );
+        if (!matchResult.passed) {
+          failures.add(
+            'Player ${assertion.player} commodity ${assertion.commodity}: ${matchResult.message}',
+          );
+        }
+      }
+
       if (assertion.treasury != null) {
         final matchResult = _matchCount(
           player.treasury,
