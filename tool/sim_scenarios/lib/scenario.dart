@@ -206,6 +206,9 @@ class Assertion {
     this.workerApprentices,
     this.workerJourneymen,
     this.workerMasters,
+    this.greatPowerCount,
+    this.minorNationCount,
+    this.tribeCount,
   });
 
   /// Which turn to check (null = final state)
@@ -257,6 +260,10 @@ class Assertion {
   final int? workerApprentices;
   final int? workerJourneymen;
   final int? workerMasters;
+  /// Faction count assertions (SPEC/game/factions.md). After game setup, assert counts of Great Powers, Minor Nations, Tribes.
+  final int? greatPowerCount;
+  final int? minorNationCount;
+  final int? tribeCount;
 }
 
 /// Type of value matching for assertions.
@@ -500,6 +507,9 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     workerApprentices: json['workerApprentices'] as int?,
     workerJourneymen: json['workerJourneymen'] as int?,
     workerMasters: json['workerMasters'] as int?,
+    greatPowerCount: json['greatPowerCount'] as int?,
+    minorNationCount: json['minorNationCount'] as int?,
+    tribeCount: json['tribeCount'] as int?,
   );
 }
 
