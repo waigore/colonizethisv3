@@ -20,6 +20,14 @@ const List<String> kDialogueEras = [
   'industrial',
 ];
 
+/// Strategic AI agenda/comment cadence in turns (MVP).
+///
+/// SPEC/ai/dialogue-and-mood.md § When to emit:
+/// Strategic AI may emit optional agenda-flavoured commentary and a matching
+/// base PortraitMoodEvent once every [kDialogueTurnsBetweenComments] turns
+/// for each AI leader, when `dialogueSeed % kDialogueTurnsBetweenComments == 0`.
+const int kDialogueTurnsBetweenComments = 7;
+
 /// Portrait mood values per spec (negotiation and base mood).
 const List<String> kPortraitMoodValues = [
   'considering',

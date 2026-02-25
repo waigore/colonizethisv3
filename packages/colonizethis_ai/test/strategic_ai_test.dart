@@ -48,7 +48,7 @@ void main() {
       expect(orders.buildUnitOrdersByPlayerId.isEmpty, isTrue);
     });
 
-    test('invokes onDialogue when dialogueSeed % 7 == 0', () {
+    test('invokes onDialogue at configured dialogue cadence', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -76,7 +76,7 @@ void main() {
         diplomacySeed: base.diplomacySeed,
         researchSeed: base.researchSeed,
         tacticalSeed: base.tacticalSeed,
-        dialogueSeed: 7,
+        dialogueSeed: kDialogueTurnsBetweenComments,
         agendaSeed: base.agendaSeed,
       );
       const api = DefaultOrderSuggestionAPI();
@@ -97,7 +97,7 @@ void main() {
       expect(captured!.category, 'agenda');
     });
 
-    test('invokes onMood when dialogueSeed % 7 == 0', () {
+    test('invokes onMood at configured dialogue cadence', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -125,7 +125,7 @@ void main() {
         diplomacySeed: base.diplomacySeed,
         researchSeed: base.researchSeed,
         tacticalSeed: base.tacticalSeed,
-        dialogueSeed: 7,
+        dialogueSeed: kDialogueTurnsBetweenComments,
         agendaSeed: base.agendaSeed,
       );
       const api = DefaultOrderSuggestionAPI();
