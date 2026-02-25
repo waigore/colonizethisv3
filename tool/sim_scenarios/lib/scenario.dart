@@ -71,7 +71,7 @@ class ScenarioSetup {
   final Map<String, Map<String, int>>? initialTileState;
   /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
   final Map<String, String>? leaderKeys;
-  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, tech-tree.
+  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
   final Map<String, List<String>>? initialTech;
 }
 
@@ -376,6 +376,18 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
           inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
         }
         result[entry.key] = inner;
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
+  Map<String, List<String>>? _parseInitialTech(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final result = <String, List<String>>{};
+    for (final entry in raw.entries) {
+      final list = entry.value;
+      if (list is List<dynamic>) {
+        result[entry.key] = list.map((e) => e.toString()).toList();
       }
     }
     return result.isEmpty ? null : result;

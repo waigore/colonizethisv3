@@ -17,7 +17,7 @@
     "connectivity_no_road_to_capital.json",
     "connectivity_no_road_to_port.json"
   ],
-  "game/military-generals.md": [],
+  "game/military-generals.md": ["military_generals_deployment_limit.json"],
   "game/military-units.md": ["military_units_buildability.json"],
   "game/naming.md": [],
   "game/production-recipes.md": ["production_recipes_basic.json"],
