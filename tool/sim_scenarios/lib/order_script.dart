@@ -1,5 +1,6 @@
 // Order script parser - converts OrderCommand to Orders objects.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'scenario.dart';
@@ -25,9 +26,8 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
         break;
 
       case 'build':
-        // Infer isMilitary from unit type (simplified)
         final unitType = cmd.unitType ?? 'infantry';
-        final isMilitary = _isMilitaryUnit(unitType);
+        final isMilitary = buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military;
         final buildOrder = BuildUnitOrder(
           unitType: unitType,
           isMilitary: isMilitary,
@@ -110,21 +110,4 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
     navalMoveOrdersByPlayerId: navalMoveOrdersByPlayerId,
     navalMissionOrdersByPlayerId: navalMissionOrdersByPlayerId,
   );
-}
-
-/// Heuristic to determine if a unit type is military.
-bool _isMilitaryUnit(String unitType) {
-  // Common military unit types
-  const militaryUnits = [
-    'infantry',
-    'cavalry',
-    'artillery',
-    'grenadiers',
-    'hussars',
-    'cuirassiers',
-    'dragoons',
-    'musketeers',
-    'line_infantry',
-  ];
-  return militaryUnits.contains(unitType.toLowerCase());
 }
