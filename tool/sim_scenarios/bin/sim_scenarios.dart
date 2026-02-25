@@ -95,7 +95,9 @@ void main(List<String> args) async {
       _log.i('logic: sim_scenarios: Running scenario: $scenarioPath');
     }
     final result = await runner.runFile(file);
-    _log.i('logic: sim_scenarios:\n${formatScenarioReport(result)}');
+    final report = formatScenarioReport(result);
+    _log.i('logic: sim_scenarios:\n$report');
+    print(report);
     exit(result.passed ? 0 : 1);
   } else {
     // Run all scenarios in directory

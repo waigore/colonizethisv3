@@ -362,6 +362,12 @@ Game _processWarAndPeace(
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
+        final key = _pairKey(gpId, targetId);
+        final bothGreatPowers =
+            _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
+        final hasMutualOffer = bothGreatPowers
+            ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2
+            : true;
         if (rel != null && rel.atWar) {
           // SPEC/game/diplomacy.md:
           // - GP–GP peace: both sides must agree (both offer peace in this phase).
@@ -387,18 +393,30 @@ Game _processWarAndPeace(
             ));
           }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
-          relations = upsertRelation(relations, gpId, targetId, (existing) {
-            return existing!.copyWith(
-              state: RelationState.atPeace,
-              sinceTurn: turn,
-              lastInteractionTurn: turn,
+          if (hasMutualOffer) {
+            relations = upsertRelation(relations, gpId, targetId, (existing) {
+              return existing!.copyWith(
+                state: RelationState.atPeace,
+                sinceTurn: turn,
+                lastInteractionTurn: turn,
+              );
+            });
+            game = game.copyWith(
+              diplomacyRelations: relations,
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
             );
-          });
-          game = game.copyWith(
-            diplomacyRelations: relations,
-            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
-          );
-          _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+            _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+          } else {
+            game = game.copyWith(
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
+            );
+          }
         }
       }
     }

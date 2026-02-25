@@ -439,6 +439,31 @@ Game applyBuildAndWorkOrders(
 
         final resourceId = game.worldState.resourceByTileKey[targetTileKey];
         if (resourceId != null) {
+          final provinceId =
+              Unit.provinceIdFromTileKey(targetTileKey) ?? u.locationProvinceId;
+          final province = provinceById(provinceId);
+          final ownerId = province?.ownerId;
+          if (ownerId == null) {
+            continue;
+          }
+
+          final hasEmbassy = game.overtureStates.any(
+            (o) => o.gpId == player.id && o.targetId == ownerId && o.hasEmbassy,
+          );
+          if (!hasEmbassy) {
+            continue;
+          }
+
+          final atWar = game.diplomacyRelations.any((rel) {
+            final ids = {rel.factionId1, rel.factionId2};
+            return ids.contains(player.id) &&
+                ids.contains(ownerId) &&
+                rel.atWar;
+          });
+          if (atWar) {
+            continue;
+          }
+
           final cost = 15 * landPurchaseBasePrice(resourceId);
           if (treasury >= cost) {
             treasury -= cost;
