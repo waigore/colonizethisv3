@@ -31,7 +31,18 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (free, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
-- **Intervention:** When a Minor with the player's Embassy is attacked by another GP: **Intervene** (Minor joins player, war on attacker), **Do Nothing** (Minor may fall, relations reset), or **Diplomatic Protest** (relation penalty with attacker).
+- **Intervention (human and AI):**
+  - Trigger: When a Minor with at least one GP Embassy is attacked by a Great Power during combat resolution, each GP with an Embassy may be offered or may internally evaluate an **Intervention** choice.
+  - Human GP with Embassy: The player chooses **Intervene**, **Do Nothing**, or **Diplomatic Protest**.
+    - **Intervene (human):** The intervening GP immediately enters a war state with each attacking Great Power; the battle proceeds with this new war state in effect. The Minor remains an independent faction for province ownership purposes in MVP.
+    - **Do Nothing (human):** The intervening GP does not change relation score or war state with any attacker in that battle, but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared).
+    - **Diplomatic Protest (human):** The intervening GP remains at peace but applies a relation penalty with each attacking Great Power; the Minor’s diplomatic state is unchanged.
+  - AI GP with Embassy: Before combat resolution, each AI-controlled GP that has an Embassy with the attacked Minor independently evaluates whether to intervene on the Minor’s side:
+    - The **probability to intervene** is a monotonic function of the GP–Minor relation score; default values for MVP are: relation score 0–25 → 0% chance, 26–50 → 25% chance, 51–75 → 50% chance, 76–100 → 80% chance.
+    - On **AI Intervene**, the AI GP immediately enters a war state with each attacking Great Power, and the battle resolves with that GP treated as a belligerent against the attackers.
+    - On **AI Do Nothing**, the AI GP does not change relation or war state with the attackers but **also loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared), matching the human Do Nothing outcome.
+    - MVP does not implement an AI **Protest** choice; AI either intervenes or does nothing.
+  - Turn timing: Because interventions are evaluated during combat resolution, a GP (including the human player) may have war declared on them **after** the Diplomacy phase has completed, but **before** movement/combat for that battle is finalized.
 - **Peace:** Minors never refuse peace offers.
  - **War and overtures:** When a GP declares war on a Minor (relationState becomes `AT_WAR`), any existing overture state between that GP and that Minor (Trade Consulate, Embassy, NAP, or Join Empire) is **cleared to `none`**. While `AT_WAR`, the GP cannot establish any new overtures with that Minor; after peace, the overture chain must be rebuilt from `none` if the player wants renewed consulate/embassy status.
 
@@ -82,13 +93,29 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system validates the `purchase_land` work order during turn resolution  
   Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
 
-- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
+- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
   When the system presents the Player with an Intervention choice and the Player selects **Intervene**  
-  Then the system changes the relation state between the Player’s Great Power and the attacking Great Power to `AT_WAR` with `sinceTurn = t`, adds the Minor’s provinces and units to the Player’s side in that war, and uses this war state for all Movement and Combat validation during turn `t`.
+  Then the system changes the relation state between the Player’s Great Power and each attacking Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t` for each such relation, and uses this `AT_WAR` state for all Movement and Combat validation for that battle during turn `t`.
 
-- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
+- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
   When the system presents the Player with an Intervention choice and the Player selects **Do Nothing**  
-  Then the system does not change the relation state between the Player’s Great Power and the attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed, and, if the Minor is eliminated, clears all diplomatic relations between the Player and that Minor from the game state.
+  Then the system does not change the relation state or relation score between the Player’s Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between the Player’s Great Power and that Minor from the game state.
+
+- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
+  When the system presents the Player with an Intervention choice and the Player selects **Diplomatic Protest**  
+  Then the system leaves the relation state between the Player’s Great Power and each attacking Great Power as `AT_PEACE` during turn `t`, decreases the relation score with each attacking Great Power by a fixed penalty of 10 points (clamped between 0 and 100 inclusive), updates `lastInteractionTurn = t` for each such relation, and does not change any overture or Embassy state with the attacked Minor.
+
+- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
+  When the system evaluates whether that AI Great Power will intervene on the Minor’s side  
+  Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene.
+
+- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
+  When the system decides that the AI Great Power **will intervene** based on the relation-score-driven probability  
+  Then the system changes the relation state between that AI Great Power and each attacking Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t` for each such relation, uses this `AT_WAR` state for all Movement and Combat validation for that battle during turn `t`, and leaves the Embassy and overture state between the AI Great Power and the Minor unchanged.
+
+- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
+  When the system decides that the AI Great Power **will not intervene** based on the relation-score-driven probability  
+  Then the system does not change the relation state or relation score between that AI Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between that AI Great Power and that Minor from the game state.
 
 - Given the Player controls a Great Power that currently has a Consulate or Embassy overture stage recorded with a target Minor Nation or Tribe and the current relation state between those two factions changes from `AT_PEACE` to `AT_WAR` in turn `t`  
   When the Diplomacy phase for turn `t` completes  
