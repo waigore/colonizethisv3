@@ -16,7 +16,15 @@ The **max effective extraction level** (1–4) per resource or improvement type 
 
 **MVP:** The implementation uses a **single scalar** cap per player (one value for all resources) as a temporary simplification; the catalog is program-level (e.g. gathering_1/2/3). The full model will use **per-resource** caps from the category sub-docs (e.g. [tech-tree-gathering.md](tech-tree-gathering.md)).
 
-**Fallback:** When the full tech model is not yet loaded or a resource has no tech-gated cap, use a **constant cap** (e.g. 4) per player from config so extraction resolution can run. Full model derives cap from [tech-tree.md](tech-tree.md) and category sub-docs. Ruleset: MVP program-level constants; future ruleset per [ruleset-config.md](../program/ruleset-config.md).
+**MVP scalar mapping:** For the MVP scalar cap, the **gathering** techs map to max effective extraction levels as follows (highest unlocked applies):
+
+- `gathering_1` → max effective extraction level **2**
+- `gathering_2` → max effective extraction level **3**
+- `gathering_3` → max effective extraction level **4**
+
+If a player has multiple gathering techs unlocked, the System uses the maximum cap implied by any unlocked gathering tech for that player.
+
+**Fallback:** When the full tech model is not yet loaded, when the tech table is missing or empty, or when a player has no gathering tech unlocked (null or all false), the System uses a **constant fallback cap of 4** per player so extraction resolution can run. The full model derives caps from [tech-tree.md](tech-tree.md) and category sub-docs. Ruleset: MVP program-level constants (including the fallback cap); future ruleset per [ruleset-config.md](../program/ruleset-config.md).
 
 ---
 
