@@ -384,6 +384,33 @@ class StateVerifier {
       }
     }
 
+    // Fog/exploration assertions (SPEC/game/fog-and-exploration.md)
+    if (assertion.player != null &&
+        (assertion.tileVisibility != null || assertion.tileProspected != null) &&
+        assertion.tileKey != null) {
+      final playerId = assertion.player!;
+      final tileKey = assertion.tileKey!;
+      final visByTile = game.worldState.playerVisibilityByTile[playerId];
+      if (assertion.tileVisibility != null) {
+        final expected = assertion.tileVisibility!;
+        final actual = visByTile?[tileKey];
+        if (actual != expected) {
+          failures.add(
+            'Player $playerId tile $tileKey visibility: expected "$expected", got "${actual ?? "absent/unknown"}"',
+          );
+        }
+      }
+      if (assertion.tileProspected != null) {
+        final prospected = game.worldState.playerProspectedTiles[playerId];
+        final isProspected = prospected?.contains(tileKey) ?? false;
+        if (isProspected != assertion.tileProspected!) {
+          failures.add(
+            'Player $playerId tile $tileKey prospected: expected ${assertion.tileProspected}, got $isProspected',
+          );
+        }
+      }
+    }
+
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,

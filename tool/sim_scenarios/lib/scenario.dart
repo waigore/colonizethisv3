@@ -209,6 +209,9 @@ class Assertion {
     this.greatPowerCount,
     this.minorNationCount,
     this.tribeCount,
+    this.tileKey,
+    this.tileVisibility,
+    this.tileProspected,
   });
 
   /// Which turn to check (null = final state)
@@ -264,6 +267,14 @@ class Assertion {
   final int? greatPowerCount;
   final int? minorNationCount;
   final int? tribeCount;
+
+  /// Fog/exploration assertions (SPEC/game/fog-and-exploration.md). Require [player].
+  /// [tileKey]: format regionId|provinceId|x|y.
+  /// [tileVisibility]: expected visibility level for that player at tileKey (unknown, revealed, fogged, fullyVisible).
+  /// [tileProspected]: true iff that player has prospected the tile at tileKey.
+  final String? tileKey;
+  final String? tileVisibility;
+  final bool? tileProspected;
 }
 
 /// Type of value matching for assertions.
@@ -510,6 +521,9 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     greatPowerCount: json['greatPowerCount'] as int?,
     minorNationCount: json['minorNationCount'] as int?,
     tribeCount: json['tribeCount'] as int?,
+    tileKey: json['tileKey'] as String?,
+    tileVisibility: json['tileVisibility'] as String?,
+    tileProspected: json['tileProspected'] as bool?,
   );
 }
 

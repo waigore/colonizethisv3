@@ -168,6 +168,8 @@ Assertion fields:
 
 **Faction count assertions** (SPEC/game/factions.md): use `greatPowerCount`, `minorNationCount`, `tribeCount` (expected integer counts) to verify that game setup created the configured Great Powers, Minor Nations, and Tribes. Example: `{"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1}`.
 
+**Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
+
 ---
 
 ## Execution Flow
