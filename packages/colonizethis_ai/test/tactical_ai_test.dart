@@ -25,7 +25,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'test',
-        personalityId: 'militant',
+        personalityId: 'test',
         hiddenAgendaId: 'warmonger',
       );
       final actions = decideQuickBattleActions(
@@ -52,7 +52,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'test',
-        personalityId: 'militant',
+        personalityId: 'test',
         hiddenAgendaId: 'warmonger',
       );
       final a = decideQuickBattleActions(
@@ -106,7 +106,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'test',
-        personalityId: 'militant',
+        personalityId: 'test',
         hiddenAgendaId: 'warmonger',
       );
       for (var i = 0; i < 20; i++) {
@@ -158,7 +158,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'test',
-        personalityId: 'militant',
+        personalityId: 'test',
         hiddenAgendaId: 'warmonger',
       );
       for (var i = 0; i < 20; i++) {

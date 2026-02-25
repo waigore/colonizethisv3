@@ -107,7 +107,7 @@ void main() {
       final snapshot = AIWorldSnapshot.fromPlayerView(view);
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(999);
@@ -175,7 +175,7 @@ void main() {
       final snapshot = AIWorldSnapshot.fromPlayerView(view);
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(100);
@@ -246,7 +246,7 @@ void main() {
       final snapshot = AIWorldSnapshot.fromPlayerView(view);
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(123);
@@ -290,7 +290,7 @@ void main() {
       final snapshot = AIWorldSnapshot.fromPlayerView(view);
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(456);

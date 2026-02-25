@@ -1,7 +1,9 @@
 // AI configuration per nation: personality, hidden agenda, difficulty. SPEC/program/ai-systems-impl.md.
 
 /// Configuration passed to full AI for one Great Power.
-/// Holds leader personality id, assigned hidden agenda, and difficulty-derived modifiers.
+/// Holds canonical leader id for personality lookups, optional personality archetype
+/// id for future ruleset overrides, assigned hidden agenda, and difficulty-derived
+/// modifiers.
 class AIConfig {
   const AIConfig({
     required this.leaderId,
@@ -10,10 +12,15 @@ class AIConfig {
     this.difficultyModifiers = const {},
   });
 
-  /// Leader id (e.g. 'victoria', 'napoleon').
+  /// Canonical leader id (e.g. 'victoria', 'napoleon').
+  /// Used as the key for personality config lookups and dossier/archetype display.
   final String leaderId;
 
-  /// Personality archetype id for goal and utility weighting.
+  /// Optional personality archetype id for goal and utility weighting.
+  ///
+  /// In MVP, colonizethis_ai does not read this field; callers should typically
+  /// pass the same canonical id as [leaderId]. Future ruleset-configurable
+  /// personality bundles may use this as an override handle.
   final String personalityId;
 
   /// Assigned hidden agenda id (never exposed to player; used only for modifiers).

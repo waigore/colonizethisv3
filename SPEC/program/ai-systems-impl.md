@@ -36,6 +36,11 @@ Orders generateStrategicOrders({
 
 `view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. Callbacks for deterministic dialogue/mood events.
 
+Personality-related fields in **AIConfig** follow [ai-personalities.md](../ai/ai-personalities.md):
+
+- `leaderId` is the canonical leader id and is the only id used for personality lookups and dossier/archetype display.
+- `personalityId` is an optional archetype handle; in MVP it is not read by `colonizethis_ai`, and callers typically pass the same value as `leaderId`.
+
 ### Tactical (Quick Battle)
 
 ```dart

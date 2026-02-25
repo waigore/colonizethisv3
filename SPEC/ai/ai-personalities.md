@@ -68,6 +68,11 @@ Difficulty does **not** change personality or AI strength. It only affects **sta
 
 Personality is loaded as config and supplied via **AIConfig** when the AI generates orders. [ai-systems-impl.md](../program/ai-systems-impl.md) defines where config holds personality and where domain planners and goal selection use it; [ai-planner.md](../program/ai-planner.md) describes integration and where AIConfig is built and supplied for order generation.
 
+In MVP, **AIConfig** fields related to personality have the following contract:
+
+- `leaderId` — canonical leader id (e.g. `victoria`, `napoleon`). This is the **only** id used by `colonizethis_ai` for personality lookups: domain weights, goal weights, and behavioral thresholds in `colonizethis_data/lib/src/ai_personality_config.dart` are all keyed by canonical leader id. Dossier/archetype display also derives from `leaderId` via that config.
+- `personalityId` — optional personality archetype id (e.g. an archetype handle in future rulesets). In MVP, `colonizethis_ai` does **not** read this field; callers SHOULD pass the same canonical id as `leaderId`. Future ruleset-configurable personality bundles may use `personalityId` as an override handle; when that happens, this spec and [ruleset-config.md](../program/ruleset-config.md) must be updated first.
+
 ---
 
 ## Acceptance criteria
