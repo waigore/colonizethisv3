@@ -1,6 +1,15 @@
 # sim_scenarios — Batch Scenario Test Driver
 
-**SPEC/program** — Batch test driver that runs scenario tests from JSON files. Each scenario initializes a deterministic game, runs scripted orders for 1-5 turns, and verifies game state assertions.
+**SPEC/program** — Batch test driver that runs scenario tests from JSON files. Each scenario initializes a deterministic game, runs scripted orders for 1-5 turns, and verifies game state assertions. Province and tile identity follow [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Province and tile identity
+
+Province ids in scenario JSON (setup units, order targets, assertion `province` / `capitalProvinceId` / `tileKey`) must be **full** province ids or tile keys per [world-model-identity.md](../game/world-model-identity.md): province id format `regionId|localId` (e.g. `oldWorld|p1`), tile key format `regionId|localId|x|y`. Do not use bare local ids in multi-region scenarios; resolution is region-scoped and uses the prefixed form.
+
+- **Setup units:** The runner accepts either a full province id or a local id in `province`. When the value does not contain `|`, the runner prefixes it with `oldWorld` (single-region or Old World default). For New World provinces use the full id (e.g. `newWorld|nw1`).
+- **Assertions:** StateVerifier resolves province assertions by full id. When optional `region` is present, lookup is restricted to that region; the `province` field must still be the full province id (`regionId|localId`) to match game state. Tile keys in assertions (e.g. fog/exploration, capital) use the 4-part format.
 
 ---
 
@@ -136,7 +145,7 @@ State verification after each turn or at final state:
 
 Assertion fields:
 - `turn` — Which turn to check (optional, defaults to final state)
-- `province` — Province ID to check
+- `province` — Province ID to check (full id `regionId|localId` per § Province and tile identity)
 - `owner` — Expected owner player ID
 - `notOwner` — Negative assertion: province must not be owned by this player ID
 - `unitCount` — Expected unit count (exact or range via `matchType`)
