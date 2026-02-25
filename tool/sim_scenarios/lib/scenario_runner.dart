@@ -119,8 +119,14 @@ class ScenarioRunner {
         // Parse orders
         final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
-        // Resolve turn (returns updated game)
-        final nextGame = _resolveTurn(currentContext, orders, scenario);
+        // Resolve turn (returns updated game). Use per-turn workerAssignments when
+        // present; otherwise fall back to scenario-level productionAssignments.
+        final nextGame = _resolveTurn(
+          currentContext,
+          orders,
+          scenario,
+          turnScript.workerAssignments,
+        );
         currentContext = ScenarioContext(
           game: nextGame,
           topology: currentContext.topology,
@@ -398,13 +404,28 @@ class ScenarioRunner {
   }
 
   /// Resolves one turn and returns the updated game.
-  Game _resolveTurn(ScenarioContext context, Orders orders, Scenario scenario) {
+  Game _resolveTurn(
+    ScenarioContext context,
+    Orders orders,
+    Scenario scenario, [
+    List<WorkerAssignment>? workerAssignments,
+  ]) {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
 
-    final defaultAssignments = _productionAssignments(scenario);
+    final defaultAssignments = workerAssignments != null &&
+            workerAssignments.isNotEmpty
+        ? workerAssignments
+            .map(
+              (w) => AssignedRecipe(
+                recipeId: w.recipeId,
+                assignedLabour: w.assignedLabour,
+              ),
+            )
+            .toList()
+        : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
     return resolveTurnForGameFromOrderEngine(
