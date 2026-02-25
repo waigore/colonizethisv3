@@ -1,0 +1,43 @@
+{
+  "name": "military_units_buildability",
+  "description": "SPEC/game/military-units.md AC2: regiment buildable iff unlocking tech in techUnlocked. GP1 with initialTech [organised_regiments] and resources builds lancers in capital; assert unit count increases. Province id prefixed (regionId|localId).",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["organised_regiments"]
+    },
+    "initialWorkers": {
+      "gp1": {"peasants": 1, "apprentices": 0, "journeymen": 0, "masters": 0}
+    },
+    "initialStockpile": {
+      "gp1": {"grain": 5, "fabric": 2, "castIron": 2}
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {"player": "gp1", "type": "build", "unitType": "lancers", "in": "oldWorld|p1"}
+      ]
+    }
+  ],
+  "assertions": [
+    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"},
+    {"turn": 1, "province": "oldWorld|p1", "unitCount": 6, "matchType": "atLeast"}
+  ]
+}

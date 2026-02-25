@@ -70,6 +70,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
 - **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power’s `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
+- **initialTech:** Optional. Map player id → list of tech ids. Overrides that player’s `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability scenarios (SPEC/game/military-units.md, tech-tree).
 
 ---
 

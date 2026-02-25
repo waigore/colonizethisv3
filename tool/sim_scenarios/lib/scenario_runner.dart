@@ -347,6 +347,22 @@ class ScenarioRunner {
       }
       game = game.copyWith(players: updatedPlayers);
     }
+    if (setup.initialTech != null && setup.initialTech!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final techIds = setup.initialTech![player.id];
+        if (techIds == null || techIds.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
+        for (final tid in techIds) {
+          techUnlocked[tid] = true;
+        }
+        updatedPlayers.add(player.copyWith(techUnlocked: techUnlocked));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
     return game;
   }
 

@@ -256,6 +256,23 @@ void main() {
         expect(scenario.assertions[1].player, 'gp2');
         expect(scenario.assertions[1].leaderKey, 'frederick');
       });
+
+      test('parses setup initialTech', () {
+        final json = {
+          'name': 'tech_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialTech': {'gp1': ['organised_regiments', 'weapon_craftsmanship']},
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.initialTech, isNotNull);
+        expect(scenario.setup!.initialTech!['gp1'], ['organised_regiments', 'weapon_craftsmanship']);
+      });
     });
 
     group('parseScenarioFile', () {

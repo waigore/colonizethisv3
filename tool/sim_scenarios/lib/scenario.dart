@@ -46,6 +46,7 @@ class ScenarioInit {
 /// initialWorkers / initialStockpile apply after init (fresh or fromTopology).
 /// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
 /// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
+/// initialTech: player id → list of tech ids. Overrides Player.techUnlocked for buildability scenarios. SPEC/game/military-units.md.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
@@ -55,6 +56,7 @@ class ScenarioSetup {
     this.productionAssignments,
     this.initialTileState,
     this.leaderKeys,
+    this.initialTech,
   });
 
   final List<UnitPlacement>? units;
@@ -69,6 +71,8 @@ class ScenarioSetup {
   final Map<String, Map<String, int>>? initialTileState;
   /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
   final Map<String, String>? leaderKeys;
+  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, tech-tree.
+  final Map<String, List<String>>? initialTech;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -388,7 +392,20 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     productionAssignments: _parseProductionAssignments(json['productionAssignments']),
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
+    initialTech: _parseInitialTech(json['initialTech']),
   );
+}
+
+Map<String, List<String>>? _parseInitialTech(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, List<String>>{};
+  for (final entry in raw.entries) {
+    final list = entry.value;
+    if (list is List<dynamic>) {
+      out[entry.key] = list.map((e) => e.toString()).toList();
+    }
+  }
+  return out.isEmpty ? null : out;
 }
 
 Map<String, String>? _parseLeaderKeys(dynamic raw) {
