@@ -488,10 +488,14 @@ void main() {
           ),
         ],
       );
+      // GP–GP peace requires both sides to offer peace (SPEC/game/diplomacy.md).
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp2': const [
             DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'gp3'),
+          ],
+          'gp3': const [
+            DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'gp2'),
           ],
         },
       );
@@ -600,10 +604,14 @@ void main() {
           ),
         ],
       );
+      // GP–GP peace requires both sides to offer peace (SPEC/game/diplomacy.md).
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp2': const [
             DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'gp3'),
+          ],
+          'gp3': const [
+            DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'gp2'),
           ],
         },
       );
