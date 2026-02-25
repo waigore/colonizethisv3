@@ -21,6 +21,14 @@
 
 ---
 
+## Versioning and backward compatibility
+
+- **MVP:** The persisted payload has **no version field**. Schema is the Game model (and optional map-data models); readers do not branch on a save-format version.
+- **Legacy:** A *legacy* save is one that (a) has no map-data keys for the game id, and/or (b) has Game JSON that omits fields added in later releases (e.g. `greatPowerColorOverride`, `turnTimeMapping`). Current reader behaviour: missing map-data keys → `loadMapData` returns null; missing Game fields → `Game.fromJson()` yields null or the model’s default for those fields. Backward compatibility is **best-effort**: there is no guarantee that a reader can load saves produced by arbitrarily old formats; the project does not maintain readers for every historical schema.
+- **Future option:** The project may introduce a **save-format version** (e.g. a `saveFormatVersion` field in the persisted payload or in a small envelope) and document a **migration strategy**. Future readers could then branch on version, apply migrations for supported versions, or reject unsupported versions explicitly. Scope (MVP vs. add version and migration) is an owner decision; this section records current behaviour and the option.
+
+---
+
 ## Optional map data
 
 - Map data (tile maps per region, topology per region, combined topology) is optional. Saves created by ctdev Init Game or init_game with map output include it; legacy saves may have none.
@@ -49,6 +57,7 @@
 - **List game ids.** Given a Hive box, when the system lists game ids, then the system returns only keys that are game ids (excludes keys ending with `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`).
 - **Optional map data — save/load round-trip.** Given a Hive box, a `gameId`, and valid `tileMapByRegion`, `topologyByRegion`, and `combinedTopology`, when the system calls saveMapData and then loadMapData for that `gameId`, then loadMapData returns the same three maps (round-trip preserves data).
 - **Optional map data — legacy.** Given a Hive box and a `gameId` for which no map-data key exists (or any one of the three keys is missing), when the system calls loadMapData for that `gameId`, then loadMapData returns null.
+- **Backward compatibility — missing Game fields.** Given a Hive box and a `gameId` whose stored value is valid Game JSON but omits a field that the current Game model defines (e.g. a field added in a later release), when the system loads the game, then the system returns a Game instance with that field set to null or the model’s default; the system does not fail deserialization solely due to the missing field.
 - **Delete.** Given a Hive box and a `gameId`, when the system deletes the game, then the system removes the key `gameId` and the three map-data keys (`gameId + _tileMapByRegion`, etc.); no-op if the game key is not present.
 - **Round-trip Game fields.** Given a Game with worldState, players, greatPowerColorOverride, turnTimeMapping, and other serialized fields, when the system saves and then loads by the same game id, then the loaded Game equals the original for all fields covered by `Game.toJson()`/`fromJson()` (as covered by existing game_save_adapter_test.dart).
 - **Logging.** Save/load operations use the `save:` prefix and log gameId and success or failure per [ctdev-logging.md](ctdev-logging.md).
