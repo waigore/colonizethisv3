@@ -363,6 +363,13 @@ class ScenarioRunner {
       }
       game = game.copyWith(players: updatedPlayers);
     }
+    if (setup.defaultCombatMode != null && setup.defaultCombatMode!.isNotEmpty) {
+      final raw = setup.defaultCombatMode!.toLowerCase();
+      final mode = (raw == 'quickbattle' || raw == 'quick_battle')
+          ? CombatMode.quickBattle
+          : CombatMode.autoResolve;
+      game = game.copyWith(defaultCombatMode: mode);
+    }
     return game;
   }
 
