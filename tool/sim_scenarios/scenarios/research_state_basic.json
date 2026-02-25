@@ -1,0 +1,30 @@
+{
+  "name": "research_state_basic",
+  "description": "SPEC/game/research-state.md: State on Player — techUnlocked exists; setup initialTech sets tech ids to true; assert player has those techs unlocked.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["gathering_1", "road_construction"]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "techUnlocked": ["gathering_1", "road_construction"]},
+    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"}
+  ]
+}

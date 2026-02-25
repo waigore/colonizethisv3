@@ -174,6 +174,8 @@ Assertion fields:
 
 **Leader assertions** (SPEC/game/leader-bonuses.md): use `player` (Great Power id) and `leaderKey` (expected leader key, e.g. `napoleon`, `frederick`, `reserve`). Example: `{"turn": 1, "player": "gp1", "leaderKey": "napoleon"}`.
 
+**Research-state assertions** (SPEC/game/research-state.md): use `player` and `techUnlocked` (array of tech ids that must be true in that player’s techUnlocked map). Example: `{"turn": 1, "player": "gp1", "techUnlocked": ["gathering_1", "road_construction"]}`.
+
 ---
 
 ## Execution Flow

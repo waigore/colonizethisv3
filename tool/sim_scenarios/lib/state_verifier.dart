@@ -427,6 +427,27 @@ class StateVerifier {
       }
     }
 
+    // Research-state assertion (SPEC/game/research-state.md): player's techUnlocked must contain listed tech ids
+    if (assertion.player != null &&
+        assertion.techUnlocked != null &&
+        assertion.techUnlocked!.isNotEmpty) {
+      try {
+        final player = game.players.firstWhere((p) => p.id == assertion.player);
+        final unlocked = player.techUnlocked ?? const <String, bool>{};
+        for (final techId in assertion.techUnlocked!) {
+          if (unlocked[techId] != true) {
+            failures.add(
+              'Player ${assertion.player} techUnlocked: expected "$techId" to be true, got ${unlocked[techId]}',
+            );
+          }
+        }
+      } on StateError {
+        failures.add(
+          'Player ${assertion.player} not found for techUnlocked assertion',
+        );
+      }
+    }
+
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,

@@ -273,6 +273,23 @@ void main() {
         expect(scenario.setup!.initialTech, isNotNull);
         expect(scenario.setup!.initialTech!['gp1'], ['organised_regiments', 'weapon_craftsmanship']);
       });
+
+      test('parses assertion techUnlocked', () {
+        final json = {
+          'name': 'research_state',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'techUnlocked': ['gathering_1', 'road_construction']},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.assertions.length, 1);
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].techUnlocked, ['gathering_1', 'road_construction']);
+      });
     });
 
     group('parseScenarioFile', () {

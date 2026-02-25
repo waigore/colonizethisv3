@@ -22,7 +22,7 @@
   "game/naming.md": [],
   "game/production-recipes.md": ["production_recipes_basic.json"],
   "game/quick-battle.md": [],
-  "game/research-state.md": [],
+  "game/research-state.md": ["research_state_basic.json"],
   "game/resource-terrain-region-rules.md": ["resource_ow_has_no_nw_only.json", "resource_nw_has_no_ow_only.json", "resource_every_tile_allowed_in_region.json", "resource_multi_region_cap.json", "resource_diamonds_nw_only.json"],
   "game/ruleset-config.md": [],
   "game/ships-and-naval.md": [],
