@@ -80,6 +80,30 @@ class StateVerifier {
       }
     }
 
+    // Faction count assertions (SPEC/game/factions.md)
+    if (assertion.greatPowerCount != null ||
+        assertion.minorNationCount != null ||
+        assertion.tribeCount != null) {
+      if (assertion.greatPowerCount != null &&
+          game.players.length != assertion.greatPowerCount!) {
+        failures.add(
+          'Great Power count: expected ${assertion.greatPowerCount}, got ${game.players.length}',
+        );
+      }
+      if (assertion.minorNationCount != null &&
+          game.minorNations.length != assertion.minorNationCount!) {
+        failures.add(
+          'Minor Nation count: expected ${assertion.minorNationCount}, got ${game.minorNations.length}',
+        );
+      }
+      if (assertion.tribeCount != null &&
+          game.tribes.length != assertion.tribeCount!) {
+        failures.add(
+          'Tribe count: expected ${assertion.tribeCount}, got ${game.tribes.length}',
+        );
+      }
+    }
+
     // Province-based assertions
     if (assertion.province != null) {
       final province = _findProvince(game, assertion.region, assertion.province!);

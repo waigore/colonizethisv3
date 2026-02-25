@@ -166,6 +166,8 @@ Assertion fields:
 
 **Economy / production assertions** (SPEC/game/production-recipes.md): use `player`, `commodity` (commodity id), and `stockpileCommodity` (expected quantity) to assert per-commodity stockpile after a turn or final state; supports `matchType`.
 
+**Faction count assertions** (SPEC/game/factions.md): use `greatPowerCount`, `minorNationCount`, `tribeCount` (expected integer counts) to verify that game setup created the configured Great Powers, Minor Nations, and Tribes. Example: `{"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1}`.
+
 ---
 
 ## Execution Flow
