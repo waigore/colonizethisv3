@@ -335,6 +335,18 @@ class ScenarioRunner {
         worldState: game.worldState.copyWith(tileState: tileState),
       );
     }
+    if (setup.leaderKeys != null && setup.leaderKeys!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final key = setup.leaderKeys![player.id];
+        if (key == null) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        updatedPlayers.add(player.copyWith(leaderKey: key));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
     return game;
   }
 

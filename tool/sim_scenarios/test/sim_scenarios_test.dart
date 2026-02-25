@@ -232,6 +232,30 @@ void main() {
         expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_timber_iron_coal');
         expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
       });
+
+      test('parses setup leaderKeys and assertion leaderKey', () {
+        final json = {
+          'name': 'leader_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england', 'france']}},
+          'setup': {
+            'leaderKeys': {'gp1': 'napoleon', 'gp2': 'frederick'},
+          },
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'leaderKey': 'napoleon'},
+            {'turn': 1, 'player': 'gp2', 'leaderKey': 'frederick'},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.leaderKeys!['gp1'], 'napoleon');
+        expect(scenario.setup!.leaderKeys!['gp2'], 'frederick');
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].leaderKey, 'napoleon');
+        expect(scenario.assertions[1].player, 'gp2');
+        expect(scenario.assertions[1].leaderKey, 'frederick');
+      });
     });
 
     group('parseScenarioFile', () {

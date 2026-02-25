@@ -411,6 +411,22 @@ class StateVerifier {
       }
     }
 
+    // Leader assertion (SPEC/game/leader-bonuses.md): player's leaderKey
+    if (assertion.player != null && assertion.leaderKey != null) {
+      try {
+        final player = game.players.firstWhere((p) => p.id == assertion.player);
+        final expected = assertion.leaderKey!;
+        final actual = player.leaderKey;
+        if (actual != expected) {
+          failures.add(
+            'Player ${assertion.player} leaderKey: expected "$expected", got "${actual ?? "null"}"',
+          );
+        }
+      } on StateError {
+        failures.add('Player ${assertion.player} not found for leaderKey assertion');
+      }
+    }
+
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,
