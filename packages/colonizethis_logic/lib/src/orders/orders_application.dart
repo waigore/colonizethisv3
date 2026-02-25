@@ -520,40 +520,6 @@ Game applyBuildAndWorkOrders(
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
-        String? provinceOwnerId;
-        final provinceIdFromTile = Unit.provinceIdFromTileKey(targetTileKey);
-        if (provinceIdFromTile != null) {
-          provinceOwnerId = provinceById(provinceIdFromTile)?.ownerId;
-        }
-
-        var hasEmbassyWithOwner = false;
-        var atWarWithOwner = false;
-
-        if (provinceOwnerId != null) {
-          for (final o in game.overtureStates) {
-            if (o.gpId == player.id &&
-                o.targetId == provinceOwnerId &&
-                o.hasEmbassy) {
-              hasEmbassyWithOwner = true;
-              break;
-            }
-          }
-
-          for (final rel in game.diplomacyRelations) {
-            final a = rel.factionId1;
-            final b = rel.factionId2;
-            if ((a == player.id && b == provinceOwnerId) ||
-                (a == provinceOwnerId && b == player.id)) {
-              atWarWithOwner = rel.atWar;
-              break;
-            }
-          }
-        }
-
-        if (!hasEmbassyWithOwner || atWarWithOwner) {
-          continue;
-        }
-
         final resourceId = game.worldState.resourceByTileKey[targetTileKey];
         if (resourceId != null) {
           final provinceId =
