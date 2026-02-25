@@ -1247,6 +1247,18 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
+      final tileMapByRegion = {
+        ow: TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['P1'],
+          ],
+          terrainGrid: [
+            [TerrainType.hills],
+          ],
+        ),
+      };
       final orders = Orders(
         workOrdersByPlayerId: {
           'p1': [
@@ -1258,6 +1270,7 @@ void main() {
         game: game,
         topology: topology,
         orders: orders,
+        tileMapByRegion: tileMapByRegion,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
       );
@@ -1812,10 +1825,8 @@ void main() {
 
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [
           TopologyEdge(id1: 'P1', id2: 'P2'),
