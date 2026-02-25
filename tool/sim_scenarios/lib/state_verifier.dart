@@ -131,6 +131,16 @@ class StateVerifier {
         }
       }
 
+      // Province display name (SPEC/game/naming.md)
+      if (assertion.provinceDisplayName != null) {
+        final actual = province.displayName ?? '';
+        if (actual != assertion.provinceDisplayName) {
+          failures.add(
+            'Province ${assertion.province}: expected displayName "${assertion.provinceDisplayName}", got "$actual"',
+          );
+        }
+      }
+
       // Check unit count
       if (assertion.unitCount != null || assertion.hasUnit != null || assertion.hasPlayerUnits != null) {
         final units = _getUnitsInProvince(game, assertion.region, assertion.province!);
