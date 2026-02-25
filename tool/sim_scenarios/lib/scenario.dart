@@ -225,6 +225,7 @@ class Assertion {
     this.tileVisibility,
     this.tileProspected,
     this.leaderKey,
+    this.techUnlocked,
     this.provinceDisplayName,
   });
 
@@ -294,6 +295,9 @@ class Assertion {
 
   /// Leader assertion (SPEC/game/leader-bonuses.md). With [player]: expected leaderKey for that Great Power.
   final String? leaderKey;
+
+  /// Research-state assertion (SPEC/game/research-state.md). With [player]: list of tech ids that must be in techUnlocked (true).
+  final List<String>? techUnlocked;
 }
 
 /// Type of value matching for assertions.
@@ -581,6 +585,9 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileVisibility: json['tileVisibility'] as String?,
     tileProspected: json['tileProspected'] as bool?,
     leaderKey: json['leaderKey'] as String?,
+    techUnlocked: (json['techUnlocked'] as List<dynamic>?)
+        ?.map((e) => e.toString())
+        .toList(),
     provinceDisplayName: json['provinceDisplayName'] as String?,
   );
 }
