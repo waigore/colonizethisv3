@@ -220,6 +220,7 @@ Game resolveTurnForGame({
           state,
           orders,
           topology: topology,
+          tileMapByRegion: tileMapByRegion,
           onDialogue: onDialogue,
         );
         break;
