@@ -47,8 +47,12 @@ Orders generateStrategicOrders({
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
   Logger().i('ai: generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount');
   // Optional dialogue/mood emission (deterministic from dialogueSeed).
-  // SPEC/ai/dialogue-and-mood.md: PortraitMoodEvent optionally when opening/closing diplomacy with base mood.
-  if (onDialogue != null && seeds.dialogueSeed % 7 == 0) {
+  // SPEC/ai/dialogue-and-mood.md § When to emit:
+  // Strategic AI may emit optional agenda/comment and base mood once every
+  // kDialogueTurnsBetweenComments turns per leader, when
+  // `dialogueSeed % kDialogueTurnsBetweenComments == 0`.
+  if (onDialogue != null &&
+      seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
     onDialogue(DialogueEvent(
       leaderId: config.leaderId,
       category: 'agenda',
@@ -57,7 +61,8 @@ Orders generateStrategicOrders({
       variables: const {},
     ));
   }
-  if (onMood != null && seeds.dialogueSeed % 7 == 0) {
+  if (onMood != null &&
+      seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
     onMood(PortraitMoodEvent(
       leaderId: config.leaderId,
       fromMood: kDefaultMood,
