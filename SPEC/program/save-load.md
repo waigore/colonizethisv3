@@ -31,7 +31,7 @@
 
 ## Optional map data
 
-- Map data (tile maps per region, topology per region, combined topology) is optional. Saves created by ctdev Init Game or init_game with map output include it; legacy saves may have none.
+- Map data (tile maps per region, topology per region, combined topology) is optional. Saves created by ctdev Init Game or init_game with map output include it; legacy saves may have none. Tile map structure and semantics are defined in [map-data.md](map-data.md) § Tile map format; this serialization is for **ctdev/init tooling** (e.g. Load Savegame map view). The main game does not require map data to load.
 - **saveMapData:** Writes the three map-data keys for the given `gameId`. Caller supplies `tileMapByRegion`, `topologyByRegion`, `combinedTopology`.
 - **loadMapData:** Returns the three maps for `gameId`, or **null** if any of the three keys is missing (legacy save). Ctdev Load Savegame shows a message when map data is absent and cannot open the map view; see [ctdev-app.md](ctdev-app.md) § Load Savegame.
 
