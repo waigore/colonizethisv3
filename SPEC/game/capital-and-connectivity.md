@@ -144,3 +144,5 @@ If a player no longer owns their capital province (e.g. after conquest), a new c
 - Given a player has no owned provinces remaining in the original capital region after capital loss  
   When the system executes capital loss and reassignment during turn resolution  
   Then the system sets the player’s capital province and capital tile to `null`, performs no new port or road setup, and in the subsequent extraction phase treats all tiles for that player as not connected for extraction until a new capital is defined by later rules.
+
+- **Implementation:** Capital choice and init: [capital-choice-phase.md](capital-choice-phase.md). Connectivity and extraction: [extraction-pipeline.md](../program/extraction-pipeline.md). Capital reassignment on loss: [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat.
