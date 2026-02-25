@@ -11,7 +11,7 @@
 - Each **civilian unit** that is working has:
   - `status`: `idle | working` only (on completion, status is set to idle).
   - `currentWork` (optional): `(target: WorkTarget, tileKey, totalTurns, remainingTurns)`.
-- `WorkTarget` values and allowed unit types/tiles are defined in [orders.md](orders.md) (`explore`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`).
+- `WorkTarget` values and allowed unit types/tiles are defined in [orders.md](orders.md) (`explore`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`). **Builder upgrade_town tech gate (MVP):** The requirement for `national_bureaucracy` in `techUnlocked` for Builder `upgrade_town` work is **deferred** in MVP; currently all Builders may submit and complete `upgrade_town`. When enforced, validation will require `techUnlocked['national_bureaucracy']` per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md).
 - Costs (lumber, castIron, bronze, steel, etc.) and max levels come from program-level config in `colonizethis_data`, mirroring Imperialism II tables.
 
 ---
