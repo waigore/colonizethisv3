@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'conflict_detection.dart';
+import 'leader_bonus_helpers.dart';
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
@@ -81,18 +82,21 @@ Game resolveBattleContext(
     }
 
     // Deployment limit per side. SPEC/game/military-generals.md.
-    final attackerLimit = _deploymentLimitForFaction(game, attacker.factionId, attacker.generalMedals);
-    final defenderLimit = _deploymentLimitForFaction(game, defenderFactionId, 0);
+    final attackerLimit = _deploymentLimitForFaction(
+        game, attacker.factionId, attacker.generalMedals);
+    final defenderLimit =
+        _deploymentLimitForFaction(game, defenderFactionId, 0);
     final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
     final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
 
-    final defenderEffectiveLevel = _defenderEffectiveLevel(game, defenderFactionId);
+    final defenderEffectiveLevel =
+        _defenderEffectiveLevel(game, defenderFactionId);
     final attackerCoverage =
         feedingCoverageByPlayerId[attacker.factionId] ?? 1.0;
     final defenderCoverage =
         feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
-    final attackerLeaderMult = _leaderBonusForFaction(game, attacker.factionId);
-    final defenderLeaderMult = _leaderBonusForFaction(game, defenderFactionId);
+    final attackerLeaderMult = leaderBonusForFaction(game, attacker.factionId);
+    final defenderLeaderMult = leaderBonusForFaction(game, defenderFactionId);
     final outcome = resolveEngagement(
       attackerUnits: cappedAttackerUnits,
       defenderUnits: cappedDefenderUnits,
@@ -114,8 +118,10 @@ Game resolveBattleContext(
     }
 
     // Casualties apply to full defender list; engagement was fought with capped subset.
-    defenderUnitIds =
-        defenderUnits.map((u) => u.id).where((id) => !outcome.defenderCasualties.contains(id)).toList();
+    defenderUnitIds = defenderUnits
+        .map((u) => u.id)
+        .where((id) => !outcome.defenderCasualties.contains(id))
+        .toList();
 
     switch (outcome.result) {
       case EngagementResult.attackerVictory:
@@ -135,10 +141,14 @@ Game resolveBattleContext(
             .skip(sortedAttackers.indexOf(attacker) + 1)
             .toList();
         if (remainingAttackers.isNotEmpty) {
-          final recoverCount =
-              (initialDefenderCount * 0.2).ceil().clamp(1, initialDefenderCount);
-          final garrisonTypes = _garrisonTypesForFaction(game, provinceOwnerId, defenderEffectiveLevel);
-          for (var i = 0; i < recoverCount && defenderUnitIds.length < recoverCount; i++) {
+          final recoverCount = (initialDefenderCount * 0.2)
+              .ceil()
+              .clamp(1, initialDefenderCount);
+          final garrisonTypes = _garrisonTypesForFaction(
+              game, provinceOwnerId, defenderEffectiveLevel);
+          for (var i = 0;
+              i < recoverCount && defenderUnitIds.length < recoverCount;
+              i++) {
             final type = garrisonTypes[i % garrisonTypes.length];
             final id = 'recover_${ctx.provinceId}_$i';
             defenderUnitIds.add(id);
@@ -156,9 +166,8 @@ Game resolveBattleContext(
     }
   }
 
-  final survivingUnits = region.units
-      .where((u) => !allCasualties.contains(u.id))
-      .toList();
+  final survivingUnits =
+      region.units.where((u) => !allCasualties.contains(u.id)).toList();
 
   var updatedProvinces = region.provinces;
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
@@ -171,7 +180,8 @@ Game resolveBattleContext(
   }
 
   final recoveredUnits = unitsById.values
-      .where((u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id))
+      .where(
+          (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id))
       .toList();
   var finalUnits = [
     ...survivingUnits,
@@ -229,10 +239,10 @@ void _sortAttackersByInitiative(
     final totalB = b.unitIds.length;
     final shareA = totalA > 0 ? cavA / totalA : 0.0;
     final shareB = totalB > 0 ? cavB / totalB : 0.0;
-    final initA =
-        shareA * initiativeCavalryShareWeight + a.generalMedals * initiativeGeneralMedalWeight;
-    final initB =
-        shareB * initiativeCavalryShareWeight + b.generalMedals * initiativeGeneralMedalWeight;
+    final initA = shareA * initiativeCavalryShareWeight +
+        a.generalMedals * initiativeGeneralMedalWeight;
+    final initB = shareB * initiativeCavalryShareWeight +
+        b.generalMedals * initiativeGeneralMedalWeight;
     final cmp = initB.compareTo(initA);
     if (cmp != 0) return cmp;
     return a.factionId.compareTo(b.factionId);
@@ -252,16 +262,11 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
 /// Max regiments that can participate per side in one engagement.
 /// SPEC/game/military-generals.md: base 10; Nationalism tech → 12; +1 per general medal.
 int _deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
-  final baseLimit = game.playerById(factionId)?.techUnlocked?[kTechIdNationalism] == true
-      ? deploymentLimitWithNationalism
-      : deploymentLimitBase;
+  final baseLimit =
+      game.playerById(factionId)?.techUnlocked?[kTechIdNationalism] == true
+          ? deploymentLimitWithNationalism
+          : deploymentLimitBase;
   return baseLimit + generalMedals;
-}
-
-/// Leader combat bonus for a faction. GPs use Player.leaderKey; minors/tribes get 1.0.
-double _leaderBonusForFaction(Game game, String factionId) {
-  final player = game.playerById(factionId);
-  return leaderCombatBonusMultiplier(player?.leaderKey);
 }
 
 List<String> _garrisonTypesForFaction(
@@ -298,8 +303,14 @@ EngagementOutcome resolveEngagement({
   );
 
   final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
-  var effAtt = attStr * terrainMod.$1 * attackerMoraleMultiplier * attackerLeaderMultiplier;
-  var effDef = defStr * terrainMod.$2 * defenderMoraleMultiplier * defenderLeaderMultiplier;
+  var effAtt = attStr *
+      terrainMod.$1 *
+      attackerMoraleMultiplier *
+      attackerLeaderMultiplier;
+  var effDef = defStr *
+      terrainMod.$2 *
+      defenderMoraleMultiplier *
+      defenderLeaderMultiplier;
 
   if (fortLevel >= 1 && fortLevel <= 3) {
     final reduction = fortDamageReduction[fortLevel];
@@ -398,11 +409,19 @@ EngagementOutcome _buildOutcome({
   bool bluntAttackerVictory = false,
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation,
 }) {
-  final attLoss = (attackerUnits.length * attLossFrac).ceil().clamp(0, attackerUnits.length);
-  final defLoss = (defenderUnits.length * defLossFrac).ceil().clamp(0, defenderUnits.length);
+  final attLoss = (attackerUnits.length * attLossFrac)
+      .ceil()
+      .clamp(0, attackerUnits.length);
+  final defLoss = (defenderUnits.length * defLossFrac)
+      .ceil()
+      .clamp(0, defenderUnits.length);
 
-  final attackerCasualties = [for (var i = 0; i < attLoss; i++) attackerUnits[i].id];
-  final defenderCasualties = [for (var i = 0; i < defLoss; i++) defenderUnits[i].id];
+  final attackerCasualties = [
+    for (var i = 0; i < attLoss; i++) attackerUnits[i].id
+  ];
+  final defenderCasualties = [
+    for (var i = 0; i < defLoss; i++) defenderUnits[i].id
+  ];
 
   final attSurvivors = attackerUnits.length - attLoss;
   final defSurvivors = defenderUnits.length - defLoss;
@@ -413,7 +432,9 @@ EngagementOutcome _buildOutcome({
   } else if (attSurvivors <= 0) {
     result = EngagementResult.defenderVictory;
   } else if (defSurvivors <= 0) {
-    result = bluntAttackerVictory ? EngagementResult.stalemate : EngagementResult.attackerVictory;
+    result = bluntAttackerVictory
+        ? EngagementResult.stalemate
+        : EngagementResult.attackerVictory;
   } else {
     result = EngagementResult.stalemate;
   }
@@ -457,8 +478,13 @@ double _moraleMultiplierForCoverage(double coverage) {
 /// Aggregates military strength for a faction. SPEC/program/military-strength.md.
 /// Uses the same formula as auto-resolve: sum of (FPN+FPM)*medalMultiplier per unit.
 double aggregateMilitaryStrengthForPlayer(Game game, String playerId) {
-  final owUnits = game.worldState.oldWorld.units.where((u) => u.ownerId == playerId).toList();
-  final nwUnits = game.worldState.newWorld.units.where((u) => u.ownerId == playerId).toList();
+  final owUnits = game.worldState.oldWorld.units
+      .where((u) => u.ownerId == playerId)
+      .toList();
+  final nwUnits = game.worldState.newWorld.units
+      .where((u) => u.ownerId == playerId)
+      .toList();
   final effectiveEra = _defenderEffectiveLevel(game, playerId);
-  return _aggregateStrength(owUnits, effectiveEra) + _aggregateStrength(nwUnits, effectiveEra);
+  return _aggregateStrength(owUnits, effectiveEra) +
+      _aggregateStrength(nwUnits, effectiveEra);
 }
