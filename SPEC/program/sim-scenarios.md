@@ -47,7 +47,7 @@ Two initialization types:
 }
 ```
 
-**From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
+**From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. Optional **resourceGrid**: same dimensions as grid; each cell is a resource name (e.g. `"grain"`) or null; used for extraction scenarios (SPEC/game/extraction-and-improvements.md). **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
 
 For saved games (or after fresh/fromTopology init), optional `setup` block injects units and can override player economy for specific test scenarios:
 ```json
@@ -68,6 +68,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **initialWorkers:** Optional. Map player id → `{ "peasants", "apprentices", "journeymen", "masters" }`. Overrides that player's worker pool before the first turn. Used for consumption/starvation scenarios (SPEC/game/workers-and-population.md).
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
+- **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
 
 ---
 

@@ -321,6 +321,20 @@ class ScenarioRunner {
       }
       game = game.copyWith(players: updatedPlayers);
     }
+    if (setup.initialTileState != null && setup.initialTileState!.isNotEmpty) {
+      var tileState = game.worldState.tileState;
+      for (final entry in setup.initialTileState!.entries) {
+        final tileKey = entry.key;
+        final opts = entry.value;
+        final imp = opts['improvementLevel'];
+        final road = opts['roadLevel'];
+        if (imp != null) tileState = tileState.setImprovement(tileKey, imp);
+        if (road != null) tileState = tileState.setRoadLevel(tileKey, road);
+      }
+      game = game.copyWith(
+        worldState: game.worldState.copyWith(tileState: tileState),
+      );
+    }
     return game;
   }
 

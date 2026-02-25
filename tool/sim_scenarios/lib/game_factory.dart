@@ -151,7 +151,28 @@ class GameFactory {
         .toList();
     final height = grid.length;
     final width = height > 0 ? grid[0].length : 0;
-    return TileMapResult(width: width, height: height, grid: grid);
+
+    List<List<Resource?>>? resourceGrid;
+    final rg = json['resourceGrid'] as List<dynamic>?;
+    if (rg != null && rg.length == height) {
+      resourceGrid = rg
+          .map((row) => (row as List<dynamic>)
+              .map((e) => e == null || e == ''
+                  ? null
+                  : Resource.values.byName(e as String))
+              .toList())
+          .toList();
+      if (resourceGrid!.any((row) => row.length != width)) {
+        resourceGrid = null;
+      }
+    }
+
+    return TileMapResult(
+      width: width,
+      height: height,
+      grid: grid,
+      resourceGrid: resourceGrid,
+    );
   }
 
   /// Loads a saved game by ID.

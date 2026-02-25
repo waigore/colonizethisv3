@@ -44,6 +44,7 @@ class ScenarioInit {
 
 /// Setup for saved-game scenarios (unit injection, resource overrides).
 /// initialWorkers / initialStockpile apply after init (fresh or fromTopology).
+/// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
@@ -51,6 +52,7 @@ class ScenarioSetup {
     this.initialWorkers,
     this.initialStockpile,
     this.productionAssignments,
+    this.initialTileState,
   });
 
   final List<UnitPlacement>? units;
@@ -61,6 +63,8 @@ class ScenarioSetup {
   final Map<String, Map<String, int>>? initialStockpile;
   /// Recipe assignments for Production phase (each turn). SPEC/game/stockpiles-and-production.md.
   final List<ProductionAssignment>? productionAssignments;
+  /// Tile key → { improvementLevel: 0-4, roadLevel: 0|1|2|4 }. Applied to worldState.tileState for extraction scenarios.
+  final Map<String, Map<String, int>>? initialTileState;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -331,6 +335,22 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     return result.isEmpty ? null : result;
   }
 
+  Map<String, Map<String, int>>? _parseInitialTileState(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final result = <String, Map<String, int>>{};
+    for (final entry in raw.entries) {
+      if (entry.value is Map) {
+        final inner = <String, int>{};
+        for (final e in (entry.value as Map).entries) {
+          final v = e.value;
+          inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
+        }
+        result[entry.key] = inner;
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
   return ScenarioSetup(
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
@@ -340,6 +360,7 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
     productionAssignments: _parseProductionAssignments(json['productionAssignments']),
+    initialTileState: _parseInitialTileState(json['initialTileState']),
   );
 }
 
