@@ -124,6 +124,7 @@ Assertion fields:
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
 - Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.
+- `player` (faction id: `gp1`, `minor1`, `tribe1`, etc.) + `capitalProvinceId` — the faction's capital province must equal this full province id (e.g. `oldWorld|p1`). Optional `capitalTileKey` — the faction's capital tile must equal this key (format `regionId|provinceId|x|y`). Example: `{"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|0"}`.
 
 **Diplomacy assertions** (SPEC/game/diplomacy.md):
 - Use `player` for the first faction (typically a Great Power) and `relationWith` for the other faction id.
