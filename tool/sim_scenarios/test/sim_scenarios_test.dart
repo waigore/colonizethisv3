@@ -273,6 +273,20 @@ void main() {
         expect(scenario.setup!.initialTech, isNotNull);
         expect(scenario.setup!.initialTech!['gp1'], ['organised_regiments', 'weapon_craftsmanship']);
       });
+
+      test('parses setup defaultCombatMode', () {
+        final json = {
+          'name': 'combat_mode_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england', 'france']}},
+          'setup': {'defaultCombatMode': 'quickBattle'},
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.defaultCombatMode, 'quickBattle');
+      });
     });
 
     group('parseScenarioFile', () {
