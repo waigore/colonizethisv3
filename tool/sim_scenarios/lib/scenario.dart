@@ -47,6 +47,7 @@ class ScenarioInit {
 /// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
 /// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
 /// initialTech: player id → list of tech ids. Overrides Player.techUnlocked for buildability scenarios. SPEC/game/military-units.md.
+/// defaultCombatMode: optional "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
@@ -57,6 +58,7 @@ class ScenarioSetup {
     this.initialTileState,
     this.leaderKeys,
     this.initialTech,
+    this.defaultCombatMode,
   });
 
   final List<UnitPlacement>? units;
@@ -71,8 +73,10 @@ class ScenarioSetup {
   final Map<String, Map<String, int>>? initialTileState;
   /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
   final Map<String, String>? leaderKeys;
-  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, tech-tree.
+  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
   final Map<String, List<String>>? initialTech;
+  /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
+  final String? defaultCombatMode;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -221,6 +225,7 @@ class Assertion {
     this.tileVisibility,
     this.tileProspected,
     this.leaderKey,
+    this.provinceDisplayName,
   });
 
   /// Which turn to check (null = final state)
@@ -228,6 +233,8 @@ class Assertion {
   /// Region ID (e.g., "oldWorld", "newWorld") - optional, used with province
   final String? region;
   final String? province;
+  /// Province display name (SPEC/game/naming.md). Use with [province]: expected Province.displayName.
+  final String? provinceDisplayName;
   final String? player;
   final String? owner;
   /// Negative assertion: province must not be owned by this player id.
@@ -381,6 +388,18 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     return result.isEmpty ? null : result;
   }
 
+  Map<String, List<String>>? _parseInitialTech(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final result = <String, List<String>>{};
+    for (final entry in raw.entries) {
+      final list = entry.value;
+      if (list is List<dynamic>) {
+        result[entry.key] = list.map((e) => e.toString()).toList();
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
   return ScenarioSetup(
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
@@ -393,6 +412,7 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
+    defaultCombatMode: json['defaultCombatMode'] as String?,
   );
 }
 
@@ -561,6 +581,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileVisibility: json['tileVisibility'] as String?,
     tileProspected: json['tileProspected'] as bool?,
     leaderKey: json['leaderKey'] as String?,
+    provinceDisplayName: json['provinceDisplayName'] as String?,
   );
 }
 

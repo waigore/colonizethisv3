@@ -1,6 +1,15 @@
 # sim_scenarios — Batch Scenario Test Driver
 
-**SPEC/program** — Batch test driver that runs scenario tests from JSON files. Each scenario initializes a deterministic game, runs scripted orders for 1-5 turns, and verifies game state assertions.
+**SPEC/program** — Batch test driver that runs scenario tests from JSON files. Each scenario initializes a deterministic game, runs scripted orders for 1-5 turns, and verifies game state assertions. Province and tile identity follow [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Province and tile identity
+
+Province ids in scenario JSON (setup units, order targets, assertion `province` / `capitalProvinceId` / `tileKey`) must be **full** province ids or tile keys per [world-model-identity.md](../game/world-model-identity.md): province id format `regionId|localId` (e.g. `oldWorld|p1`), tile key format `regionId|localId|x|y`. Do not use bare local ids in multi-region scenarios; resolution is region-scoped and uses the prefixed form.
+
+- **Setup units:** The runner accepts either a full province id or a local id in `province`. When the value does not contain `|`, the runner prefixes it with `oldWorld` (single-region or Old World default). For New World provinces use the full id (e.g. `newWorld|nw1`).
+- **Assertions:** StateVerifier resolves province assertions by full id. When optional `region` is present, lookup is restricted to that region; the `province` field must still be the full province id (`regionId|localId`) to match game state. Tile keys in assertions (e.g. fog/exploration, capital) use the 4-part format.
 
 ---
 
@@ -69,8 +78,9 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
-- **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power’s `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
-- **initialTech:** Optional. Map player id → list of tech ids. Overrides that player’s `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability scenarios (SPEC/game/military-units.md, tech-tree).
+- **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power's `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
+- **initialTech:** Optional. Map player id → list of tech ids. Overrides that player's `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability (SPEC/game/military-units.md), deployment-limit (SPEC/game/military-generals.md: base 10 vs 12 with Nationalism), and tech-tree scenarios.
+- **defaultCombatMode:** Optional. String `"quickBattle"` or `"autoResolve"`. Overrides `Game.defaultCombatMode` so combat in the scenario uses Quick Battle or auto-resolve. Used for Quick Battle scenarios (SPEC/game/quick-battle.md).
 
 ---
 
@@ -135,12 +145,13 @@ State verification after each turn or at final state:
 
 Assertion fields:
 - `turn` — Which turn to check (optional, defaults to final state)
-- `province` — Province ID to check
+- `province` — Province ID to check (full id `regionId|localId` per § Province and tile identity)
 - `owner` — Expected owner player ID
 - `notOwner` — Negative assertion: province must not be owned by this player ID
 - `unitCount` — Expected unit count (exact or range via `matchType`)
 - `hasUnit` — Specific unit ID that must be present
 - `hasPlayerUnits` — Any units belonging to player must be present
+- `provinceDisplayName` — With `province`: expected `Province.displayName` (SPEC/game/naming.md). Verifies naming phase assigned the expected name (e.g. GP capital gets capital city name).
 - `stockpile` — Resource stockpile amount (sum of all commodities in player stockpile)
 - `stockpileCommodity` — With `player` and `commodity` (commodity id): expected quantity of that commodity in the player's central stockpile. Supports `matchType`.
 - `treasury` — Treasury amount
@@ -149,7 +160,7 @@ Assertion fields:
 **Worker and stockpile assertions** (SPEC/game/workers-and-population.md): use `player` with optional `workerPeasants`, `workerApprentices`, `workerJourneymen`, `workerMasters` (expected count each). Use `player` with `commodity` (commodity id, e.g. `grain`) and `stockpileCommodity` (expected quantity) for per-commodity stockpile checks.
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
-- Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.
+- Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player's capital. Verifies the capital-choice phase selected the expected province.
 - `player` (faction id: `gp1`, `minor1`, `tribe1`, etc.) + `capitalProvinceId` — the faction's capital province must equal this full province id (e.g. `oldWorld|p1`). Optional `capitalTileKey` — the faction's capital tile must equal this key (format `regionId|provinceId|x|y`). Example: `{"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|0"}`.
 
 **Diplomacy assertions** (SPEC/game/diplomacy.md):
@@ -163,7 +174,7 @@ Assertion fields:
 
 **Resource-placement assertions** (SPEC/game/resource-terrain-region-rules.md):
 - `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.
-- `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile’s region per resource rules. Optional `region` restricts to one region.
+- `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile's region per resource rules. Optional `region` restricts to one region.
 - `region` + `maxBothFraction` — **resourcePlacementCap:** in the given region, the fraction of placed resources that are “both” (timber, iron, copper, tin, coal) is ≤ this value (default 0.30). Example: `{"region": "oldWorld", "maxBothFraction": 0.30}`.
 
 **Economy / production assertions** (SPEC/game/production-recipes.md): use `player`, `commodity` (commodity id), and `stockpileCommodity` (expected quantity) to assert per-commodity stockpile after a turn or final state; supports `matchType`.
