@@ -32,3 +32,11 @@ Replace **Section 7 (Load Savegame flow)** and extend implementation so that ove
 
 - **Spec (map-data.md or game/world-model):**
   - Optionally note that `Game` may carry an optional `greatPowerColorOverride` (setup-time GP map colours) for display; when present it is used by map visualizers and ctdev, and when absent GDD defaults apply.
+
+---
+
+## Acceptance criteria
+
+- **Override persist and load:** Save a game created with GP colour overrides (Init Game Config) → load savegame → Init Game Map Debug shows the same colours; Start Game → Running Game map shows the same colours (not GDD defaults).
+- **Legacy / no override:** Load a save with no override (legacy or default setup) → both Init Game Map Debug and Running Game use GDD default colours.
+- **Serialization round-trip:** `greatPowerColorOverride` round-trips in `Game.toJson` / `Game.fromJson` (optional unit test in colonizethis_models or save package).
