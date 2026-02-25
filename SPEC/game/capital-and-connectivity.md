@@ -1,8 +1,10 @@
 # Capital and Connectivity
 
-**SPEC/game** — Capital definition, setup, and connectivity rules for extraction. Reference: Imperialism II 02-economy. Flow: [stockpiles-and-production.md](stockpiles-and-production.md), [auto-transport.md](../program/auto-transport.md).
+**SPEC/game** — Capital definition, setup, and connectivity rules for extraction. Reference: Imperialism II 02-economy. Flow: [stockpiles-and-production.md](stockpiles-and-production.md), [auto-transport.md](../program/auto-transport.md). Province and tile identity (capital province, town keys, connectivity state) use prefixed province ids and tile keys per [world-model-identity.md](world-model-identity.md).
 
 Connectivity in this document applies **only to extraction**: it determines which tiles contribute to resource extraction and flow to the player's stockpile. It is a **tile-level** concept — each tile is either connected or not for a given player. Connectivity output is consumed by the extraction pipeline; see [extraction-pipeline.md](../program/extraction-pipeline.md).
+
+**Province and tile identity:** All province ids in game state and in capital/town/connectivity logic use **prefixed** form (`regionId|localId`). Tile keys use the 4-part format `regionId|localId|x|y`. See [world-model-identity.md](world-model-identity.md).
 
 ---
 
