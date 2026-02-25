@@ -28,7 +28,7 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       final config = const AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(999);
@@ -64,7 +64,7 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final base = AISeedBundle.fromTurnSeed(0);
@@ -113,7 +113,7 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final base = AISeedBundle.fromTurnSeed(0);

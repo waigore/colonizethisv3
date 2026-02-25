@@ -15,7 +15,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final goal = selectPrimaryGoal(snapshot, config, 42);
@@ -33,7 +33,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final goal = selectPrimaryGoal(snapshot, config, 1);
@@ -50,7 +50,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final goal = selectPrimaryGoal(snapshot, config, 2);
@@ -67,7 +67,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final goal = selectPrimaryGoal(snapshot, config, 3);
@@ -84,7 +84,7 @@ void main() {
       );
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       final goal = selectPrimaryGoal(snapshot, config, 4);

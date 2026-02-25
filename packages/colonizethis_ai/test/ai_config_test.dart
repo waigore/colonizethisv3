@@ -6,18 +6,18 @@ void main() {
     test('holds leaderId personalityId hiddenAgendaId', () {
       const config = AIConfig(
         leaderId: 'victoria',
-        personalityId: 'industrial_trader',
+        personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
       expect(config.leaderId, 'victoria');
-      expect(config.personalityId, 'industrial_trader');
+      expect(config.personalityId, 'victoria');
       expect(config.hiddenAgendaId, 'peacemaker');
       expect(config.difficultyModifiers, isEmpty);
     });
     test('accepts difficultyModifiers', () {
       const config = AIConfig(
         leaderId: 'napoleon',
-        personalityId: 'militant',
+        personalityId: 'napoleon',
         hiddenAgendaId: 'warmonger',
         difficultyModifiers: {'resourceBonus': 1.2},
       );
