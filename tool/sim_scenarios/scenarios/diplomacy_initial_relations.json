@@ -1,0 +1,18 @@
+{
+  "name": "diplomacy_initial_relations",
+  "description": "SPEC/game/diplomacy.md: Given a new game with at least two Great Powers, when the system initializes diplomatic relations at turn index 0, then each unordered GP pair has relation state atPeace, relation score 50, relation level neutral, sinceTurn 0, lastInteractionTurn 0.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 0,
+      "tribeCount": 0
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "relationWith": "gp2", "relationState": "atPeace", "relationScore": 50, "relationLevel": "neutral", "relationSinceTurn": 0, "relationLastInteractionTurn": 0}
+  ]
+}

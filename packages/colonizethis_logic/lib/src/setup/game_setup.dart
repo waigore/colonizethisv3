@@ -221,6 +221,9 @@ GameSetupResult createGameFromGeneratedMaps({
     namingSeed: namingSeed ?? config.seed,
   );
 
+  // Initial GP–GP relations per SPEC/game/diplomacy.md: AT_PEACE, score 50, Neutral, sinceTurn/lastInteractionTurn 0.
+  game = _applyInitialGpGpDiplomacy(game: game);
+
   // Spawn starting units for each Great Power in their capital provinces.
   game = _addStartingUnits(game: game, config: config);
 
@@ -278,6 +281,31 @@ List<String> _provinceIdsFromTopology(MapTopology topology) {
       .where((n) => n.type == TopologyNodeType.province)
       .map((n) => n.id)
       .toList();
+}
+
+/// Initial GP–GP relations per SPEC/game/diplomacy.md: each unordered GP pair
+/// AT_PEACE, score 50, Neutral, sinceTurn 0, lastInteractionTurn 0.
+Game _applyInitialGpGpDiplomacy({required Game game}) {
+  final gpIds = game.players.map((p) => p.id).toList();
+  if (gpIds.length < 2) return game;
+  final relations = <DiplomacyRelation>[];
+  for (var i = 0; i < gpIds.length; i++) {
+    for (var j = i + 1; j < gpIds.length; j++) {
+      final a = gpIds[i];
+      final b = gpIds[j];
+      final (id1, id2) = a.compareTo(b) <= 0 ? (a, b) : (b, a);
+      relations.add(DiplomacyRelation(
+        factionId1: id1,
+        factionId2: id2,
+        score: 50,
+        level: RelationLevel.neutral,
+        state: RelationState.atPeace,
+        sinceTurn: 0,
+        lastInteractionTurn: 0,
+      ));
+    }
+  }
+  return game.copyWith(diplomacyRelations: relations);
 }
 
 Game _applyInitialVisibility({
