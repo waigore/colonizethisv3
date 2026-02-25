@@ -4,7 +4,8 @@
   ],
   "game/capital-choice-phase.md": [],
   "game/civilian-units.md": [
-    "civilian_units_basic.json"
+    "civilian_units_basic.json",
+    "civilian_units_starting.json"
   ],
   "game/combat.md": [],
   "game/commodity-catalog.md": [],
