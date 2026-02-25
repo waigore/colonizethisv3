@@ -1,7 +1,7 @@
 {
   "game/capital-and-connectivity.md": ["capital_and_connectivity_init.json"],
   "game/capital-choice-phase.md": ["capital_choice_phase_basic.json", "capital_choice_gp_seabound.json", "capital_choice_tribe_inland.json"],
-  "game/civilian-units.md": ["civilian_units_starting.json"],
+  "game/civilian-units.md": ["civilian_units_basic.json", "civilian_units_starting.json"],
   "game/combat.md": ["combat_basic.json"],
   "game/commodity-catalog.md": ["commodity_riches_to_treasury.json"],
   "game/diplomacy.md": [],
