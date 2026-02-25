@@ -1,0 +1,53 @@
+{
+  "name": "diplomacy_initial_relations",
+  "description": "Verifies initial GP–GP diplomacy: AT_PEACE, score 50, Neutral, sinceTurn=0, lastInteractionTurn=0 (SPEC/game/diplomacy.md).",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england", "france", "spain"],
+      "continentCount": 4,
+      "minorNationCount": 4,
+      "tribeCount": 6
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "player": "gp1",
+      "relationWith": "gp2",
+      "relationState": "atPeace",
+      "relationScore": 50,
+      "relationLevel": "neutral",
+      "relationSinceTurn": 0,
+      "relationLastInteractionTurn": 0
+    },
+    {
+      "turn": 1,
+      "player": "gp1",
+      "relationWith": "gp3",
+      "relationState": "atPeace",
+      "relationScore": 50,
+      "relationLevel": "neutral",
+      "relationSinceTurn": 0,
+      "relationLastInteractionTurn": 0
+    },
+    {
+      "turn": 1,
+      "player": "gp2",
+      "relationWith": "gp3",
+      "relationState": "atPeace",
+      "relationScore": 50,
+      "relationLevel": "neutral",
+      "relationSinceTurn": 0,
+      "relationLastInteractionTurn": 0
+    }
+  ]
+}
+
