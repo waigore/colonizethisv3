@@ -10,7 +10,7 @@ const String _suffixTopologyByRegion = '_topologyByRegion';
 const String _suffixCombinedTopology = '_combinedTopology';
 
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
-/// Optional map data (tile maps, topology) can be stored per game for Load Savegame view. SPEC/project/phase-1, plan-update-gp-colours-save-load.
+/// Optional map data (tile maps, topology) can be stored per game for Load Savegame view. See SPEC/program/save-load.md.
 class GameSaveAdapter {
   /// Saves [game] to [box]. Key = game.id, value = game.toJson().
   void save(Box<dynamic> box, Game game) {
