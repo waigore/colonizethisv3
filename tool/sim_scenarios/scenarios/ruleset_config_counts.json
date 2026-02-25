@@ -1,0 +1,23 @@
+{
+  "name": "ruleset_config_counts",
+  "description": "SPEC/game/ruleset-config.md: configurable values (GP/Minor/Tribe counts) are fixed at game creation; game setup uses config from init. Given init config with 2 GPs, 3 minors, 2 tribes, when game is created then faction counts match config.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 2,
+      "minorNationCount": 3,
+      "tribeCount": 2,
+      "numProvincesOldWorld": 12,
+      "numProvincesNewWorld": 4,
+      "minProvincesPerMinor": 2
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    { "turn": 1, "greatPowerCount": 2, "minorNationCount": 3, "tribeCount": 2 }
+  ]
+}
