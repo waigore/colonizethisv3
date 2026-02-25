@@ -285,6 +285,42 @@ class ScenarioRunner {
     if (players != game.players) {
       game = game.copyWith(players: players);
     }
+    if (setup.initialStockpile != null && setup.initialStockpile!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final quantities = setup.initialStockpile![player.id];
+        if (quantities == null || quantities.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        var stockpile = const Stockpile();
+        for (final entry in quantities.entries) {
+          if (entry.value > 0) {
+            stockpile = stockpile.applyDelta(entry.key, entry.value);
+          }
+        }
+        updatedPlayers.add(player.copyWith(stockpile: stockpile));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
+    if (setup.initialWorkers != null && setup.initialWorkers!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final counts = setup.initialWorkers![player.id];
+        if (counts == null || counts.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        final pool = WorkerPool(
+          peasants: counts['peasants'] ?? 0,
+          apprentices: counts['apprentices'] ?? 0,
+          journeymen: counts['journeymen'] ?? 0,
+          masters: counts['masters'] ?? 0,
+        );
+        updatedPlayers.add(player.copyWith(workerPool: pool));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
     return game;
   }
 
