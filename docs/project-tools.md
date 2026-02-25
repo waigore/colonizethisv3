@@ -63,10 +63,11 @@ melos run generate_map -- [options]
 - `--tiles-per-province N` (default: 35)
 - `--sea-fraction F` (default: 0.6; sea fraction 0–1)
 - `--interactive` — prompt for province id and show detail; type `q` to quit
-- `--tile-map` — generate tile map and print map summary
 - `--tile-map-image[=path]` — export tile map as PNG. If path given, write there; otherwise temp file. Tries to open in default viewer.
+- `--tile-size N` — pixels per cell in PNG (default: 24).
+- `--topology-graph[=path]` — export topology as DOT (and PNG when Graphviz installed). Path derived from tile-map-image path when omitted.
 - `--seed <n>` — seed for map generation (default: random)
-- `--world-state <path>` — load world state JSON for owner in province detail (path relative to repo root)
+- `--world-state <path>` — load world state JSON for owner in province detail (path must exist)
 - `--join-continents` — enable join step (Pass 10); default off
 - `--seed-before-assignment` — use legacy land assignment; default off
 - `--skip-fill-lakes` — skip Pass 4 (fill lakes); default off

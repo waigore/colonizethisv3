@@ -67,6 +67,27 @@ The **military tech table in this doc is the GDD source of truth** for tech id, 
 
 ---
 
+## Deferred effect types (MVP)
+
+The following effect types appear in the tech table above but are **deferred** for MVP: no implementation applies them in the current codebase.
+
+| Tech id | Effect text | Where it would apply when implemented |
+|---------|-------------|----------------------------------------|
+| industrial_machinery | 25% cheaper military attack | See **Cheaper attack (owner decision)** below. |
+| modern_military_funding | Cheaper attack | Same as above. |
+| industrial_funding_of_research | Research efficiency; military/naval tech | Research points or cost modifier for military/naval tech per [research-resolution.md](../program/research-resolution.md). |
+
+**Cheaper attack (owner decision):** The exact application point for *industrial_machinery* (25% cheaper military attack) and *modern_military_funding* (Cheaper attack) is **not yet decided**. Candidate application points:
+
+- **Treasury cost** when issuing an attack order (e.g. declaring war, launching attack) — modifier would apply in order validation or cost resolution per [orders.md](../program/orders.md).
+- **Combat strength or damage** in auto-resolve / Quick Battle — modifier would apply in [combat-resolution.md](../program/combat-resolution.md) or [quick-battle-resolution.md](../program/quick-battle-resolution.md).
+
+The magnitude (e.g. 25% for industrial_machinery, and the value for modern_military_funding) may be fixed in design or configurable via ruleset per [ruleset-config.md](../program/ruleset-config.md); owner decision required. Once decided, document the chosen application point and configurability here and in the relevant TDD.
+
+**Implementation status:** No TDD or code path currently applies these modifiers. The table in this doc remains the GDD source of truth for tech id, prerequisites, and regiment unlocks; the deferred effects are documented here so contributors can distinguish implemented behaviour (regiment/fort unlocks) from deferred behaviour (cost/efficiency modifiers). See [tech-tree.md](tech-tree.md) § Effect Types for the general effect taxonomy.
+
+---
+
 ## Acceptance criteria
 
 - **Regiment buildability:** A regiment type is buildable iff its unlocking tech (per this doc) is in the player's `techUnlocked` set.

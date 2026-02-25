@@ -30,6 +30,8 @@ Both AIPlanner and the sim-game default AI share the same simple heuristics core
 ### Phase 6 (Full AI)
 Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply.
 
+**Hidden agenda assignment:** Games using full AI have hidden agendas assigned at setup or init, per [hidden-agendas.md](../ai/hidden-agendas.md). Before the first call to full AI order generation (`generateOrdersForPlayerFullAI`), the caller must invoke `assignHiddenAgendasForGame` (colonizethis_ai) so that `game.hiddenAgendaByGpId` is populated for all AI-controlled GPs. **Where invoked:** Main game path: `runInitGame` (colonizethis_logic init_game_orchestrator) calls `assignHiddenAgendasForGame` before returning InitGameResult, so the main app receives a game with agendas set. Sim path: ctdev `SimGameController` calls it when `useFullAI` is true (when starting a sim game). See [game-setup-pipeline.md](game-setup-pipeline.md) step 9.
+
 ### Order Merge
 Combined human + AI orders into deterministic list for turn resolution:
 - Stable ordering (player id → unit id → order type).
@@ -39,7 +41,7 @@ Combined human + AI orders into deterministic list for turn resolution:
 ## Integration
 
 - **Phase:** AI orders generated before turn resolution each turn.
-- **Upstream:** PlayerView, order suggestion API, game state.
+- **Upstream:** PlayerView, order suggestion API, game state. For Phase 6 full AI: `assignHiddenAgendasForGame` must have been called at setup/init (game setup pipeline or ctdev sim controller) so that hidden agendas are set before first full AI order generation.
 - **Downstream:** Merged orders → TurnResolver.
 - **ctdev:** All GPs are AI-controlled in sim. User chooses Sim Game AI or AI Planner. Turn seed displayed for debugging. AI order history in Orders tab (read-only diagnostic). See [ctdev-app.md](ctdev-app.md).
 
@@ -48,7 +50,7 @@ Combined human + AI orders into deterministic list for turn resolution:
 - **Control rules:** Game state persists per-GP control type; AIPlanner only produces orders for AI-controlled Great Powers; human-controlled units never receive AI orders.
 - **Seeding and determinism:** Per-AI seeds and per-turn `turnSeed` (with documented sub-seeds) are the only randomness inputs; given the same game state and seeds, AIPlanner produces the same strategic and tactical decisions.
 - **Phase 4 behaviour:** Minimal AI uses PlayerView and the order suggestion API with the documented category order and caps; it does not construct raw orders, and Quick Battle actions depend only on `tacticalSeed` and battle state.
-- **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec.
+- **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec. Games using full AI have hidden agendas assigned at setup/init; the caller (game setup or sim controller) invokes `assignHiddenAgendasForGame` before the first `generateOrdersForPlayerFullAI` call.
 - **Order merge:** Merged order list preserves stable ordering (player → unit → type), respects human precedence, emits at most one AI order per unit, and is fully validated and deterministic.
 
 ## Constraints

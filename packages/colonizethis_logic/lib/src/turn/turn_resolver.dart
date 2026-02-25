@@ -151,8 +151,10 @@ Game resolveTurnForGame({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   void Function(DialogueEvent)? onDialogue,
+
   /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+      onProductionComplete,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
@@ -218,6 +220,7 @@ Game resolveTurnForGame({
           state,
           orders,
           topology: topology,
+          tileMapByRegion: tileMapByRegion,
           onDialogue: onDialogue,
         );
         break;
@@ -254,8 +257,8 @@ Orders _filterAcceptedOrdersForAllPlayers({
     final moves = original.moveOrdersByPlayerId[playerId] ?? const [];
     final builds = original.buildUnitOrdersByPlayerId[playerId] ?? const [];
     final works = original.workOrdersByPlayerId[playerId] ?? const [];
-    final diplo =
-        original.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
+    final diplo = original.diplomaticOrdersByPlayerId[playerId] ??
+        const <DiplomaticOrder>[];
 
     if (moves.isEmpty && builds.isEmpty && works.isEmpty && diplo.isEmpty) {
       continue;
@@ -285,9 +288,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
     for (final b in builds) {
       final r = _next();
       if (r.isAccepted) {
-        buildByPlayer
-            .putIfAbsent(playerId, () => <BuildUnitOrder>[])
-            .add(b);
+        buildByPlayer.putIfAbsent(playerId, () => <BuildUnitOrder>[]).add(b);
       }
     }
     for (final w in works) {
@@ -428,6 +429,16 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
           .add(u.locationProvinceId);
     }
   }
+
+  // Provinces with an active Spy reveal timer for each player (timer > 0).
+  // These provinces must remain fully visible until the timer reaches 0 and is cleared.
+  final provincesWithSpyTimerByPlayer = <String, Set<String>>{};
+  for (final entry in game.worldState.spyRevealTurnsByPlayer.entries) {
+    final playerId = entry.key;
+    final provinces = entry.value.keys;
+    if (provinces.isEmpty) continue;
+    provincesWithSpyTimerByPlayer[playerId] = provinces.toSet();
+  }
   for (final u in game.worldState.newWorld.units) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
       provincesWithExplorerByPlayer
@@ -441,14 +452,17 @@ Map<String, Map<String, String>> _applyFogDecay(Game game) {
     final playerId = entry.key;
     final visibility = Map<String, String>.from(entry.value);
     final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
+    final hasSpyTimerIn = provincesWithSpyTimerByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
       final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
-      final ownerId = owOwnerByProvince[fullProvinceId] ?? nwOwnerByProvince[fullProvinceId];
+      final ownerId = owOwnerByProvince[fullProvinceId] ??
+          nwOwnerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(fullProvinceId)) {
+      if (!hasExplorerIn.contains(fullProvinceId) &&
+          !hasSpyTimerIn.contains(fullProvinceId)) {
         visibility[tileKey] = VisibilityLevel.fogged.name;
       }
     }
@@ -514,7 +528,8 @@ Game _runExtractionPhase(
   );
   var currentState = state;
   final updatedPlayers = <Player>[];
-  var extractionSeed = (state.globalGameSeed ?? 0) ^ (state.worldState.turnState.turnNumber * 0x9E3779B1);
+  var extractionSeed = (state.globalGameSeed ?? 0) ^
+      (state.worldState.turnState.turnNumber * 0x9E3779B1);
   for (final player in state.players) {
     var stockpile = player.stockpile;
     final tot = extraction[player.id];
@@ -534,7 +549,8 @@ Game _runExtractionPhase(
         );
         overseasDelivered = interception.reducedDelivered;
         currentState = currentState.copyWith(
-          worldState: currentState.worldState.copyWith(fleets: interception.updatedFleets),
+          worldState: currentState.worldState
+              .copyWith(fleets: interception.updatedFleets),
         );
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
@@ -547,7 +563,8 @@ Game _runExtractionPhase(
 Game _runProductionPhase(
   Game game,
   List<AssignedRecipe> defaultAssignments,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)? onProductionComplete,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+      onProductionComplete,
 ) {
   final updatedPlayers = <Player>[];
   final productionByRecipeByPlayerId = <String, Map<String, int>>{};
@@ -667,6 +684,7 @@ Game _runMovementPhase(
     void recordSpyLeft(String ownerId, String provinceId) {
       spyTimers.putIfAbsent(ownerId, () => {})[provinceId] = 5;
     }
+
     for (final u in state.worldState.oldWorld.units) {
       if (!isSpyUnit(u.type)) continue;
       final after = oldWorld.units.where((x) => x.id == u.id).firstOrNull;
@@ -750,7 +768,8 @@ Game _applyNavalMovesAndShipReveal(
   Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId,
 ) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
-  var visibilityByTile = Map<String, Map<String, String>>.from(game.worldState.playerVisibilityByTile);
+  var visibilityByTile = Map<String, Map<String, String>>.from(
+      game.worldState.playerVisibilityByTile);
   final fleetById = {for (final f in fleets) f.id: f};
   final nodesById = {for (final n in topology.nodes) n.id: n};
 
@@ -759,7 +778,8 @@ Game _applyNavalMovesAndShipReveal(
     for (final order in entry.value) {
       final fleet = fleetById[order.fleetId];
       if (fleet == null || fleet.ownerId != playerId) continue;
-      if (!isAdjacentSeaZone(topology, fleet.seaZoneId, order.destinationSeaZoneId)) continue;
+      if (!isAdjacentSeaZone(
+          topology, fleet.seaZoneId, order.destinationSeaZoneId)) continue;
 
       final newFleet = fleet.copyWith(seaZoneId: order.destinationSeaZoneId);
       final idx = fleets.indexWhere((f) => f.id == fleet.id);
@@ -769,7 +789,8 @@ Game _applyNavalMovesAndShipReveal(
       }
 
       // Ship reveal: coastal provinces of destination sea zone -> revealed for owner.
-      final provinceIds = provinceIdsAdjacentToSeaZone(topology, order.destinationSeaZoneId);
+      final provinceIds =
+          provinceIdsAdjacentToSeaZone(topology, order.destinationSeaZoneId);
       final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
       for (final localProvinceId in provinceIds) {
         final node = nodesById[localProvinceId];
@@ -777,7 +798,9 @@ Game _applyNavalMovesAndShipReveal(
         final regionId = node.regionId;
         if (regionId.isEmpty) continue;
         final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
-        final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? [];
+        final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]
+                ?[fullProvinceId] ??
+            [];
         for (final tk in tileKeys) {
           vis[tk] = VisibilityLevel.revealed.name;
         }
@@ -808,7 +831,8 @@ Game _runNavalInterceptionCombatPhase(
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
   };
-  var seed = (game.globalGameSeed ?? 0) ^ (game.worldState.turnState.turnNumber * 0x9E3779B1);
+  var seed = (game.globalGameSeed ?? 0) ^
+      (game.worldState.turnState.turnNumber * 0x9E3779B1);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
@@ -818,24 +842,32 @@ Game _runNavalInterceptionCombatPhase(
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
-    state = applyNavalBattleResults(state, battle, result, regionId, topology: topology);
+    state = applyNavalBattleResults(state, battle, result, regionId,
+        topology: topology);
     // Evidence: AI won naval battle (one side eliminated). SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
     String? victorId;
     String? loserId;
-    if (result.survivingShipTypeIdsSide1.isEmpty && result.survivingShipTypeIdsSide2.isNotEmpty) {
+    if (result.survivingShipTypeIdsSide1.isEmpty &&
+        result.survivingShipTypeIdsSide2.isNotEmpty) {
       victorId = battle.side2.ownerId;
       loserId = battle.side1.ownerId;
-    } else if (result.survivingShipTypeIdsSide2.isEmpty && result.survivingShipTypeIdsSide1.isNotEmpty) {
+    } else if (result.survivingShipTypeIdsSide2.isEmpty &&
+        result.survivingShipTypeIdsSide1.isNotEmpty) {
       victorId = battle.side1.ownerId;
       loserId = battle.side2.ownerId;
     }
     if (victorId != null && loserId != null) {
-      final evidence = evidenceForNavalBattleVictory(state, victorId, loserId, turn);
+      final evidence =
+          evidenceForNavalBattleVictory(state, victorId, loserId, turn);
       if (evidence.isNotEmpty) {
-        state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+        state = state.copyWith(dossierEvidenceEntries: [
+          ...state.dossierEvidenceEntries,
+          ...evidence
+        ]);
       }
       final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
-      final events = dialogueEventsForNavalBattleResult(state, victorId, loserId, turn, dialogueSeed);
+      final events = dialogueEventsForNavalBattleResult(
+          state, victorId, loserId, turn, dialogueSeed);
       if (onDialogue != null && events.isNotEmpty) {
         for (final e in events) onDialogue(e);
       }
@@ -870,7 +902,8 @@ Game _runCombatPhase(
           : null,
     );
     if (mode == CombatMode.quickBattle) {
-      final input = buildQuickBattleInput(state, ctx, seed: state.worldState.turnState.turnNumber);
+      final input = buildQuickBattleInput(state, ctx,
+          seed: state.worldState.turnState.turnNumber);
       final qbResult = resolveQuickBattle(input);
       state = applyQuickBattleResultToGame(state, ctx, qbResult);
       // Evidence: AI won land battle as attacker. SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
@@ -878,13 +911,22 @@ Game _runCombatPhase(
           qbResult.provinceFlips &&
           ctx.attackers.isNotEmpty) {
         final victorId = ctx.attackers.first.factionId;
-        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        final evidence = evidenceForLandBattleVictory(
+            state, victorId, ctx.defenderFactionId, turn);
         if (evidence.isNotEmpty) {
-          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+          state = state.copyWith(dossierEvidenceEntries: [
+            ...state.dossierEvidenceEntries,
+            ...evidence
+          ]);
         }
         final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
         final events = dialogueEventsForLandBattleResult(
-          state, victorId, ctx.defenderFactionId, ctx.provinceId, turn, dialogueSeed,
+          state,
+          victorId,
+          ctx.defenderFactionId,
+          ctx.provinceId,
+          turn,
+          dialogueSeed,
         );
         if (onDialogue != null && events.isNotEmpty) {
           for (final e in events) onDialogue(e);
@@ -893,14 +935,22 @@ Game _runCombatPhase(
         // Quick battle ended with defender holding or draw: loser is attacker, victor is defender.
         final victorId = qbResult.winner == QuickBattleWinner.defender
             ? ctx.defenderFactionId
-            : (qbResult.provinceFlips && ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null);
-        final loserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
-            ? ctx.attackers.first.factionId
-            : (victorId != null ? ctx.defenderFactionId : null);
+            : (qbResult.provinceFlips && ctx.attackers.isNotEmpty
+                ? ctx.attackers.first.factionId
+                : null);
+        final loserId =
+            victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+                ? ctx.attackers.first.factionId
+                : (victorId != null ? ctx.defenderFactionId : null);
         if (victorId != null && loserId != null) {
           final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
           final events = dialogueEventsForLandBattleResult(
-            state, victorId, loserId, ctx.provinceId, turn, dialogueSeed,
+            state,
+            victorId,
+            loserId,
+            ctx.provinceId,
+            turn,
+            dialogueSeed,
           );
           if (onDialogue != null && events.isNotEmpty) {
             for (final e in events) onDialogue(e);
@@ -914,22 +964,35 @@ Game _runCombatPhase(
         feedingCoverageByPlayerId: feedingCoverageByPlayerId,
       );
       // Evidence: AI won land battle (province flipped). Same spec refs.
-      final region = ctx.regionId == kRegionOldWorld ? state.worldState.oldWorld : state.worldState.newWorld;
-      final province = region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
+      final region = ctx.regionId == kRegionOldWorld
+          ? state.worldState.oldWorld
+          : state.worldState.newWorld;
+      final province =
+          region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
       final victorId = province?.ownerId;
       if (victorId != null && victorId != ctx.defenderFactionId) {
-        final evidence = evidenceForLandBattleVictory(state, victorId, ctx.defenderFactionId, turn);
+        final evidence = evidenceForLandBattleVictory(
+            state, victorId, ctx.defenderFactionId, turn);
         if (evidence.isNotEmpty) {
-          state = state.copyWith(dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...evidence]);
+          state = state.copyWith(dossierEvidenceEntries: [
+            ...state.dossierEvidenceEntries,
+            ...evidence
+          ]);
         }
       }
       final effectiveVictorId = victorId ?? ctx.defenderFactionId;
-      final effectiveLoserId = victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
-          ? ctx.attackers.first.factionId
-          : ctx.defenderFactionId;
+      final effectiveLoserId =
+          victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
+              ? ctx.attackers.first.factionId
+              : ctx.defenderFactionId;
       final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
       final events = dialogueEventsForLandBattleResult(
-        state, effectiveVictorId, effectiveLoserId, ctx.provinceId, turn, dialogueSeed,
+        state,
+        effectiveVictorId,
+        effectiveLoserId,
+        ctx.provinceId,
+        turn,
+        dialogueSeed,
       );
       if (onDialogue != null && events.isNotEmpty) {
         for (final e in events) onDialogue(e);
@@ -940,7 +1003,8 @@ Game _runCombatPhase(
   }
   // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
-    state = _applyCapitalReassignmentAfterCombat(state, topology, tileMapByRegion);
+    state =
+        _applyCapitalReassignmentAfterCombat(state, topology, tileMapByRegion);
   }
   return state;
 }
@@ -959,7 +1023,8 @@ Game _applyCapitalReassignmentAfterCombat(
     final region = regionId == kRegionOldWorld
         ? state.worldState.oldWorld
         : state.worldState.newWorld;
-    final province = region.provinces.where((p) => p.id == capProvinceId).firstOrNull;
+    final province =
+        region.provinces.where((p) => p.id == capProvinceId).firstOrNull;
     if (province == null) continue;
     if (province.ownerId == player.id) continue;
     // Player lost capital. Choose new capital in original region from owned provinces; prefer seaboard.
@@ -973,7 +1038,8 @@ Game _applyCapitalReassignmentAfterCombat(
         return p.copyWith(capitalProvinceId: null, capitalTile: null);
       }).toList();
       game = game.copyWith(players: updatedPlayers);
-      _log.i('logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared');
+      _log.i(
+          'logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared');
       continue;
     }
     final tileMap = tileMapByRegion[regionId];
@@ -994,9 +1060,11 @@ Game _applyCapitalReassignmentAfterCombat(
         topology: topology,
         tileMapByRegion: tileMapByRegion,
       );
-      _log.i('logic: player ${player.id} capital reassigned to $newProvinceId after loss');
+      _log.i(
+          'logic: player ${player.id} capital reassigned to $newProvinceId after loss');
     } catch (e, st) {
-      _log.w('logic: capital reassignment failed for ${player.id}', error: e, stackTrace: st);
+      _log.w('logic: capital reassignment failed for ${player.id}',
+          error: e, stackTrace: st);
     }
   }
   return game;

@@ -16,7 +16,7 @@ The **dossier** is the player’s intelligence view of another (e.g. AI) nation.
 |---------|----------|--------|
 | **Basic intel** | Visible personality/archetype (e.g. Fortifier), current relation with observer, relative military/economic strength. | Game state, visibility rules. Updated every turn or when relation/strength changes. |
 | **Hidden agenda analysis** | Per-agenda **suspicion score** (0–10+); display band: Unknown, Possible, Likely, Almost certain, Confirmed. Best-guess agenda id and confidence % for display. | Evidence accumulation (see [hidden-agendas.md](hidden-agendas.md)). Updated when evidence is added. |
-| **Evidence list** | Capped, chronological list of evidence entries the observer has seen (e.g. “Declared war on weaker neighbor, Turn 34”). No raw counter; only human-readable summary. | Evidence log for (observerId, subjectId). |
+| **Evidence list** | Capped, chronological list of evidence entries the observer has seen (e.g. “Declared war on weaker neighbor, Turn 34”). No raw counter; only human-readable summary. When new entries would exceed the cap, the system drops the oldest entries so the list remains capped and chronological. | Evidence log for (observerId, subjectId). |
 | **Behavioral notes** | War history (who they declared on, when, outcome), diplomatic pattern (alliances accepted/broken), military buildup (e.g. fort focus). | Derived from game events and visibility. |
 | **Timeline** | Chronological list of notable actions (wars, treaties, visible builds) relevant to dossier. | Same as behavioral notes, optionally more granular. |
 
@@ -47,7 +47,7 @@ Storage:
 
 ## Evidence list cap
 
-- **MVP cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by a program-level constant in `colonizethis_data`. When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological.
+- **MVP cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by a program-level constant in `colonizethis_data` (`kMaxDossierEvidenceEntries`, default `50`). When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological.
 - **Post-MVP ruleset:** Future releases may promote this cap to a ruleset-configurable value (for example per scenario or difficulty). When that happens, this document and the TDD implementation spec (`ai-events-and-dossier.md` § Evidence and Dossier) are the source of truth for how the cap is read and applied.
 
 ---

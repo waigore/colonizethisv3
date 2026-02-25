@@ -95,7 +95,9 @@ void main(List<String> args) async {
       _log.i('logic: sim_scenarios: Running scenario: $scenarioPath');
     }
     final result = await runner.runFile(file);
-    _log.i('logic: sim_scenarios:\n${formatScenarioReport(result)}');
+    final report = formatScenarioReport(result);
+    _log.i('logic: sim_scenarios:\n$report');
+    print(report);
     exit(result.passed ? 0 : 1);
   } else {
     // Run all scenarios in directory
@@ -208,6 +210,12 @@ String _formatAssertion(Assertion assertion) {
   if (assertion.stockpile != null) {
     return 'stockpile ${assertion.stockpile}';
   }
+  if (assertion.workerPeasants != null) {
+    return 'player.${assertion.player}.workerPeasants == ${assertion.workerPeasants}';
+  }
+  if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+    return 'player.${assertion.player}.stockpile.${assertion.commodity} == ${assertion.stockpileCommodity}';
+  }
   if (assertion.treasury != null) {
     return 'treasury ${assertion.treasury}';
   }
@@ -223,6 +231,25 @@ String _formatAssertion(Assertion assertion) {
   }
   if (assertion.region != null && assertion.maxBothFraction != null) {
     return 'region.${assertion.region}.maxBothFraction <= ${assertion.maxBothFraction}';
+  }
+  // Fog/exploration (SPEC/game/fog-and-exploration.md)
+  if (assertion.player != null && assertion.tileKey != null) {
+    if (assertion.tileVisibility != null) {
+      return 'player.${assertion.player}.tile.${assertion.tileKey}.visibility == ${assertion.tileVisibility}';
+    }
+    if (assertion.tileProspected != null) {
+      return 'player.${assertion.player}.tile.${assertion.tileKey}.prospected == ${assertion.tileProspected}';
+    }
+  }
+  // Leader (SPEC/game/leader-bonuses.md)
+  if (assertion.player != null && assertion.leaderKey != null) {
+    return 'player.${assertion.player}.leaderKey == ${assertion.leaderKey}';
+  }
+  // Research-state (SPEC/game/research-state.md)
+  if (assertion.player != null &&
+      assertion.techUnlocked != null &&
+      assertion.techUnlocked!.isNotEmpty) {
+    return 'player.${assertion.player}.techUnlocked == [${assertion.techUnlocked!.join(", ")}]';
   }
   return 'unknown';
 }

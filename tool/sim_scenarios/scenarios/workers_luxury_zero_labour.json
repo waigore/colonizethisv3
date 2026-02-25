@@ -1,0 +1,28 @@
+{
+  "name": "workers_luxury_zero_labour",
+  "description": "SPEC/game/workers-and-population.md: Trained worker without luxury contributes zero effective labour; worker is not removed. Given 1 apprentice, food, 0 refinedSugar, 4 labour assigned to lumber_from_timber: after turn 1 lumber 0, timber unchanged, workerApprentices 1.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1", "p2"], ["p1", "p1", "p2"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}, {"id1": "p1", "id2": "p2"}]
+    }
+  },
+  "setup": {
+    "initialWorkers": {"gp1": {"peasants": 0, "apprentices": 1, "journeymen": 0, "masters": 0}},
+    "initialStockpile": {"gp1": {"grain": 2, "meat": 2, "refinedSugar": 0, "timber": 10}},
+    "productionAssignments": [{"recipeId": "lumber_from_timber", "assignedLabour": 4}]
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "commodity": "lumber", "stockpileCommodity": 0},
+    {"turn": 1, "player": "gp1", "commodity": "timber", "stockpileCommodity": 10},
+    {"turn": 1, "player": "gp1", "workerApprentices": 1}
+  ]
+}

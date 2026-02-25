@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Resolves diplomatic orders, manages overture state machine, updates relation scores, and feeds AI evidence pipeline during the Diplomacy phase. Game rules: [diplomacy.md](../game/diplomacy.md).
+Resolves diplomatic orders, manages overture state machine, updates relation scores, and feeds AI evidence pipeline during the Diplomacy phase. Game rules: [diplomacy.md](../game/diplomacy.md). Province identity (e.g. in order payloads or state that reference a province) follows [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -40,7 +40,7 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 
 **Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
 
-**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver.
+**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver. Intervention choices for Minors with Embassies are evaluated during combat resolution, and may change relationState to `AT_WAR` between additional faction pairs (e.g., an intervening GP and each attacking GP) immediately before battle odds are computed.
 
 **AI:** Diplomatic actions feed into AI evidence and dialogue event pipelines for hidden-agenda discovery. See [ai-events-and-dossier.md](ai-events-and-dossier.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
 
@@ -60,13 +60,24 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 ## Acceptance criteria
 
 - **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–7 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → terminate agreements on war → relation modifiers and score update).
+- **Upstream orders:** The diplomacy phase receives merged orders that include `diplomaticOrdersByPlayerId`; the turn resolver supplies the output of the order engine (see [order-engine.md](order-engine.md), [turn-resolution-phases.md](turn-resolution-phases.md)). The order engine must preserve diplomatic orders and pass them into the diplomacy phase input.
 - **Overture payments:** Consulate/Embassy orders: when GP has sufficient treasury and is at the previous overture stage, cost is deducted and stage is advanced; NAP and Join Empire are free.
 - **Join Empire/Colony:** Requires NAP stage and relation score ≥ 51 (Friendly/Allied); absorption (Minor) or colony (Tribe) applied per game rules.
 - **Alliances:** GP–GP only; relation set to allied (score ≥ 76), state atPeace.
-- **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable.
-- **Agreements on war:** Overtures between a faction pair at war are terminated.
+- **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable. Intervention-driven war state changes (from human or AI intervention decisions) also update relationState, sinceTurn, and lastInteractionTurn outside the Diplomacy phase so that combat validation uses the updated state for the current battle.
+- **Agreements on war:** Overtures between a faction pair at war are terminated. When relationState changes from `AT_PEACE` to `AT_WAR` between a GP and a Minor/Tribe, any overture state between that GP and that Minor/Tribe is removed so that the effective overture stage is `none`, and later peace between them does not restore the previous overture stage automatically. When a GP (human or AI) chooses **Do Nothing** in response to an intervention trigger for a Minor it has an Embassy with, the overture state between that GP and that Minor is also cleared to `none` even if relationState remains `AT_PEACE`.
 - **GrantAid / SetSubsidy:** GrantAid requires Embassy; SetSubsidy requires Consulate or Embassy. Payer treasury deducted; SetSubsidy to GP adds to target treasury, to Minor/Tribe improves relation modifier.
+- **Order validation:** Preconditions for each diplomatic order type (AT_PEACE/AT_WAR, overture stage, treasury, etc.) are checked at order submission by the order engine and again at resolution; invalid orders are rejected and not applied. In particular, when relationState between a GP and a Minor/Tribe is `AT_WAR`, `Establish Overture` orders targeting that faction are invalid and must not create or advance overture state or deduct overture costs. See game/diplomacy.md § Diplomatic Order Types.
+- **Save/load:** Relation records (per faction-pair) and overture state (per Minor/Tribe per GP) are serialized in the game save and restored on load so that relation scores, levels, sinceTurn, lastInteractionTurn, relationState, and overture stages are preserved.
 - **Logging:** Phase start and end at debug with `logic:` prefix; key outcomes at info (overture applied, join empire, alliance formed, war declared, peace offered, agreements terminated, GrantAid/SetSubsidy applied). Rejections and validation failures are logged by the order engine only.
+
+---
+
+## Config source (MVP)
+
+Relation thresholds (score-to-level bands) and overture costs (Consulate £500, Embassy £1000) are currently **code constants** in the diplomacy resolver (`colonizethis_logic`: `overtureConsulateCost`, `overtureEmbassyCost`, `scoreToLevel`). The **default values** are defined in [diplomacy.md](../game/diplomacy.md) § Configurable Values; that table is the source of truth for design. Ruleset loading for these parameters is **not implemented** in MVP. When ruleset-driven config is added, the resolver will read from the resolved ruleset per [ruleset-config.md](ruleset-config.md) and the key path will be specified in the GDD and here.
+
+**Propaganda tech:** The effect "Decreases diplomatic penalties for declaring war" (Propaganda tech per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md)) is **not implemented** in MVP. When implemented, it would apply in step 6 (Apply relation modifiers) or in a war-declaration-specific modifier.
 
 ---
 
@@ -75,3 +86,4 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
 - Resolution order is strict (steps 1–7); reordering may break precondition checks.
 - Overture stage transitions are linear; no stage may be skipped.
+- Any province id used in diplomacy state or in diplomatic order payloads must be in prefixed form and resolved per [world-model-identity.md](../game/world-model-identity.md).

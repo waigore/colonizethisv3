@@ -1,0 +1,28 @@
+{
+  "name": "workers_luxury_consumption",
+  "description": "SPEC/game/workers-and-population.md: Consumption phase deducts luxury (refinedSugar) for trained workers; Production uses effective labour when luxury is available. Given 1 apprentice, food, 1 refinedSugar, 2 labour to lumber_from_timber: after turn 1 refinedSugar 0, lumber 1.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1", "p2"], ["p1", "p1", "p2"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}, {"id1": "p1", "id2": "p2"}]
+    }
+  },
+  "setup": {
+    "initialWorkers": {"gp1": {"peasants": 0, "apprentices": 1, "journeymen": 0, "masters": 0}},
+    "initialStockpile": {"gp1": {"grain": 2, "meat": 2, "refinedSugar": 1, "timber": 10}},
+    "productionAssignments": [{"recipeId": "lumber_from_timber", "assignedLabour": 2}]
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "commodity": "refinedSugar", "stockpileCommodity": 0},
+    {"turn": 1, "player": "gp1", "commodity": "lumber", "stockpileCommodity": 1},
+    {"turn": 1, "player": "gp1", "workerApprentices": 1}
+  ]
+}

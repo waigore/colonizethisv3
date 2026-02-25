@@ -160,6 +160,166 @@ void main() {
         expect(scenario.assertions[0].player, 'gp1');
         expect(scenario.assertions[0].capitalProvince, 'oldWorld|p1');
       });
+
+      test('parses capital assertions', () {
+        final json = {
+          'name': 'capital_assertions',
+          'init': {'type': 'fresh', 'config': {'seed': 42}},
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'capitalProvinceId': 'oldWorld|p1', 'capitalTileKey': 'oldWorld|p1|0|0'},
+            {'turn': 1, 'player': 'tribe1', 'capitalProvinceId': 'newWorld|p2'},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].capitalProvinceId, 'oldWorld|p1');
+        expect(scenario.assertions[0].capitalTileKey, 'oldWorld|p1|0|0');
+        expect(scenario.assertions[1].player, 'tribe1');
+        expect(scenario.assertions[1].capitalProvinceId, 'newWorld|p2');
+        expect(scenario.assertions[1].capitalTileKey, isNull);
+      });
+
+      test('parses setup initialWorkers and initialStockpile', () {
+        final json = {
+          'name': 'workers_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialWorkers': {
+              'gp1': {'peasants': 2, 'apprentices': 0, 'journeymen': 0, 'masters': 0},
+            },
+            'initialStockpile': {
+              'gp1': {'grain': 1, 'meat': 0},
+            },
+          },
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'workerPeasants': 1},
+            {'turn': 1, 'player': 'gp1', 'commodity': 'grain', 'stockpileCommodity': 0},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.initialWorkers!['gp1']!['peasants'], 2);
+        expect(scenario.setup!.initialStockpile!['gp1']!['grain'], 1);
+        expect(scenario.assertions[0].workerPeasants, 1);
+        expect(scenario.assertions[1].commodity, 'grain');
+        expect(scenario.assertions[1].stockpileCommodity, 0);
+      });
+
+      test('parses setup productionAssignments', () {
+        final json = {
+          'name': 'production_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'productionAssignments': [
+              {'recipeId': 'lumber_from_timber', 'assignedLabour': 4},
+              {'recipeId': 'castIron_from_timber_iron_coal', 'assignedLabour': 5},
+            ],
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.productionAssignments!.length, 2);
+        expect(scenario.setup!.productionAssignments![0].recipeId, 'lumber_from_timber');
+        expect(scenario.setup!.productionAssignments![0].assignedLabour, 4);
+        expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_timber_iron_coal');
+        expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
+      });
+
+      test('parses setup leaderKeys and assertion leaderKey', () {
+        final json = {
+          'name': 'leader_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england', 'france']}},
+          'setup': {
+            'leaderKeys': {'gp1': 'napoleon', 'gp2': 'frederick'},
+          },
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'leaderKey': 'napoleon'},
+            {'turn': 1, 'player': 'gp2', 'leaderKey': 'frederick'},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.leaderKeys!['gp1'], 'napoleon');
+        expect(scenario.setup!.leaderKeys!['gp2'], 'frederick');
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].leaderKey, 'napoleon');
+        expect(scenario.assertions[1].player, 'gp2');
+        expect(scenario.assertions[1].leaderKey, 'frederick');
+      });
+
+      test('parses setup initialTech', () {
+        final json = {
+          'name': 'tech_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialTech': {'gp1': ['organised_regiments', 'weapon_craftsmanship']},
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.initialTech, isNotNull);
+        expect(scenario.setup!.initialTech!['gp1'], ['organised_regiments', 'weapon_craftsmanship']);
+      });
+
+      test('parses assertion techUnlocked', () {
+        final json = {
+          'name': 'research_state',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'turns': [],
+          'assertions': [
+            {'turn': 1, 'player': 'gp1', 'techUnlocked': ['gathering_1', 'road_construction']},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.assertions.length, 1);
+        expect(scenario.assertions[0].player, 'gp1');
+        expect(scenario.assertions[0].techUnlocked, ['gathering_1', 'road_construction']);
+      });
+
+      test('parses assertion provinceDisplayName', () {
+        final json = {
+          'name': 'naming_parse',
+          'init': {'type': 'fresh'},
+          'assertions': [
+            {'turn': 1, 'province': 'oldWorld|p1', 'provinceDisplayName': 'London'},
+          ],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.assertions.length, 1);
+        expect(scenario.assertions[0].province, 'oldWorld|p1');
+        expect(scenario.assertions[0].provinceDisplayName, 'London');
+      });
+
+      test('parses setup defaultCombatMode', () {
+        final json = {
+          'name': 'combat_mode_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england', 'france']}},
+          'setup': {'defaultCombatMode': 'quickBattle'},
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.setup!.defaultCombatMode, 'quickBattle');
+      });
     });
 
     group('parseScenarioFile', () {

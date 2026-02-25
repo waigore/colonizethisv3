@@ -1,0 +1,81 @@
+{
+  "name": "diplomacy_gp_minor_overture_reset_on_war",
+  "description": "GP–Minor overture chain is cleared when war begins and not restored automatically by peace; overtures must be rebuilt from none. SPEC/game/diplomacy.md, SPEC/program/diplomacy-resolution.md.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 0
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "tradeConsulate"
+        },
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "embassy"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "declareWar",
+          "targetFactionId": "minor1"
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "offerPeace",
+          "targetFactionId": "minor1"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atPeace",
+      "overtureStage": "embassy"
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atWar",
+      "overtureStage": "none"
+    },
+    {
+      "turn": 3,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atPeace",
+      "overtureStage": "none"
+    }
+  ]
+}
+

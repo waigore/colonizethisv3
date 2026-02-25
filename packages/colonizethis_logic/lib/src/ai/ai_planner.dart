@@ -94,7 +94,8 @@ Orders generateOrdersForPlayerFullAI(
   final turn = game.worldState.turnState.turnNumber;
   final turnSeed = turnSeedForPlayer(game, player.id, turn);
   final seeds = AISeedBundle.fromTurnSeed(turnSeed);
-  final leaderId = player.leaderKey ?? player.id;
+  final leaderKeyOrId = player.leaderKey ?? player.id;
+  final leaderId = canonicalLeaderIdForPersonality(leaderKeyOrId);
   final agendaId = game.hiddenAgendaByGpId[playerId] ?? 'peacemaker';
   final config = AIConfig(
     leaderId: leaderId,

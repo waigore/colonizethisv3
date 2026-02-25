@@ -42,21 +42,52 @@ class ScenarioInit {
   final Map<String, dynamic>? newWorld;
 }
 
-/// Setup for saved-game scenarios (unit injection, economy state).
+/// Setup for saved-game scenarios (unit injection, resource overrides).
+/// initialWorkers / initialStockpile apply after init (fresh or fromTopology).
+/// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
+/// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
+/// initialTech: player id → list of tech ids. Overrides Player.techUnlocked for buildability scenarios. SPEC/game/military-units.md.
+/// defaultCombatMode: optional "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
     this.stockpileOverrides,
-    this.initialStockpile,
     this.initialWorkers,
+    this.initialStockpile,
+    this.productionAssignments,
+    this.initialTileState,
+    this.leaderKeys,
+    this.initialTech,
+    this.defaultCombatMode,
   });
 
   final List<UnitPlacement>? units;
   final Map<String, int>? stockpileOverrides;
-  /// Player id → commodity id → quantity. Applied to player stockpile before turns.
-  final Map<String, Map<String, int>>? initialStockpile;
-  /// Player id → worker counts (peasants, apprentices, journeymen, masters). Applied to WorkerPool before turns.
+  /// Player id → { peasants, apprentices, journeymen, masters }. SPEC/game/workers-and-population.md.
   final Map<String, Map<String, int>>? initialWorkers;
+  /// Player id → { commodityId: quantity }. Replaces player stockpile.
+  final Map<String, Map<String, int>>? initialStockpile;
+  /// Recipe assignments for Production phase (each turn). SPEC/game/stockpiles-and-production.md.
+  final List<ProductionAssignment>? productionAssignments;
+  /// Tile key → { improvementLevel: 0-4, roadLevel: 0|1|2|4 }. Applied to worldState.tileState for extraction scenarios.
+  final Map<String, Map<String, int>>? initialTileState;
+  /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
+  final Map<String, String>? leaderKeys;
+  /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
+  final Map<String, List<String>>? initialTech;
+  /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
+  final String? defaultCombatMode;
+}
+
+/// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
+class ProductionAssignment {
+  const ProductionAssignment({
+    required this.recipeId,
+    required this.assignedLabour,
+  });
+
+  final String recipeId;
+  final int assignedLabour;
 }
 
 /// Placement of a unit in a province for scenario setup.
@@ -113,6 +144,9 @@ class OrderCommand {
     this.techId,
     this.slotIndex,
     this.targetFactionId,
+    this.diplomaticType,
+    this.amount,
+    this.overtureStage,
     this.fleetId,
     this.destinationSeaZoneId,
     this.mission,
@@ -136,6 +170,9 @@ class OrderCommand {
   final int? slotIndex;
   // Diplomatic fields
   final String? targetFactionId;
+  final String? diplomaticType;
+  final int? amount;
+  final String? overtureStage;
   // Naval move fields
   final String? fleetId;
   final String? destinationSeaZoneId;
@@ -167,6 +204,8 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.capitalProvinceId,
+    this.capitalTileKey,
     this.relationWith,
     this.relationState,
     this.relationScore,
@@ -175,6 +214,19 @@ class Assertion {
     this.relationLastInteractionTurn,
     this.overtureStage,
     this.capitalProvince,
+    this.workerPeasants,
+    this.workerApprentices,
+    this.workerJourneymen,
+    this.workerMasters,
+    this.greatPowerCount,
+    this.minorNationCount,
+    this.tribeCount,
+    this.tileKey,
+    this.tileVisibility,
+    this.tileProspected,
+    this.leaderKey,
+    this.techUnlocked,
+    this.provinceDisplayName,
   });
 
   /// Which turn to check (null = final state)
@@ -182,6 +234,8 @@ class Assertion {
   /// Region ID (e.g., "oldWorld", "newWorld") - optional, used with province
   final String? region;
   final String? province;
+  /// Province display name (SPEC/game/naming.md). Use with [province]: expected Province.displayName.
+  final String? provinceDisplayName;
   final String? player;
   final String? owner;
   /// Negative assertion: province must not be owned by this player id.
@@ -217,6 +271,33 @@ class Assertion {
   final String? overtureStage;
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
+  /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
+  final String? capitalProvinceId;
+  /// Capital assertion: expected capital tile key (regionId|provinceId|x|y). Optional.
+  final String? capitalTileKey;
+  /// Worker pool assertions (SPEC/game/workers-and-population.md). Require [player].
+  final int? workerPeasants;
+  final int? workerApprentices;
+  final int? workerJourneymen;
+  final int? workerMasters;
+  /// Faction count assertions (SPEC/game/factions.md). After game setup, assert counts of Great Powers, Minor Nations, Tribes.
+  final int? greatPowerCount;
+  final int? minorNationCount;
+  final int? tribeCount;
+
+  /// Fog/exploration assertions (SPEC/game/fog-and-exploration.md). Require [player].
+  /// [tileKey]: format regionId|provinceId|x|y.
+  /// [tileVisibility]: expected visibility level for that player at tileKey (unknown, revealed, fogged, fullyVisible).
+  /// [tileProspected]: true iff that player has prospected the tile at tileKey.
+  final String? tileKey;
+  final String? tileVisibility;
+  final bool? tileProspected;
+
+  /// Leader assertion (SPEC/game/leader-bonuses.md). With [player]: expected leaderKey for that Great Power.
+  final String? leaderKey;
+
+  /// Research-state assertion (SPEC/game/research-state.md). With [player]: list of tech ids that must be in techUnlocked (true).
+  final List<String>? techUnlocked;
 }
 
 /// Type of value matching for assertions.
@@ -295,15 +376,112 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     return result.isEmpty ? null : result;
   }
 
+  Map<String, Map<String, int>>? _parseInitialTileState(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final result = <String, Map<String, int>>{};
+    for (final entry in raw.entries) {
+      if (entry.value is Map) {
+        final inner = <String, int>{};
+        for (final e in (entry.value as Map).entries) {
+          final v = e.value;
+          inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
+        }
+        result[entry.key] = inner;
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
+  Map<String, List<String>>? _parseInitialTech(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final result = <String, List<String>>{};
+    for (final entry in raw.entries) {
+      final list = entry.value;
+      if (list is List<dynamic>) {
+        result[entry.key] = list.map((e) => e.toString()).toList();
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
   return ScenarioSetup(
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
         .toList(),
     stockpileOverrides: (json['stockpileOverrides'] as Map<String, dynamic>?)
-        ?.map((k, v) => MapEntry(k, v as int)),
-    initialStockpile: _parseInitialStockpile(json['initialStockpile']),
+        ?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
+    initialStockpile: _parseInitialStockpile(json['initialStockpile']),
+    productionAssignments: _parseProductionAssignments(json['productionAssignments']),
+    initialTileState: _parseInitialTileState(json['initialTileState']),
+    leaderKeys: _parseLeaderKeys(json['leaderKeys']),
+    initialTech: _parseInitialTech(json['initialTech']),
+    defaultCombatMode: json['defaultCombatMode'] as String?,
   );
+}
+
+Map<String, List<String>>? _parseInitialTech(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, List<String>>{};
+  for (final entry in raw.entries) {
+    final list = entry.value;
+    if (list is List<dynamic>) {
+      out[entry.key] = list.map((e) => e.toString()).toList();
+    }
+  }
+  return out.isEmpty ? null : out;
+}
+
+Map<String, String>? _parseLeaderKeys(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, String>{};
+  for (final e in raw.entries) {
+    final v = e.value;
+    if (v != null && v.toString().isNotEmpty) out[e.key] = v.toString();
+  }
+  return out.isEmpty ? null : out;
+}
+
+List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
+  if (raw is! List<dynamic> || raw.isEmpty) return null;
+  final out = <ProductionAssignment>[];
+  for (final e in raw) {
+    if (e is! Map<String, dynamic>) continue;
+    final recipeId = e['recipeId'] as String?;
+    final labour = e['assignedLabour'];
+    if (recipeId == null || recipeId.isEmpty || labour == null) continue;
+    out.add(ProductionAssignment(
+      recipeId: recipeId,
+      assignedLabour: (labour as num).toInt(),
+    ));
+  }
+  return out.isEmpty ? null : out;
+}
+
+Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, Map<String, int>>{};
+  for (final entry in raw.entries) {
+    final inner = entry.value;
+    if (inner is! Map<String, dynamic>) continue;
+    out[entry.key] = {
+      for (final e in inner.entries) e.key: (e.value as num).toInt(),
+    };
+  }
+  return out.isEmpty ? null : out;
+}
+
+Map<String, Map<String, int>>? _parseInitialStockpile(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, Map<String, int>>{};
+  for (final entry in raw.entries) {
+    final inner = entry.value;
+    if (inner is! Map<String, dynamic>) continue;
+    out[entry.key] = {
+      for (final e in inner.entries) e.key: (e.value as num).toInt(),
+    };
+  }
+  return out.isEmpty ? null : out;
 }
 
 UnitPlacement _parseUnitPlacement(Map<String, dynamic> json) {
@@ -354,6 +532,9 @@ OrderCommand _parseOrderCommand(Map<String, dynamic> json) {
     techId: json['techId'] as String?,
     slotIndex: json['slotIndex'] as int?,
     targetFactionId: json['targetFactionId'] as String?,
+    diplomaticType: json['diplomaticType'] as String?,
+    amount: json['amount'] as int?,
+    overtureStage: json['overtureStage'] as String?,
     fleetId: json['fleetId'] as String?,
     destinationSeaZoneId: json['destinationSeaZoneId'] as String?,
     mission: json['mission'] as String?,
@@ -383,6 +564,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    capitalProvinceId: json['capitalProvinceId'] as String?,
+    capitalTileKey: json['capitalTileKey'] as String?,
     relationWith: json['relationWith'] as String?,
     relationState: json['relationState'] as String?,
     relationScore: json['relationScore'] as int?,
@@ -391,6 +574,21 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     relationLastInteractionTurn: json['relationLastInteractionTurn'] as int?,
     overtureStage: json['overtureStage'] as String?,
     capitalProvince: json['capitalProvince'] as String?,
+    workerPeasants: json['workerPeasants'] as int?,
+    workerApprentices: json['workerApprentices'] as int?,
+    workerJourneymen: json['workerJourneymen'] as int?,
+    workerMasters: json['workerMasters'] as int?,
+    greatPowerCount: json['greatPowerCount'] as int?,
+    minorNationCount: json['minorNationCount'] as int?,
+    tribeCount: json['tribeCount'] as int?,
+    tileKey: json['tileKey'] as String?,
+    tileVisibility: json['tileVisibility'] as String?,
+    tileProspected: json['tileProspected'] as bool?,
+    leaderKey: json['leaderKey'] as String?,
+    techUnlocked: (json['techUnlocked'] as List<dynamic>?)
+        ?.map((e) => e.toString())
+        .toList(),
+    provinceDisplayName: json['provinceDisplayName'] as String?,
   );
 }
 

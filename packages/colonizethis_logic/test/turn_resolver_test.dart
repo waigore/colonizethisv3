@@ -37,8 +37,10 @@ void main() {
     test('runs extraction, production, consumption, and movement phases', () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -119,7 +121,9 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
-            provinces: const [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')
+            ],
             units: const [],
           ),
           newWorld: const RegionData(),
@@ -144,7 +148,9 @@ void main() {
       expect(next.players.single.stockpile.quantityOf('gold'), lessThan(2));
     });
 
-    test('consumption and combat run with feeding coverage when player has no food', () {
+    test(
+        'consumption and combat run with feeding coverage when player has no food',
+        () {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
@@ -163,15 +169,31 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P2'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$ow|P1'),
+              Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P2'),
+              Unit(
+                  id: 'u2',
+                  type: 'pikemen',
+                  ownerId: 'p2',
+                  provinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
         ),
         players: [
-          Player(id: 'p1', displayName: 'P1', isHuman: true, stockpile: Stockpile.empty),
-          Player(id: 'p2', displayName: 'P2', isHuman: true, stockpile: Stockpile(quantities: {'grain': 10, 'meat': 10})),
+          Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              stockpile: Stockpile.empty),
+          Player(
+              id: 'p2',
+              displayName: 'P2',
+              isHuman: true,
+              stockpile: Stockpile(quantities: {'grain': 10, 'meat': 10})),
         ],
       );
       final orders = Orders(
@@ -188,19 +210,25 @@ void main() {
       expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));
     });
 
-    test('full turn with tileMapByRegion: extraction pipeline, turn advanced', () {
+    test('full turn with tileMapByRegion: extraction pipeline, turn advanced',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [],
       );
-      final grid = [['p1']];
+      final grid = [
+        ['p1']
+      ];
       final tileMap = TileMapResult(
         width: 1,
         height: 1,
         grid: grid,
-        resourceGrid: [[Resource.grain]],
+        resourceGrid: [
+          [Resource.grain]
+        ],
       );
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 2)
@@ -243,25 +271,37 @@ void main() {
       expect(next.players.single.stockpile.quantityOf('grain'), 1);
     });
 
-    test('extraction phase with overseas runs allocateOverseasToStockpile and applyTradeInterception path', () {
+    test(
+        'extraction phase with overseas runs allocateOverseasToStockpile and applyTradeInterception path',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'n1', regionId: 'newWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'n1', regionId: 'newWorld', type: TopologyNodeType.province),
         ],
         edges: [],
       );
       final tileMapOw = TileMapResult(
         width: 1,
         height: 1,
-        grid: [['p1']],
-        resourceGrid: [[Resource.grain]],
+        grid: [
+          ['p1']
+        ],
+        resourceGrid: [
+          [Resource.grain]
+        ],
       );
       final tileMapNw = TileMapResult(
         width: 1,
         height: 1,
-        grid: [['n1']],
-        resourceGrid: [[Resource.sugarCane]],
+        grid: [
+          ['n1']
+        ],
+        resourceGrid: [
+          [Resource.sugarCane]
+        ],
       );
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 1)
@@ -301,14 +341,19 @@ void main() {
         defaultAssignments: const [],
       );
       expect(next.worldState.turnState.turnNumber, 1);
-      expect(next.players.single.stockpile.quantityOf('grain'), greaterThanOrEqualTo(0));
+      expect(next.players.single.stockpile.quantityOf('grain'),
+          greaterThanOrEqualTo(0));
     });
 
-    test('one full turn with combat: MoveOrder into enemy province, casualties and province flip', () {
+    test(
+        'one full turn with combat: MoveOrder into enemy province, casualties and province flip',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -377,11 +422,15 @@ void main() {
       expect(p2!.ownerId, anyOf('p1', 'p2'));
     });
 
-    test('combat with tileMapByRegion runs capital reassignment when defender loses only province', () {
+    test(
+        'combat with tileMapByRegion runs capital reassignment when defender loses only province',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -391,8 +440,12 @@ void main() {
       final tileMap = TileMapResult(
         width: 2,
         height: 1,
-        grid: [['P1', 'P2']],
-        resourceGrid: [[Resource.grain, Resource.grain]],
+        grid: [
+          ['P1', 'P2']
+        ],
+        resourceGrid: [
+          [Resource.grain, Resource.grain]
+        ],
       );
       final tileState = TileMapState()
           .setImprovement('$ow|P1|0|0', 1)
@@ -411,17 +464,41 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'p1', provinceId: '$ow|P1', medals: 2),
-              Unit(id: 'u2', type: 'peasant_levies', ownerId: 'p2', provinceId: '$ow|P2'),
+              Unit(
+                  id: 'u1',
+                  type: 'grenadiers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1',
+                  medals: 2),
+              Unit(
+                  id: 'u2',
+                  type: 'peasant_levies',
+                  ownerId: 'p2',
+                  provinceId: '$ow|P2'),
             ],
           ),
           newWorld: const RegionData(),
           tileState: tileState,
-          tileKeysByRegionAndProvince: {ow: {'P1': ['$ow|P1|0|0'], 'P2': ['$ow|P2|0|1']}},
+          tileKeysByRegionAndProvince: {
+            ow: {
+              'P1': ['$ow|P1|0|0'],
+              'P2': ['$ow|P2|0|1']
+            }
+          },
         ),
         players: [
-          Player(id: 'p1', displayName: 'Attacker', isHuman: true, militaryLevel: 3),
-          Player(id: 'p2', displayName: 'Defender', isHuman: true, militaryLevel: 1, capitalProvinceId: '$ow|P2', capitalTile: cap),
+          Player(
+              id: 'p1',
+              displayName: 'Attacker',
+              isHuman: true,
+              militaryLevel: 3),
+          Player(
+              id: 'p2',
+              displayName: 'Defender',
+              isHuman: true,
+              militaryLevel: 1,
+              capitalProvinceId: '$ow|P2',
+              capitalTile: cap),
         ],
         defaultCombatMode: CombatMode.quickBattle,
       );
@@ -437,17 +514,23 @@ void main() {
         tileMapByRegion: {'oldWorld': tileMap},
       );
       expect(next.worldState.turnState.turnNumber, 1);
-      final p2Province = next.worldState.oldWorld.provinces.where((p) => p.id == '$ow|P2').singleOrNull;
+      final p2Province = next.worldState.oldWorld.provinces
+          .where((p) => p.id == '$ow|P2')
+          .singleOrNull;
       expect(p2Province, isNotNull);
       expect(p2Province!.ownerId, anyOf('p1', 'p2'));
       // When defender loses their only province, capital reassignment clears their capital (path covered when RNG flips province).
     });
 
-    test('autoResolve combat with AI players invokes onDialogue with event battle_won/battle_lost', () {
+    test(
+        'autoResolve combat with AI players invokes onDialogue with event battle_won/battle_lost',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -484,8 +567,16 @@ void main() {
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 3),
-          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 1),
+          Player(
+              id: 'p1',
+              displayName: 'AI Attacker',
+              isHuman: false,
+              militaryLevel: 3),
+          Player(
+              id: 'p2',
+              displayName: 'AI Defender',
+              isHuman: false,
+              militaryLevel: 1),
         ],
         defaultCombatMode: CombatMode.autoResolve,
       );
@@ -508,7 +599,9 @@ void main() {
 
       expect(next.worldState.turnState.turnNumber, 1);
       final eventDialogue = dialogueEvents
-          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .where((e) =>
+              e.category == 'event' &&
+              (e.situation == 'battle_won' || e.situation == 'battle_lost'))
           .toList();
       expect(eventDialogue, isNotEmpty);
     });
@@ -516,8 +609,10 @@ void main() {
     test('quick battle mode runs without error and can flip province', () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -582,11 +677,15 @@ void main() {
       expect(p2!.ownerId, isNotNull);
     });
 
-    test('combat phase with AI players invokes onDialogue with event battle_won/battle_lost', () {
+    test(
+        'combat phase with AI players invokes onDialogue with event battle_won/battle_lost',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -622,8 +721,16 @@ void main() {
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 3),
-          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 1),
+          Player(
+              id: 'p1',
+              displayName: 'AI Attacker',
+              isHuman: false,
+              militaryLevel: 3),
+          Player(
+              id: 'p2',
+              displayName: 'AI Defender',
+              isHuman: false,
+              militaryLevel: 1),
         ],
         defaultCombatMode: CombatMode.quickBattle,
       );
@@ -646,18 +753,24 @@ void main() {
 
       expect(next.worldState.turnState.turnNumber, 1);
       final eventDialogue = dialogueEvents
-          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .where((e) =>
+              e.category == 'event' &&
+              (e.situation == 'battle_won' || e.situation == 'battle_lost'))
           .toList();
       expect(eventDialogue, isNotEmpty);
       expect(eventDialogue.any((e) => e.situation == 'battle_won'), isTrue);
       expect(eventDialogue.any((e) => e.situation == 'battle_lost'), isTrue);
     });
 
-    test('quick battle defender holds: onDialogue receives battle_won for defender and battle_lost for attacker', () {
+    test(
+        'quick battle defender holds: onDialogue receives battle_won for defender and battle_lost for attacker',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -676,15 +789,32 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
             units: [
-              Unit(id: 'u1', type: 'peasant_levies', ownerId: 'p1', provinceId: '$ow|P1'),
-              Unit(id: 'u2', type: 'grenadiers', ownerId: 'p2', provinceId: '$ow|P2', medals: 2),
+              Unit(
+                  id: 'u1',
+                  type: 'peasant_levies',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+              Unit(
+                  id: 'u2',
+                  type: 'grenadiers',
+                  ownerId: 'p2',
+                  provinceId: '$ow|P2',
+                  medals: 2),
             ],
           ),
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'p1', displayName: 'AI Attacker', isHuman: false, militaryLevel: 1),
-          Player(id: 'p2', displayName: 'AI Defender', isHuman: false, militaryLevel: 3),
+          Player(
+              id: 'p1',
+              displayName: 'AI Attacker',
+              isHuman: false,
+              militaryLevel: 1),
+          Player(
+              id: 'p2',
+              displayName: 'AI Defender',
+              isHuman: false,
+              militaryLevel: 3),
         ],
         defaultCombatMode: CombatMode.quickBattle,
       );
@@ -704,15 +834,20 @@ void main() {
       );
 
       final eventDialogue = dialogueEvents
-          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .where((e) =>
+              e.category == 'event' &&
+              (e.situation == 'battle_won' || e.situation == 'battle_lost'))
           .toList();
       expect(eventDialogue, isNotEmpty);
     });
 
-    test('naval interception combat with AI players invokes onDialogue with event battle_won/battle_lost', () {
+    test(
+        'naval interception combat with AI players invokes onDialogue with event battle_won/battle_lost',
+        () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
         ],
         edges: const [],
       );
@@ -762,16 +897,20 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 1);
       // Naval battle may or may not eliminate one side; when it does, event dialogue is emitted.
       final eventDialogue = dialogueEvents
-          .where((e) => e.category == 'event' && (e.situation == 'battle_won' || e.situation == 'battle_lost'))
+          .where((e) =>
+              e.category == 'event' &&
+              (e.situation == 'battle_won' || e.situation == 'battle_lost'))
           .toList();
       expect(eventDialogue.length, lessThanOrEqualTo(2));
     });
 
-    test('endOfTurn era transition invokes onDialogue with event era_change', () {
+    test('endOfTurn era transition invokes onDialogue with event era_change',
+        () {
       // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -806,11 +945,14 @@ void main() {
       }
     });
 
-    test('resolveTurnForGameFromOrderEngine integrates order engine output', () {
+    test('resolveTurnForGameFromOrderEngine integrates order engine output',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [
           const TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -850,7 +992,8 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+      engine.addMoveOrder('p1',
+          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
 
       final next = resolveTurnForGameFromOrderEngine(
         game: game,
@@ -862,11 +1005,15 @@ void main() {
       expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
     });
 
-    test('validateOrdersAndResolveTurn filters invalid order and applies only valid move', () {
+    test(
+        'validateOrdersAndResolveTurn filters invalid order and applies only valid move',
+        () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          const TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -881,9 +1028,13 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P1'),
+              Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
             ],
-            ),
+          ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
             'p1': {
@@ -917,7 +1068,8 @@ void main() {
     test('movement phase applies naval mission order', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
         ],
         edges: const [],
       );
@@ -963,8 +1115,10 @@ void main() {
     test('movement phase applies naval move order to adjacent sea zone', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-          TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
         ],
         edges: const [
           TopologyEdge(id1: 'sea1', id2: 'sea2'),
@@ -1008,10 +1162,12 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 1);
     });
 
-    test('naval interception phase runs when two at-war fleets in same zone', () {
+    test('naval interception phase runs when two at-war fleets in same zone',
+        () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
         ],
         edges: const [],
       );
@@ -1064,7 +1220,8 @@ void main() {
     test('full turn with buildWork applies work order', () {
       final topology = MapTopology(
         nodes: [
-          const TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          const TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
         edges: [],
       );
@@ -1090,6 +1247,18 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
+      final tileMapByRegion = {
+        ow: TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['P1'],
+          ],
+          terrainGrid: [
+            [TerrainType.hills],
+          ],
+        ),
+      };
       final orders = Orders(
         workOrdersByPlayerId: {
           'p1': [
@@ -1101,6 +1270,7 @@ void main() {
         game: game,
         topology: topology,
         orders: orders,
+        tileMapByRegion: tileMapByRegion,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
       );
@@ -1108,7 +1278,8 @@ void main() {
       expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
     });
 
-    test('endOfTurn sets military victory when one GP controls 31+ provinces', () {
+    test('endOfTurn sets military victory when one GP controls 31+ provinces',
+        () {
       const ow = 'oldWorld';
       final provinces = List<Province>.generate(
         32,
@@ -1129,7 +1300,8 @@ void main() {
       final topology = MapTopology(
         nodes: [
           for (var i = 0; i < 32; i++)
-            TopologyNode(id: 'P$i', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P$i', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -1143,7 +1315,9 @@ void main() {
       expect(next.victory!.type, VictoryType.military);
     });
 
-    test('endOfTurn sets military victory when one GP controls exactly 31 OW provinces', () {
+    test(
+        'endOfTurn sets military victory when one GP controls exactly 31 OW provinces',
+        () {
       const ow = 'oldWorld';
       final provinces = List<Province>.generate(
         31,
@@ -1164,7 +1338,8 @@ void main() {
       final topology = MapTopology(
         nodes: [
           for (var i = 0; i < 31; i++)
-            TopologyNode(id: 'P$i', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P$i', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -1178,11 +1353,15 @@ void main() {
       expect(next.victory!.type, VictoryType.military);
     });
 
-    test('endOfTurn tie-break: two GPs with ≥31 OW provinces wins lexicographically smallest id', () {
+    test(
+        'endOfTurn tie-break: two GPs with ≥31 OW provinces wins lexicographically smallest id',
+        () {
       const ow = 'oldWorld';
       final provinces = <Province>[
-        ...List<Province>.generate(31, (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1')),
-        ...List<Province>.generate(31, (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2')),
+        ...List<Province>.generate(
+            31, (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1')),
+        ...List<Province>.generate(
+            31, (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2')),
       ];
       final game = Game(
         id: 'g1',
@@ -1198,8 +1377,14 @@ void main() {
       );
       final topology = MapTopology(
         nodes: [
-          ...List.generate(31, (i) => TopologyNode(id: 'A$i', regionId: ow, type: TopologyNodeType.province)),
-          ...List.generate(31, (i) => TopologyNode(id: 'B$i', regionId: ow, type: TopologyNodeType.province)),
+          ...List.generate(
+              31,
+              (i) => TopologyNode(
+                  id: 'A$i', regionId: ow, type: TopologyNodeType.province)),
+          ...List.generate(
+              31,
+              (i) => TopologyNode(
+                  id: 'B$i', regionId: ow, type: TopologyNodeType.province)),
         ],
         edges: const [],
       );
@@ -1233,7 +1418,8 @@ void main() {
       final topology = MapTopology(
         nodes: [
           for (var i = 0; i < 31; i++)
-            TopologyNode(id: 'P$i', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P$i', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -1248,8 +1434,10 @@ void main() {
     test('endOfTurn no victory when no GP has ≥31 OW provinces', () {
       const ow = 'oldWorld';
       final provinces = <Province>[
-        ...List<Province>.generate(30, (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1')),
-        ...List<Province>.generate(30, (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2')),
+        ...List<Province>.generate(
+            30, (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1')),
+        ...List<Province>.generate(
+            30, (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2')),
       ];
       final game = Game(
         id: 'g1',
@@ -1265,8 +1453,14 @@ void main() {
       );
       final topology = MapTopology(
         nodes: [
-          ...List.generate(30, (i) => TopologyNode(id: 'A$i', regionId: ow, type: TopologyNodeType.province)),
-          ...List.generate(30, (i) => TopologyNode(id: 'B$i', regionId: ow, type: TopologyNodeType.province)),
+          ...List.generate(
+              30,
+              (i) => TopologyNode(
+                  id: 'A$i', regionId: ow, type: TopologyNodeType.province)),
+          ...List.generate(
+              30,
+              (i) => TopologyNode(
+                  id: 'B$i', regionId: ow, type: TopologyNodeType.province)),
         ],
         edges: const [],
       );
@@ -1302,7 +1496,10 @@ void main() {
         game: game,
         topology: MapTopology(
           nodes: const [
-            TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P1',
+                regionId: 'oldWorld',
+                type: TopologyNodeType.province),
           ],
           edges: const [],
         ),
@@ -1313,7 +1510,9 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 10);
     });
 
-    test('endOfTurn applies fog decay: other-faction tiles become fogged when no Explorer/Spy', () {
+    test(
+        'endOfTurn applies fog decay: other-faction tiles become fogged when no Explorer/Spy',
+        () {
       const ow = 'oldWorld';
       const tileKeyP2 = 'oldWorld|P2|0|0';
       final game = Game(
@@ -1332,7 +1531,12 @@ void main() {
             'p1': {tileKeyP2: VisibilityLevel.fullyVisible.name},
             'p2': {},
           },
-          tileKeysByRegionAndProvince: {ow: {'P1': ['oldWorld|P1|0|0'], 'P2': [tileKeyP2]}},
+          tileKeysByRegionAndProvince: {
+            ow: {
+              'P1': ['oldWorld|P1|0|0'],
+              'P2': [tileKeyP2]
+            }
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
@@ -1343,17 +1547,22 @@ void main() {
         game: game,
         topology: MapTopology(
           nodes: const [
-            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P2', regionId: ow, type: TopologyNodeType.province),
           ],
           edges: const [],
         ),
         orders: const Orders(),
       );
-      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
+      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
+          VisibilityLevel.fogged.name);
     });
 
-    test('endOfTurn fog decay does not apply when Explorer is in other-faction province', () {
+    test(
+        'endOfTurn fog decay does not apply when Explorer is in other-faction province',
+        () {
       const ow = 'oldWorld';
       const tileKeyP2 = 'oldWorld|P2|0|0';
       final game = Game(
@@ -1379,7 +1588,12 @@ void main() {
             'p1': {tileKeyP2: VisibilityLevel.fullyVisible.name},
             'p2': {},
           },
-          tileKeysByRegionAndProvince: {ow: {'P1': ['oldWorld|P1|0|0'], 'P2': [tileKeyP2]}},
+          tileKeysByRegionAndProvince: {
+            ow: {
+              'P1': ['oldWorld|P1|0|0'],
+              'P2': [tileKeyP2]
+            }
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
@@ -1390,17 +1604,22 @@ void main() {
         game: game,
         topology: MapTopology(
           nodes: const [
-            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P2', regionId: ow, type: TopologyNodeType.province),
           ],
           edges: const [],
         ),
         orders: const Orders(),
       );
-      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2], VisibilityLevel.fullyVisible.name);
+      expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
+          VisibilityLevel.fullyVisible.name);
     });
 
-    test('endOfTurn fog decay uses full province id: same local id in two regions', () {
+    test(
+        'endOfTurn fog decay uses full province id: same local id in two regions',
+        () {
       const ow = 'oldWorld';
       const nw = 'newWorld';
       const tileKeyOwP1 = 'oldWorld|P1|0|0';
@@ -1435,8 +1654,13 @@ void main() {
             'p2': {},
           },
           tileKeysByRegionAndProvince: {
-            ow: {'P1': [tileKeyOwP1], 'P2': ['oldWorld|P2|0|0']},
-            nw: {'P1': [tileKeyNwP1]},
+            ow: {
+              'P1': [tileKeyOwP1],
+              'P2': ['oldWorld|P2|0|0']
+            },
+            nw: {
+              'P1': [tileKeyNwP1]
+            },
           },
         ),
         players: const [
@@ -1448,9 +1672,12 @@ void main() {
         game: game,
         topology: MapTopology(
           nodes: const [
-            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 'P1', regionId: nw, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P1', regionId: nw, type: TopologyNodeType.province),
           ],
           edges: const [],
         ),
@@ -1464,7 +1691,232 @@ void main() {
       expect(
         next.worldState.playerVisibilityByTile['p1']?[tileKeyNwP1],
         VisibilityLevel.fogged.name,
-        reason: 'No Explorer in newWorld|P1; must fog (full province id, not local)',
+        reason:
+            'No Explorer in newWorld|P1; must fog (full province id, not local)',
+      );
+    });
+
+    test(
+        'endOfTurn preserves visibility when Spy timer is active (no units present)',
+        () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fullyVisible'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'P2': [tileKeyP2],
+            },
+          },
+          spyRevealTurnsByPlayer: const {
+            'p1': {
+              '$ow|P2': 5,
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P2', regionId: ow, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+
+      // Timer decremented but still present.
+      expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], 4);
+      // Province remains fully visible while timer > 0.
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
+        VisibilityLevel.fullyVisible.name,
+      );
+    });
+
+    test(
+        'endOfTurn fogs province when Spy timer reaches zero and no Explorer/Spy remains',
+        () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fullyVisible'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'P2': [tileKeyP2],
+            },
+          },
+          spyRevealTurnsByPlayer: const {
+            'p1': {
+              '$ow|P2': 1,
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: MapTopology(
+          nodes: const [
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(
+                id: 'P2', regionId: ow, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        ),
+        orders: const Orders(),
+      );
+
+      // Timer cleared once it reaches 0.
+      expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], isNull);
+      // Province tiles decay to fogged.
+      expect(
+        next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
+        VisibilityLevel.fogged.name,
+      );
+    });
+
+    test(
+        'Spy leaving other-faction province gains 5-turn fog decay grace period',
+        () {
+      const ow = 'oldWorld';
+      const tileKeyP1 = 'oldWorld|P1|0|0';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'spy1',
+                type: 'Spy',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+                tileKey: tileKeyP1,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              tileKeyP1: 'fullyVisible',
+              tileKeyP2: 'fogged',
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|P1': [tileKeyP1],
+              '$ow|P2': [tileKeyP2],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final moveOrders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'spy1', destinationProvinceId: '$ow|P2'),
+          ],
+        },
+      );
+
+      // Turn 1: Spy moves out of other-faction province; timer starts at 5 and is
+      // decremented to 4 at end-of-turn; province remains fully visible.
+      var current = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: moveOrders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(
+        current.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P1'],
+        4,
+      );
+      expect(
+        current.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
+        VisibilityLevel.fullyVisible.name,
+      );
+
+      // Turns 2–5: no further movement; timer counts down to 0 and province fogs
+      // only when the timer expires.
+      for (var i = 0; i < 4; i++) {
+        current = resolveTurnForGame(
+          game: current,
+          topology: topology,
+          orders: const Orders(),
+          extractedByPlayerId: const {},
+          defaultAssignments: const [],
+        );
+      }
+
+      expect(
+        current.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P1'],
+        isNull,
+      );
+      expect(
+        current.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
+        VisibilityLevel.fogged.name,
       );
     });
   });

@@ -2,6 +2,7 @@
 
 import 'dart:typed_data';
 
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -188,6 +189,8 @@ InitGameResult runInitGame({
     aiSeedByGpId: {for (final p in game.players) p.id: effectiveSeed + p.id.hashCode},
     greatPowerColorOverride: gpColorOverrideList,
   );
+  // Phase 6 full AI: populate hidden agendas before first AI order generation. SPEC: game-setup-pipeline.md step 9, ai-planner.md § Phase 6.
+  game = assignHiddenAgendasForGame(game);
 
   _log.i('logic: init game end seed=$effectiveSeed gameId=${game.id}');
   return InitGameResult(

@@ -36,7 +36,7 @@ Per recipe: consume inputs and labour from stockpile and WorkerPool; add outputs
 
 ## Consumption
 
-Military regiments consume food upkeep **before** workers and navy. Per player: (1) Compute regiment food demand. (2) Consume food from stockpile (military-first). (3) Derive feeding coverage ratio → morale/strength modifier for Combat (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (4) Workers/navy consume remainder per [workers-and-population.md](../game/workers-and-population.md); starvation removes workers. Upkeep shortfall for military affects morale/strength, not unit count.
+Military regiments consume food upkeep **before** workers and navy. Per player: (1) Compute regiment food demand. (2) Consume food from stockpile (military-first). (3) Derive feeding coverage ratio → morale/strength modifier for Combat (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (4) Workers/navy consume remainder per [workers-and-population.md](../game/workers-and-population.md): food first, then starvation removes workers; then **luxury deduction** (one unit per trained worker of that tier: refinedSugar/apprentices, cigars/journeymen, furHats/masters), up to stockpile. Upkeep shortfall for military affects morale/strength, not unit count.
 
 ---
 

@@ -7,7 +7,8 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('dialogueEventsForLandBattleResult', () {
-    test('AI victor and AI loser both emit event', () {
+    test('AI victor and AI loser both emit event with era from turn-time mapping', () {
+      const mapping = TurnTimeMapping.gdd01;
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -21,6 +22,7 @@ void main() {
           Player(id: 'gp3', displayName: 'AI Loser', isHuman: false),
         ],
       );
+      final expectedEra = eraFromYear(mapping.yearAtTurn(2));
       final events = dialogueEventsForLandBattleResult(
         game, 'gp2', 'gp3', 'ow|prov1', 2, 12345,
       );
@@ -31,7 +33,7 @@ void main() {
       expect(lost.length, 1);
       expect(won.first.leaderId, 'gp2');
       expect(won.first.category, 'event');
-      expect(won.first.era, 'earlyModern');
+      expect(won.first.era, expectedEra);
       expect(won.first.variables['otherNation'], 'gp3');
       expect(won.first.variables['province'], 'ow|prov1');
       expect(lost.first.leaderId, 'gp3');

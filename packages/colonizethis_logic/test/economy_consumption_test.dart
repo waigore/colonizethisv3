@@ -136,5 +136,32 @@ void main() {
       expect(result.totalRegiments, 0);
       expect(result.fullyFedRegiments, 0);
     });
+
+    test('trained workers consume tier luxuries when available', () {
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 10)
+          .applyDelta(CommodityCatalog.meat.id, 10)
+          .applyDelta(CommodityCatalog.refinedSugar.id, 2)
+          .applyDelta(CommodityCatalog.cigars.id, 1)
+          .applyDelta(CommodityCatalog.furHats.id, 1);
+      const workers = WorkerPool(
+        peasants: 0,
+        apprentices: 2,
+        journeymen: 1,
+        masters: 1,
+      );
+
+      final result = resolveConsumption(stockpile: stockpile, workers: workers);
+
+      // Food sufficient: no starvation.
+      expect(result.workerPool.apprentices, 2);
+      expect(result.workerPool.journeymen, 1);
+      expect(result.workerPool.masters, 1);
+
+      // Luxury consumption capped by worker count and stockpile.
+      expect(result.stockpile.quantityOf(CommodityCatalog.refinedSugar.id), 0); // 2 apprentices → 2 refinedSugar used.
+      expect(result.stockpile.quantityOf(CommodityCatalog.cigars.id), 0); // 1 journeyman → 1 cigars used.
+      expect(result.stockpile.quantityOf(CommodityCatalog.furHats.id), 0); // 1 master → 1 furHats used.
+    });
   });
 }

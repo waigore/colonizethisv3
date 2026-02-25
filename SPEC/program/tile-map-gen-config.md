@@ -48,4 +48,4 @@ Implemented in colonizethis_map. Consumed by App (game/scenario load), tools. Ti
 
 ## Constraints
 
-- Grid dimensions derived; no topology input. Reference: ideas/tile-based-map-generation.md (archived) was sample only; this spec is authoritative.
+- Grid dimensions derived; no topology input. The archived document [SPEC/archive/tile-based-map-generation.md](../archive/tile-based-map-generation.md) is non-normative historical background; this spec and tile-map-gen-algorithm.md are authoritative.

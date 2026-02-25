@@ -1,0 +1,31 @@
+{
+  "name": "extraction_basic",
+  "description": "SPEC/game/extraction-and-improvements.md: Extraction phase adds effective yield from connected tile with improvement and resource to owner stockpile. Given one owned tile with grain, improvement level 1, road level 1, after turn 1: gp1 grain stockpile +1.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}],
+      "resourceGrid": [["grain", null]]
+    }
+  },
+  "setup": {
+    "initialStockpile": {"gp1": {"grain": 0}},
+    "initialTileState": {
+      "oldWorld|p1|0|0": {"improvementLevel": 1, "roadLevel": 1}
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "commodity": "grain", "stockpileCommodity": 1}
+  ]
+}

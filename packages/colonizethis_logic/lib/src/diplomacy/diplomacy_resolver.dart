@@ -23,11 +23,11 @@ RelationLevel scoreToLevel(int score) {
 }
 
 /// Normalizes faction pair for lookup (consistent ordering).
-String _pairKey(String a, String b) =>
-    a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
+String _pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
 /// Returns relation for faction pair, or null if not found.
-DiplomacyRelation? getRelation(Game game, String factionId1, String factionId2) {
+DiplomacyRelation? getRelation(
+    Game game, String factionId1, String factionId2) {
   final key = _pairKey(factionId1, factionId2);
   for (final r in game.diplomacyRelations) {
     if (_pairKey(r.factionId1, r.factionId2) == key) return r;
@@ -44,8 +44,8 @@ List<DiplomacyRelation> upsertRelation(
   DiplomacyRelation Function(DiplomacyRelation?) updater,
 ) {
   final key = _pairKey(factionId1, factionId2);
-  final idx = relations.indexWhere(
-      (r) => _pairKey(r.factionId1, r.factionId2) == key);
+  final idx =
+      relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
   final existing = idx >= 0 ? relations[idx] : null;
   final updated = updater(existing);
   final result = List<DiplomacyRelation>.from(relations);
@@ -116,7 +116,8 @@ Game resolveDiplomacyPhase(
   state = _processAlliances(state, diploByPlayer, turn);
 
   // 5. Process Declare War and Peace
-  state = _processWarAndPeace(state, diploByPlayer, turn, onDialogue: onDialogue);
+  state =
+      _processWarAndPeace(state, diploByPlayer, turn, onDialogue: onDialogue);
 
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
@@ -150,6 +151,11 @@ Game _processOverturePayments(
       final targetId = order.targetFactionId;
       if (!_isMinorOrTribe(game, targetId)) continue;
 
+      // SPEC/game/diplomacy.md: While relationState is AT_WAR between a GP and
+      // a Minor/Tribe, no new overtures may be established between that pair.
+      final rel = getRelation(game, gpId, targetId);
+      if (rel != null && rel.atWar) continue;
+
       OvertureState? existing;
       for (final o in overtures) {
         if (o.gpId == gpId && o.targetId == targetId) {
@@ -168,8 +174,9 @@ Game _processOverturePayments(
 
       // Must be at previous stage to advance to this one.
       final prevStage = _previousStage(stage);
-      final atPrevStage = (existing == null && prevStage == OvertureStage.none) ||
-          (existing != null && existing.stage == prevStage);
+      final atPrevStage =
+          (existing == null && prevStage == OvertureStage.none) ||
+              (existing != null && existing.stage == prevStage);
       final canAdvance = atPrevStage && player.treasury >= cost;
 
       if (!canAdvance) continue;
@@ -178,12 +185,18 @@ Game _processOverturePayments(
       player = player.copyWith(treasury: player.treasury - cost);
       players[playerIdx] = player;
 
-      final osIdx = overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
+      final osIdx =
+          overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
       if (osIdx >= 0) {
         overtures = List<OvertureState>.from(overtures);
-        overtures[osIdx] = overtures[osIdx].copyWith(stage: stage, sinceTurn: turn);
+        overtures[osIdx] =
+            overtures[osIdx].copyWith(stage: stage, sinceTurn: turn);
       } else {
-        overtures = [...overtures, OvertureState(gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)];
+        overtures = [
+          ...overtures,
+          OvertureState(
+              gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)
+        ];
       }
       _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage');
     }
@@ -237,10 +250,12 @@ Game _resolveJoinEmpireColony(
       // Minor -> absorption (provinces to requester); Tribe -> colony.
       // Full implementation would transfer provinces; stub for Phase 4.
       var overtures = List<OvertureState>.from(game.overtureStates);
-      final idx = overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
+      final idx =
+          overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
       if (idx >= 0) {
         overtures = List<OvertureState>.from(overtures);
-        overtures[idx] = overtures[idx].copyWith(stage: OvertureStage.joinEmpire, sinceTurn: turn);
+        overtures[idx] = overtures[idx]
+            .copyWith(stage: OvertureStage.joinEmpire, sinceTurn: turn);
         game = game.copyWith(overtureStates: overtures);
         _diploLog.i('logic: diplomacy join empire $gpId $targetId');
       }
@@ -298,6 +313,22 @@ Game _processWarAndPeace(
 }) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
+  // Track GP–GP peace offers by unordered faction pair so we can require
+  // both sides to offer peace before switching AT_WAR to AT_PEACE.
+  final peaceOffersByPairKey = <String, Set<String>>{};
+  for (final entry in diploByPlayer.entries) {
+    final gpId = entry.key;
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.offerPeace) continue;
+      final targetId = order.targetFactionId;
+      if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId))
+        continue;
+      final key = _pairKey(gpId, targetId);
+      final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
+      offerers.add(gpId);
+    }
+  }
+
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
@@ -340,14 +371,38 @@ Game _processWarAndPeace(
           });
           game = game.copyWith(
             diplomacyRelations: relations,
-            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
+            dossierEvidenceEntries: [
+              ...game.dossierEvidenceEntries,
+              ...evidence
+            ],
           );
           _diploLog.i('logic: diplomacy war declared $gpId vs $targetId');
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
+        final key = _pairKey(gpId, targetId);
+        final bothGreatPowers =
+            _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
+        final hasMutualOffer = bothGreatPowers
+            ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2
+            : true;
         if (rel != null && rel.atWar) {
+          // SPEC/game/diplomacy.md:
+          // - GP–GP peace: both sides must agree (both offer peace in this phase).
+          // - Minors never refuse peace offers.
+          var bothSidesAgreed = true;
+          final isGpTarget = _isGreatPower(game, targetId);
+          if (isGpTarget && _isGreatPower(game, gpId)) {
+            final key = _pairKey(gpId, targetId);
+            final offerers = peaceOffersByPairKey[key] ?? const <String>{};
+            bothSidesAgreed =
+                offerers.contains(gpId) && offerers.contains(targetId);
+          }
+          if (!bothSidesAgreed) {
+            continue;
+          }
+
           if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
             onDialogue(DialogueEvent(
               leaderId: gpId,
@@ -358,18 +413,30 @@ Game _processWarAndPeace(
             ));
           }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
-          relations = upsertRelation(relations, gpId, targetId, (existing) {
-            return existing!.copyWith(
-              state: RelationState.atPeace,
-              sinceTurn: turn,
-              lastInteractionTurn: turn,
+          if (hasMutualOffer) {
+            relations = upsertRelation(relations, gpId, targetId, (existing) {
+              return existing!.copyWith(
+                state: RelationState.atPeace,
+                sinceTurn: turn,
+                lastInteractionTurn: turn,
+              );
+            });
+            game = game.copyWith(
+              diplomacyRelations: relations,
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
             );
-          });
-          game = game.copyWith(
-            diplomacyRelations: relations,
-            dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
-          );
-          _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+            _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+          } else {
+            game = game.copyWith(
+              dossierEvidenceEntries: [
+                ...game.dossierEvidenceEntries,
+                ...evidence,
+              ],
+            );
+          }
         }
       }
     }
@@ -384,7 +451,8 @@ Game _terminateAgreementsOnWar(Game game) {
     final id1 = rel.factionId1;
     final id2 = rel.factionId2;
     overtures = overtures
-        .where((o) => !((o.gpId == id1 && o.targetId == id2) || (o.gpId == id2 && o.targetId == id1)))
+        .where((o) => !((o.gpId == id1 && o.targetId == id2) ||
+            (o.gpId == id2 && o.targetId == id1)))
         .toList();
   }
   if (overtures.length != game.overtureStates.length) {
@@ -420,7 +488,8 @@ Game _applyRelationModifiersAndUpdateScores(
       final playerIdx = players.indexWhere((p) => p.id == gpId);
       if (playerIdx >= 0) {
         players = List<Player>.from(players);
-        players[playerIdx] = players[playerIdx].copyWith(treasury: players[playerIdx].treasury - amount);
+        players[playerIdx] = players[playerIdx]
+            .copyWith(treasury: players[playerIdx].treasury - amount);
       }
 
       final ids = _pairIds(gpId, targetId);
@@ -436,10 +505,12 @@ Game _applyRelationModifiersAndUpdateScores(
             lastInteractionTurn: turn,
           );
         }
-        return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+        return existing.copyWith(
+            score: newScore, level: newLevel, lastInteractionTurn: turn);
       });
       game = game.copyWith(players: players, diplomacyRelations: relations);
-      _diploLog.i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
+      _diploLog
+          .i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
   }
 
@@ -460,16 +531,19 @@ Game _applyRelationModifiersAndUpdateScores(
       final payerIdx = players.indexWhere((p) => p.id == gpId);
       if (payerIdx >= 0) {
         players = List<Player>.from(players);
-        players[payerIdx] = players[payerIdx].copyWith(treasury: players[payerIdx].treasury - amount);
+        players[payerIdx] = players[payerIdx]
+            .copyWith(treasury: players[payerIdx].treasury - amount);
       }
 
       final targetPlayer = getPlayer(game, targetId);
       if (targetPlayer != null) {
         final receiverIdx = players.indexWhere((p) => p.id == targetId);
         if (receiverIdx >= 0) {
-          players[receiverIdx] = players[receiverIdx].copyWith(treasury: players[receiverIdx].treasury + amount);
+          players[receiverIdx] = players[receiverIdx]
+              .copyWith(treasury: players[receiverIdx].treasury + amount);
         }
-        _diploLog.i('logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (treasury)');
+        _diploLog.i(
+            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (treasury)');
       } else {
         // Minor/Tribe: no treasury; apply relation modifier (+3 per subsidy per diplomacy.md-style)
         final ids = _pairIds(gpId, targetId);
@@ -485,9 +559,11 @@ Game _applyRelationModifiersAndUpdateScores(
               lastInteractionTurn: turn,
             );
           }
-          return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+          return existing.copyWith(
+              score: newScore, level: newLevel, lastInteractionTurn: turn);
         });
-        _diploLog.i('logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (relation)');
+        _diploLog.i(
+            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (relation)');
       }
       game = game.copyWith(players: players, diplomacyRelations: relations);
     }
@@ -511,7 +587,8 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
   if (!isMinor) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
-  final attackerIsGp = attackerIds.any((id) => game.players.any((p) => p.id == id));
+  final attackerIsGp =
+      attackerIds.any((id) => game.players.any((p) => p.id == id));
   if (!attackerIsGp) return null;
 
   for (final p in game.players) {
@@ -543,7 +620,8 @@ Game applyInterventionChoice(
 
     if (choice == InterventionChoice.intervene) {
       final ids = _pairIds(gpIdWithEmbassy, attackerId);
-      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
+      relations =
+          upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
         if (existing == null) {
           return DiplomacyRelation(
             factionId1: ids.id1,
@@ -567,7 +645,8 @@ Game applyInterventionChoice(
       });
     } else if (choice == InterventionChoice.protest) {
       final ids = _pairIds(gpIdWithEmbassy, attackerId);
-      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
+      relations =
+          upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
         final newScore = ((existing?.score ?? 50) - 10).clamp(0, 100);
         final newLevel = scoreToLevel(newScore);
         if (existing == null) {
@@ -579,7 +658,8 @@ Game applyInterventionChoice(
             lastInteractionTurn: turn,
           );
         }
-        return existing.copyWith(score: newScore, level: newLevel, lastInteractionTurn: turn);
+        return existing.copyWith(
+            score: newScore, level: newLevel, lastInteractionTurn: turn);
       });
     }
   }

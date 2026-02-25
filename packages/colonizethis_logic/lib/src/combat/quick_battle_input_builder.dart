@@ -3,12 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'conflict_detection.dart';
-
-/// Leader combat bonus for a faction. GPs use Player.leaderKey; minors/tribes get 1.0.
-double _leaderBonusForFaction(Game game, String factionId) {
-  final player = game.playerById(factionId);
-  return leaderCombatBonusMultiplier(player?.leaderKey);
-}
+import 'leader_bonus_helpers.dart';
 
 /// Builds QuickBattleInput from Game and BattleContext. SPEC/program/quick-battle-resolution.
 /// Uses simple auto-deploy: all units in CENTER FRONT.
@@ -27,9 +22,8 @@ QuickBattleInput buildQuickBattleInput(
     QuickBattleGroup(
       lane: QuickBattleLane.center,
       line: QuickBattleLine.front,
-      unitIds: ctx.defenderUnitIds
-          .where((id) => unitsById.containsKey(id))
-          .toList(),
+      unitIds:
+          ctx.defenderUnitIds.where((id) => unitsById.containsKey(id)).toList(),
       cohesion: quickBattleMaxCohesion,
     ),
   ];
@@ -49,8 +43,9 @@ QuickBattleInput buildQuickBattleInput(
     ),
   ];
 
-  final attackerLeaderMult = _leaderBonusForFaction(game, ctx.attackers.first.factionId);
-  final defenderLeaderMult = _leaderBonusForFaction(game, ctx.defenderFactionId);
+  final attackerLeaderMult =
+      leaderBonusForFaction(game, ctx.attackers.first.factionId);
+  final defenderLeaderMult = leaderBonusForFaction(game, ctx.defenderFactionId);
 
   return QuickBattleInput(
     attackerFactionId: ctx.attackers.first.factionId,

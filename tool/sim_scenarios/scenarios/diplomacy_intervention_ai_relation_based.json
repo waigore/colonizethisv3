@@ -1,0 +1,85 @@
+{
+  "name": "diplomacy_intervention_ai_relation_based",
+  "description": "AI GPs with Embassies may intervene for attacked Minor based on relation score; includes non-intervention path clearing Embassy.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 98765,
+      "greatPowers": ["england", "france", "spain"],
+      "continentCount": 2,
+      "minorNationCount": 1,
+      "tribeCount": 0
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp2",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "embassy"
+        },
+        {
+          "player": "gp3",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "embassy"
+        },
+        {
+          "player": "gp2",
+          "type": "setRelationScoreDebug",
+          "targetFactionId": "minor1",
+          "relationScore": 80
+        },
+        {
+          "player": "gp3",
+          "type": "setRelationScoreDebug",
+          "targetFactionId": "minor1",
+          "relationScore": 40
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "attackMinor",
+          "targetFactionId": "minor1"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 2,
+      "player": "gp2",
+      "relationWith": "gp1",
+      "relationState": "atWar",
+      "relationSinceTurn": 1
+    },
+    {
+      "turn": 2,
+      "player": "gp2",
+      "relationWith": "minor1",
+      "overtureStage": "embassy"
+    },
+    {
+      "turn": 2,
+      "player": "gp3",
+      "relationWith": "minor1",
+      "overtureStage": "none"
+    },
+    {
+      "turn": 2,
+      "player": "gp3",
+      "relationWith": "gp1",
+      "relationState": "atPeace"
+    }
+  ]
+}
+

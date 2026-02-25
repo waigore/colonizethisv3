@@ -9,8 +9,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../world/movement.dart';
 import 'evidence_rules.dart';
 
-const String _eraDefault = 'earlyModern';
-
 /// Era names for dialogue (SPEC/ai/dialogue-and-mood.md: discovery | earlyModern | imperial | industrial).
 const List<String> kDialogueEras = ['discovery', 'earlyModern', 'imperial', 'industrial'];
 
@@ -56,12 +54,15 @@ List<DialogueEvent> dialogueEventsForLandBattleResult(
   int seed,
 ) {
   final events = <DialogueEvent>[];
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final year = mapping.yearAtTurn(turnNumber);
+  final era = eraFromYear(year);
   if (isAiControlledForEvidence(game, victorId)) {
     events.add(DialogueEvent(
       leaderId: victorId,
       category: 'event',
       situation: 'battle_won',
-      era: _eraDefault,
+      era: era,
       variables: {'otherNation': loserId, 'province': provinceId},
     ));
   }
@@ -70,7 +71,7 @@ List<DialogueEvent> dialogueEventsForLandBattleResult(
       leaderId: loserId,
       category: 'event',
       situation: 'battle_lost',
-      era: _eraDefault,
+      era: era,
       variables: {'otherNation': victorId, 'province': provinceId},
     ));
   }
@@ -87,12 +88,15 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
   int seed,
 ) {
   final events = <DialogueEvent>[];
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final year = mapping.yearAtTurn(turnNumber);
+  final era = eraFromYear(year);
   if (isAiControlledForEvidence(game, victorId)) {
     events.add(DialogueEvent(
       leaderId: victorId,
       category: 'event',
       situation: 'battle_won',
-      era: _eraDefault,
+      era: era,
       variables: {'otherNation': loserId},
     ));
   }
@@ -101,7 +105,7 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
       leaderId: loserId,
       category: 'event',
       situation: 'battle_lost',
-      era: _eraDefault,
+      era: era,
       variables: {'otherNation': victorId},
     ));
   }

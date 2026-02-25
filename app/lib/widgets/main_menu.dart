@@ -197,7 +197,10 @@ class _PixelArtButton extends StatelessWidget {
             children: [
               Image.asset(
                 _kAssetButton,
-                fit: BoxFit.cover,
+                // 9-slice: keep ornate gold corners/bars fixed, stretch only inner panel.
+                centerSlice: const Rect.fromLTWH(24, 18, 75, 21),
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.none,
                 errorBuilder: (_, __, ___) {
                   Logger().w('ctdev: main_menu button asset not found, using fallback');
                   return Container(

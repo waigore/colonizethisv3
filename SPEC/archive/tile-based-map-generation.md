@@ -1,3 +1,7 @@
+**Non-normative historical background.** This document describes an early graph-first tile map design (input = topology graph G; map generation enforces adjacency iff edges exist). It is **not** the source of truth. The canonical specs for tile map generation are: [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md), [tile-map-gen-resources.md](../program/tile-map-gen-resources.md), [tile-map-gen-config.md](../program/tile-map-gen-config.md), [map-data.md](../program/map-data.md), and [tile-map-and-generation.md](../game/tile-map-and-generation.md). Current GDD/TDD use a **map-first** design: input is province/continent counts and region params; topology is inferred from the grid. Implementation and tests follow the program and game specs only.
+
+---
+
 Below is a detailed design for a tile-based map generation algorithm tailored to your Imperialism II redesign. The algorithm generates a semi-random tile map (e.g., a 2D grid of tiles) that respects the given world topology graph. It ensures:
 
 - **Topology Respect**: Two regions (provinces or sea zones) in the generated map are adjacent (i.e., have at least one pair of tiles that share an edge) **if and only if** they are connected in the input graph. This prevents unwanted adjacencies while guaranteeing required ones.

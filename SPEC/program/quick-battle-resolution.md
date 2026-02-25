@@ -39,10 +39,12 @@ Resolver for the Quick Battle tactical mini-game — a bounded, per-round loop t
 
 The resolver does not decide actions; it applies actions provided by the caller.
 
+**Default round actions:** When the caller does not supply per-round actions (e.g. main game combat phase or simulation), the resolver may use default round actions so that resolution can complete without explicit player or AI input. The default is implementation-defined (e.g. Volley Fire for both sides each round). The main game path may therefore invoke the Quick Battle resolver without supplying round actions and still obtain a deterministic outcome.
+
 ## Integration
 
 - **Phase:** Combat phase, as alternative to auto-resolve ([turn-resolution-phases.md](turn-resolution-phases.md)).
-- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve.
+- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve. The main game path (turn resolver) typically invokes the resolver without supplying per-round actions and thus relies on default round actions; a future UI or AI may supply explicit round actions.
 - **Downstream:** Casualty lists and province-flip flag returned to the combat pipeline; WorldState mutation by turn resolver.
 
 ## Constraints
@@ -52,3 +54,21 @@ The resolver does not decide actions; it applies actions provided by the caller.
 - Must use the same config sources as auto-resolve (no divergence between modes).
 - Does not depend on global singletons; all data supplied or derived from shared config.
 - Owned by colonizethis_logic.
+
+## Acceptance criteria
+
+- Given the same Quick Battle seed and identical inputs (battle context, lanes and groups per side, starting round, max rounds)  
+  When the resolver runs to completion twice  
+  Then the resolver returns the same battle outcome (ATTACKER, DEFENDER, or MUTUAL_EXHAUSTION), the same per-side casualties, the same provinceFlips and attackerRouts/defenderRouts flags, and the same final tactical state (surviving composition, cohesion, lane statuses).
+
+- Given the resolver has completed a Quick Battle run  
+  When the caller inspects the resolver output  
+  Then the output conforms to the Data Model § Output: per-side casualties (by unit type or battalion group), battle outcome, provinceFlips boolean, attackerRouts/defenderRouts booleans, and final tactical state with lane statuses INTACT, BROKEN, or EMPTY.
+
+- Given combat phase invokes Quick Battle as an alternative to auto-resolve for a province  
+  When the resolver returns casualty lists and province-flip flag  
+  Then the combat pipeline applies the result via the same integration point as auto-resolve (e.g. applyQuickBattleResultToGame or equivalent); WorldState mutation is performed by the turn resolver per [turn-resolution-phases.md](turn-resolution-phases.md).
+
+- Given the resolver receives battle context that includes a province id  
+  When the resolver or downstream pipeline applies casualties or province flip for that battle  
+  Then the province id is in prefixed form (`regionId|localId`) and any province lookup follows [world-model-identity.md](../game/world-model-identity.md); the resolver does not look up by province id alone or assume a default region.

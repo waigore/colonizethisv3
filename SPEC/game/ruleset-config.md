@@ -6,7 +6,7 @@ Data-driven game parameters organized in categories and layers, fixed at game cr
 ## Rules
 
 ### Categories
-Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (FPN, FPM, RNG, DEF, MVR; terrain/fort/difficulty modifiers; initiative weights; medal multipliers), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, Old World/New World province counts).
+Parameters are grouped into: **units** (movement, strength, caps, costs), **map** (terrain costs, adjacency, starting provinces), **economy** (price modifiers, capacity, credit limits, turn timers), **combat** (FPN, FPM, RNG, DEF, MVR; terrain/fort/difficulty modifiers; initiative weights; medal multipliers; leader bonus table — MVP: not in ruleset, see [leader-bonuses.md](leader-bonuses.md) § Where defined (MVP)), **victory** (thresholds, score weights, custom win conditions), **AI** (difficulty resource modifiers, personality weights), **scenario** (starting units, treasury, relations, powers enabled), **game/setup** (Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, Old World/New World province counts).
 
 **Map:** Adjacency from topology graph ([world-model.md](world-model.md), [map-topology.md](map-topology.md)). Terrain, resources, and improvements may come from tile map or config overlays.
 
@@ -33,6 +33,12 @@ The ruleset includes a **naming** section for historically inspired names:
 
 Setup names all provinces owned by each faction at creation. Provinces acquired during play retain existing display name. Scenarios may override naming while keeping the same structure.
 
+### Turn-time mapping
+
+The resolved ruleset includes a **turn-time mapping** section that defines how turn numbers map to calendar years for narrative and UI; see [turn-time-mapping.md](turn-time-mapping.md) for structure and defaults (`startYear`, `cutoffYear`, `yearsPerTurnBeforeCutoff`, `yearsPerTurnAfterCutoff`).
+
+- **MVP default:** When the resolved ruleset does not supply turn-time mapping, game setup uses the default GDD 01 mapping (`TurnTimeMapping.gdd01`) when initializing `Game.turnTimeMapping`. See [turn-time-mapping.md](turn-time-mapping.md) and [game-setup-pipeline.md](../program/game-setup-pipeline.md) step 7e.
+
 ## Configurable Values
 
 | Parameter | Default | Layer |
@@ -44,6 +50,8 @@ Setup names all provinces owned by each faction at creation. Provinces acquired 
 | Old World provinces | ≈60 | Base, Scenario |
 | New World provinces | ≈80 | Base, Scenario |
 | Continent count | 3–4 | Base, Scenario |
+
+Turn-time mapping parameters are part of the resolved ruleset but documented in [turn-time-mapping.md](turn-time-mapping.md). Scenarios or future ruleset layers may override the mapping as a whole; when no mapping is present in the resolved ruleset, the System uses the default described there.
 
 ## Interactions
 - [world-model.md](world-model.md), [map-topology.md](map-topology.md) — adjacency, terrain

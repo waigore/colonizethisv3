@@ -1,6 +1,6 @@
 # Tile Map Generation: Resources and Provinces (Passes 7–11)
 
-**SPEC/program** — Resource and province assignment, sea zone subdivision. Algorithm: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md). Config: [tile-map-gen-config.md](tile-map-gen-config.md). Game semantics: [SPEC/game/tile-map-and-generation.md](../game/tile-map-and-generation.md).
+**SPEC/program** — Resource and province assignment, sea zone subdivision. Algorithm: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md). Config: [tile-map-gen-config.md](tile-map-gen-config.md). Game semantics: [SPEC/game/tile-map-and-generation.md](../game/tile-map-and-generation.md). Province and sea zone identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -43,6 +43,7 @@ After all passes: `MapTopology inferTopologyFromTileMap(TileMapResult result, St
 
 - Resource rules required for Pass 7; when omitted, terrain/resource grids are null.
 - Province and sea zone ids follow Voronoi; balanced land per continent yields balanced province sizes.
+- **Province and sea zone identity:** This pipeline outputs **local** ids (e.g. `p1`, `p2`, `s1`, `s2`). Local ids are not globally unique across regions. Downstream consumers (map data, game state, topology lookup) must use **prefixed** form (`regionId|localId`) and resolve per [world-model-identity.md](../game/world-model-identity.md); never look up by province or sea zone id alone.
 
 ---
 

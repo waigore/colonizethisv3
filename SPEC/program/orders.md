@@ -14,7 +14,7 @@
   - `explore` — Explorer; province-level; reveals all tiles in province over up to 3 turns (scaled by province size). See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
   - `prospect` — Explorer; tile-level; prospects the target tile; tile must be mineral-eligible (swamp, hills, mountain, desert). See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
   - `build_improvement` — Builder; tile-level; raises improvement level by 1 (subject to terrain and tech caps) after a **multi-turn build**; consumes lumber + cast iron per level.
-  - `upgrade_town` — Builder; province town tile; upgrades town to produce materials based on connected resources; multi-turn; costs per ruleset.
+  - `upgrade_town` — Builder; province town tile; upgrades town to produce materials based on connected resources; multi-turn; costs per ruleset. Gated by `national_bureaucracy` per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md); **MVP:** this gate is deferred (all Builders may use upgrade_town until the gate is implemented).
   - `build_road` — Engineer; tile-level; sets or upgrades transport level (0→1→2) subject to terrain and tech (e.g. Road Construction); multi-turn; consumes lumber + metal.
   - `build_port` — Engineer; coastal town/river tile; creates a port for a (province, seaboard) pair; sets transport level 4 on port tile; multi-turn; consumes lumber + metal.
   - `build_fort` — Engineer; province town tile; increases fort level by 1 (up to max), gated by fort techs (Mine Engineering, Modern Forts) and costs.

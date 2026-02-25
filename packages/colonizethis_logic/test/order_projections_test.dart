@@ -270,7 +270,8 @@ void main() {
             displayName: 'A',
             isHuman: true,
             stockpile: Stockpile(quantities: {'timber': 4}),
-            workerPool: WorkerPool(peasants: 2),
+            // 4 peasants → 4 labour; assignedLabour=4 can be fully used.
+            workerPool: WorkerPool(peasants: 4),
           ),
         ],
       );

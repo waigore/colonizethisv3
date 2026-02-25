@@ -119,10 +119,12 @@ class ScenarioRunner {
         // Parse orders
         final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
-        // Resolve turn (returns updated game); pass production assignments if specified
+        // Resolve turn (returns updated game). Use per-turn workerAssignments when
+        // present; otherwise fall back to scenario-level productionAssignments.
         final nextGame = _resolveTurn(
           currentContext,
           orders,
+          scenario,
           turnScript.workerAssignments,
         );
         currentContext = ScenarioContext(
@@ -278,13 +280,16 @@ class ScenarioRunner {
         ),
       );
     }
-    if (setup.stockpileOverrides != null) {
-      for (final player in game.players) {
-        final override = setup.stockpileOverrides![player.id];
-        if (override != null) {
-          // Legacy: single-value override not applied per-commodity; use initialStockpile instead.
-        }
-      }
+    // Apply initialWorkers and initialStockpile (SPEC/game/workers-and-population.md).
+    var players = game.players;
+    if (setup.initialWorkers != null || setup.initialStockpile != null) {
+      players = [
+        for (final player in game.players)
+          _applyPlayerEconomyOverrides(player, setup),
+      ];
+    }
+    if (players != game.players) {
+      game = game.copyWith(players: players);
     }
     if (setup.initialStockpile != null && setup.initialStockpile!.isNotEmpty) {
       final updatedPlayers = <Player>[];
@@ -322,13 +327,87 @@ class ScenarioRunner {
       }
       game = game.copyWith(players: updatedPlayers);
     }
+    if (setup.initialTileState != null && setup.initialTileState!.isNotEmpty) {
+      var tileState = game.worldState.tileState;
+      for (final entry in setup.initialTileState!.entries) {
+        final tileKey = entry.key;
+        final opts = entry.value;
+        final imp = opts['improvementLevel'];
+        final road = opts['roadLevel'];
+        if (imp != null) tileState = tileState.setImprovement(tileKey, imp);
+        if (road != null) tileState = tileState.setRoadLevel(tileKey, road);
+      }
+      game = game.copyWith(
+        worldState: game.worldState.copyWith(tileState: tileState),
+      );
+    }
+    if (setup.leaderKeys != null && setup.leaderKeys!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final key = setup.leaderKeys![player.id];
+        if (key == null) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        updatedPlayers.add(player.copyWith(leaderKey: key));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
+    if (setup.initialTech != null && setup.initialTech!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final techIds = setup.initialTech![player.id];
+        if (techIds == null || techIds.isEmpty) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
+        for (final tid in techIds) {
+          techUnlocked[tid] = true;
+        }
+        updatedPlayers.add(player.copyWith(techUnlocked: techUnlocked));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
+    if (setup.defaultCombatMode != null && setup.defaultCombatMode!.isNotEmpty) {
+      final raw = setup.defaultCombatMode!.toLowerCase();
+      final mode = (raw == 'quickbattle' || raw == 'quick_battle')
+          ? CombatMode.quickBattle
+          : CombatMode.autoResolve;
+      game = game.copyWith(defaultCombatMode: mode);
+    }
     return game;
+  }
+
+  Player _applyPlayerEconomyOverrides(Player player, ScenarioSetup setup) {
+    var p = player;
+    if (setup.initialWorkers != null) {
+      final w = setup.initialWorkers![player.id];
+      if (w != null) {
+        p = p.copyWith(
+          workerPool: WorkerPool(
+            peasants: w['peasants'] ?? 0,
+            apprentices: w['apprentices'] ?? 0,
+            journeymen: w['journeymen'] ?? 0,
+            masters: w['masters'] ?? 0,
+          ),
+        );
+      }
+    }
+    if (setup.initialStockpile != null) {
+      final s = setup.initialStockpile![player.id];
+      if (s != null && s.isNotEmpty) {
+        p = p.copyWith(stockpile: Stockpile(quantities: Map<String, int>.from(s)));
+      }
+    }
+    return p;
   }
 
   /// Resolves one turn and returns the updated game.
   Game _resolveTurn(
     ScenarioContext context,
-    Orders orders, [
+    Orders orders,
+    Scenario scenario, [
     List<WorkerAssignment>? workerAssignments,
   ]) {
     final topology = context.topology;
@@ -336,7 +415,8 @@ class ScenarioRunner {
       throw StateError('Topology required for turn resolution');
     }
 
-    final defaultAssignments = workerAssignments != null
+    final defaultAssignments = workerAssignments != null &&
+            workerAssignments.isNotEmpty
         ? workerAssignments
             .map(
               (w) => AssignedRecipe(
@@ -345,7 +425,7 @@ class ScenarioRunner {
               ),
             )
             .toList()
-        : <AssignedRecipe>[];
+        : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
     return resolveTurnForGameFromOrderEngine(
@@ -356,6 +436,18 @@ class ScenarioRunner {
       tileMapByRegion: context.tileMapByRegion,
       defaultAssignments: defaultAssignments,
     );
+  }
+
+  /// Converts scenario setup productionAssignments to AssignedRecipe list for resolver.
+  List<AssignedRecipe> _productionAssignments(Scenario scenario) {
+    final list = scenario.setup?.productionAssignments;
+    if (list == null || list.isEmpty) return const [];
+    return list
+        .map((a) => AssignedRecipe(
+              recipeId: a.recipeId,
+              assignedLabour: a.assignedLabour,
+            ))
+        .toList();
   }
 
   List<AssertionResult> _verifyTurnAssertions(

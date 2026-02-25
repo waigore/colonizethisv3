@@ -1,0 +1,55 @@
+{
+  "name": "diplomacy_gp_minor_overture_invalid_at_war",
+  "description": "GP–Minor overture orders while at war do not result in overture state or cost; overtureStage remains none. SPEC/game/diplomacy.md, SPEC/program/diplomacy-resolution.md.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 54321,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 0
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "declareWar",
+          "targetFactionId": "minor1"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "tradeConsulate"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atWar"
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atWar",
+      "overtureStage": "none"
+    }
+  ]
+}
+
