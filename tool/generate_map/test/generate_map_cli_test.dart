@@ -186,7 +186,7 @@ void main() {
       expect(result.stderr, contains('oldWorld or newWorld'));
     });
 
-    test('--tile-map-image outputs topology graph DOT', () async {
+    test('--tile-map-image outputs PNG and topology graph DOT', () async {
       final tmpDir = Directory.systemTemp.createTempSync('generate_map_test_');
       addTearDown(() => tmpDir.deleteSync(recursive: true));
       final mapPath = p.join(tmpDir.path, 'map.png');
@@ -208,7 +208,90 @@ void main() {
       );
       expect(result.exitCode, 0, reason: result.stderr.toString());
       expect(result.stdout, contains('Topology graph (DOT)'));
+      expect(result.stdout, contains('=== Map summary ==='));
       expect(File(mapPath).existsSync(), isTrue);
+    });
+
+    test('--provinces 0 exits with error and message on stderr', () async {
+      final result = await Process.run(
+        'dart',
+        [
+          'run',
+          'generate_map',
+          '--provinces',
+          '0',
+          '--continents',
+          '2',
+        ],
+        runInShell: false,
+        workingDirectory: _packageRoot,
+      );
+      expect(result.exitCode, 1);
+      expect(result.stderr, contains('provinces'));
+    });
+
+    test('--sea-fraction out of range exits with error on stderr', () async {
+      final result = await Process.run(
+        'dart',
+        [
+          'run',
+          'generate_map',
+          '--provinces',
+          '4',
+          '--continents',
+          '2',
+          '--sea-fraction',
+          '1.0',
+        ],
+        runInShell: false,
+        workingDirectory: _packageRoot,
+      );
+      expect(result.exitCode, 1);
+      expect(result.stderr, contains('sea-fraction'));
+    });
+
+    test('--tile-size 0 with tile-map-image exits with error on stderr', () async {
+      final tmpDir = Directory.systemTemp.createTempSync('generate_map_test_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+      final mapPath = p.join(tmpDir.path, 'out.png');
+      final result = await Process.run(
+        'dart',
+        [
+          'run',
+          'generate_map',
+          '--provinces',
+          '3',
+          '--continents',
+          '2',
+          '--tile-map-image=$mapPath',
+          '--tile-size',
+          '0',
+        ],
+        runInShell: false,
+        workingDirectory: _packageRoot,
+      );
+      expect(result.exitCode, 1);
+      expect(result.stderr, contains('tile-size'));
+    });
+
+    test('--world-state with missing file exits with error on stderr', () async {
+      final result = await Process.run(
+        'dart',
+        [
+          'run',
+          'generate_map',
+          '--provinces',
+          '4',
+          '--continents',
+          '2',
+          '--world-state',
+          '/nonexistent/world_state.json',
+        ],
+        runInShell: false,
+        workingDirectory: _packageRoot,
+      );
+      expect(result.exitCode, 1);
+      expect(result.stderr, contains('not found'));
     });
   });
 }
