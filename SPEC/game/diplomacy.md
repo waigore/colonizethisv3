@@ -56,6 +56,8 @@ Diplomacy phase runs before Movement. Declarations and peace take effect for the
 
 ## Acceptance Criteria
 
+The following Given–When–Then criteria are testable conditions for diplomacy behaviour. Implementation: [diplomacy-resolution.md](../program/diplomacy-resolution.md); phase ordering: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
+
 - Given a new game has started with at least two Great Powers  
   When the system initializes diplomatic relations at turn index 0  
   Then the system sets each unordered Great Power pair to relation state `AT_PEACE`, relation score `50`, relation level `Neutral`, and records `sinceTurn = 0` and `lastInteractionTurn = 0`.
@@ -83,6 +85,9 @@ Diplomacy phase runs before Movement. Declarations and peace take effect for the
 - Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn `t`  
   When the system presents the Player with an Intervention choice and the Player selects **Do Nothing**  
   Then the system does not change the relation state between the Player’s Great Power and the attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed, and, if the Minor is eliminated, clears all diplomatic relations between the Player and that Minor from the game state.
+
+- **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
+- **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
 ## Configurable Values
 
