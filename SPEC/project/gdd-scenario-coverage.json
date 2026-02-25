@@ -1,10 +1,10 @@
 {
   "game/capital-and-connectivity.md": ["capital_and_connectivity_init.json"],
-  "game/capital-choice-phase.md": ["capital_choice_phase_basic.json"],
+  "game/capital-choice-phase.md": ["capital_choice_phase_basic.json", "capital_choice_gp_seabound.json", "capital_choice_tribe_inland.json"],
   "game/civilian-units.md": ["civilian_units_basic.json", "civilian_units_starting.json"],
   "game/combat.md": ["combat_basic.json"],
   "game/commodity-catalog.md": ["commodity_riches_to_treasury.json"],
-  "game/diplomacy.md": ["diplomacy_gp_gp_war_and_mutual_peace.json"],
+  "game/diplomacy.md": ["diplomacy_initial_relations.json", "diplomacy_gp_gp_war_and_mutual_peace.json"],
   "game/extraction-and-improvements.md": [],
   "game/factions.md": [],
   "game/fog-and-exploration.md": [],

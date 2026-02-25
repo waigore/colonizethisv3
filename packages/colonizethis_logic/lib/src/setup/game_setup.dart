@@ -156,13 +156,19 @@ GameSetupResult createGameFromGeneratedMaps({
       Tribe(id: tribeIds[i], displayName: 'Tribe ${i + 1}'),
   ];
 
-  // Initialize GP–GP diplomacy relations at peace per SPEC/game/diplomacy.md.
+  // Initial GP–GP relations per SPEC/game/diplomacy.md: all Great Powers
+  // start at peace with neutral relations and turn index 0 metadata.
   final diplomacyRelations = <DiplomacyRelation>[
-    for (var i = 0; i < gpIds.length; i++)
-      for (var j = i + 1; j < gpIds.length; j++)
+    for (var i = 0; i < players.length; i++)
+      for (var j = i + 1; j < players.length; j++)
         DiplomacyRelation(
-          factionId1: gpIds[i],
-          factionId2: gpIds[j],
+          factionId1: players[i].id,
+          factionId2: players[j].id,
+          score: 50,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
         ),
   ];
 

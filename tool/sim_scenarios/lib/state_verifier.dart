@@ -148,8 +148,50 @@ class StateVerifier {
       }
     }
 
-    // Player-based assertions (stockpile, treasury, diplomacy)
-    if (assertion.player != null) {
+    // Capital assertions (player/minor/tribe faction id + capitalProvinceId / capitalTileKey)
+    if (assertion.player != null &&
+        (assertion.capitalProvinceId != null || assertion.capitalTileKey != null)) {
+      final factionId = assertion.player!;
+      String? actualProvinceId;
+      String? actualTileKey;
+      if (game.players.any((p) => p.id == factionId)) {
+        final p = game.players.firstWhere((x) => x.id == factionId);
+        actualProvinceId = p.capitalProvinceId;
+        actualTileKey = p.capitalTile?.toTileKey();
+      } else if (game.minorNations.any((m) => m.id == factionId)) {
+        final m = game.minorNations.firstWhere((x) => x.id == factionId);
+        actualProvinceId = m.capitalProvinceId;
+        actualTileKey = m.capitalTile?.toTileKey();
+      } else if (game.tribes.any((t) => t.id == factionId)) {
+        final t = game.tribes.firstWhere((x) => x.id == factionId);
+        actualProvinceId = t.capitalProvinceId;
+        actualTileKey = t.capitalTile?.toTileKey();
+      } else {
+        failures.add('Faction "$factionId" not found (players, minorNations, tribes)');
+      }
+      if (actualProvinceId != null || actualTileKey != null) {
+        if (assertion.capitalProvinceId != null &&
+            actualProvinceId != assertion.capitalProvinceId) {
+          failures.add(
+            'Faction $factionId: expected capitalProvinceId "${assertion.capitalProvinceId}", got "$actualProvinceId"',
+          );
+        }
+        if (assertion.capitalTileKey != null &&
+            actualTileKey != assertion.capitalTileKey) {
+          failures.add(
+            'Faction $factionId: expected capitalTileKey "${assertion.capitalTileKey}", got "$actualTileKey"',
+          );
+        }
+      } else if (assertion.capitalProvinceId != null || assertion.capitalTileKey != null) {
+        failures.add(
+          'Faction $factionId: expected capital but capitalProvinceId/capitalTile are null',
+        );
+      }
+    }
+
+    // Player-based assertions (stockpile, treasury, diplomacy) — only for game.players
+    if (assertion.player != null &&
+        (assertion.stockpile != null || assertion.treasury != null)) {
       final player = game.players.firstWhere(
         (p) => p.id == assertion.player,
         orElse: () => throw StateError('Player ${assertion.player} not found'),

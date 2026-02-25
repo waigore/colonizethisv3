@@ -172,6 +172,8 @@ class Assertion {
     this.resource,
     this.maxBothFraction,
     this.everyTileResourceAllowedInRegion,
+    this.capitalProvinceId,
+    this.capitalTileKey,
     this.relationWith,
     this.relationState,
     this.relationScore,
@@ -224,6 +226,10 @@ class Assertion {
   final String? overtureStage;
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
+  /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
+  final String? capitalProvinceId;
+  /// Capital assertion: expected capital tile key (regionId|provinceId|x|y). Optional.
+  final String? capitalTileKey;
   /// Worker pool assertions (SPEC/game/workers-and-population.md). Require [player].
   final int? workerPeasants;
   final int? workerApprentices;
@@ -394,6 +400,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
     everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    capitalProvinceId: json['capitalProvinceId'] as String?,
+    capitalTileKey: json['capitalTileKey'] as String?,
     relationWith: json['relationWith'] as String?,
     relationState: json['relationState'] as String?,
     relationScore: json['relationScore'] as int?,
