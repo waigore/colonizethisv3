@@ -376,6 +376,18 @@ class ScenarioRunner {
           : CombatMode.autoResolve;
       game = game.copyWith(defaultCombatMode: mode);
     }
+    if (setup.initialTreasury != null && setup.initialTreasury!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final treasury = setup.initialTreasury![player.id];
+        if (treasury == null) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        updatedPlayers.add(player.copyWith(treasury: treasury));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
     return game;
   }
 

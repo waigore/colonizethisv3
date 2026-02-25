@@ -47,6 +47,7 @@ class ScenarioInit {
 /// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
 /// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
 /// initialTech: player id → list of tech ids. Overrides Player.techUnlocked for buildability scenarios. SPEC/game/military-units.md.
+/// initialTreasury: player id → treasury (integer pounds). Overrides Player.treasury. SPEC/game/diplomacy.md (Join Empire scenarios).
 /// defaultCombatMode: optional "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
 class ScenarioSetup {
   const ScenarioSetup({
@@ -58,6 +59,7 @@ class ScenarioSetup {
     this.initialTileState,
     this.leaderKeys,
     this.initialTech,
+    this.initialTreasury,
     this.defaultCombatMode,
   });
 
@@ -75,6 +77,8 @@ class ScenarioSetup {
   final Map<String, String>? leaderKeys;
   /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
   final Map<String, List<String>>? initialTech;
+  /// Player id → treasury (pounds). Overrides Player.treasury for Join Empire etc. SPEC/game/diplomacy.md.
+  final Map<String, int>? initialTreasury;
   /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
   final String? defaultCombatMode;
 }
@@ -416,8 +420,19 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
+    initialTreasury: _parseInitialTreasury(json['initialTreasury']),
     defaultCombatMode: json['defaultCombatMode'] as String?,
   );
+}
+
+Map<String, int>? _parseInitialTreasury(dynamic value) {
+  if (value == null || value is! Map) return null;
+  final out = <String, int>{};
+  for (final e in (value as Map).entries) {
+    final v = e.value;
+    if (v != null) out[e.key.toString()] = (v is int) ? v : (v as num).toInt();
+  }
+  return out.isEmpty ? null : out;
 }
 
 Map<String, List<String>>? _parseInitialTech(dynamic raw) {

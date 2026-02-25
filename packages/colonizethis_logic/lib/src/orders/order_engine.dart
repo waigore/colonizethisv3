@@ -904,6 +904,14 @@ class OrderEngine {
                     'Join Empire requires at least Friendly relations (score >= 51)',
               );
             }
+            final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+            if (treasury < cost) {
+              return OrderValidationResult(
+                status: OrderValidationStatus.rejected,
+                reason:
+                    'Join Empire requires £$cost (scales with target size); treasury is $treasury',
+              );
+            }
           }
 
           return const OrderValidationResult(

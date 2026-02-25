@@ -224,8 +224,23 @@ void main() {
       expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 1);
     });
 
-    test('join empire order advances overture when at NAP and score friendly', () {
+    test('join empire absorbs minor: provinces transfer, minor removed, cost deducted', () {
+      const ow = 'oldWorld';
       var game = _baseGame().copyWith(
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
+              Province(id: '$ow|m2', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -255,9 +270,72 @@ void main() {
         },
       );
       final after = resolveDiplomacyPhase(game, orders);
-      final overture = getOverture(after, 'gp1', 'minor1');
-      expect(overture, isNotNull);
-      expect(overture!.stage, OvertureStage.joinEmpire);
+      expect(after.minorNations.any((m) => m.id == 'minor1'), isFalse);
+      expect(getOverture(after, 'gp1', 'minor1'), isNull);
+      final p1 = after.worldState.oldWorld.provinces
+          .where((p) => p.id == '$ow|m1')
+          .firstOrNull;
+      final p2 = after.worldState.oldWorld.provinces
+          .where((p) => p.id == '$ow|m2')
+          .firstOrNull;
+      expect(p1?.ownerId, 'gp1');
+      expect(p2?.ownerId, 'gp1');
+      // Cost = 5000 + 2*2000 = 9000
+      expect(getPlayer(after, 'gp1')!.treasury, 15000 - 9000);
+    });
+
+    test('join empire not applied when treasury below cost: minor unchanged', () {
+      const ow = 'oldWorld';
+      var game = _baseGame().copyWith(
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 5000),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 60,
+            level: RelationLevel.friendly,
+          ),
+        ],
+      );
+      // Cost = 5000 + 2000 = 7000; treasury 5000 is insufficient
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.joinEmpire,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders);
+      expect(after.minorNations.any((m) => m.id == 'minor1'), isTrue);
+      expect(after.worldState.oldWorld.provinces
+          .where((p) => p.id == '$ow|m1')
+          .first
+          .ownerId, 'minor1');
+      expect(getPlayer(after, 'gp1')!.treasury, 5000);
     });
 
     test('grantAid without embassy does not change relation or treasury', () {

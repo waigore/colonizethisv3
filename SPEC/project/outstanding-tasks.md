@@ -153,6 +153,7 @@ No outstanding P0 tasks.
 | Missing Action | Spec Reference | Status |
 |----------------|----------------|--------|
 | Join Empire (GP absorbing GP) | `diplomacy.md` | Not implemented |
+| Join Empire (GP absorbing Minor/Tribe) | `diplomacy.md` | **Done** — cost (base + per-province), provinces/units/fleets transfer, minor/tribe removed |
 | Alliance with mutual defense | `diplomacy.md` | Partial |
 | Subsidies (trade) | `diplomacy.md` | **Done** — SetSubsidy in resolver; GP→GP transfer, GP→Minor relation +3 |
 | Foreign aid grants | `diplomacy.md` | **Done** — GrantAid in resolver |
@@ -163,7 +164,7 @@ No outstanding P0 tasks.
 - [SPEC/program/diplomacy-resolution.md](SPEC/program/diplomacy-resolution.md)
 
 **What needs to be done:**
-1. Implement Join Empire — removes target GP, transfers provinces
+1. ~~Implement Join Empire (Minor/Tribe)~~ — **Done.** Cost base + per-province; deduct treasury; transfer provinces/units/fleets to GP; remove minor/tribe; clean overtures/relations. Scenario: diplomacy_join_empire_absorption.json. Implement Join Empire (GP absorbing GP) — removes target GP, transfers provinces.
 2. Implement Alliance — mutual defense clause triggers on ally attack
 3. ~~Implement Subsidies~~ — **Done.** SetSubsidy in diplomacy_resolver; consulate/embassy required; GP→GP treasury transfer, GP→Minor/Tribe relation +3.
 4. ~~Implement Foreign Aid~~ — **Done.** GrantAid in diplomacy_resolver.
