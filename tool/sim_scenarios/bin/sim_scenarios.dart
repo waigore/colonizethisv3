@@ -245,5 +245,11 @@ String _formatAssertion(Assertion assertion) {
   if (assertion.player != null && assertion.leaderKey != null) {
     return 'player.${assertion.player}.leaderKey == ${assertion.leaderKey}';
   }
+  // Research-state (SPEC/game/research-state.md)
+  if (assertion.player != null &&
+      assertion.techUnlocked != null &&
+      assertion.techUnlocked!.isNotEmpty) {
+    return 'player.${assertion.player}.techUnlocked == [${assertion.techUnlocked!.join(", ")}]';
+  }
   return 'unknown';
 }
