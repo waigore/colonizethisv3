@@ -35,6 +35,7 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 - **Capitals:** Gold circle. **Ports:** Distinct marker (e.g. diamond). Legend: capitals, ports.
 - **View modes:** Political (ownership fill) vs geographic (terrain fill, resource glyphs). Same view model; toggle is UI-only.
 - **PNG-from-view-data:** `renderInitGameMapToPngFromViewData` supports geographic mode param.
+- **Geographic legend scope:** In geographic mode the game-world visualizer (view-data path) shows a **subset** of resources in both the map glyphs and the legend: Grain (g), Timber (t), Iron (i). This keeps the init-game and running-game map compact; the full resource legend (all letters per § Tile map PNG export) is provided by the base tile map visualizer (generate_map). Only g, t, i are drawn on the map and listed in the legend in this mode.
 
 **greatPowerColorOverride source and flow**
 
@@ -81,6 +82,6 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Base PNG export:** Base tile map visualizer (`tile_map_visualization`) renders `TileMapResult` + `MapTopology` to PNG: fill by terrain or region, borders (land black, sea-zone light blue), legend (terrain, regions, seeds, resources when present). No game state. Used by generate_map.
 - **Game-world visualizer:** Game world state visualizer extends base with ownership overlay from `Province.ownerId`, capital markers from `Player.capitalTile`, port markers from `WorldState.portsByProvinceSeaboard`; input is `Game` + tile maps/topology or `InitGameMapViewData`. Province identity: full id (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
 - **Ownership colours:** Faction colours per GDD 09 (GPs, minors grey, tribes vibrant); keys are runtime faction id; `greatPowerColorOverride` applied when present. Capitals: gold circle; ports: distinct marker; legend includes ownership, capitals, ports.
-- **View model:** `RegionMapViewData` and `InitGameMapViewData` provide per-cell and overlay data; `renderInitGameMapToPngFromViewData` supports geographic mode param. View modes: political (ownership fill) vs geographic (terrain, resource glyphs); same view model, UI toggle.
+- **View model:** `RegionMapViewData` and `InitGameMapViewData` provide per-cell and overlay data; `renderInitGameMapToPngFromViewData` supports geographic mode param. View modes: political (ownership fill) vs geographic (terrain, resource glyphs); same view model, UI toggle. **Geographic legend:** In geographic mode the legend and map glyphs show only the subset g (Grain), t (Timber), i (Iron); full resource legend is in the base tile map visualizer.
 - **Multi-region:** `renderMultiRegionMapToPng(oldWorld, newWorld, options)` renders OW left, NW right, shared legend below; used by init_game.
 - **Integration:** Implemented in colonizethis_map; consumed by generate_map, init_game, ctdev. Terrain palette and border/legend behaviour fixed as specified.
