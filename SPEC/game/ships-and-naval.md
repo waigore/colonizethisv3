@@ -140,7 +140,7 @@ raidEfficiency = 0.3 to 0.7 depending on relative strength
 
 - Given two opposing fleets with known ship stats (FRP, RNG, ARM, HULL, MV) and medals occupy the same sea zone and a naval battle is triggered  
   When the System computes naval combat strength and resolves the battle  
-  Then the System uses the aggregation and durability formulas in this document (including RNG weighting and HULL × (1 + ARM/10)), applies any leader and tech modifiers as specified in related specs, and produces deterministic outcomes (winner, casualties, and possible retreats) for identical inputs across multiple runs.
+  Then the System uses the aggregation and durability formulas in this document (including RNG weighting and HULL × (1 + ARM/10)), applies tech modifiers as specified in related specs (leader bonuses do not apply to naval combat; see [leader-bonuses.md](leader-bonuses.md) § When Bonuses Apply), and produces deterministic outcomes (winner, casualties, and possible retreats) for identical inputs across multiple runs.
 
 - Given a Great Power’s home fleet carries overseas cargo during Extraction/Trade and hostile fleets at war with that Great Power are patrolling or blockading relevant sea zones  
   When the System resolves overseas transport and trade for that turn  

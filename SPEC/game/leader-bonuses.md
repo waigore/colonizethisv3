@@ -14,10 +14,12 @@
 
 ## When Bonuses Apply
 
-Leader bonuses apply in:
+Leader bonuses apply to **land combat only** (not naval):
 
-- **Auto-resolve combat** (main game turn resolution): when resolving a BattleContext, the combat resolver reads the defender’s and each attacker’s GP, looks up each player’s leaderKey, and applies the corresponding bonus to that side’s strength (or modifiers) before resolving the engagement.
+- **Auto-resolve combat** (main game turn resolution): when resolving a land BattleContext, the combat resolver reads the defender’s and each attacker’s GP, looks up each player’s leaderKey, and applies the corresponding bonus to that side’s strength (or modifiers) before resolving the engagement.
 - **Quick Battle** (ctdev or in-game quick battle): same rule; both sides get their GP’s leader bonus.
+
+Naval combat is resolved per [ships-and-naval.md](ships-and-naval.md) and [naval-combat-resolution.md](../program/naval-combat-resolution.md); leader bonuses are **not** applied there (medal and tech modifiers only).
 
 Bonuses are **combat-only** (no economy or research bonus from leader).
 
@@ -50,7 +52,7 @@ Modifiers are applied as multipliers to the side’s effective strength (e.g. 1.
 ## Acceptance criteria
 
 - **Leader selection:** Each Great Power has exactly one leader for the game, chosen at game start (human via UI or default; AI from config). Leader is stored as leaderKey on the Player and serialized; no mid-game change.
-- **Combat-only:** Leader bonuses apply only in auto-resolve combat and Quick Battle; no economy or research effect.
+- **Combat-only (land):** Leader bonuses apply only in land auto-resolve combat and Quick Battle; they do not apply to naval combat. No economy or research effect.
 - **Bonus table:** The leaderKey → modifier mapping (e.g. napoleon +25%, frederick +15%, reserve/default 0%) is the source of truth. Unknown leaderKey is treated as no bonus. Variant ids (e.g. france_napoleon_leader) are matched per § LeaderKey format and matching (exact first, then case-insensitive substring).
 - **Application:** Defender uses province owner's GP leader (province lookup prefixed and region-scoped per [world-model-identity.md](world-model-identity.md)); each attacker side uses that side's GP leader. Bonuses are applied as multipliers to effective strength before resolution.
 - **Implementation:** Combat resolver and quick battle apply leader bonuses per [combat-resolution.md](../program/combat-resolution.md) and [quick-battle-resolution.md](../program/quick-battle-resolution.md).

@@ -22,7 +22,7 @@ Detects naval conflicts per sea zone and auto-resolves fleet engagements, produc
 
 1. Compute firepower score from FRP and RNG (RNG weighted highest per [ships-and-naval.md](../game/ships-and-naval.md) § Naval Combat).
 2. Compute durability score from ARM and HULL.
-3. Apply medal multipliers and tech modifiers.
+3. Apply medal multipliers and tech modifiers (leader bonuses from [leader-bonuses.md](../game/leader-bonuses.md) do not apply to naval combat).
 4. Aggregate into side-level `navalStrength`. Weights from config, tunable per ruleset.
 
 **Per-Engagement Resolution:**
