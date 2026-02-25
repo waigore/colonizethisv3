@@ -96,6 +96,37 @@ const PersonalityDomainWeights defaultDomainWeights = PersonalityDomainWeights()
 const PersonalityGoalWeights defaultGoalWeights = PersonalityGoalWeights();
 const PersonalityThresholds defaultThresholds = PersonalityThresholds();
 
+/// Resolves a leader key or id to the canonical leader id used for personality
+/// lookups.
+///
+/// - If [leaderKeyOrId] already matches a canonical id present in the
+///   personality tables (e.g. `victoria`, `napoleon`), it is returned
+///   unchanged.
+/// - If [leaderKeyOrId] is a known variant key from the default naming config
+///   (e.g. `england_leader`, `france_leader`, `spain_leader`, `portugal_leader`,
+///   `netherlands_leader`, `prussia_leader`, `prussia_reserve_leader`,
+///   `sweden_leader`), the corresponding canonical id is returned.
+/// - Otherwise the input is returned as-is so callers fall back to the default
+///   neutral personality weights and thresholds for unknown ids.
+String canonicalLeaderIdForPersonality(String leaderKeyOrId) {
+  if (personalityDomainWeights.containsKey(leaderKeyOrId)) {
+    return leaderKeyOrId;
+  }
+
+  const variantToCanonical = <String, String>{
+    'england_leader': 'victoria',
+    'france_leader': 'napoleon',
+    'spain_leader': 'isabella',
+    'portugal_leader': 'henry',
+    'netherlands_leader': 'deruyter',
+    'prussia_leader': 'frederick',
+    'prussia_reserve_leader': 'frederick',
+    'sweden_leader': 'gustavus',
+  };
+
+  return variantToCanonical[leaderKeyOrId] ?? leaderKeyOrId;
+}
+
 PersonalityDomainWeights getDomainWeightsForLeader(String leaderId) {
   return personalityDomainWeights[leaderId] ?? defaultDomainWeights;
 }

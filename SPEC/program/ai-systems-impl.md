@@ -41,6 +41,12 @@ Personality-related fields in **AIConfig** follow [ai-personalities.md](../ai/ai
 - `leaderId` is the canonical leader id and is the only id used for personality lookups and dossier/archetype display.
 - `personalityId` is an optional archetype handle; in MVP it is not read by `colonizethis_ai`, and callers typically pass the same value as `leaderId`.
 
+When `ai_planner.generateOrdersForPlayerFullAI` constructs **AIConfig** for an AI-controlled Great Power, it:
+
+- Reads `Player.leaderKey` from the `Game` model (variant key from the naming ruleset, e.g. `england_leader`, `france_leader`, `prussia_reserve_leader`).
+- Calls into `colonizethis_data` to resolve this value to a **canonical leader id** for personality lookups (see `ai_personality_config.dart` and [ai-personalities.md](../ai/ai-personalities.md) § Leader identity and `Player.leaderKey`).
+- Passes the resolved canonical id as both `leaderId` and (in MVP) `personalityId` when creating **AIConfig**, so that domain planners, goal selection, and dossier projection all use the same canonical identity regardless of which variant leader key is stored on the Player.
+
 ### Tactical (Quick Battle)
 
 ```dart
