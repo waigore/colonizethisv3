@@ -76,6 +76,14 @@ Own provinces never decay.
 
 Mineral resources may only be extracted from tiles that are (a) connected and (b) prospected by that player. Non-minerals unchanged.
 
+### Province and tile identity
+
+Per [world-model-identity.md](world-model-identity.md):
+
+- **Tile keys** (visibility map, prospected set) use the 4-part format `regionId|provinceId|x|y`; the second segment is the local province id within the region; full province id is `regionId|localId`.
+- **Province keys** (e.g. Spy reveal timer `provinceKey`) must be **full province id** (`regionId|localId`), not bare local id, so that lookups and multi-region consistency are correct.
+- **Ship coastal reveal** and **fog decay** logic resolve provinces by `(regionId, provinceId)` or prefixed id only.
+
 ---
 
 ## Configurable Values
