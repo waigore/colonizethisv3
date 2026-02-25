@@ -47,6 +47,7 @@ class ScenarioInit {
 /// initialTileState: tileKey → { improvementLevel, roadLevel } for extraction scenarios. SPEC/game/extraction-and-improvements.md.
 /// leaderKeys: player id → leaderKey (SPEC/game/leader-bonuses.md); applied to Player.leaderKey after init.
 /// initialTech: player id → list of tech ids. Overrides Player.techUnlocked for buildability scenarios. SPEC/game/military-units.md.
+/// defaultCombatMode: optional "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
@@ -57,6 +58,7 @@ class ScenarioSetup {
     this.initialTileState,
     this.leaderKeys,
     this.initialTech,
+    this.defaultCombatMode,
   });
 
   final List<UnitPlacement>? units;
@@ -73,6 +75,8 @@ class ScenarioSetup {
   final Map<String, String>? leaderKeys;
   /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
   final Map<String, List<String>>? initialTech;
+  /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
+  final String? defaultCombatMode;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -405,6 +409,7 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
+    defaultCombatMode: json['defaultCombatMode'] as String?,
   );
 }
 

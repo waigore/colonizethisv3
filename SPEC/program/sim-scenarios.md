@@ -69,8 +69,9 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
-- **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power’s `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
-- **initialTech:** Optional. Map player id → list of tech ids. Overrides that player’s `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability (SPEC/game/military-units.md), deployment-limit (SPEC/game/military-generals.md: base 10 vs 12 with Nationalism), and tech-tree scenarios.
+- **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power's `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
+- **initialTech:** Optional. Map player id → list of tech ids. Overrides that player's `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability (SPEC/game/military-units.md), deployment-limit (SPEC/game/military-generals.md: base 10 vs 12 with Nationalism), and tech-tree scenarios.
+- **defaultCombatMode:** Optional. String `"quickBattle"` or `"autoResolve"`. Overrides `Game.defaultCombatMode` so combat in the scenario uses Quick Battle or auto-resolve. Used for Quick Battle scenarios (SPEC/game/quick-battle.md).
 
 ---
 
@@ -149,7 +150,7 @@ Assertion fields:
 **Worker and stockpile assertions** (SPEC/game/workers-and-population.md): use `player` with optional `workerPeasants`, `workerApprentices`, `workerJourneymen`, `workerMasters` (expected count each). Use `player` with `commodity` (commodity id, e.g. `grain`) and `stockpileCommodity` (expected quantity) for per-commodity stockpile checks.
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
-- Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player’s capital. Verifies the capital-choice phase selected the expected province.
+- Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player's capital. Verifies the capital-choice phase selected the expected province.
 - `player` (faction id: `gp1`, `minor1`, `tribe1`, etc.) + `capitalProvinceId` — the faction's capital province must equal this full province id (e.g. `oldWorld|p1`). Optional `capitalTileKey` — the faction's capital tile must equal this key (format `regionId|provinceId|x|y`). Example: `{"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|0"}`.
 
 **Diplomacy assertions** (SPEC/game/diplomacy.md):
@@ -163,7 +164,7 @@ Assertion fields:
 
 **Resource-placement assertions** (SPEC/game/resource-terrain-region-rules.md):
 - `region` + `resource` (no `province`/`player`) — **regionHasNoResource:** no tile in the given region has this resource (negative). Example: `{"region": "oldWorld", "resource": "sugarCane"}`.
-- `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile’s region per resource rules. Optional `region` restricts to one region.
+- `everyTileResourceAllowedInRegion` — For each tile in `resourceByTileKey`, the resource is allowed in that tile's region per resource rules. Optional `region` restricts to one region.
 - `region` + `maxBothFraction` — **resourcePlacementCap:** in the given region, the fraction of placed resources that are “both” (timber, iron, copper, tin, coal) is ≤ this value (default 0.30). Example: `{"region": "oldWorld", "maxBothFraction": 0.30}`.
 
 **Economy / production assertions** (SPEC/game/production-recipes.md): use `player`, `commodity` (commodity id), and `stockpileCommodity` (expected quantity) to assert per-commodity stockpile after a turn or final state; supports `matchType`.
