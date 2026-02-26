@@ -9,18 +9,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Default cargo holds per player when no ships (Phase 2 stub).
 const int defaultCargoHoldsStub = 24;
 
-/// Priority order for filling cargo: food, raw materials, riches, then manufactured/luxury/advanced.
+/// Priority order for filling cargo: food, raw materials, riches, then manufactured/advanced.
+/// Note: CommodityCategory.luxury exists but no commodity currently has that category assigned,
+/// so it's excluded from priority until luxury is defined in the commodity catalog.
 final List<CommodityCategory> _seaPriorityOrder = [
   CommodityCategory.food,
   CommodityCategory.rawMaterial,
   CommodityCategory.riches,
   CommodityCategory.manufactured,
-  CommodityCategory.luxury,
   CommodityCategory.advanced,
 ];
 
 /// Allocates [overseasTotals] to delivered amounts, filling up to [cargoHolds] units total
-/// by [priorityOrder] (default: food, raw, riches, manufactured, luxury, advanced).
+/// by [priorityOrder] (default: food, raw, riches, manufactured, advanced).
 /// Returns the map of commodity id → quantity to add to stockpile.
 Map<CommodityId, int> allocateOverseasToStockpile(
   Map<CommodityId, int> overseasTotals, {
