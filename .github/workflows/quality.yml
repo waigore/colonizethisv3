@@ -48,9 +48,9 @@ jobs:
         if: steps.changes.outputs.tests == 'true'
         run: melos --version
 
-      - name: Install lcov
+      - name: Install lcov and xvfb
         if: steps.changes.outputs.tests == 'true'
-        run: sudo apt-get update && sudo apt-get install -y lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov xvfb
 
       - name: Resolve dependencies
         if: steps.changes.outputs.tests == 'true'
@@ -78,7 +78,7 @@ jobs:
           SUPPRESS_IMAGE_VIEWER: "1"
         run: |
           if [ -d app ]; then
-            (cd app && flutter test --coverage --reporter=compact)
+            xvfb-run -a -s '-screen 0 1024x768x24' bash -c 'cd app && flutter test --coverage --reporter=compact'
           fi
 
       - name: Test ctdev (Flutter)
@@ -87,7 +87,7 @@ jobs:
           SUPPRESS_IMAGE_VIEWER: "1"
         run: |
           if [ -d ctdev/test ]; then
-            (cd ctdev && flutter test --coverage --reporter=compact)
+            xvfb-run -a -s '-screen 0 1024x768x24' bash -c 'cd ctdev && flutter test --coverage --reporter=compact'
           fi
 
       - name: Test tool packages (Dart)
