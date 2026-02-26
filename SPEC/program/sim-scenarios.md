@@ -80,6 +80,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
 - **leaderKeys:** Optional. Map player id → leaderKey (string). Overrides each Great Power's `Player.leaderKey` after init. Used for leader-bonus scenarios (SPEC/game/leader-bonuses.md).
 - **initialTech:** Optional. Map player id → list of tech ids. Overrides that player's `Player.techUnlocked` (each listed tech id set to true) before the first turn. Used for regiment buildability (SPEC/game/military-units.md), deployment-limit (SPEC/game/military-generals.md: base 10 vs 12 with Nationalism), and tech-tree scenarios.
+- **initialTreasury:** Optional. Map player id → integer treasury (pounds). Overrides that player's `Player.treasury` before the first turn. Used for Join Empire scenarios (SPEC/game/diplomacy.md) where cost scales with target size.
 - **defaultCombatMode:** Optional. String `"quickBattle"` or `"autoResolve"`. Overrides `Game.defaultCombatMode` so combat in the scenario uses Quick Battle or auto-resolve. Used for Quick Battle scenarios (SPEC/game/quick-battle.md).
 
 ---

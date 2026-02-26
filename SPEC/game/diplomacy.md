@@ -28,7 +28,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 ### GP–Minor Rules
 
-- **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (free, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation.
+- **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
 - **Intervention (human and AI):**
@@ -117,6 +117,10 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system decides that the AI Great Power **will not intervene** based on the relation-score-driven probability  
   Then the system does not change the relation state or relation score between that AI Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between that AI Great Power and that Minor from the game state.
 
+- Given the Player controls a Great Power with a Non-Aggression Pact overture with a target Minor Nation or Tribe, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
+  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor or Tribe in the Diplomacy phase and the order is valid  
+  Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation or Tribe from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
+
 - Given the Player controls a Great Power that currently has a Consulate or Embassy overture stage recorded with a target Minor Nation or Tribe and the current relation state between those two factions changes from `AT_PEACE` to `AT_WAR` in turn `t`  
   When the Diplomacy phase for turn `t` completes  
   Then the system removes any overture state between that Great Power and that Minor or Tribe so that subsequent state inspection reports `overtureStage = none` for that pair, and later peace between them does **not** restore the previous overture stage.
@@ -139,6 +143,8 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Allied threshold | 76–100 | |
 | Consulate cost | £500 | |
 | Embassy cost | £1000 | |
+| Join Empire base cost | £5000 | One-time cost when enacting Join Empire. |
+| Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
 
 ### Where defined (MVP)
 

@@ -597,6 +597,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       final rel = getRelation(game, playerId, targetId);
       final score = rel?.score ?? 50;
       if (score < 51) continue;
+      final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+      if (treasury < cost) continue;
     }
     suggestions.add(DiplomaticOrder(
       type: DiplomaticOrderType.establishOverture,
