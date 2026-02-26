@@ -244,5 +244,106 @@ void main() {
       expect(loaded.minorNations.single.effectiveMilitaryLevel, 4);
       expect(loaded.tribes.single.effectiveMilitaryLevel, 4);
     });
+
+    test('save/load round-trip includes greatPowerColorOverride', () {
+      final game = Game(
+        id: 'colorOverride',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+        ],
+        greatPowerColorOverride: {
+          'gp1': [255, 0, 0],
+          'gp2': [0, 255, 0],
+        },
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'colorOverride');
+      expect(loaded, isNotNull);
+      expect(loaded!.greatPowerColorOverride, isNotNull);
+      expect(loaded.greatPowerColorOverride!['gp1'], [255, 0, 0]);
+      expect(loaded.greatPowerColorOverride!['gp2'], [0, 255, 0]);
+    });
+
+    test('save/load round-trip includes turnTimeMapping', () {
+      final game = Game(
+        id: 'turnTime',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+        ],
+        turnTimeMapping: const TurnTimeMapping(
+          startYear: 1600,
+          cutoffYear: 1750,
+          yearsPerTurnBeforeCutoff: 3,
+          yearsPerTurnAfterCutoff: 2,
+        ),
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'turnTime');
+      expect(loaded, isNotNull);
+      expect(loaded!.turnTimeMapping, isNotNull);
+      expect(loaded.turnTimeMapping!.startYear, 1600);
+      expect(loaded.turnTimeMapping!.cutoffYear, 1750);
+      expect(loaded.turnTimeMapping!.yearsPerTurnBeforeCutoff, 3);
+      expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
+    });
+
+    test('loadMapData returns null and logs for invalid map data JSON', () {
+      // Manually insert invalid map data to simulate corrupted save
+      box.put('invalidMap_tileMapByRegion', {'invalid': 'data'});
+      box.put('invalidMap_topologyByRegion', {'nodes': 'not-a-list'});
+      box.put('invalidMap_combinedTopology', 'also invalid');
+      final loaded = adapter.loadMapData(box, 'invalidMap');
+      expect(loaded, isNull);
+    });
+
+    test('backward compatibility - greatPowerColorOverride missing yields null', () {
+      // Simulate legacy save where greatPowerColorOverride field is missing
+      final gameJson = {
+        'id': 'legacyGame',
+        'worldState': {
+          'turnState': {'phase': 'orders', 'turnNumber': 1},
+          'oldWorld': {'provinces': []},
+          'newWorld': {'provinces': []},
+        },
+        'players': [
+          {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
+        ],
+        // Note: greatPowerColorOverride is intentionally missing
+      };
+      box.put('legacyGame', gameJson);
+      final loaded = adapter.load(box, 'legacyGame');
+      expect(loaded, isNotNull);
+      expect(loaded!.greatPowerColorOverride, isNull);
+    });
+
+    test('backward compatibility - turnTimeMapping missing yields null', () {
+      // Simulate legacy save where turnTimeMapping field is missing
+      final gameJson = {
+        'id': 'legacyGame2',
+        'worldState': {
+          'turnState': {'phase': 'orders', 'turnNumber': 1},
+          'oldWorld': {'provinces': []},
+          'newWorld': {'provinces': []},
+        },
+        'players': [
+          {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
+        ],
+        // Note: turnTimeMapping is intentionally missing
+      };
+      box.put('legacyGame2', gameJson);
+      final loaded = adapter.load(box, 'legacyGame2');
+      expect(loaded, isNotNull);
+      expect(loaded!.turnTimeMapping, isNull);
+    });
   });
 }
