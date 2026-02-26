@@ -190,3 +190,17 @@ melos run check_gdd_coverage
 - Warns if a scenario file listed in the mapping is missing from tool/sim_scenarios/scenarios/.
 - Exit 0 if all specs covered; exit 1 if any uncovered (for CI).
 - If the mapping uses the extended format with `verifierIssues` for a covered spec, the tool prints those issues so the **coder** can rectify them (see [agentic-gdd-verifier.md](../SPEC/project/agentic-gdd-verifier.md) and [agentic-gdd-scenario-coverage.md](../SPEC/project/agentic-gdd-scenario-coverage.md)).
+
+---
+
+## run_quality_gate_tests.sh (CI verification)
+
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+
+**Invocation**
+
+```bash
+tool/run_quality_gate_tests.sh
+```
+
+Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).
