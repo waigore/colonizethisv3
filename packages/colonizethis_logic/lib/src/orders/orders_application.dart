@@ -240,7 +240,8 @@ Game applyBuildAndWorkOrders(
         ? Random(gameForPlayer.globalGameSeed! +
             (gameForPlayer.worldState.turnState.turnNumber * 1000))
         : Random();
-    for (final entry in unitsById.entries) {
+    // Iterate over a snapshot to allow updating unitsById during the loop.
+    for (final entry in unitsById.entries.toList()) {
       final u = entry.value;
       if (u.currentWork == null) continue;
       final cw = u.currentWork!;
@@ -248,11 +249,25 @@ Game applyBuildAndWorkOrders(
       final purchasedByTile = gameForPlayer.worldState.purchasedTilesByTileKey;
       if (purchasedByTile.containsKey(cw.tileKey) &&
           purchasedByTile[cw.tileKey] != u.ownerId) {
-        unitsById[entry.key] =
-            u.copyWith(status: UnitStatus.idle, currentWork: null);
+        unitsById[entry.key] = u.copyWith(
+            status: UnitStatus.idle, clearCurrentWork: true);
         _log.d(
             'logic: work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}');
         continue;
+      }
+      // Cancel work if province containing target tile is no longer owned (conquest). SPEC #376.
+      final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
+      if (targetProvinceId != null) {
+        final provinces = getProvinces();
+        final targetProvince =
+            provinces.where((p) => p.id == targetProvinceId).firstOrNull;
+        if (targetProvince != null && targetProvince.ownerId != u.ownerId) {
+          unitsById[entry.key] = u.copyWith(
+              status: UnitStatus.idle, clearCurrentWork: true);
+          _log.d(
+              'logic: work cancelled unit=${u.id} reason=province conquered provinceId=$targetProvinceId tileKey=${cw.tileKey}');
+          continue;
+        }
       }
       if (cw.workTarget == 'counter_spy') {
         // Per-turn: 5% per friendly spy (cap 30%) to kill one enemy spy in province
@@ -320,8 +335,8 @@ Game applyBuildAndWorkOrders(
           applyCompletedWorkTarget(
               u, cw, getProvinces, setProvinces, currentGame);
         }
-        unitsById[entry.key] =
-            u.copyWith(status: UnitStatus.idle, currentWork: null);
+        unitsById[entry.key] = u.copyWith(
+            status: UnitStatus.idle, clearCurrentWork: true);
       } else {
         unitsById[entry.key] = u.copyWith(
           currentWork: cw.copyWith(remainingTurns: nextRemaining),
