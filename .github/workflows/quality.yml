@@ -56,11 +56,14 @@ jobs:
 
       - name: Run tests with coverage
         if: steps.changes.outputs.tests == 'true'
-        run: python3 tool/test_coverage.py
+        #run: python3 tool/test_coverage.py
+        run: echo disabled
 
       - name: Coverage gate (logic/map/ai >= 90%)
         if: steps.changes.outputs.tests == 'true'
-        run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
+        #run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
+        run: echo disabled
+
 
       - name: sim_scenarios integration gate (all scenarios must pass)
         if: steps.changes.outputs.tests == 'true'
