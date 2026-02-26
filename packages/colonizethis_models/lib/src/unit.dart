@@ -104,6 +104,8 @@ class Unit {
     );
   }
 
+  /// [clearCurrentWork] when true sets [currentWork] to null (use when cancelling work).
+  /// Otherwise [currentWork] is used if provided, else kept.
   Unit copyWith({
     String? id,
     String? type,
@@ -114,6 +116,7 @@ class Unit {
     int? medals,
     String? tileKey,
     CurrentWork? currentWork,
+    bool clearCurrentWork = false,
   }) {
     return Unit(
       id: id ?? this.id,
@@ -124,7 +127,8 @@ class Unit {
       movementPoints: movementPoints ?? this.movementPoints,
       medals: medals ?? this.medals,
       tileKey: tileKey ?? this.tileKey,
-      currentWork: currentWork ?? this.currentWork,
+      currentWork:
+          clearCurrentWork ? null : (currentWork ?? this.currentWork),
     );
   }
 

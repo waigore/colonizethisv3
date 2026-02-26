@@ -455,6 +455,49 @@ void main() {
       expect(next.worldState.tileState.improvementLevel(tileKey), 1);
     });
 
+    test('work cancelled when province containing target tile is conquered (#376)',
+        () {
+      // Unit p1 is working on a tile in P1; province P1 is conquered by p2.
+      final tileState = TileMapState().setImprovement(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_improvement',
+          tileKey: tileKey,
+          totalTurns: 2,
+          remainingTurns: 2,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            // Province owned by p2 (conquered); unit still belongs to p1.
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p2')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final uAfter = next.worldState.oldWorld.units.single;
+      expect(uAfter.status, UnitStatus.idle);
+      expect(uAfter.currentWork, isNull);
+      // Improvement not applied (work was cancelled).
+      expect(next.worldState.tileState.improvementLevel(tileKey), 0);
+    });
+
     test(
         'multi-turn work decrements remainingTurns and completes only when zero',
         () {
