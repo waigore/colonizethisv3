@@ -69,3 +69,14 @@ Array of per-battle aggregates: id, attackerStrength, defenderStrength, trials, 
 - Invalid script (unknown unit type, fortLevel ∉ {0,1,2,3}, or malformed JSON/structure) aborts with non-zero exit and a clear error message.
 - Per-battle aggregate table includes: Battle Id, Attacker Str, Defender Str, Attacker Win %, Defender Win %, Stalemate %, Mutual Ann %, Mean Cas (A/D).
 - Trial index `i` uses seed `baseSeed + i` when a base seed is provided.
+
+---
+
+## Expected Testing
+
+The tool should have CLI integration tests covering:
+
+- **Determinism:** Same script and `--seed` produce identical Markdown and JSON output.
+- **Validation:** Unknown unit type, fortLevel outside 0–3, or missing required keys (`id`, `attacker`, `defender`, `province`) result in non-zero exit and a clear error message (e.g. on stderr).
+
+Test imports follow [test-logging.md](test-logging.md): import `package:colonizethis_test/test.dart` first (to suppress logs), then `package:test/test.dart`. Run tests via `tool/test_coverage.py` or `dart test` in the tool's test directory.

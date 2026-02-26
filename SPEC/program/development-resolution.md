@@ -41,7 +41,7 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
 2. When `remainingTurns` reaches 0, apply the action's effect:
    - `build_improvement`: increase improvement level for `tileKey` by 1, clamped by terrain and tech caps.
    - `upgrade_town`: increase the province's **town development level** by 1 (not generic improvement level on the tile); used in extraction formula per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
-   - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
+   - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md). "If applicable" means: when the target tile is adjacent (4-neighbour) to a tile that is either the player's capital or a port, the transport level is also applied to that adjacent tile (upgrade only, never downgrade).
    - `build_port`: create/update a `(provinceId, seaZoneId) → tileKey` mapping in `portsByProvinceSeaboard` and ensure the port tile has transport level 4.
    - `build_fort`: increase the province's `fortLevel` by 1 (up to max).
    - `build_rail`: upgrade an existing road tile at `tileKey` to railroad (transport level 4).

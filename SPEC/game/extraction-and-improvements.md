@@ -97,3 +97,51 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
 - Fog/prospecting: [fog-and-exploration.md](fog-and-exploration.md)
 - Development resolution: see program/development-resolution.md
 - Tile generation: [tile-map-and-generation.md](tile-map-and-generation.md)
+
+---
+
+## Acceptance Criteria
+
+- Given a land tile with improvement level N (0-4) in an owned province
+  When the system computes extraction for that tile
+  Then the production equals min(N, owner's tech-allowed max level for that terrain/resource)
+
+- Given a land tile with improvement level N and transport level T in an owned province that is connected to a town with development level D
+  When the system computes effective yield for that tile
+  Then the effective yield equals min(N, T, D, transport level along path to town and capital)
+
+- Given a player attempts to build a level 2 road (transport level 2) on a tile
+  When the system validates the build_road work order
+  Then the system checks that the player has the Road Construction tech; if not, the order is rejected
+
+- Given a tile with a resource that requires prospecting (iron, copper, tin, coal, silver, gold, gems, or diamonds)
+  When the system evaluates whether that resource can be extracted
+  Then the system requires both (a) the tile is connected to a town and (b) the player has prospected that tile
+
+- Given a Builder civilian unit completes a build_improvement work order on a tile
+  When the system applies the work effect
+  Then the tile's improvement level increases by 1, up to the tech-allowed max for that terrain/resource
+
+- Given a Builder civilian unit completes an upgrade_town work order on a province's town tile
+  When the system applies the work effect
+  Then the province's town development level increases by 1
+
+- Given an Engineer civilian unit completes a build_road work order on a tile with transport level 0 or 1
+  When the system applies the work effect
+  Then the tile's transport level is set to 1 (or 2 if the player has Road Construction tech)
+
+- Given a Rail Builder civilian unit completes a build_rail work order on a tile with existing road (transport level 1 or 2)
+  When the system applies the work effect
+  Then the tile's transport level is set to 4 (railroad), requiring the Early Steam Engine tech
+
+- Given a player has multiple paths from a tile to the capital
+  When the system computes transport level cap for that tile's extraction
+  Then the system uses the maximum transport level among all valid paths
+
+- Given a province has a town on a port tile adjacent to a sea zone
+  When the system evaluates connectivity for overseas extraction
+  Then that province is considered connected via sea transport using that port
+
+- Given a tile's improvement level, transport level, or town development level changes
+  When the next production phase runs
+  Then extraction recalculates using the updated values
