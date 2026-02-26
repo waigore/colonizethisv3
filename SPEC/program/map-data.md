@@ -27,6 +27,74 @@ For MVP, map topology and tile maps are **produced in-memory** by the map genera
 - **Warp zones:** Separate structure (warp links) that pairs a sea zone in one region with exactly one sea zone in another. Each link is 1:1; a sea zone can be a warp zone to one or more other maps (one link per other map). **Generation:** On each map, aim for **one warp zone per map edge**, each using a sea zone on the edge (tiles on the grid boundary); if not possible, the number of warp zones on each map must still be **equal** so every warp zone has exactly one counterpart on each linked map. **Warp links are produced during world generation** (after OW and NW topology are generated) per [game-setup-pipeline.md](game-setup-pipeline.md) step 4; they are stored with the init result and used when building combined topology / connectivity.
 - **Storage (MVP):** Topology is **not** loaded from standalone files in MVP; it is **inferred** from the tile map during generation (see Map generation tool). File-per-region storage and a colonizethis_data API to load topology/tile maps from static files are **deferred**. colonizethis_data owns the data structures and JSON (de)serialization; when static-file loading is added, this spec will define the loading contract (file layout, schema, error handling). When generating maps, topology is inferred from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
 
+### JSON schema and loading contract
+
+**Source of truth:** The `colonizethis_data` package owns the JSON (de)serialization via `MapTopology.toJson/fromJson`, `TopologyNode.toJson/fromJson`, and `TileMapResult.toJson/fromJson`. This section documents the current schema; any changes must update both the code and this spec.
+
+#### MapTopology JSON
+
+```json
+{
+  "nodes": [
+    { "id": "p1", "regionId": "oldWorld", "type": "province" },
+    { "id": "s1", "regionId": "oldWorld", "type": "seaZone" }
+  ],
+  "edges": [
+    { "id1": "p1", "id2": "p2" },
+    { "id1": "p1", "id2": "s1" }
+  ]
+}
+```
+
+- **`nodes`**: Array of topology nodes.
+  - **`id`**: String. Local province or sea zone id (e.g. `p1`, `s1`).
+  - **`regionId`**: String. Region identifier (e.g. `oldWorld`, `newWorld`).
+  - **`type`**: String. Either `"province"` or `"seaZone"`.
+- **`edges`**: Array of undirected edges.
+  - Each edge is either an object `{ "id1": string, "id2": string }` or a 2-element list `[id1, id2]`.
+  - Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths).
+
+#### TileMapResult JSON
+
+```json
+{
+  "width": 20,
+  "height": 15,
+  "grid": [
+    ["p1", "p1", "s1", "s1"],
+    ["p2", "p2", "s1", "s1"]
+  ],
+  "terrainGrid": [
+    ["plains", "plains", null, null],
+    ["forest", "hills", null, null]
+  ],
+  "resourceGrid": [
+    [null, "gold", null, null],
+    [null, null, null, null]
+  ]
+}
+```
+
+- **`width`**: Integer. Number of columns.
+- **`height`**: Integer. Number of rows.
+- **`grid`**: 2D array of strings. Each cell contains a province or sea zone id.
+- **`terrainGrid`**: Optional 2D array of terrain names (e.g. `"plains"`, `"forest"`, `"hills"`). `null` = water or not set. Must match `grid` dimensions.
+- **`resourceGrid`**: Optional 2D array of resource names (e.g. `"gold"`, `"spices"`). `null` = no resource. Must match `grid` dimensions.
+
+#### Loading from static files (deferred)
+
+For MVP, loading topology/tile maps from static JSON files is **deferred**. When implemented, the expected file layout is:
+
+- **Per-region topology:** `topology_{regionId}.json` (e.g., `topology_oldWorld.json`).
+- **Per-region tile map:** `tilemap_{regionId}.json` (e.g., `tilemap_oldWorld.json`).
+
+The loading API (file layout, error handling) will be defined in a future spec update. Until then, map data is produced in-memory by generation tools.
+
+#### Testing guidance
+
+- **Round-trip tests:** Serialize → deserialize → compare for `MapTopology` and `TileMapResult` with small hand-crafted examples.
+- **Failure mode tests:** When file loading is added, test missing file, malformed JSON, and inconsistent dimensions.
+
 ---
 
 ## Province identity and tile key format
