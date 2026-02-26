@@ -438,13 +438,13 @@ class OrderEngine {
           if (treasury < econ.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in econ.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= econ.buildTreasuryCost;
@@ -475,13 +475,13 @@ class OrderEngine {
           if (treasury < econ.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in econ.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= econ.buildTreasuryCost;
@@ -501,13 +501,13 @@ class OrderEngine {
           if (treasury < shipEcon.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in shipEcon.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= shipEcon.buildTreasuryCost;
