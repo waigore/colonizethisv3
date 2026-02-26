@@ -64,8 +64,8 @@ class GameScreen extends ConsumerWidget {
           ],
           if (game != null && victory != null)
             _VictoryOverlay(
-              game: game!,
-              victory: victory!,
+              game: game,
+              victory: victory,
             ),
         ],
       ),
