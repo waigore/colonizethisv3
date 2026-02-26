@@ -35,9 +35,8 @@ All **same-region** extracted goods are added to the player's stockpile. Extract
 | 3        | Food Variety       | Fish, Dairy        | Morale/health bonuses   |
 | 4        | Riches             | Gold, Silver, Gems | Trade income            |
 | 5        | Trade Goods        | Textiles, Spices   | Discretionary income    |
-| 6        | Luxury             | Wine, Tobacco      | Nice to have            |
 
-**Note:** Implementation uses `CommodityCategory` order (food, rawMaterial, riches, manufactured, luxury, advanced). Grain and meat are the only food commodities in the catalog; Critical Food vs Food Variety sub-ordering applies when fish/dairy are added. Cargo-hold limit uses a fixed stub per player; sum-of-ships can be wired when fleet cargo capacity is available.
+**Note:** Implementation uses `CommodityCategory` order (food, rawMaterial, riches, manufactured, advanced). The luxury category is excluded from priority until luxury is properly defined in the commodity catalog (see [commodity-catalog](../game/commodity-catalog.md) and issue #344). Grain and meat are the only food commodities in the catalog; Critical Food vs Food Variety sub-ordering applies when fish/dairy are added. Cargo-hold limit uses a fixed stub per player; sum-of-ships can be wired when fleet cargo capacity is available.
 
 ---
 

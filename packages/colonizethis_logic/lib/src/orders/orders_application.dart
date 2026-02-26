@@ -156,6 +156,20 @@ Game applyBuildAndWorkOrders(
           final nextLevel =
               (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
           tileState = tileState.setRoadLevel(cw.tileKey, nextLevel);
+
+          // Propagate transport level to adjacent capital/port tiles per
+          // SPEC/program/development-resolution.md and SPEC/game/capital-and-connectivity.md
+          final tileMap = tileMapByRegion;
+          if (tileMap != null) {
+            _propagateRoadToAdjacentCapitalOrPort(
+              tileKey: cw.tileKey,
+              nextLevel: nextLevel,
+              player: player,
+              worldState: gameForPlayer.worldState,
+              tileMapByRegion: tileMap,
+              setTileState: (newTileState) => tileState = newTileState,
+            );
+          }
           break;
         }
       case 'build_port':
@@ -839,4 +853,77 @@ Game applyBuildAndWorkOrders(
 
 String _buildUnitId(String playerId, BuildUnitOrder order) {
   return '${playerId}_${order.unitType}_${order.spawnProvinceId}';
+}
+
+/// Propagates road transport level to adjacent capital/port tiles.
+///
+/// Per SPEC/program/development-resolution.md: "build_road: set or upgrade
+/// transport level for tileKey ... and, if applicable, adjacent capital/port
+/// tiles per capital-and-connectivity.md."
+///
+/// When a road is built adjacent to the player's capital or a port, the
+/// transport level is also applied to those adjacent tiles.
+void _propagateRoadToAdjacentCapitalOrPort({
+  required String tileKey,
+  required int nextLevel,
+  Player? player,
+  required WorldState worldState,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required void Function(TileMapState) setTileState,
+}) {
+  if (player == null) return;
+
+  // Parse the target tile key: regionId|provinceId|x|y
+  final parts = tileKey.split('|');
+  if (parts.length != 4) return;
+  final targetRegionId = parts[0];
+  final targetX = int.tryParse(parts[2]);
+  final targetY = int.tryParse(parts[3]);
+  if (targetX == null || targetY == null) return;
+
+  // Get player's capital tile key
+  final capitalTileKey = player.capitalTile?.toTileKey();
+
+  // Get all port tile keys
+  final portTileKeys = worldState.portsByProvinceSeaboard.values.toSet();
+
+  // Get the tile map for the region to check bounds
+  final tileMap = tileMapByRegion[targetRegionId];
+  if (tileMap == null) return;
+
+  // Check 4 neighbours (north, east, south, west)
+  final neighbours = [
+    (targetX, targetY - 1),
+    (targetX + 1, targetY),
+    (targetX, targetY + 1),
+    (targetX - 1, targetY),
+  ];
+
+  for (final (nx, ny) in neighbours) {
+    // Check bounds
+    if (nx < 0 || nx >= tileMap.width || ny < 0 || ny >= tileMap.height) {
+      continue;
+    }
+
+    // Get the cell (province) at this position
+    final cellId = tileMap.cell(nx, ny);
+
+    // Build the adjacent tile key
+    final adjacentTileKey =
+        CapitalTile.tileKey(targetRegionId, '$targetRegionId|$cellId', nx, ny);
+
+    // Check if adjacent tile is the player's capital or a port
+    final isCapital = adjacentTileKey == capitalTileKey;
+    final isPort = portTileKeys.contains(adjacentTileKey);
+
+    if (isCapital || isPort) {
+      _log.d(
+          'logic: build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey');
+      final currentLevel = worldState.tileState.roadLevel(adjacentTileKey);
+      // Only upgrade, never downgrade
+      if (nextLevel > currentLevel) {
+        setTileState(worldState.tileState.setRoadLevel(adjacentTileKey, nextLevel));
+      }
+    }
+  }
 }
