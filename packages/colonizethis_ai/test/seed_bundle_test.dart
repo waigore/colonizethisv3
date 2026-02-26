@@ -1,5 +1,5 @@
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 
 void main() {
   group('AISeedBundle', () {

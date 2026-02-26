@@ -1,9 +1,9 @@
 import 'dart:io';
+import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:image/image.dart' as img;
-import 'package:colonizethis_test/test.dart';
 
 /// Sea color and plains color from tile_map_visualization (for pixel assertions).
 const (int, int, int) _seaRgb = (20, 60, 140);
