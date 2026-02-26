@@ -6,23 +6,7 @@ alwaysApply: false
 
 # Asset Structure
 
-## Directories
-
-- **`assets/images/`** — Sprites, textures, UI images. Optionally split into `assets/sprites/`, `assets/ui/`.
-- **`assets/audio/`** — Music and SFX (e.g. subdirs `music/`, `sfx/`).
-- **`assets/data/`** — JSON or other data (e.g. rulesets) if not code-generated from spec.
-
-## Naming
-
-- **Snake_case**, descriptive. Optional prefixes by domain: `unit_`, `terrain_`, `ui_`.
-- Example: `wizard_attack_frame0.png`, `unit_swordmaster_idle.png`.
-
-## pubspec.yaml
-
-- List asset directories under `flutter: assets:`.
-- Do not commit unnecessarily large binaries; use `.gitignore` for generated or temporary assets if needed.
-
-## Flame loading
-
-- Load assets in **`onLoad()`** via Flame asset APIs (e.g. `Images.load`, `Sprite.load`) and cache.
-- Do not load the same asset every frame. Use Flame’s caches and reuse loaded resources.
+- **Dirs:** `assets/images/` (sprites, UI; optional `sprites/`, `ui/`); `assets/audio/` (e.g. `music/`, `sfx/`); `assets/data/` (e.g. rulesets).
+- **Naming:** Snake_case; optional domain prefix (`unit_`, `terrain_`, `ui_`). Example: `unit_swordmaster_idle.png`.
+- **pubspec.yaml:** List dirs under `flutter: assets:`; don’t commit large binaries; `.gitignore` generated/temp as needed.
+- **Flame:** Load in `onLoad()` via Flame APIs; cache and reuse — never load same asset every frame.

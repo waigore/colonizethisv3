@@ -1,30 +1,13 @@
 ---
-description: Test layers and 80% per-package coverage requirement
+description: Test layers and 90% per-package coverage requirement
 globs: "**/*_test.dart,**/test/**/*.dart"
 alwaysApply: false
 ---
 
 # Testing
 
-## Coverage
-
-- **80% per package.** Enforce in CI where applicable (e.g. `dart test --coverage` and fail if below threshold).
-
-## Layers
-
-- **Unit** — Pure logic, models, services (no Flutter/Flame). Fast; mock external deps (file, network, game refs).
-- **Widget** — Flutter widgets and screens. Use `flutter_test` and `pumpWidget`; mock state/providers and game if needed.
-- **Game/component** — Flame components in isolation (e.g. minimal `FlameGame` + component under test). Test `onLoad`, behavior in `update`, removal. Avoid depending on full game when not needed.
-
-## Layout and naming
-
-- **`test/`** mirrors **`lib/`**. Use **`*_test.dart`** naming. Group by feature or class.
-
-## Mocks
-
-- Use **mockito** or **mocktail** for interfaces and services.
-- For Flame: mock `Game` or use a minimal game instance so component tests do not depend on the full world.
-
-## Critical paths
-
-- Combat, economy, save/load, and **ruleset loading** should have tests. Prioritize coverage on these when approaching the 80% target.
+- **Coverage:** 90% per package (enforce in CI, e.g. `tool/test_coverage.py`).
+- **Layers:** **Unit** — pure logic, models, services (no Flutter/Flame); mock deps. **Widget** — Flutter; `flutter_test`, `pumpWidget`; mock state/providers. **Game/component** — Flame in isolation (minimal `FlameGame` + component); test `onLoad`, `update`, removal.
+- **Layout:** `test/` mirrors `lib/`; **`*_test.dart`**; group by feature or class.
+- **Mocks:** mockito or mocktail; for Flame use minimal game or mock `Game`.
+- **Critical paths:** Combat, economy, save/load, **ruleset loading** — prioritize coverage here.

@@ -1,0 +1,16 @@
+---
+description: Tools are thin facades over library logic; orchestration in tools, implementation in packages.
+globs: "tool/**"
+alwaysApply: false
+---
+
+# Tools as Thin Facades
+
+- **Principle:** `tool/` = thin facades only: parse args, load config/input, call into packages, output results. No core logic (e.g. map description, tile counts) in the tool; add helpers/types in the appropriate package and call from the tool.
+- **Run from root:** All tools run via **Melos** from project root: `melos run <tool_name> -- [args]`. Paths in args are relative to repo root. Document in **`docs/project-tools.md`** (command, args, options, examples).
+
+**Adding a new tool:**
+1. New package under `tool/<name>` (thin facade; logic in packages).
+2. Package: `resolution: workspace`, executable name = `<name>` (e.g. `executables: <name>: bin/<name>.dart`).
+3. Root `pubspec.yaml`: add `tool/<name>` to `workspace:` and to `melos.scripts` (e.g. `<name>: run: dart run <name>`).
+4. Update `docs/project-tools.md` with section for the new tool.

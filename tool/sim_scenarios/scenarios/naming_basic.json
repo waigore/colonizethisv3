@@ -1,0 +1,40 @@
+{
+  "name": "naming_basic",
+  "description": "Naming (SPEC/game/naming.md): after setup every province has non-null displayName; GP capital gets capital city name; GP gets countryName; tribe capital gets first from pool.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england"],
+      "tribeCount": 1
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"], ["p2", "p1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [
+        {"id1": "p1", "id2": "sea1"},
+        {"id1": "p2", "id2": "p1"}
+      ]
+    },
+    "newWorld": {
+      "grid": [["nw1", "sea1"], ["nw1", "nw1"]],
+      "nodes": [
+        {"id": "nw1", "regionId": "newWorld", "type": "province"},
+        {"id": "sea1", "regionId": "newWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "nw1", "id2": "sea1"}]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1"},
+    {"turn": 1, "province": "oldWorld|p1", "provinceDisplayName": "London"},
+    {"turn": 1, "province": "oldWorld|p2", "provinceDisplayName": "Gloucestershire"},
+    {"turn": 1, "player": "tribe1", "capitalProvinceId": "newWorld|nw1"},
+    {"turn": 1, "province": "newWorld|nw1", "provinceDisplayName": "Mexica"}
+  ]
+}

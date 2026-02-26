@@ -1,0 +1,213 @@
+/// Diplomacy models. SPEC/game/diplomacy.md, diplomacy-resolution.md.
+
+/// Relation state per faction-pair.
+enum RelationState {
+  atPeace,
+  atWar,
+}
+
+/// Relation level derived from score (0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied).
+enum RelationLevel {
+  hostile,
+  neutral,
+  friendly,
+  allied,
+}
+
+/// Per faction-pair relation. Stored in world state; save/load.
+class DiplomacyRelation {
+  const DiplomacyRelation({
+    required this.factionId1,
+    required this.factionId2,
+    this.score = 50,
+    this.level = RelationLevel.neutral,
+    this.state = RelationState.atPeace,
+    this.sinceTurn = 0,
+    this.lastInteractionTurn = 0,
+  });
+
+  final String factionId1;
+  final String factionId2;
+  final int score;
+  final RelationLevel level;
+  final RelationState state;
+  final int sinceTurn;
+  final int lastInteractionTurn;
+
+  bool get atWar => state == RelationState.atWar;
+  bool get atPeace => state == RelationState.atPeace;
+
+  DiplomacyRelation copyWith({
+    String? factionId1,
+    String? factionId2,
+    int? score,
+    RelationLevel? level,
+    RelationState? state,
+    int? sinceTurn,
+    int? lastInteractionTurn,
+  }) =>
+      DiplomacyRelation(
+        factionId1: factionId1 ?? this.factionId1,
+        factionId2: factionId2 ?? this.factionId2,
+        score: score ?? this.score,
+        level: level ?? this.level,
+        state: state ?? this.state,
+        sinceTurn: sinceTurn ?? this.sinceTurn,
+        lastInteractionTurn: lastInteractionTurn ?? this.lastInteractionTurn,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'factionId1': factionId1,
+        'factionId2': factionId2,
+        'score': score,
+        'level': level.name,
+        'state': state.name,
+        'sinceTurn': sinceTurn,
+        'lastInteractionTurn': lastInteractionTurn,
+      };
+
+  static DiplomacyRelation fromJson(Map<String, dynamic> json) =>
+      DiplomacyRelation(
+        factionId1: json['factionId1'] as String,
+        factionId2: json['factionId2'] as String,
+        score: json['score'] as int? ?? 50,
+        level: RelationLevel.values.firstWhere(
+          (e) => e.name == json['level'],
+          orElse: () => RelationLevel.neutral,
+        ),
+        state: RelationState.values.firstWhere(
+          (e) => e.name == json['state'],
+          orElse: () => RelationState.atPeace,
+        ),
+        sinceTurn: json['sinceTurn'] as int? ?? 0,
+        lastInteractionTurn: json['lastInteractionTurn'] as int? ?? 0,
+      );
+}
+
+/// Overture stage per Minor/Tribe per GP.
+enum OvertureStage {
+  none,
+  tradeConsulate,
+  embassy,
+  nap,
+  joinEmpire,
+}
+
+/// Per Minor/Tribe per GP overture state.
+class OvertureState {
+  const OvertureState({
+    required this.gpId,
+    required this.targetId,
+    this.stage = OvertureStage.none,
+    this.sinceTurn = 0,
+  });
+
+  final String gpId;
+  final String targetId;
+  final OvertureStage stage;
+  final int sinceTurn;
+
+  bool get hasEmbassy => stage == OvertureStage.embassy ||
+      stage == OvertureStage.nap ||
+      stage == OvertureStage.joinEmpire;
+  bool get hasConsulate => stage != OvertureStage.none;
+
+  OvertureState copyWith({
+    String? gpId,
+    String? targetId,
+    OvertureStage? stage,
+    int? sinceTurn,
+  }) =>
+      OvertureState(
+        gpId: gpId ?? this.gpId,
+        targetId: targetId ?? this.targetId,
+        stage: stage ?? this.stage,
+        sinceTurn: sinceTurn ?? this.sinceTurn,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'gpId': gpId,
+        'targetId': targetId,
+        'stage': stage.name,
+        'sinceTurn': sinceTurn,
+      };
+
+  static OvertureState fromJson(Map<String, dynamic> json) =>
+      OvertureState(
+        gpId: json['gpId'] as String,
+        targetId: json['targetId'] as String,
+        stage: OvertureStage.values.firstWhere(
+          (e) => e.name == json['stage'],
+          orElse: () => OvertureStage.none,
+        ),
+        sinceTurn: json['sinceTurn'] as int? ?? 0,
+      );
+}
+
+/// Diplomatic order types. SPEC/program/diplomacy-resolution.
+enum DiplomaticOrderType {
+  declareWar,
+  offerPeace,
+  alliance,
+  establishOverture,
+  grantAid,
+  setSubsidy,
+}
+
+/// Base for diplomatic orders.
+class DiplomaticOrder {
+  const DiplomaticOrder({
+    required this.type,
+    required this.targetFactionId,
+    this.amount,
+    this.overtureStage,
+  });
+
+  final DiplomaticOrderType type;
+  final String targetFactionId;
+  final int? amount;
+  final OvertureStage? overtureStage;
+
+  Map<String, dynamic> toJson() => {
+        'type': type.name,
+        'targetFactionId': targetFactionId,
+        if (amount != null) 'amount': amount,
+        if (overtureStage != null) 'overtureStage': overtureStage!.name,
+      };
+
+  static DiplomaticOrder fromJson(Map<String, dynamic> json) =>
+      DiplomaticOrder(
+        type: DiplomaticOrderType.values.firstWhere(
+          (e) => e.name == json['type'],
+          orElse: () => DiplomaticOrderType.declareWar,
+        ),
+        targetFactionId: json['targetFactionId'] as String,
+        amount: json['amount'] as int?,
+        overtureStage: json['overtureStage'] != null
+            ? OvertureStage.values.firstWhere(
+                (e) => e.name == json['overtureStage'],
+                orElse: () => OvertureStage.none,
+              )
+            : null,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DiplomaticOrder &&
+          type == other.type &&
+          targetFactionId == other.targetFactionId &&
+          amount == other.amount &&
+          overtureStage == other.overtureStage;
+
+  @override
+  @override
+  int get hashCode => Object.hash(type, targetFactionId, amount, overtureStage);
+}
+
+/// Intervention choice when Minor with Embassy is attacked. SPEC/game/diplomacy.md.
+enum InterventionChoice {
+  intervene,
+  doNothing,
+  protest,
+}

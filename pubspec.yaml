@@ -1,0 +1,54 @@
+name: colonizethis
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+workspace:
+  - app
+  - ctdev
+  - packages/colonizethis_models
+  - packages/colonizethis_data
+  - packages/colonizethis_save
+  - packages/colonizethis_logic
+  - packages/colonizethis_ai
+  - packages/colonizethis_map
+  - packages/colonizethis_test
+  - tool/generate_map
+  - tool/init_game
+  - tool/sim_economy
+  - tool/sim_combat
+  - tool/sim_combat_montecarlo
+  - tool/sim_scenarios
+  - tool/show_tech
+  - tool/check_gdd_coverage
+
+dev_dependencies:
+  melos: ^7.0.0
+
+melos:
+  scripts:
+    generate_map:
+      description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
+      run: dart run generate_map
+    init_game:
+      description: Game creation (map gen, province/capital assignment). SPEC/program/init-game-tool.md.
+      run: dart run init_game
+    sim_economy:
+      description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
+      run: dart run sim_economy
+    sim_combat:
+      description: Standalone Phase 3 combat simulation CLI. SPEC/program/sim-combat.md.
+      run: dart run sim_combat
+    sim_combat_montecarlo:
+      description: Monte Carlo combat simulation CLI. SPEC/program/sim-combat-montecarlo.md.
+      run: dart run sim_combat_montecarlo
+    sim_scenarios:
+      description: Batch scenario test driver for game integration testing. SPEC/program/sim-scenarios.md.
+      run: dart run sim_scenarios
+    show_tech:
+      description: Technology tree diagram and query (SPEC/program/show-tech-tool.md).
+      run: dart run show_tech
+    check_gdd_coverage:
+      description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
+      run: dart run check_gdd_coverage

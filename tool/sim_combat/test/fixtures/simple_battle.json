@@ -1,0 +1,23 @@
+{
+  "metadata": "Simple battle scenario",
+  "battles": [
+    {
+      "id": "b1",
+      "attacker": {
+        "units": [
+          { "type": "grenadiers", "medals": 2 },
+          { "type": "grenadiers", "medals": 0 }
+        ],
+        "generalMedals": 1
+      },
+      "defender": {
+        "units": [
+          { "type": "peasant_levies", "medals": 0 },
+          { "type": "peasant_levies", "medals": 0 }
+        ]
+      },
+      "province": { "fortLevel": 0, "terrain": "plains" },
+      "defenderFaction": "greatPower"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "diplomacy_intervention_human_do_nothing_resets_embassy",
+  "description": "Human GP with Embassy chooses Do Nothing when Minor is attacked; Embassy/overtures are cleared and no war is created with attacker.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 424242,
+      "greatPowers": ["england", "france"],
+      "continentCount": 2,
+      "minorNationCount": 1,
+      "tribeCount": 0
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "diplomatic",
+          "diplomaticType": "establishOverture",
+          "targetFactionId": "minor1",
+          "overtureStage": "embassy"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp2",
+          "type": "attackMinor",
+          "targetFactionId": "minor1"
+        },
+        {
+          "player": "gp1",
+          "type": "interventionChoice",
+          "interventionFor": "minor1",
+          "choice": "doNothing"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "gp2",
+      "relationState": "atPeace"
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "relationState": "atPeace"
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "relationWith": "minor1",
+      "overtureStage": "none"
+    }
+  ]
+}
+

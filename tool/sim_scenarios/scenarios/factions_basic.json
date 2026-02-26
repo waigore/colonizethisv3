@@ -1,0 +1,27 @@
+{
+  "name": "factions_basic",
+  "description": "SPEC/game/factions.md AC1: game setup creates Faction records for configured Great Power, Minor Nation, and Tribe with correct faction types.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 1,
+      "numProvincesOldWorld": 4,
+      "numProvincesNewWorld": 2
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "greatPowerCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 1
+    }
+  ]
+}

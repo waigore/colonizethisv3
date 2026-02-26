@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    {"id": "p1", "regionId": "oldWorld", "type": "province"},
+    {"id": "p2", "regionId": "oldWorld", "type": "province"},
+    {"id": "s1", "regionId": "oldWorld", "type": "seaZone"}
+  ],
+  "edges": [["p1", "p2"], ["p1", "s1"]]
+}

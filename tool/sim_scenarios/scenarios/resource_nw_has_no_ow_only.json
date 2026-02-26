@@ -1,0 +1,21 @@
+{
+  "name": "resource_nw_has_no_ow_only",
+  "description": "New World has no OW-only resources (SPEC/game/resource-terrain-region-rules.md). Negative assertions.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "region": "newWorld", "resource": "grain"},
+    {"turn": 1, "region": "newWorld", "resource": "meat"},
+    {"turn": 1, "region": "newWorld", "resource": "wool"},
+    {"turn": 1, "region": "newWorld", "resource": "horses"}
+  ]
+}

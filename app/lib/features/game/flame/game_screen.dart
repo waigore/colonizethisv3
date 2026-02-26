@@ -1,0 +1,173 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:flame/game.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../widgets/technology_panel.dart';
+import 'game_canvas.dart';
+
+/// Hosts the Flame game canvas. Phase 1: Next turn invokes TurnResolver and persists.
+class GameScreen extends ConsumerWidget {
+  const GameScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final game = ref.watch(currentGameProvider);
+    final victory = game?.victory;
+    return Scaffold(
+      body: Stack(
+        children: [
+          GameWidget(game: ColonizeThisGame()),
+          if (game != null && victory == null) ...[
+            Positioned(
+              right: 16,
+              top: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      final service = ref.read(gameServiceProvider);
+                      final newGame = service.nextTurn(game);
+                      ref.read(currentGameProvider.notifier).state = newGame;
+                    },
+                    child: Text(
+                      'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      final player = game.players.isNotEmpty
+                          ? game.players.first
+                          : null;
+                      if (player != null) {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          builder: (ctx) => TechnologyPanel(
+                            game: game,
+                            player: player,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.science, size: 20),
+                    label: const Text('Technology'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (game != null && victory != null)
+            _VictoryOverlay(
+              game: game!,
+              victory: victory!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
+class _VictoryOverlay extends StatefulWidget {
+  const _VictoryOverlay({
+    required this.game,
+    required this.victory,
+  });
+
+  final ct_models.Game game;
+  final ct_models.VictoryState victory;
+
+  @override
+  State<_VictoryOverlay> createState() => _VictoryOverlayState();
+}
+
+class _VictoryOverlayState extends State<_VictoryOverlay> {
+  bool _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black54,
+        child: Center(
+          child: _VictoryPanel(
+            game: widget.game,
+            victory: widget.victory,
+            onViewFinalState: () => setState(() => _dismissed = true),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VictoryPanel extends StatelessWidget {
+  const _VictoryPanel({
+    required this.game,
+    required this.victory,
+    this.onViewFinalState,
+  });
+
+  final ct_models.Game game;
+  final ct_models.VictoryState victory;
+  final VoidCallback? onViewFinalState;
+
+  @override
+  Widget build(BuildContext context) {
+    final winner = game.players.firstWhere(
+      (p) => p.id == victory.winnerPlayerId,
+      orElse: () => game.players.first,
+    );
+    final victoryLabel = switch (victory.type) {
+      ct_models.VictoryType.military => 'Military victory',
+    };
+
+    return Card(
+      margin: const EdgeInsets.all(24),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              victoryLabel,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${winner.displayName} wins on turn ${victory.turnNumber}.',
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('Return to main menu'),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    onViewFinalState?.call();
+                  },
+                  child: const Text('View final state'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

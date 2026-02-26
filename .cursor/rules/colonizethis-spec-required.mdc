@@ -5,12 +5,8 @@ alwaysApply: true
 
 # SPEC Required
 
-## SPEC-first
-
-- All game and technical behavior must be **specified before implementation**.
-- Implement only what the specs describe. No behavior that contradicts the GDD or TDD.
-
-## SPEC layout
+- **SPEC-first:** Specify all game and technical behavior before implementation. Implement only what specs describe; no behavior that contradicts GDD or TDD.
+- **Layout:** Sub-specs only; max 1000 words per document.
 
 | Domain | Path | Source of truth |
 |--------|------|-----------------|
@@ -19,29 +15,7 @@ alwaysApply: true
 | AI | `SPEC/ai/` | Derives from GDD/TDD |
 | UI | `SPEC/ui/` | Derives from GDD/TDD |
 
-- Use **sub-specs only**; split large topics. **Max 500 words per document.**
-- GDD: player interaction, calculation logic, rules (configurable vs fixed), single vs multiplayer, core model (units, production, terrain, stats/modifiers/constraints). Use diagrams where useful.
-- TDD: modules/submodules, key variables and lifecycles/storage, component flows, frontend–server (multiplayer).
-- AI spec: how AI uses game constraints; what game state the AI can access.
-- UI spec: screen design, map layers.
-
-## Source of truth
-
-- **Game and AI logic:** GDD is ultimate source of truth.
-- **Technical architecture:** TDD is ultimate source of truth.
-- AI and UI specs must derive from GDD/TDD.
-
-## Inconsistencies
-
-- If specs conflict, **flag and resolve** before coding.
-- Resolve by updating GDD or TDD first, then derived specs (AI, UI).
-
-## Rulesets
-
-- Game stats, modifiers, and constraints are **configurable via distinct rulesets**.
-- GDD and TDD must specify **where** ruleset configuration is defined and **how** it is loaded.
-
-## When adding behavior
-
-- Point to the spec section (and sub-spec file) that authorizes it.
-- If no such section exists, **add or extend the spec first**, then implement.
+- **Source of truth:** GDD for game/AI logic; TDD for architecture. AI and UI specs derive from GDD/TDD.
+- **Conflicts:** Flag and resolve before coding. Update GDD or TDD first, then AI/UI specs.
+- **Rulesets:** Stats, modifiers, constraints are configurable via distinct rulesets. GDD/TDD must specify where and how ruleset config is defined and loaded.
+- **Adding behavior:** Point to the spec (section/file) that authorizes it. If none exists, add or extend the spec first, then implement.

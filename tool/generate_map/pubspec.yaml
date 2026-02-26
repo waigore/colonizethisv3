@@ -1,0 +1,23 @@
+name: generate_map
+description: End-to-end map generation (topology + tile map + PNG). SPEC/program/map-data.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  colonizethis_data:
+  colonizethis_map:
+  colonizethis_models:
+  logger: ^2.0.2
+
+dev_dependencies:
+  colonizethis_test:
+  path: ^1.9.0
+  test: ^1.24.0
+
+executables:
+  generate_map: bin/generate_map.dart
+

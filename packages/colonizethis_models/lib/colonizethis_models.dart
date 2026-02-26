@@ -1,0 +1,28 @@
+/// Shared data models, schemas, serialization. SPEC/game/world-model, SPEC/program/turn-resolution.
+library colonizethis_models;
+
+export 'src/capital_tile.dart';
+export 'src/diplomacy.dart';
+export 'src/fleet.dart';
+export 'src/combat_mode.dart';
+export 'src/current_work.dart';
+export 'src/game.dart';
+export 'src/general.dart';
+export 'src/minor_nation.dart';
+export 'src/tribe.dart';
+export 'src/orders.dart';
+export 'src/stockpile.dart';
+export 'src/player.dart';
+export 'src/tile_map_state.dart';
+export 'src/province.dart';
+export 'src/province_id.dart';
+export 'src/quick_battle.dart';
+export 'src/region.dart';
+export 'src/region_data.dart';
+export 'src/worker_pool.dart';
+export 'src/turn_state.dart';
+export 'src/turn_time_mapping.dart';
+export 'src/unit.dart';
+export 'src/world_state.dart';
+export 'src/ai_events.dart';
+export 'src/dossier_evidence.dart';

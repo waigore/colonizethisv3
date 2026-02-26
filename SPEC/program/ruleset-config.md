@@ -1,36 +1,52 @@
-# Ruleset & Config (Program)
+# Ruleset & Config — Implementation
 
-**SPEC/program** — Implementation scope for loading and applying ruleset configuration. **Source of truth:** TDD 19. Ruleset & config — Implementation (Obsidian). See SPEC/project for Obsidian/spec sync.
+## Responsibility
+Load, merge, and expose ruleset configuration at game creation. Game rules: [ruleset-config.md](../game/ruleset-config.md).
 
----
+## Scope (MVP)
+**MVP uses program-level config only.** No JSON load or merge from `rules/` asset path in MVP. Base → Difficulty → Scenario merge is deferred until the ruleset loader is implemented. Current behaviour: config (e.g. GameSetupConfig, default naming) is supplied from code constants / colonizethis_data. See [game-setup-pipeline.md](game-setup-pipeline.md) § Data Model (GameSetupConfig), #57 (loader tracking), and #235 for current behaviour.
 
-## Where and Format
+## Data Model
 
-- **Package:** colonizethis_data (or dedicated colonizethis_ruleset). JSON files under `rules/` asset path.
-- **Files:** `base.json`, `difficulty/introductory.json`, `difficulty/normal.json`, `difficulty/hard.json`, `difficulty/impossible.json`, `scenario/search_for_el_dorado.json` (and other scenarios).
+### File Format
+JSON files under `rules/` asset path: `base.json`, `difficulty/{level}.json`, `scenario/{id}.json`.
 
----
+### Resolved Ruleset
+Single merged object containing all category parameters (units, map, economy, combat, victory, AI, scenario, game/setup) plus naming and turn-time mapping sections.
 
-## Load and Merge
+**Naming structure:**
+- `greatPowers`: registry keyed by semantic id. Fields: `id`, `countryName`, `adjective`, `capitalCityName`, `leaderVariants[]` (`{ id, name, leaderKey, provinceNamePool? }`).
+- `minorNations[]`: `{ id, displayName, provinceNamePool? }`.
+- `tribes[]`: `{ id, displayName, provinceNamePool? }`.
 
-- **When:** Game creation only. `GameSettings` includes `difficulty` and `scenarioId` (or null). Resolver runs once; result stored with the game.
-- **Merge order:** Base → difficulty overlay → scenario overlay. Key-level replace (nested objects merged per key). Output: single **ResolvedRuleset** (or **GameConfig**) object.
-- **Immutability:** No mid-game ruleset reload in production.
+**Turn-time mapping:** `{ startYear, cutoffYear, yearsPerTurnBeforeCutoff, yearsPerTurnAfterCutoff }`. See [turn-time-mapping.md](../game/turn-time-mapping.md).
 
----
+## Algorithm / Flow
 
-## Example Scenario
+### Merge
+1. Load `base.json`.
+2. If difficulty is set, overlay `difficulty/{level}.json`.
+3. If scenario is set, overlay `scenario/{id}.json`.
+4. Key-level replace; nested objects merged per key.
+5. Output: single resolved object, stored with the game.
 
-**Search for El Dorado** (`scenario/search_for_el_dorado.json`): Overrides victory (primary = exploration_el_dorado, gold_bonus 500), units (explorer prospect_speed_multiplier 2.0), economy (riches_cash_multiplier 1.5), scenario (starting_treasury_bonus 200, description_key). Base + chosen difficulty + this file → resolved config.
+### Debug Exception
+Debug builds only: dev menu may inspect and change resolved parameters for the live session. Changes not persisted; not used for multiplayer authority.
 
----
+## Integration
 
-## Debug Exception
+- **Phase:** Game creation only. Game settings include difficulty and scenario id.
+- **Upstream:** JSON asset files in `rules/` path (package `colonizethis_data`).
+- **Downstream:** `colonizethis_logic` and `colonizethis_ai` consume the resolved ruleset; no layer awareness. App receives resolved config at game load; Flutter does not perform merge or parsing.
 
-Debug builds only: a debug console (or dev menu) may allow inspecting and optionally changing resolved parameters for the live session. Changes are not persisted and not used for multiplayer authority. This is the only allowed path to change ruleset-derived parameters after game start.
+## Constraints
+- Resolved ruleset is read-only after creation.
+- Consumers depend only on the merged result, not layer structure.
+- Province naming at setup uses the resolved naming section; see [ruleset-config.md](../game/ruleset-config.md) for naming rules.
 
----
-
-## Consumers
-
-colonizethis_logic and colonizethis_ai take a single ResolvedRuleset/GameConfig; no layer awareness. App receives resolved config at game load. Flutter does not perform merge or file parsing.
+## Acceptance criteria
+- **Read-only after creation:** Given a game has been created with a resolved ruleset, when any consumer (logic, AI, app) reads config during play, then the system exposes the same merged result and no component may mutate it.
+- **Consumer contract:** Given a resolved ruleset, when colonizethis_logic or colonizethis_ai consume config, then they depend only on the merged result and do not depend on layer structure (Base/Difficulty/Scenario).
+- **Merge order (when JSON merge is implemented):** Given JSON files under `rules/` (base, optional difficulty, optional scenario), when the ruleset loader runs at game creation, then merge order is: (1) load base.json, (2) overlay difficulty/{level}.json if set, (3) overlay scenario/{id}.json if set, (4) key-level replace with nested merge, (5) output stored with the game; logic and AI consume only this merged result.
+- **Resolved structure:** Given the resolved ruleset, when consumers read it, then the object contains naming (greatPowers, minorNations, tribes per Data Model) and turn-time mapping; when turn-time mapping is absent, default is per [turn-time-mapping.md](../game/turn-time-mapping.md) (e.g. GDD 01).
+- **Province naming at setup:** Given game setup has run with a resolved ruleset, when provinces are named, then setup uses the resolved naming section per [ruleset-config.md](../game/ruleset-config.md) and [naming.md](../game/naming.md).

@@ -1,0 +1,29 @@
+{
+  "name": "capital_and_connectivity_init",
+  "description": "Capital and connectivity: after init each GP owns their capital province (SPEC/game/capital-and-connectivity.md § Capital, Capital Setup). Deterministic init with seed 42 and 2 GPs.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england", "france"],
+      "continentCount": 4,
+      "minorNationCount": 6,
+      "tribeCount": 10
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "province": "oldWorld|p1",
+      "owner": "gp1"
+    },
+    {
+      "turn": 1,
+      "province": "oldWorld|p1",
+      "notOwner": "gp2"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+name: sim_combat
+description: Standalone Phase 3 combat simulation CLI. SPEC/program/sim-combat.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  logger: ^2.0.2
+  colonizethis_data:
+  colonizethis_logic:
+  colonizethis_models:
+
+dev_dependencies:
+  colonizethis_test:
+  test: ^1.24.0
+
+executables:
+  sim_combat: bin/sim_combat.dart

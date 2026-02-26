@@ -1,0 +1,39 @@
+name: Label fixed issues
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, dev]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  label-fixed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get linked issues
+        id: linked
+        run: |
+          numbers=$(gh api graphql \
+            -f owner="${{ github.repository_owner }}" \
+            -f name="${{ github.event.repository.name }}" \
+            -F pr=${{ github.event.pull_request.number }} \
+            -f query='query($owner: String!, $name: String!, $pr: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $pr) { closingIssuesReferences(first: 100) { nodes { number } } } } }' \
+            --jq '.data.repository.pullRequest.closingIssuesReferences.nodes[].number')
+          echo "numbers<<EOF" >> $GITHUB_OUTPUT
+          echo "$numbers" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add fixed label to linked issues
+        if: steps.linked.outputs.numbers != ''
+        run: |
+          for num in ${{ steps.linked.outputs.numbers }}; do
+            gh issue edit "$num" --add-label "fixed"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
