@@ -5,11 +5,8 @@ import 'package:logger/logger.dart';
 import '../combat/combat_mode_selection.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
-import '../combat/combat_resolver.dart';
 import '../constants.dart';
 import '../combat/conflict_detection.dart';
-import '../combat/quick_battle_input_builder.dart';
-import '../combat/quick_battle_resolver.dart';
 import '../setup/capital_choice.dart';
 import '../world/connectivity_resolver.dart';
 import '../economy/economy_consumption.dart';
@@ -28,6 +25,8 @@ import '../combat/naval_combat_resolver.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../world/player_view.dart';
+import 'combat_phase_helpers.dart';
+import 'end_of_turn_resolver.dart';
 
 final Logger _log = Logger();
 
@@ -225,7 +224,7 @@ Game resolveTurnForGame({
         );
         break;
       case TurnPhase.endOfTurn:
-        state = _runEndOfTurnPhase(state, onDialogue: onDialogue);
+        state = runEndOfTurnPhase(state, onDialogue: onDialogue);
         break;
     }
     _log.d('logic: phase ${phase.name} end');
@@ -327,177 +326,6 @@ Orders _filterAcceptedOrdersForAllPlayers({
     navalMoveOrdersByPlayerId: navalByPlayer,
     navalMissionOrdersByPlayerId: missionByPlayer,
   );
-}
-
-Game _runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
-  // If victory is already set, keep the turn state stable.
-  if (game.victory != null) {
-    return game;
-  }
-
-  final winnerId = _findMilitaryVictoryWinner(game);
-  if (winnerId != null) {
-    final turnNumber = game.worldState.turnState.turnNumber;
-    _log.i('logic: military victory set winner=$winnerId turn=$turnNumber');
-    return game.copyWith(
-      victory: VictoryState(
-        winnerPlayerId: winnerId,
-        type: VictoryType.military,
-        turnNumber: turnNumber,
-      ),
-    );
-  }
-
-  // Era-change dialogue: emit when calendar era changes after this turn. SPEC/ai/dialogue-and-mood.md.
-  final currentTurn = game.worldState.turnState.turnNumber;
-  final nextTurn = currentTurn + 1;
-  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
-  final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
-  final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
-  if (previousEra != newEra && onDialogue != null) {
-    final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
-    final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
-    for (final e in events) onDialogue(e);
-  }
-
-  // Spy 5-turn fog decay: decrement timers; where 0, set that province's tiles to fogged. SPEC/program/fog-and-exploration-resolution.md.
-  var visibilityByTile = Map<String, Map<String, String>>.from(
-    game.worldState.playerVisibilityByTile.map(
-      (k, v) => MapEntry(k, Map<String, String>.from(v)),
-    ),
-  );
-  final nextSpyTimers = <String, Map<String, int>>{};
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  for (final entry in game.worldState.spyRevealTurnsByPlayer.entries) {
-    final playerId = entry.key;
-    final byProvince = entry.value;
-    final newByProvince = <String, int>{};
-    final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-    for (final provEntry in byProvince.entries) {
-      final provinceId = provEntry.key;
-      final turns = provEntry.value;
-      if (turns <= 1) {
-        final regionId = ProvinceId.regionIdFrom(provinceId);
-        final tileKeys = tileKeysByRegion[regionId]?[provinceId] ?? [];
-        for (final tk in tileKeys) {
-          vis[tk] = VisibilityLevel.fogged.name;
-        }
-      } else {
-        newByProvince[provinceId] = turns - 1;
-      }
-    }
-    if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;
-    visibilityByTile[playerId] = vis;
-  }
-  var stateForFog = game.copyWith(
-    worldState: game.worldState.copyWith(
-      playerVisibilityByTile: visibilityByTile,
-      spyRevealTurnsByPlayer: nextSpyTimers,
-    ),
-  );
-  // Fog decay: other-faction provinces with no Explorer/Spy → fogged. SPEC/program/fog-and-exploration-resolution.md.
-  final nextVisibility = _applyFogDecay(stateForFog);
-
-  return game.copyWith(
-    worldState: game.worldState.copyWith(
-      turnState: game.worldState.turnState.copyWith(
-        turnNumber: game.worldState.turnState.turnNumber + 1,
-        phase: TurnPhase.orders,
-      ),
-      playerVisibilityByTile: nextVisibility,
-      spyRevealTurnsByPlayer: nextSpyTimers,
-    ),
-  );
-}
-
-/// For each player, set tiles in other-faction provinces to fogged when no Explorer/Spy in that province.
-Map<String, Map<String, String>> _applyFogDecay(Game game) {
-  const explorerTypes = {'explorer', 'spy'};
-  final owOwnerByProvince = {
-    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
-  };
-  final nwOwnerByProvince = {
-    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
-  };
-
-  // Use full province id (regionId|localId) per SPEC/game/world-model-identity.md.
-  final provincesWithExplorerByPlayer = <String, Set<String>>{};
-  for (final u in game.worldState.oldWorld.units) {
-    if (explorerTypes.contains(u.type.toLowerCase())) {
-      provincesWithExplorerByPlayer
-          .putIfAbsent(u.ownerId, () => <String>{})
-          .add(u.locationProvinceId);
-    }
-  }
-
-  // Provinces with an active Spy reveal timer for each player (timer > 0).
-  // These provinces must remain fully visible until the timer reaches 0 and is cleared.
-  final provincesWithSpyTimerByPlayer = <String, Set<String>>{};
-  for (final entry in game.worldState.spyRevealTurnsByPlayer.entries) {
-    final playerId = entry.key;
-    final provinces = entry.value.keys;
-    if (provinces.isEmpty) continue;
-    provincesWithSpyTimerByPlayer[playerId] = provinces.toSet();
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (explorerTypes.contains(u.type.toLowerCase())) {
-      provincesWithExplorerByPlayer
-          .putIfAbsent(u.ownerId, () => <String>{})
-          .add(u.locationProvinceId);
-    }
-  }
-
-  final result = <String, Map<String, String>>{};
-  for (final entry in game.worldState.playerVisibilityByTile.entries) {
-    final playerId = entry.key;
-    final visibility = Map<String, String>.from(entry.value);
-    final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
-    final hasSpyTimerIn = provincesWithSpyTimerByPlayer[playerId] ?? const {};
-
-    for (final tileKey in visibility.keys.toList()) {
-      final parts = tileKey.split('|');
-      if (parts.length != 4) continue;
-      final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
-      final ownerId = owOwnerByProvince[fullProvinceId] ??
-          nwOwnerByProvince[fullProvinceId];
-      if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(fullProvinceId) &&
-          !hasSpyTimerIn.contains(fullProvinceId)) {
-        visibility[tileKey] = VisibilityLevel.fogged.name;
-      }
-    }
-    result[playerId] = visibility;
-  }
-  return result;
-}
-
-/// Returns the id of a Great Power that controls 31+ Old World provinces,
-/// or null when no military victory has been achieved.
-String? _findMilitaryVictoryWinner(Game game) {
-  const int requiredProvinces = 31;
-  final countsByOwner = <String, int>{};
-  for (final province in game.worldState.oldWorld.provinces) {
-    final ownerId = province.ownerId;
-    if (ownerId == null || ownerId.isEmpty) continue;
-    countsByOwner.update(ownerId, (v) => v + 1, ifAbsent: () => 1);
-  }
-
-  // Only Great Powers are eligible for this victory condition.
-  final gpIds = game.players.map((p) => p.id).toSet();
-  String? winnerId;
-  for (final entry in countsByOwner.entries) {
-    final ownerId = entry.key;
-    final count = entry.value;
-    if (!gpIds.contains(ownerId)) continue;
-    if (count >= requiredProvinces) {
-      // Deterministic tie-breaking: pick the lexicographically smallest id
-      // among eligible winners.
-      if (winnerId == null || ownerId.compareTo(winnerId) < 0) {
-        winnerId = ownerId;
-      }
-    }
-  }
-  return winnerId;
 }
 
 Game _runExtractionPhase(
@@ -901,103 +729,16 @@ Game _runCombatPhase(
           ? game.combatModeByProvinceId
           : null,
     );
-    if (mode == CombatMode.quickBattle) {
-      final input = buildQuickBattleInput(state, ctx,
-          seed: state.worldState.turnState.turnNumber);
-      final qbResult = resolveQuickBattle(input);
-      state = applyQuickBattleResultToGame(state, ctx, qbResult);
-      // Evidence: AI won land battle as attacker. SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
-      if (qbResult.winner == QuickBattleWinner.attacker &&
-          qbResult.provinceFlips &&
-          ctx.attackers.isNotEmpty) {
-        final victorId = ctx.attackers.first.factionId;
-        final evidence = evidenceForLandBattleVictory(
-            state, victorId, ctx.defenderFactionId, turn);
-        if (evidence.isNotEmpty) {
-          state = state.copyWith(dossierEvidenceEntries: [
-            ...state.dossierEvidenceEntries,
-            ...evidence
-          ]);
-        }
-        final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
-        final events = dialogueEventsForLandBattleResult(
-          state,
-          victorId,
-          ctx.defenderFactionId,
-          ctx.provinceId,
-          turn,
-          dialogueSeed,
-        );
-        if (onDialogue != null && events.isNotEmpty) {
-          for (final e in events) onDialogue(e);
-        }
-      } else {
-        // Quick battle ended with defender holding or draw: loser is attacker, victor is defender.
-        final victorId = qbResult.winner == QuickBattleWinner.defender
-            ? ctx.defenderFactionId
-            : (qbResult.provinceFlips && ctx.attackers.isNotEmpty
-                ? ctx.attackers.first.factionId
-                : null);
-        final loserId =
-            victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
-                ? ctx.attackers.first.factionId
-                : (victorId != null ? ctx.defenderFactionId : null);
-        if (victorId != null && loserId != null) {
-          final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
-          final events = dialogueEventsForLandBattleResult(
-            state,
-            victorId,
-            loserId,
-            ctx.provinceId,
-            turn,
-            dialogueSeed,
-          );
-          if (onDialogue != null && events.isNotEmpty) {
-            for (final e in events) onDialogue(e);
-          }
-        }
-      }
-    } else {
-      state = resolveBattleContext(
-        state,
-        ctx,
-        feedingCoverageByPlayerId: feedingCoverageByPlayerId,
-      );
-      // Evidence: AI won land battle (province flipped). Same spec refs.
-      final region = ctx.regionId == kRegionOldWorld
-          ? state.worldState.oldWorld
-          : state.worldState.newWorld;
-      final province =
-          region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
-      final victorId = province?.ownerId;
-      if (victorId != null && victorId != ctx.defenderFactionId) {
-        final evidence = evidenceForLandBattleVictory(
-            state, victorId, ctx.defenderFactionId, turn);
-        if (evidence.isNotEmpty) {
-          state = state.copyWith(dossierEvidenceEntries: [
-            ...state.dossierEvidenceEntries,
-            ...evidence
-          ]);
-        }
-      }
-      final effectiveVictorId = victorId ?? ctx.defenderFactionId;
-      final effectiveLoserId =
-          victorId == ctx.defenderFactionId && ctx.attackers.isNotEmpty
-              ? ctx.attackers.first.factionId
-              : ctx.defenderFactionId;
-      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
-      final events = dialogueEventsForLandBattleResult(
-        state,
-        effectiveVictorId,
-        effectiveLoserId,
-        ctx.provinceId,
-        turn,
-        dialogueSeed,
-      );
-      if (onDialogue != null && events.isNotEmpty) {
-        for (final e in events) onDialogue(e);
-      }
-    }
+    state = runOneLandBattle(
+      state,
+      ctx,
+      mode,
+      feedingCoverageByPlayerId,
+      turn,
+      battleIndex,
+      seed,
+      onDialogue: onDialogue,
+    );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     battleIndex++;
   }

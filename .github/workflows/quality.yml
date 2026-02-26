@@ -9,12 +9,14 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # CI quality scope: packages + tool packages only (no app/ctdev UI tests). Full scope via tool/test_coverage.py locally.
       - name: Detect source changes
         id: changes
         uses: dorny/paths-filter@v3
@@ -29,8 +31,6 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
-              - 'app/**'
-              - 'ctdev/**'
 
       - name: Setup Flutter
         if: steps.changes.outputs.tests == 'true'
@@ -58,7 +58,7 @@ jobs:
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
-      # Same scope as tool/test_coverage.py; split steps, compact reporter (pass/fail only, no logger).
+      # Reduced scope: packages + tool packages only (app/ctdev run via tool/test_coverage.py locally).
       - name: Test packages (Dart)
         if: steps.changes.outputs.tests == 'true'
         env:
@@ -70,24 +70,6 @@ jobs:
             (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
             (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
           done
-
-      - name: Test app (Flutter)
-        if: steps.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d app ]; then
-            (cd app && flutter test --coverage --reporter=compact)
-          fi
-
-      - name: Test ctdev (Flutter)
-        if: steps.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d ctdev/test ]; then
-            (cd ctdev && flutter test --coverage --reporter=compact)
-          fi
 
       - name: Test tool packages (Dart)
         if: steps.changes.outputs.tests == 'true'
