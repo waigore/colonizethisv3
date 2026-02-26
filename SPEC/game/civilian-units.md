@@ -38,7 +38,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
 | build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |
 | build_fort | Engineer | Per siege-mechanics | Config (1+ turn per level) | Town tile; fort level 1–3 |
-| build_rail | Rail Builder | Steel + lumber | Config | Road→4; rail tech |
+| build_rail | Rail Builder | 2 lumber + 2 cast iron | Config | Road→4; rail tech |
 | steal_tech | Spy | — | Up to 5 turns | Target = **GP capital province**; 8%/turn success; random tech player lacks |
 | counter_spy | Spy | — | Ongoing | Target = **owned province**; +5% per friendly spy/turn (cap 30%) to kill enemy spies |
 | purchase_land | Merchant | 15 × resource base price (treasury); embassy in Minor/Tribe | 1 turn | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected |
@@ -53,7 +53,7 @@ Spy does not have explore/prospect; Spy's garrison reveal is handled by visibili
 - **WorkOrder** specifies both an **action** (e.g. `build_improvement`, `build_road`) and a **target tile** (`targetTileKey`). Civilians can move to and act on a tile different from their current tile (Imperialism-style).
 - **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
 - **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the **target tile** after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
-- **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile to railroad (transport level 4) over multiple turns, costing steel + lumber; only available after the relevant transport techs. See [tech-tree-transport.md](tech-tree-transport.md).
+- **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile to railroad (transport level 4) over multiple turns, costing 2 lumber + 2 cast iron; only available after the relevant transport techs. See [tech-tree-transport.md](tech-tree-transport.md).
 - **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves, the province returns to fogged after 5 turns (turn timer). (2) **steal_tech:** WorkOrder target = other GP's **capital province**; up to 5 turns; 8% per turn to steal a random tech the player does not have; completion or expiry clears work. (3) **counter_spy:** WorkOrder target = any **owned** province; each friendly Spy in that province adds 5% per turn (capped 30%) chance to kill an enemy Spy there. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner.
 - **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury); requires **embassy** with that Minor/Tribe. Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
 
@@ -93,7 +93,7 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 
 - Given a Rail Builder civilian unit controlled by the player has an active `build_rail` `WorkOrder` targeting a tile that currently has a road and the required transport technology is unlocked  
   When the system completes that work after the configured duration  
-  Then the system upgrades the tile's transport level to railroad (transport level 4), deducts the specified steel and lumber once for that work, and does not allow another `build_rail` order on that tile while it already has transport level 4.
+  Then the system upgrades the tile's transport level to railroad (transport level 4), deducts 2 lumber and 2 cast iron once for that work, and does not allow another `build_rail` order on that tile while it already has transport level 4.
 
 - Given a civilian `Unit` of any type exists on the map  
   When the system evaluates that unit's `location` and any `WorkOrder.targetTileKey` for rules that depend on province or region identity  

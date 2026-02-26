@@ -440,8 +440,8 @@ class _InitGameDebugMapScreenState extends State<InitGameDebugMapScreen> {
                       if (!_initialTransformApplied &&
                           initialScale.isFinite &&
                           initialScale > 0) {
-                        _controller.value =
-                            Matrix4.identity()..scale(initialScale);
+                        _controller.value = Matrix4.identity()
+                          ..scaleByDouble(initialScale, initialScale, initialScale, 1.0);
                         _initialTransformApplied = true;
                       }
 
