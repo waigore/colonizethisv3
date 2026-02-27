@@ -3,6 +3,10 @@
 
 import 'package:logger/logger.dart';
 
+// Re-export test package for convenience.
+// Test files can import this library instead of 'package:test/test.dart' directly.
+export 'package:test/test.dart';
+
 /// Filter that never logs; used so test runs produce no logger output.
 class _NoLogFilter extends LogFilter {
   @override
