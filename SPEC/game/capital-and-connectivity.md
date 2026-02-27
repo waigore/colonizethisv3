@@ -27,7 +27,11 @@ When the player chooses the capital tile:
 
 ## Town per province
 
-At **game init**, every province has exactly one **town** tile assigned (the province's "town" for extraction). The town is: (1) the **capital tile** if the province is that faction's capital province, or (2) otherwise the tile in that province with the **shortest path** to the capital (same region) or to a **port** in that province (overseas). Town is stored as province's `townTileKey` or in a region-level map. Linking a tile to a town (via road/rail/port path) means the faction can extract that tile's resources; town development level and transport level along the path limit extraction (see [extraction-and-improvements.md](extraction-and-improvements.md) § Town and extraction).
+At **game init**, every province has exactly one **town** tile assigned (the province's "town" for extraction). The town is: (1) the **capital tile** if the province is that faction's capital province, or (2) otherwise:
+   - **Same region (not overseas):** the tile in that province with the **shortest path** to the capital (per BFS on province tiles).
+   - **Overseas provinces:** the **port tile** in that province, if any; otherwise an arbitrary/default tile (the first tile in the province's tile list).
+
+Town is stored as province's `townTileKey` or in a region-level map. Linking a tile to a town (via road/rail/port path) means the faction can extract that tile's resources; town development level and transport level along the path limit extraction (see [extraction-and-improvements.md](extraction-and-improvements.md) § Town and extraction).
 
 ---
 
@@ -107,7 +111,7 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 
 - Given a Great Power player has a capital province with a capital tile already placed  
   When the system initializes towns for all provinces  
-  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set to the tile in that province with the shortest valid road or rail path to either the capital tile in the same region or a port in that province for an overseas province.
+  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set as follows: for same-region provinces, the tile with the shortest road/rail path to the capital; for overseas provinces, the port tile (if any) or an arbitrary/default tile.
 
 - Given a Great Power player has a capital province in region `R1` and an owned province `P2` in the same region `R1` with at least one tile reachable by a road or rail path to the capital tile  
   When the system assigns a town for `P2`  
@@ -115,7 +119,7 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 
 - Given a Great Power player has an owned province `P3` in region `R2` that is overseas (region `R2` is different from the capital region `R1`) and at least one port tile in `P3` whose sea zone is reachable from the capital’s seaboard via sea-zone and warp-zone edges  
   When the system assigns a town for `P3`  
-  Then the system selects as `P3`’s `townTileKey` the tile in `P3` with the shortest road or rail path to any such connected port in `P3`, and marks that port as used for extraction connectivity for that province.
+  Then the system selects as `P3`’s `townTileKey` the port tile itself (the tile with the port), which is used for extraction connectivity for that province. If `P3` has no port, an arbitrary/default tile (the first tile in the province's tile list) is used as the town.
 
 - Given a Great Power player has a capital tile and a port tile `portA` in the same region  
   When the system evaluates whether `portA` is connected to the capital  
