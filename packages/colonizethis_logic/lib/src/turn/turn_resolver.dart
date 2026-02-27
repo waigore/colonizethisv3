@@ -489,6 +489,12 @@ Game _runMovementPhase(
   final moveOrders = orders.moveOrdersByPlayerId;
   final tileKeysByRegion = state.worldState.tileKeysByRegionAndProvince;
   if (moveOrders.isNotEmpty) {
+    // Province ownership lookup for Spy timers (other-faction only).
+    final ownerByProvinceId = <String, String?>{
+      for (final p in state.worldState.oldWorld.provinces) p.id: p.ownerId,
+      for (final p in state.worldState.newWorld.provinces) p.id: p.ownerId,
+    };
+
     final oldWorld = applyMoveOrdersToRegion(
       state.worldState.oldWorld,
       topology,
@@ -510,6 +516,11 @@ Game _runMovementPhase(
       ),
     );
     void recordSpyLeft(String ownerId, String provinceId) {
+      // Only start timers for provinces owned by another faction; own provinces never decay.
+      final provinceOwner = ownerByProvinceId[provinceId];
+      if (provinceOwner == null || provinceOwner == ownerId) {
+        return;
+      }
       spyTimers.putIfAbsent(ownerId, () => {})[provinceId] = 5;
     }
 

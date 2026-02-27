@@ -29,10 +29,7 @@ Game runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
 
   _emitEraChangeDialogue(game, onDialogue);
 
-  final (visibilityByTile, nextSpyTimers) =
-      applySpyRevealTimerDecay(game.worldState.playerVisibilityByTile,
-          game.worldState.spyRevealTurnsByPlayer,
-          game.worldState.tileKeysByRegionAndProvince);
+  final (visibilityByTile, nextSpyTimers) = applySpyRevealTimerDecay(game);
   var stateForFog = game.copyWith(
     worldState: game.worldState.copyWith(
       playerVisibilityByTile: visibilityByTile,
@@ -67,21 +64,27 @@ void _emitEraChangeDialogue(
   for (final e in events) onDialogue(e);
 }
 
-/// Spy 5-turn fog decay: decrement timers; where ≤1, set that province's tiles to fogged.
-/// SPEC/program/fog-and-exploration-resolution.md.
+/// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
+/// provinces back to fogged for that player. Timers MUST NOT affect a player's
+/// own provinces; own provinces remain fully visible. SPEC/program/fog-and-exploration-resolution.md.
 (Map<String, Map<String, String>>, Map<String, Map<String, int>>)
-    applySpyRevealTimerDecay(
-  Map<String, Map<String, String>> playerVisibilityByTile,
-  Map<String, Map<String, int>> spyRevealTurnsByPlayer,
-  Map<String, Map<String, List<String>>> tileKeysByRegion,
-) {
+    applySpyRevealTimerDecay(Game game) {
+  final world = game.worldState;
+  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
   var visibilityByTile = Map<String, Map<String, String>>.from(
-    playerVisibilityByTile.map(
+    world.playerVisibilityByTile.map(
       (k, v) => MapEntry(k, Map<String, String>.from(v)),
     ),
   );
+
+  // Province ownership lookup so we can ensure timers only affect other-faction provinces.
+  final ownerByProvinceId = <String, String?>{
+    for (final p in world.oldWorld.provinces) p.id: p.ownerId,
+    for (final p in world.newWorld.provinces) p.id: p.ownerId,
+  };
+
   final nextSpyTimers = <String, Map<String, int>>{};
-  for (final entry in spyRevealTurnsByPlayer.entries) {
+  for (final entry in world.spyRevealTurnsByPlayer.entries) {
     final playerId = entry.key;
     final byProvince = entry.value;
     final newByProvince = <String, int>{};
@@ -89,14 +92,22 @@ void _emitEraChangeDialogue(
     for (final provEntry in byProvince.entries) {
       final provinceId = provEntry.key;
       final turns = provEntry.value;
-      if (turns <= 1) {
+
+      // Never apply Spy timers to a player's own provinces; clear any such timers without changing visibility.
+      final ownerId = ownerByProvinceId[provinceId];
+      if (ownerId == playerId) {
+        continue;
+      }
+
+      final nextTurns = turns - 1;
+      if (nextTurns <= 0) {
         final regionId = ProvinceId.regionIdFrom(provinceId);
         final tileKeys = tileKeysByRegion[regionId]?[provinceId] ?? [];
         for (final tk in tileKeys) {
           vis[tk] = VisibilityLevel.fogged.name;
         }
       } else {
-        newByProvince[provinceId] = turns - 1;
+        newByProvince[provinceId] = nextTurns;
       }
     }
     if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;
