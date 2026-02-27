@@ -77,6 +77,22 @@ A province is **overseas** for a player if it is in a **different region** from 
 
 If a player no longer owns their capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). New capital is in the player's **original region** (region of the previous capital) from the player's **owned provinces** in that region. Prefer **seaboard** provinces; place capital along the seaboard when possible. If the player has no seaboard provinces in that region, choose any remaining owned province (inland capital). Apply port/road setup per § Capital Setup. Reference capital-choice heuristics (e.g. border-avoidance) for tile choice where applicable. If the player has no owned provinces in the original region, leave capital (and capital tile) null; no port/road setup is applied.
 
+### Great Power fall (loss of capital and ports)
+
+For **Great Powers only**, the capital loss rules have an additional terminal case:
+
+- If, after combat resolution and capital reassignment, a Great Power:
+  - no longer owns its original capital province, **and**
+  - has **no remaining port provinces** that can serve as a valid capital (i.e. no owned province with a port tile connected per § Port connection to capital),
+- then that Great Power **forfeits** (falls) during turn resolution.
+
+When a Great Power falls:
+
+- All provinces previously owned by that Great Power (in all regions) are transferred to the faction that currently owns its last capital province (the conqueror of the original capital in this sequence).
+- The fallen Great Power is removed from active play (no further turns, orders, or capital), and its remaining fleets and units are disbanded (removed from world state) unless a future ruleset explicitly describes an alternative transfer behaviour.
+
+This Great Power fall check runs **after** combat and capital reassignment, and **before** the next Extraction phase so that connectivity and extraction for remaining factions are computed with the updated ownership and player list.
+
 ---
 
 ## Acceptance Criteria

@@ -365,7 +365,7 @@ Game _runExtractionPhase(
       stockpile = applyExtractionToStockpile(stockpile, tot.land);
       var overseasDelivered = allocateOverseasToStockpile(
         tot.overseas,
-        cargoHolds: defaultCargoHoldsStub,
+        cargoHolds: cargoHoldsForHomeFleet(state, player.id),
       );
       if (overseasDelivered.isNotEmpty) {
         extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
@@ -575,6 +575,37 @@ Game _applyNavalMissionOrders(
     for (final order in entry.value) {
       final fleet = fleetById[order.fleetId];
       if (fleet == null || fleet.ownerId != playerId) continue;
+      final homeFleetId = 'fleet_$playerId';
+
+      // Special mission: join home fleet. Only allowed when fleet is in the same
+      // sea zone as the player's home fleet; moves ships back into the home fleet.
+      if (order.mission == 'join_home_fleet') {
+        final homeFleet = fleetById[homeFleetId];
+        if (homeFleet == null) {
+          continue;
+        }
+        if (homeFleet.seaZoneId != fleet.seaZoneId) {
+          continue;
+        }
+        if (fleet.shipTypeIds.isEmpty) {
+          continue;
+        }
+        // Move all ships from this fleet into the home fleet.
+        final updatedHome = homeFleet.copyWith(
+          shipTypeIds: [...homeFleet.shipTypeIds, ...fleet.shipTypeIds],
+        );
+        fleets = fleets
+            .where((f) => f.id != fleet.id)
+            .map((f) => f.id == homeFleetId ? updatedHome : f)
+            .toList();
+        fleetById[homeFleetId] = updatedHome;
+        continue;
+      }
+
+      // Home fleet cannot receive active missions; keep mission as none.
+      if (fleet.id == homeFleetId) {
+        continue;
+      }
       FleetMission mission = FleetMission.none;
       for (final m in FleetMission.values) {
         if (m.name == order.mission) {
@@ -617,6 +648,12 @@ Game _applyNavalMovesAndShipReveal(
     for (final order in entry.value) {
       final fleet = fleetById[order.fleetId];
       if (fleet == null || fleet.ownerId != playerId) continue;
+      final homeFleetId = 'fleet_$playerId';
+
+      // Home fleet cannot move; a move targeting it is ignored.
+      if (fleet.id == homeFleetId) {
+        continue;
+      }
       if (!isAdjacentSeaZone(
           topology, fleet.seaZoneId, order.destinationSeaZoneId)) continue;
 
@@ -725,6 +762,9 @@ Game _runCombatPhase(
   void Function(DialogueEvent)? onDialogue,
 }) {
   // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
+  final previousCapitalByPlayer = {
+    for (final p in game.players) p.id: p.capitalProvinceId,
+  };
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
@@ -758,6 +798,8 @@ Game _runCombatPhase(
     state =
         _applyCapitalReassignmentAfterCombat(state, topology, tileMapByRegion);
   }
+  // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
+  state = _applyGreatPowerFall(state, previousCapitalByPlayer);
   return state;
 }
 
@@ -819,5 +861,95 @@ Game _applyCapitalReassignmentAfterCombat(
           error: e, stackTrace: st);
     }
   }
+  return game;
+}
+
+/// Apply Great Power fall rule after combat and capital reassignment.
+///
+/// For each Great Power:
+/// - Determine whether they lost their original capital province during this combat step.
+/// - If they have **no remaining port provinces**, all of their provinces transfer
+///   to the owner of the original capital province and their fleets/units are disbanded.
+Game _applyGreatPowerFall(
+  Game state,
+  Map<String, String?> previousCapitalByPlayer,
+) {
+  var game = state;
+
+  // Province owner lookup.
+  final provinceOwnerById = <String, String?>{
+    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
+    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
+  };
+
+  // Map provinceId -> list of port keys for that province.
+  final portsByProvince = <String, List<String>>{};
+  game.worldState.portsByProvinceSeaboard.forEach((key, _) {
+    // key format: fullProvinceId|seaZoneId
+    final parts = key.split('|');
+    if (parts.length >= 3) {
+      final provinceId = '${parts[0]}|${parts[1]}';
+      portsByProvince.putIfAbsent(provinceId, () => []).add(key);
+    }
+  });
+
+  for (final player in game.players) {
+    final playerId = player.id;
+    final prevCapitalId = previousCapitalByPlayer[playerId];
+    if (prevCapitalId == null || prevCapitalId.isEmpty) continue;
+
+    final prevCapitalOwner = provinceOwnerById[prevCapitalId];
+    // Player must have lost their original capital.
+    if (prevCapitalOwner == null || prevCapitalOwner == playerId) {
+      continue;
+    }
+
+    // Check if player still has any port provinces.
+    var hasPortProvince = false;
+    provinceOwnerById.forEach((provId, ownerId) {
+      if (ownerId == playerId && portsByProvince.containsKey(provId)) {
+        hasPortProvince = true;
+      }
+    });
+    if (hasPortProvince) continue;
+
+    final conquerorId = prevCapitalOwner;
+
+    // Transfer all provinces owned by this GP to the conqueror and disband its units.
+    RegionData _transferRegion(RegionData region) {
+      final updatedProvinces = region.provinces
+          .map((p) =>
+              p.ownerId == playerId ? p.copyWith(ownerId: conquerorId) : p)
+          .toList();
+      final remainingUnits =
+          region.units.where((u) => u.ownerId != playerId).toList();
+      return RegionData(
+        provinces: updatedProvinces,
+        units: remainingUnits,
+      );
+    }
+
+    final newOldWorld = _transferRegion(game.worldState.oldWorld);
+    final newNewWorld = _transferRegion(game.worldState.newWorld);
+
+    // Disband fleets owned by this GP.
+    final remainingFleets = game.worldState.fleets
+        .where((f) => f.ownerId != playerId)
+        .toList();
+
+    game = game.copyWith(
+      worldState: game.worldState.copyWith(
+        oldWorld: newOldWorld,
+        newWorld: newNewWorld,
+        fleets: remainingFleets,
+      ),
+      players: game.players
+          .map((p) => p.id == playerId
+              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+              : p)
+          .toList(),
+    );
+  }
+
   return game;
 }

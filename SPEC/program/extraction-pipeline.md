@@ -45,7 +45,7 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 1. **Connectivity:** Recompute per-player connectivity.
 2. **Extract:** Run resource extractor; obtain land and overseas totals.
 3. **Land:** Add same-region totals to each player's stockpile.
-4. **Sea:** Allocate overseas totals to stockpile by priority, capped by cargo holds (stub).
+4. **Sea:** Allocate overseas totals to stockpile by priority, capped by cargo holds derived from the player's **home fleet** at the capital port (see [auto-transport.md](auto-transport.md) and [ships-and-naval.md](../game/ships-and-naval.md)); any overseas quantity beyond cargoHolds is not delivered this turn.
 
 ---
 
