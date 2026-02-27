@@ -1,5 +1,5 @@
 // Log suppression first (SPEC/program/test-logging.md); then Flutter test API.
-import 'package:colonizethis_test/test.dart' as _;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter/material.dart';
@@ -8,6 +8,8 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 
 void main() {
+  // Suppress logs for test run.
+  suppressLogsForTests();
   group('HiveBoxNames', () {
     test('has expected box names', () {
       expect(HiveBoxNames.settings, 'settings');

@@ -1,5 +1,5 @@
 // Log suppression first (SPEC/program/test-logging.md); then Flutter test API.
-import 'package:colonizethis_test/test.dart' as _;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -7,9 +7,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
-import '../lib/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 
 void main() {
+  // Suppress logs for test run.
+  suppressLogsForTests();
+
   group('GameService integration', () {
     late Box<dynamic> box;
     late GameService service;

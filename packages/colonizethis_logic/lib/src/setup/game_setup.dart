@@ -13,7 +13,6 @@ import '../constants.dart';
 import '../world/player_view.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
-import 'warp_zone_generator.dart';
 
 final Logger _log = Logger();
 
