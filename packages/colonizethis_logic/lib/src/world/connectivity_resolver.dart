@@ -2,8 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import '../constants.dart';
-
 final Logger _log = Logger();
 
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
@@ -142,12 +140,6 @@ bool _isCapitalTileOnSeaboard(
   return false;
 }
 
-RegionData _regionData(Game game, String regionId) {
-  if (regionId == kRegionOldWorld) return game.worldState.oldWorld;
-  if (regionId == kRegionNewWorld) return game.worldState.newWorld;
-  return const RegionData();
-}
-
 Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
   final owned = <String>{};
   for (final p in game.worldState.oldWorld.provinces) {
@@ -222,7 +214,6 @@ ConnectivityResult _connectedTilesForPlayer({
 
     if (!owned.contains(fullProvinceId)) continue;
 
-    final region = _regionData(game, regionId);
     final map = tileMapByRegion[regionId];
     if (map == null) continue;
 
