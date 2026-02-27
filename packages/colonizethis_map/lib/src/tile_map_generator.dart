@@ -2389,7 +2389,7 @@ class TileMapGenerator {
           var d2 = 0x7fffffff;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
-            final dd = (x - sx) * (x - sy) * (x - sx) + (y - sy) * (y - sy);
+            final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
             if (dd < d2) d2 = dd;
           }
           final noise = params.voronoiNoiseScale > 0
