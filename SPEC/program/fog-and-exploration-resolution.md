@@ -29,7 +29,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 **Prospect resolution** (Build/Work phase):
 
 1. For each Explorer with work order `prospect` on tile T, verify T is mineral-eligible.
-2. Add T to player's prospected set. One turn.
+2. Add T to player's prospected set. **Instantaneous** — prospect is resolved immediately when the work order is accepted (in the Build/Work phase), not as a multi-turn countdown. This is consistent with other single-turn actions like `purchase_land`.
 
 **Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as the Spy is there.
 

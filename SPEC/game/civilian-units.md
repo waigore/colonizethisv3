@@ -32,7 +32,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | Target | Unit | Cost / gates | Duration | Notes |
 |--------|------|--------------|----------|-------|
 | explore | Explorer | Free | Multi-turn (province size) | Province-level; reveals tiles |
-| prospect | Explorer | Free | 1 turn | Tile-level; mineral-eligible |
+| prospect | Explorer | Free | Instant (Build/Work phase) | Tile-level; mineral-eligible; resolved immediately when order is accepted |
 | build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4 |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
@@ -49,7 +49,7 @@ Spy does not have explore/prospect; Spy's garrison reveal is handled by visibili
 
 ## Work Types and Multi-Turn Builds
 
-- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** (one tile per completed order).
+- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** and is resolved immediately when the order is accepted (instantaneous in Build/Work phase).
 - **WorkOrder** specifies both an **action** (e.g. `build_improvement`, `build_road`) and a **target tile** (`targetTileKey`). Civilians can move to and act on a tile different from their current tile (Imperialism-style).
 - **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
 - **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the **target tile** after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
