@@ -36,8 +36,10 @@ class ScenarioInit {
   final String type;
   final Map<String, dynamic>? config;
   final String? gameId;
+
   /// For fromTopology: { grid, nodes, edges } for Old World.
   final Map<String, dynamic>? oldWorld;
+
   /// For fromTopology: { grid, nodes, edges } for New World (optional).
   final Map<String, dynamic>? newWorld;
 }
@@ -65,20 +67,28 @@ class ScenarioSetup {
 
   final List<UnitPlacement>? units;
   final Map<String, int>? stockpileOverrides;
+
   /// Player id → { peasants, apprentices, journeymen, masters }. SPEC/game/workers-and-population.md.
   final Map<String, Map<String, int>>? initialWorkers;
+
   /// Player id → { commodityId: quantity }. Replaces player stockpile.
   final Map<String, Map<String, int>>? initialStockpile;
+
   /// Recipe assignments for Production phase (each turn). SPEC/game/stockpiles-and-production.md.
   final List<ProductionAssignment>? productionAssignments;
+
   /// Tile key → { improvementLevel: 0-4, roadLevel: 0|1|2|4 }. Applied to worldState.tileState for extraction scenarios.
   final Map<String, Map<String, int>>? initialTileState;
+
   /// Player id → leaderKey. Overrides Player.leaderKey for leader-bonus scenarios. SPEC/game/leader-bonuses.md.
   final Map<String, String>? leaderKeys;
+
   /// Player id → list of tech ids. Overrides Player.techUnlocked (map techId → true). SPEC/game/military-units.md, SPEC/game/military-generals.md, tech-tree.
   final Map<String, List<String>>? initialTech;
+
   /// Player id → treasury (pounds). Overrides Player.treasury for Join Empire etc. SPEC/game/diplomacy.md.
   final Map<String, int>? initialTreasury;
+
   /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
   final String? defaultCombatMode;
 }
@@ -130,6 +140,7 @@ class TurnScript {
 
   final int turn;
   final List<OrderCommand> orders;
+
   /// Production phase: recipe assignments for this turn (defaultAssignments).
   final List<WorkerAssignment>? workerAssignments;
 }
@@ -156,10 +167,12 @@ class OrderCommand {
     this.mission,
     this.targetPortId,
     this.targetProvinceId,
+    this.targetTileKey,
   });
 
   final String player;
-  final String type; // move, build, work, diplomatic, research, naval_move, naval_mission
+  final String
+      type; // move, build, work, diplomatic, research, naval_move, naval_mission
   // Move fields
   final String? unit;
   final String? to;
@@ -184,6 +197,9 @@ class OrderCommand {
   final String? mission;
   final String? targetPortId;
   final String? targetProvinceId;
+
+  /// Optional explicit tile key for work orders (tile-level targets).
+  final String? targetTileKey;
 }
 
 /// Assertion for state verification.
@@ -232,35 +248,44 @@ class Assertion {
     this.leaderKey,
     this.techUnlocked,
     this.provinceDisplayName,
+    this.tileRoadLevel,
   });
 
   /// Which turn to check (null = final state)
   final int? turn;
+
   /// Region ID (e.g., "oldWorld", "newWorld") - optional, used with province
   final String? region;
   final String? province;
+
   /// Province display name (SPEC/game/naming.md). Use with [province]: expected Province.displayName.
   final String? provinceDisplayName;
   final String? player;
   final String? owner;
+
   /// Negative assertion: province must not be owned by this player id.
   final String? notOwner;
   final int? unitCount;
   final String? hasUnit;
   final String? hasPlayerUnits;
   final int? stockpile;
+
   /// With [player] and [commodity]: expected quantity of that commodity in stockpile. SPEC/game/production-recipes.md.
   final int? stockpileCommodity;
+
   /// Commodity id for [stockpileCommodity] assertion.
   final String? commodity;
   final int? treasury;
   final int? matchMin;
   final int? matchMax;
   final MatchType matchType;
+
   /// With region: no tile in region has this resource (regionHasNoResource). SPEC/game/resource-terrain-region-rules.md.
   final String? resource;
+
   /// With region: fraction of placed resources that are "both" must be <= this (resourcePlacementCap).
   final double? maxBothFraction;
+
   /// Every tile's resource is allowed in its region per resource rules. Optional region scopes to one region.
   final bool? everyTileResourceAllowedInRegion;
 
@@ -272,19 +297,25 @@ class Assertion {
   final String? relationLevel;
   final int? relationSinceTurn;
   final int? relationLastInteractionTurn;
+
   /// Overture stage between GP [player] and Minor/Tribe [relationWith].
   final String? overtureStage;
+
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
+
   /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
   final String? capitalProvinceId;
+
   /// Capital assertion: expected capital tile key (regionId|provinceId|x|y). Optional.
   final String? capitalTileKey;
+
   /// Worker pool assertions (SPEC/game/workers-and-population.md). Require [player].
   final int? workerPeasants;
   final int? workerApprentices;
   final int? workerJourneymen;
   final int? workerMasters;
+
   /// Faction count assertions (SPEC/game/factions.md). After game setup, assert counts of Great Powers, Minor Nations, Tribes.
   final int? greatPowerCount;
   final int? minorNationCount;
@@ -308,6 +339,10 @@ class Assertion {
 
   /// Research-state assertion (SPEC/game/research-state.md). With [player]: list of tech ids that must be in techUnlocked (true).
   final List<String>? techUnlocked;
+
+  /// Road / transport-level assertion (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md).
+  /// With [tileKey]: expected road/transport level on that tile (0, 1, 2, or 4).
+  final int? tileRoadLevel;
 }
 
 /// Type of value matching for assertions.
@@ -422,7 +457,8 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
-    productionAssignments: _parseProductionAssignments(json['productionAssignments']),
+    productionAssignments:
+        _parseProductionAssignments(json['productionAssignments']),
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
@@ -561,6 +597,7 @@ OrderCommand _parseOrderCommand(Map<String, dynamic> json) {
     mission: json['mission'] as String?,
     targetPortId: json['targetPortId'] as String?,
     targetProvinceId: json['targetProvinceId'] as String?,
+    targetTileKey: json['targetTileKey'] as String?,
   );
 }
 
@@ -584,7 +621,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     matchType: _parseMatchType(json['matchType'] as String?),
     resource: json['resource'] as String?,
     maxBothFraction: (json['maxBothFraction'] as num?)?.toDouble(),
-    everyTileResourceAllowedInRegion: json['everyTileResourceAllowedInRegion'] as bool?,
+    everyTileResourceAllowedInRegion:
+        json['everyTileResourceAllowedInRegion'] as bool?,
     capitalProvinceId: json['capitalProvinceId'] as String?,
     capitalTileKey: json['capitalTileKey'] as String?,
     relationWith: json['relationWith'] as String?,
@@ -611,6 +649,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
         ?.map((e) => e.toString())
         .toList(),
     provinceDisplayName: json['provinceDisplayName'] as String?,
+    tileRoadLevel: json['tileRoadLevel'] as int?,
   );
 }
 
@@ -631,9 +670,11 @@ MatchType _parseMatchType(String? value) {
 List<Scenario> parseScenarioFile(File file) {
   final content = file.readAsStringSync();
   final json = jsonDecode(content) as dynamic;
-  
+
   if (json is List<dynamic>) {
-    return json.map((e) => parseScenarioFromJson(e as Map<String, dynamic>)).toList();
+    return json
+        .map((e) => parseScenarioFromJson(e as Map<String, dynamic>))
+        .toList();
   }
   return [parseScenarioFromJson(json as Map<String, dynamic>)];
 }
@@ -642,7 +683,7 @@ List<Scenario> parseScenarioFile(File file) {
 List<Scenario> discoverScenarios(Directory dir) {
   final scenarios = <Scenario>[];
   if (!dir.existsSync()) return scenarios;
-  
+
   for (final entity in dir.listSync()) {
     if (entity is File && entity.path.endsWith('.json')) {
       try {

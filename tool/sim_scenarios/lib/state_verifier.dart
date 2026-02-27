@@ -29,7 +29,9 @@ class StateVerifier {
 
     for (final assertion in assertions) {
       // Filter by turn if specified
-      if (atTurn != null && assertion.turn != null && assertion.turn != atTurn) {
+      if (atTurn != null &&
+          assertion.turn != null &&
+          assertion.turn != atTurn) {
         continue;
       }
 
@@ -49,8 +51,10 @@ class StateVerifier {
     final failures = <String>[];
 
     // Resource-placement assertions (SPEC/game/resource-terrain-region-rules.md)
-    if (assertion.region != null && assertion.resource != null &&
-        assertion.province == null && assertion.player == null) {
+    if (assertion.region != null &&
+        assertion.resource != null &&
+        assertion.province == null &&
+        assertion.player == null) {
       final bad = _tilesInRegionWithResource(
         game.worldState.resourceByTileKey,
         assertion.region!,
@@ -68,8 +72,10 @@ class StateVerifier {
         assertion.region,
       );
       failures.addAll(ruleFailures);
-    } else if (assertion.region != null && assertion.maxBothFraction != null &&
-        assertion.province == null && assertion.player == null) {
+    } else if (assertion.region != null &&
+        assertion.maxBothFraction != null &&
+        assertion.province == null &&
+        assertion.player == null) {
       final result = _checkResourcePlacementCap(
         game.worldState.resourceByTileKey,
         assertion.region!,
@@ -106,9 +112,11 @@ class StateVerifier {
 
     // Province-based assertions
     if (assertion.province != null) {
-      final province = _findProvince(game, assertion.region, assertion.province!);
+      final province =
+          _findProvince(game, assertion.region, assertion.province!);
       if (province == null) {
-        final regionStr = assertion.region != null ? '${assertion.region}:' : '';
+        final regionStr =
+            assertion.region != null ? '${assertion.region}:' : '';
         failures.add('Province "$regionStr${assertion.province}" not found');
         return VerificationResult(passed: false, failures: failures);
       }
@@ -142,9 +150,12 @@ class StateVerifier {
       }
 
       // Check unit count
-      if (assertion.unitCount != null || assertion.hasUnit != null || assertion.hasPlayerUnits != null) {
-        final units = _getUnitsInProvince(game, assertion.region, assertion.province!);
-        
+      if (assertion.unitCount != null ||
+          assertion.hasUnit != null ||
+          assertion.hasPlayerUnits != null) {
+        final units =
+            _getUnitsInProvince(game, assertion.region, assertion.province!);
+
         if (assertion.unitCount != null) {
           final matchResult = _matchCount(
             units.length,
@@ -172,7 +183,8 @@ class StateVerifier {
 
         // Check player units
         if (assertion.hasPlayerUnits != null) {
-          final hasPlayerUnits = units.any((u) => u.ownerId == assertion.hasPlayerUnits);
+          final hasPlayerUnits =
+              units.any((u) => u.ownerId == assertion.hasPlayerUnits);
           if (!hasPlayerUnits) {
             failures.add(
               'Province ${assertion.province}: no units found for player "${assertion.hasPlayerUnits}"',
@@ -184,7 +196,8 @@ class StateVerifier {
 
     // Capital assertions (player/minor/tribe faction id + capitalProvinceId / capitalTileKey)
     if (assertion.player != null &&
-        (assertion.capitalProvinceId != null || assertion.capitalTileKey != null)) {
+        (assertion.capitalProvinceId != null ||
+            assertion.capitalTileKey != null)) {
       final factionId = assertion.player!;
       String? actualProvinceId;
       String? actualTileKey;
@@ -201,7 +214,8 @@ class StateVerifier {
         actualProvinceId = t.capitalProvinceId;
         actualTileKey = t.capitalTile?.toTileKey();
       } else {
-        failures.add('Faction "$factionId" not found (players, minorNations, tribes)');
+        failures.add(
+            'Faction "$factionId" not found (players, minorNations, tribes)');
       }
       if (actualProvinceId != null || actualTileKey != null) {
         if (assertion.capitalProvinceId != null &&
@@ -216,7 +230,8 @@ class StateVerifier {
             'Faction $factionId: expected capitalTileKey "${assertion.capitalTileKey}", got "$actualTileKey"',
           );
         }
-      } else if (assertion.capitalProvinceId != null || assertion.capitalTileKey != null) {
+      } else if (assertion.capitalProvinceId != null ||
+          assertion.capitalTileKey != null) {
         failures.add(
           'Faction $factionId: expected capital but capitalProvinceId/capitalTile are null',
         );
@@ -233,7 +248,8 @@ class StateVerifier {
 
       if (assertion.stockpile != null) {
         // Sum all commodity quantities in stockpile
-        final totalStockpile = player.stockpile.quantities.values.fold<int>(0, (a, b) => a + b);
+        final totalStockpile =
+            player.stockpile.quantities.values.fold<int>(0, (a, b) => a + b);
         final matchResult = _matchCount(
           totalStockpile,
           assertion.stockpile!,
@@ -333,7 +349,8 @@ class StateVerifier {
 
       // Diplomacy relation assertions between [player] and [relationWith]
       if (assertion.relationWith != null) {
-        final rel = _findRelation(game, assertion.player!, assertion.relationWith!);
+        final rel =
+            _findRelation(game, assertion.player!, assertion.relationWith!);
         if (rel == null) {
           failures.add(
             'Relation between ${assertion.player} and ${assertion.relationWith} not found',
@@ -368,7 +385,8 @@ class StateVerifier {
             );
           }
           if (assertion.relationLastInteractionTurn != null &&
-              rel.lastInteractionTurn != assertion.relationLastInteractionTurn) {
+              rel.lastInteractionTurn !=
+                  assertion.relationLastInteractionTurn) {
             failures.add(
               'Relation ${assertion.player}-${assertion.relationWith}: '
               'expected lastInteractionTurn ${assertion.relationLastInteractionTurn}, '
@@ -379,7 +397,8 @@ class StateVerifier {
 
         // Overture stage (GP–Minor/Tribe) between [player] and [relationWith]
         if (assertion.overtureStage != null) {
-          final overture = _findOverture(game, assertion.player!, assertion.relationWith!);
+          final overture =
+              _findOverture(game, assertion.player!, assertion.relationWith!);
           if (overture == null) {
             failures.add(
               'Overture between ${assertion.player} and ${assertion.relationWith} not found',
@@ -396,7 +415,8 @@ class StateVerifier {
 
     // Fog/exploration assertions (SPEC/game/fog-and-exploration.md)
     if (assertion.player != null &&
-        (assertion.tileVisibility != null || assertion.tileProspected != null) &&
+        (assertion.tileVisibility != null ||
+            assertion.tileProspected != null) &&
         assertion.tileKey != null) {
       final playerId = assertion.player!;
       final tileKey = assertion.tileKey!;
@@ -433,6 +453,18 @@ class StateVerifier {
       }
     }
 
+    // Road / transport-level assertions (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md)
+    if (assertion.tileRoadLevel != null && assertion.tileKey != null) {
+      final tileKey = assertion.tileKey!;
+      final expectedLevel = assertion.tileRoadLevel!;
+      final actualLevel = game.worldState.tileState.roadLevel(tileKey);
+      if (actualLevel != expectedLevel) {
+        failures.add(
+          'Tile $tileKey roadLevel: expected $expectedLevel, got $actualLevel',
+        );
+      }
+    }
+
     // Leader assertion (SPEC/game/leader-bonuses.md): player's leaderKey
     if (assertion.player != null && assertion.leaderKey != null) {
       try {
@@ -445,7 +477,8 @@ class StateVerifier {
           );
         }
       } on StateError {
-        failures.add('Player ${assertion.player} not found for leaderKey assertion');
+        failures.add(
+            'Player ${assertion.player} not found for leaderKey assertion');
       }
     }
 
@@ -564,7 +597,7 @@ class StateVerifier {
     // If provinceId contains '|', it includes the region prefix (e.g., "oldWorld|p1")
     // The province.id stored in game is already in format "regionId|provinceId"
     // So we just search by the full ID
-    
+
     // If region is specified, search only that region
     if (regionId != null) {
       final regionData = _getRegionData(game, regionId);
@@ -575,7 +608,7 @@ class StateVerifier {
       }
       return null;
     }
-    
+
     // If no region specified, search both oldWorld and newWorld by full ID
     // The province.id includes region prefix (e.g., "oldWorld|p1")
     for (final province in game.worldState.oldWorld.provinces) {
@@ -593,9 +626,10 @@ class StateVerifier {
     return null;
   }
 
-  List<Unit> _getUnitsInProvince(Game game, String? regionId, String provinceId) {
+  List<Unit> _getUnitsInProvince(
+      Game game, String? regionId, String provinceId) {
     final units = <Unit>[];
-    
+
     // If region is specified, only check that region's units
     if (regionId != null) {
       final regionData = _getRegionData(game, regionId);
@@ -608,20 +642,20 @@ class StateVerifier {
       }
       return units;
     }
-    
+
     // If no region, check both oldWorld and newWorld units
     for (final unit in game.worldState.oldWorld.units) {
       if (unit.provinceId == provinceId) {
         units.add(unit);
       }
     }
-    
+
     for (final unit in game.worldState.newWorld.units) {
       if (unit.provinceId == provinceId) {
         units.add(unit);
       }
     }
-    
+
     return units;
   }
 
@@ -638,29 +672,21 @@ class StateVerifier {
     switch (matchType) {
       case MatchType.exact:
         passed = actual == expected;
-        message = passed 
-          ? 'ok' 
-          : 'expected $expected, got $actual';
+        message = passed ? 'ok' : 'expected $expected, got $actual';
         break;
       case MatchType.range:
         final min = matchMin ?? 0;
         final max = matchMax ?? expected;
         passed = actual >= min && actual <= max;
-        message = passed 
-          ? 'ok' 
-          : 'expected $min-$max, got $actual';
+        message = passed ? 'ok' : 'expected $min-$max, got $actual';
         break;
       case MatchType.atLeast:
         passed = actual >= expected;
-        message = passed 
-          ? 'ok' 
-          : 'expected >=$expected, got $actual';
+        message = passed ? 'ok' : 'expected >=$expected, got $actual';
         break;
       case MatchType.atMost:
         passed = actual <= expected;
-        message = passed 
-          ? 'ok' 
-          : 'expected <=$expected, got $actual';
+        message = passed ? 'ok' : 'expected <=$expected, got $actual';
         break;
     }
 

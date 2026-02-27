@@ -420,6 +420,18 @@ void main() {
           buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]},
         );
 
+    TileMapResult _simpleTileMap() {
+      return TileMapResult(
+        width: 3,
+        height: 3,
+        grid: const [
+          ['P1', 'P1', 'P1'],
+          ['P1', 'P1', 'P1'],
+          ['P1', 'P1', 'P1'],
+        ],
+      );
+    }
+
     test(
         'build_improvement completion increases improvement level and clears currentWork',
         () {
@@ -455,7 +467,8 @@ void main() {
       expect(next.worldState.tileState.improvementLevel(tileKey), 1);
     });
 
-    test('work cancelled when province containing target tile is conquered (#376)',
+    test(
+        'work cancelled when province containing target tile is conquered (#376)',
         () {
       // Unit p1 is working on a tile in P1; province P1 is conquered by p2.
       final tileState = TileMapState().setImprovement(tileKey, 0);
@@ -607,8 +620,127 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(
+        game,
+        _ordersToTriggerProcessWork(),
+        tileMapByRegion: const {},
+      );
       expect(next.worldState.tileState.roadLevel(tileKey), 1);
+    });
+
+    test(
+        'build_road completion propagates transport level to adjacent capital tile (no downgrade)',
+        () {
+      const capitalTileKey = 'oldWorld|P1|1|0';
+      final initialTileState = TileMapState()
+          .setRoadLevel(tileKey, 0)
+          .setRoadLevel(capitalTileKey, 2);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_road',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: provinceId,
+        capitalTile: const CapitalTile(
+          regionId: ow,
+          provinceId: provinceId,
+          x: 1,
+          y: 0,
+        ),
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: initialTileState,
+        ),
+        players: [player],
+      );
+      final next = applyBuildAndWorkOrders(
+        game,
+        _ordersToTriggerProcessWork(),
+        tileMapByRegion: {ow: _simpleTileMap()},
+      );
+
+      // Road built on target tile.
+      expect(next.worldState.tileState.roadLevel(tileKey), 1);
+      // Capital tile was already at level 2 and should remain 2 (no downgrade).
+      expect(next.worldState.tileState.roadLevel(capitalTileKey), 2);
+    });
+
+    test(
+        'build_road completion propagates transport level to adjacent port tile and upgrades it',
+        () {
+      const portTileKey = 'oldWorld|P1|1|0';
+      final initialTileState =
+          TileMapState().setRoadLevel(tileKey, 1).setRoadLevel(portTileKey, 1);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_road',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: provinceId,
+        techUnlocked: const {'road_construction': true},
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: RegionData(
+          provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+          units: [unit],
+        ),
+        newWorld: const RegionData(),
+        tileState: initialTileState,
+        portsByProvinceSeaboard: const {
+          '$provinceId|sea1': portTileKey,
+        },
+      );
+      final game = Game(
+        id: 'g',
+        worldState: world,
+        players: [player],
+      );
+
+      final next = applyBuildAndWorkOrders(
+        game,
+        _ordersToTriggerProcessWork(),
+        tileMapByRegion: {ow: _simpleTileMap()},
+      );
+
+      // Road on target tile upgraded from 1 -> 2.
+      expect(next.worldState.tileState.roadLevel(tileKey), 2);
+      // Adjacent port tile upgraded from 1 -> 2.
+      expect(next.worldState.tileState.roadLevel(portTileKey), 2);
     });
 
     test(
@@ -747,7 +879,8 @@ void main() {
       );
     }
 
-    test('prospect adds tile to playerProspectedTiles when terrain eligible', () {
+    test('prospect adds tile to playerProspectedTiles when terrain eligible',
+        () {
       final unit = Unit(
         id: 'u1',
         type: 'Explorer',
@@ -976,8 +1109,7 @@ void main() {
             provinces: [
               const Province(
                   id: provinceId, regionId: ow, ownerId: 'p1'), // owner
-              const Province(
-                  id: targetProvinceId, regionId: ow, ownerId: 'p2'),
+              const Province(id: targetProvinceId, regionId: ow, ownerId: 'p2'),
             ],
             units: [spy],
           ),
@@ -1376,8 +1508,7 @@ void main() {
       expect(next.players.single.treasury, game.players.single.treasury);
     });
 
-    test(
-        'purchase_land rejected when at war with province owner (Minor/Tribe)',
+    test('purchase_land rejected when at war with province owner (Minor/Tribe)',
         () {
       const minorProvinceId = 'oldWorld|M1';
       const tileKeyMinor = 'oldWorld|M1|0|0';
