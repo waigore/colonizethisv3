@@ -45,9 +45,9 @@ Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [re
 ### Fog Decay
 
 - **Explorer:** When the last Explorer leaves an other-faction province, tiles in that province immediately revert to fogged (retaining last-known state).
-- **Spy:** When a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5; see Configurable Values) starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province. **Spy timers MUST NEVER be started for, or cause visibility changes in, the Spy owner's own provinces.**
+- **Spy:** When a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5; see Configurable Values) starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province. Spy timers are **per-player, per-province counters** (playerId, fullProvinceId) and **MUST NEVER be started for, or cause visibility changes in, the Spy owner's own provinces.**
 
-Own provinces never decay (they remain fully visible regardless of Explorer/Spy presence or timers).
+Own provinces never decay (they remain fully visible regardless of Explorer/Spy presence or timers). When a player gains ownership of a province for which they previously had an active Spy timer, that timer is cleared immediately and can no longer cause decay in that province.
 
 ### Explorer vs Spy
 
@@ -122,9 +122,13 @@ Per [world-model-identity.md](world-model-identity.md):
 
 ### Given–When–Then acceptance criteria
 
-- Given a player owns a province and that province's tiles are fully visible for that player  
-  When any Spy owned by that player moves out of, or is removed from, that province  
-  Then the system does not start or maintain any Spy fog-decay timer for that (player, province) pair and no tiles in that province ever revert from `fullyVisible` to `fogged` due to Spy timers.
+- Given a player A has an active Spy timer for province `P` that is currently owned by player B and at least one tile in `P` is fully visible for player A  
+  When player A gains ownership of province `P` via any game rule (e.g. combat conquest, Join Empire/Colony)  
+  Then the system immediately removes the Spy timer entry for `(player A, P)` and leaves all tiles in `P` for player A at their current visibility (no tiles in `P` become fogged for player A due to that timer).
+
+- Given a player owns a province `P` and that province's tiles are fully visible for that player  
+  When any Spy owned by that player moves out of, or is removed from, province `P`  
+  Then the system does not start or maintain any Spy fog-decay timer for `(player, P)` and no tiles in `P` ever revert from `fullyVisible` to `fogged` due to Spy timers or Explorer/Spy fog decay (own provinces remain fully visible).
 
 - Given a Spy belonging to player A is located in a province owned by player B and that province has at least one land tile  
   When the system constructs the PlayerView for player A  
