@@ -1,0 +1,39 @@
+{
+  "name": "extraction_improvement_naming",
+  "description": "Improvement naming (SPEC/game/extraction-and-improvements.md § Improvement Naming): tiles with resources map to Farm, Mine, Fur post, or Improvement based on resource id; level does not affect the base name.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "numProvincesOldWorld": 1,
+      "numProvincesNewWorld": 0,
+      "tribeCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1", "p1", "p1"]],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" }
+      ],
+      "resourceGrid": [["grain", null, "furs", "gold"]]
+    }
+  },
+  "setup": {
+    "initialTileState": {
+      "oldWorld|p1|0|0": { "improvementLevel": 1, "roadLevel": 0 },
+      "oldWorld|p1|1|0": { "improvementLevel": 1, "roadLevel": 0 },
+      "oldWorld|p1|2|0": { "improvementLevel": 1, "roadLevel": 0 },
+      "oldWorld|p1|3|0": { "improvementLevel": 1, "roadLevel": 0 }
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": []
+}
+

@@ -21,6 +21,40 @@ Each land tile in an owned province may have one extraction improvement (mine, f
 
 Tech caps first, then transport caps. Example: level 4 farm, tech cap 3, transport 2 → 2 units/turn. The improvement stays at level 4; tech/transport upgrades or conquest can unlock more later.
 
+### Improvement Naming
+
+Improvement **names** are purely descriptive; they do **not** change extraction rules or yields, which continue to follow the formula above. The UI derives the displayed name from the tile's **resource id**, independent of improvement level:
+
+| Resource id (or group) | Default improvement name |
+|------------------------|--------------------------|
+| `grain`                | Farm                     |
+| `meat`, `horses`       | Ranch                    |
+| `wool`                 | Pasture                  |
+| `timber`               | Lumber camp              |
+| `sugarCane`, `tobacco`, `cotton`, `spices` | Plantation  |
+| `furs`                 | Fur post                 |
+| `iron`, `copper`, `tin`, `coal`, `silver`, `gold`, `gems`, `diamonds` | Mine |
+
+If a tile has **no resource id** (e.g. development-only tile in a future ruleset), the improvement name is `Improvement` by default. UI layers **may** append the numeric level for clarity (e.g. `Farm (L2)`), but the canonical base name is given by the table above.
+
+Acceptance criteria (naming only):
+
+- Given a land tile with resource id `gold` and improvement level \(N\) where \(N\) is an integer between 1 and 4 inclusive  
+  When the UI layer queries the tile's improvement name for display  
+  Then the UI layer uses the base name `Mine` for that tile, regardless of the value of \(N\)
+
+- Given a land tile with resource id `grain` and improvement level \(N\) where \(N\) is an integer between 1 and 4 inclusive  
+  When the UI layer queries the tile's improvement name for display  
+  Then the UI layer uses the base name `Farm` for that tile, regardless of the value of \(N\)
+
+- Given a land tile with resource id `furs` and improvement level \(N\) where \(N\) is an integer between 1 and 4 inclusive  
+  When the UI layer queries the tile's improvement name for display  
+  Then the UI layer uses the base name `Fur post` for that tile, regardless of the value of \(N\)
+
+- Given a land tile with no resource id and improvement level \(N\) where \(N\) is an integer between 1 and 4 inclusive  
+  When the UI layer queries the tile's improvement name for display  
+  Then the UI layer uses the base name `Improvement` for that tile
+
 ### Town and extraction
 
 Each province has one **town** tile assigned at game init (see [capital-and-connectivity.md](capital-and-connectivity.md) § Town per province). A tile's resources are extractable only if the tile is **connected to the province's town** (path of road/rail/port to the town) and the town is connected to the capital. **Town development level** (raised by Builder `upgrade_town` work) and the **transport level** along the path limit extraction. If multiple paths exist from a tile to the capital, the **maximum** transport level path determines the cap.
