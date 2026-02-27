@@ -76,7 +76,7 @@ Array of per-battle aggregates: id, attackerStrength, defenderStrength, trials, 
 
 The tool should have CLI integration tests covering:
 
-- **Determinism:** Same script and `--seed` produce identical Markdown and JSON output.
-- **Validation:** Unknown unit type, fortLevel outside 0–3, or missing required keys (`id`, `attacker`, `defender`, `province`) result in non-zero exit and a clear error message (e.g. on stderr).
+- **Determinism:** Given the same script and `--seed`, two runs produce identical Markdown and JSON output.
+- **Validation:** Unknown unit type, fortLevel outside 0–3, and missing required keys (`id`, `attacker`, `defender`, `province`) result in non-zero exit and a clear error message on stderr.
 
-Test imports follow [test-logging.md](test-logging.md): import `package:colonizethis_test/test.dart` first (to suppress logs), then `package:test/test.dart`. Run tests via `tool/test_coverage.py` or `dart test` in the tool's test directory.
+For test import convention and test execution, see [test-logging.md](test-logging.md) (colonizethis_test first) and the project's test runner (e.g. `test_coverage.py`).
