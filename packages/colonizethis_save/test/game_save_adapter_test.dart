@@ -87,6 +87,63 @@ void main() {
       expect(adapter.listGameIds(box).length, 2);
     });
 
+    test('listGameIds returns game id that ends with suffix when no matching map-data exists', () {
+      final game = Game(
+        id: 'mygame_tileMapByRegion',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [],
+      );
+      adapter.save(box, game);
+      adapter.save(box, game.copyWith(id: 'normalGame'));
+
+      final ids = adapter.listGameIds(box);
+      expect(ids, containsAll(['mygame_tileMapByRegion', 'normalGame']));
+      expect(ids.length, 2);
+    });
+
+    test('listGameIds excludes map-data keys when corresponding game exists', () {
+      final game = Game(
+        id: 'gameWithMapData',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [],
+      );
+      adapter.save(box, game);
+
+      final tileMap = TileMapResult(width: 2, height: 2, grid: [
+        ['p1', 'p1'],
+        ['p2', 's1'],
+      ]);
+      final topo = MapTopology(
+        nodes: [
+          TopologyNode(
+              id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      adapter.saveMapData(
+        box,
+        'gameWithMapData',
+        tileMapByRegion: {'oldWorld': tileMap},
+        topologyByRegion: {'oldWorld': topo},
+        combinedTopology: topo,
+      );
+
+      final ids = adapter.listGameIds(box);
+      expect(ids, contains('gameWithMapData'));
+      expect(ids.length, 1);
+      expect(ids, isNot(contains('gameWithMapData_tileMapByRegion')));
+      expect(ids, isNot(contains('gameWithMapData_topologyByRegion')));
+      expect(ids, isNot(contains('gameWithMapData_combinedTopology')));
+    });
+
     test('saveMapData then loadMapData returns same data', () {
       final tileMap = TileMapResult(
         width: 2,
