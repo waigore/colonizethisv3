@@ -27,21 +27,25 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
 
       case 'build':
         final unitType = cmd.unitType ?? 'infantry';
-        final isMilitary = buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military;
+        final isMilitary = buildUnitCategoryForUnitType(unitType) ==
+            BuildUnitCategory.military;
         final buildOrder = BuildUnitOrder(
           unitType: unitType,
           isMilitary: isMilitary,
           spawnProvinceId: cmd.inProvince ?? '',
         );
-        buildUnitOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(buildOrder);
+        buildUnitOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(buildOrder);
         break;
 
       case 'work':
-        // Work orders need unit ID and target - simplified
+        // Work orders need unit ID and target. For tile-level work the scenario
+        // should provide targetTileKey; otherwise empty string is used.
         final workOrder = WorkOrder(
           unitId: cmd.unit ?? '',
           target: cmd.workType ?? 'explore',
-          targetTileKey: '',
+          targetTileKey: cmd.targetTileKey ?? '',
         );
         workOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(workOrder);
         break;
@@ -64,7 +68,9 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
           amount: cmd.amount,
           overtureStage: overtureStage,
         );
-        diplomaticOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(diploOrder);
+        diplomaticOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(diploOrder);
         break;
 
       case 'research':
@@ -74,7 +80,9 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
           techId: cmd.techId ?? '',
           funding: ResearchFundingLevel.low,
         );
-        researchOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(researchOrder);
+        researchOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(researchOrder);
         break;
 
       case 'naval_move':
@@ -82,7 +90,9 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
           fleetId: cmd.fleetId ?? '',
           destinationSeaZoneId: cmd.destinationSeaZoneId ?? '',
         );
-        navalMoveOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(navalMoveOrder);
+        navalMoveOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(navalMoveOrder);
         break;
 
       case 'naval_mission':
@@ -92,7 +102,9 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
           targetPortId: cmd.targetPortId,
           targetProvinceId: cmd.targetProvinceId,
         );
-        navalMissionOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(navalMissionOrder);
+        navalMissionOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(navalMissionOrder);
         break;
 
       default:

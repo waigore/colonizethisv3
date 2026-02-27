@@ -105,6 +105,11 @@ Each turn specifies orders for one or more players:
 
 Supported order types: `move`, `build`, `work`, `diplomatic`, `research`, `naval_move`, `naval_mission`.
 
+- **work orders:** Use `type: "work"` with:
+  - `unit` — unit id in the game state.
+  - `workType` — work target id (`explore`, `prospect`, `build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`).
+  - `targetTileKey` (optional but **required** for tile-level work such as `build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`): tile key string in format `regionId|provinceId|x|y`. When omitted, the runner uses the work target’s own default behaviour (e.g. province-level `explore`).
+
 Each turn may optionally include **workerAssignments** (production phase): a list of `{ "recipeId": "<id>", "assignedLabour": <n> }`. These are passed as default production assignments for that turn so the Production phase can run recipes; see SPEC/game/production-recipes.md. Scenario setup may include **initialStockpile** and **initialWorkers** per player (map from player id to commodity quantities or worker counts) to set economy state before turns run.
 
 ### Diplomatic orders
@@ -185,6 +190,8 @@ Assertion fields:
 **Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
 
 **Improvement naming assertions** (SPEC/game/extraction-and-improvements.md): when the scenario runner exposes a UI-facing view for tiles, use `tileKey` (format `regionId|provinceId|x|y`) with `tileImprovementName` (expected string) to verify that the improvement naming table is applied correctly. Example: `{"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileImprovementName": "Farm"}` for a tile whose resource id is `grain` and improvement level is between 1 and 4 inclusive.
+  
+**Road / transport-level assertions** (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md): use `tileKey` with `tileRoadLevel` (expected integer in `{0,1,2,4}`) to verify the per-tile road/transport level in `worldState.tileState`. Example: `{"turn": 2, "tileKey": "oldWorld|p1|1|1", "tileRoadLevel": 2}` for a tile that should have been upgraded by a `build_road` work order and any adjacency propagation rules.
 
 **Leader assertions** (SPEC/game/leader-bonuses.md): use `player` (Great Power id) and `leaderKey` (expected leader key, e.g. `napoleon`, `frederick`, `reserve`). Example: `{"turn": 1, "player": "gp1", "leaderKey": "napoleon"}`.
 
