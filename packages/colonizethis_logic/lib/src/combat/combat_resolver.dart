@@ -171,12 +171,14 @@ Game resolveBattleContext(
       region.units.where((u) => !allCasualties.contains(u.id)).toList();
 
   var updatedProvinces = region.provinces;
+  bool provinceChangedOwner = false;
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
     final idx = updatedProvinces.indexWhere((p) => p.id == ctx.provinceId);
     if (idx >= 0) {
       final p = updatedProvinces[idx];
       updatedProvinces = List<Province>.from(updatedProvinces)
         ..[idx] = p.copyWith(ownerId: survivingAttackerFactionId);
+      provinceChangedOwner = true;
     }
   }
 
@@ -207,13 +209,38 @@ Game resolveBattleContext(
   );
 
   if (ctx.regionId == kRegionOldWorld) {
-    return game.copyWith(
-      worldState: game.worldState.copyWith(oldWorld: newRegion),
-    );
+    var newWorldState = game.worldState.copyWith(oldWorld: newRegion);
+    if (provinceChangedOwner && survivingAttackerFactionId != null) {
+      // Clear Spy timers for (newOwner, province) when province changes hands.
+      final timers = <String, Map<String, int>>{};
+      game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
+        final inner = Map<String, int>.from(byProv);
+        if (playerId == survivingAttackerFactionId) {
+          inner.remove(ctx.provinceId);
+        }
+        if (inner.isNotEmpty) {
+          timers[playerId] = inner;
+        }
+      });
+      newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
+    }
+    return game.copyWith(worldState: newWorldState);
   } else {
-    return game.copyWith(
-      worldState: game.worldState.copyWith(newWorld: newRegion),
-    );
+    var newWorldState = game.worldState.copyWith(newWorld: newRegion);
+    if (provinceChangedOwner && survivingAttackerFactionId != null) {
+      final timers = <String, Map<String, int>>{};
+      game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
+        final inner = Map<String, int>.from(byProv);
+        if (playerId == survivingAttackerFactionId) {
+          inner.remove(ctx.provinceId);
+        }
+        if (inner.isNotEmpty) {
+          timers[playerId] = inner;
+        }
+      });
+      newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
+    }
+    return game.copyWith(worldState: newWorldState);
   }
 }
 

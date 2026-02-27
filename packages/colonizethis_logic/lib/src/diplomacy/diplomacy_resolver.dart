@@ -325,6 +325,27 @@ Game _absorbMinorOrTribeIntoGp(Game game, String gpId, String targetId, int turn
   final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
   final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
 
+  // Clear Spy timers for (gpId, province) where gpId now owns the province,
+  // so own provinces never decay via Spy timers after absorption.
+  final ownedProvinceIds = <String>{
+    for (final p in owProvinces)
+      if (p.ownerId == gpId) p.id,
+    for (final p in nwProvinces)
+      if (p.ownerId == gpId) p.id,
+  };
+  final updatedSpyTimers = <String, Map<String, int>>{};
+  game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
+    final inner = Map<String, int>.from(byProv);
+    if (playerId == gpId) {
+      for (final provId in ownedProvinceIds) {
+        inner.remove(provId);
+      }
+    }
+    if (inner.isNotEmpty) {
+      updatedSpyTimers[playerId] = inner;
+    }
+  });
+
   var minorNations = game.minorNations;
   var tribes = game.tribes;
   if (game.minorNations.any((m) => m.id == targetId)) {
@@ -350,6 +371,7 @@ Game _absorbMinorOrTribeIntoGp(Game game, String gpId, String targetId, int turn
       oldWorld: oldWorld,
       newWorld: newWorld,
       fleets: fleets,
+      spyRevealTurnsByPlayer: updatedSpyTimers,
     ),
     minorNations: minorNations,
     tribes: tribes,
