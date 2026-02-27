@@ -1,5 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 void main() {
   group('computeFairTargets', () {
