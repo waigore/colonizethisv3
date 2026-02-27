@@ -341,12 +341,31 @@ Game applyQuickBattleResultToGame(
     provinces: provinces,
     units: survivingUnits,
   );
+  WorldState newWorldState;
   if (ctx.regionId == kRegionOldWorld) {
-    return game.copyWith(
-      worldState: game.worldState.copyWith(oldWorld: newRegion),
-    );
+    newWorldState = game.worldState.copyWith(oldWorld: newRegion);
+  } else {
+    newWorldState = game.worldState.copyWith(newWorld: newRegion);
   }
-  return game.copyWith(
-    worldState: game.worldState.copyWith(newWorld: newRegion),
-  );
+
+  // When Quick Battle flips a province, clear Spy timers for (attacker, that province)
+  // so that own provinces never decay via Spy timers.
+  if (result.provinceFlips &&
+      result.winner == QuickBattleWinner.attacker &&
+      ctx.attackers.isNotEmpty) {
+    final attackerFactionId = ctx.attackers.first.factionId;
+    final timers = <String, Map<String, int>>{};
+    game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
+      final inner = Map<String, int>.from(byProv);
+      if (playerId == attackerFactionId) {
+        inner.remove(ctx.provinceId);
+      }
+      if (inner.isNotEmpty) {
+        timers[playerId] = inner;
+      }
+    });
+    newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
+  }
+
+  return game.copyWith(worldState: newWorldState);
 }

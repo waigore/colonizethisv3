@@ -284,6 +284,84 @@ void main() {
       expect(getPlayer(after, 'gp1')!.treasury, 15000 - 9000);
     });
 
+    test('join empire clears Spy timers for provinces that become owned by GP', () {
+      const ow = 'oldWorld';
+      // gp1 has an active Spy timer for minor-owned province m1; after Join Empire,
+      // gp1 owns m1 and the timer must be cleared without changing visibility.
+      var game = _baseGame().copyWith(
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|m1|0|0': 'fullyVisible',
+            },
+          },
+          spyRevealTurnsByPlayer: const {
+            'gp1': {
+              '$ow|m1': 3,
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|m1': ['oldWorld|m1|0|0'],
+            },
+          },
+        ),
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 60,
+            level: RelationLevel.friendly,
+          ),
+        ],
+      );
+
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.joinEmpire,
+            ),
+          ],
+        },
+      );
+
+      final after = resolveDiplomacyPhase(game, orders);
+      // Province now owned by gp1.
+      final p1 = after.worldState.oldWorld.provinces
+          .where((p) => p.id == '$ow|m1')
+          .firstOrNull;
+      expect(p1?.ownerId, 'gp1');
+      // Spy timer for (gp1, m1) is cleared.
+      expect(after.worldState.spyRevealTurnsByPlayer['gp1'], isNull);
+      // Tile visibility for gp1 remains fullyVisible.
+      expect(
+        after.worldState.playerVisibilityByTile['gp1']?['oldWorld|m1|0|0'],
+        'fullyVisible',
+      );
+    });
+
     test('join empire not applied when treasury below cost: minor unchanged', () {
       const ow = 'oldWorld';
       var game = _baseGame().copyWith(
