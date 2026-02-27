@@ -993,8 +993,10 @@ class OrderEngine {
         continue;
       }
       final fleet = fleetById[o.fleetId];
+      final homeFleetId = 'fleet_$playerId';
       final valid = fleet != null &&
           fleet.ownerId == playerId &&
+          fleet.id != homeFleetId &&
           isAdjacentSeaZone(topology, fleet.seaZoneId, o.destinationSeaZoneId);
       results.add(OrderValidationResult(
         status: valid
@@ -1015,7 +1017,10 @@ class OrderEngine {
         continue;
       }
       final fleet = fleetById[o.fleetId];
-      final valid = fleet != null && fleet.ownerId == playerId;
+      final homeFleetId = 'fleet_$playerId';
+      final valid = fleet != null &&
+          fleet.ownerId == playerId &&
+          (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
       results.add(OrderValidationResult(
         status: valid
             ? OrderValidationStatus.accepted

@@ -1,9 +1,57 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
+  group('cargoHoldsForHomeFleet', () {
+    test('returns 0 when no home fleet exists', () {
+      final game = Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+
+      final holds = cargoHoldsForHomeFleet(game, 'p1');
+      expect(holds, greaterThanOrEqualTo(0));
+    });
+
+    test('sums cargoHold from home-fleet ship types', () {
+      final fleet = Fleet(
+        id: 'fleet_p1',
+        ownerId: 'p1',
+        seaZoneId: 'sea1',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['carrack', 'fluyte'],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [fleet],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+
+      final holds = cargoHoldsForHomeFleet(game, 'p1');
+      expect(
+        holds,
+        NavalStatsCatalog.carrack.cargoHold +
+            NavalStatsCatalog.fluyte.cargoHold,
+      );
+    });
+  });
+
   group('SeaTransport', () {
     group('allocateOverseasToStockpile', () {
       test('returns empty when overseas is empty', () {

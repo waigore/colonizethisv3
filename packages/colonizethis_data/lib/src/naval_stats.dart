@@ -1,6 +1,6 @@
 // Per-ship naval combat and interception stats. SPEC/program/naval-combat-resolution.md, naval-movement-resolution.md.
 
-/// Naval stats for one ship type (FRP, RNG, ARM, HULL, MV, interceptRating, fleeRating).
+/// Naval stats for one ship type (FRP, RNG, ARM, HULL, MV, interceptRating, fleeRating, cargoHold).
 class NavalStatsEntry {
   const NavalStatsEntry({
     this.firepower = 1,
@@ -10,6 +10,7 @@ class NavalStatsEntry {
     this.movement = 1,
     this.interceptRating = 1,
     this.fleeRating = 1,
+    this.cargoHold = 0,
   });
 
   final int firepower;
@@ -19,6 +20,8 @@ class NavalStatsEntry {
   final int movement;
   final int interceptRating;
   final int fleeRating;
+  /// Cargo capacity in holds for this ship type. Each hold = 1 unit per turn.
+  final int cargoHold;
 }
 
 /// Naval stats per ship type id. Used by naval combat and interception.
@@ -33,6 +36,7 @@ class NavalStatsCatalog {
     movement: 2,
     interceptRating: 1,
     fleeRating: 2,
+    cargoHold: 3,
   );
 
   static const NavalStatsEntry fluyte = NavalStatsEntry(
@@ -43,6 +47,7 @@ class NavalStatsCatalog {
     movement: 2,
     interceptRating: 1,
     fleeRating: 3,
+    cargoHold: 4,
   );
 
   static const Map<String, NavalStatsEntry> byId = {

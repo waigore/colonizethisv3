@@ -1162,6 +1162,119 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 1);
     });
 
+    test('naval move order targeting home fleet does not move it', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'sea1', id2: 'sea2'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet_p1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMoveOrdersByPlayerId: {
+          'p1': [
+            const NavalMoveOrder(
+                fleetId: 'fleet_p1', destinationSeaZoneId: 'sea2'),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      expect(next.worldState.fleets.single.seaZoneId, 'sea1');
+      expect(next.worldState.turnState.turnNumber, 1);
+    });
+
+    test('join_home_fleet mission moves ships into home fleet and removes fleet',
+        () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final homeFleet = Fleet(
+        id: 'fleet_p1',
+        ownerId: 'p1',
+        seaZoneId: 'sea1',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['carrack'],
+      );
+      final otherFleet = Fleet(
+        id: 'f2',
+        ownerId: 'p1',
+        seaZoneId: 'sea1',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['fluyte'],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [homeFleet, otherFleet],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMissionOrdersByPlayerId: {
+          'p1': [
+            const NavalMissionOrder(
+              fleetId: 'f2',
+              mission: 'join_home_fleet',
+            ),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.fleets.length, 1);
+      final resultingFleet = next.worldState.fleets.single;
+      expect(resultingFleet.id, 'fleet_p1');
+      expect(resultingFleet.shipTypeIds, containsAll(['carrack', 'fluyte']));
+    });
+
     test('naval interception phase runs when two at-war fleets in same zone',
         () {
       final topology = MapTopology(
