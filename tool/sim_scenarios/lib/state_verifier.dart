@@ -421,6 +421,18 @@ class StateVerifier {
       }
     }
 
+    // Improvement naming assertions (SPEC/game/extraction-and-improvements.md)
+    if (assertion.tileImprovementName != null && assertion.tileKey != null) {
+      final tileKey = assertion.tileKey!;
+      final expectedName = assertion.tileImprovementName!;
+      final actualName = _improvementNameForTile(game, tileKey);
+      if (actualName != expectedName) {
+        failures.add(
+          'Tile $tileKey improvementName: expected "$expectedName", got "$actualName"',
+        );
+      }
+    }
+
     // Leader assertion (SPEC/game/leader-bonuses.md): player's leaderKey
     if (assertion.player != null && assertion.leaderKey != null) {
       try {
@@ -679,6 +691,42 @@ class StateVerifier {
       if (o.gpId == gpId && o.targetId == targetId) return o;
     }
     return null;
+  }
+}
+
+/// Derives the improvement display name for a tile based on its resource id.
+/// Mirrors SPEC/game/extraction-and-improvements.md (Improvement Naming table).
+String _improvementNameForTile(Game game, String tileKey) {
+  final resourceId = game.worldState.resourceByTileKey[tileKey];
+  final normalized = resourceId ?? '';
+  switch (normalized) {
+    case 'grain':
+      return 'Farm';
+    case 'meat':
+    case 'horses':
+      return 'Ranch';
+    case 'wool':
+      return 'Pasture';
+    case 'timber':
+      return 'Lumber camp';
+    case 'sugarCane':
+    case 'tobacco':
+    case 'cotton':
+    case 'spices':
+      return 'Plantation';
+    case 'furs':
+      return 'Fur post';
+    case 'iron':
+    case 'copper':
+    case 'tin':
+    case 'coal':
+    case 'silver':
+    case 'gold':
+    case 'gems':
+    case 'diamonds':
+      return 'Mine';
+    default:
+      return 'Improvement';
   }
 }
 

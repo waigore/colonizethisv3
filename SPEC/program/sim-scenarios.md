@@ -184,6 +184,8 @@ Assertion fields:
 
 **Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
 
+**Improvement naming assertions** (SPEC/game/extraction-and-improvements.md): when the scenario runner exposes a UI-facing view for tiles, use `tileKey` (format `regionId|provinceId|x|y`) with `tileImprovementName` (expected string) to verify that the improvement naming table is applied correctly. Example: `{"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileImprovementName": "Farm"}` for a tile whose resource id is `grain` and improvement level is between 1 and 4 inclusive.
+
 **Leader assertions** (SPEC/game/leader-bonuses.md): use `player` (Great Power id) and `leaderKey` (expected leader key, e.g. `napoleon`, `frederick`, `reserve`). Example: `{"turn": 1, "player": "gp1", "leaderKey": "napoleon"}`.
 
 **Research-state assertions** (SPEC/game/research-state.md): use `player` and `techUnlocked` (array of tech ids that must be true in that player’s techUnlocked map). Example: `{"turn": 1, "player": "gp1", "techUnlocked": ["gathering_1", "road_construction"]}`.

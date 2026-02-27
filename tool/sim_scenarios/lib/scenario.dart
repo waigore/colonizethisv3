@@ -228,6 +228,7 @@ class Assertion {
     this.tileKey,
     this.tileVisibility,
     this.tileProspected,
+    this.tileImprovementName,
     this.leaderKey,
     this.techUnlocked,
     this.provinceDisplayName,
@@ -296,6 +297,11 @@ class Assertion {
   final String? tileKey;
   final String? tileVisibility;
   final bool? tileProspected;
+
+  /// Improvement naming assertion (SPEC/game/extraction-and-improvements.md).
+  /// With [tileKey]: expected improvement display name derived from the tile's resource id.
+  /// Example: tile with resource `grain` and improvementLevel 1-4 → `Farm`.
+  final String? tileImprovementName;
 
   /// Leader assertion (SPEC/game/leader-bonuses.md). With [player]: expected leaderKey for that Great Power.
   final String? leaderKey;
@@ -599,6 +605,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileKey: json['tileKey'] as String?,
     tileVisibility: json['tileVisibility'] as String?,
     tileProspected: json['tileProspected'] as bool?,
+    tileImprovementName: json['tileImprovementName'] as String?,
     leaderKey: json['leaderKey'] as String?,
     techUnlocked: (json['techUnlocked'] as List<dynamic>?)
         ?.map((e) => e.toString())
