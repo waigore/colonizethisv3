@@ -7,7 +7,8 @@ final Logger _log = Logger();
 /// Computes effective available labour for production, capped by luxury
 /// availability per SPEC/program/economy-models.md and
 /// SPEC/game/workers-and-population.md.
-int _effectiveLabourForWorkers({
+/// Public for use by AI economy planner. SPEC/ai/economy-planner.md.
+int effectiveLabourForWorkers({
   required WorkerPool workers,
   required Stockpile stockpile,
 }) {
@@ -32,6 +33,12 @@ int _effectiveLabourForWorkers({
       journeymenWithLuxury * 6 +
       mastersWithLuxury * 8;
 }
+
+int _effectiveLabourForWorkers({
+  required WorkerPool workers,
+  required Stockpile stockpile,
+}) =>
+    effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md

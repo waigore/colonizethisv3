@@ -173,4 +173,47 @@ void main() {
       expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 5);
     });
   });
+
+  group('effectiveLabourForWorkers', () {
+    test('peasants contribute 1 labour each', () {
+      const workers = WorkerPool(peasants: 10);
+      const stockpile = Stockpile();
+      expect(
+        effectiveLabourForWorkers(workers: workers, stockpile: stockpile),
+        10,
+      );
+    });
+
+    test('trained workers capped by luxury in stockpile', () {
+      const workers = WorkerPool(
+        peasants: 2,
+        apprentices: 3,
+        journeymen: 0,
+        masters: 0,
+      );
+      // Only 1 refinedSugar → only 1 apprentice contributes (4 labour).
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.refinedSugar.id, 1);
+      expect(
+        effectiveLabourForWorkers(workers: workers, stockpile: stockpile),
+        2 + 4, // 2 peasants + 1 apprentice with luxury
+      );
+    });
+
+    test('full luxury gives full trained labour', () {
+      const workers = WorkerPool(
+        peasants: 1,
+        apprentices: 2,
+        journeymen: 1,
+        masters: 0,
+      );
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.refinedSugar.id, 5)
+          .applyDelta(CommodityCatalog.cigars.id, 5);
+      expect(
+        effectiveLabourForWorkers(workers: workers, stockpile: stockpile),
+        1 + 2 * 4 + 1 * 6, // 1 + 8 + 6 = 15
+      );
+    });
+  });
 }

@@ -91,6 +91,7 @@ Game resolveTurnForGameFromOrderEngine({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
 }) {
   final merged = mergeOrderLists(
@@ -105,6 +106,7 @@ Game resolveTurnForGameFromOrderEngine({
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );
 }
 
@@ -124,6 +126,7 @@ Game validateOrdersAndResolveTurn({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
 }) {
   final engine = OrderEngine(initialOrders: orders);
@@ -140,6 +143,7 @@ Game validateOrdersAndResolveTurn({
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );
 }
 
@@ -150,6 +154,8 @@ Game resolveTurnForGame({
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
+  /// Per-player production assignments; when set, used for that player instead of [defaultAssignments]. SPEC/ai/economy-planner.md.
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
 
   /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
@@ -182,6 +188,7 @@ Game resolveTurnForGame({
         state = _runProductionPhase(
           state,
           defaultAssignments,
+          defaultAssignmentsByPlayerId,
           onProductionComplete,
         );
         break;
@@ -392,6 +399,7 @@ Game _runExtractionPhase(
 Game _runProductionPhase(
   Game game,
   List<AssignedRecipe> defaultAssignments,
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
       onProductionComplete,
 ) {
@@ -399,10 +407,11 @@ Game _runProductionPhase(
   final productionByRecipeByPlayerId = <String, Map<String, int>>{};
 
   for (final player in game.players) {
+    final assignments = defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
     final result = resolveProduction(
       stockpile: player.stockpile,
       workers: player.workerPool,
-      assignments: defaultAssignments,
+      assignments: assignments,
     );
     if (result.productionByRecipe.isNotEmpty) {
       productionByRecipeByPlayerId[player.id] =

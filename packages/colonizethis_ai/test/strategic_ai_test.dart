@@ -34,7 +34,7 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(999);
       const api = DefaultOrderSuggestionAPI();
 
-      final orders = generateStrategicOrders(
+      final result = generateStrategicOrders(
         game: game,
         topology: topology,
         nationId: 'gp1',
@@ -44,8 +44,13 @@ void main() {
         suggestionAPI: api,
       );
 
-      expect(orders.moveOrdersByPlayerId.isEmpty, isTrue);
-      expect(orders.buildUnitOrdersByPlayerId.isEmpty, isTrue);
+      expect(result.orders.moveOrdersByPlayerId.isEmpty, isTrue);
+      expect(result.orders.buildUnitOrdersByPlayerId.isEmpty, isTrue);
+      expect(result.economyPlan.productionAssignments, isEmpty);
+      expect(
+        result.economyPlan.cargoPreference,
+        isIn([CargoPreference.none, CargoPreference.preferCargo, CargoPreference.strongCargo]),
+      );
     });
 
     test('invokes onDialogue at configured dialogue cadence', () {
@@ -81,7 +86,7 @@ void main() {
       );
       const api = DefaultOrderSuggestionAPI();
       DialogueEvent? captured;
-      final orders = generateStrategicOrders(
+      final result = generateStrategicOrders(
         game: game,
         topology: topology,
         nationId: 'gp1',
@@ -91,7 +96,7 @@ void main() {
         suggestionAPI: api,
         onDialogue: (e) => captured = e,
       );
-      expect(orders, isNotNull);
+      expect(result.orders, isNotNull);
       expect(captured, isNotNull);
       expect(captured!.leaderId, 'victoria');
       expect(captured!.category, 'agenda');
@@ -130,7 +135,7 @@ void main() {
       );
       const api = DefaultOrderSuggestionAPI();
       PortraitMoodEvent? captured;
-      final orders = generateStrategicOrders(
+      final result = generateStrategicOrders(
         game: game,
         topology: topology,
         nationId: 'gp1',
@@ -140,7 +145,7 @@ void main() {
         suggestionAPI: api,
         onMood: (e) => captured = e,
       );
-      expect(orders, isNotNull);
+      expect(result.orders, isNotNull);
       expect(captured, isNotNull);
       expect(captured!.leaderId, 'victoria');
       expect(captured!.fromMood, 'considering');

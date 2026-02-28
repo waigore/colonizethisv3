@@ -203,7 +203,8 @@ void main() {
         ],
         edges: [],
       );
-      final orders = generateOrdersForGameFullAI(game, topology);
+      final result = generateOrdersForGameFullAI(game, topology);
+      final orders = result.orders;
       expect(orders.moveOrdersByPlayerId, isNotNull);
       expect(orders.buildUnitOrdersByPlayerId, isNotNull);
       expect(orders.researchOrdersByPlayerId, isNotNull);
@@ -215,6 +216,7 @@ void main() {
         isNotEmpty,
         reason: 'full AI should produce at least research when no capital',
       );
+      expect(result.economyPlansByPlayerId.containsKey('gp1'), isTrue);
     });
 
     test('generateOrdersForGameFullAI preserves naval mission orders from per-player AI', () {
@@ -258,16 +260,16 @@ void main() {
         ],
         edges: [],
       );
-      final singleOrders = generateOrdersForPlayerFullAI(game, topology, 'gp1');
-      final gameOrders = generateOrdersForGameFullAI(game, topology);
+      final singleResult = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+      final gameResult = generateOrdersForGameFullAI(game, topology);
       expect(
-        gameOrders.navalMissionOrdersByPlayerId['gp1'],
-        equals(singleOrders.navalMissionOrdersByPlayerId['gp1']),
+        gameResult.orders.navalMissionOrdersByPlayerId['gp1'],
+        equals(singleResult.orders.navalMissionOrdersByPlayerId['gp1']),
         reason: 'full-AI aggregation must include naval mission orders (SPEC gap #1)',
       );
       expect(
-        gameOrders.navalMoveOrdersByPlayerId['gp1'],
-        equals(singleOrders.navalMoveOrdersByPlayerId['gp1']),
+        gameResult.orders.navalMoveOrdersByPlayerId['gp1'],
+        equals(singleResult.orders.navalMoveOrdersByPlayerId['gp1']),
         reason: 'full-AI aggregation must include naval move orders',
       );
     });

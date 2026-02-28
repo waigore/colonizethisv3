@@ -4,6 +4,7 @@ export 'package:colonizethis_data/colonizethis_data.dart' show kPortraitMoodValu
 export 'src/ai_config.dart';
 export 'src/dossier.dart';
 export 'src/domain_planners.dart';
+export 'src/economy_planner.dart';
 export 'src/goal_manager.dart';
 export 'src/hidden_agenda.dart';
 export 'src/mood_state_machine.dart';

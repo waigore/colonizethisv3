@@ -78,6 +78,8 @@ class SimGameController {
   int get baseSeed => _baseSeed;
 
   final Map<String, Orders> _pendingOrdersByPlayerId = {};
+  /// When using full AI, economy plans per player for production phase. Cleared on resolve.
+  final Map<String, EconomyPlan> _pendingEconomyPlansByPlayerId = {};
   final List<SimOrderHistoryEntry> _orderHistory = [];
 
   Game get game => _game;
@@ -112,17 +114,22 @@ class SimGameController {
     final currentTurn = _game.worldState.turnState.turnNumber;
     for (final player in _game.players) {
       if (_pendingOrdersByPlayerId.containsKey(player.id)) continue;
-      final orders = useSimGameAi
-          ? defaultSimGameAi(
-              game: _game,
-              player: player,
-              topology: _topology,
-              baseSeed: _baseSeed,
-            )
-          : (useFullAI
-              ? generateOrdersForPlayerFullAI(_game, _topology, player.id)
-              : generateOrdersForPlayer(_game, _topology, player.id));
-      _pendingOrdersByPlayerId[player.id] = orders;
+      if (useSimGameAi) {
+        final orders = defaultSimGameAi(
+          game: _game,
+          player: player,
+          topology: _topology,
+          baseSeed: _baseSeed,
+        );
+        _pendingOrdersByPlayerId[player.id] = orders;
+      } else if (useFullAI) {
+        final result = generateOrdersForPlayerFullAI(_game, _topology, player.id);
+        _pendingOrdersByPlayerId[player.id] = result.orders;
+        _pendingEconomyPlansByPlayerId[player.id] = result.economyPlan;
+      } else {
+        final orders = generateOrdersForPlayer(_game, _topology, player.id);
+        _pendingOrdersByPlayerId[player.id] = orders;
+      }
       Logger().i(
         'ctdev: Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
       );
@@ -135,17 +142,25 @@ class SimGameController {
     if (!allPlayersHaveOrders) return;
     clearUiLog();
     final combined = _combineOrders(_pendingOrdersByPlayerId.values.toList());
+    final defaultAssignmentsByPlayerId = _pendingEconomyPlansByPlayerId.isEmpty
+        ? null
+        : _pendingEconomyPlansByPlayerId.map(
+            (pid, plan) => MapEntry(pid, plan.productionAssignments),
+          );
     _pendingOrdersByPlayerId.clear();
-    _advanceOneTurnFromOrders(combined);
+    _pendingEconomyPlansByPlayerId.clear();
+    _advanceOneTurnFromOrders(
+      combined,
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    );
   }
 
   /// Generates orders for all Great Powers and advances one full turn.
   /// All GPs use the selected AI (Sim Game AI or AI Planner).
   void stepFullTurn() {
     clearUiLog();
-    final List<Orders> ordersList;
     if (useSimGameAi) {
-      ordersList = [
+      final ordersList = [
         for (final player in _game.players)
           defaultSimGameAi(
             game: _game,
@@ -154,16 +169,24 @@ class SimGameController {
             baseSeed: _baseSeed,
           ),
       ];
+      final combined = _combineOrders(ordersList);
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(combined);
+    } else if (useFullAI) {
+      final result = generateOrdersForGameFullAI(_game, _topology);
+      final defaultAssignmentsByPlayerId = result.economyPlansByPlayerId.map(
+        (pid, plan) => MapEntry(pid, plan.productionAssignments),
+      );
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(
+        result.orders,
+        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      );
     } else {
-      ordersList = [
-        useFullAI
-            ? generateOrdersForGameFullAI(_game, _topology)
-            : generateOrdersForGame(_game, _topology),
-      ];
+      final combined = generateOrdersForGame(_game, _topology);
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(combined);
     }
-    final combined = _combineOrders(ordersList);
-    _pendingOrdersByPlayerId.clear();
-    _advanceOneTurnFromOrders(combined);
   }
 
   /// Advances the game by [turns] full turns using the default AI.
@@ -217,7 +240,10 @@ class SimGameController {
     );
   }
 
-  void _advanceOneTurnFromOrders(Orders orders) {
+  void _advanceOneTurnFromOrders(
+    Orders orders, {
+    Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  }) {
     _recordOrderHistory(orders);
     final before = _game;
     final next = validateOrdersAndResolveTurn(
@@ -226,6 +252,7 @@ class SimGameController {
       orders: orders,
       tileMapByRegion: _tileMapByRegion,
       defaultAssignments: const [],
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
     _game = next;
     _recordTurnLog(before: before, after: next);
