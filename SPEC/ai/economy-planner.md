@@ -24,7 +24,7 @@ All inputs are observable; no cheats.
 ## Outputs
 
 1. **Production assignments** — `List<AssignedRecipe>` (recipe id, assigned labour). Total assigned labour must not exceed the player's **effective labour** (luxury-capped). Assignments are passed to the Production phase as that player's default assignments (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)); resolver must support per-player assignments when multiple players are AI.
-2. **Cargo preference** (optional) — one of: `none`, `prefer_cargo`, `strong_cargo`. Used by the naval planner to bias **join home fleet** vs patrol/blockade when a fleet is in the capital port; and optionally by build preference (prefer merchant ships when `strong_cargo` and economy goal).
+2. **Cargo preference** (optional) — one of: `none`, `prefer_cargo`, `strong_cargo`. Used by the naval planner to bias **join home fleet** vs patrol/blockade when a fleet is in the capital port; and by the **build planner** when choosing among build orders (ships vs regiments): it scores candidates and may prefer cargo-capable ships when `prefer_cargo` or `strong_cargo`.
 
 ---
 
@@ -83,7 +83,7 @@ Naval planner and build planner consume this preference; the economy planner onl
 
 ## Integration
 
-- **Caller:** Strategic AI (e.g. `generateStrategicOrders` or domain planners) calls the economy planner for each AI GP after or alongside other domain planners. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).
+- **Caller:** Strategic AI (e.g. `generateStrategicOrders`) calls the economy planner for each AI GP first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build step can weight ship vs land builds. Production assignments are collected per player and passed to the turn resolver as **per-player default production assignments** (resolver must accept `Map<String, List<AssignedRecipe>>` or equivalent for multi-player).
 - **Human players:** Production assignments for human players come from UI or saved choices; the economy planner is not used.
 - **Determinism:** Same PlayerView, game state, config, and economy seed → same production assignments and cargo preference.
 

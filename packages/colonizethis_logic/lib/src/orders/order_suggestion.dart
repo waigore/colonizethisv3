@@ -311,12 +311,26 @@ List<BuildUnitOrder> suggestBuildOrders(
     return suggestions;
   }
 
-  // For now, suggest only military builds using RegimentEconomyCatalog.
+  // Military (regiment) builds.
   for (final entry in RegimentEconomyCatalog.byId.entries) {
     final unitType = entry.key;
     final candidate = BuildUnitOrder(
       unitType: unitType,
       isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
+      spawnProvinceId: capitalId,
+    );
+
+    if (_isBuildOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+
+  // Naval (ship) builds. SPEC/program/order-suggestions.md.
+  for (final entry in ShipEconomyCatalog.byId.entries) {
+    final unitType = entry.key;
+    final candidate = BuildUnitOrder(
+      unitType: unitType,
+      isMilitary: false,
       spawnProvinceId: capitalId,
     );
 

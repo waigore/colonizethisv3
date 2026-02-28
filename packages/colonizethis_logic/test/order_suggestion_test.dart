@@ -339,6 +339,76 @@ void main() {
       expect(suggestions, isA<List<BuildUnitOrder>>());
     });
 
+    test('suggestBuildOrders returns ship when affordable', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 2)
+          .applyDelta(CommodityCatalog.fabric.id, 2);
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1',
+        treasury: 100,
+        stockpile: stockpile,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestBuildOrders(view, game, topology, const Orders());
+      final shipTypes = suggestions.where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).toList();
+      expect(shipTypes, isNotEmpty, reason: 'suggestBuildOrders should include ships when player has capital, treasury and stockpile for fluyte/carrack');
+    });
+
+    test('suggestBuildOrders can return both regiment and ship when both affordable', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 5)
+          .applyDelta(CommodityCatalog.fabric.id, 5)
+          .applyDelta(CommodityCatalog.castIron.id, 5);
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1',
+        workerPool: const WorkerPool(peasants: 2, apprentices: 1),
+        treasury: 500,
+        stockpile: stockpile,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestBuildOrders(view, game, topology, const Orders());
+      final hasRegiment = suggestions.any((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType));
+      final hasShip = suggestions.any((o) => ShipEconomyCatalog.byId.containsKey(o.unitType));
+      expect(hasRegiment, isTrue, reason: 'should suggest regiments when affordable');
+      expect(hasShip, isTrue, reason: 'should suggest ships when affordable');
+    });
+
     test('suggestResearchOrders returns list', () {
       const playerId = 'gp1';
       final player = const Player(id: playerId, displayName: 'GP', isHuman: false, treasury: 1000);

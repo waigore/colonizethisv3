@@ -6,7 +6,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import 'ai_config.dart';
-import 'hidden_agenda.dart';
 import 'seed_bundle.dart';
 
 final Logger _log = Logger();
