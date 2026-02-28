@@ -108,6 +108,156 @@ void main() {
       );
     });
 
+    test('army move within own provinces across regions is instantaneous', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      // Turn number advanced.
+      expect(next.worldState.turnState.turnNumber, 1);
+      // Unit moved from Old World to New World in a single movement phase.
+      expect(next.worldState.oldWorld.units, isEmpty);
+      expect(next.worldState.newWorld.units.single.id, 'u1');
+      expect(next.worldState.newWorld.units.single.provinceId, '$nw|P2');
+    });
+
+    test('civilian move within own provinces across regions is instantaneous and sets tileKey', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      const owProv = '$ow|P1';
+      const nwProv = '$nw|P2';
+      const nwTile = '$nw|P2|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: owProv, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'c1',
+                type: 'Merchant',
+                ownerId: 'p1',
+                provinceId: owProv,
+                tileKey: '$ow|P1|0|0',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: nwProv, regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              nwProv: [nwTile],
+            },
+          },
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            const MoveOrder(unitId: 'c1', destinationProvinceId: nwProv),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units, isEmpty);
+      final moved = next.worldState.newWorld.units.single;
+      expect(moved.id, 'c1');
+      expect(moved.provinceId, nwProv);
+      expect(moved.tileKey, nwTile);
+    });
+
     test('riches to treasury phase converts riches in stockpile', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
