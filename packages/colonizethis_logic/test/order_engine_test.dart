@@ -579,7 +579,63 @@ void main() {
       expect(results[0].reason, contains('visible'));
     });
 
-    test('move order rejected when destination not adjacent', () {
+    test('move order rejected when destination not adjacent and not own province', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P3', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+          const TopologyEdge(id1: 'P2', id2: 'P3'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P3', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'fullyVisible',
+              'oldWorld|P3|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final engine = OrderEngine();
+      engine.addMoveOrder(
+          'p1', MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'));
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.single.status, OrderValidationStatus.rejected);
+    });
+
+    test('move order accepted when destination not adjacent but own province', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
@@ -627,6 +683,117 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
           'p1', MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'));
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.single.status, OrderValidationStatus.accepted);
+    });
+
+    test('move order accepted for own province across regions', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: nw, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+
+      final engine = OrderEngine();
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+      );
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.single.status, OrderValidationStatus.accepted);
+    });
+
+    test('move order rejected when destination is foreign province across regions', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: nw, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
+            ],
+            units: const [],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final engine = OrderEngine();
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+      );
       final results =
           engine.validatePlayerOrdersWithContext(game, topology, 'p1');
       expect(results.single.status, OrderValidationStatus.rejected);
