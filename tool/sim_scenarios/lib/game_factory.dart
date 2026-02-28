@@ -134,8 +134,15 @@ class GameFactory {
       warpLinks: warpLinks,
     );
 
+    // SPEC/game/military-generals.md: at game start each Great Power has one general (cap 1).
+    var game = setupResult.game;
+    final initialGenerals = [
+      for (final p in game.players) General(id: '${p.id}_gen_0', ownerId: p.id, medals: 0),
+    ];
+    game = game.copyWith(generals: initialGenerals);
+
     return GameInitResult(
-      game: setupResult.game,
+      game: game,
       topology: setupResult.combinedTopology,
       tileMapByRegion: setupResult.tileMapByRegion,
     );

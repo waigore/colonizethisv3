@@ -1,0 +1,17 @@
+{
+  "name": "military_generals_medal_cap_four",
+  "description": "SPEC/game/military-generals.md AC: Winning general at 4 medals stays at 4. Placeholder; assert when general state includes medals and combat records winner.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [{"id": "p1", "regionId": "oldWorld", "type": "province"}, {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "generalCount": 1}
+  ]
+}

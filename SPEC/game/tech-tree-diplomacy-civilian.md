@@ -16,9 +16,9 @@ The **diplomacy and civilian tech table in this doc is the GDD source of truth**
 |----|------|-----|---------------|--------|
 | diplomatic_expertise | Diplomatic Expertise | 1 | — | Offer embassies to Minor Nations; Merchants, Engineers, Builders may work there |
 | merchant_companies | Merchant Companies | 1 | — | Construct Merchant units; buy land in Minor Nations |
-| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Builders may upgrade provincial towns |
+| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Builders may upgrade provincial towns; contributes to raising general cap to at least 3 per [military-generals.md](military-generals.md) |
 | propaganda | Propaganda | 3 | national_bureaucracy, university | Decreases diplomatic penalties for declaring war |
-| nationalism | Nationalism | 3 | propaganda, master_artisans, modern_forts | Deployment limit 12 regiments (vs 10); general adds more |
+| nationalism | Nationalism | 3 | propaganda, master_artisans, modern_forts | Deployment limit 12 regiments (vs 10); general adds more; raises general cap to at least 4 per [military-generals.md](military-generals.md) |
 | empire_building | Empire Building | 4 | nationalism, banking | Ask Great Powers to join your empire peacefully |
 
 ---

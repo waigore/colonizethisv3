@@ -1,29 +1,22 @@
-/// General leading an army. Generals, medals, and army definition:
-/// SPEC/game/military-generals.md. Regiment types and tactical stats:
-/// SPEC/game/military-units.md. Phase 3: minimal model for initiative and combat.
+/// General: abstract commander for combat. No map location; assignment at combat time.
+/// SPEC/game/military-generals.md. Regiment types: SPEC/game/military-units.md.
 class General {
   const General({
     required this.id,
     required this.ownerId,
     this.medals = 0,
-    this.provinceId,
   });
 
   final String id;
   final String ownerId;
 
-  /// Experience medals (0–4); affects initiative and deployment. SPEC/game/military-generals.md.
+  /// Experience medals (0–4); affects initiative, deployment, and morale aura. SPEC/game/military-generals.md.
   final int medals;
-
-  /// Province where general is attached to an army. Null if unassigned.
-  /// When set, must be prefixed province id per world-model-identity.md.
-  final String? provinceId;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'ownerId': ownerId,
         if (medals != 0) 'medals': medals,
-        if (provinceId != null) 'provinceId': provinceId,
       };
 
   static General fromJson(Map<String, dynamic> json) {
@@ -31,7 +24,6 @@ class General {
       id: json['id'] as String,
       ownerId: json['ownerId'] as String,
       medals: (json['medals'] as int?) ?? 0,
-      provinceId: json['provinceId'] as String?,
     );
   }
 
@@ -39,13 +31,11 @@ class General {
     String? id,
     String? ownerId,
     int? medals,
-    String? provinceId,
   }) {
     return General(
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       medals: medals ?? this.medals,
-      provinceId: provinceId ?? this.provinceId,
     );
   }
 
@@ -56,9 +46,8 @@ class General {
           runtimeType == other.runtimeType &&
           id == other.id &&
           ownerId == other.ownerId &&
-          medals == other.medals &&
-          provinceId == other.provinceId;
+          medals == other.medals;
 
   @override
-  int get hashCode => Object.hash(id, ownerId, medals, provinceId);
+  int get hashCode => Object.hash(id, ownerId, medals);
 }

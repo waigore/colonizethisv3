@@ -14,9 +14,9 @@ The **military tech table in this doc is the GDD source of truth** for tech id, 
 
 | id | name | era | prerequisites | regiment / effect |
 |----|------|-----|---------------|-------------------|
-| organised_regiments | Organised Regiments | 1 | land_enclosure | Lancers; Knights upgrade path |
+| organised_regiments | Organised Regiments | 1 | land_enclosure | Lancers; Knights upgrade path; raises general cap to at least 2 per [military-generals.md](military-generals.md) |
 | improved_iron_weapons | Improved Iron Weapons | 1 | organised_regiments, iron_mining | Halberdiers; Pikemen upgrade |
-| improved_infantry_tactics | Improved Infantry Tactics | 2 | organised_regiments, printing_press | Calivermen; Peasant Levies upgrade |
+| improved_infantry_tactics | Improved Infantry Tactics | 2 | organised_regiments, printing_press | Calivermen; Peasant Levies upgrade; contributes to raising general cap to at least 3 per [military-generals.md](military-generals.md) |
 | crucible_process | Crucible Process | 2 | square_set_timbering, steam_in_mining | Steel; leads to Bayonet and more |
 | bayonet | Bayonet | 2 | improved_iron_weapons, crucible_process | Regulars; Halberdiers upgrade |
 | weapon_craftsmanship | Weapon Craftsmanship | 2 | organised_regiments, copper_and_tin_mining | Musketeers; Arquebusiers upgrade |
