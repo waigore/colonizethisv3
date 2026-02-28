@@ -34,7 +34,7 @@ Orders generateStrategicOrders({
 });
 ```
 
-`view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. The strategic AI also produces **production assignments** and **cargo preference** per AI GP when the economy planner runs; see [economy-planner.md](../ai/economy-planner.md). The turn-resolution caller supplies per-player production assignments to the resolver (e.g. `defaultAssignmentsByPlayerId`) and may pass cargo preference into the naval planner. Callbacks for deterministic dialogue/mood events.
+`view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. Strategic AI runs the **economy planner** first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build planner can weight ship vs land builds (cargo need, goal, personality). The strategic AI also produces **production assignments** per AI GP; see [economy-planner.md](../ai/economy-planner.md). The turn-resolution caller supplies per-player production assignments to the resolver (e.g. `defaultAssignmentsByPlayerId`). Callbacks for deterministic dialogue/mood events.
 
 Personality-related fields in **AIConfig** follow [ai-personalities.md](../ai/ai-personalities.md):
 

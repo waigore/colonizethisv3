@@ -57,6 +57,7 @@ StrategicOrderResult generateStrategicOrders({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    economyPlan: economyPlan,
   );
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;

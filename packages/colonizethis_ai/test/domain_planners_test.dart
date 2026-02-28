@@ -113,6 +113,10 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(999);
       const api = DefaultOrderSuggestionAPI();
 
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
       final orders = runDomainPlanners(
         game: game,
         topology: topology,
@@ -123,6 +127,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: api,
+        economyPlan: economyPlan,
       );
 
       expect(orders.moveOrdersByPlayerId.isEmpty, isTrue);
@@ -181,6 +186,10 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(100);
       const api = DefaultOrderSuggestionAPI();
 
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
       final orders = runDomainPlanners(
         game: game,
         topology: topology,
@@ -191,6 +200,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: api,
+        economyPlan: economyPlan,
       );
 
       expect(orders, isNotNull);
@@ -250,6 +260,10 @@ void main() {
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(123);
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
 
       final orders = runDomainPlanners(
         game: game,
@@ -261,6 +275,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       // Economy: at least one work and build order should be appended.
@@ -307,6 +322,10 @@ void main() {
         navalMission: [],
         diplomatic: [diploOrder],
       );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
 
       final orders = runDomainPlanners(
         game: game,
@@ -318,6 +337,7 @@ void main() {
         primaryGoal: StrategicGoal.diplomacy,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       expect(orders.diplomaticOrdersByPlayerId['gp1'], isNotNull);
@@ -358,7 +378,11 @@ void main() {
         research: [],
         navalMove: [],
         navalMission: [],
-        diplomatic: const [],
+        diplomatic: [],
+      );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
       );
 
       final orders = runDomainPlanners(
@@ -371,9 +395,153 @@ void main() {
         primaryGoal: StrategicGoal.diplomacy,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       expect(orders.diplomaticOrdersByPlayerId['gp1'], isNull);
+    });
+
+    test('with strongCargo and ship candidate picks ship deterministically', () {
+      const regimentBuild = BuildUnitOrder(
+        unitType: 'peasant_levies',
+        isMilitary: true,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const shipBuild = BuildUnitOrder(
+        unitType: 'fluyte',
+        isMilitary: false,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [regimentBuild, shipBuild],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [],
+      );
+      const economyPlanStrongCargo = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.strongCargo,
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'A',
+            isHuman: false,
+            leaderKey: 'henry',
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'henry',
+        personalityId: 'henry',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(42);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlanStrongCargo,
+      );
+
+      final builds = orders.buildUnitOrdersByPlayerId['gp1'] ?? [];
+      expect(builds.length, 1);
+      expect(builds.single.unitType, 'fluyte', reason: 'strongCargo should favour cargo ship over regiment');
+    });
+
+    test('build selection is deterministic for same seed and cargoPreference none', () {
+      const regimentBuild = BuildUnitOrder(
+        unitType: 'peasant_levies',
+        isMilitary: true,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const shipBuild = BuildUnitOrder(
+        unitType: 'fluyte',
+        isMilitary: false,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [regimentBuild, shipBuild],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [],
+      );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'victoria'),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(999);
+
+      final orders1 = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+      final orders2 = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final build1 = orders1.buildUnitOrdersByPlayerId['gp1']?.single.unitType;
+      final build2 = orders2.buildUnitOrdersByPlayerId['gp1']?.single.unitType;
+      expect(build1, build2, reason: 'same seed and economyPlan should yield same build choice');
     });
   });
 }

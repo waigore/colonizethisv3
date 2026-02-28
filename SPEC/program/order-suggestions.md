@@ -31,6 +31,7 @@ For every suggested order `o`, appending it to the current list and validating v
 - **Work orders:** Suggested only for the unit's current province and tile. Never suggests work for a province the unit is not in.
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
+- **Build orders:** `suggestBuildOrders` returns affordable, valid build-unit orders for both **military (regiment)** and **naval (ship)** unit types. Each candidate is validated (treasury, stockpile, tech, capital) via the order engine. Ordering is deterministic (e.g. by unit type id).
 
 ---
 

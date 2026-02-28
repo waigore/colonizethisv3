@@ -5,16 +5,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'ai_config.dart';
+import 'economy_planner.dart';
 import 'goal_manager.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
-// Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md.
+// Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
 
 /// Runs economy, military, diplomacy, and research planners; returns combined orders
-/// for [nationId]. Uses [suggestionAPI] and scores with [config] and [snapshot].
-/// Deterministic given seeds.
+/// for [nationId]. Uses [suggestionAPI] and [economyPlan] (cargo preference) to score
+/// build candidates. Deterministic given seeds.
 Orders runDomainPlanners({
   required Game game,
   required MapTopology topology,
@@ -25,6 +26,7 @@ Orders runDomainPlanners({
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+  required EconomyPlan economyPlan,
 }) {
   var orders = const Orders();
   final domainWeights = getDomainWeightsForLeader(config.leaderId);
@@ -47,9 +49,16 @@ Orders runDomainPlanners({
   }
   final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
-    final rng = math.Random(seeds.economySeed + 1);
-    final idx = rng.nextInt(buildCandidates.length);
-    orders = _appendBuildOrders(orders, nationId, [buildCandidates[idx]]);
+    final chosen = _pickBuildOrder(
+      buildCandidates: buildCandidates,
+      cargoPreference: economyPlan.cargoPreference,
+      primaryGoal: primaryGoal,
+      config: config,
+      seed: seeds.economySeed + 1,
+    );
+    if (chosen != null) {
+      orders = _appendBuildOrders(orders, nationId, [chosen]);
+    }
   }
 
   // Movement: suggest moves; weight by military/expand.
@@ -165,6 +174,67 @@ Orders _appendBuildOrders(Orders o, String playerId, List<BuildUnitOrder> list) 
   return o.copyWith(
     buildUnitOrdersByPlayerId: {...o.buildUnitOrdersByPlayerId, playerId: [...existing, ...list]},
   );
+}
+
+/// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
+/// Returns one build order via weighted random, or null if list empty. SPEC/ai/economy-planner.md.
+BuildUnitOrder? _pickBuildOrder({
+  required List<BuildUnitOrder> buildCandidates,
+  required CargoPreference cargoPreference,
+  required StrategicGoal primaryGoal,
+  required AIConfig config,
+  required int seed,
+}) {
+  if (buildCandidates.isEmpty) return null;
+  final thresholds = getThresholdsForLeader(config.leaderId);
+  final scores = buildCandidates.map((o) {
+    final unitType = o.unitType;
+    final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
+    final cargoHold = isShip ? NavalStatsCatalog.get(unitType).cargoHold : 0;
+    final isRegiment = RegimentEconomyCatalog.byId.containsKey(unitType);
+
+    double cargoBonus = 0.0;
+    if (isShip && cargoHold > 0) {
+      switch (cargoPreference) {
+        case CargoPreference.strongCargo:
+          cargoBonus = 2.0;
+          break;
+        case CargoPreference.preferCargo:
+          cargoBonus = 1.0;
+          break;
+        case CargoPreference.none:
+          break;
+      }
+    }
+
+    double militaryBonus = 0.0;
+    if (primaryGoal == StrategicGoal.conquer || primaryGoal == StrategicGoal.defend) {
+      if (isRegiment) {
+        militaryBonus = 1.0;
+      } else if (isShip && cargoHold == 0) {
+        militaryBonus = 1.0;
+      }
+    }
+
+    double personalityBonus = 0.0;
+    if (isShip) {
+      personalityBonus = thresholds.researchNaval / 100.0;
+    } else if (isRegiment) {
+      personalityBonus = thresholds.researchMilitary / 100.0;
+    }
+
+    return 1.0 + cargoBonus + militaryBonus + personalityBonus;
+  }).toList();
+
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return buildCandidates.first;
+  final rng = math.Random(seed);
+  var r = rng.nextDouble() * total;
+  for (var idx = 0; idx < buildCandidates.length; idx++) {
+    if (r < scores[idx]) return buildCandidates[idx];
+    r -= scores[idx];
+  }
+  return buildCandidates.last;
 }
 
 Orders _appendWorkOrders(Orders o, String playerId, List<WorkOrder> list) {
