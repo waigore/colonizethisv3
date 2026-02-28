@@ -385,7 +385,7 @@ void main() {
 
       final parsed = cli.parseSimEconomyScript(scriptJson);
       var stockpile = parsed.initialStockpile;
-      var workers = parsed.initialWorkers;
+      // Workers are not used in this test case
       var treasury = parsed.initialTreasury;
       final turn = parsed.turns.single;
 

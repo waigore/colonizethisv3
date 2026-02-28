@@ -271,7 +271,6 @@ void main() {
     });
 
     test('returns no battles when oldWorld has no units', () {
-      const ow = 'oldWorld';
       const nw = 'newWorld';
       final game = Game(
         id: 'g1',

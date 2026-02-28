@@ -163,10 +163,10 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld != null ||
       numProvincesNewWorld != null) {
     List<String> selectedIds = config.selectedGreatPowerIds;
-    if (greatPowersOverride != null && greatPowersOverride!.isNotEmpty) {
-      selectedIds = greatPowersOverride!;
-    } else     if (greatPowerCount != null && greatPowerCount! > 0) {
-      selectedIds = allGreatPowerIds.take(greatPowerCount!).toList();
+    if (greatPowersOverride != null && greatPowersOverride.isNotEmpty) {
+      selectedIds = greatPowersOverride;
+    } else     if (greatPowerCount != null && greatPowerCount > 0) {
+      selectedIds = allGreatPowerIds.take(greatPowerCount).toList();
     }
     Map<String, String> leaderVariantByGpId = config.leaderVariantByGpId;
     if (prussiaLeaderOverride != null && selectedIds.contains('prussia')) {

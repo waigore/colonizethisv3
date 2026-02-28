@@ -454,7 +454,7 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
         .toList(),
     stockpileOverrides: (json['stockpileOverrides'] as Map<String, dynamic>?)
-        ?.map((k, v) => MapEntry(k as String, (v as num).toInt())),
+        ?.map((k, v) => MapEntry(k, v.toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
     productionAssignments:
@@ -470,21 +470,9 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
 Map<String, int>? _parseInitialTreasury(dynamic value) {
   if (value == null || value is! Map) return null;
   final out = <String, int>{};
-  for (final e in (value as Map).entries) {
+  for (final e in value.entries) {
     final v = e.value;
-    if (v != null) out[e.key.toString()] = (v is int) ? v : (v as num).toInt();
-  }
-  return out.isEmpty ? null : out;
-}
-
-Map<String, List<String>>? _parseInitialTech(dynamic raw) {
-  if (raw is! Map<String, dynamic>) return null;
-  final out = <String, List<String>>{};
-  for (final entry in raw.entries) {
-    final list = entry.value;
-    if (list is List<dynamic>) {
-      out[entry.key] = list.map((e) => e.toString()).toList();
-    }
+    if (v != null) out[e.key.toString()] = (v is int) ? v : v.toInt();
   }
   return out.isEmpty ? null : out;
 }
@@ -511,32 +499,6 @@ List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
       recipeId: recipeId,
       assignedLabour: (labour as num).toInt(),
     ));
-  }
-  return out.isEmpty ? null : out;
-}
-
-Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {
-  if (raw is! Map<String, dynamic>) return null;
-  final out = <String, Map<String, int>>{};
-  for (final entry in raw.entries) {
-    final inner = entry.value;
-    if (inner is! Map<String, dynamic>) continue;
-    out[entry.key] = {
-      for (final e in inner.entries) e.key: (e.value as num).toInt(),
-    };
-  }
-  return out.isEmpty ? null : out;
-}
-
-Map<String, Map<String, int>>? _parseInitialStockpile(dynamic raw) {
-  if (raw is! Map<String, dynamic>) return null;
-  final out = <String, Map<String, int>>{};
-  for (final entry in raw.entries) {
-    final inner = entry.value;
-    if (inner is! Map<String, dynamic>) continue;
-    out[entry.key] = {
-      for (final e in inner.entries) e.key: (e.value as num).toInt(),
-    };
   }
   return out.isEmpty ? null : out;
 }

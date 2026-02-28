@@ -355,20 +355,23 @@ class OrderEngine {
       final destFullId =
           resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
       final destRegion = ProvinceId.regionIdFrom(destFullId);
-      if (destRegion != unitRegion) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
-      final destLocalId = ProvinceId.localIdFrom(destFullId);
-      if (!isValidLandMoveInRegion(
-          topology, unitRegion, unitLocalId, destLocalId)) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      final destProvince =
-          tryGetProvince(game.worldState, o.destinationProvinceId);
+      final destProvince = tryGetProvince(game.worldState, destFullId);
       final destOwnerId = destProvince?.ownerId;
+      // Movement within own provinces: always allowed (no adjacency, no cargo, no region restriction). SPEC/program/movement.md.
+      final moveToOwnProvince = destOwnerId == playerId;
+      if (!moveToOwnProvince && destRegion != unitRegion) {
+        return const OrderValidationResult(
+            status: OrderValidationStatus.rejected, reason: 'Invalid move');
+      }
+      if (!moveToOwnProvince) {
+        final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
+        final destLocalId = ProvinceId.localIdFrom(destFullId);
+        if (!isValidLandMoveInRegion(
+            topology, unitRegion, unitLocalId, destLocalId)) {
+          return const OrderValidationResult(
+              status: OrderValidationStatus.rejected, reason: 'Invalid move');
+        }
+      }
       if (!isMilitaryUnit(unit.type) &&
           destOwnerId != null &&
           destOwnerId != playerId) {
@@ -388,7 +391,7 @@ class OrderEngine {
       }
       if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
           !moveDestVisibilityOk(
-              view, unitRegion, o.destinationProvinceId, unit.type)) {
+              view, destRegion, o.destinationProvinceId, unit.type)) {
         return const OrderValidationResult(
             status: OrderValidationStatus.rejected,
             reason: 'Source or destination not visible');

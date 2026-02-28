@@ -108,6 +108,156 @@ void main() {
       );
     });
 
+    test('army move within own provinces across regions is instantaneous', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'p1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      // Turn number advanced.
+      expect(next.worldState.turnState.turnNumber, 1);
+      // Unit moved from Old World to New World in a single movement phase.
+      expect(next.worldState.oldWorld.units, isEmpty);
+      expect(next.worldState.newWorld.units.single.id, 'u1');
+      expect(next.worldState.newWorld.units.single.provinceId, '$nw|P2');
+    });
+
+    test('civilian move within own provinces across regions is instantaneous and sets tileKey', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      const owProv = '$ow|P1';
+      const nwProv = '$nw|P2';
+      const nwTile = '$nw|P2|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: owProv, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'c1',
+                type: 'Merchant',
+                ownerId: 'p1',
+                provinceId: owProv,
+                tileKey: '$ow|P1|0|0',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: nwProv, regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              nwProv: [nwTile],
+            },
+          },
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            const MoveOrder(unitId: 'c1', destinationProvinceId: nwProv),
+          ],
+        },
+      );
+
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units, isEmpty);
+      final moved = next.worldState.newWorld.units.single;
+      expect(moved.id, 'c1');
+      expect(moved.provinceId, nwProv);
+      expect(moved.tileKey, nwTile);
+    });
+
     test('riches to treasury phase converts riches in stockpile', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
@@ -2167,6 +2317,125 @@ void main() {
         next.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
         VisibilityLevel.fullyVisible.name,
       );
+    });
+
+    // Regression test for issue #233: Diplomatic orders must flow through
+    // OrderEngine and turn resolver to the Diplomacy phase.
+    test('validateOrdersAndResolveTurn applies diplomatic orders from OrderEngine',
+        () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 2000),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        overtureStates: const [],
+      );
+
+      // Create OrderEngine with initial diplomatic orders.
+      final engine = OrderEngine(
+        initialOrders: Orders(
+          diplomaticOrdersByPlayerId: {
+            'p1': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.establishOverture,
+                targetFactionId: 'minor1',
+                overtureStage: OvertureStage.tradeConsulate,
+              ),
+            ],
+          },
+        ),
+      );
+
+      // Resolve turn via validateOrdersAndResolveTurn (full pipeline).
+      final next = validateOrdersAndResolveTurn(
+        game: game,
+        topology: topology,
+        orders: engine.orders, // Start with engine orders (mimics human orders)
+      );
+
+      // Verify diplomatic order was applied: consulate should be established.
+      final overture = getOverture(next, 'p1', 'minor1');
+      expect(overture, isNotNull);
+      expect(overture!.hasConsulate, isTrue);
+      // Treasury should be reduced by consulate cost.
+      final player = getPlayer(next, 'p1')!;
+      expect(player.treasury, lessThan(2000));
+    });
+
+    test(
+        'resolveTurnForGameFromOrderEngine preserves diplomatic orders through merge',
+        () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 2000),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        overtureStates: const [],
+      );
+
+      // Create OrderEngine with human diplomatic orders.
+      final engine = OrderEngine();
+      engine.addDiplomaticOrder(
+        'p1',
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'minor1',
+        ),
+      );
+
+      // AI has no orders.
+      final next = resolveTurnForGameFromOrderEngine(
+        game: game,
+        topology: topology,
+        orderEngine: engine,
+        aiOrders: const Orders(),
+      );
+
+      // Verify war was declared: relation state should be AT_WAR.
+      final rel = getRelation(next, 'p1', 'minor1')!;
+      expect(rel.atWar, isTrue);
     });
   });
 }
