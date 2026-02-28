@@ -1,0 +1,18 @@
+{
+  "name": "military_generals_cap_four_nationalism",
+  "description": "SPEC/game/military-generals.md AC: nationalism gives general cap 4; faction has exactly four generals.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [{"id": "p1", "regionId": "oldWorld", "type": "province"}, {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "setup": {"initialTech": {"gp1": ["organised_regiments", "national_bureaucracy", "nationalism"]}},
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "generalCount": 4}
+  ]
+}

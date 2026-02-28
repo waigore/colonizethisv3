@@ -1,0 +1,19 @@
+{
+  "name": "military_generals_cap_two_organised_regiments",
+  "description": "SPEC/game/military-generals.md AC: Researching organised_regiments gives general cap 2; faction has exactly two generals, new one 0 medals.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [{"id": "p1", "regionId": "oldWorld", "type": "province"}, {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "setup": {"initialTech": {"gp1": ["organised_regiments"]}},
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "techUnlocked": ["organised_regiments"]},
+    {"turn": 1, "player": "gp1", "generalCount": 2}
+  ]
+}

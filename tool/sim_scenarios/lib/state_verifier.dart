@@ -503,6 +503,16 @@ class StateVerifier {
       }
     }
 
+    // General count assertion (SPEC/game/military-generals.md): player must have expected number of generals
+    if (assertion.player != null && assertion.generalCount != null) {
+      final count = game.generals.where((g) => g.ownerId == assertion.player).length;
+      if (count != assertion.generalCount) {
+        failures.add(
+          'Player ${assertion.player} generalCount: expected ${assertion.generalCount}, got $count',
+        );
+      }
+    }
+
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,

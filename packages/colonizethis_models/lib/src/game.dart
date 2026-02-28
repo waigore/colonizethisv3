@@ -1,6 +1,7 @@
 import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
+import 'general.dart';
 import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
@@ -70,6 +71,7 @@ class Game {
     required this.players,
     this.minorNations = const [],
     this.tribes = const [],
+    this.generals = const [],
     this.turnTimeMapping,
     this.defaultCombatMode,
     this.combatModeByProvinceId = const {},
@@ -89,6 +91,9 @@ class Game {
   final List<Player> players;
   final List<MinorNation> minorNations;
   final List<Tribe> tribes;
+
+  /// Generals per faction (Great Powers). SPEC/game/military-generals.md. Empty in legacy saves.
+  final List<General> generals;
 
   /// Turn-to-calendar-year mapping. When null (legacy saves), use default per SPEC/game/turn-time-mapping.
   final TurnTimeMapping? turnTimeMapping;
@@ -151,6 +156,7 @@ class Game {
         if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
           'greatPowerColorOverride': greatPowerColorOverride!.map((k, v) => MapEntry(k, v)),
         if (victory != null) 'victory': victory!.toJson(),
+        if (generals.isNotEmpty) 'generals': generals.map((e) => e.toJson()).toList(),
       };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -209,6 +215,10 @@ class Game {
         ),
       ),
     );
+    final generalsList = json['generals'] as List<dynamic>? ?? [];
+    final generals = generalsList
+        .map((e) => General.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(Map<String, dynamic>.from(json['worldState'] as Map)),
@@ -216,6 +226,7 @@ class Game {
       minorNations:
           minorNationsList.map((e) => MinorNation.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
       tribes: tribesList.map((e) => Tribe.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      generals: generals,
       turnTimeMapping:
           turnTimeMappingJson != null ? TurnTimeMapping.fromJson(turnTimeMappingJson) : null,
       defaultCombatMode: defaultCombatMode,
@@ -242,6 +253,7 @@ class Game {
     List<Player>? players,
     List<MinorNation>? minorNations,
     List<Tribe>? tribes,
+    List<General>? generals,
     TurnTimeMapping? turnTimeMapping,
     CombatMode? defaultCombatMode,
     Map<String, CombatMode>? combatModeByProvinceId,
@@ -261,6 +273,7 @@ class Game {
       players: players ?? this.players,
       minorNations: minorNations ?? this.minorNations,
       tribes: tribes ?? this.tribes,
+      generals: generals ?? this.generals,
       turnTimeMapping: turnTimeMapping ?? this.turnTimeMapping,
       defaultCombatMode: defaultCombatMode ?? this.defaultCombatMode,
       combatModeByProvinceId: combatModeByProvinceId ?? this.combatModeByProvinceId,
@@ -286,6 +299,7 @@ class Game {
           _listEquals(players, other.players) &&
           _listEquals(minorNations, other.minorNations) &&
           _listEquals(tribes, other.tribes) &&
+          _listEquals(generals, other.generals) &&
           turnTimeMapping == other.turnTimeMapping &&
           defaultCombatMode == other.defaultCombatMode &&
           _mapEquals(combatModeByProvinceId, other.combatModeByProvinceId) &&
@@ -306,6 +320,7 @@ class Game {
         Object.hashAll(players),
         Object.hashAll(minorNations),
         Object.hashAll(tribes),
+        Object.hashAll(generals),
         turnTimeMapping,
         defaultCombatMode,
         Object.hashAll(combatModeByProvinceId.entries),

@@ -368,6 +368,9 @@ class ScenarioRunner {
         updatedPlayers.add(player.copyWith(techUnlocked: techUnlocked));
       }
       game = game.copyWith(players: updatedPlayers);
+
+      // SPEC/game/military-generals.md: general cap from tech. Ensure each GP has exactly cap many generals.
+      game = _applyGeneralCapFromTech(game);
     }
     if (setup.defaultCombatMode != null && setup.defaultCombatMode!.isNotEmpty) {
       final raw = setup.defaultCombatMode!.toLowerCase();
@@ -389,6 +392,32 @@ class ScenarioRunner {
       game = game.copyWith(players: updatedPlayers);
     }
     return game;
+  }
+
+  /// SPEC/game/military-generals.md: general cap from tech. Ensures each GP has exactly cap many generals.
+  static int _generalCapFromTech(Map<String, bool>? techUnlocked) {
+    final t = techUnlocked ?? {};
+    var cap = 1;
+    if (t['organised_regiments'] == true) cap = 2;
+    if (t['national_bureaucracy'] == true || t['improved_infantry_tactics'] == true) cap = 3;
+    if (t['nationalism'] == true) cap = 4;
+    return cap;
+  }
+
+  static Game _applyGeneralCapFromTech(Game game) {
+    final newGenerals = <General>[];
+    for (final player in game.players) {
+      final cap = _generalCapFromTech(player.techUnlocked);
+      final existing = game.generals.where((g) => g.ownerId == player.id).toList();
+      for (var i = 0; i < cap; i++) {
+        if (i < existing.length) {
+          newGenerals.add(existing[i]);
+        } else {
+          newGenerals.add(General(id: '${player.id}_gen_$i', ownerId: player.id, medals: 0));
+        }
+      }
+    }
+    return game.copyWith(generals: newGenerals);
   }
 
   Player _applyPlayerEconomyOverrides(Player player, ScenarioSetup setup) {
