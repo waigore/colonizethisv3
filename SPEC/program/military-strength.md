@@ -18,7 +18,7 @@ Military strength = sum of army strengths = sum of unit strengths. Uses the same
 - **Army strength:** Sum of unit strengths in that army.
 - **Player/faction military strength:** Sum of all unit strengths owned by that faction (equivalently, sum of army strengths).
 
-Effective era: Great Powers use era 4; Minor Nations and Tribes use `effectiveMilitaryLevel`. Units with stats above the effective era are downgraded to the era-equivalent regiment in the same category.
+Effective era: Great Powers use era 4; Minor Nations use their `effectiveMilitaryLevel` (parity with max GP); Tribes use their `effectiveMilitaryLevel` (always 1, no parity). Units with stats above the effective era are downgraded to the era-equivalent regiment in the same category.
 
 ---
 
@@ -38,7 +38,7 @@ Effective era: Great Powers use era 4; Minor Nations and Tribes use `effectiveMi
 - Given a `Game` and a faction id (player, minor, or tribe), when the system calls the aggregation API, then the output equals the sum of unit strengths for all military units owned by that faction, with effective-era downgrade and medal multiplier (0–4 medals; multiplier 1.0–1.4 per Formula).
 - Given the same `Game` and faction id, when the system calls the aggregation API multiple times, then the output is identical each time (deterministic; no RNG).
 - Given a `Game`, when the system aggregates military strength for a faction, then only units in Old World and New World `RegionData.units` with `ownerId ==` that faction id are included; only units that have regiment stats (FPN, FPM, medal multiplier) count—civilians and ships are skipped.
-- Given a Great Power faction, when the system applies effective era for strength calculation, then the effective era is 4. Given a Minor Nation or Tribe, then the effective era is that faction's `effectiveMilitaryLevel` per [factions.md](../game/factions.md).
+- Given a Great Power faction, when the system applies effective era for strength calculation, then the effective era is 4. Given a Minor Nation, then the effective era is that faction's `effectiveMilitaryLevel` (parity). Given a Tribe, then the effective era is 1 per [factions.md](../game/factions.md).
 - Given any caller, when the system aggregates military strength, then the API uses faction id for ownership only and does not perform province id lookups; see [world-model-identity.md](../game/world-model-identity.md) for identity rules.
 
 ---

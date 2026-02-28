@@ -187,6 +187,8 @@ Assertion fields:
 
 **Faction count assertions** (SPEC/game/factions.md): use `greatPowerCount`, `minorNationCount`, `tribeCount` (expected integer counts) to verify that game setup created the configured Great Powers, Minor Nations, and Tribes. Example: `{"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1}`.
 
+**Faction effective military level** (SPEC/game/factions.md): use `player` (Minor or Tribe faction id, e.g. `minor1`, `tribe1`) and `effectiveMilitaryLevel` (expected integer 1–4) to verify parity step: minors get max GP level; tribes always 1. Example: `{"turn": 1, "player": "tribe1", "effectiveMilitaryLevel": 1}`.
+
 **Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
 
 **Improvement naming assertions** (SPEC/game/extraction-and-improvements.md): when the scenario runner exposes a UI-facing view for tiles, use `tileKey` (format `regionId|provinceId|x|y`) with `tileImprovementName` (expected string) to verify that the improvement naming table is applied correctly. Example: `{"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileImprovementName": "Farm"}` for a tile whose resource id is `grain` and improvement level is between 1 and 4 inclusive.

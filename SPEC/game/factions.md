@@ -28,7 +28,7 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 
 **Minor military parity:** Old World minor nations are difficult to conquer and automatically keep pace with the most advanced Great Power. Define a global **military level** (1–4) as the highest regiment era currently available to **any** Great Power (from [military-units.md](military-units.md) and tech). A minor nation's **effective military level** is set to this maximum, not the average.
 
-**Timing:** At the start of each Combat phase (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)), compute `maxGreatPowerMilitaryLevel` from all Great Powers. For every Minor Nation and Tribe, set `effectiveMilitaryLevel = maxGreatPowerMilitaryLevel`. The combat resolver reads this when computing defender strength. Parity affects **defence and recruitment quality**, not army count caps or general bonuses.
+**Timing:** At the start of each Combat phase (see [turn-resolution-phases.md](../program/turn-resolution-phases.md)), compute `maxGreatPowerMilitaryLevel` from all Great Powers. For every **Minor Nation**, set `effectiveMilitaryLevel = maxGreatPowerMilitaryLevel`. Tribes do **not** receive parity (see Tribe section). The combat resolver reads effective military level when computing defender strength. Parity affects **defence and recruitment quality**, not army count caps or general bonuses.
 
 **Upgrading in place:** If minor nations' units are eligible for upgrade due to change in **effective military level**, their existing regiments become higher-tier versions. However, damaged regiments stay damaged. Templates are regenerated each Combat phase. 
 
@@ -40,6 +40,7 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 - **Can:** Own provinces; have capital (assigned at game setup; must be located for diplomacy); have **primitive** military (no firearms, cavalry, or artillery in baseline; no forts); **defend** when invaded; participate in **trade**; be **targets** of diplomacy (overtures, Join Empire / colony). Reactive only.
 - **Cannot:** Win the game; submit orders; initiate attacks; build units or research; own ships. Can be invaded without declaration of war by Great Powers (unless another GP has invested in the province).
 - **Capital:** Assigned at game setup (any owned province; sea-bound not required).
+- **Military level:** Tribes have **no military parity**. They are meant to be easily conquered by Great Powers. Their **effective military level** is always **1** (capped). At the start of each Combat phase, the System sets each Tribe's `effectiveMilitaryLevel` to 1, regardless of Great Power tech.
 
 ---
 
@@ -65,10 +66,10 @@ Extraction and ownership apply per faction; only Great Powers have stockpiles an
   When the System runs the game-setup pipeline per [game-setup.md](game-setup.md)  
   Then the System creates Faction records for each configured Great Power, Minor Nation, and Tribe, assigns them the correct faction type, and sets their capabilities (such as ability to submit orders, own provinces in specific regions, and win the game) according to the summary table in this document.
 
-- Given the combat system needs to compute `maxGreatPowerMilitaryLevel` and `effectiveMilitaryLevel` for Minors and Tribes as described under Minor Nations  
+- Given the combat system needs to compute `maxGreatPowerMilitaryLevel` and set `effectiveMilitaryLevel` for Minor Nations and Tribes as described under Minor Nations and Tribe  
   When the System starts a Combat phase per [turn-resolution-phases.md](../program/turn-resolution-phases.md)  
-  Then the System scans all Great Powers’ buildable regiment types per [military-units.md](military-units.md) and tech state, derives the highest available regiment era as `maxGreatPowerMilitaryLevel`, and sets each Minor Nation and Tribe’s `effectiveMilitaryLevel` to that value before resolving any battles that involve those factions.
+  Then the System scans all Great Powers’ buildable regiment types per [military-units.md](military-units.md) and tech state, derives the highest available regiment era as `maxGreatPowerMilitaryLevel`, sets each **Minor Nation**'s `effectiveMilitaryLevel` to that value, and sets each **Tribe**'s `effectiveMilitaryLevel` to **1** (no parity), before resolving any battles that involve those factions.
 
-- Given a Minor Nation or Tribe’s `effectiveMilitaryLevel` increases because `maxGreatPowerMilitaryLevel` increased at the start of a Combat phase  
+- Given a Minor Nation's `effectiveMilitaryLevel` increases because `maxGreatPowerMilitaryLevel` increased at the start of a Combat phase  
   When the System generates or updates that faction’s unit templates for use in battles during that phase  
   Then the System upgrades existing regiments to the appropriate higher-tier versions consistent with the new effective level while preserving any damage state those regiments already had, so that parity affects unit quality but not unit counts or general bonuses.

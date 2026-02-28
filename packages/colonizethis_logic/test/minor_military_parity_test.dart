@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('applyMinorMilitaryParity', () {
-    test('sets minor and tribe effectiveMilitaryLevel to max GP level', () {
+    test('sets minor effectiveMilitaryLevel to max GP level; tribes capped at 1', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -33,7 +33,7 @@ void main() {
 
       expect(result.minorNations[0].effectiveMilitaryLevel, 4);
       expect(result.minorNations[1].effectiveMilitaryLevel, 4);
-      expect(result.tribes[0].effectiveMilitaryLevel, 4);
+      expect(result.tribes[0].effectiveMilitaryLevel, 1);
     });
 
     test('uses 1 when no GP has militaryLevel set', () {
@@ -88,9 +88,9 @@ void main() {
       final m2 = MinorNation.fromJson(m.toJson());
       expect(m2.effectiveMilitaryLevel, 4);
 
-      const t = Tribe(id: 't1', effectiveMilitaryLevel: 3);
+      const t = Tribe(id: 't1', effectiveMilitaryLevel: 1);
       final t2 = Tribe.fromJson(t.toJson());
-      expect(t2.effectiveMilitaryLevel, 3);
+      expect(t2.effectiveMilitaryLevel, 1);
     });
   });
 }

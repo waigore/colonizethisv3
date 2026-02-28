@@ -46,7 +46,7 @@
 
 ## Defender Effective Level
 
-- The sim uses a **fixed defender effective military level** (4) for all trials. The script field `defenderFaction` is accepted for script format parity with sim-combat but does not change the level in this tool; in-game rules for minor/tribe level are defined in [factions.md](../game/factions.md) and are not applied here.
+- The sim uses a **fixed defender effective military level** (4) for all trials. The script field `defenderFaction` is accepted for script format parity with sim-combat but does not change the level in this tool; in-game rules for minor parity and tribe cap-at-1 are defined in [factions.md](../game/factions.md) and are not applied here.
 
 ---
 

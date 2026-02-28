@@ -10,7 +10,7 @@ Land military forces consist of **regiments** and **generals**. Regiments are or
 
 **Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md)). There is **no era gate**: if the unlocking tech is in the player's techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
 
-**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each Minor Nation and Tribe's `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase (see [factions.md](factions.md)).
+**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each **Minor Nation**'s `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase. **Tribes** do not receive parity; their `effectiveMilitaryLevel` is always **1** (see [factions.md](factions.md)).
 
 ---
 

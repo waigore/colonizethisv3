@@ -365,7 +365,11 @@ class ScenarioRunner {
         for (final tid in techIds) {
           techUnlocked[tid] = true;
         }
-        updatedPlayers.add(player.copyWith(techUnlocked: techUnlocked));
+        // SPEC/game/factions.md: parity uses max GP military level; set it from tech so Combat phase sees it.
+        final militaryLevel = militaryLevelForUnlocked(techUnlocked);
+        updatedPlayers.add(
+          player.copyWith(techUnlocked: techUnlocked, militaryLevel: militaryLevel),
+        );
       }
       game = game.copyWith(players: updatedPlayers);
 

@@ -91,6 +91,6 @@ The magnitude (e.g. 25% for industrial_machinery, and the value for modern_milit
 ## Acceptance criteria
 
 - **Regiment buildability:** A regiment type is buildable iff its unlocking tech (per this doc) is in the player's `techUnlocked` set.
-- **Military level:** Military level (1–4) = highest era among regiment types any Great Power can build; minors and tribes receive this as `effectiveMilitaryLevel` per [factions.md](factions.md).
+- **Military level:** Military level (1–4) = highest era among regiment types any Great Power can build; minors receive this as `effectiveMilitaryLevel` per [factions.md](factions.md); tribes are capped at 1 (no parity).
 - **Table as source of truth:** The tech table in this doc is the source of truth for tech id, name, era, prerequisites, and regiment/effect mapping.
 - **Fort prerequisites:** Fort level 2 requires Mine Engineering (see [tech-tree-gathering.md](tech-tree-gathering.md)); fort level 3 requires Modern Forts (this doc). Build validation and resolution: [siege-mechanics.md](siege-mechanics.md), [development-resolution.md](../program/development-resolution.md).
