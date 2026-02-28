@@ -75,6 +75,10 @@ bool isValidLandMove(
 /// Applies all MoveOrders in [orders] to the units in [regionData], returning
 /// an updated RegionData. Invalid moves are ignored.
 ///
+/// When [isDestinationOwnedByPlayer] is provided and returns true for
+/// (playerId, destFullProvinceId), the move is allowed without adjacency
+/// (movement within own provinces). SPEC/program/movement.md.
+///
 /// For **civilian** units (have [tileKey]), sets [tileKey] to a tile in the destination
 /// province when [tileKeysByRegionAndProvince] and [regionId] are provided; otherwise
 /// only [provinceId] is updated. For **military** units (no tileKey), updates [provinceId] only.
@@ -84,6 +88,8 @@ RegionData applyMoveOrdersToRegion(
   Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
   String? regionId,
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  bool Function(String playerId, String destFullProvinceId)?
+      isDestinationOwnedByPlayer,
 }) {
   if (moveOrdersByPlayerId.isEmpty || regionData.units.isEmpty) {
     return regionData;
@@ -109,11 +115,15 @@ RegionData applyMoveOrdersToRegion(
           ? ProvinceId.full(regionId, destProvinceId)
           : destProvinceId;
       // Topology uses local province ids; validate using region-scoped adjacency when region known.
+      // Movement within own provinces: no adjacency required. SPEC/program/movement.md.
+      final ownProvinceMove = isDestinationOwnedByPlayer != null &&
+          isDestinationOwnedByPlayer(playerId, destFullId);
       final fromLocal = ProvinceId.localIdFrom(currentProvinceId);
       final toLocal = ProvinceId.localIdFrom(destFullId);
-      final valid = regionId != null
-          ? isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal)
-          : isValidLandMove(topology, fromLocal, toLocal);
+      final valid = ownProvinceMove ||
+          (regionId != null
+              ? isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal)
+              : isValidLandMove(topology, fromLocal, toLocal));
       if (!valid) {
         continue;
       }
