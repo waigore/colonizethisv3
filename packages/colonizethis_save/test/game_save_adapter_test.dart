@@ -288,7 +288,7 @@ void main() {
           MinorNation(id: 'min1', effectiveMilitaryLevel: 4),
         ],
         tribes: [
-          Tribe(id: 'tribe1', effectiveMilitaryLevel: 4),
+          Tribe(id: 'tribe1', effectiveMilitaryLevel: 1),
         ],
       );
       adapter.save(box, game);
@@ -299,7 +299,7 @@ void main() {
       expect(loaded.worldState.oldWorld.units.single.medals, 3);
       expect(loaded.players.single.militaryLevel, 4);
       expect(loaded.minorNations.single.effectiveMilitaryLevel, 4);
-      expect(loaded.tribes.single.effectiveMilitaryLevel, 4);
+      expect(loaded.tribes.single.effectiveMilitaryLevel, 1);
     });
 
     test('save/load round-trip includes greatPowerColorOverride', () {

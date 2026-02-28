@@ -2,7 +2,7 @@ import 'capital_tile.dart';
 
 /// Tribe faction. SPEC/game/factions.md.
 /// New World only; capital assigned at game setup.
-/// Phase 3: effectiveMilitaryLevel for combat parity. SPEC/game/factions.md.
+/// Phase 3: effectiveMilitaryLevel for combat (always 1; no parity). SPEC/game/factions.md.
 class Tribe {
   const Tribe({
     required this.id,
@@ -17,7 +17,7 @@ class Tribe {
   final String? capitalProvinceId;
   final CapitalTile? capitalTile;
 
-  /// Combat parity: set to max GP military level at start of Combat phase. SPEC/game/factions.md.
+  /// Combat: set to 1 at start of Combat phase (no parity; tribes easily conquered). SPEC/game/factions.md.
   final int effectiveMilitaryLevel;
 
   Map<String, dynamic> toJson() => {

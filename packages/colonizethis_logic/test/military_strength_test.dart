@@ -513,7 +513,7 @@ void main() {
       expect(effectiveEraForFaction(game, 'minor1'), equals(2));
     });
 
-    test('returns effectiveMilitaryLevel for Tribe', () {
+    test('returns effectiveMilitaryLevel for Tribe (capped at 1 in-game)', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -527,12 +527,12 @@ void main() {
           Tribe(
             id: 'tribe1',
             displayName: 'Tribe',
-            effectiveMilitaryLevel: 3,
+            effectiveMilitaryLevel: 1,
           ),
         ],
       );
 
-      expect(effectiveEraForFaction(game, 'tribe1'), equals(3));
+      expect(effectiveEraForFaction(game, 'tribe1'), equals(1));
     });
 
     test('returns 4 for unknown faction', () {

@@ -513,6 +513,45 @@ class StateVerifier {
       }
     }
 
+    // Faction effective military level (SPEC/game/factions.md): Minor or Tribe [player] must have expected effectiveMilitaryLevel.
+    if (assertion.player != null && assertion.effectiveMilitaryLevel != null) {
+      final factionId = assertion.player!;
+      final expected = assertion.effectiveMilitaryLevel!;
+      MinorNation? minor;
+      for (final m in game.minorNations) {
+        if (m.id == factionId) {
+          minor = m;
+          break;
+        }
+      }
+      Tribe? tribe;
+      if (minor == null) {
+        for (final t in game.tribes) {
+          if (t.id == factionId) {
+            tribe = t;
+            break;
+          }
+        }
+      }
+      if (minor != null) {
+        if (minor.effectiveMilitaryLevel != expected) {
+          failures.add(
+            'Minor $factionId effectiveMilitaryLevel: expected $expected, got ${minor.effectiveMilitaryLevel}',
+          );
+        }
+      } else if (tribe != null) {
+        if (tribe.effectiveMilitaryLevel != expected) {
+          failures.add(
+            'Tribe $factionId effectiveMilitaryLevel: expected $expected, got ${tribe.effectiveMilitaryLevel}',
+          );
+        }
+      } else {
+        failures.add(
+          'Faction $factionId not found (effectiveMilitaryLevel applies to Minor or Tribe only)',
+        );
+      }
+    }
+
     return VerificationResult(
       passed: failures.isEmpty,
       failures: failures,
