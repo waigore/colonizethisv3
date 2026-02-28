@@ -70,6 +70,6 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 - **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
 - **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
-- **build_port:** Completion requires topology to be defined (topology-null behaviour is documented in a dedicated issue); port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
+- **build_port:** Completion requires topology to be defined. If topology is `null`, the build_port completion has no effect—no port is registered in `portsByProvinceSeaboard` and the transport level is not set on the tile. Therefore, build_port must only be offered/completed when topology is available. Port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
 - **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
 
