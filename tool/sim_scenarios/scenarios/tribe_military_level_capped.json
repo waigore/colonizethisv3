@@ -1,0 +1,39 @@
+{
+  "name": "tribe_military_level_capped",
+  "description": "SPEC/game/factions.md: Tribes have no military parity; effective military level always 1. GP with tech (military level 2); after turn 1 Combat phase parity step, tribe remains 1.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "tribeCount": 1
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"], ["p1", "p1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    },
+    "newWorld": {
+      "grid": [["p2", "sea2"], ["p2", "p2"]],
+      "nodes": [
+        {"id": "p2", "regionId": "newWorld", "type": "province"},
+        {"id": "sea2", "regionId": "newWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p2", "id2": "sea2"}]
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["organised_regiments"]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "province": "newWorld|p2", "owner": "tribe1"},
+    {"turn": 1, "player": "tribe1", "effectiveMilitaryLevel": 1}
+  ]
+}

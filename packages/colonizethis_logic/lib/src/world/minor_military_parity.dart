@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Minor military parity step. SPEC/game/factions.md, SPEC/program/turn-resolution-phases.md.
 ///
 /// At start of Combat phase: compute maxGreatPowerMilitaryLevel from all GPs;
-/// set each MinorNation and Tribe effectiveMilitaryLevel = max.
+/// set each MinorNation effectiveMilitaryLevel = max; set each Tribe effectiveMilitaryLevel = 1 (no parity).
 Game applyMinorMilitaryParity(Game game) {
   int maxLevel = 1;
   for (final player in game.players) {
@@ -16,9 +16,10 @@ Game applyMinorMilitaryParity(Game game) {
     updatedMinors.add(m.copyWith(effectiveMilitaryLevel: maxLevel));
   }
 
+  const tribeEffectiveLevel = 1;
   final updatedTribes = <Tribe>[];
   for (final t in game.tribes) {
-    updatedTribes.add(t.copyWith(effectiveMilitaryLevel: maxLevel));
+    updatedTribes.add(t.copyWith(effectiveMilitaryLevel: tribeEffectiveLevel));
   }
 
   if (updatedMinors.isEmpty && updatedTribes.isEmpty) return game;

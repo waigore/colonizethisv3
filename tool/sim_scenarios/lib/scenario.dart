@@ -250,6 +250,7 @@ class Assertion {
     this.provinceDisplayName,
     this.tileRoadLevel,
     this.generalCount,
+    this.effectiveMilitaryLevel,
   });
 
   /// Which turn to check (null = final state)
@@ -347,6 +348,9 @@ class Assertion {
 
   /// General count assertion (SPEC/game/military-generals.md). With [player]: expected number of generals for that Great Power.
   final int? generalCount;
+
+  /// Faction effective military level (SPEC/game/factions.md). With [player] (Minor or Tribe faction id): expected effectiveMilitaryLevel (minors get parity; tribes always 1).
+  final int? effectiveMilitaryLevel;
 }
 
 /// Type of value matching for assertions.
@@ -617,6 +621,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     provinceDisplayName: json['provinceDisplayName'] as String?,
     tileRoadLevel: json['tileRoadLevel'] as int?,
     generalCount: json['generalCount'] as int?,
+    effectiveMilitaryLevel: json['effectiveMilitaryLevel'] as int?,
   );
 }
 

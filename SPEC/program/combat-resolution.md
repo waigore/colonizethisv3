@@ -43,7 +43,7 @@ Before running the per-engagement resolver, cap each side’s participating regi
 Steps:
 
 1. Aggregate strength per side per game/combat.md § Rules (Strength).
-2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
+2. For Minor Nation defenders, apply effective military level per [factions.md](../game/factions.md); for Tribe defenders, effective military level is always 1 (no parity).
 3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
 4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). Apply **leader bonus** per [leader-bonuses.md](../game/leader-bonuses.md): multiplier from each side's GP leaderKey (attackerLeaderMultiplier, defenderLeaderMultiplier). Apply **general morale aura** per [military-generals.md](../game/military-generals.md): 5% strength bonus per general medal, max 20%. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
 5. Compute winner and casualties. Pure function; no side effects.
