@@ -1260,7 +1260,6 @@ void main() {
     });
 
     group('validateDiplomatic', () {
-      const ow = 'oldWorld';
       final emptyTopology = MapTopology(nodes: const [], edges: const []);
 
       Game _gpMinorBaseGame({

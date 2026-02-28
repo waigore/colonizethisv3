@@ -92,9 +92,13 @@ Per [world-model-identity.md](world-model-identity.md):
 |---|---|---|
 | Explore max turns | 3 | Scaled by province size |
 | Prospect turns per tile | 1 | |
-| Spy fog decay turns | 5 | When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
+| Spy fog decay turns | 5 | **Fixed constant for MVP** (not ruleset-configurable). When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
 | Old World initial visibility | fogged | Own = fully visible |
 | New World initial visibility | unknown | |
+
+**Notes on non-configurable values:**
+
+- **Exploration scale** (`maxTilesInAnyProvinceInRegion`): This value is **derived from map topology**, not a ruleset parameter. It is computed as the maximum tile count of any province in the same region as the exploring unit's province. This ensures exploration time is comparable across provinces within the same region. See [world-model.md](world-model.md) and [map-topology.md](map-topology.md).
 
 ---
 

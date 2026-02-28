@@ -82,6 +82,7 @@ class Game {
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
+    this.richesCashMultiplier = 1.0,
   });
 
   final String id;
@@ -126,6 +127,10 @@ class Game {
   /// Victory state when game has been won. Null when game is ongoing.
   final VictoryState? victory;
 
+  /// Multiplier for riches-to-treasury conversion. Default 1.0. Scenario/ruleset
+  /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
+  final double richesCashMultiplier;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'worldState': worldState.toJson(),
@@ -151,6 +156,7 @@ class Game {
         if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
           'greatPowerColorOverride': greatPowerColorOverride!.map((k, v) => MapEntry(k, v)),
         if (victory != null) 'victory': victory!.toJson(),
+        if (richesCashMultiplier != 1.0) 'richesCashMultiplier': richesCashMultiplier,
       };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -209,6 +215,7 @@ class Game {
         ),
       ),
     );
+    final richesCashMultiplier = (json['richesCashMultiplier'] as num?)?.toDouble() ?? 1.0;
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(Map<String, dynamic>.from(json['worldState'] as Map)),
@@ -233,6 +240,7 @@ class Game {
           : json['victory'] is Map
               ? VictoryState.fromJson(Map<String, dynamic>.from(json['victory'] as Map))
               : null,
+      richesCashMultiplier: richesCashMultiplier,
     );
   }
 
@@ -254,6 +262,7 @@ class Game {
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
+    double? richesCashMultiplier,
   }) {
     return Game(
       id: id ?? this.id,
@@ -273,6 +282,7 @@ class Game {
       globalGameSeed: globalGameSeed ?? this.globalGameSeed,
       greatPowerColorOverride: greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
+      richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
     );
   }
 
@@ -297,7 +307,8 @@ class Game {
           _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
           globalGameSeed == other.globalGameSeed &&
           _mapListEquals(greatPowerColorOverride, other.greatPowerColorOverride) &&
-          victory == other.victory;
+          victory == other.victory &&
+          richesCashMultiplier == other.richesCashMultiplier;
 
   @override
   int get hashCode => Object.hash(
@@ -318,6 +329,7 @@ class Game {
         globalGameSeed,
         greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
         victory,
+        richesCashMultiplier,
       );
 
   static bool _mapListEquals(Map<String, List<int>>? a, Map<String, List<int>>? b) {
