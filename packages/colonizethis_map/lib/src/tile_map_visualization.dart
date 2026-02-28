@@ -44,7 +44,7 @@ Uint8List renderTileMapToPng(
   final showLandSeeds = landSeedPositions != null && landSeedPositions.isNotEmpty;
   final useLandSeedByContinent = showLandSeeds &&
       landSeedContinentIndices != null &&
-      landSeedContinentIndices.length == landSeedPositions!.length;
+      landSeedContinentIndices.length == landSeedPositions.length;
   final showContinentSeeds = continentSeedPositions != null && continentSeedPositions.isNotEmpty;
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -60,7 +60,7 @@ Uint8List renderTileMapToPng(
   if (showContinentSeeds) legendLines += 1;
   if (showLandSeeds) {
     if (useLandSeedByContinent) {
-      final maxContinent = landSeedContinentIndices!.reduce((a, b) => a > b ? a : b);
+      final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
       legendLines += maxContinent + 1;
     } else {
       legendLines += 1;
@@ -127,7 +127,7 @@ Uint8List renderTileMapToPng(
   if (showContinentSeeds) {
     const radius = 5;
     final fillColor = image.getColor(continentSeedMarkerRgb.$1, continentSeedMarkerRgb.$2, continentSeedMarkerRgb.$3);
-    for (final (sx, sy) in continentSeedPositions!) {
+    for (final (sx, sy) in continentSeedPositions) {
       final cx = sx * cellSize + cellSize ~/ 2;
       final cy = sy * cellSize + cellSize ~/ 2;
       img.fillCircle(image, x: cx, y: cy, radius: radius, color: fillColor);
@@ -138,10 +138,10 @@ Uint8List renderTileMapToPng(
   // Land seed markers (cell centers); color by continent when indices provided. Small circles with black outline.
   if (showLandSeeds) {
     const radius = 3;
-    for (var i = 0; i < landSeedPositions!.length; i++) {
+    for (var i = 0; i < landSeedPositions.length; i++) {
       final (sx, sy) = landSeedPositions[i];
       final (r, g, b) = useLandSeedByContinent
-          ? regionPalette[landSeedContinentIndices![i] % regionPalette.length]
+          ? regionPalette[landSeedContinentIndices[i] % regionPalette.length]
           : landSeedMarkerRgb;
       final markerColor = image.getColor(r, g, b);
       final cx = sx * cellSize + cellSize ~/ 2;
@@ -223,7 +223,7 @@ Uint8List renderTileMapToPng(
     }
     if (showLandSeeds) {
       if (useLandSeedByContinent) {
-        final maxContinent = landSeedContinentIndices!.reduce((a, b) => a > b ? a : b);
+        final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
         for (var c = 0; c <= maxContinent; c++) {
           final y = legendY0 + row * legendLineHeight;
           final (r, g, b) = regionPalette[c % regionPalette.length];
@@ -283,7 +283,7 @@ Uint8List renderTileMapToPng(
     }
     if (showLandSeeds) {
       if (useLandSeedByContinent) {
-        final maxContinent = landSeedContinentIndices!.reduce((a, b) => a > b ? a : b);
+        final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
         for (var c = 0; c <= maxContinent; c++) {
           final y = legendY0 + row * legendLineHeight;
           final (r, g, b) = regionPalette[c % regionPalette.length];
