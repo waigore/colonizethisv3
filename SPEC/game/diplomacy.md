@@ -17,7 +17,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 ### Tribe vs Minor War Rule
 
 - **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
-- **Tribes (New World):** No declaration required unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe in that province; then war must be declared on that GP. Any province id used in diplomacy state or in orders (e.g. “in that province”, purchase_land target) must be in prefixed form and resolved per [world-model-identity.md](world-model-identity.md).
+- **Tribes (New World):** No declaration required to attack unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe. If such relations exist, war must be declared on that GP before attacking the Tribe. Diplomatic relations with Tribes are per-nation (not per-province); an Embassy with a Tribe applies to all its provinces. The phrase "in that province" refers to the attack location, not relation scope. Any province id used in diplomacy state or in orders (e.g. "in that province", purchase_land target) must be in prefixed form and resolved per [world-model-identity.md](world-model-identity.md).
 
 ### GP–GP Rules
 
