@@ -112,7 +112,7 @@ RegionData applyMoveOrdersToRegion(
       final fromLocal = ProvinceId.localIdFrom(currentProvinceId);
       final toLocal = ProvinceId.localIdFrom(destFullId);
       final valid = regionId != null
-          ? isValidLandMoveInRegion(topology, regionId!, fromLocal, toLocal)
+          ? isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal)
           : isValidLandMove(topology, fromLocal, toLocal);
       if (!valid) {
         continue;
