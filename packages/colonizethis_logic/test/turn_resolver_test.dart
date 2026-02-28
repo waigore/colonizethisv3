@@ -495,6 +495,64 @@ void main() {
           greaterThanOrEqualTo(0));
     });
 
+    test('production phase uses defaultAssignmentsByPlayerId per player', () {
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [], units: []),
+          newWorld: RegionData(provinces: [], units: []),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: false,
+            stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.timber.id, 20)
+                .applyDelta(CommodityCatalog.iron.id, 0)
+                .applyDelta(CommodityCatalog.coal.id, 0),
+            workerPool: const WorkerPool(peasants: 10),
+          ),
+          Player(
+            id: 'p2',
+            displayName: 'P2',
+            isHuman: false,
+            stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.timber.id, 20)
+                .applyDelta(CommodityCatalog.iron.id, 20)
+                .applyDelta(CommodityCatalog.coal.id, 10),
+            workerPool: const WorkerPool(peasants: 15),
+          ),
+        ],
+      );
+      final defaultAssignmentsByPlayerId = <String, List<AssignedRecipe>>{
+        'p1': const [
+          AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+        ],
+        'p2': const [
+          AssignedRecipe(
+            recipeId: 'castIron_from_timber_iron_coal',
+            assignedLabour: 15,
+          ),
+        ],
+      };
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        defaultAssignments: const [],
+        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      );
+      final player1 = next.playerById('p1')!;
+      final player2 = next.playerById('p2')!;
+      expect(player1.stockpile.quantityOf(CommodityCatalog.lumber.id), 5);
+      expect(player1.stockpile.quantityOf(CommodityCatalog.castIron.id), 0);
+      expect(player2.stockpile.quantityOf(CommodityCatalog.castIron.id), 3);
+      expect(player2.stockpile.quantityOf(CommodityCatalog.lumber.id), 0);
+    });
+
     test(
         'one full turn with combat: MoveOrder into enemy province, casualties and province flip',
         () {

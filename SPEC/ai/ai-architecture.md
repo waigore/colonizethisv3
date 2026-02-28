@@ -30,7 +30,7 @@ Behavior trees pick top-level goals; utility AI scores and selects concrete obje
 ### Turn Pipeline (per AI Great Power)
 1. **Perception** — Derive observable snapshot: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
 2. **Goal selection** — Choose strategy (e.g. weighted choice over goals) using personality weights and hidden agenda modifiers.
-3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders.
+3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders. The **economy planner** also produces **production assignments** (worker allocation to recipes) and a **cargo preference** for naval/build; see [economy-planner.md](economy-planner.md).
 4. **Execution** — Combine, cap, and validate orders; emit dialogue/mood events. Strategic AI may emit **optional** agenda-flavoured dialogue and a matching base PortraitMoodEvent for each AI leader on a deterministic cadence derived from the dialogue seed (see [dialogue-and-mood.md](dialogue-and-mood.md) § When to emit for `kDialogueTurnsBetweenComments` and cadence rules).
 5. **Tactical** — Quick Battle: CP-based actions per lane, deterministic given state and seed.
 
@@ -54,6 +54,7 @@ Seeded randomness selects among acceptable candidates; personality weights bias 
 Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds: perception, goals, economy, military, diplomacy, research, tactical, dialogue, agenda. Same save + seeds → same orders and events.
 
 ## Interactions
+- [economy-planner.md](economy-planner.md) — worker allocation (production), cargo preference
 - [ai-personalities.md](ai-personalities.md) — per-leader weights
 - [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
 - [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
