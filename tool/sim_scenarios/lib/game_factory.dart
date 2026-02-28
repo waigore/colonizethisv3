@@ -162,7 +162,7 @@ class GameFactory {
                   : Resource.values.byName(e as String))
               .toList())
           .toList();
-      if (resourceGrid!.any((row) => row.length != width)) {
+      if (resourceGrid.any((row) => row.length != width)) {
         resourceGrid = null;
       }
     }
