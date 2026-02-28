@@ -465,9 +465,13 @@ Game _runConsumptionPhase(
 
 Game _runRichesToTreasuryPhase(Game game) {
   final updatedPlayers = <Player>[];
+  final multiplier = game.richesCashMultiplier;
 
   for (final player in game.players) {
-    final result = resolveRichesToTreasury(stockpile: player.stockpile);
+    final result = resolveRichesToTreasury(
+      stockpile: player.stockpile,
+      richesCashMultiplier: multiplier,
+    );
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,
