@@ -16,6 +16,8 @@ import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
@@ -29,6 +31,9 @@ class ShellScreen extends StatefulComponent {
     required this.onExit,
     this.dataDirOverride,
     this.game,
+    this.onTurnProcessed,
+    this.onClearGame,
+    this.onLoadGame,
   });
 
   final CttermRoute route;
@@ -37,6 +42,12 @@ class ShellScreen extends StatefulComponent {
   final Game? game;
   final void Function(CttermRoute) onNavigate;
   final void Function() onExit;
+  /// Callback when turn is processed, receives updated game state.
+  final void Function(Game)? onTurnProcessed;
+  /// Callback to clear game state (e.g., when returning to main menu).
+  final void Function()? onClearGame;
+  /// Callback to load a game by ID.
+  final Future<void> Function(String gameId)? onLoadGame;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -102,9 +113,10 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.loadGame:
         return LoadGameScreen(
           dataDirOverride: component.dataDirOverride,
-          onLoad: (gameId) {
-            _log.d('tui:nav: Load gameId=$gameId -> in-game shell');
-            component.onNavigate(CttermRoute.inGameShell);
+          onLoad: (gameId) async {
+            _log.d('tui:nav: Load gameId=$gameId');
+            // Use the app's loadGame callback to load and navigate
+            await component.onLoadGame?.call(gameId);
           },
           onDelete: (gameId) async {
             _log.i('tui:save: deleting gameId=$gameId');
@@ -127,18 +139,32 @@ class _ShellScreenState extends State<ShellScreen> {
           game: component.game,
           onNavigate: component.onNavigate,
           onEndTurn: () async {
-            // TODO: Actually process turn when game logic is wired up
-            // For now, this is a stub. Full turn processing requires:
-            // - MapTopology from loadMapData
-            // - Orders from player input
-            // - Calling resolveTurnForGame from colonizethis_logic
-            // After processing, check game.victory and navigate accordingly.
-            _log.d('tui:game: end turn (stub)');
+            final game = component.game;
+            if (game == null) {
+              _log.w('tui:game: no game to process turn');
+              return;
+            }
+            _log.d('tui:game: processing turn ${game.worldState.turnState.turnNumber}');
+            
+            // Process turn with minimal topology and empty orders for MVP
+            // Full implementation would load map data and collect player orders
+            const emptyOrders = Orders();
+            const emptyTopology = MapTopology();
+            final nextGame = resolveTurnForGame(
+              game: game,
+              topology: emptyTopology,
+              orders: emptyOrders,
+            );
+            
+            // Notify parent of updated game state
+            component.onTurnProcessed?.call(nextGame);
+            _log.i('tui:game: turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
           },
           onVictory: _triggerVictory,
           onDefeat: _triggerDefeat,
           onExitToMainMenu: () {
             _log.d('tui:nav: exit to main menu');
+            component.onClearGame?.call();
             component.onNavigate(CttermRoute.mainMenu);
           },
         );
