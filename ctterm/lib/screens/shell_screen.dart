@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/screens/game_setup_screen.dart';
+import 'package:ctterm/screens/generating_world_screen.dart';
 import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
@@ -85,7 +86,10 @@ class _ShellScreenState extends State<ShellScreen> {
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
         );
       case CttermRoute.generatingWorld:
-        return const StubScreen(title: 'Generating World');
+        return GeneratingWorldScreen(
+          onComplete: () => component.onNavigate(CttermRoute.inGameShell),
+          onCancel: () => component.onNavigate(CttermRoute.mainMenu),
+        );
       case CttermRoute.settings:
         return SettingsScreen(
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
