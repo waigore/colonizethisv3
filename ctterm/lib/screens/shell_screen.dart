@@ -16,6 +16,7 @@ import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/screens/units_screen.dart';
 import 'package:ctterm/screens/development_screen.dart';
+import 'package:ctterm/screens/production_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -203,7 +204,10 @@ class _ShellScreenState extends State<ShellScreen> {
           },
         );
       case CttermRoute.production:
-        return const StubScreen(title: 'Production');
+        return ProductionScreen(
+          game: component.game!,
+          onNavigate: component.onNavigate,
+        );
       case CttermRoute.academy:
         return const StubScreen(title: 'Academy');
       case CttermRoute.shipyard:
