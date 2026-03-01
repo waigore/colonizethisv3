@@ -10,6 +10,7 @@ import 'package:ctterm/screens/generating_world_screen.dart';
 import 'package:ctterm/screens/in_game_shell_screen.dart';
 import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
+import 'package:ctterm/screens/map_context_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
@@ -39,7 +40,7 @@ class ShellScreen extends StatefulComponent {
 
 class _ShellScreenState extends State<ShellScreen> {
   // Game state for victory/defeat screens
-  int _currentTurn = 1;
+  final int _currentTurn = 1;
   
   void _triggerVictory() {
     _log.d('tui:game: victory triggered, turn $_currentTurn');
@@ -122,6 +123,10 @@ class _ShellScreenState extends State<ShellScreen> {
             _log.d('tui:nav: exit to main menu');
             component.onNavigate(CttermRoute.mainMenu);
           },
+        );
+      case CttermRoute.mapContext:
+        return MapContextScreen(
+          onNavigate: component.onNavigate,
         );
       case CttermRoute.units:
         return const StubScreen(title: 'Units');

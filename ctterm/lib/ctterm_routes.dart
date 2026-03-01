@@ -8,6 +8,7 @@ enum CttermRoute {
   generatingWorld,
   settings,
   inGameShell,
+  mapContext,
   units,
   development,
   production,
