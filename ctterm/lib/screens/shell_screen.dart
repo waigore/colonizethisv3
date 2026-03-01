@@ -17,6 +17,7 @@ import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/screens/units_screen.dart';
 import 'package:ctterm/screens/development_screen.dart';
 import 'package:ctterm/screens/production_screen.dart';
+import 'package:ctterm/screens/academy_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -209,7 +210,14 @@ class _ShellScreenState extends State<ShellScreen> {
           onNavigate: component.onNavigate,
         );
       case CttermRoute.academy:
-        return const StubScreen(title: 'Academy');
+        return AcademyScreen(
+          game: component.game!,
+          orders: component.orders ?? const Orders(),
+          onNavigate: component.onNavigate,
+          onOrdersChanged: (Orders orders) {
+            component.onOrdersChanged?.call(orders);
+          },
+        );
       case CttermRoute.shipyard:
         return const StubScreen(title: 'Shipyard');
       case CttermRoute.diplomacy:
