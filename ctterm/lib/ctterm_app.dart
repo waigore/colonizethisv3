@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart';
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/screens/shell_screen.dart';
+import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
@@ -29,13 +30,29 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Loads a game by ID and navigates to in-game shell.
   Future<void> _loadGame(String gameId) async {
-    // TODO: Actually load the game using save_service
-    // For now, this is a placeholder - full implementation would:
-    // 1. Call loadGame(gameId, dataDirOverride) from save_service
-    // 2. Store the loaded game in _currentGame
-    // 3. Navigate to inGameShell
-    _log.d('tui:app: load game $gameId (stub)');
-    setState(() => _route = CttermRoute.inGameShell);
+    _log.d('tui:app: loading game $gameId');
+    final game = await loadGame(gameId, component.dataDirOverride);
+    if (game == null) {
+      _log.e('tui:app: failed to load game $gameId');
+      return;
+    }
+    _log.i('tui:app: loaded game $gameId, turn ${game.worldState.turnState.turnNumber}');
+    setState(() {
+      _currentGame = game;
+      _route = CttermRoute.inGameShell;
+    });
+  }
+
+  /// Callback when turn is processed, updates game state.
+  void _onTurnProcessed(Game updatedGame) {
+    _log.d('tui:app: turn processed, now turn ${updatedGame.worldState.turnState.turnNumber}');
+    setState(() => _currentGame = updatedGame);
+  }
+
+  /// Clears game state (e.g., when returning to main menu).
+  void _clearGame() {
+    _log.d('tui:app: clearing game state');
+    setState(() => _currentGame = null);
   }
 
   void _exit() {
@@ -52,6 +69,9 @@ class _CttermAppState extends State<CttermApp> {
         game: _currentGame,
         onNavigate: _navigateTo,
         onExit: _exit,
+        onTurnProcessed: _onTurnProcessed,
+        onClearGame: _clearGame,
+        onLoadGame: _loadGame,
       ),
     );
   }
