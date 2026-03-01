@@ -6,6 +6,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/screens/game_setup_screen.dart';
 import 'package:ctterm/screens/generating_world_screen.dart';
+import 'package:ctterm/screens/in_game_shell_screen.dart';
 import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
@@ -95,7 +96,17 @@ class _ShellScreenState extends State<ShellScreen> {
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
         );
       case CttermRoute.inGameShell:
-        return const StubScreen(title: 'In-game shell');
+        return InGameShellScreen(
+          onNavigate: component.onNavigate,
+          onEndTurn: () async {
+            // TODO: Actually process turn when game logic is wired up
+            _log.d('tui:game: end turn (stub)');
+          },
+          onExitToMainMenu: () {
+            _log.d('tui:nav: exit to main menu');
+            component.onNavigate(CttermRoute.mainMenu);
+          },
+        );
       case CttermRoute.units:
         return const StubScreen(title: 'Units');
       case CttermRoute.development:
