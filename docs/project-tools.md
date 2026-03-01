@@ -6,6 +6,32 @@ The list below is the single place for **what tools exist** and **how to invoke 
 
 ---
 
+## ctterm
+
+Terminal UI for the full single-player ColonizeThis experience. Pure Dart (Nocterm); no Flutter. Spec: [SPEC/tui/ctterm.md](../SPEC/tui/ctterm.md).
+
+**Invocation**
+
+```bash
+dart run ctterm
+```
+
+Or from project root with Melos:
+
+```bash
+melos run ctterm
+```
+
+**Options**
+
+- `--data-dir <path>` — Override the default Hive data directory (default: `$HOME/.colonizethis_ctterm`, or `$XDG_DATA_HOME/colonizethis_ctterm` on Linux when set).
+
+**Behaviour**
+
+- Shows Main Menu first (New Game, Load Game, Settings, Quit). Load Game is enabled only when at least one save exists in the ctterm data directory. Saves are separate from app/ctdev.
+
+---
+
 ## init_game
 
 Game creation: generate Old World and New World maps, assign provinces and capitals to Great Powers, Minor Nations, and Tribes, build initial world state. Outputs combined map PNG (with ownership and capitals) and faction setup markdown. Does not advance turns. Spec: [SPEC/program/init-game-tool.md](../SPEC/program/init-game-tool.md).

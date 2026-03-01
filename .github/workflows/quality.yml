@@ -24,6 +24,7 @@ jobs:
           filters: |
             tests:
               - 'packages/**'
+              - 'ctterm/**'
               - 'tool/sim_scenarios/**'
               - 'tool/sim_combat_montecarlo/**'
               - 'tool/sim_combat/**'
@@ -70,6 +71,17 @@ jobs:
             (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
             (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
           done
+
+      - name: Test ctterm (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          if [ -d ctterm/test ]; then
+            (cd ctterm && dart test --coverage=coverage -j 4 --reporter=compact)
+            (cd ctterm && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
 
       - name: Test tool packages (Dart)
         if: steps.changes.outputs.tests == 'true'

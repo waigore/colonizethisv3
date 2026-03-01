@@ -31,6 +31,13 @@ if [ -d ctdev/test ]; then
 fi
 
 echo ""
+echo "=== Test ctterm (Dart) ==="
+if [ -d ctterm/test ]; then
+  (cd ctterm && dart test --coverage=coverage -j 4 --reporter=compact)
+  (cd ctterm && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+fi
+
+echo ""
 echo "=== Test tool packages (Dart) ==="
 for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
   [ -d "$dir/test" ] || continue
