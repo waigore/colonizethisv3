@@ -1,0 +1,2 @@
+# Image manipulation tools (pytool). See SPEC/ui/pytool-image-tools.md.
+Pillow>=10.0.0

@@ -74,14 +74,86 @@ When the pixel-art variant is used, the following assets are required. Check `as
 
 **Style lock:** UXD 02 (palette, no anti-aliasing, 1x grid, 16th/17th century); UXD 06 for PixelLab prompt injection when generating.
 
+---
+
+## Main menu pixel aesthetic
+
+Single source of truth for look/feel, colour palette, and asset pipeline for the pixel-art variant. Style reference: `ui_main_menu_button.png` only; other existing PNGs are disregarded for look-and-feel.
+
+### Aesthetic
+
+16th-century European / colonial study room. Sturdy, slightly luxurious; dark wood and golden embellishments; pixel art, no anti-aliasing, 1x grid (align with UXD 02).
+
+### Color palette (from reference button)
+
+- **Frame:** deep reddish-brown (e.g. `#3E1F1A`–`#5A332C`), subtle wood grain.
+- **Inner panel:** warmer reddish-brown (e.g. `#A85C3A`–`#C87A5B`), lighter wood.
+- **Accents:** bright gold filigree — highlight `#E8C838`–`#FFED7F`, shadow `#B08B2A`; dark edge `#7D472D`.
+
+Use this palette as the single source of truth for all generated assets.
+
+### Background
+
+Interior of a 16th-century study: statue, globe, drawing table, windows/doors, and other period-appropriate elements; same palette and pixel style. Asset: `ui_main_menu_background.png`.
+
+### Logo
+
+**Fluttering flag with text "ColonizeThis".** Colonial-style fabric flag (not wooden banner); dark reddish brown and gold brass; text "ColonizeThis" on the asset. Optional: Flutter can overlay " V3" or full title. Asset: `ui_main_menu_logo.png` (static), `ui_main_menu_logo_animated.png` (spritesheet when available).
+
+**Logo animation:** flag fluttering in wind. **Primary:** PixelLab `animate_with_text` with static flag as reference, action "flag fluttering in wind" / "gentle waving"; output spritesheet. **Fallback:** If PixelLab output is unusable, Flutter-only — no spritesheet; subtle periodic `Transform` on static logo. Asset when used: `ui_main_menu_logo_animated.png`.
+
+### Buttons
+
+Base asset: `ui_main_menu_button.png`. **Idle:** subtle glint/shimmer (PixelLab spritesheet; Flutter plays it). **Hover (pointer enter):** (1) Gentle bobbing starts, stops on pointer exit — Flutter only (`Transform.translate`, 2–3 px, subtle). (2) Hovered button uses a slightly darker palette (Flutter `ColorFilter` or semi-transparent dark overlay). **On hover exit:** bobbing stops, palette returns to normal. All motion and contrast changes stay subtle. Glint spritesheet when used: `ui_main_menu_button_animated.png`.
+
+### Typography (initial)
+
+Use a **serif font** for title and button labels in the pixel-art variant (basic colonial theme; e.g. Cinzel, Merriweather, or bundled serif). Pixel font: to be defined and created later; out of scope for this spec.
+
+### MCP tool mapping
+
+| Asset / task | MCP tool | Purpose |
+|--------------|----------|---------|
+| Background (study room) | **PixelLab Bitforge** | Generate from description; `style_image_path` = button PNG; `style_strength` ~60–80. |
+| Logo (static, fluttering flag) | **PixelLab Pixflux** | Colonial flag with text "ColonizeThis"; 256×64. |
+| Logo animation (flag fluttering) | **PixelLab `animate_with_text`** (primary) / **Flutter** (fallback) | Primary: flag as reference, action "flag fluttering in wind"; spritesheet. Fallback: Flutter-only Transform. |
+| Optional panel / frame | **PixelLab Bitforge** | Same style reference. |
+| Palette extraction | **pixel-mcp `analyze_reference`** | Optional; refine Bitforge prompts. |
+| Resize / composite | **Imagesorcery** | Only if needed. |
+| Button contrast/wood (post-process) | **pytool** | [pytool-image-tools.md](pytool-image-tools.md): `button_contrast_wood_pil.py` for PNG; `button_contrast_wood.py` for pixel JSON. Run with `.venv_pixel` activated. |
+| Button animation spritesheet (glint) | **PixelLab `animate_with_text`** | Glint/shimmer only; button as reference; n_frames 4–6. |
+| Button playback, hover bobbing/tint | **Flutter** | Idle: play glint spritesheet. Hover: bobbing + darker tint. |
+| Font (colonial theme) | **None (asset / Google Fonts)** | Serif (e.g. Cinzel, Merriweather). Pixel font deferred. |
+
+All new pixel-art imagery (background, logo, optional panel) is generated with **Bitforge** using the button PNG as the sole style reference. Logo animation: **PixelLab `animate_with_text`** (primary) or Flutter-only (fallback). Button glint: **PixelLab `animate_with_text`**.
+
+### Pixel-art asset table (extended)
+
+| Asset id | size (px) | Notes |
+|----------|-----------|-------|
+| main_menu_background | e.g. 640×360 / 800×450 | 16th-century study room interior. Bitforge, style ref = button. |
+| main_menu_logo | 256×64 | Fluttering flag with text "ColonizeThis". Pixflux. |
+| main_menu_logo_animated | (spritesheet) | Optional. Flag fluttering; PixelLab `animate_with_text` primary / Flutter fallback. |
+| main_menu_button | 400×48 | Existing. Static fallback. |
+| main_menu_button_animated | (spritesheet) | Optional. Glint only. PixelLab `animate_with_text`. |
+| main_menu_panel | 64×64 | Optional. Wooden panel. |
+
+---
+
 ### PixelLab prompts (exact wording)
 
-For each asset, the **exact** wording used in PixelLab `generate_image_pixflux` is recorded below so regeneration is reproducible.
+For each asset, the **exact** wording used in PixelLab is recorded below so regeneration is reproducible.
 
-**main_menu_logo (textless banner), 256×64**
+**main_menu_background (Bitforge or Pixflux), then upscale to 640×360**
 
-- description: `Colonial 16th 17th century pixel art wooden banner or title frame, carved wood with brass corner rivets, no text no letters, parchment and dark wood and gold brass, crisp pixel art, UI element, limited palette.`
-- outline: single color black outline; shading: flat shading; detail: medium detail; text_guidance_scale: 12.
+- description: `Pixel art scene. One wooden statue visible in the room. One globe on a wooden stand. One drawing table with papers. Window with daylight. Wooden walls and paneling. Door. 16th century study interior. Dark reddish brown wood and gold brass accents. Crisp pixels, no anti-aliasing.` (Bitforge: add "Same color palette as reference.")
+- **Bitforge:** style_image_path = button PNG (resize to 128×128); style_strength 70; output 128×128; then resize to 640×360.
+- **Pixflux:** width 256, height 144; text_guidance_scale 12; outline single color black outline; shading basic shading; detail medium detail; then resize to 640×360.
+
+**main_menu_logo (fluttering flag with text "ColonizeThis"), 256×64**
+
+- **Pixflux (used):** description: `Pixel art colonial style flag or banner with text ColonizeThis. 16th 17th century, dark reddish brown and gold brass, fabric flag, crisp pixel art no anti-aliasing, limited palette. No wooden frame.` width 256, height 64; text_guidance_scale 12; outline: single color black outline; shading: basic shading; detail: medium detail.
+- **Logo animation (PixelLab `animate_with_text`):** description: `Colonial style fabric flag with text ColonizeThis, dark brown and gold`; action: `flag fluttering in wind, gentle waving`; reference_image_path: static logo (resize to 128×128 if API requires square); width 128, height 128; n_frames 6; save_to_file: `ui_main_menu_logo_animated.png`. If API rejects non-square, use 128×128 reference and output then resize/stretch to 256×64 for display.
 
 **main_menu_button, 400×48**
 

@@ -22,6 +22,7 @@ dependencies:
   colonizethis_logic:
   colonizethis_ai:
   widgetbook: ^3.22.0
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   colonizethis_test:
@@ -33,7 +34,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/images/ui_main_menu_logo.png
-    - assets/images/ui_main_menu_button.png
-    - assets/images/ui_main_menu_panel.png
 
