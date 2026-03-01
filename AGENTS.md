@@ -29,6 +29,7 @@ Apply these when working in the indicated areas (by path or topic).
 | **colonizethis-code-review.mdc** | `**/*.dart` | Checklist: function &lt; 20 lines, widget &lt; ~60 lines, no UI+logic mix, constants for strings, explicit types, spec alignment, logging, reuse, tests. |
 | **colonizethis-lifecycle.mdc** | `**/*.dart` | Flame: `onLoad` (init), `onMount`/`onRemove` (subscribe/cleanup), `update`/`render` (tick/paint). Flutter: `initState`/`dispose`. |
 | **colonizethis-assets.mdc** | `**/*.dart`, `**/pubspec.yaml`, `**/assets/**` | Asset dirs: `assets/images/`, `assets/audio/`, `assets/data/`. Snake_case naming. Load in Flame `onLoad()`; use caches. |
+| **colonizethis-tui.mdc** | `SPEC/tui/**`, `ctterm/**` | TUI (ctterm): SPEC/tui and ctterm.md source of truth; Given–When–Then for TUI AC; keyboard-first; Nocterm; log prefixes `tui:*`; province identity (prefixed id); no Flutter in ctterm. |
 
 ## Quick reference for agents
 
