@@ -13,6 +13,7 @@ final log_pkg.Logger _log = log_pkg.Logger();
 /// - ASCII map display (simplified for MVP)
 /// - HUD with turn/year, treasury
 /// - Keyboard navigation to panels (U, D, P, A, S, I, T, V)
+/// - Map context (M)
 /// - End turn (E or Enter)
 /// - Pause/Options (O or Escape)
 class InGameShellScreen extends StatefulComponent {
@@ -108,6 +109,13 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         
+        // Map context (M key)
+        if (c == 'm') {
+          _log.d('tui:nav: in-game shell -> map context');
+          component.onNavigate(CttermRoute.mapContext);
+          return true;
+        }
+        
         // End turn
         if (c == 'e' || key == LogicalKey.enter) {
           _handleEndTurn();
@@ -175,6 +183,9 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           ? Text('Processing turn...', style: TextStyle(color: Colors.yellow))
           : Row(
               children: [
+                const Text('['),
+                Text('M', style: TextStyle(color: Colors.cyan)),
+                const Text(']ap Context '),
                 const Text('['),
                 Text('U', style: TextStyle(color: Colors.cyan)),
                 const Text(']nits '),
