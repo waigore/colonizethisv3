@@ -16,6 +16,7 @@ import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -27,10 +28,13 @@ class ShellScreen extends StatefulComponent {
     required this.onNavigate,
     required this.onExit,
     this.dataDirOverride,
+    this.game,
   });
 
   final CttermRoute route;
   final String? dataDirOverride;
+  /// Current game state. Set when loading or starting a game.
+  final Game? game;
   final void Function(CttermRoute) onNavigate;
   final void Function() onExit;
 
@@ -39,16 +43,22 @@ class ShellScreen extends StatefulComponent {
 }
 
 class _ShellScreenState extends State<ShellScreen> {
-  // Game state for victory/defeat screens
-  final int _currentTurn = 1;
-  
+  /// Triggered when victory condition is met (human wins).
+  /// Uses game.victory data if available, otherwise falls back to defaults.
   void _triggerVictory() {
-    _log.d('tui:game: victory triggered, turn $_currentTurn');
+    final game = component.game;
+    final turn = game?.victory?.turnNumber ?? 1;
+    _log.d('tui:game: victory triggered, turn $turn');
     component.onNavigate(CttermRoute.victory);
   }
-  
+
+  /// Triggered when another player wins (human loses).
+  /// Uses game.victory data if available, otherwise falls back to defaults.
   void _triggerDefeat() {
-    _log.d('tui:game: defeat triggered, turn $_currentTurn');
+    final game = component.game;
+    final turn = game?.victory?.turnNumber ?? 1;
+    final winnerId = game?.victory?.winnerPlayerId;
+    _log.d('tui:game: defeat triggered, turn $turn, winner=$winnerId');
     component.onNavigate(CttermRoute.defeat);
   }
 
@@ -114,11 +124,19 @@ class _ShellScreenState extends State<ShellScreen> {
         );
       case CttermRoute.inGameShell:
         return InGameShellScreen(
+          game: component.game,
           onNavigate: component.onNavigate,
           onEndTurn: () async {
             // TODO: Actually process turn when game logic is wired up
+            // For now, this is a stub. Full turn processing requires:
+            // - MapTopology from loadMapData
+            // - Orders from player input
+            // - Calling resolveTurnForGame from colonizethis_logic
+            // After processing, check game.victory and navigate accordingly.
             _log.d('tui:game: end turn (stub)');
           },
+          onVictory: _triggerVictory,
+          onDefeat: _triggerDefeat,
           onExitToMainMenu: () {
             _log.d('tui:nav: exit to main menu');
             component.onNavigate(CttermRoute.mainMenu);
@@ -149,29 +167,69 @@ class _ShellScreenState extends State<ShellScreen> {
           onDefeat: _triggerDefeat,
         );
       case CttermRoute.victory:
+        // Use game data if available, otherwise fallbacks
+        final victory = component.game?.victory;
         return VictoryScreen(
           onNavigate: component.onNavigate,
           onExitToMainMenu: () {
             _log.d('tui:nav: Victory -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
           },
-          victoryType: 'Military',
-          turnNumber: _currentTurn,
+          victoryType: victory?.type.name ?? 'Military',
+          turnNumber: victory?.turnNumber ?? 1,
           winnerName: 'You',
         );
       case CttermRoute.defeat:
+        // Use game data if available, otherwise fallbacks
+        final victory = component.game?.victory;
+        // Build standings from game state
+        final standings = component.game != null
+            ? _buildStandings(component.game!)
+            : <MapEntry<String, int>>[];
         return DefeatScreen(
           onNavigate: component.onNavigate,
           onExitToMainMenu: () {
             _log.d('tui:nav: Defeat -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
           },
-          winnerName: 'British Empire',
-          victoryType: 'Military',
-          turnNumber: _currentTurn,
+          winnerName: victory?.winnerPlayerId ?? 'AI Player',
+          victoryType: victory?.type.name ?? 'Military',
+          turnNumber: victory?.turnNumber ?? 1,
+          finalStandings: standings,
         );
       case CttermRoute.pauseOptions:
         return const StubScreen(title: 'Pause / Options');
     }
   }
 }
+
+  /// Builds standings from game state for defeat screen.
+  /// Returns list of GP name -> province count, sorted by count descending.
+  List<MapEntry<String, int>> _buildStandings(Game game) {
+    final countsByOwner = <String, int>{};
+    
+    // Count Old World provinces per player
+    for (final province in game.worldState.oldWorld.provinces) {
+      final ownerId = province.ownerId;
+      if (ownerId == null || ownerId.isEmpty) continue;
+      countsByOwner.update(ownerId, (v) => v + 1, ifAbsent: () => 1);
+    }
+    
+    // Get player names
+    final playerNames = <String, String>{};
+    for (final player in game.players) {
+      playerNames[player.id] = player.displayName;
+    }
+    
+    // Build standings list
+    final standings = <MapEntry<String, int>>[];
+    for (final entry in countsByOwner.entries) {
+      final name = playerNames[entry.key] ?? entry.key;
+      standings.add(MapEntry(name, entry.value));
+    }
+    
+    // Sort by province count descending
+    standings.sort((a, b) => b.value.compareTo(a.value));
+    
+    return standings;
+  }
