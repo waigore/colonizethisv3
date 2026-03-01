@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/game_setup_screen.dart';
 import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
@@ -60,7 +61,15 @@ class _ShellScreenState extends State<ShellScreen> {
           onQuit: component.onExit,
         );
       case CttermRoute.gameSetup:
-        return const StubScreen(title: 'Game Setup');
+        return GameSetupScreen(
+          onStartGame: (orderedGpIdsForSlots, leaderVariantByGpId) {
+            _log.d('tui:nav: Game Setup complete -> generating world');
+            // TODO: Create game with config and navigate to in-game shell
+            // For now, navigate to generating world (stub will be replaced)
+            component.onNavigate(CttermRoute.generatingWorld);
+          },
+          onBack: () => component.onNavigate(CttermRoute.mainMenu),
+        );
       case CttermRoute.loadGame:
         return LoadGameScreen(
           dataDirOverride: component.dataDirOverride,
