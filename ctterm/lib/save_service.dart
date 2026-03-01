@@ -88,3 +88,62 @@ Future<void> saveGameAndMapData(
   );
   _log.i('tui:save: saved gameId=${game.id} with map data');
 }
+
+/// Summary of a saved game for display in Load Game list.
+class SaveSummary {
+  const SaveSummary({
+    required this.gameId,
+    required this.turnNumber,
+    required this.year,
+    required this.humanPlayerName,
+    this.lastPlayedAt,
+  });
+
+  final String gameId;
+  final int turnNumber;
+  final int year;
+  final String humanPlayerName;
+  final DateTime? lastPlayedAt;
+}
+
+/// Lists saved games with metadata. Returns empty list if none or on error.
+Future<List<SaveSummary>> listSaves([String? dataDirOverride]) async {
+  final box = await _ensureBox(dataDirOverride);
+  final ids = _adapter.listGameIds(box);
+  if (ids.isEmpty) return [];
+
+  final summaries = <SaveSummary>[];
+  for (final id in ids) {
+    final game = _adapter.load(box, id);
+    if (game == null) continue;
+
+    // Get human player name (first player is human)
+    String humanName = 'Unknown';
+    if (game.players.isNotEmpty) {
+      humanName = game.players.first.displayName;
+    }
+
+    // Calculate year from turn (default mapping: turn 0 = 1600)
+    final year = 1600 + (game.worldState.turnState.turnNumber ~/ 2);
+
+    summaries.add(SaveSummary(
+      gameId: id,
+      turnNumber: game.worldState.turnState.turnNumber,
+      year: year,
+      humanPlayerName: humanName,
+    ));
+  }
+
+  // Sort by turn number descending (most recent first)
+  summaries.sort((a, b) => b.turnNumber.compareTo(a.turnNumber));
+
+  _log.d('tui:save: listSaves count=${summaries.length}');
+  return summaries;
+}
+
+/// Deletes a saved game by id.
+Future<void> deleteSave(String gameId, [String? dataDirOverride]) async {
+  final box = await _ensureBox(dataDirOverride);
+  _adapter.delete(box, gameId);
+  _log.i('tui:save: deleted gameId=$gameId');
+}
