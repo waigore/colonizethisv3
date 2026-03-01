@@ -23,6 +23,7 @@ class CttermApp extends StatefulComponent {
 class _CttermAppState extends State<CttermApp> {
   CttermRoute _route = CttermRoute.mainMenu;
   Game? _currentGame;
+  Orders _currentOrders = const Orders();
 
   void _navigateTo(CttermRoute route) {
     setState(() => _route = route);
@@ -43,16 +44,28 @@ class _CttermAppState extends State<CttermApp> {
     });
   }
 
-  /// Callback when turn is processed, updates game state.
+  /// Callback when turn is processed, updates game state and clears orders.
   void _onTurnProcessed(Game updatedGame) {
     _log.d('tui:app: turn processed, now turn ${updatedGame.worldState.turnState.turnNumber}');
-    setState(() => _currentGame = updatedGame);
+    setState(() {
+      _currentGame = updatedGame;
+      _currentOrders = const Orders(); // Clear orders after turn is processed
+    });
   }
 
   /// Clears game state (e.g., when returning to main menu).
   void _clearGame() {
     _log.d('tui:app: clearing game state');
-    setState(() => _currentGame = null);
+    setState(() {
+      _currentGame = null;
+      _currentOrders = const Orders();
+    });
+  }
+
+  /// Updates current orders (e.g., from Units panel).
+  void _updateOrders(Orders orders) {
+    _log.d('tui:app: orders updated');
+    setState(() => _currentOrders = orders);
   }
 
   void _exit() {
@@ -67,9 +80,15 @@ class _CttermAppState extends State<CttermApp> {
         route: _route,
         dataDirOverride: component.dataDirOverride,
         game: _currentGame,
+        orders: _currentOrders,
         onNavigate: _navigateTo,
         onExit: _exit,
         onTurnProcessed: _onTurnProcessed,
+        onOrdersChanged: _updateOrders,
+        onGameUpdated: (game) {
+          _log.d('tui:app: game updated from panel');
+          setState(() => _currentGame = game);
+        },
         onClearGame: _clearGame,
         onLoadGame: _loadGame,
       ),
