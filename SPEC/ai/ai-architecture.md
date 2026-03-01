@@ -44,6 +44,8 @@ Behavior trees pick top-level goals; utility AI scores and selects concrete obje
 ### Strategic Behavior Preferences
 AI uses the order suggestion API and applies:
 - **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
+  - **Filter:** All AI paths (simple heuristics and full-AI domain planner) must drop move orders whose destination is owned by a faction at peace with the mover (or by a Minor with no war). No move into at-peace or minor-without-war territory.
+  - **Prefer enemy:** When choosing among valid move candidates, score moves into enemy (at-war) territory higher than moves into unowned or own territory; weighted selection then prefers enemy/contested. Default bonus +20 to score when destination owner is at war with the mover.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
 - **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
@@ -71,4 +73,5 @@ AI order generation runs so that orders are available for the **Orders** phase o
 - **Turn pipeline:** AI emits orders that are merged with human orders in the Orders phase; phase sequence and application order per [turn-resolution-phases.md](../program/turn-resolution-phases.md), [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md).
 - **Goal selection and domains:** Behavior tree or weighted goal selection drives strategy; utility AI (economy, military, diplomacy, research) scores candidates; personality and hidden agendas bias selection per § Rules.
 - **Province identity:** Movement targets, build provinces, and visibility use prefixed form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
+- **Movement (filter and prefer):** Move orders are filtered by diplomacy (no move to at-peace or minor-without-war). Among valid moves, selection prefers moves into enemy/contested territory via configurable score bonus.
 - **Difficulty:** Difficulty affects starting parameters and ruleset modifiers only, not AI logic or personality.

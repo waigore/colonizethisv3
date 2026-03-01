@@ -53,6 +53,29 @@ const Map<String, int> agendaTreatyBreakingModifiers = {
   'warmonger': 20,
 };
 
+/// Max relation score (0–100) below or equal to which declare-war is considered.
+/// Warmonger: 70 (declare even when friendlier); Peacemaker: 30 (only when hostile); default 50.
+/// SPEC/ai/hidden-agendas.md war declaration relation threshold.
+const Map<String, int> declareWarMaxRelationScoreByAgenda = {
+  'warmonger': 70,
+  'peacemaker': 30,
+  'backstabber': 100,
+};
+const int kDeclareWarMaxRelationScoreDefault = 50;
+
+/// Bonus added to declare-war candidate score when target is a weaker neighbor (Warmonger). SPEC/ai/hidden-agendas.md.
+const Map<String, int> declareWarTargetBonusWeakerNeighborByAgenda = {
+  'warmonger': 30,
+};
+
+/// Bonus added to declare-war candidate score when target is allied (Backstabber). SPEC/ai/hidden-agendas.md.
+const Map<String, int> declareWarTargetBonusAllyByAgenda = {
+  'backstabber': 25,
+};
+
+/// Score bonus when scoring a move whose destination is owned by a faction at war with the mover. SPEC/ai/ai-architecture.md.
+const int kMovePreferEnemyTerritoryBonus = 20;
+
 /// Spy-type work order modifier (positive = more likely to pick steal_tech / counter_spy).
 /// SPEC: tech_thief "high spy usage". Used when spy work candidates exist; no effect if no spy order type.
 const Map<String, int> agendaSpyOrderModifiers = {
@@ -92,6 +115,21 @@ int getAgendaAllianceAcceptanceModifier(String agendaId) {
 /// Returns modifier for treaty/peace breaking (positive = more likely to declare war or break treaties).
 int getAgendaTreatyBreakingModifier(String agendaId) {
   return agendaTreatyBreakingModifiers[agendaId] ?? 0;
+}
+
+/// Returns max relation score (≤) for which declare-war is considered for this agenda.
+int getDeclareWarMaxRelationScore(String agendaId) {
+  return declareWarMaxRelationScoreByAgenda[agendaId] ?? kDeclareWarMaxRelationScoreDefault;
+}
+
+/// Returns bonus to declare-war score when target is a weaker neighbor.
+int getDeclareWarTargetBonusWeakerNeighbor(String agendaId) {
+  return declareWarTargetBonusWeakerNeighborByAgenda[agendaId] ?? 0;
+}
+
+/// Returns bonus to declare-war score when target is allied.
+int getDeclareWarTargetBonusAlly(String agendaId) {
+  return declareWarTargetBonusAllyByAgenda[agendaId] ?? 0;
 }
 
 /// Returns modifier for spy-type work orders (positive = more likely to pick steal_tech / counter_spy).

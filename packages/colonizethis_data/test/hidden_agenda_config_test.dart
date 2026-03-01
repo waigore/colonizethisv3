@@ -150,4 +150,37 @@ void main() {
       expect(getAgendaSpyOrderModifier('warmonger'), 0);
     });
   });
+
+  group('getDeclareWarMaxRelationScore', () {
+    test('returns 70 for warmonger', () {
+      expect(getDeclareWarMaxRelationScore('warmonger'), 70);
+    });
+    test('returns 30 for peacemaker', () {
+      expect(getDeclareWarMaxRelationScore('peacemaker'), 30);
+    });
+    test('returns 100 for backstabber', () {
+      expect(getDeclareWarMaxRelationScore('backstabber'), 100);
+    });
+    test('returns default 50 for unknown', () {
+      expect(getDeclareWarMaxRelationScore('tech_thief'), kDeclareWarMaxRelationScoreDefault);
+    });
+  });
+
+  group('getDeclareWarTargetBonusWeakerNeighbor', () {
+    test('returns 30 for warmonger', () {
+      expect(getDeclareWarTargetBonusWeakerNeighbor('warmonger'), 30);
+    });
+    test('returns 0 for others', () {
+      expect(getDeclareWarTargetBonusWeakerNeighbor('peacemaker'), 0);
+    });
+  });
+
+  group('getDeclareWarTargetBonusAlly', () {
+    test('returns 25 for backstabber', () {
+      expect(getDeclareWarTargetBonusAlly('backstabber'), 25);
+    });
+    test('returns 0 for others', () {
+      expect(getDeclareWarTargetBonusAlly('warmonger'), 0);
+    });
+  });
 }

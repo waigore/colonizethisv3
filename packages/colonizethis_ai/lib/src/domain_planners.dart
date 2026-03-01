@@ -95,6 +95,7 @@ Orders runDomainPlanners({
     game: game,
     topology: topology,
     orders: orders,
+    snapshot: snapshot,
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
@@ -147,6 +148,8 @@ Orders _runMovePlanner({
 }) {
   final moveCandidates = suggestionAPI.suggestMoveOrders(view, game, topology, orders);
   if (moveCandidates.isEmpty) return orders;
+  final filtered = filterMoveOrdersByDiplomacy(game, nationId, moveCandidates);
+  if (filtered.isEmpty) return orders;
   final domainWeights = getDomainWeightsForLeader(config.leaderId);
   final weight = primaryGoal == StrategicGoal.conquer || primaryGoal == StrategicGoal.defend
       ? domainWeights.military
@@ -154,11 +157,24 @@ Orders _runMovePlanner({
           ? domainWeights.economy
           : 50;
   if (weight < 20) return orders;
+  final provinceOwner = getProvinceOwnerMap(game);
+  final scores = filtered.map((m) {
+    final destOwner = provinceOwner[m.destinationProvinceId];
+    if (destOwner == null || destOwner == nationId) return 1.0;
+    final rel = getRelation(game, nationId, destOwner);
+    final atWar = rel != null && rel.atWar;
+    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+  }).toList();
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
   final rng = math.Random(seeds.militarySeed);
-  final cap = (moveCandidates.length.clamp(0, 5));
-  final take = cap > 0 ? 1 + rng.nextInt(cap) : 0;
-  if (take <= 0) return orders;
-  final selected = moveCandidates.take(take).toList();
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < filtered.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= filtered.length) idx = filtered.length - 1;
+  final selected = [filtered[idx]];
   return _appendMoveOrders(orders, nationId, selected);
 }
 
@@ -313,6 +329,7 @@ Orders _runDiplomacyPlanner({
   required Game game,
   required MapTopology topology,
   required Orders orders,
+  required AIWorldSnapshot snapshot,
   required AIConfig config,
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
@@ -331,6 +348,7 @@ Orders _runDiplomacyPlanner({
 
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.leaderId);
+  final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   final scores = diploCandidates.map((o) {
     var s = 50;
     switch (o.type) {
@@ -342,17 +360,31 @@ Orders _runDiplomacyPlanner({
         s += agendaAllianceAcceptanceModifier(agendaId);
         s += (thresholds.allianceTendency - 50);
         break;
-      case DiplomaticOrderType.declareWar:
-        s += agendaConquerModifier(agendaId);
-        s += agendaTreatyBreakingModifier(agendaId);
-        s += (thresholds.warLikelihood - 50);
+      case DiplomaticOrderType.declareWar: {
+        final rel = snapshot.relations[o.targetFactionId];
+        final relationScore = rel?.score ?? 50;
+        if (relationScore > maxRelationForDeclareWar) {
+          s = 0;
+        } else {
+          s += agendaConquerModifier(agendaId);
+          s += agendaTreatyBreakingModifier(agendaId);
+          s += (thresholds.warLikelihood - 50);
+          if (snapshot.opportunities.weakNeighbors.contains(o.targetFactionId)) {
+            s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
+          }
+          if (rel?.level == RelationLevel.allied) {
+            s += getDeclareWarTargetBonusAlly(agendaId);
+          }
+        }
         break;
+      }
       default:
         break;
     }
-    return math.max(1, s);
+    return s == 0 ? 0 : math.max(1, s);
   }).toList();
   final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
   final rng = math.Random(seeds.diplomacySeed);
   var r = rng.nextDouble() * total;
   var idx = 0;
