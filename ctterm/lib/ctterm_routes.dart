@@ -16,6 +16,7 @@ enum CttermRoute {
   diplomacy,
   technology,
   victoryProgress,
+  victory,
   defeat,
   pauseOptions,
 }

@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/defeat_screen.dart';
 import 'package:ctterm/screens/game_setup_screen.dart';
 import 'package:ctterm/screens/generating_world_screen.dart';
 import 'package:ctterm/screens/in_game_shell_screen.dart';
@@ -11,6 +12,8 @@ import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/screens/stub_screen.dart';
+import 'package:ctterm/screens/victory_progress_screen.dart';
+import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
@@ -35,6 +38,19 @@ class ShellScreen extends StatefulComponent {
 }
 
 class _ShellScreenState extends State<ShellScreen> {
+  // Game state for victory/defeat screens
+  int _currentTurn = 1;
+  
+  void _triggerVictory() {
+    _log.d('tui:game: victory triggered, turn $_currentTurn');
+    component.onNavigate(CttermRoute.victory);
+  }
+  
+  void _triggerDefeat() {
+    _log.d('tui:game: defeat triggered, turn $_currentTurn');
+    component.onNavigate(CttermRoute.defeat);
+  }
+
   @override
   Component build(BuildContext context) {
     return KeyboardListener(
@@ -122,9 +138,33 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.technology:
         return const StubScreen(title: 'Technology');
       case CttermRoute.victoryProgress:
-        return const StubScreen(title: 'Victory / Progress');
+        return VictoryProgressScreen(
+          onNavigate: component.onNavigate,
+          onVictory: _triggerVictory,
+          onDefeat: _triggerDefeat,
+        );
+      case CttermRoute.victory:
+        return VictoryScreen(
+          onNavigate: component.onNavigate,
+          onExitToMainMenu: () {
+            _log.d('tui:nav: Victory -> main menu');
+            component.onNavigate(CttermRoute.mainMenu);
+          },
+          victoryType: 'Military',
+          turnNumber: _currentTurn,
+          winnerName: 'You',
+        );
       case CttermRoute.defeat:
-        return const StubScreen(title: 'Defeat');
+        return DefeatScreen(
+          onNavigate: component.onNavigate,
+          onExitToMainMenu: () {
+            _log.d('tui:nav: Defeat -> main menu');
+            component.onNavigate(CttermRoute.mainMenu);
+          },
+          winnerName: 'British Empire',
+          victoryType: 'Military',
+          turnNumber: _currentTurn,
+        );
       case CttermRoute.pauseOptions:
         return const StubScreen(title: 'Pause / Options');
     }
