@@ -14,6 +14,7 @@ import 'package:ctterm/screens/map_context_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
+import 'package:ctterm/screens/units_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -31,7 +32,10 @@ class ShellScreen extends StatefulComponent {
     required this.onExit,
     this.dataDirOverride,
     this.game,
+    this.orders,
     this.onTurnProcessed,
+    this.onOrdersChanged,
+    this.onGameUpdated,
     this.onClearGame,
     this.onLoadGame,
   });
@@ -40,10 +44,16 @@ class ShellScreen extends StatefulComponent {
   final String? dataDirOverride;
   /// Current game state. Set when loading or starting a game.
   final Game? game;
+  /// Current orders for the human player.
+  final Orders? orders;
   final void Function(CttermRoute) onNavigate;
   final void Function() onExit;
   /// Callback when turn is processed, receives updated game state.
   final void Function(Game)? onTurnProcessed;
+  /// Callback when orders are changed in a panel.
+  final void Function(Orders)? onOrdersChanged;
+  /// Callback when game state is updated (e.g., orders changed in a panel).
+  final void Function(Game)? onGameUpdated;
   /// Callback to clear game state (e.g., when returning to main menu).
   final void Function()? onClearGame;
   /// Callback to load a game by ID.
@@ -146,14 +156,14 @@ class _ShellScreenState extends State<ShellScreen> {
             }
             _log.d('tui:game: processing turn ${game.worldState.turnState.turnNumber}');
             
-            // Process turn with minimal topology and empty orders for MVP
-            // Full implementation would load map data and collect player orders
-            const emptyOrders = Orders();
+            // Process turn with current orders and minimal topology
+            // Full implementation would load map data and use real topology
+            final currentOrders = component.orders ?? const Orders();
             const emptyTopology = MapTopology();
             final nextGame = resolveTurnForGame(
               game: game,
               topology: emptyTopology,
-              orders: emptyOrders,
+              orders: currentOrders,
             );
             
             // Notify parent of updated game state
@@ -173,7 +183,15 @@ class _ShellScreenState extends State<ShellScreen> {
           onNavigate: component.onNavigate,
         );
       case CttermRoute.units:
-        return const StubScreen(title: 'Units');
+        return UnitsScreen(
+          game: component.game!,
+          orders: component.orders ?? const Orders(),
+          onNavigate: component.onNavigate,
+          onOrdersChanged: (Orders orders) {
+            // Propagate orders change to parent
+            component.onOrdersChanged?.call(orders);
+          },
+        );
       case CttermRoute.development:
         return const StubScreen(title: 'Development');
       case CttermRoute.production:
