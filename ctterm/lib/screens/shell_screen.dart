@@ -4,9 +4,11 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/screens/stub_screen.dart';
+import 'package:ctterm/save_service.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -60,7 +62,19 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.gameSetup:
         return const StubScreen(title: 'Game Setup');
       case CttermRoute.loadGame:
-        return const StubScreen(title: 'Load Game');
+        return LoadGameScreen(
+          dataDirOverride: component.dataDirOverride,
+          onLoad: (gameId) {
+            _log.d('tui:nav: Load gameId=$gameId -> in-game shell');
+            component.onNavigate(CttermRoute.inGameShell);
+          },
+          onDelete: (gameId) async {
+            _log.i('tui:save: deleting gameId=$gameId');
+            // Import is already at top, just use deleteSave
+            await deleteSave(gameId, component.dataDirOverride);
+          },
+          onBack: () => component.onNavigate(CttermRoute.mainMenu),
+        );
       case CttermRoute.generatingWorld:
         return const StubScreen(title: 'Generating World');
       case CttermRoute.settings:
