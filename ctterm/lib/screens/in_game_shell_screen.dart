@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -19,13 +20,22 @@ final log_pkg.Logger _log = log_pkg.Logger();
 class InGameShellScreen extends StatefulComponent {
   const InGameShellScreen({
     super.key,
+    this.game,
     required this.onNavigate,
     required this.onEndTurn,
+    required this.onVictory,
+    required this.onDefeat,
     required this.onExitToMainMenu,
   });
 
+  /// Current game state for victory checking.
+  final Game? game;
   final void Function(CttermRoute) onNavigate;
   final Future<void> Function() onEndTurn;
+  /// Callback when human player wins.
+  final void Function() onVictory;
+  /// Callback when AI player wins (human defeated).
+  final void Function() onDefeat;
   final void Function() onExitToMainMenu;
 
   @override
@@ -58,6 +68,21 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     
     await component.onEndTurn();
     
+    // Check for victory/defeat after turn processing
+    final game = component.game;
+    if (game?.victory != null) {
+      final winnerId = game!.victory!.winnerPlayerId;
+      final isHumanWinner = _isHumanPlayer(winnerId, game);
+      _log.i('tui:game: victory detected winner=$winnerId isHuman=$isHumanWinner');
+      setState(() => _isEndingTurn = false);
+      if (isHumanWinner) {
+        component.onVictory();
+      } else {
+        component.onDefeat();
+      }
+      return;
+    }
+    
     setState(() {
       _turn++;
       _year += 5; // Each turn = 5 years
@@ -65,6 +90,12 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       _isEndingTurn = false;
     });
     _log.d('tui:game: now turn $_turn, year $_year');
+  }
+
+  /// Checks if the given playerId is the human player.
+  bool _isHumanPlayer(String playerId, Game game) {
+    // Human player is one where aiControlByGpId is false or not set
+    return !(game.aiControlByGpId[playerId] ?? false);
   }
 
   @override
