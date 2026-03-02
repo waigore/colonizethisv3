@@ -216,6 +216,7 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.inGameShell:
         return InGameShellScreen(
           game: component.game,
+          combinedTopology: component.combinedTopology,
           gameEvents: component.gameEvents,
           tileMapByRegion: component.tileMapByRegion,
           onNavigate: component.onNavigate,

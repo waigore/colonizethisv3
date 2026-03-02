@@ -9,9 +9,9 @@ Future<bool> runStartupSaveCheck(
   String? dataDirOverride, {
   Future<void> Function(String?)? ensureReady,
 }) async {
-  ensureReady ??= ensureSaveServiceReady;
+  final fn = ensureReady ?? ensureSaveServiceReady;
   try {
-    await ensureReady!(dataDirOverride);
+    await fn(dataDirOverride);
     return false;
   } on StaleLockException {
     return true;
