@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens** — Load Game screen for ctterm. Reference: SPEC/tui/ctterm.md §1, SPEC/ui/main-menu.md (Load Game), SPEC/program/save-load.md.
 
+**Screen ID:** 100003
+
 ---
 
 ## Widget contract

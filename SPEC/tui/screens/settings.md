@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/settings.md** — TUI-specific Settings screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100005
+
 ## Overview
 
 Settings screen for terminal-specific options. MVP includes only terminal theme selection.

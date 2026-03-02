@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/production.md** — TUI-specific Production screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100010
+
 ## Overview
 
 Production screen for managing resource extraction, stockpile viewing, and industry production. Displays connected extraction tiles, current stockpile contents, production recipes, and worker allocation. Reference: [SPEC/game/stockpiles-and-production.md](../../game/stockpiles-and-production.md), [SPEC/program/extraction-pipeline.md](../../program/extraction-pipeline.md).

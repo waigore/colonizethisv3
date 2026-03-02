@@ -4,6 +4,8 @@
 **Source:** SPEC/program/game-setup-pipeline.md (adaptations in ctterm.md)  
 **UXD:** 03b
 
+**Screen ID:** 100004
+
 ## Overview
 
 The Generating World screen is shown while the game world is being initialized. It displays progress feedback and allows the user to cancel (return to Main Menu).

@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/map-context.md** — TUI-specific Map/Province Context screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100007
+
 ## Overview
 
 Map context screen showing detailed province information, map layers, visibility, and region navigation. Reference: [SPEC/program/player-view.md](../../program/player-view.md), [SPEC/program/map-visualization.md](../../program/map-visualization.md), [SPEC/game/world-model-identity.md](../../game/world-model-identity.md).

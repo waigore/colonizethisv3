@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/defeat.md** — TUI-specific Defeat screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100017
+
 ## Overview
 
 Defeat screen shown when another Great Power wins the game (human player loses). Reference: [SPEC/game/victory.md](../../game/victory.md).
