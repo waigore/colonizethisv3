@@ -10,6 +10,7 @@ import '../combat/quick_battle_resolver.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
+import '../game_events.dart';
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(
@@ -21,12 +22,31 @@ Game runOneLandBattle(
   int battleIndex,
   int seed, {
   void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
 }) {
+  String? winnerId;
+  Map<String, int> casualties = {};
+
   if (mode == CombatMode.quickBattle) {
     final input = buildQuickBattleInput(state, ctx,
         seed: state.worldState.turnState.turnNumber);
     final qbResult = resolveQuickBattle(input);
     state = applyQuickBattleResultToGame(state, ctx, qbResult);
+
+    // Determine winner and casualties
+    if (qbResult.winner == QuickBattleWinner.attacker) {
+      winnerId = ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null;
+    } else if (qbResult.winner == QuickBattleWinner.defender) {
+      winnerId = ctx.defenderFactionId;
+    } else {
+      // Mutual exhaustion - no clear winner
+      winnerId = null;
+    }
+    casualties = {
+      for (final id in qbResult.attackerCasualties) id: 1,
+      for (final id in qbResult.defenderCasualties) id: 1,
+    };
+
     if (qbResult.winner == QuickBattleWinner.attacker &&
         qbResult.provinceFlips &&
         ctx.attackers.isNotEmpty) {
@@ -70,6 +90,12 @@ Game runOneLandBattle(
     final province =
         region.provinces.where((p) => p.id == ctx.provinceId).firstOrNull;
     final victorId = province?.ownerId;
+
+    // Determine winner and casualties for auto-resolve
+    winnerId = victorId;
+    // For auto-resolve, we don't have detailed casualty info from the resolver
+    // so we emit empty casualties map per spec (at least winner/loser info is present)
+
     if (victorId != null && victorId != ctx.defenderFactionId) {
       final evidence = evidenceForLandBattleVictory(
           state, victorId, ctx.defenderFactionId, turn);
@@ -88,6 +114,18 @@ Game runOneLandBattle(
     _emitLandBattleDialogue(state, effectiveVictorId, effectiveLoserId,
         ctx.provinceId, turn, battleIndex, seed, onDialogue);
   }
+  // Emit combat_result event for this battle
+  if (onGameEvent != null && winnerId != null && ctx.attackers.isNotEmpty) {
+    onGameEvent(CombatResultEvent(
+      provinceId: ctx.provinceId,
+      attackerId: ctx.attackers.first.factionId,
+      defenderId: ctx.defenderFactionId,
+      winnerId: winnerId,
+      turnNumber: turn,
+      casualties: casualties,
+    ));
+  }
+
   return state;
 }
 
