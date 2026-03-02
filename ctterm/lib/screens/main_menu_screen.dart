@@ -31,7 +31,7 @@ class MainMenuScreen extends StatefulComponent {
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
   bool _loadGameEnabled = false;
-  bool _loading = true;
+  bool _savesChecked = false;
 
   @override
   void initState() {
@@ -40,12 +40,23 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Future<void> _checkSaves() async {
-    final ids = await listGameIds(component.dataDirOverride);
-    _log.d('tui:menu: listGameIds count=${ids.length}');
-    setState(() {
-      _loadGameEnabled = isLoadGameEnabled(ids);
-      _loading = false;
-    });
+    try {
+      final ids = await listGameIds(component.dataDirOverride)
+          .timeout(const Duration(seconds: 5), onTimeout: () => <String>[]);
+      _log.d('tui:menu: listGameIds count=${ids.length}');
+      if (!mounted) return;
+      setState(() {
+        _loadGameEnabled = isLoadGameEnabled(ids);
+        _savesChecked = true;
+      });
+    } catch (e, st) {
+      _log.w('tui:menu: checkSaves failed', error: e, stackTrace: st);
+      if (!mounted) return;
+      setState(() {
+        _loadGameEnabled = false;
+        _savesChecked = true;
+      });
+    }
   }
 
   @override
@@ -53,7 +64,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return Focusable(
       focused: true,
       onKeyEvent: (event) {
-        if (_loading) return false;
+        if (!_savesChecked) return false;
         final key = event.logicalKey;
         if (key == LogicalKey.enter || key == LogicalKey.space) {
           // Use current selection (we use shortcuts below instead for simplicity)
@@ -85,19 +96,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           children: [
             Text('ColonizeThis', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
-            if (_loading)
-              Text('Loading...', style: TextStyle(color: Colors.gray))
-            else ...[
-              _menuRow('N', 'New Game', true, component.onNewGame),
-              _menuRow('L', 'Load Game', _loadGameEnabled, component.onLoadGame),
-              if (!_loadGameEnabled)
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(
-                    'No save games found',
-                    style: TextStyle(color: Colors.gray),
-                  ),
+            _menuRow('N', 'New Game', true, component.onNewGame),
+            _menuRow('L', 'Load Game', _loadGameEnabled, component.onLoadGame),
+            if (!_savesChecked)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Checking saves...',
+                  style: TextStyle(color: Colors.gray),
                 ),
+              )
+            else if (!_loadGameEnabled)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'No save games found',
+                  style: TextStyle(color: Colors.gray),
+                ),
+              ),
               _menuRow('S', 'Settings', true, component.onSettings),
               _menuRow('Q', 'Quit', true, component.onQuit),
             ],

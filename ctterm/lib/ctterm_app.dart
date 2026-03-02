@@ -45,6 +45,8 @@ class CttermApp extends StatefulComponent {
 
 class _CttermAppState extends State<CttermApp> {
   CttermRoute _route = CttermRoute.mainMenu;
+  /// Previous route (used so Settings Back returns to Pause when opened from Pause). SPEC/tui/screens/pause-options.md §7.
+  CttermRoute? _previousRoute;
   Game? _currentGame;
   Orders _currentOrders = const Orders();
   _PendingNewGameConfig? _pendingNewGameConfig;
@@ -55,7 +57,10 @@ class _CttermAppState extends State<CttermApp> {
   TerminalTheme _terminalTheme = TerminalTheme.dark;
 
   void _navigateTo(CttermRoute route) {
-    setState(() => _route = route);
+    setState(() {
+      _previousRoute = _route;
+      _route = route;
+    });
   }
 
   /// Stores setup data and navigates to Generating World. Called from Game Setup when user presses Start.
@@ -210,6 +215,10 @@ class _CttermAppState extends State<CttermApp> {
         onLoadGame: _loadGame,
         initialTheme: _terminalTheme,
         onThemeChanged: _onThemeChanged,
+        /// When in Settings, Back goes to Pause if we came from Pause. SPEC/tui/screens/pause-options.md §7.
+        settingsReturnRoute: _route == CttermRoute.settings && _previousRoute == CttermRoute.pauseOptions
+            ? CttermRoute.pauseOptions
+            : null,
       ),
     );
   }
