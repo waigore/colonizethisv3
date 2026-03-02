@@ -245,7 +245,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
                 
                 if (idx < provinces.length) {
                   final prov = provinces[idx];
-                  final name = prov.displayName ?? prov.id ?? '???';
+                  final name = prov.displayName ?? prov.id;
                   // Shorten to 2 chars for the grid cell
                   cellChar = name.length > 2 ? name.substring(0, 2) : name;
                 } else {
@@ -306,7 +306,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
       if (ownerId == null) return 'Unclaimed';
       for (final player in game.players) {
         if (player.id == ownerId) {
-          return player.displayName ?? ownerId;
+          return player.displayName;
         }
       }
       return ownerId;
@@ -327,7 +327,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
             Text('No data available', style: TextStyle(color: Colors.gray))
           else ...[
             // Name
-            Text('Name: ${prov.displayName ?? prov.id ?? "Unknown"}'),
+            Text('Name: ${prov.displayName ?? prov.id}'),
             const SizedBox(height: 1),
             
             // Owner
@@ -335,15 +335,15 @@ class _MapContextScreenState extends State<MapContextScreen> {
             const SizedBox(height: 1),
             
             // Terrain
-            Text('Terrain: ${_showTerrain ? (prov.terrain ?? "Unknown") : "[hidden]"}'),
+            Text('Terrain: ${_showTerrain ? prov.terrain : "[hidden]"}'),
             const SizedBox(height: 1),
             
             // Fort Level
-            Text('Fort: ${_showTowns ? (prov.fortLevel ?? 0) : "[hidden]"}'),
+            Text('Fort: ${_showTowns ? prov.fortLevel : "[hidden]"}'),
             const SizedBox(height: 1),
             
             // Town Development
-            Text('Town Dev: ${_showTowns ? (prov.townDevelopmentLevel ?? 0) : "[hidden]"}'),
+            Text('Town Dev: ${_showTowns ? prov.townDevelopmentLevel : "[hidden]"}'),
             const SizedBox(height: 1),
             
             // Visibility (placeholder - would come from PlayerView)
