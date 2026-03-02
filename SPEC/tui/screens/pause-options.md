@@ -1,133 +1,150 @@
 # Pause/Options Screen — TUI Spec
 
-**SPEC/tui/screens** — Pause menu and options panel in ctterm. Full specification for TUI layout, navigation, and Given–When–Then acceptance criteria. Source of truth for pause/options screen behavior; adapts from SPEC/ui/main-menu.md return flow.
+**SPEC/tui/screens** — Pause menu and options panel in ctterm. Source of truth for pause/options screen behavior. Adapts from [SPEC/ui/main-menu.md](../../ui/main-menu.md) return flow. Reference: [ctterm.md](../ctterm.md).
 
 **Screen ID:** 100018
 
 ---
 
-## Layout
+## 1. What the Pause Menu Is
 
-```
-┌─────────────────────────────────────────┐
-│            === PAUSE ===                │
-│                                         │
-│  ┌───────────────────────────────────┐  │
-│  │ > Exit to Main Menu               │  │
-│  │   Settings                        │  │
-│  │   (more options coming soon)      │  │
-│  └───────────────────────────────────┘  │
-│                                         │
-│  [Esc/B] Back to Game  [Enter] Select   │
-└─────────────────────────────────────────┘
-```
-
-### Layout Details
-
-- **Header:** Title "=== PAUSE ===", centered
-- **Menu Items:** Vertical list of options:
-  - "Exit to Main Menu" (primary, with `>` indicator for selected)
-  - "Settings" (future: terminal theme settings)
-- **Selection Indicator:** `>` prefix on selected item
-- **Footer:** Keyboard shortcuts
-
-### Responsive Behavior
-
-- **Narrow terminal (<60 cols):** Same vertical layout; reduce padding; items remain selectable
-- **Short terminal (<18 rows):** Scrollable if more options added; ensure "Exit to Main Menu" always visible
+- **Purpose:** A modal-like screen shown during a running game that lets the player pause, change terminal settings, or quit the current game and return to the main menu.
+- **When it appears:** Only when the player is in the **in-game shell** (screen 100006) and presses the open-pause keys. The game is not ended; turn resolution does not advance while the menu is open; orders remain queued.
+- **When it closes:** The player either resumes the game (Back), goes to Settings then returns to Pause or game, or exits to Main Menu (with confirmation). Save files on disk are never modified by opening or closing the menu.
 
 ---
 
-## Navigation
+## 2. How to Open and Close
 
-| From → To | Trigger | Behavior |
-| ---------- | ------- | -------- |
-| Shell → Pause | `Escape` or `P` key (global hotkey) | Open Pause/Options as overlay or screen |
-| Pause → Shell | `Escape` or `B` | Close pause, resume game |
-| Select item | `Up`/`Down` or `W`/`S` | Navigate menu items |
-| Confirm | `Enter` | Execute selected action |
-| Exit to Main Menu | Confirm on "Exit to Main Menu" | Navigate to Main Menu, clear game state |
+| Action | Keys | Result |
+|--------|------|--------|
+| Open Pause (from in-game shell only) | `Escape`, `O`, or `P` | Pause/Options screen is shown; game state preserved. |
+| Close Pause and resume game | `Escape` or `B` | Pause closes; in-game shell (100006) is shown again. |
+| Confirm selected menu item | `Enter` | Runs the action for the currently selected item (see §4). |
 
 ---
 
-## Given–When–Then Acceptance Criteria
+## 3. On-Screen Elements (in order, top to bottom)
 
-### Opening Pause Menu
-
-- **Given** the player is in the in-game shell with the game map visible
-- **When** the player presses `Escape` or `P`
-- **Then** the Pause/Options screen appears overlaying or replacing the map
-- **And** the game state is preserved (paused)
-
-- **Given** the terminal is narrow (e.g., 40 columns)
-- **When** the player opens Pause menu
-- **Then** the menu renders without horizontal overflow
-- **And** all menu items remain selectable
-
-### Navigating Menu
-
-- **Given** the Pause menu is open with "Exit to Main Menu" selected
-- **When** the player presses `Down` or `S`
-- **Then** "Settings" becomes the selected item
-- **And** the `>` indicator moves to "Settings"
-
-- **Given** "Settings" is selected
-- **When** the player presses `Up` or `W`
-- **Then** "Exit to Main Menu" becomes selected again
-
-### Exiting to Main Menu
-
-- **Given** the Pause menu is open with "Exit to Main Menu" selected
-- **When** the player presses `Enter`
-- **Then** the game displays a confirmation prompt: "Exit to Main Menu? Any unsaved progress will be lost. [Y] Yes / [N] No"
-- **And** the game waits for confirmation
-
-- **Given** the confirmation prompt is shown
-- **When** the player presses `Y` or `Enter`
-- **Then** the game navigates to the Main Menu
-- **And** the in-memory game state is cleared
-- **And** any active saves remain unaffected
-
-- **Given** the confirmation prompt is shown
-- **When** the player presses `N` or `Escape`
-- **Then** the confirmation prompt closes
-- **And** the Pause menu remains open with "Exit to Main Menu" selected
-
-### Returning to Game
-
-- **Given** the Pause menu is open
-- **When** the player presses `Escape` or `B`
-- **Then** the Pause menu closes
-- **And** the in-game shell resumes with the map visible
-- **And** the game continues from where it left off
+| Element | Description | Behavior |
+|---------|-------------|----------|
+| **Header** | Single line: `=== PAUSE ===` | Title only; no interaction. |
+| **Menu list** | Vertical list of selectable items (see §4). | One item is selected; `>` marks the selected row. |
+| **Footer** | Short hint line(s). | Shows: `[Esc/B] Back to Game  [Enter] Select` and `[W/S or Up/Down] Navigate`. Display only. |
 
 ---
 
-## Game State
+## 4. Menu Items and What Each Does
 
-- **Paused state:** When Pause menu is open, turn resolution does not advance. Orders remain queued but not processed.
-- **Clear on exit:** When exiting to Main Menu, the shell clears `WorldState`, `Game`, and any loaded player data from memory. Save files on disk are not modified.
+| # | Label | When selected and user presses Enter |
+|---|--------|--------------------------------------|
+| 1 | **Exit to Main Menu** | Show the exit-confirmation prompt (§5). Does not exit immediately. |
+| 2 | **Settings** | Navigate to the Settings screen (100005). When the user leaves Settings (Back), they return to the Pause menu (game still paused). |
 
----
-
-## Future Options (Not in MVP)
-
-- Terminal theme selection (light/dark/palette name)
-- Sound toggle (if TUI supports audio)
-- Display mode (fullscreen terminal, etc.)
-- Help/controls reference
+No other menu items are required for MVP. Additional options (e.g. Help) may be added later; see §9.
 
 ---
 
-## Keyboard Shortcuts Summary
+## 5. Exit-to–Main-Menu Confirmation
+
+- **When shown:** Only when the user selects "Exit to Main Menu" and presses Enter.
+- **Content:** Two lines of text plus one hint line:
+  - `Exit to Main Menu?`
+  - `Any unsaved progress will be lost.`
+  - `[Y] Yes  [N] No`
+- **Behavior:**
+  - **Y** or **Enter:** Navigate to Main Menu; clear in-memory game state (world, orders, etc.). Save files on disk are not modified.
+  - **N** or **Escape:** Close the confirmation; stay on Pause menu with "Exit to Main Menu" still selected.
+
+---
+
+## 6. Navigation Within the Menu
 
 | Key | Action |
-| -----| ------- |
-| `Escape` | Open Pause menu (from game) / Back (from pause) |
-| `P` | Alternative: Open Pause menu |
-| `B` | Alternative: Back to game |
-| `Up` / `W` | Select previous menu item |
-| `Down` / `S` | Select next menu item |
-| `Enter` | Confirm / Execute selected action |
-| `Y` | Confirm exit to Main Menu |
-| `N` | Cancel exit to Main Menu |
+|-----|--------|
+| `Up` or `W` | Select the previous menu item (wrap not required). |
+| `Down` or `S` | Select the next menu item. |
+| `Enter` | Execute the selected item’s action (§4). |
+| `Escape` or `B` | Close Pause and return to in-game shell (resume game). |
+
+---
+
+## 7. Keyboard Shortcuts Summary
+
+| Key | Context | Action |
+|-----|---------|--------|
+| `Escape` | In-game shell | Open Pause. |
+| `Escape` | Pause menu | Back to game. |
+| `Escape` | Exit confirmation | Cancel exit (stay in Pause). |
+| `O` | In-game shell | Open Pause. |
+| `P` | In-game shell | Open Pause. |
+| `B` | Pause menu | Back to game. |
+| `W` / `Up` | Pause menu | Previous menu item. |
+| `S` / `Down` | Pause menu | Next menu item. |
+| `Enter` | Pause menu | Execute selected item. |
+| `Enter` | Exit confirmation | Confirm exit (Yes). |
+| `Y` | Exit confirmation | Confirm exit (Yes). |
+| `N` | Exit confirmation | Cancel exit (No). |
+
+---
+
+## 8. Acceptance Criteria (Given–When–Then)
+
+### Opening and closing
+
+- **Given** the player is in the in-game shell with the game map visible  
+- **When** the player presses `Escape`, `O`, or `P`  
+- **Then** the Pause/Options screen (100018) is shown and the game state is preserved.
+
+- **Given** the Pause menu is open  
+- **When** the player presses `Escape` or `B`  
+- **Then** the Pause menu closes and the in-game shell is shown again.
+
+### Menu navigation
+
+- **Given** the Pause menu is open with "Exit to Main Menu" selected  
+- **When** the player presses `Down` or `S`  
+- **Then** "Settings" becomes selected and the `>` indicator moves to it.
+
+- **Given** "Settings" is selected  
+- **When** the player presses `Up` or `W`  
+- **Then** "Exit to Main Menu" becomes selected.
+
+### Exit to Main Menu
+
+- **Given** the Pause menu is open with "Exit to Main Menu" selected  
+- **When** the player presses `Enter`  
+- **Then** the confirmation prompt is shown: "Exit to Main Menu? Any unsaved progress will be lost. [Y] Yes  [N] No".
+
+- **Given** the confirmation prompt is shown  
+- **When** the player presses `Y` or `Enter`  
+- **Then** the app navigates to the Main Menu and in-memory game state is cleared; save files are unchanged.
+
+- **Given** the confirmation prompt is shown  
+- **When** the player presses `N` or `Escape`  
+- **Then** the prompt closes and the Pause menu remains open with "Exit to Main Menu" selected.
+
+### Settings from Pause
+
+- **Given** the Pause menu is open  
+- **When** the player selects "Settings" and presses `Enter`  
+- **Then** the Settings screen (100005) is shown.
+
+- **Given** the player opened Settings from the Pause menu  
+- **When** the player presses Escape or Back on the Settings screen  
+- **Then** the app returns to the Pause menu (100018), not the Main Menu, and the game remains paused.
+
+### Narrow terminal
+
+- **Given** the terminal is narrow (e.g. 40 columns)  
+- **When** the Pause menu is open  
+- **Then** the menu renders without horizontal overflow and all items remain selectable.
+
+---
+
+## 9. Game State and Future Options
+
+- **While Pause is open:** Turn resolution does not advance; orders remain queued.
+- **On "Exit to Main Menu":** The shell clears `Game`, `WorldState`, and loaded player data from memory; it does not delete or overwrite save files.
+
+Future options (not in MVP): terminal theme from Pause (already reachable via Settings), sound toggle, help/controls reference.

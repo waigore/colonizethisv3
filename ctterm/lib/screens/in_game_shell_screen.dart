@@ -247,8 +247,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         
-        // Pause/Options
-        if (c == 'o' || key == LogicalKey.escape) {
+        // Pause/Options (Escape, O, or P per SPEC/tui/screens/pause-options.md)
+        if (c == 'o' || c == 'p' || key == LogicalKey.escape) {
           component.onNavigate(CttermRoute.pauseOptions);
           return true;
         }
@@ -271,13 +271,14 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     );
   }
 
+  /// HUD per SPEC/tui/screens/in-game-shell.md § G2 and UI Layout: turn, year, treasury, selected province.
   Component _buildHUD() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Turn: $_turn | Year: $_year | Treasury: \$$_treasury '),
+          Text('Turn: $_turn | Year: $_year | Treasury: \$$_treasury | [Selected: None]'),
           Text('Region: [$_regionDisplayName] (Press R to cycle)', style: TextStyle(color: Colors.gray)),
         ],
       ),
@@ -339,36 +340,48 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     );
   }
 
+  /// Command bar per SPEC/tui/screens/in-game-shell.md UI Layout (G3, G4, G5).
   Component _buildCommandBar() {
+    if (_isEndingTurn) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        child: Text('Processing turn...', style: TextStyle(color: Colors.yellow)),
+      );
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-      child: _isEndingTurn
-          ? Text('Processing turn...', style: TextStyle(color: Colors.yellow))
-          : Row(
-              children: [
-                const Text('['),
-                Text('M', style: TextStyle(color: Colors.cyan)),
-                const Text(']ap Context '),
-                const Text('['),
-                Text('R', style: TextStyle(color: Colors.cyan)),
-                const Text(']egion '),
-                const Text('['),
-                Text('U', style: TextStyle(color: Colors.cyan)),
-                const Text(']nits '),
-                const Text('['),
-                Text('D', style: TextStyle(color: Colors.cyan)),
-                const Text(']ev '),
-                const Text('['),
-                Text('P', style: TextStyle(color: Colors.cyan)),
-                const Text(']rod '),
-                const Text('['),
-                Text('A', style: TextStyle(color: Colors.cyan)),
-                const Text(']cademy '),
-                const Text('['),
-                Text('S', style: TextStyle(color: Colors.cyan)),
-                const Text(']hipyard '),
-              ],
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Text('Commands: '),
+              _cmdKey('U'), const Text('nits '),
+              _cmdKey('D'), const Text('ev '),
+              _cmdKey('P'), const Text('rod '),
+              _cmdKey('A'), const Text('cademy '),
+              _cmdKey('S'), const Text('hipyard '),
+            ],
+          ),
+          Row(
+            children: [
+              _cmdKey('I'), const Text('ntl '),
+              _cmdKey('T'), const Text('ech '),
+              _cmdKey('V'), const Text('ictory '),
+              _cmdKey('E'), const Text('nd Turn '),
+              _cmdKey('O'), const Text('ptions '),
+            ],
+          ),
+        ],
+      ),
     );
   }
+
+  static Component _cmdKey(String key) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text('[$key]', style: TextStyle(color: Colors.cyan)),
+    ],
+  );
 }
