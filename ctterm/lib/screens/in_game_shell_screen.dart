@@ -1,29 +1,22 @@
-// In-Game Shell: map + HUD + panel navigation. SPEC/tui/ctterm.md, SPEC/tui/screens/in-game-shell.md.
+// In-Game Shell: topology graph map + HUD + province info + panel navigation.
+// SPEC/tui/ctterm.md, SPEC/tui/screens/in-game-shell.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:ctterm/map_tui_mapping.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
-/// In-game shell: main game view with ASCII map, HUD, and navigation to panels.
-/// 
-/// Features:
-/// - ASCII map display (from real game data)
-/// - HUD with turn/year, treasury
-/// - Keyboard navigation to panels (U, D, P, A, S, I, T, V)
-/// - Map context (M)
-/// - End turn (E or Enter)
-/// - Pause/Options (O or Escape)
+/// In-game shell: topology graph map, HUD, province info panel, navigation to panels.
 class InGameShellScreen extends StatefulComponent {
   const InGameShellScreen({
     super.key,
     this.game,
+    this.combinedTopology,
     this.gameEvents,
     this.tileMapByRegion,
     required this.onNavigate,
@@ -33,17 +26,15 @@ class InGameShellScreen extends StatefulComponent {
     required this.onExitToMainMenu,
   });
 
-  /// Current game state for victory checking.
   final Game? game;
-  /// Game events from turn processing (to display to user).
+  /// Topology for the current game (from save/init). Used for land graph and neighbour navigation.
+  final MapTopology? combinedTopology;
   final List<GameEvent>? gameEvents;
-  /// Tile maps by region (oldWorld, newWorld) for map rendering.
+  /// Tile maps by region (oldWorld, newWorld) for future map overlays (currently unused in this screen).
   final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
   final Future<void> Function() onEndTurn;
-  /// Callback when human player wins.
   final void Function() onVictory;
-  /// Callback when AI player wins (human defeated).
   final void Function() onDefeat;
   final void Function() onExitToMainMenu;
 
@@ -52,199 +43,166 @@ class InGameShellScreen extends StatefulComponent {
 }
 
 class _InGameShellScreenState extends State<InGameShellScreen> {
-  // Selected region for map display: 'oldWorld' or 'newWorld'
   String _selectedRegion = 'oldWorld';
+  /// Local province id (in current region) of the selected node in the graph.
+  String? _selectedProvinceLocalId;
+  /// Index into current province's neighbour list when moving next/prev.
+  int _neighbourIndex = 0;
   bool _isEndingTurn = false;
 
-  /// Gets the current turn number from game state.
   int get _turn => component.game?.worldState.turnState.turnNumber ?? 1;
-  
-  /// Gets the current year from game state.
   int get _year => 1850 + ((_turn - 1) * 5);
-  
-  /// Gets the human player's treasury from game state.
+
   int get _treasury {
     final game = component.game;
     if (game == null) return 0;
-    // Find human player (non-AI controlled)
     for (final player in game.players) {
-      final isAi = game.aiControlByGpId[player.id] ?? false;
-      if (!isAi) {
-        return player.treasury;
-      }
+      if (!(game.aiControlByGpId[player.id] ?? false)) return player.treasury;
     }
     return 0;
   }
 
-  /// Gets provinces for the currently selected region.
+  String get _regionDisplayName =>
+      _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
+
+  /// Land province node ids (local) in current region from topology. Empty if no topology.
+  List<String> get _landProvinceLocalIds {
+    final top = component.combinedTopology;
+    if (top == null || top.nodes.isEmpty) return [];
+    final provinceIds = top.nodes
+        .where((n) =>
+            n.regionId == _selectedRegion && n.type == TopologyNodeType.province)
+        .map((n) => ProvinceId.localIdFrom(n.id))
+        .toList();
+    provinceIds.sort();
+    return provinceIds;
+  }
+
+  /// Neighbours of [localId] in the land graph (P–P only).
+  List<String> _neighboursOf(String localId) {
+    final top = component.combinedTopology;
+    if (top == null) return [];
+    return neighborProvinceIdsInRegion(top, _selectedRegion, localId).toList();
+  }
+
+  /// Game provinces for current region.
   List<Province> get _provinces {
     final game = component.game;
     if (game == null) return [];
-    
-    if (_selectedRegion == 'oldWorld') {
-      return game.worldState.oldWorld.provinces;
-    } else {
-      return game.worldState.newWorld.provinces;
+    return _selectedRegion == 'oldWorld'
+        ? game.worldState.oldWorld.provinces
+        : game.worldState.newWorld.provinces;
+  }
+
+  /// Find province by local id in current region (handles prefixed or local id in game).
+  Province? _provinceByLocalId(String localId) {
+    final fullId = ProvinceId.full(_selectedRegion, localId);
+    for (final p in _provinces) {
+      if (p.id == fullId || ProvinceId.localIdFrom(p.id) == localId) return p;
     }
+    return null;
   }
 
-  /// Gets the region display name.
-  String get _regionDisplayName => _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
-
-  /// Gets a short code for the player (first letter of ID, uppercased).
-  String _getPlayerCode(String? playerId) {
-    if (playerId == null) return '?';
-    return playerId.substring(0, 1).toUpperCase();
+  @override
+  void initState() {
+    super.initState();
+    _ensureSelection();
   }
 
-  /// Gets the current tile map for the selected region.
-  TileMapResult? get _tileMap {
-    final tileMaps = component.tileMapByRegion;
-    if (tileMaps == null) return null;
-    
-    final regionKey = _selectedRegion == 'oldWorld' ? 'ow' : 'nw';
-    return tileMaps[regionKey];
-  }
-
-  /// Gets the human player's visibility map.
-  Map<String, String>? get _playerVisibility {
+  /// Returns the local id of the human player's capital in the current region, if any.
+  String? _humanCapitalLocalIdInSelectedRegion() {
     final game = component.game;
     if (game == null) return null;
-    
-    // Find human player
-    String? humanId;
+
     for (final player in game.players) {
-      final isAi = game.aiControlByGpId[player.id] ?? false;
-      if (!isAi) {
-        humanId = player.id;
-        break;
+      final isAiControlled = game.aiControlByGpId[player.id] ?? false;
+      if (isAiControlled || !player.isHuman) continue;
+      final capitalId = player.capitalProvinceId;
+      if (capitalId == null) continue;
+
+      final capitalRegion = ProvinceId.regionIdFrom(capitalId);
+      if (capitalRegion != _selectedRegion) continue;
+
+      return ProvinceId.localIdFrom(capitalId);
+    }
+
+    return null;
+  }
+
+  void _ensureSelection() {
+    final land = _landProvinceLocalIds;
+    if (land.isEmpty) {
+      if (_selectedProvinceLocalId != null) {
+        setState(() => _selectedProvinceLocalId = null);
       }
+      return;
     }
-    
-    if (humanId == null) return null;
-    return game.worldState.playerVisibilityByTile[humanId];
+
+    // Prefer the human player's capital in this region when available; otherwise fall back to first province.
+    final capitalLocalId = _humanCapitalLocalIdInSelectedRegion();
+    final preferredId =
+        (capitalLocalId != null && land.contains(capitalLocalId))
+            ? capitalLocalId
+            : land.first;
+
+    if (_selectedProvinceLocalId == null ||
+        !land.contains(_selectedProvinceLocalId)) {
+      setState(() => _selectedProvinceLocalId = preferredId);
+    }
   }
 
-  /// Builds ASCII map from tile data using TUI mapping.
-  List<String> get _mapGrid {
-    final game = component.game;
-    final tileMap = _tileMap;
-    
-    // Fallback to old province grid if no tile map
-    if (game == null || tileMap == null) {
-      return _buildProvinceGrid();
-    }
-    
-    // Get provinces for the region
-    final provinces = _provinces;
-    final provincesById = buildProvincesMap(provinces);
-    
-    // Get player list
-    final players = game.players;
-    
-    // Get capital and port tiles
-    final capitalTiles = getCapitalTiles(game);
-    final portTiles = getPortTiles(game.worldState);
-    
-    // Get player visibility
-    final visibility = _playerVisibility;
-    
-    // Limit map size for display (terminal constraints)
-    const maxMapWidth = 40;
-    const maxMapHeight = 15;
-    
-    // Render the map using the TUI mapping
-    final lines = <String>[];
-    
-    // Header with region name
-    lines.add('=== $_regionDisplayName ===');
-    
-    // Render tile map
-    final mapLines = renderRegionMap(
-      tileMap: tileMap,
-      provincesById: provincesById,
-      playerVisibilityByTile: visibility,
-      players: players,
-      capitalTiles: capitalTiles,
-      portTiles: portTiles,
-      showTerrain: true,
-      showOwnership: true,
-      maxWidth: maxMapWidth,
-      maxHeight: maxMapHeight,
-    );
-    
-    lines.addAll(mapLines);
-    
-    return lines;
+  void _cycleRegion() {
+    setState(() {
+      _selectedRegion =
+          _selectedRegion == 'oldWorld' ? 'newWorld' : 'oldWorld';
+      _selectedProvinceLocalId = null;
+      _neighbourIndex = 0;
+    });
+    _ensureSelection();
+    _log.d('tui:map: region changed to $_selectedRegion');
   }
 
-  /// Fallback: builds ASCII map from province data (when no tile map available).
-  List<String> _buildProvinceGrid() {
-    final provinces = _provinces;
-    if (provinces.isEmpty) {
-      return ['[No map data available]'];
-    }
-    
-    // Group provinces by a simple grid layout
-    // For MVP, show provinces in a simple grid format
-    final lines = <String>[];
-    
-    // Header
-    lines.add('=== $_regionDisplayName ===');
-    lines.add('');
-    
-    // Province grid - organize into columns
-    const cols = 4;
-    final rows = (provinces.length / cols).ceil();
-    
-    for (var row = 0; row < rows; row++) {
-      final rowProvs = <String>[];
-      for (var col = 0; col < cols; col++) {
-        final idx = row * cols + col;
-        if (idx < provinces.length) {
-          final prov = provinces[idx];
-          final ownerCode = _getPlayerCode(prov.ownerId);
-          final name = prov.displayName ?? prov.id;
-          // Truncate name to fit
-          final shortName = name.length > 8 ? name.substring(0, 8) : name;
-          rowProvs.add('[$ownerCode$shortName]');
-        } else {
-          rowProvs.add('           ');
-        }
-      }
-      lines.add(rowProvs.join(' '));
-    }
-    
-    return lines;
+  void _selectNextNeighbour() {
+    final cur = _selectedProvinceLocalId;
+    if (cur == null) return;
+    final neighbours = _neighboursOf(cur);
+    if (neighbours.isEmpty) return;
+    final nextIdx = (_neighbourIndex + 1) % neighbours.length;
+    final newId = neighbours[nextIdx];
+    final newNeighbours = _neighboursOf(newId);
+    final backIdx = newNeighbours.indexOf(cur);
+    setState(() {
+      _selectedProvinceLocalId = newId;
+      _neighbourIndex = backIdx >= 0 ? backIdx : 0;
+    });
   }
 
-  /// Gets legend text showing owner codes.
-  String get _legend {
-    final game = component.game;
-    if (game == null) return '';
-    
-    final parts = <String>[];
-    for (final player in game.players) {
-      final code = _getPlayerCode(player.id);
-      parts.add('$code=${player.displayName}');
-    }
-    parts.add('?=Unclaimed');
-    return parts.join(' | ');
+  void _selectPrevNeighbour() {
+    final cur = _selectedProvinceLocalId;
+    if (cur == null) return;
+    final neighbours = _neighboursOf(cur);
+    if (neighbours.isEmpty) return;
+    final len = neighbours.length;
+    final nextIdx = (_neighbourIndex - 1 + len) % len;
+    final newId = neighbours[nextIdx];
+    final newNeighbours = _neighboursOf(newId);
+    final backIdx = newNeighbours.indexOf(cur);
+    setState(() {
+      _selectedProvinceLocalId = newId;
+      _neighbourIndex = backIdx >= 0 ? backIdx : 0;
+    });
   }
 
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
     setState(() => _isEndingTurn = true);
     _log.d('tui:game: ending turn $_turn');
-    
     await component.onEndTurn();
-    
-    // Check for victory/defeat after turn processing
     final game = component.game;
     if (game?.victory != null) {
       final winnerId = game!.victory!.winnerPlayerId;
-      final isHumanWinner = _isHumanPlayer(winnerId, game);
-      _log.i('tui:game: victory detected winner=$winnerId isHuman=$isHumanWinner');
+      final isHumanWinner =
+          !(game.aiControlByGpId[winnerId] ?? false);
       setState(() => _isEndingTurn = false);
       if (isHumanWinner) {
         component.onVictory();
@@ -253,34 +211,18 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       }
       return;
     }
-    
     setState(() => _isEndingTurn = false);
-    _log.d('tui:game: now turn $_turn, year $_year');
-  }
-
-  /// Checks if the given playerId is the human player.
-  bool _isHumanPlayer(String playerId, Game game) {
-    // Human player is one where aiControlByGpId is false or not set
-    return !(game.aiControlByGpId[playerId] ?? false);
-  }
-
-  /// Cycles between Old World and New World regions.
-  void _cycleRegion() {
-    setState(() {
-      _selectedRegion = _selectedRegion == 'oldWorld' ? 'newWorld' : 'oldWorld';
-    });
-    _log.d('tui:map: region changed to $_selectedRegion');
   }
 
   @override
   Component build(BuildContext context) {
+    _ensureSelection();
     return Focusable(
       focused: true,
       onKeyEvent: (event) {
         final key = event.logicalKey;
         final c = event.character?.toLowerCase();
-        
-        // Navigation keys
+
         if (c == 'u') {
           component.onNavigate(CttermRoute.units);
           return true;
@@ -313,161 +255,245 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           component.onNavigate(CttermRoute.victoryProgress);
           return true;
         }
-        
-        // Map context (M key)
         if (c == 'm') {
           _log.d('tui:nav: in-game shell -> map context');
           component.onNavigate(CttermRoute.mapContext);
           return true;
         }
-        
-        // Region cycle (R key)
         if (c == 'r') {
           _cycleRegion();
           return true;
         }
-        
-        // End turn
+        // Graph navigation: next/prev neighbour (j/k or left/right)
+        if (c == 'j' || key == LogicalKey.arrowLeft) {
+          _selectPrevNeighbour();
+          return true;
+        }
+        if (c == 'l' || key == LogicalKey.arrowRight) {
+          _selectNextNeighbour();
+          return true;
+        }
         if (c == 'e' || key == LogicalKey.enter) {
           _handleEndTurn();
           return true;
         }
-        
-        // Pause/Options (Escape, O, or P per SPEC/tui/screens/pause-options.md)
         if (c == 'o' || c == 'p' || key == LogicalKey.escape) {
           component.onNavigate(CttermRoute.pauseOptions);
           return true;
         }
-        
         return false;
       },
       child: Column(
         children: [
-          // HUD
           _buildHUD(),
           const SizedBox(height: 1),
-          // Map
-          Expanded(child: _buildMap()),
-          // Events bar (shows recent game events)
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: _buildMapArea()),
+                Expanded(flex: 2, child: _buildProvinceInfoPanel()),
+              ],
+            ),
+          ),
           _buildEventsBar(),
-          // Command bar
           _buildCommandBar(),
         ],
       ),
     );
   }
 
-  /// HUD per SPEC/tui/screens/in-game-shell.md § G2 and UI Layout: turn, year, treasury, selected province.
   Component _buildHUD() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Turn: $_turn | Year: $_year | Treasury: \$$_treasury | [Selected: None]'),
-          Text('Region: [$_regionDisplayName] (Press R to cycle)', style: TextStyle(color: Colors.gray)),
+          Text(
+              'Turn: $_turn | Year: $_year | Treasury: \$$_treasury | Region: $_regionDisplayName [R]'),
         ],
       ),
     );
   }
 
-  Component _buildMap() {
+  Component _buildMapArea() {
+    final top = component.combinedTopology;
+    final land = _landProvinceLocalIds;
+    if (top == null || top.nodes.isEmpty || land.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(1),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('No topology', style: TextStyle(color: Colors.gray)),
+            Text('Provinces in region: ${_provinces.length}',
+                style: TextStyle(color: Colors.gray)),
+          ],
+        ),
+      );
+    }
+
+    const cols = 5;
+    final rows = (land.length / cols).ceil();
+    final selected = _selectedProvinceLocalId;
+    final neighbours = selected != null ? _neighboursOf(selected) : <String>[];
+
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ..._mapGrid.map((row) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 0),
-            child: Text(row),
-          )),
+          Text('=== $_regionDisplayName (land graph) ===',
+              style: TextStyle(color: Colors.cyan)),
+          Text('Select: j/l or ←/→ move to neighbour',
+              style: TextStyle(color: Colors.gray)),
           const SizedBox(height: 1),
-          Text('Legend: $_legend', style: TextStyle(color: Colors.gray)),
+          ...List.generate(rows, (row) {
+            return Row(
+              children: List.generate(cols, (col) {
+                final idx = row * cols + col;
+                if (idx >= land.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                    child: Text('   '),
+                  );
+                }
+                final localId = land[idx];
+                final prov = _provinceByLocalId(localId);
+                final name = prov?.displayName ?? prov?.id ?? localId;
+                final short = name.length > 6 ? name.substring(0, 6) : name;
+                final isSelected = localId == selected;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                  child: Text(
+                    isSelected ? '[$short]' : ' $short ',
+                    style: isSelected
+                        ? TextStyle(
+                            backgroundColor: Colors.cyan,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          )
+                        : TextStyle(color: Colors.gray),
+                  ),
+                );
+              }),
+            );
+          }),
+          const SizedBox(height: 1),
+          if (selected != null && neighbours.isNotEmpty)
+            Text(
+              'Neighbours: ${neighbours.map((n) => _provinceByLocalId(n)?.displayName ?? n).join(", ")}',
+              style: TextStyle(color: Colors.yellow),
+            ),
         ],
       ),
     );
   }
 
-  /// Formats a game event for display.
+  Component _buildProvinceInfoPanel() {
+    final prov = _selectedProvinceLocalId != null
+        ? _provinceByLocalId(_selectedProvinceLocalId!)
+        : null;
+    final game = component.game;
+
+    String ownerName(String? ownerId) {
+      if (ownerId == null) return 'Unclaimed';
+      if (game == null) return ownerId;
+      for (final p in game.players) {
+        if (p.id == ownerId) return p.displayName;
+      }
+      return ownerId;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Province Info',
+              style: TextStyle(
+                  color: Colors.cyan, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 1),
+          if (prov == null)
+            Text('No province selected', style: TextStyle(color: Colors.gray))
+          else ...[
+            Text(
+                'ID: ${ProvinceId.isPrefixed(prov.id) ? prov.id : ProvinceId.full(_selectedRegion, prov.id)}',
+                style: TextStyle(color: Colors.yellow)),
+            Text('Name: ${prov.displayName ?? prov.id}'),
+            Text('Owner: ${ownerName(prov.ownerId)}'),
+            Text('Terrain: ${prov.terrain}'),
+            Text('Fort: ${prov.fortLevel}'),
+            Text('Town Dev: ${prov.townDevelopmentLevel}'),
+            Text('Visibility: full', style: TextStyle(color: Colors.gray)),
+          ],
+          const Spacer(),
+          Text('j/l or ←/→: neighbour', style: TextStyle(color: Colors.gray)),
+        ],
+      ),
+    );
+  }
+
   String _formatEvent(GameEvent event) {
     if (event is CombatResultEvent) {
-      return 'Battle in ${event.provinceId}: ${event.winnerId} wins';
+      return 'Battle: ${event.winnerId} wins';
     } else if (event is ProvinceCapturedEvent) {
-      return 'Province captured: ${event.provinceId} by ${event.newOwnerId}';
-    } else if (event is DiplomacyChangeEvent) {
-      return 'Diplomacy: ${event.actorId} -> ${event.targetId}: ${event.changeType}';
+      return 'Captured: ${event.provinceId} by ${event.newOwnerId}';
     } else if (event is ResearchCompleteEvent) {
-      return 'Research: ${event.playerId} discovered ${event.techId}';
+      return 'Research: ${event.techId}';
     } else if (event is VictorySetEvent) {
-      return 'Victory: ${event.winnerPlayerId} wins (${event.victoryType})';
-    } else if (event is OrderRejectedEvent) {
-      return 'Order rejected: ${event.orderSummary} (${event.reasonCode})';
+      return 'Victory: ${event.winnerPlayerId}';
     }
     return event.toString();
   }
 
-  /// Builds the events display (shows recent game events).
   Component _buildEventsBar() {
     final events = component.gameEvents;
-    if (events == null || events.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    // Show last 3 events
-    final recentEvents = events.length > 3 ? events.sublist(events.length - 3) : events;
+    if (events == null || events.isEmpty) return const SizedBox.shrink();
+    final recent =
+        events.length > 3 ? events.sublist(events.length - 3) : events;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('--- Events ---', style: TextStyle(color: Colors.gray)),
-          ...recentEvents.map((e) => Text(_formatEvent(e), style: TextStyle(color: Colors.yellow))),
+          ...recent.map((e) =>
+              Text(_formatEvent(e), style: TextStyle(color: Colors.yellow))),
         ],
       ),
     );
   }
 
-  /// Command bar per SPEC/tui/screens/in-game-shell.md UI Layout (G3, G4, G5).
   Component _buildCommandBar() {
-    if (_isEndingTurn) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-        child: Text('Processing turn...', style: TextStyle(color: Colors.yellow)),
-      );
-    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Text('Commands: '),
-              _cmdKey('U'), const Text('nits '),
-              _cmdKey('D'), const Text('ev '),
-              _cmdKey('P'), const Text('rod '),
-              _cmdKey('A'), const Text('cademy '),
-              _cmdKey('S'), const Text('hipyard '),
-            ],
-          ),
-          Row(
-            children: [
-              _cmdKey('I'), const Text('ntl '),
-              _cmdKey('T'), const Text('ech '),
-              _cmdKey('V'), const Text('ictory '),
-              _cmdKey('E'), const Text('nd Turn '),
-              _cmdKey('O'), const Text('ptions '),
-            ],
-          ),
-        ],
-      ),
+      child: _isEndingTurn
+          ? Text('Processing turn...', style: TextStyle(color: Colors.yellow))
+          : Row(
+              children: [
+                const Text('['),
+                Text('M', style: TextStyle(color: Colors.cyan)),
+                const Text(']ap ['),
+                Text('R', style: TextStyle(color: Colors.cyan)),
+                const Text(']egion '),
+                const Text('['),
+                Text('U', style: TextStyle(color: Colors.cyan)),
+                const Text(']nits ['),
+                Text('D', style: TextStyle(color: Colors.cyan)),
+                const Text(']ev ['),
+                Text('P', style: TextStyle(color: Colors.cyan)),
+                const Text(']rod ['),
+                Text('A', style: TextStyle(color: Colors.cyan)),
+                const Text(']cademy ['),
+                Text('S', style: TextStyle(color: Colors.cyan)),
+                const Text(']hipyard ['),
+                Text('E', style: TextStyle(color: Colors.cyan)),
+                const Text(']nd ['),
+                Text('O', style: TextStyle(color: Colors.cyan)),
+                const Text(']ptions'),
+              ],
+            ),
     );
   }
-
-  static Component _cmdKey(String key) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text('[$key]', style: TextStyle(color: Colors.cyan)),
-    ],
-  );
 }
