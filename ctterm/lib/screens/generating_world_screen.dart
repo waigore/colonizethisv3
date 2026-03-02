@@ -14,6 +14,7 @@ class GeneratingWorldScreen extends StatefulComponent {
     super.key,
     required this.onComplete,
     required this.onCancel,
+    this.runGeneration,
   });
 
   /// Called when world generation completes successfully.
@@ -21,6 +22,9 @@ class GeneratingWorldScreen extends StatefulComponent {
 
   /// Called when user cancels generation.
   final void Function() onCancel;
+
+  /// When set, run real init (runInitGame) instead of simulated progress. Called once on mount; when done, app navigates to in-game shell.
+  final void Function()? runGeneration;
 
   @override
   State<GeneratingWorldScreen> createState() => _GeneratingWorldScreenState();
@@ -36,6 +40,11 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
   @override
   void initState() {
     super.initState();
+    if (component.runGeneration != null) {
+      // Run real init; runGeneration will set game state and navigate when done.
+      scheduleMicrotask(() => component.runGeneration!());
+      return;
+    }
     _startGeneration();
   }
 
