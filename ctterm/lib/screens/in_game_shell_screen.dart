@@ -11,7 +11,7 @@ final log_pkg.Logger _log = log_pkg.Logger();
 /// In-game shell: main game view with ASCII map, HUD, and navigation to panels.
 /// 
 /// Features:
-/// - ASCII map display (simplified for MVP)
+/// - ASCII map display (from real game data)
 /// - HUD with turn/year, treasury
 /// - Keyboard navigation to panels (U, D, P, A, S, I, T, V)
 /// - Map context (M)
@@ -43,23 +43,104 @@ class InGameShellScreen extends StatefulComponent {
 }
 
 class _InGameShellScreenState extends State<InGameShellScreen> {
-  // Game state (MVP: static values)
-  int _turn = 1;
-  int _year = 1850;
-  int _treasury = 5000;
-  final String _selectedProvince = 'None';
+  // Selected region for map display: 'oldWorld' or 'newWorld'
+  String _selectedRegion = 'oldWorld';
   bool _isEndingTurn = false;
 
-  static const List<String> _mapGrid = [
-    '  ~~~  ~~~  ',
-    ' ~~~  ~~~  ',
-    '~~~~  ~~~~ ',
-    ' +++  +++  ',
-    ' +A+  +B+  ',
-    ' +++  +++  ',
-    ' ~~~  ~~~  ',
-    ' ~~~  ~~~  ',
-  ];
+  /// Gets the current turn number from game state.
+  int get _turn => component.game?.worldState.turnState.turnNumber ?? 1;
+  
+  /// Gets the current year from game state.
+  int get _year => 1850 + ((_turn - 1) * 5);
+  
+  /// Gets the human player's treasury from game state.
+  int get _treasury {
+    final game = component.game;
+    if (game == null) return 0;
+    // Find human player (non-AI controlled)
+    for (final player in game.players) {
+      final isAi = game.aiControlByGpId[player.id] ?? false;
+      if (!isAi) {
+        return player.treasury;
+      }
+    }
+    return 0;
+  }
+
+  /// Gets provinces for the currently selected region.
+  List<Province> get _provinces {
+    final game = component.game;
+    if (game == null) return [];
+    
+    if (_selectedRegion == 'oldWorld') {
+      return game.worldState.oldWorld.provinces;
+    } else {
+      return game.worldState.newWorld.provinces;
+    }
+  }
+
+  /// Gets the region display name.
+  String get _regionDisplayName => _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
+
+  /// Gets a short code for the player (first letter of ID, uppercased).
+  String _getPlayerCode(String? playerId) {
+    if (playerId == null) return '?';
+    return playerId.substring(0, 1).toUpperCase();
+  }
+
+  /// Builds ASCII map from province data.
+  List<String> get _mapGrid {
+    final provinces = _provinces;
+    if (provinces.isEmpty) {
+      return ['[No map data available]'];
+    }
+    
+    // Group provinces by a simple grid layout
+    // For MVP, show provinces in a simple grid format
+    final lines = <String>[];
+    
+    // Header
+    lines.add('=== $_regionDisplayName ===');
+    lines.add('');
+    
+    // Province grid - organize into columns
+    const cols = 4;
+    final rows = (provinces.length / cols).ceil();
+    
+    for (var row = 0; row < rows; row++) {
+      final rowProvs = <String>[];
+      for (var col = 0; col < cols; col++) {
+        final idx = row * cols + col;
+        if (idx < provinces.length) {
+          final prov = provinces[idx];
+          final ownerCode = _getPlayerCode(prov.ownerId);
+          final name = prov.displayName ?? prov.id;
+          // Truncate name to fit
+          final shortName = name.length > 8 ? name.substring(0, 8) : name;
+          rowProvs.add('[$ownerCode$shortName]');
+        } else {
+          rowProvs.add('           ');
+        }
+      }
+      lines.add(rowProvs.join(' '));
+    }
+    
+    return lines;
+  }
+
+  /// Gets legend text showing owner codes.
+  String get _legend {
+    final game = component.game;
+    if (game == null) return '';
+    
+    final parts = <String>[];
+    for (final player in game.players) {
+      final code = _getPlayerCode(player.id);
+      parts.add('$code=${player.displayName}');
+    }
+    parts.add('?=Unclaimed');
+    return parts.join(' | ');
+  }
 
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
@@ -83,12 +164,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       return;
     }
     
-    setState(() {
-      _turn++;
-      _year += 5; // Each turn = 5 years
-      _treasury += 100; // Simplified income
-      _isEndingTurn = false;
-    });
+    setState(() => _isEndingTurn = false);
     _log.d('tui:game: now turn $_turn, year $_year');
   }
 
@@ -96,6 +172,14 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   bool _isHumanPlayer(String playerId, Game game) {
     // Human player is one where aiControlByGpId is false or not set
     return !(game.aiControlByGpId[playerId] ?? false);
+  }
+
+  /// Cycles between Old World and New World regions.
+  void _cycleRegion() {
+    setState(() {
+      _selectedRegion = _selectedRegion == 'oldWorld' ? 'newWorld' : 'oldWorld';
+    });
+    _log.d('tui:map: region changed to $_selectedRegion');
   }
 
   @override
@@ -147,6 +231,12 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         
+        // Region cycle (R key)
+        if (c == 'r') {
+          _cycleRegion();
+          return true;
+        }
+        
         // End turn
         if (c == 'e' || key == LogicalKey.enter) {
           _handleEndTurn();
@@ -182,7 +272,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Turn: $_turn | Year: $_year | Treasury: \$$_treasury '),
-          Text('[$_selectedProvince]', style: TextStyle(color: Colors.gray)),
+          Text('Region: [$_regionDisplayName] (Press R to cycle)', style: TextStyle(color: Colors.gray)),
         ],
       ),
     );
@@ -194,14 +284,12 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('--- Map ---', style: TextStyle(color: Colors.gray)),
-          const SizedBox(height: 1),
           ..._mapGrid.map((row) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 0),
             child: Text(row),
           )),
           const SizedBox(height: 1),
-          Text('Legend: ~ sea  + land  A/B prov owner', style: TextStyle(color: Colors.gray)),
+          Text('Legend: $_legend', style: TextStyle(color: Colors.gray)),
         ],
       ),
     );
@@ -218,6 +306,9 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
                 Text('M', style: TextStyle(color: Colors.cyan)),
                 const Text(']ap Context '),
                 const Text('['),
+                Text('R', style: TextStyle(color: Colors.cyan)),
+                const Text(']egion '),
+                const Text('['),
                 Text('U', style: TextStyle(color: Colors.cyan)),
                 const Text(']nits '),
                 const Text('['),
@@ -232,21 +323,6 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
                 const Text('['),
                 Text('S', style: TextStyle(color: Colors.cyan)),
                 const Text(']hipyard '),
-                const Text('['),
-                Text('I', style: TextStyle(color: Colors.cyan)),
-                const Text(']ntl '),
-                const Text('['),
-                Text('T', style: TextStyle(color: Colors.cyan)),
-                const Text(']ech '),
-                const Text('['),
-                Text('V', style: TextStyle(color: Colors.cyan)),
-                const Text(']ictory '),
-                const Text('['),
-                Text('E', style: TextStyle(color: Colors.cyan)),
-                const Text(']nd Turn '),
-                const Text('['),
-                Text('O', style: TextStyle(color: Colors.cyan)),
-                const Text(']ptions'),
               ],
             ),
     );
