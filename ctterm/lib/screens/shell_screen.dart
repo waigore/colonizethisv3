@@ -12,7 +12,6 @@ import 'package:ctterm/screens/load_game_screen.dart';
 import 'package:ctterm/screens/main_menu_screen.dart';
 import 'package:ctterm/screens/map_context_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
-import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/screens/units_screen.dart';
 import 'package:ctterm/screens/development_screen.dart';
@@ -21,6 +20,8 @@ import 'package:ctterm/screens/academy_screen.dart';
 import 'package:ctterm/screens/shipyard_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/screens/diplomacy_screen.dart';
+import 'package:ctterm/screens/technology_screen.dart';
+import 'package:ctterm/screens/pause_options_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -93,11 +94,19 @@ class _ShellScreenState extends State<ShellScreen> {
     return KeyboardListener(
       onKeyEvent: (LogicalKey key) {
         if (key == LogicalKey.escape) {
-          if (component.route != CttermRoute.mainMenu) {
+          // Let in-game routes handle their own escape (pause menu, etc.)
+          // Only handle escape at shell level for routes outside game flow
+          if (component.route == CttermRoute.mainMenu ||
+              component.route == CttermRoute.gameSetup ||
+              component.route == CttermRoute.loadGame ||
+              component.route == CttermRoute.settings ||
+              component.route == CttermRoute.generatingWorld) {
             _log.d('tui:nav: Esc -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
+            return true;
           }
-          return true;
+          // For in-game routes, let them handle escape themselves
+          return false;
         }
         return false;
       },
@@ -239,7 +248,14 @@ class _ShellScreenState extends State<ShellScreen> {
           },
         );
       case CttermRoute.technology:
-        return const StubScreen(title: 'Technology');
+        return TechnologyScreen(
+          game: component.game!,
+          orders: component.orders ?? const Orders(),
+          onNavigate: component.onNavigate,
+          onOrdersChanged: (Orders orders) {
+            component.onOrdersChanged?.call(orders);
+          },
+        );
       case CttermRoute.victoryProgress:
         return VictoryProgressScreen(
           onNavigate: component.onNavigate,
@@ -278,7 +294,14 @@ class _ShellScreenState extends State<ShellScreen> {
           finalStandings: standings,
         );
       case CttermRoute.pauseOptions:
-        return const StubScreen(title: 'Pause / Options');
+        return PauseOptionsScreen(
+          onNavigate: component.onNavigate,
+          onExitToMainMenu: () {
+            _log.d('tui:nav: exit to main menu from pause');
+            component.onClearGame?.call();
+            component.onNavigate(CttermRoute.mainMenu);
+          },
+        );
     }
   }
 }
