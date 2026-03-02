@@ -4,6 +4,8 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/map_tui_mapping.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -23,6 +25,7 @@ class InGameShellScreen extends StatefulComponent {
     super.key,
     this.game,
     this.gameEvents,
+    this.tileMapByRegion,
     required this.onNavigate,
     required this.onEndTurn,
     required this.onVictory,
@@ -34,6 +37,8 @@ class InGameShellScreen extends StatefulComponent {
   final Game? game;
   /// Game events from turn processing (to display to user).
   final List<GameEvent>? gameEvents;
+  /// Tile maps by region (oldWorld, newWorld) for map rendering.
+  final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
   final Future<void> Function() onEndTurn;
   /// Callback when human player wins.
@@ -92,8 +97,89 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return playerId.substring(0, 1).toUpperCase();
   }
 
-  /// Builds ASCII map from province data.
+  /// Gets the current tile map for the selected region.
+  TileMapResult? get _tileMap {
+    final tileMaps = component.tileMapByRegion;
+    if (tileMaps == null) return null;
+    
+    final regionKey = _selectedRegion == 'oldWorld' ? 'ow' : 'nw';
+    return tileMaps[regionKey];
+  }
+
+  /// Gets the human player's visibility map.
+  Map<String, String>? get _playerVisibility {
+    final game = component.game;
+    if (game == null) return null;
+    
+    // Find human player
+    String? humanId;
+    for (final player in game.players) {
+      final isAi = game.aiControlByGpId[player.id] ?? false;
+      if (!isAi) {
+        humanId = player.id;
+        break;
+      }
+    }
+    
+    if (humanId == null) return null;
+    return game.worldState.playerVisibilityByTile[humanId];
+  }
+
+  /// Builds ASCII map from tile data using TUI mapping.
   List<String> get _mapGrid {
+    final game = component.game;
+    final tileMap = _tileMap;
+    
+    // Fallback to old province grid if no tile map
+    if (game == null || tileMap == null) {
+      return _buildProvinceGrid();
+    }
+    
+    // Get provinces for the region
+    final provinces = _provinces;
+    final provincesById = buildProvincesMap(provinces);
+    
+    // Get player list
+    final players = game.players;
+    
+    // Get capital and port tiles
+    final capitalTiles = getCapitalTiles(game);
+    final portTiles = getPortTiles(game.worldState);
+    
+    // Get player visibility
+    final visibility = _playerVisibility;
+    
+    // Limit map size for display (terminal constraints)
+    const maxMapWidth = 40;
+    const maxMapHeight = 15;
+    
+    // Render the map using the TUI mapping
+    final lines = <String>[];
+    
+    // Header with region name
+    lines.add('=== $_regionDisplayName ===');
+    
+    // Render tile map
+    final mapLines = renderRegionMap(
+      tileMap: tileMap,
+      provincesById: provincesById,
+      playerVisibilityByTile: visibility,
+      players: players,
+      capitalTiles: capitalTiles,
+      portTiles: portTiles,
+      showTerrain: true,
+      showOwnership: true,
+      maxWidth: maxMapWidth,
+      maxHeight: maxMapHeight,
+    );
+    
+    lines.addAll(mapLines);
+    
+    return lines;
+  }
+
+  /// Fallback: builds ASCII map from province data (when no tile map available).
+  List<String> _buildProvinceGrid() {
     final provinces = _provinces;
     if (provinces.isEmpty) {
       return ['[No map data available]'];

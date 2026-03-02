@@ -217,6 +217,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return InGameShellScreen(
           game: component.game,
           gameEvents: component.gameEvents,
+          tileMapByRegion: component.tileMapByRegion,
           onNavigate: component.onNavigate,
           onEndTurn: () async {
             final game = component.game;

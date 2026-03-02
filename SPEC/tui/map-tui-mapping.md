@@ -18,17 +18,68 @@
 
 ---
 
-## Placeholder mapping (to implement)
+## Implemented mapping
 
-| Data | Terminal representation (placeholder) |
-|------|----------------------------------------|
-| Terrain (e.g. land, sea) | Character or symbol per terrain type (e.g. `.` land, `~` water). Extend per ruleset. |
-| Province ownership | Color or style per owner (e.g. distinct terminal colors for each GP). |
-| Capital | Symbol or marker (e.g. `*` or `C`) on capital tile. |
-| Port | Symbol (e.g. `#`) on port tile. |
-| Visibility | Fog = dimmed or `?`; revealed = outline; fully visible = full detail. |
+### Terrain → Character
 
-Exact characters and palette are implementation choices; document them in ctterm code or comments and keep this spec updated when the mapping is finalized.
+| Terrain | Character | Description |
+|---------|-----------|-------------|
+| Sea (no terrain) | `~` | Water |
+| Plains | `.` | Flat land |
+| Forest | `♣` | Tree/forest |
+| Hills | `^` | Elevated land |
+| Mountain | `▲` | High peaks |
+| Swamp | `≈` | Marshland |
+| Desert | `▒` | Sandy arid |
+
+### Province ownership → Character prefix
+
+| Owner type | Prefix | Example |
+|------------|--------|---------|
+| Unclaimed/Wilderness | `·` | `·A` (province A) |
+| Great Power | First letter of GP ID (uppercase) | `FA` (France) |
+| Minor Nation | `m` + first letter | `mA` (Austria) |
+| Tribe | `t` + first letter | `tI` (Inuit) |
+
+### Special markers
+
+| Feature | Character | Position |
+|---------|-----------|----------|
+| Capital | `*` | Appended to province, e.g., `F*` |
+| Port | `¶` | Appended to province, e.g., `F¶` |
+| Town | `#` | Shown in tile details |
+
+### Visibility states
+
+| State | Representation |
+|-------|----------------|
+| Fully visible | Normal character, full color |
+| Revealed (seen but fogged) | Dimmed/italic style, partial info |
+| Fogged (not currently visible) | Gray color, `?` prefix, limited info |
+| Unexplored | Space character (empty) |
+
+### Implementation
+
+The mapping is implemented in `ctterm/lib/map_tui_mapping.dart`:
+- `terrainToChar(TerrainType?)` - converts terrain to character
+- `ownerToChar(String? ownerId, PlayerType? playerType)` - converts owner to character
+- `getTileDisplay(String tileKey, TileMapResult tileMap, Province? province, String? ownerId, bool isVisible)` - assembles full tile display
+- `renderRegionMap(TileMapResult tileMap, Map<String, Province> provincesById, Map<String, String> playerVisibility, bool showTerrain, bool showOwnership)` - renders complete ASCII map
+
+### Color palette (terminal)
+
+| Element | Color |
+|---------|-------|
+| Sea | Blue |
+| Plains | Green |
+| Forest | Dark green |
+| Hills | Brown |
+| Mountain | Gray |
+| Swamp | Cyan |
+| Desert | Yellow |
+| Fog | Gray |
+| Capital | Gold |
+| Port | Magenta |
 
 ---
 
