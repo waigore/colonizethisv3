@@ -19,10 +19,10 @@ Units screen for managing military and civilian unit orders. Displays unit stack
 
 ### Unit List Display
 
-- **Given** the user opens the Units screen
-- **When** viewing the unit list
+- **Given** the user opens the Units screen  
+- **When** viewing the unit list  
 - **Then** display each unit stack showing:
-  - Province location (using prefixed province id per SPEC/game/world-model-identity.md)
+  - Province location using the province's human-friendly name (`Province.displayName`), or the prefixed province id per SPEC/game/world-model-identity.md when no display name is defined
   - Unit type (military/civilian)
   - Regiment count
   - Current orders (if any)
@@ -42,20 +42,23 @@ Units screen for managing military and civilian unit orders. Displays unit stack
 - **Given** the user has selected a unit stack
 - **When** they issue a Move order to a valid adjacent province
 - **Then** the order is validated:
-  - Check adjacency
-  - Check unit movement points
-  - Check ownership/target province visibility
+  - Check adjacency and ownership per movement rules
+  - Check source and destination visibility per fog-of-war rules
 - **And** display validation result (accepted/rejected with reason)
 
 ### Issue Attack Order
 
-- **Given** the user has selected a military unit stack
-- **When** they issue an Attack order to an enemy-controlled province
+- **Given** the user has selected a military unit stack  
+- **When** they issue an Attack order to an enemy-controlled province  
 - **Then** the order is validated per combat rules:
   - Province must be enemy-controlled
   - Unit must have attack capability
   - Check visibility (fog of war rules)
 - **And** display validation result
+
+- **Given** the user has selected a non-military unit stack (e.g., Explorer, Builder, Engineer, Merchant, Spy)  
+- **When** they attempt to issue an Attack order via the keyboard shortcut  
+- **Then** the Units screen does not add or change any orders for that unit and instead shows a non-blocking error message explaining that the selected unit cannot attack
 
 ### Clear Order
 
@@ -70,7 +73,7 @@ Units screen for managing military and civilian unit orders. Displays unit stack
 - **When** the order is validated
 - **Then** show feedback:
   - Accepted: order added to queue, visual confirmation
-  - Rejected: error message with reason (e.g., "Invalid: not enough movement points", "Invalid: fog of war blocks target")
+  - Rejected: error message with reason (e.g., "Invalid: destination not adjacent", "Invalid: fog of war blocks target")
 
 ### Turn End
 
@@ -81,11 +84,13 @@ Units screen for managing military and civilian unit orders. Displays unit stack
 ## Acceptance Criteria
 
 - [ ] Units screen displays title
-- [ ] Unit stacks are listed with province, type, count
+- [ ] Unit stacks are listed with province (using province name or prefixed id), type, count
 - [ ] User can select a unit stack via keyboard
 - [ ] Selected unit shows detail panel
+- [ ] Detail panel and any listed orders show provinces using province names (or prefixed ids when no name is defined), not opaque internal keys
 - [ ] User can issue Move order to valid adjacent province
-- [ ] User can issue Attack order to enemy province
+- [ ] User can issue Attack order to enemy province when the selected unit is military and can initiate combat
+- [ ] User cannot successfully issue Attack orders for non-military units (Explorer, Builder, Engineer, Merchant, Spy); the screen instead shows a clear, non-blocking error message and leaves orders unchanged
 - [ ] User can clear pending orders
 - [ ] Order validation feedback is shown (accepted/rejected with reason)
 - [ ] Escape key returns to In-Game Shell

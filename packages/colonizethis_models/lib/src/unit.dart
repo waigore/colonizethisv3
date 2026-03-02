@@ -9,7 +9,6 @@ class Unit {
     required this.ownerId,
     required this.provinceId,
     this.status = UnitStatus.idle,
-    this.movementPoints = 0,
     this.medals = 0,
     this.tileKey,
     this.currentWork,
@@ -20,8 +19,6 @@ class Unit {
   final String ownerId;
   final String provinceId;
   final UnitStatus status;
-  final int movementPoints;
-
   /// Experience medals (0–4); multiplies FPN/FPM in combat. SPEC/game/military-units.md.
   final int medals;
 
@@ -79,7 +76,6 @@ class Unit {
         'ownerId': ownerId,
         'provinceId': provinceId,
         'status': status.name,
-        'movementPoints': movementPoints,
         if (medals != 0) 'medals': medals,
         if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
         if (currentWork != null) 'currentWork': currentWork!.toJson(),
@@ -93,7 +89,6 @@ class Unit {
       ownerId: json['ownerId'] as String,
       provinceId: json['provinceId'] as String,
       status: _statusFromJson(json['status'] as String?),
-      movementPoints: (json['movementPoints'] as int?) ?? 0,
       medals: (json['medals'] as int?) ?? 0,
       tileKey: json['tileKey'] as String?,
       currentWork: cw is Map<String, dynamic>
@@ -112,7 +107,6 @@ class Unit {
     String? ownerId,
     String? provinceId,
     UnitStatus? status,
-    int? movementPoints,
     int? medals,
     String? tileKey,
     CurrentWork? currentWork,
@@ -124,7 +118,6 @@ class Unit {
       ownerId: ownerId ?? this.ownerId,
       provinceId: provinceId ?? this.provinceId,
       status: status ?? this.status,
-      movementPoints: movementPoints ?? this.movementPoints,
       medals: medals ?? this.medals,
       tileKey: tileKey ?? this.tileKey,
       currentWork:
@@ -142,7 +135,6 @@ class Unit {
           ownerId == other.ownerId &&
           provinceId == other.provinceId &&
           status == other.status &&
-          movementPoints == other.movementPoints &&
           medals == other.medals &&
           tileKey == other.tileKey &&
           currentWork == other.currentWork;
@@ -154,7 +146,6 @@ class Unit {
         ownerId,
         provinceId,
         status,
-        movementPoints,
         medals,
         tileKey,
         currentWork,

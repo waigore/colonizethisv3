@@ -146,7 +146,7 @@ PlayerView and save/load contracts are unchanged; ctterm uses the same PlayerVie
 
 ### Summary
 
-All TUI screen specs under SPEC/tui/screens/ will be created when those screens are specified in detail. This document references these paths so that future work knows where each screen’s spec will live. Existing SPEC paths (SPEC/ui/, SPEC/game/, SPEC/program/) are used as-is; no new files there for ctterm except [SPEC/program/game-events.md](../program/game-events.md).
+All TUI screen specs under SPEC/tui/screens/ will be created when those screens are specified in detail. This document references these paths so that future work knows where each screen’s spec will live. Existing SPEC paths (SPEC/ui/, SPEC/game/, SPEC/program/) are used as-is; no new files there for ctterm except [SPEC/program/game-events.md](../program/game-events.md). The in-game shell / Empire overview (screen 100006) performs an **idle-civilian check** before resolving end-of-turn; when at least one civilian unit owned by the human player has no work order, the shell prompts the player to confirm ending the turn before calling turn resolution.
 
 Acceptance criteria carried over from existing SPECs must be restated in Given–When–Then form with TUI adaptations in the corresponding SPEC/tui/screens/<screen-key>.md (or inline in this document where no separate screen file is used).
 

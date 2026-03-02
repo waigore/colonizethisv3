@@ -23,7 +23,7 @@ The screen uses `defaultNamingConfig` from `colonizethis_data` for nations and l
 
 **User stories.** The user navigates here from Main Menu "New Game". They see six player slots: Player 1 (You) and Players 2–6 (AI). For each slot they select a nation from a dropdown, then a leader for that nation. Start Game is disabled until every slot has both a nation and a leader selected. Back returns to Main Menu.
 
-**Keyboard-first.** Navigation: Tab/Shift+Tab to move between slots and buttons. Arrow keys in dropdowns. Enter to confirm selection/start. Escape for back.
+**Keyboard-first.** Navigation: Tab/Shift+Tab to move between slots and buttons. Arrow keys in dropdowns. Enter to confirm selection/start. Escape for back. `[A]` auto-assigns nations (and default leaders) to any empty slots from top to bottom using the first available nation per slot, without changing already-selected nations.
 
 **Acceptance criteria (Given–When–Then).**
 
@@ -34,6 +34,9 @@ The screen uses `defaultNamingConfig` from `colonizethis_data` for nations and l
 - **Leader follows nation:** When a slot's nation changes, the leader dropdown updates to that nation's leader variants and resets to the default leader for that nation.
 - **Start:** Given all six slots have nation and leader selected, when the user presses Start Game (or Enter), the widget invokes `onStartGame` with (1) ordered list of six gpIds (index 0 = human) and (2) map gpId → leaderVariantId.
 - **Back:** When the user presses B or Escape, the widget invokes `onBack` once; the shell navigates to Main Menu.
+ - **Auto-assign empty slots:** Given one or more slots have no nation selected and at least one Great Power is not yet assigned to any slot, when the user presses A, then the UI layer assigns to each empty slot, in top-to-bottom slot order, the first Great Power from the naming config that is not already assigned in another slot and sets that nation's leader to its default leader variant.
+ - **Auto-assign when no GP available:** Given a slot has no nation selected and all Great Powers from the naming config are already assigned in other slots, when the user presses A, then the UI layer leaves that slot's nation and leader unselected.
+ - **Auto-assign with all slots filled:** Given all six slots already have a nation and leader selected, when the user presses A, then the UI layer leaves all slot selections unchanged.
 
 ---
 

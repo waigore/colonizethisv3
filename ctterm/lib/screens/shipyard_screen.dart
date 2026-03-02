@@ -130,6 +130,21 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
 
   int _getPlayerGold() => _getHumanPlayer()?.treasury ?? 0;
 
+  String _provinceLabel(String fullProvinceId) {
+    final world = component.game.worldState;
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    for (final p in world.newWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    return fullProvinceId;
+  }
+
   void _issueBuildOrder(String provinceId, ShipDisplayInfo ship) {
     final playerId = _getHumanPlayerId();
     if (playerId == null) { setState(() { _feedbackMessage = 'Error: No human player'; _feedbackColor = Colors.red; }); return; }
@@ -242,8 +257,12 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
                 else ...homeFleet.map((u) => Text(_fmtShip(u.type), style: const TextStyle(color: Colors.white))),
                 Text('Ports: ${ports.length}', style: const TextStyle(color: Colors.grey)),
               ] else ...[
-                if (buildOrders.isEmpty) const Text('No orders', style: TextStyle(color: Colors.grey))
-                else ...buildOrders.asMap().entries.map((e) => Text('${e.key+1}.${e.value.shipName}>${e.value.provinceId}', style: TextStyle(color: e.key==_selectedIndex ? Colors.green : Colors.white))),
+              if (buildOrders.isEmpty) const Text('No orders', style: TextStyle(color: Colors.grey))
+              else ...buildOrders.asMap().entries.map((e) => Text(
+                    '${e.key + 1}.${e.value.shipName}>${_provinceLabel(e.value.provinceId)}',
+                    style: TextStyle(
+                        color: e.key == _selectedIndex ? Colors.green : Colors.white),
+                  )),
               ],
             ])),
           ])),

@@ -59,6 +59,49 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     return ['', ...others];
   }
 
+  /// Auto-assign nations and default leaders to any empty slots from top to bottom.
+  void _autoAssignGaps() {
+    final currentOrdered = List<String>.from(_orderedGpIdsBySlot);
+    final currentLeaders = Map<String, String>.from(_leaderVariantByGpId);
+    final assigned = <String>{
+      for (final id in currentOrdered)
+        if (id.isNotEmpty) id,
+    };
+    final filledSlots = <int>[];
+
+    for (var slotIndex = 0; slotIndex < _kNumSlots; slotIndex++) {
+      if (currentOrdered[slotIndex].isNotEmpty) {
+        continue;
+      }
+      final gpId = _allGpIds.firstWhere(
+        (id) => !assigned.contains(id),
+        orElse: () => '',
+      );
+      if (gpId.isEmpty) {
+        continue;
+      }
+
+      currentOrdered[slotIndex] = gpId;
+      final gp = _naming.gpById(gpId);
+      if (gp != null && gp.leaderVariants.isNotEmpty) {
+        currentLeaders[gpId] = gp.defaultLeaderVariantId;
+      }
+      assigned.add(gpId);
+      filledSlots.add(slotIndex);
+    }
+
+    if (filledSlots.isEmpty) {
+      _log.i('tui:setup: auto-assign: no changes');
+      return;
+    }
+
+    setState(() {
+      _orderedGpIdsBySlot = currentOrdered;
+      _leaderVariantByGpId = currentLeaders;
+    });
+    _log.i('tui:setup: auto-assign filled slots $filledSlots');
+  }
+
   /// Check if all slots have nation and leader selected.
   bool get _startEnabled =>
       _orderedGpIdsBySlot.every((id) => id.isNotEmpty) &&
@@ -90,6 +133,10 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
         if (_focusIndex >= 0) {
           setState(() => _dropdownFocus = (_dropdownFocus + 1).clamp(0, 1));
         }
+        break;
+      case 'a':
+      case 'A':
+        _autoAssignGaps();
         break;
       case 's':
       case 'S':
@@ -297,6 +344,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const Text('[A] Auto-assign  '),
         Text(
           startEnabled ? '[S] Start Game  ' : '[S] Start Game  ',
           style: startStyle,

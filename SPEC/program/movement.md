@@ -34,7 +34,6 @@ Before applying a move order:
 
 - **Land units:** Destination must be a **province** (not sea zone). If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** (P<->P edge) within the same region as the unit.
 - **Naval (Phase 5+):** Destination must be a **sea zone**; must be adjacent to current sea zone (S<->S or P<->S).
-- Optional: movement points, passable terrain, or blocking (e.g. enemy) — per design; can be stubbed.
 
 Invalid moves are rejected; unit location unchanged.
 

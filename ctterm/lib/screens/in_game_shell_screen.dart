@@ -16,6 +16,7 @@ class InGameShellScreen extends StatefulComponent {
   const InGameShellScreen({
     super.key,
     this.game,
+    required this.orders,
     this.combinedTopology,
     this.gameEvents,
     this.tileMapByRegion,
@@ -27,6 +28,8 @@ class InGameShellScreen extends StatefulComponent {
   });
 
   final Game? game;
+  /// Current orders for the human player (used for idle-civilian end-turn checks).
+  final Orders orders;
   /// Topology for the current game (from save/init). Used for land graph and neighbour navigation.
   final MapTopology? combinedTopology;
   final List<GameEvent>? gameEvents;
@@ -49,9 +52,19 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   /// Index into current province's neighbour list when moving next/prev.
   int _neighbourIndex = 0;
   bool _isEndingTurn = false;
+  bool _isConfirmingEndTurn = false;
+  int _idleCivilianCountForPrompt = 0;
 
   int get _turn => component.game?.worldState.turnState.turnNumber ?? 1;
-  int get _year => 1850 + ((_turn - 1) * 5);
+  int get _year => inGameShellHudYear(component.game, _turn);
+  Orders get _orders => component.orders;
+
+  /// Computes the calendar year for the in-game shell HUD using the game's
+  /// turn-time mapping per SPEC/game/turn-time-mapping.md.
+  int inGameShellHudYear(Game? game, int rawTurn) {
+    final mapping = game?.turnTimeMapping;
+    return turnToYear(rawTurn, mapping);
+  }
 
   int get _treasury {
     final game = component.game;
@@ -64,6 +77,51 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
 
   String get _regionDisplayName =>
       _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
+
+  String? _humanPlayerId() {
+    final game = component.game;
+    if (game == null) return null;
+    for (final entry in game.aiControlByGpId.entries) {
+      if (!entry.value) return entry.key;
+    }
+    return game.players.isNotEmpty ? game.players.first.id : null;
+  }
+
+  bool _isCivilianUnit(Unit unit) {
+    final type = unit.type.toLowerCase();
+    return type.contains('builder') || type.contains('engineer');
+  }
+
+  List<Unit> get _playerCivilianUnits {
+    final game = component.game;
+    final playerId = _humanPlayerId();
+    if (game == null || playerId == null) return [];
+
+    final units = <Unit>[];
+    units.addAll(game.worldState.oldWorld.units
+        .where((u) => u.ownerId == playerId && _isCivilianUnit(u)));
+    units.addAll(game.worldState.newWorld.units
+        .where((u) => u.ownerId == playerId && _isCivilianUnit(u)));
+    return units;
+  }
+
+  int _idleCivilianCount() {
+    final playerId = _humanPlayerId();
+    if (playerId == null) return 0;
+    final civs = _playerCivilianUnits;
+    if (civs.isEmpty) return 0;
+
+    final workOrders = _orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
+    int idle = 0;
+    for (final unit in civs) {
+      final hasOrder =
+          workOrders.any((order) => order.unitId == unit.id);
+      if (!hasOrder) {
+        idle++;
+      }
+    }
+    return idle;
+  }
 
   /// Land province node ids (local) in current region from topology. Empty if no topology.
   List<String> get _landProvinceLocalIds {
@@ -239,6 +297,29 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         final key = event.logicalKey;
         final c = event.character?.toLowerCase();
 
+        if (_isConfirmingEndTurn) {
+          if (key == LogicalKey.enter || c == 'y') {
+            _log.d(
+                'tui:game: end turn confirmed with $_idleCivilianCountForPrompt idle civilian unit(s)');
+            setState(() {
+              _isConfirmingEndTurn = false;
+              _idleCivilianCountForPrompt = 0;
+            });
+            _handleEndTurn();
+            return true;
+          }
+          if (key == LogicalKey.escape || c == 'n') {
+            _log.d(
+                'tui:game: end turn cancelled with $_idleCivilianCountForPrompt idle civilian unit(s)');
+            setState(() {
+              _isConfirmingEndTurn = false;
+              _idleCivilianCountForPrompt = 0;
+            });
+            return true;
+          }
+          return false;
+        }
+
         if (c == 'u') {
           component.onNavigate(CttermRoute.units);
           return true;
@@ -297,6 +378,14 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         if (c == 'e' || key == LogicalKey.enter) {
+          final idleCount = _idleCivilianCount();
+          if (idleCount > 0) {
+            setState(() {
+              _isConfirmingEndTurn = true;
+              _idleCivilianCountForPrompt = idleCount;
+            });
+            return true;
+          }
           _handleEndTurn();
           return true;
         }
@@ -448,10 +537,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           if (prov == null)
             Text('No province selected', style: TextStyle(color: Colors.gray))
           else ...[
-            Text(
-                'ID: ${ProvinceId.isPrefixed(prov.id) ? prov.id : ProvinceId.full(_selectedRegion, prov.id)}',
+            Text('Name: ${prov.displayName ?? prov.id}',
                 style: TextStyle(color: Colors.yellow)),
-            Text('Name: ${prov.displayName ?? prov.id}'),
             Text('Owner: ${ownerName(prov.ownerId)}'),
             Text('Terrain: ${prov.terrain}'),
             Text('Fort: ${prov.fortLevel}'),
@@ -460,7 +547,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
             Text('Visibility: full', style: TextStyle(color: Colors.gray)),
           ],
           const Spacer(),
-          Text('1–9: neighbour, j/l or ←/→: cycle', style: TextStyle(color: Colors.gray)),
+          Text('1–9: neighbour, j/l or ←/→: cycle',
+              style: TextStyle(color: Colors.gray)),
         ],
       ),
     );
@@ -549,11 +637,24 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return Colors.gray;
   }
 
+  String _provinceNameFromId(String fullProvinceId) {
+    final game = component.game;
+    if (game == null) return fullProvinceId;
+    for (final p in game.worldState.oldWorld.provinces) {
+      if (p.id == fullProvinceId) return p.displayName ?? p.id;
+    }
+    for (final p in game.worldState.newWorld.provinces) {
+      if (p.id == fullProvinceId) return p.displayName ?? p.id;
+    }
+    return fullProvinceId;
+  }
+
   String _formatEvent(GameEvent event) {
     if (event is CombatResultEvent) {
       return 'Battle: ${event.winnerId} wins';
     } else if (event is ProvinceCapturedEvent) {
-      return 'Captured: ${event.provinceId} by ${event.newOwnerId}';
+      final name = _provinceNameFromId(event.provinceId);
+      return 'Captured: $name by ${event.newOwnerId}';
     } else if (event is ResearchCompleteEvent) {
       return 'Research: ${event.techId}';
     } else if (event is VictorySetEvent) {
@@ -585,30 +686,35 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       child: _isEndingTurn
           ? Text('Processing turn...', style: TextStyle(color: Colors.yellow))
-          : Row(
-              children: [
-                const Text('['),
-                Text('M', style: TextStyle(color: Colors.cyan)),
-                const Text(']ap ['),
-                Text('R', style: TextStyle(color: Colors.cyan)),
-                const Text(']egion '),
-                const Text('['),
-                Text('U', style: TextStyle(color: Colors.cyan)),
-                const Text(']nits ['),
-                Text('D', style: TextStyle(color: Colors.cyan)),
-                const Text(']ev ['),
-                Text('P', style: TextStyle(color: Colors.cyan)),
-                const Text(']rod ['),
-                Text('A', style: TextStyle(color: Colors.cyan)),
-                const Text(']cademy ['),
-                Text('S', style: TextStyle(color: Colors.cyan)),
-                const Text(']hipyard ['),
-                Text('E', style: TextStyle(color: Colors.cyan)),
-                const Text(']nd ['),
-                Text('O', style: TextStyle(color: Colors.cyan)),
-                const Text(']ptions'),
-              ],
-            ),
+          : _isConfirmingEndTurn
+              ? Text(
+                  '$_idleCivilianCountForPrompt civilian unit(s) are idle. End turn anyway? [Y]es [N]o',
+                  style: TextStyle(color: Colors.yellow),
+                )
+              : Row(
+                  children: [
+                    const Text('['),
+                    Text('M', style: TextStyle(color: Colors.cyan)),
+                    const Text(']ap ['),
+                    Text('R', style: TextStyle(color: Colors.cyan)),
+                    const Text(']egion '),
+                    const Text('['),
+                    Text('U', style: TextStyle(color: Colors.cyan)),
+                    const Text(']nits ['),
+                    Text('D', style: TextStyle(color: Colors.cyan)),
+                    const Text(']ev ['),
+                    Text('P', style: TextStyle(color: Colors.cyan)),
+                    const Text(']rod ['),
+                    Text('A', style: TextStyle(color: Colors.cyan)),
+                    const Text(']cademy ['),
+                    Text('S', style: TextStyle(color: Colors.cyan)),
+                    const Text(']hipyard ['),
+                    Text('E', style: TextStyle(color: Colors.cyan)),
+                    const Text(']nd* ['),
+                    Text('O', style: TextStyle(color: Colors.cyan)),
+                    const Text(']ptions  (*prompts if idle civilians)'),
+                  ],
+                ),
     );
   }
 }
