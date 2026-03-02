@@ -47,7 +47,7 @@ Display the main game view with ASCII map, HUD, and navigation to panels (units,
 
 ### G5: Pause/Options
 - **Given** the player is in the in-game shell
-- **When** pressing `Escape` or `O`
+- **When** pressing `Escape`, `O`, or `P`
 - **Then** navigate to Pause/Options screen
 
 ### G6: Main Menu Exit

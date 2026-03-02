@@ -52,9 +52,12 @@ class ShellScreen extends StatefulComponent {
     this.onLoadGame,
     this.initialTheme,
     this.onThemeChanged,
+    this.settingsReturnRoute,
   });
 
   final CttermRoute route;
+  /// When non-null, Settings Back navigates here (e.g. Pause when opened from Pause). SPEC/tui/screens/pause-options.md §7.
+  final CttermRoute? settingsReturnRoute;
   final String? dataDirOverride;
   /// Current game state. Set when loading or starting a game.
   final Game? game;
@@ -206,7 +209,7 @@ class _ShellScreenState extends State<ShellScreen> {
         );
       case CttermRoute.settings:
         return SettingsScreen(
-          onBack: () => component.onNavigate(CttermRoute.mainMenu),
+          onBack: () => component.onNavigate(component.settingsReturnRoute ?? CttermRoute.mainMenu),
           initialTheme: component.initialTheme,
           onThemeChanged: component.onThemeChanged,
         );
@@ -360,7 +363,6 @@ class _ShellScreenState extends State<ShellScreen> {
         );
     }
   }
-}
 
   /// Builds standings from game state for defeat screen.
   /// Returns list of GP name -> province count, sorted by count descending.
@@ -392,3 +394,4 @@ class _ShellScreenState extends State<ShellScreen> {
     
     return standings;
   }
+}
