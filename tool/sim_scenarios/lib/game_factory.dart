@@ -93,7 +93,7 @@ class GameFactory {
     final baseConfig = init.config != null
         ? _parseGameSetupConfig(init.config!)
         : GameSetupConfig(
-            selectedGreatPowerIds: ['england'],
+            selectedGreatPowerIds: const ['england'],
             continentCount: 1,
             minorNationCount: 0,
             tribeCount: 1,
@@ -111,6 +111,7 @@ class GameFactory {
       numProvincesNewWorld: numNW >= 1 ? numNW : 1,
       minProvincesPerMinor: 0, // fromTopology: no reservation for minors
       seed: baseConfig.seed,
+      startingResources: baseConfig.startingResources,
     );
 
     final warpLinks = generateWarpZones(
@@ -193,6 +194,35 @@ class GameFactory {
 
   /// Parses a JSON map into GameSetupConfig.
   GameSetupConfig _parseGameSetupConfig(Map<String, dynamic> json) {
+    StartingResourcesConfig _parseStartingResources(
+        Map<String, dynamic>? raw) {
+      if (raw == null) return const StartingResourcesConfig();
+      return StartingResourcesConfig(
+        initialPeasants:
+            (raw['initialPeasants'] as num?)?.toInt() ?? 4,
+        initialGrainTurns:
+            (raw['initialGrainTurns'] as num?)?.toInt() ?? 10,
+        initialTreasury:
+            (raw['initialTreasury'] as num?)?.toInt() ?? 5000,
+        initialImprovementSlots:
+            (raw['initialImprovementSlots'] as num?)?.toInt() ?? 4,
+        initialMilitaryRegiments:
+            (raw['initialMilitaryRegiments'] as num?)?.toInt() ?? 5,
+        initialNavalShips:
+            (raw['initialNavalShips'] as num?)?.toInt() ?? 3,
+        startingCivilianUnits:
+            Map<String, int>.from((raw['startingCivilianUnits']
+                    as Map<String, dynamic>? ??
+                const <String, int>{})
+                .map(
+          (k, v) => MapEntry(k, (v as num).toInt()),
+        )),
+      );
+    }
+
+    final startingResources =
+        _parseStartingResources(json['startingResources'] as Map<String, dynamic>?);
+
     return GameSetupConfig(
       selectedGreatPowerIds: (json['greatPowers'] as List<dynamic>?)
               ?.cast<String>() ??
@@ -204,6 +234,7 @@ class GameFactory {
       numProvincesNewWorld: json['numProvincesNewWorld'] as int? ?? 80,
       minProvincesPerMinor: json['minProvincesPerMinor'] as int? ?? 3,
       seed: json['seed'] as int? ?? 42,
+      startingResources: startingResources,
     );
   }
 }

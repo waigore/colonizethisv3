@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 
 import 'capital_choice.dart';
 import '../constants.dart';
+import '../world/naval.dart';
 import '../world/player_view.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
@@ -128,8 +129,23 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   final startingResources = config.startingResources;
-  final initialGrainQuantity = startingResources.initialPeasants * startingResources.initialGrainTurns;
-  
+  final initialGrainQuantity =
+      startingResources.initialPeasants * startingResources.initialGrainTurns;
+
+  // Base starting stockpile for each Great Power: grain for workers plus
+  // enough lumber and castIron to build a small number of level-1 improvements.
+  final baseStockpileQuantities = <CommodityId, int>{};
+  if (initialGrainQuantity > 0) {
+    baseStockpileQuantities[CommodityCatalog.grain.id] = initialGrainQuantity;
+  }
+  if (startingResources.initialImprovementSlots > 0) {
+    final slots = startingResources.initialImprovementSlots;
+    baseStockpileQuantities[CommodityCatalog.lumber.id] =
+        (baseStockpileQuantities[CommodityCatalog.lumber.id] ?? 0) + slots;
+    baseStockpileQuantities[CommodityCatalog.castIron.id] =
+        (baseStockpileQuantities[CommodityCatalog.castIron.id] ?? 0) + slots;
+  }
+
   var players = <Player>[
     for (var i = 0; i < gpCount; i++)
       Player(
@@ -137,9 +153,9 @@ GameSetupResult createGameFromGeneratedMaps({
         displayName: 'Power ${i + 1}',
         isHuman: i == 0,
         stockpile: Stockpile(
-          quantities: initialGrainQuantity > 0
-              ? {CommodityCatalog.grain.id: initialGrainQuantity}
-              : const {},
+          quantities: baseStockpileQuantities.isEmpty
+              ? const {}
+              : Map<CommodityId, int>.from(baseStockpileQuantities),
         ),
         workerPool: WorkerPool(peasants: startingResources.initialPeasants),
         treasury: startingResources.initialTreasury,
@@ -239,6 +255,13 @@ GameSetupResult createGameFromGeneratedMaps({
 
   // Spawn starting units for each Great Power in their capital provinces.
   game = _addStartingUnits(game: game, config: config);
+
+  // Spawn starting land regiments and home fleets for each Great Power.
+  game = _addStartingMilitaryAndNaval(
+    game: game,
+    config: config,
+    topologyOldWorld: topologyOldWorld,
+  );
 
   final combinedTopology = buildCombinedTopology(
     topologyByRegion: topologyByRegion,
@@ -795,6 +818,145 @@ Game _addStartingUnits({
       ),
     ),
   );
+}
+
+/// Adds starting land regiments and home-fleet ships for each Great Power.
+Game _addStartingMilitaryAndNaval({
+  required Game game,
+  required GameSetupConfig config,
+  required MapTopology topologyOldWorld,
+}) {
+  final starting = config.startingResources;
+  final regimentCount = starting.initialMilitaryRegiments;
+  final shipCount = starting.initialNavalShips;
+
+  if (regimentCount <= 0 && shipCount <= 0) {
+    return game;
+  }
+
+  var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
+  var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
+  var fleets = List<Fleet>.from(game.worldState.fleets);
+
+  for (final player in game.players) {
+    final capitalProvinceId = player.capitalProvinceId;
+    if (capitalProvinceId == null) continue;
+
+    final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final localProvinceId = ProvinceId.localIdFrom(capitalProvinceId);
+
+    // Starting regiments in capital province.
+    if (regimentCount > 0) {
+      final regimentTypeId = _startingRegimentTypeForPlayer(player);
+      for (var i = 0; i < regimentCount; i++) {
+        final unitId = '${player.id}_${regimentTypeId}_reg${i + 1}';
+        final unit = Unit(
+          id: unitId,
+          type: regimentTypeId,
+          ownerId: player.id,
+          provinceId: capitalProvinceId,
+          status: UnitStatus.idle,
+        );
+        if (regionId == kRegionOldWorld) {
+          oldWorldUnits.add(unit);
+        } else {
+          newWorldUnits.add(unit);
+        }
+      }
+    }
+
+    // Starting merchant ships in the home fleet at the capital port sea zone.
+    if (shipCount > 0 && regionId == kRegionOldWorld) {
+      final seaZoneId =
+          seaZoneIdForProvince(topologyOldWorld, localProvinceId, regionId: kRegionOldWorld);
+      if (seaZoneId == null) {
+        continue;
+      }
+
+      final homeFleetId = 'fleet_${player.id}';
+      final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
+      final existingFleet =
+          existingIndex >= 0 ? fleets[existingIndex] : null;
+
+      final shipTypeId = _startingShipTypeForPlayer(player);
+      final newShipTypes = <String>[
+        if (existingFleet != null) ...existingFleet.shipTypeIds,
+        for (var i = 0; i < shipCount; i++) shipTypeId,
+      ];
+
+      final homeFleet = Fleet(
+        id: homeFleetId,
+        ownerId: player.id,
+        seaZoneId: seaZoneId,
+        regionId: regionId,
+        shipTypeIds: newShipTypes,
+      );
+
+      if (existingFleet == null) {
+        fleets.add(homeFleet);
+      } else {
+        fleets[existingIndex] = homeFleet;
+      }
+    }
+  }
+
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      oldWorld: RegionData(
+        provinces: game.worldState.oldWorld.provinces,
+        units: oldWorldUnits,
+      ),
+      newWorld: RegionData(
+        provinces: game.worldState.newWorld.provinces,
+        units: newWorldUnits,
+      ),
+      fleets: fleets,
+    ),
+  );
+}
+
+/// Chooses the regiment type used for starting armies.
+String _startingRegimentTypeForPlayer(Player player) {
+  // MVP: fixed baseline regular-infantry regiment from era 1.
+  const fallbackId = 'pikemen';
+  final stats = regimentStatsById(fallbackId);
+  if (stats != null) return stats.id;
+  return regimentCatalog.isNotEmpty ? regimentCatalog.first.id : fallbackId;
+}
+
+/// Chooses the merchant ship type used for starting home fleets.
+String _startingShipTypeForPlayer(Player player) {
+  final techUnlocked = player.techUnlocked;
+  bool hasTech(String techId) =>
+      techUnlocked != null && techUnlocked[techId] == true;
+
+  String? bestTypeId;
+  var bestCargo = -1;
+
+  for (final entry in ShipEconomyCatalog.all) {
+    final typeId = entry.shipTypeId;
+    final requiredTech = _unlockingTechForShip(typeId);
+    if (requiredTech != null && !hasTech(requiredTech)) {
+      continue;
+    }
+    final cargo = NavalStatsCatalog.get(typeId).cargoHold;
+    if (cargo > bestCargo) {
+      bestCargo = cargo;
+      bestTypeId = typeId;
+    }
+  }
+
+  // Fallback: baseline carrack if nothing matched.
+  return bestTypeId ?? ShipEconomyCatalog.carrack.shipTypeId;
+}
+
+String? _unlockingTechForShip(String shipTypeId) {
+  switch (shipTypeId) {
+    case 'fluyte':
+      return 'superior_hull_design';
+    default:
+      return null;
+  }
 }
 
 /// Builds a map of province id -> neighbouring province ids using only P–P edges.
