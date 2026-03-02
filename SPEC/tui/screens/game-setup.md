@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens** — Game Setup screen for ctterm. Reference: SPEC/tui/ctterm.md §1, SPEC/ui/game-setup.md.
 
+**Screen ID:** 100002
+
 ---
 
 ## Widget contract

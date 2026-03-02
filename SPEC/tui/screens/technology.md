@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens** — Technology research panel in ctterm. Full specification for TUI layout, navigation, and Given–When–Then acceptance criteria. Source of truth for technology screen behavior; adapts from SPEC/game/research-state.md, SPEC/game/tech-tree.md, and SPEC/program/research-resolution.md.
 
+**Screen ID:** 100014
+
 ---
 
 ## Layout

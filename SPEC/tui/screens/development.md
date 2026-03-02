@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/development.md** — TUI-specific Development screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100009
+
 ## Overview
 
 Development screen for managing civilian unit work orders (Builders, Engineers). Displays working units, allows assigning work tasks (improvements, roads, ports, forts, rails), and shows work progress. Reference: [SPEC/program/development-resolution.md](../../program/development-resolution.md), [SPEC/game/civilian-units.md](../../game/civilian-units.md).

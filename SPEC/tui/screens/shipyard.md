@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/shipyard.md** — TUI-specific Shipyard screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100012
+
 ## Overview
 
 Shipyard screen for constructing naval units. Displays available ship types (merchant and warship based on researched tech), allows building new ships, and shows the construction queue. Reference: [SPEC/game/ships-and-naval.md](../../game/ships-and-naval.md), [SPEC/game/tech-tree-naval.md](../../game/tech-tree-naval.md).

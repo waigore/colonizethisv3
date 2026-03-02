@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/victory-progress.md** — TUI-specific Victory/Progress screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100015
+
 ## Overview
 
 Victory/Progress screen showing human player's progress toward victory and standings of all Great Powers. Reference: [SPEC/game/victory.md](../../game/victory.md).

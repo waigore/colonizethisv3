@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/units.md** — TUI-specific Units screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100008
+
 ## Overview
 
 Units screen for managing military and civilian unit orders. Displays unit stacks, allows issuing Move/Attack/Clear orders, and shows order validation feedback. Reference: [SPEC/program/order-engine.md](../../program/order-engine.md), [SPEC/game/combat.md](../../game/combat.md).
