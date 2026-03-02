@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart';
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/screens/shell_screen.dart';
+import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -50,6 +51,8 @@ class _CttermAppState extends State<CttermApp> {
   _MapCache? _mapCache;
   /// Game events received during turn processing (displayed to user).
   final List<GameEvent> _gameEvents = [];
+  /// Current terminal theme.
+  TerminalTheme _terminalTheme = TerminalTheme.dark;
 
   void _navigateTo(CttermRoute route) {
     setState(() => _route = route);
@@ -163,10 +166,27 @@ class _CttermAppState extends State<CttermApp> {
     shutdownApp(0);
   }
 
+  /// Handles theme change from Settings screen.
+  void _onThemeChanged(TerminalTheme theme) {
+    _log.d('tui:app: theme changed to ${theme.name}');
+    setState(() => _terminalTheme = theme);
+  }
+
+  /// Converts TerminalTheme to Nocterm TuiThemeData.
+  TuiThemeData get _themeData {
+    switch (_terminalTheme) {
+      case TerminalTheme.light:
+        return TuiThemeData.light;
+      case TerminalTheme.dark:
+        return TuiThemeData.dark;
+    }
+  }
+
   @override
   Component build(BuildContext context) {
     return NoctermApp(
       title: 'ColonizeThis',
+      theme: _themeData,
       child: ShellScreen(
         route: _route,
         dataDirOverride: component.dataDirOverride,
@@ -188,6 +208,8 @@ class _CttermAppState extends State<CttermApp> {
         },
         onClearGame: _clearGame,
         onLoadGame: _loadGame,
+        initialTheme: _terminalTheme,
+        onThemeChanged: _onThemeChanged,
       ),
     );
   }

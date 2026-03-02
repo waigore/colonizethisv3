@@ -50,6 +50,8 @@ class ShellScreen extends StatefulComponent {
     this.onGameUpdated,
     this.onClearGame,
     this.onLoadGame,
+    this.initialTheme,
+    this.onThemeChanged,
   });
 
   final CttermRoute route;
@@ -81,6 +83,10 @@ class ShellScreen extends StatefulComponent {
   final void Function()? onClearGame;
   /// Callback to load a game by ID.
   final Future<void> Function(String gameId)? onLoadGame;
+  /// Initial terminal theme for settings screen.
+  final TerminalTheme? initialTheme;
+  /// Callback when theme is changed in settings.
+  final void Function(TerminalTheme)? onThemeChanged;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -201,6 +207,8 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.settings:
         return SettingsScreen(
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
+          initialTheme: component.initialTheme,
+          onThemeChanged: component.onThemeChanged,
         );
       case CttermRoute.inGameShell:
         return InGameShellScreen(

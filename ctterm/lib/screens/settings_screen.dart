@@ -21,10 +21,13 @@ class SettingsScreen extends StatefulComponent {
     super.key,
     required this.onBack,
     this.initialTheme,
+    this.onThemeChanged,
   });
 
   final void Function() onBack;
   final TerminalTheme? initialTheme;
+  /// Callback when theme is changed.
+  final void Function(TerminalTheme)? onThemeChanged;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -43,8 +46,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _selectTheme(TerminalTheme theme) {
     setState(() => _selectedTheme = theme);
     _log.d('tui:settings: theme selected=${theme.name}');
-    // TODO: Apply theme to NoctermApp (requires passing theme up to CttermApp)
-    // For MVP, we just track the selection.
+    // Notify parent to apply theme
+    component.onThemeChanged?.call(theme);
   }
 
   @override
