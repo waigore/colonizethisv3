@@ -32,8 +32,8 @@ class _PauseOptionsScreenState extends State<PauseOptionsScreen> {
 
   @override
   Component build(BuildContext context) {
-    return KeyboardListener(
-      autofocus: true,
+    return Focusable(
+      focused: true,
       onKeyEvent: _handleKeyEvent,
       child: _showExitConfirm ? _buildExitConfirm() : _buildMenu(),
     );

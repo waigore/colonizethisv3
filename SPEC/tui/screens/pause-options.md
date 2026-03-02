@@ -18,7 +18,7 @@
 
 | Action | Keys | Result |
 |--------|------|--------|
-| Open Pause (from in-game shell only) | `Escape`, `O`, or `P` | Pause/Options screen is shown; game state preserved. |
+| Open Pause (from in-game shell only) | `Escape`, `O`, or `X` | Pause/Options screen is shown; game state preserved. |
 | Close Pause and resume game | `Escape` or `B` | Pause closes; in-game shell (100006) is shown again. |
 | Confirm selected menu item | `Enter` | Runs the action for the currently selected item (see §4). |
 
@@ -77,7 +77,7 @@ No other menu items are required for MVP. Additional options (e.g. Help) may be 
 | `Escape` | Pause menu | Back to game. |
 | `Escape` | Exit confirmation | Cancel exit (stay in Pause). |
 | `O` | In-game shell | Open Pause. |
-| `P` | In-game shell | Open Pause. |
+| `X` | In-game shell | Open Pause. |
 | `B` | Pause menu | Back to game. |
 | `W` / `Up` | Pause menu | Previous menu item. |
 | `S` / `Down` | Pause menu | Next menu item. |

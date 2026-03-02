@@ -91,7 +91,7 @@ The map area is a **topology graph** of the current region’s **land provinces*
 
 ### G7: Pause/Options
 - **Given** the player is in the in-game shell
-- **When** pressing `Escape`, `O`, or `P`
+- **When** pressing `Escape`, `O`, or `X`
 - **Then** navigate to Pause/Options screen
 
 ### G8: Main Menu Exit
