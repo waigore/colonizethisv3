@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens** — Pause menu and options panel in ctterm. Full specification for TUI layout, navigation, and Given–When–Then acceptance criteria. Source of truth for pause/options screen behavior; adapts from SPEC/ui/main-menu.md return flow.
 
+**Screen ID:** 100018
+
 ---
 
 ## Layout

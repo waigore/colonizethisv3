@@ -66,6 +66,10 @@ Layouts must work on small terminals (e.g. Termux, Termius). Constraints: narrow
 - **Identity:** Province and tile keys follow [SPEC/game/world-model-identity.md](../game/world-model-identity.md) (prefixed province id, tile key format `regionId|localId|x|y`). Logic must never locate a province by province id alone.
 - **Smartphone map:** Provide a way to scroll the map and/or cycle between regions (e.g. Old World / New World) so the full map is usable on a small terminal.
 
+### Screen IDs
+
+Each top-level screen has a unique **6-digit screen ID** shown in a bar at the top-right of the screen for easy identification (e.g. when discussing which screen is meant). Source of truth: `CttermRoute.screenId` in `ctterm/lib/ctterm_routes.dart`. IDs: Main Menu 100001, Game Setup 100002, Load Game 100003, Generating World 100004, Settings 100005, In-game shell 100006, Map context 100007, Units 100008, Development 100009, Production 100010, Academy 100011, Shipyard 100012, Diplomacy 100013, Technology 100014, Victory/Progress 100015, Victory 100016, Defeat 100017, Pause/Options 100018.
+
 ### Acceptance criteria format
 
 All ctterm acceptance criteria MUST be written as **Given–When–Then** per project rules. Include TUI-specific cases where applicable (e.g. "Given the terminal is 80×24, when the user opens the Units panel, then the panel is shown and the map remains in the shell.").

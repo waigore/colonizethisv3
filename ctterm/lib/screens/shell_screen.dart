@@ -127,7 +127,34 @@ class _ShellScreenState extends State<ShellScreen> {
         }
         return false;
       },
-      child: _buildScreen(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildScreenIdBar(),
+          Expanded(child: _buildScreen()),
+        ],
+      ),
+    );
+  }
+
+  /// Top bar showing unique 6-digit screen ID for easy identification. SPEC/tui/ctterm.md § Screen IDs.
+  Component _buildScreenIdBar() {
+    final id = component.route.screenId;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+      color: Colors.grey,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            'Screen $id',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.cyan,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

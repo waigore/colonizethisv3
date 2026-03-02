@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/diplomacy.md** — TUI-specific Diplomacy screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100013
+
 ## Overview
 
 Diplomacy screen for managing relations with other Great Powers, Minor Nations, and Tribes. Allows issuing diplomatic orders (war, peace, alliances, overtures), viewing relation states, and responding to diplomatic events. Reference: [SPEC/game/diplomacy.md](../../game/diplomacy.md), [SPEC/program/diplomacy-resolution.md](../../program/diplomacy-resolution.md).

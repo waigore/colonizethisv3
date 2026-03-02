@@ -2,6 +2,8 @@
 
 **SPEC/tui** — In-game shell for ctterm. Reference: [ctterm.md](../ctterm.md).
 
+**Screen ID:** 100006
+
 ## Overview
 
 Display the main game view with ASCII map, HUD, and navigation to panels (units, development, production, academy, shipyard, diplomacy, technology, victory/progress).

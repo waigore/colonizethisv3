@@ -2,6 +2,8 @@
 
 **SPEC/tui/screens/academy.md** — TUI-specific Academy screen per SPEC/tui/ctterm.md.
 
+**Screen ID:** 100011
+
 ## Overview
 
 Academy screen for training military regiments. Displays available regiment types (based on researched tech), allows recruiting new units, and shows the training queue. Reference: [SPEC/game/military-units.md](../../game/military-units.md), [SPEC/game/research-state.md](../../game/research-state.md).
