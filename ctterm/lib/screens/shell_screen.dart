@@ -20,6 +20,7 @@ import 'package:ctterm/screens/production_screen.dart';
 import 'package:ctterm/screens/academy_screen.dart';
 import 'package:ctterm/screens/shipyard_screen.dart';
 import 'package:ctterm/screens/victory_screen.dart';
+import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -229,7 +230,14 @@ class _ShellScreenState extends State<ShellScreen> {
           },
         );
       case CttermRoute.diplomacy:
-        return const StubScreen(title: 'Diplomacy');
+        return DiplomacyScreen(
+          game: component.game!,
+          orders: component.orders ?? const Orders(),
+          onNavigate: component.onNavigate,
+          onOrdersChanged: (Orders orders) {
+            component.onOrdersChanged?.call(orders);
+          },
+        );
       case CttermRoute.technology:
         return const StubScreen(title: 'Technology');
       case CttermRoute.victoryProgress:
