@@ -1,0 +1,157 @@
+// Tests for shell screens (ShellScreen, InGameShellScreen). SPEC/tui/ctterm.md.
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:ctterm/screens/shell_screen.dart';
+import 'package:ctterm/screens/in_game_shell_screen.dart';
+import 'package:ctterm/ctterm_routes.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('ShellScreen (SPEC/tui/ctterm.md)', () {
+    test('can be constructed with required parameters', () {
+      final screen = ShellScreen(
+        route: CttermRoute.mainMenu,
+        onNavigate: (route) {},
+        onExit: () {},
+      );
+
+      expect(screen.route, CttermRoute.mainMenu);
+      expect(screen.onNavigate, isNotNull);
+      expect(screen.onExit, isNotNull);
+    });
+
+    test('callbacks are invoked correctly', () {
+      var navigateRoute = CttermRoute.mainMenu;
+      var exitCount = 0;
+
+      final screen = ShellScreen(
+        route: CttermRoute.mainMenu,
+        onNavigate: (route) => navigateRoute = route,
+        onExit: () => exitCount++,
+      );
+
+      screen.onNavigate(CttermRoute.gameSetup);
+      expect(navigateRoute, CttermRoute.gameSetup);
+
+      screen.onExit();
+      expect(exitCount, 1);
+    });
+
+    test('can be constructed with game parameter', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: List<String>.from(GameSetupConfig.defaultConfig.selectedGreatPowerIds),
+        leaderVariantByGpId: {},
+        seed: 42,
+        continentCount: GameSetupConfig.defaultConfig.continentCount,
+        minorNationCount: GameSetupConfig.defaultConfig.minorNationCount,
+        tribeCount: GameSetupConfig.defaultConfig.tribeCount,
+        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+      );
+
+      final initResult = runInitGame(
+        config: config,
+        options: const InitGameOptions(renderPng: false),
+      );
+
+      final screen = ShellScreen(
+        route: CttermRoute.inGameShell,
+        onNavigate: (route) {},
+        onExit: () {},
+        game: initResult.game,
+      );
+
+      expect(screen.game, isNotNull);
+    });
+  });
+
+  group('InGameShellScreen (SPEC/tui/screens/in-game-shell.md)', () {
+    test('can be constructed with required parameters', () {
+      final screen = InGameShellScreen(
+        onNavigate: (route) {},
+        onEndTurn: () async {},
+        onVictory: () {},
+        onDefeat: () {},
+        onExitToMainMenu: () {},
+      );
+
+      expect(screen.onNavigate, isNotNull);
+      expect(screen.onEndTurn, isNotNull);
+      expect(screen.onVictory, isNotNull);
+      expect(screen.onDefeat, isNotNull);
+      expect(screen.onExitToMainMenu, isNotNull);
+    });
+
+    test('callbacks are invoked correctly', () {
+      var navigateRoute = CttermRoute.mainMenu;
+      var victoryCount = 0;
+      var defeatCount = 0;
+      var exitCount = 0;
+
+      final screen = InGameShellScreen(
+        onNavigate: (route) => navigateRoute = route,
+        onEndTurn: () async {},
+        onVictory: () => victoryCount++,
+        onDefeat: () => defeatCount++,
+        onExitToMainMenu: () => exitCount++,
+      );
+
+      screen.onNavigate(CttermRoute.units);
+      expect(navigateRoute, CttermRoute.units);
+
+      screen.onVictory();
+      expect(victoryCount, 1);
+
+      screen.onDefeat();
+      expect(defeatCount, 1);
+
+      screen.onExitToMainMenu();
+      expect(exitCount, 1);
+    });
+
+    test('can be constructed with game parameter', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: List<String>.from(GameSetupConfig.defaultConfig.selectedGreatPowerIds),
+        leaderVariantByGpId: {},
+        seed: 42,
+        continentCount: GameSetupConfig.defaultConfig.continentCount,
+        minorNationCount: GameSetupConfig.defaultConfig.minorNationCount,
+        tribeCount: GameSetupConfig.defaultConfig.tribeCount,
+        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+      );
+
+      final initResult = runInitGame(
+        config: config,
+        options: const InitGameOptions(renderPng: false),
+      );
+
+      final screen = InGameShellScreen(
+        onNavigate: (route) {},
+        onEndTurn: () async {},
+        onVictory: () {},
+        onDefeat: () {},
+        onExitToMainMenu: () {},
+        game: initResult.game,
+      );
+
+      expect(screen.game, isNotNull);
+    });
+
+    test('can be constructed with gameEvents parameter', () {
+      final screen = InGameShellScreen(
+        onNavigate: (route) {},
+        onEndTurn: () async {},
+        onVictory: () {},
+        onDefeat: () {},
+        onExitToMainMenu: () {},
+        gameEvents: const [],
+      );
+
+      expect(screen.gameEvents, isNotNull);
+    });
+  });
+}
