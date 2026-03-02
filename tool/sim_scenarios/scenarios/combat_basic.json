@@ -6,7 +6,11 @@
     "config": {
       "greatPowers": ["england", "france"],
       "seed": 42,
-      "minorNationCount": 0
+      "minorNationCount": 0,
+      "startingResources": {
+        "initialMilitaryRegiments": 0,
+        "initialNavalShips": 0
+      }
     },
     "oldWorld": {
       "grid": [["p1", "sea1", "p2"], ["p1", "sea1", "p2"]],

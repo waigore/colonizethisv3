@@ -5,7 +5,11 @@
     "type": "fromTopology",
     "config": {
       "seed": 54321,
-      "greatPowers": ["england", "france"]
+      "greatPowers": ["england", "france"],
+      "startingResources": {
+        "initialMilitaryRegiments": 0,
+        "initialNavalShips": 0
+      }
     },
     "oldWorld": {
       "grid": [["P1", "sea1", "P2"]],
