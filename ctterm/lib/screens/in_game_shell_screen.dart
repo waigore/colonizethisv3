@@ -277,7 +277,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           _handleEndTurn();
           return true;
         }
-        if (c == 'o' || c == 'p' || key == LogicalKey.escape) {
+        if (c == 'o' || c == 'x' || key == LogicalKey.escape) {
           component.onNavigate(CttermRoute.pauseOptions);
           return true;
         }
