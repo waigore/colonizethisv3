@@ -11,7 +11,7 @@ Future<bool> runStartupSaveCheck(
 }) async {
   ensureReady ??= ensureSaveServiceReady;
   try {
-    await ensureReady(dataDirOverride);
+    await ensureReady!(dataDirOverride);
     return false;
   } on StaleLockException {
     return true;
