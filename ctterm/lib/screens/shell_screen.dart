@@ -39,12 +39,14 @@ class ShellScreen extends StatefulComponent {
     this.dataDirOverride,
     this.game,
     this.orders,
+    this.gameEvents,
     this.combinedTopology,
     this.tileMapByRegion,
     this.onPrepareNewGame,
     this.runGeneration,
     this.onTurnProcessed,
     this.onOrdersChanged,
+    this.onGameEvent,
     this.onGameUpdated,
     this.onClearGame,
     this.onLoadGame,
@@ -69,6 +71,10 @@ class ShellScreen extends StatefulComponent {
   final void Function(Game)? onTurnProcessed;
   /// Callback when orders are changed in a panel.
   final void Function(Orders)? onOrdersChanged;
+  /// Game events to display to the user (from turn processing).
+  final List<GameEvent>? gameEvents;
+  /// Callback to receive game events (combat, diplomacy, research, victory, etc.).
+  final void Function(GameEvent)? onGameEvent;
   /// Callback when game state is updated (e.g., orders changed in a panel).
   final void Function(Game)? onGameUpdated;
   /// Callback to clear game state (e.g., when returning to main menu).
@@ -172,6 +178,7 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.inGameShell:
         return InGameShellScreen(
           game: component.game,
+          gameEvents: component.gameEvents,
           onNavigate: component.onNavigate,
           onEndTurn: () async {
             final game = component.game;
@@ -191,6 +198,7 @@ class _ShellScreenState extends State<ShellScreen> {
               topology: topology,
               orders: currentOrders,
               tileMapByRegion: tileMapByRegion,
+              onGameEvent: component.onGameEvent,
             );
             
             // Notify parent of updated game state

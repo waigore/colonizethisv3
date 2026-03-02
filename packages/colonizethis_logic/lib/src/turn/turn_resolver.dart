@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../game_events.dart';
 import '../combat/combat_mode_selection.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
@@ -93,6 +94,7 @@ Game resolveTurnForGameFromOrderEngine({
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
 }) {
   final merged = mergeOrderLists(
     humanOrders: orderEngine.orders,
@@ -103,6 +105,7 @@ Game resolveTurnForGameFromOrderEngine({
     topology: topology,
     orders: merged,
     onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
@@ -128,6 +131,7 @@ Game validateOrdersAndResolveTurn({
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
 }) {
   final engine = OrderEngine(initialOrders: orders);
   final filtered = _filterAcceptedOrdersForAllPlayers(
@@ -138,6 +142,7 @@ Game validateOrdersAndResolveTurn({
   return resolveTurnForGame(
     game: game,
     onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
     topology: topology,
     orders: filtered,
     tileMapByRegion: tileMapByRegion,
@@ -157,6 +162,9 @@ Game resolveTurnForGame({
   /// Per-player production assignments; when set, used for that player instead of [defaultAssignments]. SPEC/ai/economy-planner.md.
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(DialogueEvent)? onDialogue,
+
+  /// Callback for game events (combat, diplomacy, research, victory, etc.). SPEC/program/game-events.md.
+  void Function(GameEvent)? onGameEvent,
 
   /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
@@ -195,12 +203,66 @@ Game resolveTurnForGame({
       case TurnPhase.consumption:
         state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
         break;
-      case TurnPhase.research:
+      case TurnPhase.research: {
+        final previousTechs = <String, Set<String>>{};
+        for (final p in state.players) {
+          final unlocked = p.techUnlocked ?? {};
+          previousTechs[p.id] = unlocked.entries
+              .where((e) => e.value)
+              .map((e) => e.key)
+              .toSet();
+        }
         state = resolveResearchPhase(state, orders);
+        // Emit research_complete events for newly completed techs
+        if (onGameEvent != null) {
+          for (final player in state.players) {
+            final unlocked = player.techUnlocked ?? {};
+            final current = unlocked.entries
+                .where((e) => e.value)
+                .map((e) => e.key)
+                .toSet();
+            final previous = previousTechs[player.id] ?? {};
+            for (final tech in current) {
+              if (!previous.contains(tech)) {
+                onGameEvent(ResearchCompleteEvent(
+                  playerId: player.id,
+                  techId: tech,
+                  turnNumber: turn,
+                ));
+              }
+            }
+          }
+        }
         break;
-      case TurnPhase.diplomacy:
+      }
+      case TurnPhase.diplomacy: {
+        // Track previous diplomatic relations from game state
+        final previousRelations = <String, Map<String, RelationState>>{};
+        for (final rel in state.diplomacyRelations) {
+          // Store both directions
+          previousRelations.putIfAbsent(rel.factionId1, () => {});
+          previousRelations.putIfAbsent(rel.factionId2, () => {});
+          previousRelations[rel.factionId1]![rel.factionId2] = rel.state;
+          previousRelations[rel.factionId2]![rel.factionId1] = rel.state;
+        }
         state = resolveDiplomacyPhase(state, orders, onDialogue: onDialogue);
+        // Emit diplomacy_change events for changed relations
+        if (onGameEvent != null) {
+          for (final rel in state.diplomacyRelations) {
+            final prev1 = previousRelations[rel.factionId1]?[rel.factionId2];
+            if (prev1 == null || prev1 != rel.state) {
+              // Emit for faction1
+              onGameEvent(DiplomacyChangeEvent(
+                actorId: rel.factionId1,
+                targetId: rel.factionId2,
+                changeType: rel.state.name,
+                turnNumber: turn,
+              ));
+            }
+          }
+        }
         break;
+      }
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);
         break;
@@ -212,7 +274,14 @@ Game resolveTurnForGame({
           onDialogue: onDialogue,
         );
         break;
-      case TurnPhase.combat:
+      case TurnPhase.combat: {
+        // Track province ownership before combat for province_captured events
+        final previousOwnership = <String, String?>{};
+        for (final region in [state.worldState.oldWorld, state.worldState.newWorld]) {
+          for (final prov in region.provinces) {
+            previousOwnership[prov.id] = prov.ownerId;
+          }
+        }
         state = _runCombatPhase(
           state,
           orders,
@@ -221,7 +290,24 @@ Game resolveTurnForGame({
           tileMapByRegion,
           onDialogue: onDialogue,
         );
+        // Emit province_captured events for changed ownership
+        if (onGameEvent != null) {
+          for (final region in [state.worldState.oldWorld, state.worldState.newWorld]) {
+            for (final prov in region.provinces) {
+              final previousOwner = previousOwnership[prov.id];
+              if (previousOwner != null && previousOwner != prov.ownerId) {
+                onGameEvent(ProvinceCapturedEvent(
+                  provinceId: prov.id,
+                  previousOwnerId: previousOwner,
+                  newOwnerId: prov.ownerId ?? '',
+                  turnNumber: turn,
+                ));
+              }
+            }
+          }
+        }
         break;
+      }
       case TurnPhase.buildWork:
         state = applyBuildAndWorkOrders(
           state,
@@ -231,9 +317,18 @@ Game resolveTurnForGame({
           onDialogue: onDialogue,
         );
         break;
-      case TurnPhase.endOfTurn:
+      case TurnPhase.endOfTurn: {
         state = runEndOfTurnPhase(state, onDialogue: onDialogue);
+        // Emit victory_set event if victory is set
+        if (onGameEvent != null && state.victory != null) {
+          onGameEvent(VictorySetEvent(
+            winnerPlayerId: state.victory!.winnerPlayerId,
+            victoryType: state.victory!.type.name,
+            turnNumber: turn,
+          ));
+        }
         break;
+      }
     }
     _log.d('logic: phase ${phase.name} end');
   }

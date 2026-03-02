@@ -48,6 +48,8 @@ class _CttermAppState extends State<CttermApp> {
   Orders _currentOrders = const Orders();
   _PendingNewGameConfig? _pendingNewGameConfig;
   _MapCache? _mapCache;
+  /// Game events received during turn processing (displayed to user).
+  final List<GameEvent> _gameEvents = [];
 
   void _navigateTo(CttermRoute route) {
     setState(() => _route = route);
@@ -129,7 +131,14 @@ class _CttermAppState extends State<CttermApp> {
     setState(() {
       _currentGame = updatedGame;
       _currentOrders = const Orders(); // Clear orders after turn is processed
+      // Keep game events for display; clear when returning to main menu
     });
+  }
+
+  /// Callback to receive game events (combat, diplomacy, research, victory, etc.).
+  void _onGameEvent(GameEvent event) {
+    _log.d('tui:event: received ${event.runtimeType}');
+    setState(() => _gameEvents.add(event));
   }
 
   /// Clears game state (e.g., when returning to main menu).
@@ -140,6 +149,7 @@ class _CttermAppState extends State<CttermApp> {
       _currentOrders = const Orders();
       _mapCache = null;
       _pendingNewGameConfig = null;
+      _gameEvents.clear();
     });
   }
 
@@ -162,6 +172,7 @@ class _CttermAppState extends State<CttermApp> {
         dataDirOverride: component.dataDirOverride,
         game: _currentGame,
         orders: _currentOrders,
+        gameEvents: _gameEvents,
         combinedTopology: _mapCache?.combinedTopology,
         tileMapByRegion: _mapCache?.tileMapByRegion,
         onNavigate: _navigateTo,
@@ -170,6 +181,7 @@ class _CttermAppState extends State<CttermApp> {
         runGeneration: _route == CttermRoute.generatingWorld ? _runGeneration : null,
         onTurnProcessed: _onTurnProcessed,
         onOrdersChanged: _updateOrders,
+        onGameEvent: _onGameEvent,
         onGameUpdated: (game) {
           _log.d('tui:app: game updated from panel');
           setState(() => _currentGame = game);
