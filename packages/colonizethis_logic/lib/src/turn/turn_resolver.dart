@@ -138,6 +138,7 @@ Game validateOrdersAndResolveTurn({
     engine: engine,
     game: game,
     topology: topology,
+    onGameEvent: onGameEvent,
   );
   return resolveTurnForGame(
     game: game,
@@ -289,6 +290,7 @@ Game resolveTurnForGame({
           topology,
           tileMapByRegion,
           onDialogue: onDialogue,
+          onGameEvent: onGameEvent,
         );
         // Emit province_captured events for changed ownership
         if (onGameEvent != null) {
@@ -341,6 +343,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
   required OrderEngine engine,
   required Game game,
   required MapTopology topology,
+  void Function(GameEvent)? onGameEvent,
 }) {
   final original = engine.orders;
   final moveByPlayer = <String, List<MoveOrder>>{};
@@ -385,18 +388,36 @@ Orders _filterAcceptedOrdersForAllPlayers({
       final r = _next();
       if (r.isAccepted) {
         moveByPlayer.putIfAbsent(playerId, () => <MoveOrder>[]).add(m);
+      } else if (onGameEvent != null && r.reason != null) {
+        onGameEvent(OrderRejectedEvent(
+          playerId: playerId,
+          orderSummary: 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+          reasonCode: r.reason!,
+        ));
       }
     }
     for (final b in builds) {
       final r = _next();
       if (r.isAccepted) {
         buildByPlayer.putIfAbsent(playerId, () => <BuildUnitOrder>[]).add(b);
+      } else if (onGameEvent != null && r.reason != null) {
+        onGameEvent(OrderRejectedEvent(
+          playerId: playerId,
+          orderSummary: 'Build unit: ${b.unitType}',
+          reasonCode: r.reason!,
+        ));
       }
     }
     for (final w in works) {
       final r = _next();
       if (r.isAccepted) {
         workByPlayer.putIfAbsent(playerId, () => <WorkOrder>[]).add(w);
+      } else if (onGameEvent != null && r.reason != null) {
+        onGameEvent(OrderRejectedEvent(
+          playerId: playerId,
+          orderSummary: 'Work order: ${w.target}',
+          reasonCode: r.reason!,
+        ));
       }
     }
 
@@ -986,6 +1007,7 @@ Game _runCombatPhase(
   MapTopology topology,
   Map<String, TileMapResult>? tileMapByRegion, {
   void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
 }) {
   // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   final previousCapitalByPlayer = {
@@ -1015,6 +1037,7 @@ Game _runCombatPhase(
       battleIndex,
       seed,
       onDialogue: onDialogue,
+      onGameEvent: onGameEvent,
     );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     battleIndex++;
