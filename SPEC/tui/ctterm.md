@@ -10,6 +10,8 @@
 
 App start → **Main Menu** (ctterm equivalent of UXD 03a). The Main Menu is the first screen shown (except possibly a splash/logo). The menu shows at least: **New Game**, **Load Game**, **Settings**, and **Quit** (or platform-appropriate equivalent). Source: [SPEC/ui/main-menu.md](../ui/main-menu.md).
 
+If opening the save-data Hive box fails because the **lock file** is held (e.g. another ctterm instance is running, or a previous run did not exit cleanly), the app shows a **Lock-prompt screen** first (see §5.1). The user must choose whether to remove the lock and continue or quit; only then does the app show the Main Menu or exit.
+
 ### Flows
 
 - **Main Menu** → **New Game** → Game Setup (03b) → Generating world → In-game shell.
@@ -31,6 +33,7 @@ After a victory or defeat, pressing "Return to Main Menu" returns to the Main Me
 
 ### Screens in the flow
 
+- Lock-prompt (shown only when save-data lock is detected at startup; see §5.1)
 - Main Menu, Game Setup, Load Game, Generating World, Settings
 - In-game shell (map + HUD + empire sidebar + context panel)
 - Units, Development, Production, Academy, Shipyard, Diplomacy, Technology, Victory/Progress panels
@@ -156,7 +159,21 @@ This section records development decisions for ctterm. Package placement is defi
 - **Package placement:** Top-level **`ctterm/`** at repo root (like ctdev). Pure Dart executable; no Flutter SDK. Run with `dart run ctterm` from repo root (or `melos run ctterm`).
 - **Game events:** The game event stream is implemented in colonizethis_logic first; ctterm only consumes it. Logic has no knowledge of UI display. Events are built progressively as the TUI requires them. See [SPEC/program/game-events.md](../program/game-events.md).
 - **Data flow / dependencies:** Generate map first, then derive topology (same as ctdev). Ctterm depends on: colonizethis_save, colonizethis_logic (and transitively colonizethis_models, colonizethis_data, colonizethis_map, colonizethis_ai). Same package set as ctdev. If colonizethis_save or colonizethis_logic need augmentation for ctterm (e.g. Hive path injection), add minimal API or options in those packages.
-- **Storage:** A **separate Hive directory** is used for ctterm (not shared with app or ctdev). Pure Dart cannot use `path_provider`; use a fixed convention: e.g. `$HOME/.colonizethis_ctterm` (or on Linux, `$XDG_DATA_HOME/colonizethis_ctterm` when set). Implement in ctterm using `dart:io` Platform and the `path` package. Optional CLI flag `--data-dir <path>` overrides the default; document in [docs/project-tools.md](../../docs/project-tools.md).
+- **Storage:** A **separate Hive directory** is used for ctterm (not shared with app or ctdev). Pure Dart cannot use `path_provider`; use a fixed convention: e.g. `$HOME/.colonizethis_ctterm` (or on Linux, `$XDG_DATA_HOME/colonizethis_ctterm` when set). Implement in ctterm using `dart:io` Platform and the `path` package. Optional CLI flag `--data-dir <path>` overrides the default; document in [docs/project-tools.md](../../docs/project-tools.md). Hive uses a **lock file** (e.g. `games.lock`) in that directory so only one process has the box open; lock handling is specified in §5.1.
+
+### 5.1 Save-data lock and lock-prompt screen
+
+- **Purpose of the lock:** The Hive backend uses a lock file (e.g. `games.lock`) in the ctterm data directory so that only one process has the games box open at a time. This avoids corruption if two instances wrote to the same files.
+- **Detection:** When ctterm starts, it calls the save service to open the games box (before showing the Main Menu). If opening fails because the lock is held (e.g. `FileSystemException` with "lock" in the message or errno indicating resource unavailable), the save service throws a **lock exception** (e.g. `StaleLockException`) instead of deleting the lock or retrying.
+- **User choice, no automatic delete:** The app **must not** delete the lock file unless the user explicitly agrees. If a lock exception is detected at startup, the app shows a **Lock-prompt screen** (before the Main Menu) that:
+  - Explains that save data is locked (another instance may be running, or a previous run did not exit cleanly).
+  - Offers two options: **[Y]es** — remove the lock and continue (then open the box and show the Main Menu); **[N]o** — quit without modifying the lock.
+- **When the lock is deleted:** The lock file is deleted **only** when the user chooses "Remove lock and continue" (e.g. presses Y). Implementation: the app calls a dedicated function (e.g. `removeStaleLock`) that deletes the lock file in the data directory, then calls the save service again to open the box; on success, the app dismisses the lock-prompt screen and shows the Main Menu.
+- **Acceptance criteria (Given–When–Then):**
+  - **Given** ctterm is starting and the games box cannot be opened because the lock file is held, **when** the app runs, **then** the app shows the Lock-prompt screen with text explaining the lock and options [Y]es (remove and continue) and [N]o (quit).
+  - **Given** the Lock-prompt screen is shown, **when** the user presses **Y**, **then** the app deletes the lock file in the ctterm data directory, opens the games box, and shows the Main Menu.
+  - **Given** the Lock-prompt screen is shown, **when** the user presses **N** (or **Q**), **then** the app exits without deleting the lock file.
+  - **Given** the user has not agreed to remove the lock, **then** the app must not delete the lock file.
 - **Nocterm:** Use latest stable (e.g. `nocterm: ^0.4.2`). No extra version constraints. Ctterm must detect terminal size and resize elements responsively.
 - **Testing:** 90% coverage is required for the ctterm package. Use mocks; refer to Nocterm docs (e.g. `testNocterm()`) for TUI component tests. Critical paths: main menu and navigation; load map/empire views; assign units (civilian, military, naval); development; production; academy; shipyard; technology; end turn.
 - **Navigation:** Full navigation structure with stubs for all panels: Main Menu, Game Setup, Load Game, Generating World, Settings, In-game shell, Units, Development, Production, Academy, Shipyard, Diplomacy, Technology, Victory/Progress, Defeat, Pause/Options.

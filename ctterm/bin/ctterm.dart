@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_app.dart';
 import 'package:ctterm/ctterm_log.dart';
+import 'package:ctterm/save_service.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -21,5 +22,18 @@ void main(List<String> args) async {
   initCttermLogging(dataDirOverride);
   _log.i('tui: ctterm starting');
 
-  runApp(CttermApp(dataDirOverride: dataDirOverride));
+  var initialLockDetected = false;
+  try {
+    await ensureSaveServiceReady(dataDirOverride);
+  } on StaleLockException catch (e) {
+    _log.d('tui: lock detected at ${e.dataDir}, showing prompt');
+    initialLockDetected = true;
+  } catch (e, st) {
+    _log.w('tui: save service pre-init failed (menu may show Loading then recover)', error: e, stackTrace: st);
+  }
+
+  runApp(CttermApp(
+    dataDirOverride: dataDirOverride,
+    initialLockDetected: initialLockDetected,
+  ));
 }
