@@ -1,0 +1,291 @@
+[
+  {
+    "name": "sea_transport_overseas_riches_trade_income_small_home_fleet",
+    "description": "Riches-to-treasury with overseas sea transport (SPEC/program/auto-transport.md, SPEC/program/extraction-pipeline.md, SPEC/game/commodity-catalog.md). OW/NW topology as other sea_transport_overseas scenarios, but NW tiles produce spices (riches). Home fleet has a single carrack (3 holds). Each turn, extraction delivers up to 3 overseas spices to stockpile, then riches-to-treasury converts them to treasury; over 2 turns this yields 6 spices worth of treasury.",
+    "init": {
+      "type": "fromTopology",
+      "config": {
+        "greatPowers": ["england"],
+        "seed": 42,
+        "minorNationCount": 0,
+        "tribeCount": 1
+      },
+      "oldWorld": {
+        "grid": [
+          ["p1", "sea1"],
+          ["p1", "p1"]
+        ],
+        "nodes": [
+          { "id": "p1", "regionId": "oldWorld", "type": "province" },
+          { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+        ],
+        "edges": [
+          { "id1": "p1", "id2": "sea1" }
+        ],
+        "resourceGrid": [
+          ["grain", null],
+          ["grain", "grain"]
+        ]
+      },
+      "newWorld": {
+        "grid": [
+          ["p2", "sea2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"]
+        ],
+        "nodes": [
+          { "id": "p2", "regionId": "newWorld", "type": "province" },
+          { "id": "sea2", "regionId": "newWorld", "type": "seaZone" }
+        ],
+        "edges": [
+          { "id1": "p2", "id2": "sea2" }
+        ],
+        "resourceGrid": [
+          ["spices", null, "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"]
+        ]
+      }
+    },
+    "setup": {
+      "initialStockpile": {
+        "gp1": {
+          "grain": 0,
+          "spices": 0
+        }
+      },
+      "initialTileState": {
+        "oldWorld|p1|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "oldWorld|p1|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "oldWorld|p1|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|0": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|2": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|3": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|4": { "improvementLevel": 1, "roadLevel": 1 }
+      },
+      "initialTech": {
+        "gp1": ["galleys_1"]
+      }
+    },
+    "turns": [
+      {
+        "turn": 1,
+        "orders": [
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          }
+        ]
+      },
+      {
+        "turn": 2,
+        "orders": []
+      }
+    ],
+    "assertions": [
+      {
+        "turn": 2,
+        "player": "gp1",
+        "commodity": "spices",
+        "stockpileCommodity": 0
+      }
+    ]
+  },
+  {
+    "name": "sea_transport_overseas_riches_trade_income_large_home_fleet",
+    "description": "Riches-to-treasury with overseas sea transport (SPEC/program/auto-transport.md, SPEC/program/extraction-pipeline.md, SPEC/game/commodity-catalog.md). Same OW/NW topology and spices placement as small_home_fleet. Home fleet builds eight carracks (24 holds, matching the 24 overseas spices per turn). Over 2 turns, all overseas spices are delivered and converted, yielding treasury equal to 48 spices worth.",
+    "init": {
+      "type": "fromTopology",
+      "config": {
+        "greatPowers": ["england"],
+        "seed": 42,
+        "minorNationCount": 0,
+        "tribeCount": 1
+      },
+      "oldWorld": {
+        "grid": [
+          ["p1", "sea1"],
+          ["p1", "p1"]
+        ],
+        "nodes": [
+          { "id": "p1", "regionId": "oldWorld", "type": "province" },
+          { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+        ],
+        "edges": [
+          { "id1": "p1", "id2": "sea1" }
+        ],
+        "resourceGrid": [
+          ["grain", null],
+          ["grain", "grain"]
+        ]
+      },
+      "newWorld": {
+        "grid": [
+          ["p2", "sea2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"],
+          ["p2", "p2", "p2", "p2", "p2"]
+        ],
+        "nodes": [
+          { "id": "p2", "regionId": "newWorld", "type": "province" },
+          { "id": "sea2", "regionId": "newWorld", "type": "seaZone" }
+        ],
+        "edges": [
+          { "id1": "p2", "id2": "sea2" }
+        ],
+        "resourceGrid": [
+          ["spices", null, "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"],
+          ["spices", "spices", "spices", "spices", "spices"]
+        ]
+      }
+    },
+    "setup": {
+      "initialStockpile": {
+        "gp1": {
+          "grain": 0,
+          "spices": 0
+        }
+      },
+      "initialTileState": {
+        "oldWorld|p1|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "oldWorld|p1|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "oldWorld|p1|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|0": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|0": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|1": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|2": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|2": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|3": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|3": { "improvementLevel": 1, "roadLevel": 1 },
+
+        "newWorld|p2|0|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|1|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|2|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|3|4": { "improvementLevel": 1, "roadLevel": 1 },
+        "newWorld|p2|4|4": { "improvementLevel": 1, "roadLevel": 1 }
+      },
+      "initialTech": {
+        "gp1": ["galleys_1"]
+      }
+    },
+    "turns": [
+      {
+        "turn": 1,
+        "orders": [
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          },
+          {
+            "player": "gp1",
+            "type": "build",
+            "unitType": "carrack",
+            "in": "oldWorld|p1"
+          }
+        ]
+      },
+      {
+        "turn": 2,
+        "orders": []
+      }
+    ],
+    "assertions": [
+      {
+        "turn": 2,
+        "player": "gp1",
+        "commodity": "spices",
+        "stockpileCommodity": 0
+      }
+    ]
+  }
+]
+

@@ -116,6 +116,20 @@ Tests in `perception_test.dart` cover threats (including neighbor/capital with t
 
 ---
 
+## 12. War declaration and attack target selection — **IMPLEMENTED** (relation threshold; target-specific scoring; movement filter and prefer)
+
+**Spec:**  
+- **SPEC/ai/hidden-agendas.md** — **War declaration:** "Warmonger: **lower relation threshold** to declare war; Peacemaker: strong negative modifier; **Backstabber: bonus if target is ally**." Agenda table: warmonger "**Attacks weaker neighbors**"; backstabber "**Attacks allies when weak**".  
+- **SPEC/ai/ai-architecture.md** — **Movement:** "**Prefer** contested or enemy territory (at war); avoid factions at peace."
+
+**Current:**  
+- **Relation threshold:** Implemented in `_runDiplomacyPlanner`. Declare-war candidates are scored 0 when relation score > `getDeclareWarMaxRelationScore(agendaId)` (default 50; warmonger 70; peacemaker 30; backstabber 100). Config in `colonizethis_data/hidden_agenda_config.dart`.  
+- **Target-specific scoring:** When scoring declare-war, warmonger receives `getDeclareWarTargetBonusWeakerNeighbor` (+30) when target is in `snapshot.opportunities.weakNeighbors`; backstabber receives `getDeclareWarTargetBonusAlly` (+25) when target relation level is allied.  
+- **Movement filter:** `filterMoveOrdersByDiplomacy(game, playerId, orders)` in `order_suggestion.dart` drops moves to at-peace or minor-without-war destinations. Used by both simple heuristics and full-AI `_runMovePlanner`.  
+- **Movement prefer enemy:** Full-AI move planner scores filtered moves with `kMovePreferEnemyTerritoryBonus` (+20) when destination owner is at war with the mover; weighted random selection prefers enemy territory.
+
+---
+
 ## Summary table
 
 | # | Area | Status | Priority |
@@ -131,3 +145,4 @@ Tests in `perception_test.dart` cover threats (including neighbor/capital with t
 | 9 | Personality thresholds (war/peace/alliance/research) | Implemented | Medium |
 | 10 | Goal selection (weighted choice vs behavior tree) | Documented | Low |
 | 11 | OrderSuggestionAPI diplomatic | Implemented | High (for #7) |
+| 12 | War declaration / attack target (relation threshold; target-specific scoring; movement filter and prefer) | Implemented | Medium |

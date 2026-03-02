@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('resolveEngagement', () {
@@ -355,6 +355,87 @@ void main() {
       final survivingAtt = result.worldState.oldWorld.units.where((u) => u.ownerId == 'att').length;
       // With Nationalism, limit 12; 13 attackers so ≥1 does not participate and must survive.
       expect(survivingAtt, greaterThanOrEqualTo(1), reason: 'deployment limit 12 with Nationalism: at most 12 participate');
+    });
+  });
+
+  group('resolveBattleContext Spy timer interaction', () {
+    test('combat conquest clears Spy timer for new owner province', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'def'),
+            ],
+            units: const [
+              Unit(
+                id: 'att1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                provinceId: provinceId,
+              ),
+              Unit(
+                id: 'def1',
+                type: 'peasant_levies',
+                ownerId: 'def',
+                provinceId: provinceId,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'att': {tileKey: 'fullyVisible'},
+          },
+          spyRevealTurnsByPlayer: const {
+            'att': {
+              provinceId: 3,
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceId: [tileKey],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+      );
+
+      const ctx = BattleContext(
+        provinceId: provinceId,
+        regionId: ow,
+        defenderFactionId: 'def',
+        defenderUnitIds: ['def1'],
+        attackers: [
+          AttackingSide(
+            factionId: 'att',
+            unitIds: ['att1'],
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final after = resolveBattleContext(game, ctx);
+      final province = after.worldState.oldWorld.provinces
+          .where((p) => p.id == provinceId)
+          .first;
+      expect(province.ownerId, 'att');
+      // Spy timer for (att, provinceId) cleared.
+      expect(after.worldState.spyRevealTurnsByPlayer['att'], isNull);
+      // Visibility for attacker remains fullyVisible.
+      expect(
+        after.worldState.playerVisibilityByTile['att']?[tileKey],
+        'fullyVisible',
+      );
     });
   });
 }

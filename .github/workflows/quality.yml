@@ -9,12 +9,14 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # CI quality scope: packages + tool packages only (no app/ctdev UI tests). Full scope via tool/test_coverage.py locally.
       - name: Detect source changes
         id: changes
         uses: dorny/paths-filter@v3
@@ -22,6 +24,7 @@ jobs:
           filters: |
             tests:
               - 'packages/**'
+              - 'ctterm/**'
               - 'tool/sim_scenarios/**'
               - 'tool/sim_combat_montecarlo/**'
               - 'tool/sim_combat/**'
@@ -29,8 +32,6 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
-              - 'app/**'
-              - 'ctdev/**'
 
       - name: Setup Flutter
         if: steps.changes.outputs.tests == 'true'
@@ -51,12 +52,48 @@ jobs:
         if: steps.changes.outputs.tests == 'true'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
+      - name: Resolve dependencies
+        if: steps.changes.outputs.tests == 'true'
+        run: dart pub get
+
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
-      - name: Run tests with coverage
+      # Reduced scope: packages + tool packages only (app/ctdev run via tool/test_coverage.py locally).
+      - name: Test packages (Dart)
         if: steps.changes.outputs.tests == 'true'
-        run: python3 tool/test_coverage.py
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
+            [ -d "$dir/test" ] || continue
+            (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
+            (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          done
+
+      - name: Test ctterm (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          if [ -d ctterm/test ]; then
+            (cd ctterm && dart test --coverage=coverage -j 4 --reporter=compact)
+            (cd ctterm && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test tool packages (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
+            [ -d "$dir/test" ] || continue
+            (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
+            (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          done
 
       - name: Coverage gate (logic/map/ai >= 90%)
         if: steps.changes.outputs.tests == 'true'

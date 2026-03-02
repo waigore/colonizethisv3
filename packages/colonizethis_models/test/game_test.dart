@@ -1,5 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('Game', () {
@@ -143,6 +143,40 @@ void main() {
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.minorNations, isEmpty);
       expect(fromLegacy.tribes, isEmpty);
+    });
+    test('richesCashMultiplier round-trip and default', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [],
+        richesCashMultiplier: 1.5,
+      );
+      final json = game.toJson();
+      // Should serialize non-default value
+      expect(json['richesCashMultiplier'], 1.5);
+      final roundTrip = Game.fromJson(json);
+      expect(roundTrip.richesCashMultiplier, 1.5);
+      // Default value not serialized
+      final defaultGame = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [],
+      );
+      expect(defaultGame.richesCashMultiplier, 1.0);
+      final defaultJson = defaultGame.toJson();
+      expect(defaultJson.containsKey('richesCashMultiplier'), false);
+      // Backward compat: missing richesCashMultiplier => default 1.0
+      final legacy = Map<String, dynamic>.from(json)..remove('richesCashMultiplier');
+      final fromLegacy = Game.fromJson(legacy);
+      expect(fromLegacy.richesCashMultiplier, 1.0);
     });
   });
 }

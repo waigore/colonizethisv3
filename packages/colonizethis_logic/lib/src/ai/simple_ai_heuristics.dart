@@ -38,26 +38,6 @@ enum _SuggestionCategory {
   research,
 }
 
-/// Builds a map from full province id (regionId|localId) to owner faction id.
-/// Keys must match [MoveOrder.destinationProvinceId] format from the order
-/// suggestion API (SPEC/game/world-model-identity.md).
-Map<String, String> _provinceOwnerMap(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
-      out[key] = p.ownerId!;
-    }
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
-      out[key] = p.ownerId!;
-    }
-  }
-  return out;
-}
-
 /// Generates orders for a single player using the shared simple heuristics:
 /// PlayerView, order suggestion API, category order (move → work → build →
 /// research), seeded random choice within category, and diplomacy post-filter.
@@ -73,7 +53,6 @@ Orders generateOrdersWithSimpleHeuristics(
     return const Orders();
   }
 
-  final provinceOwner = _provinceOwnerMap(game);
   final rng = math.Random(turnSeed);
   var current = const Orders();
   final view = buildPlayerView(game, topology, player.id);
@@ -187,24 +166,7 @@ Orders generateOrdersWithSimpleHeuristics(
 
   final rawMoves = current.moveOrdersByPlayerId[player.id];
   if (rawMoves != null && rawMoves.isNotEmpty) {
-    final filtered = <MoveOrder>[];
-    for (final m in rawMoves) {
-      final destOwner = provinceOwner[m.destinationProvinceId];
-      if (destOwner == null || destOwner == player.id) {
-        filtered.add(m);
-        continue;
-      }
-      final rel = getRelation(game, player.id, destOwner);
-      if (rel != null && rel.atPeace) {
-        continue;
-      }
-      if (rel == null) {
-        final isMinor =
-            game.minorNations.any((mn) => mn.id == destOwner);
-        if (isMinor) continue;
-      }
-      filtered.add(m);
-    }
+    final filtered = filterMoveOrdersByDiplomacy(game, player.id, rawMoves);
     if (filtered.isNotEmpty) {
       moveByPlayer[player.id] = filtered;
     }

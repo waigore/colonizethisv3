@@ -41,6 +41,8 @@ At game start, for each AI Great Power `P`:
 Agenda applies **additive or multiplicative modifiers** to the same quantities that personality uses:
 
 - **War declaration** — Warmonger: lower relation threshold to declare war; Peacemaker: strong negative modifier; Backstabber: bonus if target is ally.
+  - **Relation threshold:** AI only considers declaring war on a faction when relation score ≤ max score for that agenda. Default (base) 50; Warmonger 70 (more willing); Peacemaker 30 (only when hostile); Backstabber 100 (can declare on allies).
+  - **Target-specific scoring:** When scoring declare-war candidates, add bonus when target is a weaker neighbor (Warmonger) or when target is allied (Backstabber). Config: `declareWarTargetBonusWeakerNeighbor` (warmonger default +30), `declareWarTargetBonusAlly` (backstabber default +25).
 - **Peace acceptance** — Peacemaker: accept at lower war-score threshold; Warmonger: higher threshold.
 - **Alliance acceptance** — Isolationist: high decline chance; others unchanged or positive.
 - **Build/order choice** — Tech Thief: boost spy/research orders; Envy: boost orders that mirror human’s recent builds or targets.
@@ -69,6 +71,7 @@ When the game or AI performs an action, **evidence rules** (defined per agenda) 
 - **Assignment and immutability:** One agenda per AI; assigned at game start from `agendaSeed[P]` (derived from global game seed and `aiSeed[P]`). Stored in game state; no mid-game change.
 - **Determinism:** Same global game seed and `aiSeed[P]` yield the same agenda. Same observable actions yield the same evidence points (replay- and save/load-consistent).
 - **Behavior modifiers:** Each agenda type has defined effects in the spec categories: war declaration, peace acceptance, alliance acceptance, build/order choice, treaty breaking. Expressed as weights or thresholds in config.
+- **War declaration (relation threshold and target scoring):** Declare-war candidates are scored only when relation score ≤ agenda’s `declareWarMaxRelationScore` (default 50; warmonger 70; peacemaker 30). When scoring declare-war, warmonger receives bonus for target in weakNeighbors; backstabber receives bonus for allied target. Implementation uses config for thresholds and bonuses; diplomacy planner filters or zero-scores out-of-threshold declare-war and applies target bonuses.
 - **Evidence and suspicion:** Evidence rules add points per (observer nation, subject AI, agenda type). Suspicion bands (Unknown, Possible, Likely, Almost certain, Confirmed) map total evidence score; display uses bands only. True agenda is never exposed to the player. Evidence rule coverage: MVP (war declaration, peace offer, land/naval battle victory) is implemented; deferred (spy, alliance decline, treaty break, mirror-build) is documented and not in scope for MVP.
 - **Dossier contract:** Only suspicion scores and capped evidence log are exposed (PlayerView-safe). See [ai-dossier.md](ai-dossier.md) and [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
 

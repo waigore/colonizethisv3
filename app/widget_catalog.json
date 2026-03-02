@@ -7,5 +7,14 @@
     "category": "screen",
     "source": "pipeline",
     "widgetbook_story_path": "Main Menu"
+  },
+  {
+    "id": "ct_game_setup",
+    "name": "CtGameSetup",
+    "dart_file_path": "lib/widgets/game_setup.dart",
+    "constructor_props": "variant: GameSetupVariant, state: GameSetupState, naming: ResolvedNamingConfig, initialOrderedGpIds: List<String>, initialLeaderVariantByGpId: Map<String, String>, onStartGame: void Function(List<String>, Map<String, String>), onBack: VoidCallback",
+    "category": "screen",
+    "source": "pipeline",
+    "widgetbook_story_path": "Game Setup"
   }
 ]

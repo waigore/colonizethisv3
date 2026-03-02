@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// App themes. Phase 6: pixel-art canon and styling per UXD apply to existing UIs (03a–03m).
 /// Asset pipeline: assets/images/; load in Flame/Flutter via rootBundle or Flame cache.
@@ -9,7 +10,7 @@ class AppThemes {
 
   /// Colonial theme per UXD 02: parchment, colonial brown, dark wood, gold/brass, iron.
   /// Used for main menu mockups and Widgetbook. Uses platform text theme with colonial
-  /// colors; Cinzel/Merriweather can be added via bundled fonts or google_fonts when available.
+  /// colors.
   static ThemeData get colonial {
     const Color parchment = Color(0xFFF5F5DC);
     const Color colonialBrown = Color(0xFF8B4513);
@@ -58,6 +59,25 @@ class AppThemes {
           foregroundColor: colonialBrown,
           minimumSize: const Size(88, 48),
         ),
+      ),
+    );
+  }
+
+  /// Colonial theme with serif font (Cinzel) for pixel-art main menu. SPEC/ui/main-menu.md.
+  /// Pixel font to be defined later; serif keeps basic colonial theme.
+  static ThemeData get colonialPixelArt {
+    final ThemeData base = colonial;
+    final TextTheme baseText = base.textTheme;
+    return base.copyWith(
+      textTheme: baseText.copyWith(
+        headlineMedium: GoogleFonts.cinzel(textStyle: baseText.headlineMedium),
+        headlineSmall: GoogleFonts.cinzel(textStyle: baseText.headlineSmall),
+        titleLarge: GoogleFonts.cinzel(textStyle: baseText.titleLarge),
+        titleMedium: GoogleFonts.cinzel(textStyle: baseText.titleMedium),
+        titleSmall: GoogleFonts.cinzel(textStyle: baseText.titleSmall),
+        bodyLarge: GoogleFonts.cinzel(textStyle: baseText.bodyLarge),
+        bodyMedium: GoogleFonts.cinzel(textStyle: baseText.bodyMedium),
+        bodySmall: GoogleFonts.cinzel(textStyle: baseText.bodySmall),
       ),
     );
   }

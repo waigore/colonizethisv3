@@ -4,23 +4,24 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
 ///
-/// Phase 2: cargo holds = fixed stub per player. Fill by priority until cap; rest left behind.
+/// Phase 2: cargo holds derived from home fleet (with stub fallback). Fill by priority until cap; rest left behind.
 
-/// Default cargo holds per player when no ships (Phase 2 stub).
+/// Default cargo holds per player when no ships or no cargoHold data (stub fallback).
 const int defaultCargoHoldsStub = 24;
 
-/// Priority order for filling cargo: food, raw materials, riches, then manufactured/luxury/advanced.
+/// Priority order for filling cargo: food, raw materials, riches, then manufactured/advanced.
+/// Note: CommodityCategory.luxury exists but no commodity currently has that category assigned,
+/// so it's excluded from priority until luxury is defined in the commodity catalog.
 final List<CommodityCategory> _seaPriorityOrder = [
   CommodityCategory.food,
   CommodityCategory.rawMaterial,
   CommodityCategory.riches,
   CommodityCategory.manufactured,
-  CommodityCategory.luxury,
   CommodityCategory.advanced,
 ];
 
 /// Allocates [overseasTotals] to delivered amounts, filling up to [cargoHolds] units total
-/// by [priorityOrder] (default: food, raw, riches, manufactured, luxury, advanced).
+/// by [priorityOrder] (default: food, raw, riches, manufactured, advanced).
 /// Returns the map of commodity id → quantity to add to stockpile.
 Map<CommodityId, int> allocateOverseasToStockpile(
   Map<CommodityId, int> overseasTotals, {
@@ -48,6 +49,28 @@ Map<CommodityId, int> allocateOverseasToStockpile(
   }
 
   return delivered;
+}
+
+/// Total cargo holds for [playerId] based on ships in the home fleet at the capital port.
+///
+/// Home fleet convention: fleet id = 'fleet_<playerId>'. Each ship's cargoHold is read from
+/// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
+/// falls back to [defaultCargoHoldsStub] for backwards compatibility.
+int cargoHoldsForHomeFleet(Game game, String playerId) {
+  final homeFleetId = 'fleet_$playerId';
+  final fleets = game.worldState.fleets;
+  final homeFleet = fleets
+      .where((f) => f.id == homeFleetId && f.ownerId == playerId)
+      .firstOrNull;
+  if (homeFleet == null) {
+    return defaultCargoHoldsStub;
+  }
+  var total = 0;
+  for (final typeId in homeFleet.shipTypeIds) {
+    total += NavalStatsCatalog.get(typeId).cargoHold;
+  }
+  // When a home fleet exists but has no cargo-capable ships, capacity is 0.
+  return total;
 }
 
 // --- Trade/transport interception (Phase 6). Only when interceptor is at war with owner. ---

@@ -11,6 +11,51 @@ import '../world/player_view.dart';
 
 final Logger _log = Logger();
 
+/// Builds a map from full province id (regionId|localId) to owner faction id.
+/// Used by AI to filter move orders by diplomacy. SPEC/ai/ai-architecture.md.
+Map<String, String> getProvinceOwnerMap(Game game) {
+  final out = <String, String>{};
+  for (final p in game.worldState.oldWorld.provinces) {
+    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
+      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      out[key] = p.ownerId!;
+    }
+  }
+  for (final p in game.worldState.newWorld.provinces) {
+    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
+      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      out[key] = p.ownerId!;
+    }
+  }
+  return out;
+}
+
+/// Filters move orders to those allowed by diplomacy: no move into province of
+/// a faction at peace with [playerId], or into Minor territory without war.
+/// SPEC/ai/ai-architecture.md movement filter.
+List<MoveOrder> filterMoveOrdersByDiplomacy(
+  Game game,
+  String playerId,
+  List<MoveOrder> orders,
+) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  final filtered = <MoveOrder>[];
+  for (final m in orders) {
+    final destOwner = provinceOwner[m.destinationProvinceId];
+    if (destOwner == null || destOwner == playerId) {
+      filtered.add(m);
+      continue;
+    }
+    final rel = getRelation(game, playerId, destOwner);
+    if (rel != null && rel.atPeace) continue;
+    if (rel == null) {
+      if (game.minorNations.any((mn) => mn.id == destOwner)) continue;
+    }
+    filtered.add(m);
+  }
+  return filtered;
+}
+
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
 List<MoveOrder> suggestMoveOrders(
@@ -311,12 +356,26 @@ List<BuildUnitOrder> suggestBuildOrders(
     return suggestions;
   }
 
-  // For now, suggest only military builds using RegimentEconomyCatalog.
+  // Military (regiment) builds.
   for (final entry in RegimentEconomyCatalog.byId.entries) {
     final unitType = entry.key;
     final candidate = BuildUnitOrder(
       unitType: unitType,
       isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
+      spawnProvinceId: capitalId,
+    );
+
+    if (_isBuildOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+
+  // Naval (ship) builds. SPEC/program/order-suggestions.md.
+  for (final entry in ShipEconomyCatalog.byId.entries) {
+    final unitType = entry.key;
+    final candidate = BuildUnitOrder(
+      unitType: unitType,
+      isMilitary: false,
       spawnProvinceId: capitalId,
     );
 
@@ -597,6 +656,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       final rel = getRelation(game, playerId, targetId);
       final score = rel?.score ?? 50;
       if (score < 51) continue;
+      final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+      if (treasury < cost) continue;
     }
     suggestions.add(DiplomaticOrder(
       type: DiplomaticOrderType.establishOverture,

@@ -6,6 +6,33 @@ The list below is the single place for **what tools exist** and **how to invoke 
 
 ---
 
+## ctterm
+
+Terminal UI for the full single-player ColonizeThis experience. Pure Dart (Nocterm); no Flutter. Spec: [SPEC/tui/ctterm.md](../SPEC/tui/ctterm.md).
+
+**Invocation**
+
+```bash
+dart run ctterm
+```
+
+Or from project root with Melos:
+
+```bash
+melos run ctterm
+```
+
+**Options**
+
+- `--data-dir <path>` — Override the default Hive data directory (default: `$HOME/.colonizethis_ctterm`, or `$XDG_DATA_HOME/colonizethis_ctterm` on Linux when set).
+
+**Behaviour**
+
+- Shows Main Menu first (New Game, Load Game, Settings, Quit). Load Game is enabled only when at least one save exists in the ctterm data directory. Saves are separate from app/ctdev.
+- Logs to **ctterm.log** in the ctterm data directory (same as `--data-dir` when set). All logger output (tui:*, logic:*, etc.) is appended to this file.
+
+---
+
 ## init_game
 
 Game creation: generate Old World and New World maps, assign provinces and capitals to Great Powers, Minor Nations, and Tribes, build initial world state. Outputs combined map PNG (with ownership and capitals) and faction setup markdown. Does not advance turns. Spec: [SPEC/program/init-game-tool.md](../SPEC/program/init-game-tool.md).
@@ -190,3 +217,17 @@ melos run check_gdd_coverage
 - Warns if a scenario file listed in the mapping is missing from tool/sim_scenarios/scenarios/.
 - Exit 0 if all specs covered; exit 1 if any uncovered (for CI).
 - If the mapping uses the extended format with `verifierIssues` for a covered spec, the tool prints those issues so the **coder** can rectify them (see [agentic-gdd-verifier.md](../SPEC/project/agentic-gdd-verifier.md) and [agentic-gdd-scenario-coverage.md](../SPEC/project/agentic-gdd-scenario-coverage.md)).
+
+---
+
+## run_quality_gate_tests.sh (CI verification)
+
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+
+**Invocation**
+
+```bash
+tool/run_quality_gate_tests.sh
+```
+
+Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).

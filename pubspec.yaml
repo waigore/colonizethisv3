@@ -7,6 +7,7 @@ environment:
 workspace:
   - app
   - ctdev
+  - ctterm
   - packages/colonizethis_models
   - packages/colonizethis_data
   - packages/colonizethis_save
@@ -52,3 +53,6 @@ melos:
     check_gdd_coverage:
       description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
       run: dart run check_gdd_coverage
+    ctterm:
+      description: Terminal UI for full single-player ColonizeThis. SPEC/tui/ctterm.md.
+      run: dart run ctterm

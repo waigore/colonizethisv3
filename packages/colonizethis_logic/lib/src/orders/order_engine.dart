@@ -355,20 +355,23 @@ class OrderEngine {
       final destFullId =
           resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
       final destRegion = ProvinceId.regionIdFrom(destFullId);
-      if (destRegion != unitRegion) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
-      final destLocalId = ProvinceId.localIdFrom(destFullId);
-      if (!isValidLandMoveInRegion(
-          topology, unitRegion, unitLocalId, destLocalId)) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      final destProvince =
-          tryGetProvince(game.worldState, o.destinationProvinceId);
+      final destProvince = tryGetProvince(game.worldState, destFullId);
       final destOwnerId = destProvince?.ownerId;
+      // Movement within own provinces: always allowed (no adjacency, no cargo, no region restriction). SPEC/program/movement.md.
+      final moveToOwnProvince = destOwnerId == playerId;
+      if (!moveToOwnProvince && destRegion != unitRegion) {
+        return const OrderValidationResult(
+            status: OrderValidationStatus.rejected, reason: 'Invalid move');
+      }
+      if (!moveToOwnProvince) {
+        final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
+        final destLocalId = ProvinceId.localIdFrom(destFullId);
+        if (!isValidLandMoveInRegion(
+            topology, unitRegion, unitLocalId, destLocalId)) {
+          return const OrderValidationResult(
+              status: OrderValidationStatus.rejected, reason: 'Invalid move');
+        }
+      }
       if (!isMilitaryUnit(unit.type) &&
           destOwnerId != null &&
           destOwnerId != playerId) {
@@ -388,7 +391,7 @@ class OrderEngine {
       }
       if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
           !moveDestVisibilityOk(
-              view, unitRegion, o.destinationProvinceId, unit.type)) {
+              view, destRegion, o.destinationProvinceId, unit.type)) {
         return const OrderValidationResult(
             status: OrderValidationStatus.rejected,
             reason: 'Source or destination not visible');
@@ -438,13 +441,13 @@ class OrderEngine {
           if (treasury < econ.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in econ.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= econ.buildTreasuryCost;
@@ -475,13 +478,13 @@ class OrderEngine {
           if (treasury < econ.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in econ.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= econ.buildTreasuryCost;
@@ -501,13 +504,13 @@ class OrderEngine {
           if (treasury < shipEcon.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
+                reason: 'Insufficient treasury');
           }
           for (final e in shipEcon.buildInputs.entries) {
             if (stockpile.quantityOf(e.key) < e.value) {
               return const OrderValidationResult(
                   status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient resources');
+                  reason: 'Insufficient materials');
             }
           }
           treasury -= shipEcon.buildTreasuryCost;
@@ -904,6 +907,14 @@ class OrderEngine {
                     'Join Empire requires at least Friendly relations (score >= 51)',
               );
             }
+            final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+            if (treasury < cost) {
+              return OrderValidationResult(
+                status: OrderValidationStatus.rejected,
+                reason:
+                    'Join Empire requires £$cost (scales with target size); treasury is $treasury',
+              );
+            }
           }
 
           return const OrderValidationResult(
@@ -985,8 +996,10 @@ class OrderEngine {
         continue;
       }
       final fleet = fleetById[o.fleetId];
+      final homeFleetId = 'fleet_$playerId';
       final valid = fleet != null &&
           fleet.ownerId == playerId &&
+          fleet.id != homeFleetId &&
           isAdjacentSeaZone(topology, fleet.seaZoneId, o.destinationSeaZoneId);
       results.add(OrderValidationResult(
         status: valid
@@ -1007,7 +1020,10 @@ class OrderEngine {
         continue;
       }
       final fleet = fleetById[o.fleetId];
-      final valid = fleet != null && fleet.ownerId == playerId;
+      final homeFleetId = 'fleet_$playerId';
+      final valid = fleet != null &&
+          fleet.ownerId == playerId &&
+          (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
       results.add(OrderValidationResult(
         status: valid
             ? OrderValidationStatus.accepted

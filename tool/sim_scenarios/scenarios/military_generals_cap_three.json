@@ -1,0 +1,18 @@
+{
+  "name": "military_generals_cap_three",
+  "description": "SPEC/game/military-generals.md AC: national_bureaucracy or improved_infantry_tactics (with organised_regiments) gives cap 3; three generals.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [{"id": "p1", "regionId": "oldWorld", "type": "province"}, {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}],
+      "edges": [{"id1": "p1", "id2": "sea1"}]
+    }
+  },
+  "setup": {"initialTech": {"gp1": ["organised_regiments", "national_bureaucracy"]}},
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "generalCount": 3}
+  ]
+}

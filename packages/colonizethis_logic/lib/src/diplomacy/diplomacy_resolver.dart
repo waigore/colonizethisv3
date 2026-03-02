@@ -14,6 +14,29 @@ final Logger _diploLog = Logger();
 const int overtureConsulateCost = 500;
 const int overtureEmbassyCost = 1000;
 
+/// Join Empire cost: base + per-province. SPEC/game/diplomacy.md.
+const int joinEmpireBaseCost = 5000;
+const int joinEmpirePerProvinceCost = 2000;
+
+/// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
+int provinceCountOwnedBy(Game game, String factionId) {
+  int count = 0;
+  for (final p in game.worldState.oldWorld.provinces) {
+    if (p.ownerId == factionId) count++;
+  }
+  for (final p in game.worldState.newWorld.provinces) {
+    if (p.ownerId == factionId) count++;
+  }
+  return count;
+}
+
+/// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
+/// Cost = base + (provinceCount * perProvince). SPEC/game/diplomacy.md.
+int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
+  final n = provinceCountOwnedBy(game, targetId);
+  return joinEmpireBaseCost + n * joinEmpirePerProvinceCost;
+}
+
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
 RelationLevel scoreToLevel(int score) {
   if (score <= 25) return RelationLevel.hostile;
@@ -163,27 +186,30 @@ Game _processOverturePayments(
           break;
         }
       }
-      int cost;
-      if (stage == OvertureStage.tradeConsulate) {
-        cost = overtureConsulateCost;
-      } else if (stage == OvertureStage.embassy) {
-        cost = overtureEmbassyCost;
-      } else {
-        continue; // NAP and Join Empire are free
-      }
-
       // Must be at previous stage to advance to this one.
       final prevStage = _previousStage(stage);
       final atPrevStage =
           (existing == null && prevStage == OvertureStage.none) ||
               (existing != null && existing.stage == prevStage);
-      final canAdvance = atPrevStage && player.treasury >= cost;
+      if (!atPrevStage) continue;
 
-      if (!canAdvance) continue;
+      int cost;
+      if (stage == OvertureStage.tradeConsulate) {
+        cost = overtureConsulateCost;
+      } else if (stage == OvertureStage.embassy) {
+        cost = overtureEmbassyCost;
+      } else if (stage == OvertureStage.nap) {
+        cost = 0; // NAP is free; advance below
+      } else {
+        continue; // Join Empire is handled in step 3 (_resolveJoinEmpireColony)
+      }
 
-      // Deduct treasury and advance overture
-      player = player.copyWith(treasury: player.treasury - cost);
-      players[playerIdx] = player;
+      if (player.treasury < cost) continue;
+
+      if (cost > 0) {
+        player = player.copyWith(treasury: player.treasury - cost);
+        players[playerIdx] = player;
+      }
 
       final osIdx =
           overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
@@ -233,12 +259,18 @@ Game _resolveJoinEmpireColony(
 ) {
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
+
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.establishOverture) continue;
       final stage = order.overtureStage;
       if (stage != OvertureStage.joinEmpire) continue;
 
       final targetId = order.targetFactionId;
+      if (!_isMinorOrTribe(game, targetId)) continue;
+
+      final player = getPlayer(game, gpId);
+      if (player == null) continue;
+
       final existing = getOverture(game, gpId, targetId);
       if (existing == null || existing.stage != OvertureStage.nap) continue;
 
@@ -246,22 +278,106 @@ Game _resolveJoinEmpireColony(
       final score = rel?.score ?? 50;
       if (score < 51) continue; // Must be Friendly or Allied
 
-      // Join Empire: absorb Minor/Tribe into GP. Per diplomacy.md:
-      // Minor -> absorption (provinces to requester); Tribe -> colony.
-      // Full implementation would transfer provinces; stub for Phase 4.
-      var overtures = List<OvertureState>.from(game.overtureStates);
-      final idx =
-          overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
-      if (idx >= 0) {
-        overtures = List<OvertureState>.from(overtures);
-        overtures[idx] = overtures[idx]
-            .copyWith(stage: OvertureStage.joinEmpire, sinceTurn: turn);
-        game = game.copyWith(overtureStates: overtures);
-        _diploLog.i('logic: diplomacy join empire $gpId $targetId');
-      }
+      final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+      if (player.treasury < cost) continue;
+
+      // Absorb Minor/Tribe: transfer provinces, units, fleets to GP; remove faction.
+      game = _absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+      _diploLog.i('logic: diplomacy join empire $gpId $targetId cost=$cost');
     }
   }
   return game;
+}
+
+/// Transfers all provinces, units, and fleets owned by [targetId] to [gpId],
+/// deducts Join Empire cost from GP treasury, removes the Minor/Tribe and
+/// cleans overtures/relations. SPEC/game/diplomacy.md.
+Game _absorbMinorOrTribeIntoGp(Game game, String gpId, String targetId, int turn) {
+  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+  var players = List<Player>.from(game.players);
+  final gpIdx = players.indexWhere((p) => p.id == gpId);
+  if (gpIdx >= 0) {
+    players = List<Player>.from(players);
+    players[gpIdx] = players[gpIdx].copyWith(treasury: players[gpIdx].treasury - cost);
+  }
+
+  // Transfer provinces: ownerId targetId -> gpId
+  final owProvinces = game.worldState.oldWorld.provinces
+      .map((p) => p.ownerId == targetId ? p.copyWith(ownerId: gpId) : p)
+      .toList();
+  final nwProvinces = game.worldState.newWorld.provinces
+      .map((p) => p.ownerId == targetId ? p.copyWith(ownerId: gpId) : p)
+      .toList();
+
+  // Transfer units: ownerId targetId -> gpId
+  final owUnits = game.worldState.oldWorld.units
+      .map((u) => u.ownerId == targetId ? u.copyWith(ownerId: gpId) : u)
+      .toList();
+  final nwUnits = game.worldState.newWorld.units
+      .map((u) => u.ownerId == targetId ? u.copyWith(ownerId: gpId) : u)
+      .toList();
+
+  // Transfer fleets
+  final fleets = game.worldState.fleets
+      .map((f) => f.ownerId == targetId ? f.copyWith(ownerId: gpId) : f)
+      .toList();
+
+  final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
+  final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
+
+  // Clear Spy timers for (gpId, province) where gpId now owns the province,
+  // so own provinces never decay via Spy timers after absorption.
+  final ownedProvinceIds = <String>{
+    for (final p in owProvinces)
+      if (p.ownerId == gpId) p.id,
+    for (final p in nwProvinces)
+      if (p.ownerId == gpId) p.id,
+  };
+  final updatedSpyTimers = <String, Map<String, int>>{};
+  game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
+    final inner = Map<String, int>.from(byProv);
+    if (playerId == gpId) {
+      for (final provId in ownedProvinceIds) {
+        inner.remove(provId);
+      }
+    }
+    if (inner.isNotEmpty) {
+      updatedSpyTimers[playerId] = inner;
+    }
+  });
+
+  var minorNations = game.minorNations;
+  var tribes = game.tribes;
+  if (game.minorNations.any((m) => m.id == targetId)) {
+    minorNations = game.minorNations.where((m) => m.id != targetId).toList();
+  }
+  if (game.tribes.any((t) => t.id == targetId)) {
+    tribes = game.tribes.where((t) => t.id != targetId).toList();
+  }
+
+  // Remove overture state involving this target (any GP targeting it)
+  final overtures = game.overtureStates
+      .where((o) => o.targetId != targetId)
+      .toList();
+
+  // Remove diplomacy relations involving this target
+  final relations = game.diplomacyRelations
+      .where((r) => r.factionId1 != targetId && r.factionId2 != targetId)
+      .toList();
+
+  return game.copyWith(
+    players: players,
+    worldState: game.worldState.copyWith(
+      oldWorld: oldWorld,
+      newWorld: newWorld,
+      fleets: fleets,
+      spyRevealTurnsByPlayer: updatedSpyTimers,
+    ),
+    minorNations: minorNations,
+    tribes: tribes,
+    overtureStates: overtures,
+    diplomacyRelations: relations,
+  );
 }
 
 Game _processAlliances(

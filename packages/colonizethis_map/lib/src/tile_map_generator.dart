@@ -744,29 +744,6 @@ class TileMapGenerator {
     return _connectedComponentsOfLand(seaCells);
   }
 
-  /// Assign s1, s2, … to sea components; sort by (minY, minX). Returns new grid.
-  List<List<String>> _assignSeaZoneIds(
-    List<List<String>> grid,
-    List<Set<(int x, int y)>> components,
-    String seaZoneId,
-  ) {
-    final sorted = List<Set<(int x, int y)>>.from(components)
-      ..sort((a, b) {
-        final (minYa, minXa) = _minYx(a);
-        final (minYb, minXb) = _minYx(b);
-        if (minYa != minYb) return minYa.compareTo(minYb);
-        return minXa.compareTo(minXb);
-      });
-    final g = grid.map((row) => row.toList()).toList();
-    for (var i = 0; i < sorted.length; i++) {
-      final id = 's${i + 1}';
-      for (final (x, y) in sorted[i]) {
-        g[y][x] = id;
-      }
-    }
-    return g;
-  }
-
   (int, int) _minYx(Set<(int x, int y)> cells) {
     var minY = params.height;
     var minX = params.width;
@@ -2412,7 +2389,7 @@ class TileMapGenerator {
           var d2 = 0x7fffffff;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
-            final dd = (x - sx) * (x - sy) * (x - sx) + (y - sy) * (y - sy);
+            final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
             if (dd < d2) d2 = dd;
           }
           final noise = params.voronoiNoiseScale > 0

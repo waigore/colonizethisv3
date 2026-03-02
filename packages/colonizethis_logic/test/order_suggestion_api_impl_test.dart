@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('DefaultOrderSuggestionAPI', () {
@@ -74,6 +74,43 @@ void main() {
       const api = DefaultOrderSuggestionAPI();
       final list = api.suggestBuildOrders(view, game, topology, emptyOrders);
       expect(list, isA<List<BuildUnitOrder>>());
+    });
+
+    test('suggestBuildOrders includes ship types when player can afford a ship', () {
+      const api = DefaultOrderSuggestionAPI();
+      const ow = 'oldWorld';
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 2)
+          .applyDelta(CommodityCatalog.fabric.id, 2);
+      final gameWithShip = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1')],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'A',
+            isHuman: false,
+            capitalProvinceId: '$ow|p1',
+            treasury: 100,
+            stockpile: stockpile,
+          ),
+        ],
+      );
+      final topo = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final v = buildPlayerView(gameWithShip, topo, 'gp1');
+      final list = api.suggestBuildOrders(v, gameWithShip, topo, emptyOrders);
+      final shipBuilds = list.where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).toList();
+      expect(shipBuilds, isNotEmpty, reason: 'API should suggest ship builds when affordable');
     });
 
     test('suggestResearchOrders returns list', () {

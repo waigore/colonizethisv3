@@ -13,9 +13,10 @@
 
 ## Contract
 
-- **Storage backend:** Hive box. One box per store; keys are strings.
+- **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Clients that open the box (e.g. ctterm) must handle lock failure appropriately; ctterm does so by showing a lock-prompt screen and deleting the lock only if the user agrees (see [SPEC/tui/ctterm.md](../tui/ctterm.md) §5.1).
 - **Key convention:**
   - **Game:** key = `gameId`; value = `Game.toJson()`. Schema is the Game model (no separate version field in MVP).
+  - **gameId constraints:** The `gameId` must be a non-empty string. It may contain any characters except those that would create ambiguity with map-data keys (see below). For clarity, avoid gameIds that end with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` unless you intentionally want the game to be treated as a potential map-data key (see listGameIds behavior).
   - **Optional map data:** keys = `gameId + suffix`; suffixes: `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`. Values = JSON produced by the respective model `toJson()` (e.g. `TileMapResult`, `MapTopology`).
 - **Province/region identity:** Province and region ids stored in the saved payload are whatever the model stores; for consistency with [world-model-identity.md](../game/world-model-identity.md), any province or region id in saved state follows the same prefixed form and lookup rules as at runtime (no separate serialization format).
 
@@ -54,7 +55,7 @@
 
 - **Save Game.** Given a Hive box and a Game with id `gameId`, when the system saves the game, then the system writes one entry with key `gameId` and value `Game.toJson()`, and the system logs with prefix `save:` including `gameId` and success (per [ctdev-logging.md](ctdev-logging.md)).
 - **Load Game.** Given a Hive box and a `gameId`, when the system loads the game, then the system returns a Game instance from the stored JSON, or null if the key is not found or deserialization fails; on failure the system logs with prefix `save:` including `gameId` and error (per [ctdev-logging.md](ctdev-logging.md)).
-- **List game ids.** Given a Hive box, when the system lists game ids, then the system returns only keys that are game ids (excludes keys ending with `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`).
+- **List game ids.** Given a Hive box, when the system lists game ids, then the system returns only keys that are game ids. Keys ending with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` are excluded ONLY if their prefix (gameId) exists as a separate key in the box (proving they are map data). This ensures game IDs that happen to end with these suffixes are not incorrectly excluded.
 - **Optional map data — save/load round-trip.** Given a Hive box, a `gameId`, and valid `tileMapByRegion`, `topologyByRegion`, and `combinedTopology`, when the system calls saveMapData and then loadMapData for that `gameId`, then loadMapData returns the same three maps (round-trip preserves data).
 - **Optional map data — legacy.** Given a Hive box and a `gameId` for which no map-data key exists (or any one of the three keys is missing), when the system calls loadMapData for that `gameId`, then loadMapData returns null.
 - **Backward compatibility — missing Game fields.** Given a Hive box and a `gameId` whose stored value is valid Game JSON but omits a field that the current Game model defines (e.g. a field added in a later release), when the system loads the game, then the system returns a Game instance with that field set to null or the model’s default; the system does not fail deserialization solely due to the missing field.

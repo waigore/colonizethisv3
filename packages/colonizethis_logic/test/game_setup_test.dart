@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('GameSetup', () {
@@ -144,12 +144,10 @@ void main() {
         ],
       );
 
-      const gpCount = 2;
       const minorCount = 2;
       const minPerMinor = 3;
       const totalOw = 12;
-      const reservedForMinors = minorCount * minPerMinor; // 6
-      const availableForGps = totalOw - reservedForMinors; // 6
+      const availableForGps = totalOw - (minorCount * minPerMinor);
 
       final config = GameSetupConfig(
         selectedGreatPowerIds: ['england', 'france'],
@@ -313,12 +311,10 @@ void main() {
         ],
       );
 
-      const gpCount = 2;
       const minorCount = 6;
       const minPerMinor = 2;
       const totalOw = 24;
       const reservedForMinors = minorCount * minPerMinor; // 12
-      const availableForGps = totalOw - reservedForMinors; // 12
       const basePerMinor = reservedForMinors ~/ minorCount; // 2
 
       final config = GameSetupConfig(

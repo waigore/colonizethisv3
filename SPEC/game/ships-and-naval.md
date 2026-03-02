@@ -42,7 +42,44 @@ When a fleet **enters** a sea zone (move order), all **coastal land tiles** of p
 
 ## Home Fleet
 
-Ships built appear in home fleet (capital port). Only home fleet used for transport and trade.
+The **home fleet** is a special fleet for each Great Power:
+
+- It is always located in the **capital port sea zone** (the sea zone adjacent to the capital port tile) and **cannot move**; naval move orders do not change its sea zone.
+- It contains ships that are **in port** and not assigned to any mission; these ships are not currently at sea.
+- It is the **only** fleet whose ships can carry a faction's **transport and trade cargo** during the Extraction/Trade phase.
+
+### Membership and state
+
+- A ship is either **part of the home fleet** (in port) or **part of a sea‑going fleet** (out at sea); membership is mutually exclusive.
+- Ships **enter** the home fleet when:
+  - They are built as naval units via `BuildUnitOrder` (default spawn into the home fleet at the capital port), or
+  - A `join home fleet` order resolves successfully during turn resolution, moving ships from a sea‑going fleet in the capital port sea zone back into the home fleet.
+- Ships **leave** the home fleet when they receive a naval move or mission order that creates or updates a non‑home fleet (a fleet that can move and receive missions).
+
+### Missions and movement
+
+- The home fleet itself **cannot move** and cannot be assigned active missions:
+  - Naval move orders targeting the home fleet do not change its sea zone.
+  - Mission orders cannot set the home fleet's mission to `patrol`, `blockade`, `beachhead`, or `defend`; its mission is effectively `none`.
+- Only **sea‑going fleets** (non‑home fleets) participate in missions (`Move`, `Patrol`, `Blockade`, `Beachhead`, `Defend`); ships must leave the home fleet before they can be used for these missions.
+
+### Cargo holds and capacity
+
+- Each merchant ship type has a **cargoHold** value defined in the naval stats/economy catalog.
+- The faction's total cargo capacity for the turn is the sum of cargoHold values for **all ships in the home fleet** at the capital port:
+
+  \[
+  \text{cargoHolds} = \sum_t H(t) \times \text{count\\_home}(t)
+  \]
+
+  where `H(t)` is the cargoHold for ship type `t` and `count_home(t)` is the number of ships of type `t` in the home fleet.
+
+- Each cargo hold carries exactly **1 unit** of any commodity per turn.
+- Cargo capacity is used **only** for:
+  - (1) transport of cross‑region resources (e.g. New World → Old World), and
+  - (2) trade/export shipments on the open market.
+
+Transport and trade use this capacity in priority order (cross‑region extraction first, then trade) per [auto-transport.md](../program/auto-transport.md).
 
 ---
 

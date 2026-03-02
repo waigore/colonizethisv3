@@ -3,6 +3,7 @@ library colonizethis_logic;
 
 // Root
 export 'src/constants.dart';
+export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
 
 // Setup
@@ -22,6 +23,7 @@ export 'src/combat/combat_mode_selection.dart';
 export 'src/combat/combat_resolver.dart';
 export 'src/combat/combat_resolver_probabilistic.dart';
 export 'src/combat/conflict_detection.dart';
+export 'src/combat/military_strength.dart';
 export 'src/combat/naval_combat_resolver.dart';
 export 'src/combat/quick_battle_input_builder.dart';
 export 'src/combat/quick_battle_resolver.dart';

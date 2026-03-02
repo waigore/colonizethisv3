@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('detectConflicts', () {
@@ -271,7 +271,6 @@ void main() {
     });
 
     test('returns no battles when oldWorld has no units', () {
-      const ow = 'oldWorld';
       const nw = 'newWorld';
       final game = Game(
         id: 'g1',

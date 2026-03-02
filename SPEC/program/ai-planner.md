@@ -38,6 +38,8 @@ Combined human + AI orders into deterministic list for turn resolution:
 - Human-controlled units cannot receive AI orders; AI emits at most one order per unit.
 - All merged orders validated; invalid orders dropped without breaking determinism.
 
+When full AI (Phase 6) runs, the economy planner produces **production assignments** and **cargo preference** per AI GP ([economy-planner.md](../ai/economy-planner.md)). The caller must pass per-player production assignments into the turn resolver (Production phase) and may pass cargo preference to the naval planner. Human production choices come from UI or saved state; merge semantics for production are per-player (each player's assignments used for that player only).
+
 ## Integration
 
 - **Phase:** AI orders generated before turn resolution each turn.

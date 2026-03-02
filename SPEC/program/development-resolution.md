@@ -41,7 +41,7 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
 2. When `remainingTurns` reaches 0, apply the action's effect:
    - `build_improvement`: increase improvement level for `tileKey` by 1, clamped by terrain and tech caps.
    - `upgrade_town`: increase the province's **town development level** by 1 (not generic improvement level on the tile); used in extraction formula per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
-   - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
+   - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md). "If applicable" means: when the target tile is adjacent (4-neighbour) to a tile that is either the player's capital or a port, the transport level is also applied to that adjacent tile (upgrade only, never downgrade).
    - `build_port`: create/update a `(provinceId, seaZoneId) → tileKey` mapping in `portsByProvinceSeaboard` and ensure the port tile has transport level 4.
    - `build_fort`: increase the province's `fortLevel` by 1 (up to max).
    - `build_rail`: upgrade an existing road tile at `tileKey` to railroad (transport level 4).
@@ -70,6 +70,6 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 - **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
 - **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
-- **build_port:** Completion requires topology to be defined (topology-null behaviour is documented in a dedicated issue); port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
+- **build_port:** Completion requires topology to be defined. If topology is `null`, the build_port completion has no effect—no port is registered in `portsByProvinceSeaboard` and the transport level is not set on the tile. Therefore, build_port must only be offered/completed when topology is available. Port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
 - **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
 

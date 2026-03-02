@@ -129,5 +129,5 @@ The game then applies casualties and province ownership changes using the same w
 
 - Given a Quick Battle round is about to begin and both sides have regiments and optional general medals  
   When the System determines which side acts first in that round  
-  Then the System computes initiative consistent with [combat.md](combat.md) § Rules (Initiative) (cavalryShare × W_cav + generalMedals × W_medal) and uses that ordering (or tie-break by faction id) to decide first-acting side.
+  Then the System computes initiative consistent with [combat.md](combat.md) § Rules (Initiative) (cavalryShare × W_cav + generalMedals × W_medal) and uses that ordering (or tie-break by faction id) to decide first-acting side. General medals (deployment limit, initiative, morale aura) apply the same way as in auto-resolve per [military-generals.md](military-generals.md).
 

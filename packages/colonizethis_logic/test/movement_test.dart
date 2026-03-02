@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('neighborProvinceIdsInRegion and isValidLandMoveInRegion', () {
@@ -232,6 +232,52 @@ void main() {
       );
       expect(updated.units.single.provinceId, owDestFullId);
       expect(updated.units.single.tileKey, owDestTile);
+    });
+
+    test('allows move to non-adjacent province when destination is own (isDestinationOwnedByPlayer)', () {
+      const regionId = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
+          TopologyNode(id: 'P3', regionId: regionId, type: TopologyNodeType.province),
+        ],
+        edges: [
+          const TopologyEdge(id1: 'P1', id2: 'P2'),
+          const TopologyEdge(id1: 'P2', id2: 'P3'),
+        ],
+      );
+      final destFullId = ProvinceId.full(regionId, 'P3');
+      final region = RegionData(
+        provinces: const [
+          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'P3', regionId: regionId, ownerId: 'p1'),
+        ],
+        units: const [
+          Unit(
+            id: 'u1',
+            type: 'Regiment',
+            ownerId: 'p1',
+            provinceId: 'oldWorld|P1',
+          ),
+        ],
+      );
+      final orders = {
+        'p1': [
+          MoveOrder(unitId: 'u1', destinationProvinceId: destFullId),
+        ],
+      };
+      bool isDestinationOwnedByPlayer(String playerId, String destFullProvinceId) =>
+          playerId == 'p1' && destFullProvinceId == destFullId;
+      final updated = applyMoveOrdersToRegion(
+        region,
+        topology,
+        orders,
+        regionId: regionId,
+        isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+      );
+      expect(updated.units.single.provinceId, destFullId);
     });
   });
 }

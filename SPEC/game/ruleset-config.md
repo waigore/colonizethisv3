@@ -58,3 +58,16 @@ Turn-time mapping parameters are part of the resolved ruleset but documented in 
 - [game-setup.md](game-setup.md) — setup counts
 - [naming.md](naming.md) — fallback naming
 - Program: [ruleset-config.md](../program/ruleset-config.md) — loading, merge, data model
+
+
+## Acceptance Criteria
+
+- **Immutability:** Given a resolved ruleset at game creation, when the game is in progress, then the ruleset parameters are fixed and cannot be changed except through a documented debug facility.
+
+- **Merge order:** Given ruleset layers (Base, Difficulty, Scenario) in the resolved ruleset, when the System loads the ruleset, then later layers override only the keys they specify, following the order Base → Difficulty → Scenario.
+
+- **Naming structure:** Given a resolved ruleset with a naming section, when the System uses names for Great Powers, Minor Nations, and Tribes, then it uses the structure defined in this GDD (id, display name, name pools) and applies the fallback per [naming.md](naming.md) when entries or pools are missing.
+
+- **Configurable Values table:** Given the Configurable Values table in this GDD, when the System initializes game parameters, then it uses these as the default source of values; scenario or difficulty layers may override per the overridable parameter contract.
+
+- **Province naming at setup:** Given a game in the setup phase, when the System names provinces owned by each faction, then it uses the resolved naming section from the ruleset. Provinces acquired during play retain their existing display name.

@@ -46,7 +46,7 @@
 
 ## Defender Effective Level
 
-- The sim uses a **fixed defender effective military level** (4) for all trials. The script field `defenderFaction` is accepted for script format parity with sim-combat but does not change the level in this tool; in-game rules for minor/tribe level are defined in [factions.md](../game/factions.md) and are not applied here.
+- The sim uses a **fixed defender effective military level** (4) for all trials. The script field `defenderFaction` is accepted for script format parity with sim-combat but does not change the level in this tool; in-game rules for minor parity and tribe cap-at-1 are defined in [factions.md](../game/factions.md) and are not applied here.
 
 ---
 
@@ -69,3 +69,14 @@ Array of per-battle aggregates: id, attackerStrength, defenderStrength, trials, 
 - Invalid script (unknown unit type, fortLevel ∉ {0,1,2,3}, or malformed JSON/structure) aborts with non-zero exit and a clear error message.
 - Per-battle aggregate table includes: Battle Id, Attacker Str, Defender Str, Attacker Win %, Defender Win %, Stalemate %, Mutual Ann %, Mean Cas (A/D).
 - Trial index `i` uses seed `baseSeed + i` when a base seed is provided.
+
+---
+
+## Expected Testing
+
+The tool should have CLI integration tests covering:
+
+- **Determinism:** Given the same script and `--seed`, two runs produce identical Markdown and JSON output.
+- **Validation:** Unknown unit type, fortLevel outside 0–3, and missing required keys (`id`, `attacker`, `defender`, `province`) result in non-zero exit and a clear error message on stderr.
+
+For test import convention and test execution, see [test-logging.md](test-logging.md) (colonizethis_test first) and the project's test runner (e.g. `test_coverage.py`).

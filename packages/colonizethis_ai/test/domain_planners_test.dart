@@ -1,8 +1,8 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 // Fake suggestion API used to drive domain planners deterministically in tests.
 class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
@@ -113,6 +113,10 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(999);
       const api = DefaultOrderSuggestionAPI();
 
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
       final orders = runDomainPlanners(
         game: game,
         topology: topology,
@@ -123,6 +127,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: api,
+        economyPlan: economyPlan,
       );
 
       expect(orders.moveOrdersByPlayerId.isEmpty, isTrue);
@@ -181,6 +186,10 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(100);
       const api = DefaultOrderSuggestionAPI();
 
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
       final orders = runDomainPlanners(
         game: game,
         topology: topology,
@@ -191,6 +200,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: api,
+        economyPlan: economyPlan,
       );
 
       expect(orders, isNotNull);
@@ -250,6 +260,10 @@ void main() {
         hiddenAgendaId: 'peacemaker',
       );
       final seeds = AISeedBundle.fromTurnSeed(123);
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
 
       final orders = runDomainPlanners(
         game: game,
@@ -261,6 +275,7 @@ void main() {
         primaryGoal: StrategicGoal.expand,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       // Economy: at least one work and build order should be appended.
@@ -307,6 +322,10 @@ void main() {
         navalMission: [],
         diplomatic: [diploOrder],
       );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
 
       final orders = runDomainPlanners(
         game: game,
@@ -318,6 +337,7 @@ void main() {
         primaryGoal: StrategicGoal.diplomacy,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       expect(orders.diplomaticOrdersByPlayerId['gp1'], isNotNull);
@@ -358,7 +378,11 @@ void main() {
         research: [],
         navalMove: [],
         navalMission: [],
-        diplomatic: const [],
+        diplomatic: [],
+      );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
       );
 
       final orders = runDomainPlanners(
@@ -371,9 +395,420 @@ void main() {
         primaryGoal: StrategicGoal.diplomacy,
         seeds: seeds,
         suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
       );
 
       expect(orders.diplomaticOrdersByPlayerId['gp1'], isNull);
+    });
+
+    test('with strongCargo and ship candidate picks ship deterministically', () {
+      const regimentBuild = BuildUnitOrder(
+        unitType: 'peasant_levies',
+        isMilitary: true,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const shipBuild = BuildUnitOrder(
+        unitType: 'fluyte',
+        isMilitary: false,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [regimentBuild, shipBuild],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [],
+      );
+      const economyPlanStrongCargo = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.strongCargo,
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'A',
+            isHuman: false,
+            leaderKey: 'henry',
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'henry',
+        personalityId: 'henry',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(42);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlanStrongCargo,
+      );
+
+      final builds = orders.buildUnitOrdersByPlayerId['gp1'] ?? [];
+      expect(builds.length, 1);
+      expect(builds.single.unitType, 'fluyte', reason: 'strongCargo should favour cargo ship over regiment');
+    });
+
+    test('build selection is deterministic for same seed and cargoPreference none', () {
+      const regimentBuild = BuildUnitOrder(
+        unitType: 'peasant_levies',
+        isMilitary: true,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const shipBuild = BuildUnitOrder(
+        unitType: 'fluyte',
+        isMilitary: false,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [regimentBuild, shipBuild],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [],
+      );
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'victoria'),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(999);
+
+      final orders1 = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+      final orders2 = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.expand,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final build1 = orders1.buildUnitOrdersByPlayerId['gp1']?.single.unitType;
+      final build2 = orders2.buildUnitOrdersByPlayerId['gp1']?.single.unitType;
+      expect(build1, build2, reason: 'same seed and economyPlan should yield same build choice');
+    });
+  });
+
+  group('war declaration relation threshold and target scoring', () {
+    test('peacemaker scores declareWar 0 when relation above threshold so does not pick it when another candidate exists', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'victoria'),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+          Player(id: 'gp3', displayName: 'C', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 60, level: RelationLevel.neutral, state: RelationState.atPeace),
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp3', score: 20, level: RelationLevel.hostile, state: RelationState.atPeace),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(111);
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [
+          DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp2'),
+          DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp3'),
+        ],
+      );
+      const economyPlan = EconomyPlan(productionAssignments: [], cargoPreference: CargoPreference.none);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final diplo = orders.diplomaticOrdersByPlayerId['gp1'];
+      expect(diplo, isNotNull);
+      expect(diplo!.single.targetFactionId, 'gp3', reason: 'peacemaker max relation 30; gp2 has 60 so score 0; only gp3 has positive score');
+    });
+
+    test('warmonger gets bonus for weakNeighbors target', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+              Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp3'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'napoleon', militaryLevel: 3),
+          Player(id: 'gp2', displayName: 'B', isHuman: false, militaryLevel: 1),
+          Player(id: 'gp3', displayName: 'C', isHuman: false, militaryLevel: 5),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 50, state: RelationState.atPeace),
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp3', score: 50, state: RelationState.atPeace),
+        ],
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+          TopologyEdge(id1: 'p1', id2: 'p3'),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+      expect(snapshot.opportunities.weakNeighbors, contains('gp2'), reason: 'gp2 owns p2 adjacent to gp1 p1');
+      expect(snapshot.opportunities.weakNeighbors, contains('gp3'));
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(222);
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [
+          DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp2'),
+        ],
+      );
+      const economyPlan = EconomyPlan(productionAssignments: [], cargoPreference: CargoPreference.none);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final diplo = orders.diplomaticOrdersByPlayerId['gp1'];
+      expect(diplo, isNotNull);
+      expect(diplo!.single.type, DiplomaticOrderType.declareWar);
+      expect(diplo.single.targetFactionId, 'gp2', reason: 'only candidate is gp2 (weak neighbor); warmonger applies +30 bonus');
+    });
+
+    test('backstabber prefers allied target when it is the only declare-war candidate', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'napoleon'),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+          Player(id: 'gp3', displayName: 'C', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 80, level: RelationLevel.allied, state: RelationState.atPeace),
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp3', score: 50, level: RelationLevel.neutral, state: RelationState.atPeace),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'backstabber',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(333);
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [],
+        move: [],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [
+          DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'gp2'),
+        ],
+      );
+      const economyPlan = EconomyPlan(productionAssignments: [], cargoPreference: CargoPreference.none);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final diplo = orders.diplomaticOrdersByPlayerId['gp1'];
+      expect(diplo, isNotNull);
+      expect(diplo!.single.type, DiplomaticOrderType.declareWar);
+      expect(diplo.single.targetFactionId, 'gp2', reason: 'only candidate is gp2 (allied); backstabber applies +25 bonus');
+    });
+  });
+
+  group('move planner diplomacy filter', () {
+    test('full-AI move planner drops moves to at-peace destinations', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: 'p2', regionId: ow, ownerId: 'gp2'),
+              Province(id: 'p3', regionId: ow, ownerId: 'gp3'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false, leaderKey: 'napoleon'),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+          Player(id: 'gp3', displayName: 'C', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 0, state: RelationState.atWar),
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp3', score: 50, state: RelationState.atPeace),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(444);
+      const fakeApi = _FakeOrderSuggestionAPI(
+        work: [],
+        build: [],
+        move: [
+          MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+          MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|p3'),
+        ],
+        research: [],
+        navalMove: [],
+        navalMission: [],
+        diplomatic: [],
+      );
+      const economyPlan = EconomyPlan(productionAssignments: [], cargoPreference: CargoPreference.none);
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
+      expect(moves.length, 1, reason: 'move to gp3 at peace should be filtered out');
+      expect(moves.single.destinationProvinceId, 'oldWorld|p2');
     });
   });
 }

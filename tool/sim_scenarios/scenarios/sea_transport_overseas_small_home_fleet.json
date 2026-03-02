@@ -1,0 +1,131 @@
+{
+  "name": "sea_transport_overseas_small_home_fleet",
+  "description": "Sea transport (SPEC/program/auto-transport.md, SPEC/program/extraction-pipeline.md): overseas extraction from New World to Old World is capped by home-fleet cargo capacity. One GP with OW capital p1 (sea-bound) and NW province p2 connected by warp; NW has many sugarCane tiles (overseas). Home fleet has a single carrack (3 holds), so only 3 units of overseas sugarCane reach the stockpile even though more is extractable; land (OW grain) is fully delivered.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "tribeCount": 1
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "sea1"],
+        ["p1", "p1"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" }
+      ],
+      "resourceGrid": [
+        ["grain", null],
+        ["grain", "grain"]
+      ]
+    },
+    "newWorld": {
+      "grid": [
+        ["p2", "sea2", "p2", "p2", "p2"],
+        ["p2", "p2", "p2", "p2", "p2"],
+        ["p2", "p2", "p2", "p2", "p2"],
+        ["p2", "p2", "p2", "p2", "p2"],
+        ["p2", "p2", "p2", "p2", "p2"]
+      ],
+      "nodes": [
+        { "id": "p2", "regionId": "newWorld", "type": "province" },
+        { "id": "sea2", "regionId": "newWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p2", "id2": "sea2" }
+      ],
+      "resourceGrid": [
+        ["sugarCane", null, "sugarCane", "sugarCane", "sugarCane"],
+        ["sugarCane", "sugarCane", "sugarCane", "sugarCane", "sugarCane"],
+        ["sugarCane", "sugarCane", "sugarCane", "sugarCane", "sugarCane"],
+        ["sugarCane", "sugarCane", "sugarCane", "sugarCane", "sugarCane"],
+        ["sugarCane", "sugarCane", "sugarCane", "sugarCane", "sugarCane"]
+      ]
+    }
+  },
+  "setup": {
+    "initialStockpile": {
+      "gp1": {
+        "grain": 0,
+        "sugarCane": 0
+      }
+    },
+    "initialTileState": {
+      "oldWorld|p1|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+      "oldWorld|p1|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+      "oldWorld|p1|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+      "newWorld|p2|0|0": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|2|0": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|3|0": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|4|0": { "improvementLevel": 1, "roadLevel": 1 },
+
+      "newWorld|p2|0|1": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|1|1": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|2|1": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|3|1": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|4|1": { "improvementLevel": 1, "roadLevel": 1 },
+
+      "newWorld|p2|0|2": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|1|2": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|2|2": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|3|2": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|4|2": { "improvementLevel": 1, "roadLevel": 1 },
+
+      "newWorld|p2|0|3": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|1|3": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|2|3": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|3|3": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|4|3": { "improvementLevel": 1, "roadLevel": 1 },
+
+      "newWorld|p2|0|4": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|1|4": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|2|4": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|3|4": { "improvementLevel": 1, "roadLevel": 1 },
+      "newWorld|p2|4|4": { "improvementLevel": 1, "roadLevel": 1 }
+    },
+    "initialTech": {
+      "gp1": ["galleys_1"]
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "build",
+          "unitType": "carrack",
+          "in": "oldWorld|p1"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 2,
+      "player": "gp1",
+      "commodity": "grain",
+      "stockpileCommodity": 1,
+      "matchType": "atLeast"
+    },
+    {
+      "turn": 2,
+      "player": "gp1",
+      "commodity": "sugarCane",
+      "stockpileCommodity": 3
+    }
+  ]
+}
+

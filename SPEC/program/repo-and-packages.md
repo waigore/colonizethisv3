@@ -8,8 +8,9 @@
 
 Monorepo layout:
 
-- **Root:** `SPEC/`, `packages/`, `app/`, optional `assets/`, **`tool/`** (standalone CLI tools), tooling (e.g. `analysis_options.yaml`).
+- **Root:** `SPEC/`, `packages/`, `app/`, **`ctterm/`**, optional `assets/`, **`tool/`** (standalone CLI tools), tooling (e.g. `analysis_options.yaml`).
 - **Flutter app** lives under **`app/`** (not at root). Run and build from `app/` (e.g. `flutter run`, `flutter build macos`). Package work is done in `packages/<name>/`.
+- **ctterm** lives at top-level **`ctterm/`** — standalone Dart TUI (Nocterm). Run via `dart run ctterm` or `melos run ctterm`. Uses its own Hive data directory; see [SPEC/tui/ctterm.md](../tui/ctterm.md).
 - **Standalone CLI tools** (e.g. topology description, map generation) live under **`tool/`**. Run from the **project root** via **Melos**: `melos run <tool_name> -- [args]` (paths in args are relative to repo root). The repo uses a root Dart workspace and Melos for scripts; see [.cursor/rules/colonizethis-tools.mdc](../../.cursor/rules/colonizethis-tools.mdc). Tools may depend on colonizethis_data or a shared reader to load topology.
 - **No `server/`** in current scope.
 

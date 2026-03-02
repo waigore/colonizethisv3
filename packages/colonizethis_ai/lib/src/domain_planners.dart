@@ -5,16 +5,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'ai_config.dart';
+import 'economy_planner.dart';
 import 'goal_manager.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
-// Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md.
+// Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
 
 /// Runs economy, military, diplomacy, and research planners; returns combined orders
-/// for [nationId]. Uses [suggestionAPI] and scores with [config] and [snapshot].
-/// Deterministic given seeds.
+/// for [nationId]. Uses [suggestionAPI] and [economyPlan] (cargo preference) to score
+/// build candidates. Deterministic given seeds.
 Orders runDomainPlanners({
   required Game game,
   required MapTopology topology,
@@ -25,6 +26,7 @@ Orders runDomainPlanners({
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+  required EconomyPlan economyPlan,
 }) {
   var orders = const Orders();
   final domainWeights = getDomainWeightsForLeader(config.leaderId);
@@ -47,9 +49,16 @@ Orders runDomainPlanners({
   }
   final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
-    final rng = math.Random(seeds.economySeed + 1);
-    final idx = rng.nextInt(buildCandidates.length);
-    orders = _appendBuildOrders(orders, nationId, [buildCandidates[idx]]);
+    final chosen = _pickBuildOrder(
+      buildCandidates: buildCandidates,
+      cargoPreference: economyPlan.cargoPreference,
+      primaryGoal: primaryGoal,
+      config: config,
+      seed: seeds.economySeed + 1,
+    );
+    if (chosen != null) {
+      orders = _appendBuildOrders(orders, nationId, [chosen]);
+    }
   }
 
   // Movement: suggest moves; weight by military/expand.
@@ -86,6 +95,7 @@ Orders runDomainPlanners({
     game: game,
     topology: topology,
     orders: orders,
+    snapshot: snapshot,
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
@@ -138,6 +148,8 @@ Orders _runMovePlanner({
 }) {
   final moveCandidates = suggestionAPI.suggestMoveOrders(view, game, topology, orders);
   if (moveCandidates.isEmpty) return orders;
+  final filtered = filterMoveOrdersByDiplomacy(game, nationId, moveCandidates);
+  if (filtered.isEmpty) return orders;
   final domainWeights = getDomainWeightsForLeader(config.leaderId);
   final weight = primaryGoal == StrategicGoal.conquer || primaryGoal == StrategicGoal.defend
       ? domainWeights.military
@@ -145,11 +157,24 @@ Orders _runMovePlanner({
           ? domainWeights.economy
           : 50;
   if (weight < 20) return orders;
+  final provinceOwner = getProvinceOwnerMap(game);
+  final scores = filtered.map((m) {
+    final destOwner = provinceOwner[m.destinationProvinceId];
+    if (destOwner == null || destOwner == nationId) return 1.0;
+    final rel = getRelation(game, nationId, destOwner);
+    final atWar = rel != null && rel.atWar;
+    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+  }).toList();
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
   final rng = math.Random(seeds.militarySeed);
-  final cap = (moveCandidates.length.clamp(0, 5));
-  final take = cap > 0 ? 1 + rng.nextInt(cap) : 0;
-  if (take <= 0) return orders;
-  final selected = moveCandidates.take(take).toList();
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < filtered.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= filtered.length) idx = filtered.length - 1;
+  final selected = [filtered[idx]];
   return _appendMoveOrders(orders, nationId, selected);
 }
 
@@ -165,6 +190,67 @@ Orders _appendBuildOrders(Orders o, String playerId, List<BuildUnitOrder> list) 
   return o.copyWith(
     buildUnitOrdersByPlayerId: {...o.buildUnitOrdersByPlayerId, playerId: [...existing, ...list]},
   );
+}
+
+/// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
+/// Returns one build order via weighted random, or null if list empty. SPEC/ai/economy-planner.md.
+BuildUnitOrder? _pickBuildOrder({
+  required List<BuildUnitOrder> buildCandidates,
+  required CargoPreference cargoPreference,
+  required StrategicGoal primaryGoal,
+  required AIConfig config,
+  required int seed,
+}) {
+  if (buildCandidates.isEmpty) return null;
+  final thresholds = getThresholdsForLeader(config.leaderId);
+  final scores = buildCandidates.map((o) {
+    final unitType = o.unitType;
+    final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
+    final cargoHold = isShip ? NavalStatsCatalog.get(unitType).cargoHold : 0;
+    final isRegiment = RegimentEconomyCatalog.byId.containsKey(unitType);
+
+    double cargoBonus = 0.0;
+    if (isShip && cargoHold > 0) {
+      switch (cargoPreference) {
+        case CargoPreference.strongCargo:
+          cargoBonus = 2.0;
+          break;
+        case CargoPreference.preferCargo:
+          cargoBonus = 1.0;
+          break;
+        case CargoPreference.none:
+          break;
+      }
+    }
+
+    double militaryBonus = 0.0;
+    if (primaryGoal == StrategicGoal.conquer || primaryGoal == StrategicGoal.defend) {
+      if (isRegiment) {
+        militaryBonus = 1.0;
+      } else if (isShip && cargoHold == 0) {
+        militaryBonus = 1.0;
+      }
+    }
+
+    double personalityBonus = 0.0;
+    if (isShip) {
+      personalityBonus = thresholds.researchNaval / 100.0;
+    } else if (isRegiment) {
+      personalityBonus = thresholds.researchMilitary / 100.0;
+    }
+
+    return 1.0 + cargoBonus + militaryBonus + personalityBonus;
+  }).toList();
+
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return buildCandidates.first;
+  final rng = math.Random(seed);
+  var r = rng.nextDouble() * total;
+  for (var idx = 0; idx < buildCandidates.length; idx++) {
+    if (r < scores[idx]) return buildCandidates[idx];
+    r -= scores[idx];
+  }
+  return buildCandidates.last;
 }
 
 Orders _appendWorkOrders(Orders o, String playerId, List<WorkOrder> list) {
@@ -243,6 +329,7 @@ Orders _runDiplomacyPlanner({
   required Game game,
   required MapTopology topology,
   required Orders orders,
+  required AIWorldSnapshot snapshot,
   required AIConfig config,
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
@@ -261,6 +348,7 @@ Orders _runDiplomacyPlanner({
 
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.leaderId);
+  final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   final scores = diploCandidates.map((o) {
     var s = 50;
     switch (o.type) {
@@ -272,17 +360,31 @@ Orders _runDiplomacyPlanner({
         s += agendaAllianceAcceptanceModifier(agendaId);
         s += (thresholds.allianceTendency - 50);
         break;
-      case DiplomaticOrderType.declareWar:
-        s += agendaConquerModifier(agendaId);
-        s += agendaTreatyBreakingModifier(agendaId);
-        s += (thresholds.warLikelihood - 50);
+      case DiplomaticOrderType.declareWar: {
+        final rel = snapshot.relations[o.targetFactionId];
+        final relationScore = rel?.score ?? 50;
+        if (relationScore > maxRelationForDeclareWar) {
+          s = 0;
+        } else {
+          s += agendaConquerModifier(agendaId);
+          s += agendaTreatyBreakingModifier(agendaId);
+          s += (thresholds.warLikelihood - 50);
+          if (snapshot.opportunities.weakNeighbors.contains(o.targetFactionId)) {
+            s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
+          }
+          if (rel?.level == RelationLevel.allied) {
+            s += getDeclareWarTargetBonusAlly(agendaId);
+          }
+        }
         break;
+      }
       default:
         break;
     }
-    return math.max(1, s);
+    return s == 0 ? 0 : math.max(1, s);
   }).toList();
   final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
   final rng = math.Random(seeds.diplomacySeed);
   var r = rng.nextDouble() * total;
   var idx = 0;

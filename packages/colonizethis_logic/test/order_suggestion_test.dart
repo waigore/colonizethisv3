@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Order suggestion', () {
@@ -339,6 +339,76 @@ void main() {
       expect(suggestions, isA<List<BuildUnitOrder>>());
     });
 
+    test('suggestBuildOrders returns ship when affordable', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 2)
+          .applyDelta(CommodityCatalog.fabric.id, 2);
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1',
+        treasury: 100,
+        stockpile: stockpile,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestBuildOrders(view, game, topology, const Orders());
+      final shipTypes = suggestions.where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).toList();
+      expect(shipTypes, isNotEmpty, reason: 'suggestBuildOrders should include ships when player has capital, treasury and stockpile for fluyte/carrack');
+    });
+
+    test('suggestBuildOrders can return both regiment and ship when both affordable', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 5)
+          .applyDelta(CommodityCatalog.fabric.id, 5)
+          .applyDelta(CommodityCatalog.castIron.id, 5);
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        capitalProvinceId: '$ow|p1',
+        workerPool: const WorkerPool(peasants: 2, apprentices: 1),
+        treasury: 500,
+        stockpile: stockpile,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestBuildOrders(view, game, topology, const Orders());
+      final hasRegiment = suggestions.any((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType));
+      final hasShip = suggestions.any((o) => ShipEconomyCatalog.byId.containsKey(o.unitType));
+      expect(hasRegiment, isTrue, reason: 'should suggest regiments when affordable');
+      expect(hasShip, isTrue, reason: 'should suggest ships when affordable');
+    });
+
     test('suggestResearchOrders returns list', () {
       const playerId = 'gp1';
       final player = const Player(id: playerId, displayName: 'GP', isHuman: false, treasury: 1000);
@@ -490,6 +560,91 @@ void main() {
       final view = buildPlayerView(game, topology, playerId);
       final suggestions = suggestNavalMissionOrders(view, game, topology, const Orders());
       expect(suggestions, isA<List<NavalMissionOrder>>());
+    });
+  });
+
+  group('filterMoveOrdersByDiplomacy and getProvinceOwnerMap', () {
+    test('getProvinceOwnerMap returns owner by full province id', () {
+      const ow = 'oldWorld';
+      final p1 = Province(id: 'p1', regionId: ow, ownerId: 'gp1');
+      final p2 = Province(id: 'p2', regionId: ow, ownerId: 'gp2');
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1, p2], units: []),
+        newWorld: const RegionData(),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: world,
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+      );
+      final map = getProvinceOwnerMap(game);
+      expect(map['oldWorld|p1'], 'gp1');
+      expect(map['oldWorld|p2'], 'gp2');
+    });
+
+    test('filterMoveOrdersByDiplomacy drops move to at-peace faction', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: 'p2', regionId: ow, ownerId: 'gp2'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 50, state: RelationState.atPeace),
+        ],
+      );
+      final orders = [
+        MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+      ];
+      final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
+      expect(filtered, isEmpty, reason: 'move to gp2 at peace should be dropped');
+    });
+
+    test('filterMoveOrdersByDiplomacy keeps move to at-war faction', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: 'p2', regionId: ow, ownerId: 'gp2'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 0, state: RelationState.atWar),
+        ],
+      );
+      final orders = [
+        MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+      ];
+      final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
+      expect(filtered.length, 1);
+      expect(filtered.first.destinationProvinceId, 'oldWorld|p2');
     });
   });
 }

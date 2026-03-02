@@ -156,6 +156,21 @@ Game applyBuildAndWorkOrders(
           final nextLevel =
               (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
           tileState = tileState.setRoadLevel(cw.tileKey, nextLevel);
+
+          // Propagate transport level to adjacent capital/port tiles per
+          // SPEC/program/development-resolution.md and SPEC/game/capital-and-connectivity.md.
+          final tileMap = tileMapByRegion;
+          if (tileMap != null) {
+            _propagateRoadToAdjacentCapitalOrPort(
+              tileKey: cw.tileKey,
+              nextLevel: nextLevel,
+              player: player,
+              worldState: gameForPlayer.worldState,
+              tileMapByRegion: tileMap,
+              tileState: tileState,
+              setTileState: (newTileState) => tileState = newTileState,
+            );
+          }
           break;
         }
       case 'build_port':
@@ -226,7 +241,8 @@ Game applyBuildAndWorkOrders(
         ? Random(gameForPlayer.globalGameSeed! +
             (gameForPlayer.worldState.turnState.turnNumber * 1000))
         : Random();
-    for (final entry in unitsById.entries) {
+    // Iterate over a snapshot to allow updating unitsById during the loop.
+    for (final entry in unitsById.entries.toList()) {
       final u = entry.value;
       if (u.currentWork == null) continue;
       final cw = u.currentWork!;
@@ -235,10 +251,24 @@ Game applyBuildAndWorkOrders(
       if (purchasedByTile.containsKey(cw.tileKey) &&
           purchasedByTile[cw.tileKey] != u.ownerId) {
         unitsById[entry.key] =
-            u.copyWith(status: UnitStatus.idle, currentWork: null);
+            u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
         _log.d(
             'logic: work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}');
         continue;
+      }
+      // Cancel work if province containing target tile is no longer owned (conquest). SPEC #376.
+      final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
+      if (targetProvinceId != null) {
+        final provinces = getProvinces();
+        final targetProvince =
+            provinces.where((p) => p.id == targetProvinceId).firstOrNull;
+        if (targetProvince != null && targetProvince.ownerId != u.ownerId) {
+          unitsById[entry.key] =
+              u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
+          _log.d(
+              'logic: work cancelled unit=${u.id} reason=province conquered provinceId=$targetProvinceId tileKey=${cw.tileKey}');
+          continue;
+        }
       }
       if (cw.workTarget == 'counter_spy') {
         // Per-turn: 5% per friendly spy (cap 30%) to kill one enemy spy in province
@@ -307,7 +337,7 @@ Game applyBuildAndWorkOrders(
               u, cw, getProvinces, setProvinces, currentGame);
         }
         unitsById[entry.key] =
-            u.copyWith(status: UnitStatus.idle, currentWork: null);
+            u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
       } else {
         unitsById[entry.key] = u.copyWith(
           currentWork: cw.copyWith(remainingTurns: nextRemaining),
@@ -515,45 +545,125 @@ Game applyBuildAndWorkOrders(
       final targetTileKey = order.targetTileKey;
       final hasValidTarget = targetTileKey.isNotEmpty;
 
+      // Configuration for standard work order targets that use material cost.
+      // Reduces duplication in WorkOrder application by centralizing validation,
+      // cost computation, and unit update logic.
+      // Special targets (purchase_land, prospect, explore, steal_tech, counter_spy)
+      // are handled separately due to their unique logic.
+      ({
+        String target,
+        bool Function(String) allowedForUnitType,
+        WorkOrderCost? Function() costFn,
+        int Function() totalTurnsFn
+      }) workTargetConfig(String target) {
+        switch (target) {
+          case 'build_improvement':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () => workOrderMaterialCost(target,
+                  improvementLevel: tileState.improvementLevel(targetTileKey)),
+              totalTurnsFn: () => totalTurnsForWork(target,
+                  improvementLevel: tileState.improvementLevel(targetTileKey)),
+            );
+          case 'build_road':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () => workOrderMaterialCost(target),
+              totalTurnsFn: () => totalTurnsForWork(target),
+            );
+          case 'build_port':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () => workOrderMaterialCost(target),
+              totalTurnsFn: () => totalTurnsForWork(target),
+            );
+          case 'build_fort':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () {
+                final prov = provinceById(u.locationProvinceId);
+                final fortLevel = prov?.fortLevel ?? 0;
+                return workOrderMaterialCost(target, fortLevel: fortLevel);
+              },
+              totalTurnsFn: () {
+                final prov = provinceById(u.locationProvinceId);
+                final fortLevel = prov?.fortLevel ?? 0;
+                return totalTurnsForWork(target, fortLevel: fortLevel);
+              },
+            );
+          case 'build_rail':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () => workOrderMaterialCost(target),
+              totalTurnsFn: () => totalTurnsForWork(target),
+            );
+          case 'upgrade_town':
+            return (
+              target: target,
+              allowedForUnitType: (t) =>
+                  isWorkOrderTargetAllowedForUnitType(t, target),
+              costFn: () => workOrderMaterialCost(target),
+              totalTurnsFn: () => totalTurnsForWork(target),
+            );
+          default:
+            // Fall through to individual handling for non-standard targets
+            return (
+              target: target,
+              allowedForUnitType: (_) => false,
+              costFn: () => null,
+              totalTurnsFn: () => 1,
+            );
+        }
+      }
+
+      // Applies a standard work order using the config dispatch.
+      // Returns true if the order was applied, false otherwise.
+      bool applyStandardWorkOrder(String orderTarget) {
+        if (u.currentWork != null) return false;
+        if (!hasValidTarget) return false;
+
+        final config = workTargetConfig(orderTarget);
+        if (!config.allowedForUnitType(u.type)) return false;
+
+        final cost = config.costFn();
+        if (cost == null) return false;
+        if (!canAffordMaterialCost(cost)) return false;
+
+        deductMaterialCost(cost);
+        final totalTurns = config.totalTurnsFn();
+
+        _log.d(
+            'logic: work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns');
+        updateUnit(
+            order.unitId,
+            u.copyWith(
+              status: UnitStatus.working,
+              tileKey: targetTileKey,
+              currentWork: CurrentWork(
+                workTarget: orderTarget,
+                tileKey: targetTileKey,
+                totalTurns: totalTurns,
+                remainingTurns: totalTurns,
+              ),
+            ));
+        return true;
+      }
+
       if (order.target == 'purchase_land' &&
           isWorkOrderTargetAllowedForUnitType(u.type, 'purchase_land') &&
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
-        String? provinceOwnerId;
-        final provinceIdFromTile = Unit.provinceIdFromTileKey(targetTileKey);
-        if (provinceIdFromTile != null) {
-          provinceOwnerId = provinceById(provinceIdFromTile)?.ownerId;
-        }
-
-        var hasEmbassyWithOwner = false;
-        var atWarWithOwner = false;
-
-        if (provinceOwnerId != null) {
-          for (final o in game.overtureStates) {
-            if (o.gpId == player.id &&
-                o.targetId == provinceOwnerId &&
-                o.hasEmbassy) {
-              hasEmbassyWithOwner = true;
-              break;
-            }
-          }
-
-          for (final rel in game.diplomacyRelations) {
-            final a = rel.factionId1;
-            final b = rel.factionId2;
-            if ((a == player.id && b == provinceOwnerId) ||
-                (a == provinceOwnerId && b == player.id)) {
-              atWarWithOwner = rel.atWar;
-              break;
-            }
-          }
-        }
-
-        if (!hasEmbassyWithOwner || atWarWithOwner) {
-          continue;
-        }
-
         final resourceId = game.worldState.resourceByTileKey[targetTileKey];
         if (resourceId != null) {
           final provinceId =
@@ -650,33 +760,8 @@ Game applyBuildAndWorkOrders(
           ),
         );
       }
-      if (order.target == 'build_improvement' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'build_improvement') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final improvementLevel = tileState.improvementLevel(targetTileKey);
-        final cost = workOrderMaterialCost('build_improvement',
-            improvementLevel: improvementLevel);
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns = totalTurnsForWork('build_improvement',
-              improvementLevel: improvementLevel);
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=build_improvement targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: 'build_improvement',
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (order.target == 'build_improvement') {
+        if (applyStandardWorkOrder('build_improvement')) continue;
       }
       if (order.target == 'explore' &&
           isExplorerUnit(u.type) &&
@@ -713,133 +798,20 @@ Game applyBuildAndWorkOrders(
         }
       }
       final workTarget = order.target;
-      if (workTarget == 'build_road' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'build_road') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final cost = workOrderMaterialCost('build_road');
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns = totalTurnsForWork('build_road');
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=build_road targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: workTarget,
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (workTarget == 'build_road') {
+        if (applyStandardWorkOrder('build_road')) continue;
       }
-      if (workTarget == 'build_port' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'build_port') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final cost = workOrderMaterialCost('build_port');
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns = totalTurnsForWork('build_port');
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=build_port targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: workTarget,
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (workTarget == 'build_port') {
+        if (applyStandardWorkOrder('build_port')) continue;
       }
-      if (workTarget == 'build_fort' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'build_fort') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final prov = provinceById(u.locationProvinceId);
-        final fortLevel = prov?.fortLevel ?? 0;
-        final cost = workOrderMaterialCost('build_fort', fortLevel: fortLevel);
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns =
-              totalTurnsForWork('build_fort', fortLevel: fortLevel);
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=build_fort targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: workTarget,
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (workTarget == 'build_fort') {
+        if (applyStandardWorkOrder('build_fort')) continue;
       }
-      if (workTarget == 'build_rail' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'build_rail') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final cost = workOrderMaterialCost('build_rail');
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns = totalTurnsForWork('build_rail');
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=build_rail targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: workTarget,
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (workTarget == 'build_rail') {
+        if (applyStandardWorkOrder('build_rail')) continue;
       }
-      if (workTarget == 'upgrade_town' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'upgrade_town') &&
-          u.currentWork == null &&
-          hasValidTarget) {
-        final cost = workOrderMaterialCost('upgrade_town');
-        if (cost != null && canAffordMaterialCost(cost)) {
-          deductMaterialCost(cost);
-          final totalTurns = totalTurnsForWork('upgrade_town');
-          _log.d(
-              'logic: work order accepted and assigned unit=${order.unitId} target=upgrade_town targetTileKey=$targetTileKey totalTurns=$totalTurns');
-          updateUnit(
-              order.unitId,
-              u.copyWith(
-                status: UnitStatus.working,
-                tileKey: targetTileKey,
-                currentWork: CurrentWork(
-                  workTarget: workTarget,
-                  tileKey: targetTileKey,
-                  totalTurns: totalTurns,
-                  remainingTurns: totalTurns,
-                ),
-              ));
-        }
-        continue;
+      if (workTarget == 'upgrade_town') {
+        if (applyStandardWorkOrder('upgrade_town')) continue;
       }
     }
 
@@ -873,4 +845,78 @@ Game applyBuildAndWorkOrders(
 
 String _buildUnitId(String playerId, BuildUnitOrder order) {
   return '${playerId}_${order.unitType}_${order.spawnProvinceId}';
+}
+
+/// Propagates road transport level to adjacent capital/port tiles.
+///
+/// Per SPEC/program/development-resolution.md: "build_road: set or upgrade
+/// transport level for tileKey ... and, if applicable, adjacent capital/port
+/// tiles per capital-and-connectivity.md."
+///
+/// When a road is built adjacent to the player's capital or a port, the
+/// transport level is also applied to those adjacent tiles.
+void _propagateRoadToAdjacentCapitalOrPort({
+  required String tileKey,
+  required int nextLevel,
+  Player? player,
+  required WorldState worldState,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required TileMapState tileState,
+  required void Function(TileMapState) setTileState,
+}) {
+  if (player == null) return;
+
+  // Parse the target tile key: regionId|provinceId|x|y
+  final parts = tileKey.split('|');
+  if (parts.length != 4) return;
+  final targetRegionId = parts[0];
+  final targetX = int.tryParse(parts[2]);
+  final targetY = int.tryParse(parts[3]);
+  if (targetX == null || targetY == null) return;
+
+  // Get player's capital tile key
+  final capitalTileKey = player.capitalTile?.toTileKey();
+
+  // Get all port tile keys
+  final portTileKeys = worldState.portsByProvinceSeaboard.values.toSet();
+
+  // Get the tile map for the region to check bounds
+  final tileMap = tileMapByRegion[targetRegionId];
+  if (tileMap == null) return;
+
+  // Check 4 neighbours (north, east, south, west)
+  final neighbours = [
+    (targetX, targetY - 1),
+    (targetX + 1, targetY),
+    (targetX, targetY + 1),
+    (targetX - 1, targetY),
+  ];
+
+  for (final (nx, ny) in neighbours) {
+    // Check bounds
+    if (nx < 0 || nx >= tileMap.width || ny < 0 || ny >= tileMap.height) {
+      continue;
+    }
+
+    // Get the cell (province) at this position
+    final cellId = tileMap.cell(nx, ny);
+
+    // Build the adjacent tile key
+    final adjacentTileKey =
+        CapitalTile.tileKey(targetRegionId, '$targetRegionId|$cellId', nx, ny);
+
+    // Check if adjacent tile is the player's capital or a port
+    final isCapital = adjacentTileKey == capitalTileKey;
+    final isPort = portTileKeys.contains(adjacentTileKey);
+
+    if (isCapital || isPort) {
+      _log.d(
+          'logic: build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey');
+      final currentLevel = tileState.roadLevel(adjacentTileKey);
+      // Only upgrade, never downgrade.
+      if (nextLevel > currentLevel) {
+        setTileState(tileState.setRoadLevel(adjacentTileKey, nextLevel));
+      }
+    }
+  }
 }

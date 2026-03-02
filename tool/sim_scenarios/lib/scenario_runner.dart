@@ -119,8 +119,14 @@ class ScenarioRunner {
         // Parse orders
         final orders = parseOrderCommands(turnScript.orders, currentContext.game);
         
-        // Resolve turn (returns updated game)
-        final nextGame = _resolveTurn(currentContext, orders, scenario);
+        // Resolve turn (returns updated game). Use per-turn workerAssignments when
+        // present; otherwise fall back to scenario-level productionAssignments.
+        final nextGame = _resolveTurn(
+          currentContext,
+          orders,
+          scenario,
+          turnScript.workerAssignments,
+        );
         currentContext = ScenarioContext(
           game: nextGame,
           topology: currentContext.topology,
@@ -359,9 +365,16 @@ class ScenarioRunner {
         for (final tid in techIds) {
           techUnlocked[tid] = true;
         }
-        updatedPlayers.add(player.copyWith(techUnlocked: techUnlocked));
+        // SPEC/game/factions.md: parity uses max GP military level; set it from tech so Combat phase sees it.
+        final militaryLevel = militaryLevelForUnlocked(techUnlocked);
+        updatedPlayers.add(
+          player.copyWith(techUnlocked: techUnlocked, militaryLevel: militaryLevel),
+        );
       }
       game = game.copyWith(players: updatedPlayers);
+
+      // SPEC/game/military-generals.md: general cap from tech. Ensure each GP has exactly cap many generals.
+      game = _applyGeneralCapFromTech(game);
     }
     if (setup.defaultCombatMode != null && setup.defaultCombatMode!.isNotEmpty) {
       final raw = setup.defaultCombatMode!.toLowerCase();
@@ -370,7 +383,45 @@ class ScenarioRunner {
           : CombatMode.autoResolve;
       game = game.copyWith(defaultCombatMode: mode);
     }
+    if (setup.initialTreasury != null && setup.initialTreasury!.isNotEmpty) {
+      final updatedPlayers = <Player>[];
+      for (final player in game.players) {
+        final treasury = setup.initialTreasury![player.id];
+        if (treasury == null) {
+          updatedPlayers.add(player);
+          continue;
+        }
+        updatedPlayers.add(player.copyWith(treasury: treasury));
+      }
+      game = game.copyWith(players: updatedPlayers);
+    }
     return game;
+  }
+
+  /// SPEC/game/military-generals.md: general cap from tech. Ensures each GP has exactly cap many generals.
+  static int _generalCapFromTech(Map<String, bool>? techUnlocked) {
+    final t = techUnlocked ?? {};
+    var cap = 1;
+    if (t['organised_regiments'] == true) cap = 2;
+    if (t['national_bureaucracy'] == true || t['improved_infantry_tactics'] == true) cap = 3;
+    if (t['nationalism'] == true) cap = 4;
+    return cap;
+  }
+
+  static Game _applyGeneralCapFromTech(Game game) {
+    final newGenerals = <General>[];
+    for (final player in game.players) {
+      final cap = _generalCapFromTech(player.techUnlocked);
+      final existing = game.generals.where((g) => g.ownerId == player.id).toList();
+      for (var i = 0; i < cap; i++) {
+        if (i < existing.length) {
+          newGenerals.add(existing[i]);
+        } else {
+          newGenerals.add(General(id: '${player.id}_gen_$i', ownerId: player.id, medals: 0));
+        }
+      }
+    }
+    return game.copyWith(generals: newGenerals);
   }
 
   Player _applyPlayerEconomyOverrides(Player player, ScenarioSetup setup) {
@@ -398,13 +449,28 @@ class ScenarioRunner {
   }
 
   /// Resolves one turn and returns the updated game.
-  Game _resolveTurn(ScenarioContext context, Orders orders, Scenario scenario) {
+  Game _resolveTurn(
+    ScenarioContext context,
+    Orders orders,
+    Scenario scenario, [
+    List<WorkerAssignment>? workerAssignments,
+  ]) {
     final topology = context.topology;
     if (topology == null) {
       throw StateError('Topology required for turn resolution');
     }
 
-    final defaultAssignments = _productionAssignments(scenario);
+    final defaultAssignments = workerAssignments != null &&
+            workerAssignments.isNotEmpty
+        ? workerAssignments
+            .map(
+              (w) => AssignedRecipe(
+                recipeId: w.recipeId,
+                assignedLabour: w.assignedLabour,
+              ),
+            )
+            .toList()
+        : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
     return resolveTurnForGameFromOrderEngine(

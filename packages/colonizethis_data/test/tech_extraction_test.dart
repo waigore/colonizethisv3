@@ -1,5 +1,5 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
   group('extractionCapForUnlocked', () {

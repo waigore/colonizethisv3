@@ -39,14 +39,40 @@ class GameSaveAdapter {
   }
 
   /// Lists all game ids stored in [box]. Excludes internal map-data keys.
+  ///
+  /// A key is treated as a game id unless it ends with a map-data suffix AND
+  /// its prefix exists as a separate key in the box (proving it is map data for
+  /// that game). This ensures game ids like `mygame_tileMapByRegion` are not
+  /// incorrectly excluded when no corresponding `mygame` key exists.
   List<String> listGameIds(Box<dynamic> box) {
-    return box.keys
-        .whereType<String>()
+    final allKeys = box.keys.whereType<String>().toSet();
+
+    final definiteGameIds = allKeys
         .where((k) =>
             !k.endsWith(_suffixTileMapByRegion) &&
             !k.endsWith(_suffixTopologyByRegion) &&
             !k.endsWith(_suffixCombinedTopology))
-        .toList();
+        .toSet();
+
+    final result = <String>[...definiteGameIds];
+
+    for (final key in allKeys) {
+      if (key.endsWith(_suffixTileMapByRegion)) {
+        final prefix =
+            key.substring(0, key.length - _suffixTileMapByRegion.length);
+        if (!definiteGameIds.contains(prefix)) result.add(key);
+      } else if (key.endsWith(_suffixTopologyByRegion)) {
+        final prefix =
+            key.substring(0, key.length - _suffixTopologyByRegion.length);
+        if (!definiteGameIds.contains(prefix)) result.add(key);
+      } else if (key.endsWith(_suffixCombinedTopology)) {
+        final prefix =
+            key.substring(0, key.length - _suffixCombinedTopology.length);
+        if (!definiteGameIds.contains(prefix)) result.add(key);
+      }
+    }
+
+    return result;
   }
 
   /// Saves map data for [gameId] so Load Savegame can build InitGameMapViewData. Optional; legacy saves have none.

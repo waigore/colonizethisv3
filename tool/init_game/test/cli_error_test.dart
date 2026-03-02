@@ -3,8 +3,8 @@
 
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:colonizethis_test/test.dart';
+
 import 'package:path/path.dart' as p;
 
 /// Package root: tool/init_game. Works when run from package dir or repo root.
