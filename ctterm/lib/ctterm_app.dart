@@ -6,9 +6,31 @@ import 'package:nocterm/nocterm.dart';
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/screens/shell_screen.dart';
 import 'package:ctterm/save_service.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
+
+/// Pending setup data when user has completed Game Setup and we are about to generate the world.
+class _PendingNewGameConfig {
+  const _PendingNewGameConfig({
+    required this.orderedGpIdsForSlots,
+    required this.leaderVariantByGpId,
+  });
+  final List<String> orderedGpIdsForSlots;
+  final Map<String, String> leaderVariantByGpId;
+}
+
+/// Map data cached after new game creation for turn resolution (extraction, movement).
+class _MapCache {
+  const _MapCache({
+    required this.combinedTopology,
+    required this.tileMapByRegion,
+  });
+  final MapTopology combinedTopology;
+  final Map<String, TileMapResult> tileMapByRegion;
+}
 
 /// Root component. Holds current screen and shows Main Menu or a stub.
 class CttermApp extends StatefulComponent {
@@ -24,9 +46,66 @@ class _CttermAppState extends State<CttermApp> {
   CttermRoute _route = CttermRoute.mainMenu;
   Game? _currentGame;
   Orders _currentOrders = const Orders();
+  _PendingNewGameConfig? _pendingNewGameConfig;
+  _MapCache? _mapCache;
 
   void _navigateTo(CttermRoute route) {
     setState(() => _route = route);
+  }
+
+  /// Stores setup data and navigates to Generating World. Called from Game Setup when user presses Start.
+  void _onPrepareNewGame(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId) {
+    _log.d('tui:app: prepare new game with ${orderedGpIdsForSlots.length} players');
+    setState(() {
+      _pendingNewGameConfig = _PendingNewGameConfig(
+        orderedGpIdsForSlots: orderedGpIdsForSlots,
+        leaderVariantByGpId: leaderVariantByGpId,
+      );
+      _route = CttermRoute.generatingWorld;
+    });
+  }
+
+  /// Runs world generation (runInitGame) with pending config, then sets game and navigates to in-game shell.
+  /// Called by GeneratingWorldScreen when it mounts. Game is never null after this for a new-game flow.
+  void _runGeneration() {
+    final pending = _pendingNewGameConfig;
+    if (pending == null) {
+      _log.w('tui:app: runGeneration called with no pending config');
+      return;
+    }
+    final config = GameSetupConfig(
+      selectedGreatPowerIds: List<String>.from(pending.orderedGpIdsForSlots),
+      leaderVariantByGpId: Map<String, String>.from(pending.leaderVariantByGpId),
+      seed: GameSetupConfig.defaultConfig.seed,
+      continentCount: GameSetupConfig.defaultConfig.continentCount,
+      minorNationCount: GameSetupConfig.defaultConfig.minorNationCount,
+      tribeCount: GameSetupConfig.defaultConfig.tribeCount,
+      numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+      numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+      minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+    );
+    try {
+      _log.i('tui:app: running init game');
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(renderPng: false),
+      );
+      _log.i('tui:app: init game complete, turn ${result.game.worldState.turnState.turnNumber}');
+      // Set game and route in one setState so no rebuild can see inGameShell with null game.
+      setState(() {
+        _currentGame = result.game;
+        _mapCache = _MapCache(
+          combinedTopology: result.combinedTopology,
+          tileMapByRegion: result.tileMapByRegion,
+        );
+        _pendingNewGameConfig = null;
+        _route = CttermRoute.inGameShell;
+      });
+    } catch (e, st) {
+      _log.e('tui:app: init game failed', error: e, stackTrace: st);
+      setState(() => _pendingNewGameConfig = null);
+      _navigateTo(CttermRoute.mainMenu);
+    }
   }
 
   /// Loads a game by ID and navigates to in-game shell.
@@ -59,6 +138,8 @@ class _CttermAppState extends State<CttermApp> {
     setState(() {
       _currentGame = null;
       _currentOrders = const Orders();
+      _mapCache = null;
+      _pendingNewGameConfig = null;
     });
   }
 
@@ -81,8 +162,12 @@ class _CttermAppState extends State<CttermApp> {
         dataDirOverride: component.dataDirOverride,
         game: _currentGame,
         orders: _currentOrders,
+        combinedTopology: _mapCache?.combinedTopology,
+        tileMapByRegion: _mapCache?.tileMapByRegion,
         onNavigate: _navigateTo,
         onExit: _exit,
+        onPrepareNewGame: _onPrepareNewGame,
+        runGeneration: _route == CttermRoute.generatingWorld ? _runGeneration : null,
         onTurnProcessed: _onTurnProcessed,
         onOrdersChanged: _updateOrders,
         onGameUpdated: (game) {

@@ -29,6 +29,7 @@ melos run ctterm
 **Behaviour**
 
 - Shows Main Menu first (New Game, Load Game, Settings, Quit). Load Game is enabled only when at least one save exists in the ctterm data directory. Saves are separate from app/ctdev.
+- Logs to **ctterm.log** in the ctterm data directory (same as `--data-dir` when set). All logger output (tui:*, logic:*, etc.) is appended to this file.
 
 ---
 

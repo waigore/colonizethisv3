@@ -9,9 +9,6 @@ import 'package:ctterm/ctterm_log.dart';
 final log_pkg.Logger _log = log_pkg.Logger();
 
 void main(List<String> args) async {
-  initCttermLogging();
-  _log.i('tui: ctterm starting');
-
   String? dataDirOverride;
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '--data-dir' && i + 1 < args.length) {
@@ -20,6 +17,9 @@ void main(List<String> args) async {
       break;
     }
   }
+
+  initCttermLogging(dataDirOverride);
+  _log.i('tui: ctterm starting');
 
   runApp(CttermApp(dataDirOverride: dataDirOverride));
 }

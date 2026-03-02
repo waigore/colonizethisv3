@@ -38,6 +38,10 @@ class ShellScreen extends StatefulComponent {
     this.dataDirOverride,
     this.game,
     this.orders,
+    this.combinedTopology,
+    this.tileMapByRegion,
+    this.onPrepareNewGame,
+    this.runGeneration,
     this.onTurnProcessed,
     this.onOrdersChanged,
     this.onGameUpdated,
@@ -51,8 +55,15 @@ class ShellScreen extends StatefulComponent {
   final Game? game;
   /// Current orders for the human player.
   final Orders? orders;
+  /// Topology and tile maps for turn resolution (set after new game creation).
+  final MapTopology? combinedTopology;
+  final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
   final void Function() onExit;
+  /// Called with setup data before navigating to Generating World. When set, Game Setup uses it.
+  final void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId)? onPrepareNewGame;
+  /// When set, Generating World screen runs this instead of simulated progress (runs real init then navigates).
+  final void Function()? runGeneration;
   /// Callback when turn is processed, receives updated game state.
   final void Function(Game)? onTurnProcessed;
   /// Callback when orders are changed in a panel.
@@ -119,9 +130,8 @@ class _ShellScreenState extends State<ShellScreen> {
         return GameSetupScreen(
           onStartGame: (orderedGpIdsForSlots, leaderVariantByGpId) {
             _log.d('tui:nav: Game Setup complete -> generating world');
-            // TODO: Create game with config and navigate to in-game shell
-            // For now, navigate to generating world (stub will be replaced)
-            component.onNavigate(CttermRoute.generatingWorld);
+            component.onPrepareNewGame?.call(orderedGpIdsForSlots, leaderVariantByGpId);
+            // App's onPrepareNewGame sets route to generatingWorld; no separate navigate needed.
           },
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
         );
@@ -144,6 +154,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return GeneratingWorldScreen(
           onComplete: () => component.onNavigate(CttermRoute.inGameShell),
           onCancel: () => component.onNavigate(CttermRoute.mainMenu),
+          runGeneration: component.runGeneration,
         );
       case CttermRoute.settings:
         return SettingsScreen(
@@ -164,11 +175,13 @@ class _ShellScreenState extends State<ShellScreen> {
             // Process turn with current orders and minimal topology
             // Full implementation would load map data and use real topology
             final currentOrders = component.orders ?? const Orders();
-            const emptyTopology = MapTopology();
+            final topology = component.combinedTopology ?? const MapTopology();
+            final tileMapByRegion = component.tileMapByRegion;
             final nextGame = resolveTurnForGame(
               game: game,
-              topology: emptyTopology,
+              topology: topology,
               orders: currentOrders,
+              tileMapByRegion: tileMapByRegion,
             );
             
             // Notify parent of updated game state
@@ -193,7 +206,6 @@ class _ShellScreenState extends State<ShellScreen> {
           orders: component.orders ?? const Orders(),
           onNavigate: component.onNavigate,
           onOrdersChanged: (Orders orders) {
-            // Propagate orders change to parent
             component.onOrdersChanged?.call(orders);
           },
         );
