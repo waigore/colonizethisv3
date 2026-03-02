@@ -250,6 +250,7 @@ class _ShellScreenState extends State<ShellScreen> {
         );
       case CttermRoute.mapContext:
         return MapContextScreen(
+          game: component.game!,
           onNavigate: component.onNavigate,
         );
       case CttermRoute.units:

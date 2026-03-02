@@ -1,6 +1,7 @@
 // Map Context Screen: detailed province information, map layers, visibility, region navigation.
 // SPEC/tui/ctterm.md, SPEC/tui/screens/map-context.md
 
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
@@ -12,9 +13,11 @@ final log_pkg.Logger _log = log_pkg.Logger();
 class MapContextScreen extends StatefulComponent {
   const MapContextScreen({
     super.key,
+    required this.game,
     required this.onNavigate,
   });
 
+  final Game game;
   final void Function(CttermRoute) onNavigate;
 
   @override
@@ -22,9 +25,9 @@ class MapContextScreen extends StatefulComponent {
 }
 
 class _MapContextScreenState extends State<MapContextScreen> {
-  // Current region (Old World / New World)
-  String _currentRegion = 'Old World';
-  static const List<String> _regions = ['Old World', 'New World'];
+  // Current region (oldWorld or newWorld)
+  String _currentRegion = 'oldWorld';
+  static const List<String> _regions = ['oldWorld', 'newWorld'];
 
   // Map layers (toggleable)
   bool _showTerrain = true;
@@ -37,33 +40,30 @@ class _MapContextScreenState extends State<MapContextScreen> {
   int _cursorY = 0;
   bool _tileMode = false; // false = province, true = tile
 
-  // Mock map data for demonstration
-  static const List<List<String>> _mapGrid = [
-    ['A', 'B', 'C', 'D'],
-    ['E', 'F', 'G', 'H'],
-    ['I', 'J', 'K', 'L'],
-    ['M', 'N', 'O', 'P'],
-  ];
+  /// Gets the game from the widget.
+  Game get game => component.game;
 
-  // Mock province data
-  static const Map<String, _ProvinceData> _provinceData = {
-    'A': _ProvinceData(name: 'Londinium', owner: 'British Empire', terrain: 'Plains', resources: 'Iron', towns: 3, visibility: _Visibility.full),
-    'B': _ProvinceData(name: 'Edinburgh', owner: 'British Empire', terrain: 'Hills', resources: 'Coal', towns: 2, visibility: _Visibility.full),
-    'C': _ProvinceData(name: 'Dublin', owner: 'British Empire', terrain: 'Coastal', resources: 'Fish', towns: 2, visibility: _Visibility.full),
-    'D': _ProvinceData(name: 'Paris', owner: 'French Kingdom', terrain: 'Plains', resources: 'Wheat', towns: 4, visibility: _Visibility.full),
-    'E': _ProvinceData(name: 'Madrid', owner: 'Spanish Empire', terrain: 'Desert', resources: 'Silver', towns: 3, visibility: _Visibility.revealed),
-    'F': _ProvinceData(name: 'Rome', owner: 'Italian States', terrain: 'Hill', resources: 'Marble', towns: 4, visibility: _Visibility.full),
-    'G': _ProvinceData(name: 'Berlin', owner: 'Prussian State', terrain: 'Plains', resources: 'Iron', towns: 2, visibility: _Visibility.full),
-    'H': _ProvinceData(name: 'Vienna', owner: 'Austrian Empire', terrain: 'Mountain', resources: 'Gold', towns: 3, visibility: _Visibility.fog),
-    'I': _ProvinceData(name: 'New York', owner: 'British Empire', terrain: 'Coastal', resources: 'Furs', towns: 2, visibility: _Visibility.full),
-    'J': _ProvinceData(name: 'Boston', owner: 'Colonial Rebels', terrain: 'Plains', resources: 'Timber', towns: 2, visibility: _Visibility.full),
-    'K': _ProvinceData(name: 'Quebec', owner: 'British Empire', terrain: 'Forest', resources: 'Fur', towns: 1, visibility: _Visibility.revealed),
-    'L': _ProvinceData(name: 'Mexico City', owner: 'Spanish Empire', terrain: 'Desert', resources: 'Silver', towns: 5, visibility: _Visibility.fog),
-    'M': _ProvinceData(name: 'Havana', owner: 'Spanish Empire', terrain: 'Coastal', resources: 'Sugar', towns: 2, visibility: _Visibility.full),
-    'N': _ProvinceData(name: 'Lima', owner: 'Spanish Empire', terrain: 'Coastal', resources: 'Silver', towns: 3, visibility: _Visibility.fog),
-    'O': _ProvinceData(name: 'Cuzco', owner: 'Unclaimed', terrain: 'Mountain', resources: 'Gold', towns: 1, visibility: _Visibility.revealed),
-    'P': _ProvinceData(name: 'Brasilia', owner: 'Portuguese Empire', terrain: 'Jungle', resources: 'Timber', towns: 1, visibility: _Visibility.fog),
-  };
+  /// Gets the current region's display name.
+  String get _regionDisplayName => _currentRegion == 'oldWorld' ? 'Old World' : 'New World';
+
+  /// Gets provinces for the currently selected region.
+  List<Province> get _provinces {
+    if (_currentRegion == 'oldWorld') {
+      return game.worldState.oldWorld.provinces;
+    } else {
+      return game.worldState.newWorld.provinces;
+    }
+  }
+
+  /// Gets the currently selected province based on cursor position.
+  Province? get _selectedProvince {
+    final provinces = _provinces;
+    final idx = _cursorY * 4 + _cursorX;
+    if (idx >= 0 && idx < provinces.length) {
+      return provinces[idx];
+    }
+    return null;
+  }
 
   void _cycleRegion() {
     setState(() {
@@ -94,9 +94,12 @@ class _MapContextScreenState extends State<MapContextScreen> {
   }
 
   void _moveCursor(int dx, int dy) {
+    final provinces = _provinces;
+    const cols = 4;
+    final rows = provinces.isEmpty ? 0 : (provinces.length / cols).ceil();
     setState(() {
-      final newX = (_cursorX + dx).clamp(0, _mapGrid[0].length - 1);
-      final newY = (_cursorY + dy).clamp(0, _mapGrid.length - 1);
+      final newX = (_cursorX + dx).clamp(0, cols - 1);
+      final newY = (_cursorY + dy).clamp(0, rows - 1);
       _cursorX = newX;
       _cursorY = newY;
     });
@@ -109,13 +112,18 @@ class _MapContextScreenState extends State<MapContextScreen> {
     _log.d('tui:map: selection mode: ${_tileMode ? "tile" : "province"}');
   }
 
+  /// Gets the province ID for the current cursor position.
   String get _currentProvinceId {
-    return _mapGrid[_cursorY][_cursorX];
+    final provinces = _provinces;
+    final idx = _cursorY * 4 + _cursorX;
+    if (idx >= 0 && idx < provinces.length) {
+      return provinces[idx].id;
+    }
+    return '';
   }
 
-  _ProvinceData? get _currentProvince {
-    return _provinceData[_currentProvinceId];
-  }
+  /// Gets the currently selected province data.
+  Province? get _currentProvince => _selectedProvince;
 
   String _getVisibilityIcon(_Visibility visibility) {
     switch (visibility) {
@@ -205,24 +213,44 @@ class _MapContextScreenState extends State<MapContextScreen> {
   }
 
   Component _buildMapPanel() {
+    final provinces = _provinces;
+    if (provinces.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(1),
+        child: Text('No map data available', style: TextStyle(color: Colors.gray)),
+      );
+    }
+
+    // Build map grid from real province data
+    const cols = 4;
+    final rows = (provinces.length / cols).ceil();
+
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Region indicator
-          Text('Region: $_currentRegion', style: TextStyle(color: Colors.cyan)),
+          Text('Region: $_regionDisplayName', style: TextStyle(color: Colors.cyan)),
           const SizedBox(height: 1),
           // Map grid
-          ...List.generate(_mapGrid.length, (y) {
+          ...List.generate(rows, (y) {
             return Row(
-              children: List.generate(_mapGrid[y].length, (x) {
+              children: List.generate(cols, (x) {
+                final idx = y * cols + x;
                 final isSelected = x == _cursorX && y == _cursorY;
-                final provId = _mapGrid[y][x];
-                final prov = _provinceData[provId];
                 
-                String cellChar = provId;
+                String cellChar;
                 var style = TextStyle();
+                
+                if (idx < provinces.length) {
+                  final prov = provinces[idx];
+                  final name = prov.displayName ?? prov.id ?? '???';
+                  // Shorten to 2 chars for the grid cell
+                  cellChar = name.length > 2 ? name.substring(0, 2) : name;
+                } else {
+                  cellChar = '  ';
+                }
                 
                 if (isSelected) {
                   style = TextStyle(backgroundColor: Colors.cyan, color: Colors.black);
@@ -231,18 +259,24 @@ class _MapContextScreenState extends State<MapContextScreen> {
                   cellChar = ' $cellChar ';
                 }
 
-                // Apply fog styling
-                if (_showFog && prov != null && prov.visibility == _Visibility.fog) {
-                  style = style.copyWith(color: Colors.gray);
-                } else if (_showOwnership && prov != null) {
-                  // Color by owner (simplified)
-                  if (prov.owner.contains('British')) {
-                    style = style.copyWith(color: Colors.red);
-                  } else if (prov.owner.contains('French')) {
-                    style = style.copyWith(color: Colors.blue);
-                  } else if (prov.owner.contains('Spanish')) {
-                    style = style.copyWith(color: Colors.yellow);
-                  } else if (prov.owner.contains('Unclaimed')) {
+                // Apply ownership coloring
+                if (idx < provinces.length) {
+                  final prov = provinces[idx];
+                  if (_showOwnership && prov.ownerId != null) {
+                    // Color by player ID prefix (simplified)
+                    final pid = prov.ownerId!.toLowerCase();
+                    if (pid.startsWith('gb') || pid.startsWith('britain')) {
+                      style = style.copyWith(color: Colors.red);
+                    } else if (pid.startsWith('fr')) {
+                      style = style.copyWith(color: Colors.blue);
+                    } else if (pid.startsWith('sp')) {
+                      style = style.copyWith(color: Colors.yellow);
+                    } else {
+                      style = style.copyWith(color: Colors.green);
+                    }
+                  }
+                  if (_showFog) {
+                    // TODO: Use real visibility from PlayerView
                     style = style.copyWith(color: Colors.gray);
                   }
                 }
@@ -267,6 +301,17 @@ class _MapContextScreenState extends State<MapContextScreen> {
     final prov = _currentProvince;
     final provId = _currentProvinceId;
 
+    // Get owner name from game players
+    String getOwnerName(String? ownerId) {
+      if (ownerId == null) return 'Unclaimed';
+      for (final player in game.players) {
+        if (player.id == ownerId) {
+          return player.displayName ?? ownerId;
+        }
+      }
+      return ownerId;
+    }
+
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
@@ -282,27 +327,27 @@ class _MapContextScreenState extends State<MapContextScreen> {
             Text('No data available', style: TextStyle(color: Colors.gray))
           else ...[
             // Name
-            Text('Name: ${prov.name}'),
+            Text('Name: ${prov.displayName ?? prov.id ?? "Unknown"}'),
             const SizedBox(height: 1),
             
             // Owner
-            Text('Owner: ${_maskIfFog(prov.owner, prov.visibility)}'),
+            Text('Owner: ${getOwnerName(prov.ownerId)}'),
             const SizedBox(height: 1),
             
             // Terrain
-            Text('Terrain: ${_showTerrain ? prov.terrain : "[hidden]"}'),
+            Text('Terrain: ${_showTerrain ? (prov.terrain ?? "Unknown") : "[hidden]"}'),
             const SizedBox(height: 1),
             
-            // Resources
-            Text('Resources: ${_showTerrain ? (prov.resources != null ? prov.resources : "None") : "[hidden]"}'),
+            // Fort Level
+            Text('Fort: ${_showTowns ? (prov.fortLevel ?? 0) : "[hidden]"}'),
             const SizedBox(height: 1),
             
-            // Towns
-            Text('Towns: ${_showTowns ? prov.towns : "[hidden]"}'),
+            // Town Development
+            Text('Town Dev: ${_showTowns ? (prov.townDevelopmentLevel ?? 0) : "[hidden]"}'),
             const SizedBox(height: 1),
             
-            // Visibility
-            Text('Visibility: ${_getVisibilityIcon(prov.visibility)} ${prov.visibility.name}'),
+            // Visibility (placeholder - would come from PlayerView)
+            Text('Visibility: ${_getVisibilityIcon(_Visibility.full)} full'),
           ],
           
           const SizedBox(height: 2),
@@ -332,29 +377,6 @@ class _MapContextScreenState extends State<MapContextScreen> {
     );
   }
 
-  String _maskIfFog(String value, _Visibility visibility) {
-    if (visibility == _Visibility.fog) return '???';
-    if (visibility == _Visibility.revealed) return '$value (revealed)';
-    return value;
-  }
 }
 
 enum _Visibility { full, revealed, fog }
-
-class _ProvinceData {
-  final String name;
-  final String owner;
-  final String terrain;
-  final String? resources;
-  final int towns;
-  final _Visibility visibility;
-
-  const _ProvinceData({
-    required this.name,
-    required this.owner,
-    required this.terrain,
-    required this.resources,
-    required this.towns,
-    required this.visibility,
-  });
-}
