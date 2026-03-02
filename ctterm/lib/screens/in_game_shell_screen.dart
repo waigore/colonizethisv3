@@ -193,6 +193,22 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     });
   }
 
+  /// Select neighbour at [index] (0-based) in the current province's neighbour list.
+  void _selectNeighbourByIndex(int index) {
+    final cur = _selectedProvinceLocalId;
+    if (cur == null) return;
+    if (index < 0) return;
+    final neighbours = _neighboursOf(cur);
+    if (index >= neighbours.length) return;
+    final newId = neighbours[index];
+    final newNeighbours = _neighboursOf(newId);
+    final backIdx = newNeighbours.indexOf(cur);
+    setState(() {
+      _selectedProvinceLocalId = newId;
+      _neighbourIndex = backIdx >= 0 ? backIdx : 0;
+    });
+  }
+
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
     setState(() => _isEndingTurn = true);
@@ -273,6 +289,13 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           _selectNextNeighbour();
           return true;
         }
+        // Direct neighbour selection via number keys 1–9.
+        if (c != null && c.length == 1 && c.codeUnitAt(0) >= '1'.codeUnitAt(0) &&
+            c.codeUnitAt(0) <= '9'.codeUnitAt(0)) {
+          final index = c.codeUnitAt(0) - '1'.codeUnitAt(0);
+          _selectNeighbourByIndex(index);
+          return true;
+        }
         if (c == 'e' || key == LogicalKey.enter) {
           _handleEndTurn();
           return true;
@@ -333,10 +356,11 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       );
     }
 
-    const cols = 5;
-    final rows = (land.length / cols).ceil();
     final selected = _selectedProvinceLocalId;
-    final neighbours = selected != null ? _neighboursOf(selected) : <String>[];
+    final selectedProv =
+        selected != null ? _provinceByLocalId(selected) : null;
+    final neighbours =
+        selected != null ? _neighboursOf(selected) : <String>[];
 
     return Container(
       padding: const EdgeInsets.all(1),
@@ -345,46 +369,51 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         children: [
           Text('=== $_regionDisplayName (land graph) ===',
               style: TextStyle(color: Colors.cyan)),
-          Text('Select: j/l or ←/→ move to neighbour',
+          Text(
+              'Center = current province; 1–9: neighbour, j/l or ←/→: cycle',
               style: TextStyle(color: Colors.gray)),
           const SizedBox(height: 1),
-          ...List.generate(rows, (row) {
-            return Row(
-              children: List.generate(cols, (col) {
-                final idx = row * cols + col;
-                if (idx >= land.length) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-                    child: Text('   '),
-                  );
-                }
-                final localId = land[idx];
-                final prov = _provinceByLocalId(localId);
-                final name = prov?.displayName ?? prov?.id ?? localId;
-                final short = name.length > 6 ? name.substring(0, 6) : name;
-                final isSelected = localId == selected;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
-                  child: Text(
-                    isSelected ? '[$short]' : ' $short ',
-                    style: isSelected
-                        ? TextStyle(
-                            backgroundColor: Colors.cyan,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          )
-                        : TextStyle(color: Colors.gray),
+          if (selected == null || selectedProv == null)
+            Text('No province selected', style: TextStyle(color: Colors.gray))
+          else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _provinceLabel(selectedProv, selected),
+                  style: TextStyle(
+                    color: _provinceTextColor(selectedProv),
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              }),
-            );
-          }),
-          const SizedBox(height: 1),
-          if (selected != null && neighbours.isNotEmpty)
-            Text(
-              'Neighbours: ${neighbours.map((n) => _provinceByLocalId(n)?.displayName ?? n).join(", ")}',
-              style: TextStyle(color: Colors.yellow),
+                ),
+                const SizedBox(width: 2),
+                Text('->', style: TextStyle(color: Colors.gray)),
+                const SizedBox(width: 1),
+                if (neighbours.isEmpty)
+                  Text('No neighbours', style: TextStyle(color: Colors.gray))
+                else
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var i = 0; i < neighbours.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 1),
+                            child: Text(
+                              _neighbourLabel(neighbours[i], i),
+                              style: TextStyle(
+                                color: _provinceTextColor(
+                                  _provinceByLocalId(neighbours[i]),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
+          ],
         ],
       ),
     );
@@ -395,6 +424,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         ? _provinceByLocalId(_selectedProvinceLocalId!)
         : null;
     final game = component.game;
+    final isSeabound = _selectedProvinceLocalId != null &&
+        _isProvinceSeaBound(_selectedProvinceLocalId!);
 
     String ownerName(String? ownerId) {
       if (ownerId == null) return 'Unclaimed';
@@ -425,13 +456,97 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
             Text('Terrain: ${prov.terrain}'),
             Text('Fort: ${prov.fortLevel}'),
             Text('Town Dev: ${prov.townDevelopmentLevel}'),
+            Text('Seabound: ${isSeabound ? "Yes" : "No"}'),
             Text('Visibility: full', style: TextStyle(color: Colors.gray)),
           ],
           const Spacer(),
-          Text('j/l or ←/→: neighbour', style: TextStyle(color: Colors.gray)),
+          Text('1–9: neighbour, j/l or ←/→: cycle', style: TextStyle(color: Colors.gray)),
         ],
       ),
     );
+  }
+
+  /// Returns true when the province with [localId] in the current region has at
+  /// least one P–S edge (sea-bound) in the combined topology.
+  bool _isProvinceSeaBound(String localId) {
+    final top = component.combinedTopology;
+    if (top == null || top.nodes.isEmpty) return false;
+    final regionId = _selectedRegion;
+
+    final provinceNodeIds = top.nodes
+        .where((n) =>
+            n.regionId == regionId &&
+            n.type == TopologyNodeType.province &&
+            ProvinceId.localIdFrom(n.id) == localId)
+        .map((n) => n.id)
+        .toSet();
+    if (provinceNodeIds.isEmpty) return false;
+
+    final seaNodeIds = top.nodes
+        .where((n) =>
+            n.regionId == regionId && n.type == TopologyNodeType.seaZone)
+        .map((n) => n.id)
+        .toSet();
+    if (seaNodeIds.isEmpty) return false;
+
+    for (final edge in top.edges) {
+      final id1 = edge.id1;
+      final id2 = edge.id2;
+      String? provinceSide;
+      if (provinceNodeIds.contains(id1)) {
+        provinceSide = id1;
+      } else if (provinceNodeIds.contains(id2)) {
+        provinceSide = id2;
+      }
+      if (provinceSide == null) continue;
+      final other = provinceSide == id1 ? id2 : id1;
+      if (seaNodeIds.contains(other)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Province label for the centered view, including seabound marker.
+  String _provinceLabel(Province? prov, String localId) {
+    final base = prov?.displayName ?? prov?.id ?? localId;
+    final seabound = _isProvinceSeaBound(localId);
+    return seabound ? '$base*' : base;
+  }
+
+  /// Label for neighbour [localId] at [index] (0-based), including hotkey index and seabound marker.
+  String _neighbourLabel(String localId, int index) {
+    final prov = _provinceByLocalId(localId);
+    final name = _provinceLabel(prov, localId);
+    final keyIndex = index + 1;
+    final keyPart = keyIndex <= 9 ? '$keyIndex' : '-';
+    return '$keyPart:$name';
+  }
+
+  /// Text colour for a province based on owning Great Power colour override (when present).
+  Color _provinceTextColor(Province? prov) {
+    if (prov == null) return Colors.gray;
+    final ownerId = prov.ownerId;
+    final game = component.game;
+    if (ownerId == null || game == null) return Colors.gray;
+    final override = game.greatPowerColorOverride;
+    final rgb = override?[ownerId];
+    if (rgb == null || rgb.length < 3) return Colors.gray;
+    final r = rgb[0];
+    final g = rgb[1];
+    final b = rgb[2];
+
+    if (r == g && g == b) {
+      return r > 200 ? Colors.white : Colors.gray;
+    }
+    final max = [r, g, b].reduce((a, b) => a > b ? a : b);
+    if (max == r && max == g) return Colors.yellow;
+    if (max == r && max == b) return Colors.magenta;
+    if (max == g && max == b) return Colors.cyan;
+    if (max == r) return Colors.red;
+    if (max == g) return Colors.green;
+    if (max == b) return Colors.blue;
+    return Colors.gray;
   }
 
   String _formatEvent(GameEvent event) {
