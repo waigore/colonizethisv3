@@ -39,8 +39,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     _checkSaves();
   }
 
-  static const _listSavesTimeout = Duration(seconds: 10);
-
   Future<void> _checkSaves() async {
     try {
       final ids = await listGameIds(component.dataDirOverride)
@@ -116,9 +114,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   style: TextStyle(color: Colors.gray),
                 ),
               ),
-              _menuRow('S', 'Settings', true, component.onSettings),
-              _menuRow('Q', 'Quit', true, component.onQuit),
-            ],
+            _menuRow('S', 'Settings', true, component.onSettings),
+            _menuRow('Q', 'Quit', true, component.onQuit),
             const SizedBox(height: 2),
             Text('v0.1.0', style: TextStyle(color: Colors.gray)),
           ],
