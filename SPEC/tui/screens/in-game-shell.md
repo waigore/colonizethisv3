@@ -67,9 +67,15 @@ The map area is a **topology graph** of the current region’s **land provinces*
 - **Given** the player is in the in-game shell
 - **When** the screen renders
 - **Then** show at the top:
-  - Current turn number and year
+  - Current turn number and year:
+    - Turn number comes from `Game.worldState.turnState.turnNumber`
+    - Year is derived via `turnToYear(Game.worldState.turnState.turnNumber, Game.turnTimeMapping)` per [SPEC/game/turn-time-mapping.md](../../game/turn-time-mapping.md), falling back to the default mapping when `turnTimeMapping` is null (legacy saves)
   - Current region (Old World / New World) and way to cycle (e.g. R)
   - Player's treasury/resources summary
+
+- **Given** a game with a non-null `turnTimeMapping`
+- **When** the HUD is shown for turn `N`
+- **Then** the year displayed equals `turnToYear(N, Game.turnTimeMapping)` as defined in [SPEC/game/turn-time-mapping.md](../../game/turn-time-mapping.md)
 
 ### G5: Panel Navigation
 - **Given** the player is in the in-game shell
@@ -85,9 +91,18 @@ The map area is a **topology graph** of the current region’s **land provinces*
   - `V` → Victory/Progress screen
 
 ### G6: End Turn
-- **Given** the player is in the in-game shell
+- **Given** the player is in the in-game shell and there are **no idle civilian units** for the human player (all civilian units have a work order or none exist)
 - **When** pressing `Enter` or `E` to end turn
 - **Then** simulate turn processing and update the display (show turn progress, then refresh map/HUD)
+-
+- **Given** the player is in the in-game shell and there is **at least one idle civilian unit** for the human player (a Builder/Engineer-family unit owned by the human player with **no** work order in `Orders.workOrdersByPlayerId` for that player)
+- **When** pressing `Enter` or `E` to end turn
+- **Then** the shell does **not** immediately resolve the turn but instead shows a confirmation prompt indicating how many civilian units are idle and asking whether to end the turn anyway (e.g. `X civilian unit(s) are idle. End turn anyway? [Y]es [N]o`); only when the player confirms (e.g. `Y` or `Enter`) does the shell simulate turn processing and refresh the HUD/map.
+
+### G6b: Idle Civilian Definition (In-game Shell)
+- **Given** the in-game shell needs to determine whether civilian units are idle before ending the turn
+- **When** evaluating the human player’s units
+- **Then** a unit counts as a **civilian** when its type is treated as a Builder/Engineer family per the development spec (e.g. unit type string contains `builder` or `engineer`, case-insensitive), and it counts as **idle** when there is **no** corresponding entry for its `unitId` in `Orders.workOrdersByPlayerId[humanPlayerId]`.
 
 ### G7: Pause/Options
 - **Given** the player is in the in-game shell
@@ -118,6 +133,7 @@ The map area is a **topology graph** of the current region’s **land provinces*
 ## Implementation Notes
 
 - Use `Nocterm` for rendering (like other ctterm screens).
+- **Turn-time mapping:** HUD year uses the game's turn-time mapping (`Game.turnTimeMapping`) via `turnToYear` from `colonizethis_logic` per [SPEC/game/turn-time-mapping.md](../../game/turn-time-mapping.md). When `turnTimeMapping` is missing (legacy/older saves), the default mapping is used as defined in that spec.
 - **Topology:** Use combined topology from game/save (passed into the screen). Filter to current region; use only province nodes and P–P edges for the land graph. Province identity: [SPEC/game/world-model-identity.md](../../game/world-model-identity.md) (prefixed id, region-scoped lookup).
 - **Layout:** Render a centered view: compute the selected province (human capital when available, otherwise first province) and show it as the center; compute its neighbours via `neighborProvinceIdsInRegion` from colonizethis_logic and render them to the right with index keys `1`–`9`. Neighbour-based navigation uses the same adjacency as movement.
 - **Sea-bound detection:** A province is sea-bound when, in the combined topology, its node has at least one P–S edge to a sea zone node in the same region (per [SPEC/game/capital-choice-phase.md](../../game/capital-choice-phase.md)). The graph view appends `*` to the province name and the panel shows `Seabound: Yes` when this is true.

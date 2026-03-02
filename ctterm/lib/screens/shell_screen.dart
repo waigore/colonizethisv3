@@ -216,6 +216,7 @@ class _ShellScreenState extends State<ShellScreen> {
       case CttermRoute.inGameShell:
         return InGameShellScreen(
           game: component.game,
+          orders: component.orders ?? const Orders(),
           combinedTopology: component.combinedTopology,
           gameEvents: component.gameEvents,
           tileMapByRegion: component.tileMapByRegion,
@@ -266,6 +267,7 @@ class _ShellScreenState extends State<ShellScreen> {
           onOrdersChanged: (Orders orders) {
             component.onOrdersChanged?.call(orders);
           },
+          combinedTopology: component.combinedTopology,
         );
       case CttermRoute.development:
         return DevelopmentScreen(

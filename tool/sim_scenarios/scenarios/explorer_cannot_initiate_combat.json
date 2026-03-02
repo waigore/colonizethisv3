@@ -1,0 +1,53 @@
+{
+  "name": "explorer_cannot_initiate_combat",
+  "description": "Explorer moves into enemy-controlled province without initiating combat; ownership remains with defender per SPEC/game/combat.md and unit role rules.",
+  "init": {
+    "type": "fromTopology",
+    "oldWorld": {
+      "grid": {
+        "rows": 1,
+        "cols": 2,
+        "cells": [
+          ["p1", "p2"]
+        ]
+      },
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "p2", "regionId": "oldWorld", "type": "province" }
+      ],
+      "edges": [
+        ["p1", "p2"]
+      ]
+    }
+  },
+  "setup": {
+    "units": [
+      { "playerId": "gp1", "unitType": "Explorer", "provinceId": "oldWorld|p1", "count": 1 }
+    ],
+    "initialTreasury": {
+      "gp1": 1000,
+      "gp2": 1000
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "move",
+          "unit": "gp1_explorer_1",
+          "to": "oldWorld|p2"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "province": "oldWorld|p2",
+      "owner": "gp2"
+    }
+  ]
+}
+

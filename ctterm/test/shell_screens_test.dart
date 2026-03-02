@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/screens/shell_screen.dart';
 import 'package:ctterm/screens/in_game_shell_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
@@ -70,6 +71,7 @@ void main() {
   group('InGameShellScreen (SPEC/tui/screens/in-game-shell.md)', () {
     test('can be constructed with required parameters', () {
       final screen = InGameShellScreen(
+        orders: const Orders(),
         onNavigate: (route) {},
         onEndTurn: () async {},
         onVictory: () {},
@@ -91,6 +93,7 @@ void main() {
       var exitCount = 0;
 
       final screen = InGameShellScreen(
+        orders: const Orders(),
         onNavigate: (route) => navigateRoute = route,
         onEndTurn: () async {},
         onVictory: () => victoryCount++,
@@ -130,6 +133,7 @@ void main() {
       );
 
       final screen = InGameShellScreen(
+        orders: const Orders(),
         onNavigate: (route) {},
         onEndTurn: () async {},
         onVictory: () {},
@@ -143,6 +147,7 @@ void main() {
 
     test('can be constructed with gameEvents parameter', () {
       final screen = InGameShellScreen(
+        orders: const Orders(),
         onNavigate: (route) {},
         onEndTurn: () async {},
         onVictory: () {},
@@ -153,5 +158,47 @@ void main() {
 
       expect(screen.gameEvents, isNotNull);
     });
+
+    test('HUD year matches turnToYear for initialized game', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: List<String>.from(
+          GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        ),
+        leaderVariantByGpId: {},
+        seed: 42,
+        continentCount: GameSetupConfig.defaultConfig.continentCount,
+        minorNationCount: GameSetupConfig.defaultConfig.minorNationCount,
+        tribeCount: GameSetupConfig.defaultConfig.tribeCount,
+        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+      );
+
+      final initResult = runInitGame(
+        config: config,
+        options: const InitGameOptions(renderPng: false),
+      );
+
+      final game = initResult.game;
+      final turnNumber = game.worldState.turnState.turnNumber;
+      final expectedYear = turnToYear(turnNumber, game.turnTimeMapping);
+
+      final screen = InGameShellScreen(
+        orders: const Orders(),
+        onNavigate: (route) {},
+        onEndTurn: () async {},
+        onVictory: () {},
+        onDefeat: () {},
+        onExitToMainMenu: () {},
+        game: game,
+      );
+
+      // Use the same helper as the HUD getter to compute the year.
+      final hudYear =
+          (screen.createState() as dynamic).inGameShellHudYear(game, turnNumber);
+
+      expect(hudYear, expectedYear);
+    });
+
   });
 }

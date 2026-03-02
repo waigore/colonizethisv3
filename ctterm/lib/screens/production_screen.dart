@@ -177,6 +177,21 @@ class _ProductionScreenState extends State<ProductionScreen> {
     return component.game.players.where((p) => p.id == playerId).firstOrNull;
   }
 
+  String _provinceLabel(String fullProvinceId) {
+    final world = component.game.worldState;
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    for (final p in world.newWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    return fullProvinceId;
+  }
+
   /// Get extraction tiles for the player's provinces.
   List<ExtractionTileInfo> _getExtractionTiles() {
     final playerId = _getHumanPlayerId();
@@ -516,7 +531,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
                   color: bg,
                   padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
                   child: Text(
-                    '  ${tile.provinceId}: ${tile.resource} (imp:${tile.improvementLevel}, road:${tile.roadLevel}) -> +${tile.yieldPerTurn}/turn',
+                    '  ${_provinceLabel(tile.provinceId)}: ${tile.resource} (imp:${tile.improvementLevel}, road:${tile.roadLevel}) -> +${tile.yieldPerTurn}/turn',
                     style: TextStyle(color: fg),
                   ),
                 );

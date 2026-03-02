@@ -5,6 +5,9 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show neighborProvinceIdsInRegion;
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -16,6 +19,7 @@ class UnitsScreen extends StatefulComponent {
     required this.orders,
     required this.onNavigate,
     required this.onOrdersChanged,
+    this.combinedTopology,
   });
 
   /// Current game state (required for unit data).
@@ -25,6 +29,8 @@ class UnitsScreen extends StatefulComponent {
   final void Function(CttermRoute) onNavigate;
   /// Callback when orders are changed (to propagate to game).
   final void Function(Orders) onOrdersChanged;
+  /// Combined land/sea topology for the current game (may be null when map data is unavailable).
+  final MapTopology? combinedTopology;
 
   @override
   State<UnitsScreen> createState() => _UnitsScreenState();
@@ -65,9 +71,43 @@ class _UnitsScreenState extends State<UnitsScreen> {
     return component.game.players.isNotEmpty ? component.game.players.first.id : null;
   }
 
-  /// Get province name for a unit (formatted as prefixId).
+  /// Resolve a province label (human-friendly name when available, otherwise prefixed id).
+  String _provinceLabelFor(String fullProvinceId) {
+    final world = component.game.worldState;
+    // Prefer exact id match in either region.
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    for (final p in world.newWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    // Fallback: if caller passed a local id by mistake, try resolving via full id.
+    final regionId = ProvinceId.regionIdFrom(fullProvinceId);
+    final localId = ProvinceId.localIdFrom(fullProvinceId);
+    if (regionId.isNotEmpty) {
+      final prefixed = ProvinceId.full(regionId, localId);
+      for (final p in world.oldWorld.provinces) {
+        if (p.id == prefixed) {
+          return p.displayName ?? p.id;
+        }
+      }
+      for (final p in world.newWorld.provinces) {
+        if (p.id == prefixed) {
+          return p.displayName ?? p.id;
+        }
+      }
+    }
+    return fullProvinceId;
+  }
+
+  /// Get province label for a unit using its effective location province id.
   String _getProvinceName(Unit unit) {
-    return unit.provinceId;
+    final fullProvinceId = unit.locationProvinceId;
+    return _provinceLabelFor(fullProvinceId);
   }
 
   /// Get the current player's orders for units.
@@ -159,9 +199,18 @@ class _UnitsScreenState extends State<UnitsScreen> {
       return true;
     }
 
-    // a: issue Attack order
+    // a: issue Attack order (military units only)
     if (c == 'a') {
-      _startAttackOrder(units[_selectedIndex]);
+      final unit = units[_selectedIndex];
+      if (!canUnitInitiateCombat(unit.type)) {
+        setState(() {
+          _feedbackMessage = 'Selected unit cannot attack';
+          _feedbackColor = Colors.red;
+        });
+        _log.w('tui:units: attack rejected - ${unit.type} cannot initiate combat');
+        return true;
+      }
+      _startAttackOrder(unit);
       return true;
     }
 
@@ -174,20 +223,26 @@ class _UnitsScreenState extends State<UnitsScreen> {
     return false;
   }
 
-  /// Get adjacent provinces for the selected unit (simplified - returns a few dummy options for MVP).
+  /// Get adjacent provinces for the selected unit using map topology when available.
   List<String> _getAdjacentProvinces(Unit unit) {
-    // MVP: return some dummy adjacent provinces based on the unit's current province
-    // Full implementation would check adjacency from map topology
-    final provId = unit.provinceId;
-    if (provId.isEmpty) return [];
-    
-    // For MVP, just show a few placeholder adjacent provinces
-    // In a real implementation, we'd query the map topology
-    return [
-      '$provId-adjacent-1',
-      '$provId-adjacent-2', 
-      '$provId-adjacent-3',
-    ];
+    final topology = component.combinedTopology;
+    if (topology == null || topology.nodes.isEmpty) return const [];
+
+    final locationId = unit.locationProvinceId;
+    if (locationId.isEmpty) return const [];
+
+    final regionId = unit.regionIdFromTile ?? ProvinceId.regionIdFrom(locationId);
+    if (regionId.isEmpty) return const [];
+
+    final localId = ProvinceId.localIdFrom(locationId);
+    if (localId.isEmpty) return const [];
+
+    final neighbours =
+        neighborProvinceIdsInRegion(topology, regionId, localId).toList();
+    if (neighbours.isEmpty) return const [];
+
+    // Convert neighbour local ids back to full province ids.
+    return neighbours.map((n) => ProvinceId.full(regionId, n)).toList();
   }
 
   int _selectedAdjacentIndex = 0;
@@ -240,6 +295,14 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   void _startAttackOrder(Unit unit) {
+    if (!canUnitInitiateCombat(unit.type)) {
+      setState(() {
+        _feedbackMessage = 'Selected unit cannot attack';
+        _feedbackColor = Colors.red;
+      });
+      _log.w('tui:units: startAttackOrder called for non-combat unit ${unit.id} (${unit.type})');
+      return;
+    }
     final adj = _getAdjacentProvinces(unit);
     if (adj.isEmpty) {
       setState(() {
@@ -258,16 +321,6 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   void _issueMoveOrder(Unit unit, String targetProvince) {
-    // Validate: check movement points (simplified)
-    if (unit.movementPoints <= 0) {
-      setState(() {
-        _feedbackMessage = 'Invalid: not enough movement points';
-        _feedbackColor = Colors.red;
-      });
-      _log.w('tui:units: move rejected - no movement points');
-      return;
-    }
-
     // Create move order
     final playerId = _getHumanPlayerId();
     if (playerId == null) {
@@ -517,17 +570,19 @@ class _UnitsScreenState extends State<UnitsScreen> {
           Text('ID: ${unit.id}'),
           Text('Type: ${unit.type}'),
           Text('Owner: ${unit.ownerId}'),
-          Text('Province: ${unit.provinceId}'),
+          Text('Province: ${_getProvinceName(unit)} (${unit.locationProvinceId})'),
           Text('Status: ${unit.status.name}'),
-          Text('Movement: ${unit.movementPoints}'),
           Text('Medals: ${unit.medals}'),
           if (hasOrders) ...[
             const SizedBox(height: 1),
             const Text('Orders:', style: TextStyle(color: Colors.yellow)),
-            ...orders.map((o) => Text(
-              '  -> ${o.destinationProvinceId}',
-              style: const TextStyle(color: Colors.cyan),
-            )),
+            ...orders.map((o) {
+              final label = _provinceLabelFor(o.destinationProvinceId);
+              return Text(
+                '  -> $label',
+                style: const TextStyle(color: Colors.cyan),
+              );
+            }),
           ],
         ],
       ),
@@ -536,6 +591,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
   Component _buildCommandBar(List<Unit> units, Unit? selectedUnit) {
     final isInputMode = _inputMode != 'none';
+    final canAttack = selectedUnit != null && canUnitInitiateCombat(selectedUnit.type);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
@@ -543,7 +599,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
           ? Row(
               children: [
                 Text(
-                  'Target: ${_getAdjacentProvinces(selectedUnit!).isNotEmpty ? _getAdjacentProvinces(selectedUnit)[_selectedAdjacentIndex] : "none"}',
+                  'Target: ${_getAdjacentProvinces(selectedUnit!).isNotEmpty ? _provinceLabelFor(_getAdjacentProvinces(selectedUnit)[_selectedAdjacentIndex]) : "none"}',
                   style: const TextStyle(color: Colors.yellow),
                 ),
                 const Text(' [Y]es [N]o '),
@@ -558,8 +614,14 @@ class _UnitsScreenState extends State<UnitsScreen> {
                 Text('m', style: TextStyle(color: Colors.cyan)),
                 const Text(']ove '),
                 const Text('['),
-                Text('a', style: TextStyle(color: Colors.cyan)),
-                const Text(']ttack '),
+                Text(
+                  'a',
+                  style: TextStyle(color: canAttack ? Colors.cyan : Colors.gray),
+                ),
+                Text(
+                  ']ttack ',
+                  style: TextStyle(color: canAttack ? Colors.white : Colors.gray),
+                ),
                 const Text('['),
                 Text('c', style: TextStyle(color: Colors.cyan)),
                 const Text(']lear '),

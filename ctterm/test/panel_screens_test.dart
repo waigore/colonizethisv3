@@ -46,6 +46,7 @@ void main() {
         game: testGame,
         orders: const Orders(),
         onOrdersChanged: (orders) {},
+        combinedTopology: initResult.combinedTopology,
       );
 
       expect(screen.onNavigate, isNotNull);
@@ -63,6 +64,7 @@ void main() {
         game: testGame,
         orders: const Orders(),
         onOrdersChanged: (orders) => changedOrders = orders,
+        combinedTopology: initResult.combinedTopology,
       );
 
       screen.onNavigate(CttermRoute.mainMenu);
@@ -71,6 +73,9 @@ void main() {
       screen.onOrdersChanged(const Orders());
       expect(changedOrders, isNotNull);
     });
+
+    // Detailed rendering tests for UnitsScreen are covered by higher-level
+    // ctterm integration tests; here we only verify construction and wiring.
   });
 
   group('DevelopmentScreen (SPEC/tui/screens/development.md)', () {

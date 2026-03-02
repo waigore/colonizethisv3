@@ -113,6 +113,21 @@ class _AcademyScreenState extends State<AcademyScreen> {
     return null;
   }
 
+  String _provinceLabel(String fullProvinceId) {
+    final world = component.game.worldState;
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    for (final p in world.newWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    return fullProvinceId;
+  }
+
   /// Get all regiment display info, filtered by tech availability.
   List<RegimentDisplayInfo> _getRegimentList() {
     final player = _getHumanPlayer();
@@ -684,7 +699,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
                               style: const TextStyle(color: Colors.white),
                             ),
                             Text(
-                              item.provinceId,
+                              _provinceLabel(item.provinceId),
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ],

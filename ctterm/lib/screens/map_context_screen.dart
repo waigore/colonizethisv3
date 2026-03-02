@@ -341,7 +341,6 @@ class _MapContextScreenState extends State<MapContextScreen> {
 
   Component _buildContextPanel() {
     final prov = _currentProvince;
-    final provId = _currentProvinceId;
 
     // Get owner name from game players
     String getOwnerName(String? ownerId) {
@@ -362,14 +361,11 @@ class _MapContextScreenState extends State<MapContextScreen> {
           // Header
           Text('Province Info', style: TextStyle(color: Colors.cyan, fontWeight: FontWeight.bold)),
           const SizedBox(height: 1),
-          Text('ID: $provId', style: TextStyle(color: Colors.yellow)),
-          const SizedBox(height: 1),
-          
           if (prov == null)
             Text('No data available', style: TextStyle(color: Colors.gray))
           else ...[
             // Name
-            Text('Name: ${prov.displayName ?? prov.id}'),
+            Text('Name: ${prov.displayName ?? prov.id}', style: TextStyle(color: Colors.yellow)),
             const SizedBox(height: 1),
             
             // Owner

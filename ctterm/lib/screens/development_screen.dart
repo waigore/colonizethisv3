@@ -82,9 +82,25 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     return component.game.players.isNotEmpty ? component.game.players.first.id : null;
   }
 
-  /// Get province name for a unit (formatted as prefixId).
+  String _provinceLabel(String fullProvinceId) {
+    final world = component.game.worldState;
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    for (final p in world.newWorld.provinces) {
+      if (p.id == fullProvinceId) {
+        return p.displayName ?? p.id;
+      }
+    }
+    return fullProvinceId;
+  }
+
+  /// Get province name for a unit using its effective location province id.
   String _getProvinceName(Unit unit) {
-    return unit.provinceId;
+    final fullProvinceId = unit.locationProvinceId;
+    return _provinceLabel(fullProvinceId);
   }
 
   /// Get the current player's work orders for civilian units.

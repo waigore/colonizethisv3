@@ -10,7 +10,6 @@ void main() {
         ownerId: 'p1',
         provinceId: 'prov1',
         status: UnitStatus.working,
-        movementPoints: 2,
         medals: 2,
       );
       final u2 = Unit.fromJson(u.toJson());
@@ -19,7 +18,6 @@ void main() {
       expect(u2.ownerId, 'p1');
       expect(u2.provinceId, 'prov1');
       expect(u2.status, UnitStatus.working);
-      expect(u2.movementPoints, 2);
       expect(u2.medals, 2);
     });
     test('equality', () {
