@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
@@ -21,6 +22,7 @@ class InGameShellScreen extends StatefulComponent {
   const InGameShellScreen({
     super.key,
     this.game,
+    this.gameEvents,
     required this.onNavigate,
     required this.onEndTurn,
     required this.onVictory,
@@ -30,6 +32,8 @@ class InGameShellScreen extends StatefulComponent {
 
   /// Current game state for victory checking.
   final Game? game;
+  /// Game events from turn processing (to display to user).
+  final List<GameEvent>? gameEvents;
   final void Function(CttermRoute) onNavigate;
   final Future<void> Function() onEndTurn;
   /// Callback when human player wins.
@@ -258,6 +262,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           const SizedBox(height: 1),
           // Map
           Expanded(child: _buildMap()),
+          // Events bar (shows recent game events)
+          _buildEventsBar(),
           // Command bar
           _buildCommandBar(),
         ],
@@ -290,6 +296,44 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           )),
           const SizedBox(height: 1),
           Text('Legend: $_legend', style: TextStyle(color: Colors.gray)),
+        ],
+      ),
+    );
+  }
+
+  /// Formats a game event for display.
+  String _formatEvent(GameEvent event) {
+    if (event is CombatResultEvent) {
+      return 'Battle in ${event.provinceId}: ${event.winnerId} wins';
+    } else if (event is ProvinceCapturedEvent) {
+      return 'Province captured: ${event.provinceId} by ${event.newOwnerId}';
+    } else if (event is DiplomacyChangeEvent) {
+      return 'Diplomacy: ${event.actorId} -> ${event.targetId}: ${event.changeType}';
+    } else if (event is ResearchCompleteEvent) {
+      return 'Research: ${event.playerId} discovered ${event.techId}';
+    } else if (event is VictorySetEvent) {
+      return 'Victory: ${event.winnerPlayerId} wins (${event.victoryType})';
+    } else if (event is OrderRejectedEvent) {
+      return 'Order rejected: ${event.orderSummary} (${event.reasonCode})';
+    }
+    return event.toString();
+  }
+
+  /// Builds the events display (shows recent game events).
+  Component _buildEventsBar() {
+    final events = component.gameEvents;
+    if (events == null || events.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    // Show last 3 events
+    final recentEvents = events.length > 3 ? events.sublist(events.length - 3) : events;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('--- Events ---', style: TextStyle(color: Colors.gray)),
+          ...recentEvents.map((e) => Text(_formatEvent(e), style: TextStyle(color: Colors.yellow))),
         ],
       ),
     );

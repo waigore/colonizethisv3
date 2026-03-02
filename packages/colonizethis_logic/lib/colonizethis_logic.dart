@@ -3,6 +3,7 @@ library colonizethis_logic;
 
 // Root
 export 'src/constants.dart';
+export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
 
 // Setup
