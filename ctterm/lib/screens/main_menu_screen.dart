@@ -39,6 +39,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     _checkSaves();
   }
 
+  static const _listSavesTimeout = Duration(seconds: 10);
+
   Future<void> _checkSaves() async {
     try {
       final ids = await listGameIds(component.dataDirOverride)

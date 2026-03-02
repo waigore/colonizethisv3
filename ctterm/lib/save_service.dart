@@ -30,7 +30,21 @@ String getCttermDataDir([String? override]) {
   return _initDataDir!;
 }
 
+/// Lock filename used by Hive for the games box.
+const String gamesLockFilename = 'games.lock';
+
+/// Thrown when the games box cannot be opened because the lock file is held
+/// (e.g. another ctterm is running, or a previous run did not exit cleanly).
+class StaleLockException implements Exception {
+  StaleLockException(this.dataDir);
+  final String dataDir;
+  @override
+  String toString() => 'StaleLockException(dataDir: $dataDir)';
+}
+
 /// Ensures Hive is initialized and the games box is open. Call before list/load/save.
+/// Throws [StaleLockException] on lock failure instead of deleting the lock;
+/// the UI should ask the user and call [removeStaleLock] only if they agree.
 Future<Box<dynamic>> _ensureBox([String? dataDirOverride]) async {
   if (_box != null && _box!.isOpen) return _box!;
   final dir = getCttermDataDir(dataDirOverride);
@@ -39,9 +53,35 @@ Future<Box<dynamic>> _ensureBox([String? dataDirOverride]) async {
     dirFile.createSync(recursive: true);
   }
   Hive.init(dir);
-  _box = await Hive.openBox<dynamic>('games');
+
+  try {
+    _box = await Hive.openBox<dynamic>('games');
+  } on FileSystemException catch (e) {
+    final isLockError = e.message.contains('lock') ||
+        (e.osError?.errorCode == 11); // EAGAIN
+    if (!isLockError) rethrow;
+    throw StaleLockException(dir);
+  }
+
   _log.d('tui:save: Hive box opened at $dir');
   return _box!;
+}
+
+/// Removes the games box lock file in [dataDirOverride]. Call only after the user
+/// has agreed to continue (e.g. another instance may have left a stale lock).
+void removeStaleLock([String? dataDirOverride]) {
+  final dir = getCttermDataDir(dataDirOverride);
+  final lockFile = File(path.join(dir, gamesLockFilename));
+  if (lockFile.existsSync()) {
+    lockFile.deleteSync();
+    _log.i('tui:save: removed lock file at ${lockFile.path}');
+  }
+}
+
+/// Call from main() before runApp so the games box is open before any screen runs.
+/// Avoids the main menu depending on async completion (TUI may not process Futures until input).
+Future<void> ensureSaveServiceReady([String? dataDirOverride]) async {
+  await _ensureBox(dataDirOverride);
 }
 
 final _adapter = GameSaveAdapter();
