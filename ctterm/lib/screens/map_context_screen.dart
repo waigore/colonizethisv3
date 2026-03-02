@@ -46,6 +46,44 @@ class _MapContextScreenState extends State<MapContextScreen> {
   /// Gets the current region's display name.
   String get _regionDisplayName => _currentRegion == 'oldWorld' ? 'Old World' : 'New World';
 
+  /// Gets the region ID prefix for the current region (oldWorld -> 'ow', newWorld -> 'nw').
+  String get _regionId {
+    return _currentRegion == 'oldWorld' ? 'ow' : 'nw';
+  }
+
+  /// Gets the human player's ID (first player with isHuman == true).
+  String? get _humanPlayerId {
+    final human = game.players.where((p) => p.isHuman).firstOrNull;
+    return human?.id;
+  }
+
+  /// Checks if a province is at least revealed to the human player.
+  /// Uses WorldState.playerVisibilityByTile directly.
+  bool _provinceIsVisible(Province province) {
+    final playerId = _humanPlayerId;
+    if (playerId == null) return false;
+
+    final visibilityByTile = game.worldState.playerVisibilityByTile[playerId];
+    if (visibilityByTile == null) return false;
+
+    // Get the tile keys for this province from WorldState
+    final tileKeysByProv = game.worldState.tileKeysByRegionAndProvince;
+    final regionTileKeys = tileKeysByProv[_regionId];
+    if (regionTileKeys == null) return false;
+
+    final provTileKeys = regionTileKeys[province.id];
+    if (provTileKeys == null || provTileKeys.isEmpty) return false;
+
+    // Check if any tile in the province is at least revealed
+    for (final tileKey in provTileKeys) {
+      final levelName = visibilityByTile[tileKey];
+      if (levelName == 'revealed' || levelName == 'fogged' || levelName == 'fullyVisible') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Gets provinces for the currently selected region.
   List<Province> get _provinces {
     if (_currentRegion == 'oldWorld') {
@@ -276,8 +314,12 @@ class _MapContextScreenState extends State<MapContextScreen> {
                     }
                   }
                   if (_showFog) {
-                    // TODO: Use real visibility from PlayerView
-                    style = style.copyWith(color: Colors.gray);
+                    // Use real visibility from PlayerView
+                    final isVisible = _provinceIsVisible(prov);
+                    if (!isVisible) {
+                      // Province is hidden or in fog - show as gray
+                      style = style.copyWith(color: Colors.gray);
+                    }
                   }
                 }
 
