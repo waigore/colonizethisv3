@@ -39,13 +39,27 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     _checkSaves();
   }
 
+  static const _listSavesTimeout = Duration(seconds: 10);
+
   Future<void> _checkSaves() async {
-    final ids = await listGameIds(component.dataDirOverride);
-    _log.d('tui:menu: listGameIds count=${ids.length}');
-    setState(() {
-      _loadGameEnabled = isLoadGameEnabled(ids);
-      _loading = false;
-    });
+    try {
+      final ids = await listGameIds(component.dataDirOverride)
+          .timeout(_listSavesTimeout, onTimeout: () {
+        _log.w('tui:menu: listGameIds timed out after ${_listSavesTimeout.inSeconds}s');
+        return <String>[];
+      });
+      _log.d('tui:menu: listGameIds count=${ids.length}');
+      setState(() {
+        _loadGameEnabled = isLoadGameEnabled(ids);
+        _loading = false;
+      });
+    } catch (e, st) {
+      _log.e('tui:menu: listGameIds failed', error: e, stackTrace: st);
+      setState(() {
+        _loadGameEnabled = false;
+        _loading = false;
+      });
+    }
   }
 
   @override

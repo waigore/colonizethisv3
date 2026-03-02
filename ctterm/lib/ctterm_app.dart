@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart';
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/lock_prompt_screen.dart';
 import 'package:ctterm/screens/shell_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/save_service.dart';
@@ -34,16 +35,24 @@ class _MapCache {
 }
 
 /// Root component. Holds current screen and shows Main Menu or a stub.
+/// When [initialLockDetected] is true, shows lock-prompt screen first; only deletes lock if user agrees.
 class CttermApp extends StatefulComponent {
-  const CttermApp({super.key, this.dataDirOverride});
+  const CttermApp({
+    super.key,
+    this.dataDirOverride,
+    this.initialLockDetected = false,
+  });
 
   final String? dataDirOverride;
+  final bool initialLockDetected;
 
   @override
   State<CttermApp> createState() => _CttermAppState();
 }
 
 class _CttermAppState extends State<CttermApp> {
+  /// True until user resolves the lock prompt (remove+continue or quit).
+  bool _showLockPrompt = false;
   CttermRoute _route = CttermRoute.mainMenu;
   Game? _currentGame;
   Orders _currentOrders = const Orders();
@@ -53,6 +62,18 @@ class _CttermAppState extends State<CttermApp> {
   final List<GameEvent> _gameEvents = [];
   /// Current terminal theme.
   TerminalTheme _terminalTheme = TerminalTheme.dark;
+
+  @override
+  void initState() {
+    super.initState();
+    _showLockPrompt = component.initialLockDetected;
+  }
+
+  Future<void> _handleLockRemoveAndContinue() async {
+    removeStaleLock(component.dataDirOverride);
+    await ensureSaveServiceReady(component.dataDirOverride);
+    if (mounted) setState(() => _showLockPrompt = false);
+  }
 
   void _navigateTo(CttermRoute route) {
     setState(() => _route = route);
@@ -184,6 +205,16 @@ class _CttermAppState extends State<CttermApp> {
 
   @override
   Component build(BuildContext context) {
+    if (_showLockPrompt) {
+      return NoctermApp(
+        title: 'ColonizeThis',
+        theme: _themeData,
+        child: LockPromptScreen(
+          onRemoveAndContinue: _handleLockRemoveAndContinue,
+          onQuit: _exit,
+        ),
+      );
+    }
     return NoctermApp(
       title: 'ColonizeThis',
       theme: _themeData,
