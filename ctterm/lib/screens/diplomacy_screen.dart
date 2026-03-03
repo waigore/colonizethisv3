@@ -59,7 +59,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
   bool _isStatusError = false;
   // Intervention choice state
   bool _showIntervention = false;
-  String _interventionMinorId = '';
+  final String _interventionMinorId = '';
 
   // Get the human player's ID
   String get _humanPlayerId {

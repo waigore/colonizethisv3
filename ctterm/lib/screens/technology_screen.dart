@@ -294,7 +294,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
           Text('─' * 60),
 
           // Research Slots
-          Text('Research Slots ($_selectedSlot/${slots})'),
+          Text('Research Slots (${_selectedSlot + 1}/$slots)'),
           _buildSlotsTable(slots),
           const SizedBox(height: 1),
 
@@ -346,7 +346,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
         Text(_fundingLabel(funding)),
         Text(' '),
         Text(progressBar),
-        Text(' ${progress}/${cost} RP'),
+        Text(' $progress/$cost RP'),
       ]));
     }
 
