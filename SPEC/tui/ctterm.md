@@ -181,6 +181,62 @@ This section records development decisions for ctterm. Package placement is defi
 - **Logging:** Use multiple log prefixes for easy identification: `tui:`, `tui:menu:`, `tui:save:`, `tui:nav:` (and later `tui:map:`, `tui:event:`). Use Dart `logger`; no `print` for operational output. See [SPEC/program/ctdev-logging.md](../program/ctdev-logging.md) for level and prefix conventions.
 - **Project tools:** Ctterm is documented in [docs/project-tools.md](../../docs/project-tools.md) (invocation, optional `--data-dir`, link to this spec).
 
+### 5.2 TUI automation testing with `agent-tui`
+
+This subsection specifies how automated agents (and CI) interact with ctterm using [`agent-tui`](https://github.com/pproenca/agent-tui). The goal is to make TUI-level Given–When–Then tests reproducible and tool-agnostic.
+
+- **Test terminal size:** Unless a scenario states otherwise, automated tests use an **80×24** terminal. This matches the TUI AC examples in this spec.
+- **Working directory:** Automated runs of ctterm must execute from the repo root so Dart can resolve the workspace:
+
+  ```text
+  cwd: /home/<user>/colonizethisv3
+  command: dart run ctterm --data-dir <test-data-dir>
+  ```
+
+- **Session management (agent-tui):**
+  - Start the daemon once per test run: `agent-tui daemon start`.
+  - Create a new ctterm session with a fixed terminal size and isolated data directory:
+
+    ```text
+    agent-tui run --cols 80 --rows 24 \
+      --cwd /home/<user>/colonizethisv3 \
+      dart -- run ctterm --data-dir <test-data-dir>
+    ```
+
+    `<test-data-dir>` is a per-test Hive directory (e.g. a temp folder) so tests do not share save data or lock files.
+
+  - Kill the session when the scenario ends: `agent-tui kill` (or `agent-tui --session <id> kill` when managing multiple sessions).
+
+- **Observability:**
+  - Automated agents obtain the current screen via `agent-tui screenshot --strip-ansi`.
+  - Screen assertions use **stable identifiers** from this spec, especially:
+    - **Screen IDs** (e.g. `100001` for Main Menu, `100006` for In-game shell) rendered in the top bar.
+    - Stable labels and hotkeys (e.g. `[N] New Game`, `[Q] Quit`) rather than incidental layout spacing.
+  - When waiting for transitions, agents use `agent-tui wait` with textual conditions instead of fixed sleeps, for example:
+
+    ```text
+    agent-tui wait "100002" --assert          # Game Setup screen
+    agent-tui wait "Generating world" --gone  # World-generation finished
+    ```
+
+- **Input conventions:**
+  - Agents use `agent-tui press` for navigation keys and `agent-tui type` for literal text:
+
+    ```text
+    agent-tui press N              # New Game from Main Menu
+    agent-tui press ArrowDown Enter
+    agent-tui type "Save 1"
+    agent-tui press Enter
+    ```
+
+  - Tests SHOULD encode Given–When–Then steps using these primitives, matching the AC defined in this spec and `SPEC/tui/screens/*.md`.
+
+- **Lock-prompt and data-dir scenarios:**
+  - To test §5.1 lock behaviour, the test harness prepares `<test-data-dir>` with or without a Hive lock file before starting ctterm.
+  - The same `agent-tui` workflow applies; assertions target the presence of the lock-prompt text and options `[Y]` / `[N]`, plus the subsequent navigation to Main Menu or process exit as specified in §5.1.
+
+This automation contract ensures that any testing agent (Python, Rust, or other) can drive ctterm via `agent-tui` in a consistent way, without relying on project-internal implementation details beyond what is specified here.
+
 ---
 
 ## Package placement
