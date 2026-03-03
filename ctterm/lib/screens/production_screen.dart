@@ -462,7 +462,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
               color: const Color(0xFF1a1a2e),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
               child: Text(
-                ' ${_feedbackMessage}',
+                ' $_feedbackMessage',
                 style: TextStyle(color: _feedbackColor),
               ),
             ),
@@ -487,7 +487,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
   Component _buildPanelTab(String panel, String label) {
     final isSelected = _selectedPanel == panel;
     return Text(
-      isSelected ? '[${label[0]}]${label.substring(1)}' : ' ${label} ',
+      isSelected ? '[${label[0]}]${label.substring(1)}' : ' $label ',
       style: TextStyle(
         color: isSelected ? const Color(0xFF00FFFF) : const Color(0xFF888888),
         fontWeight: isSelected ? FontWeight.bold : null,

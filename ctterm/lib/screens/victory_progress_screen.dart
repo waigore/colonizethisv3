@@ -138,7 +138,7 @@ class _VictoryProgressScreenState extends State<VictoryProgressScreen> {
             // Build progress bar
             final barLength = 20;
             final filled = (provinces / _victoryThreshold * barLength).clamp(0, barLength).toInt();
-            final bar = '[' + '=' * filled + ' ' * (barLength - filled) + ']';
+            final bar = '[${'=' * filled}${' ' * (barLength - filled)}]';
             
             final color = isPlayer 
                 ? Colors.cyan 

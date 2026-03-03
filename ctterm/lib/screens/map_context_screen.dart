@@ -150,16 +150,6 @@ class _MapContextScreenState extends State<MapContextScreen> {
     _log.d('tui:map: selection mode: ${_tileMode ? "tile" : "province"}');
   }
 
-  /// Gets the province ID for the current cursor position.
-  String get _currentProvinceId {
-    final provinces = _provinces;
-    final idx = _cursorY * 4 + _cursorX;
-    if (idx >= 0 && idx < provinces.length) {
-      return provinces[idx].id;
-    }
-    return '';
-  }
-
   /// Gets the currently selected province data.
   Province? get _currentProvince => _selectedProvince;
 
