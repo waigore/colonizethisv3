@@ -32,6 +32,31 @@
 | Swamp | `≈` | Marshland |
 | Desert | `▒` | Sandy arid |
 
+### Resources → Character
+
+Resources are rendered using single-character glyphs so that the **Resources** map layer and mini-maps can show both terrain and resource at a glance. The authoritative mapping lives in `ctterm/lib/map_tui_mapping.dart` (`resourceToChar`), and the ctterm map legend must list **all** of these glyphs explicitly so any symbol on the map can be decoded without guessing.
+
+| Resource    | Character | Notes              |
+|------------|-----------|--------------------|
+| Grain      | `g`       | Grain / cereals    |
+| Meat       | `m`       | Livestock / meat   |
+| Wool       | `w`       | Wool               |
+| Horses     | `h`       | Horses             |
+| Timber     | `t`       | Timber / lumber    |
+| Iron       | `i`       | Iron ore           |
+| Copper     | `c`       | Copper ore         |
+| Tin        | `n`       | Tin                |
+| Coal       | `k`       | Coal               |
+| Sugar cane | `s`       | Sugar cane         |
+| Tobacco    | `b`       | Tobacco            |
+| Cotton     | `u`       | Cotton             |
+| Furs       | `f`       | Furs               |
+| Spices     | `p`       | Spices             |
+| Silver     | `v`       | Silver             |
+| Gold       | `G`       | Gold               |
+| Gems       | `e`       | Gems               |
+| Diamonds   | `d`       | Diamonds           |
+
 ### Province ownership → Character prefix
 
 | Owner type | Prefix | Example |
@@ -62,11 +87,14 @@
 
 The mapping is implemented in `ctterm/lib/map_tui_mapping.dart`:
 - `terrainToChar(TerrainType?)` - converts terrain to character
+- `resourceToChar(Resource?)` - converts resources to character using the table above
 - `ownerToChar(String? ownerId, PlayerType? playerType)` - converts owner to character
 - `getTileDisplay(String tileKey, TileMapResult tileMap, Province? province, String? ownerId, bool isVisible)` - assembles full tile display
 - `renderRegionMap(TileMapResult tileMap, Map<String, Province> provincesById, Map<String, String> playerVisibility, bool showTerrain, bool showOwnership)` - renders complete ASCII map
 - `renderRegionMapViewport(regionId, tileMap, ..., offsetX, offsetY, viewportWidth, viewportHeight, layer, unitSymbolByTileKey?)` - renders a viewport for the in-game shell map grid; **layer** is `MapGridLayer` (terrain, political, resources, units)
 - `MapGridLayer` enum; `makeFullTileKey(regionId, localId, x, y)` for full tile keys per world-model-identity
+
+Mini-map views (such as the Development screen’s context panel) may apply **additional color-layering** on top of these glyphs for selection context (for example, bright color for the highlighted tile, normal color for tiles in the same province, dim/gray for tiles in other provinces) without changing the underlying character mapping.
 
 ### Color palette (terminal)
 
@@ -82,6 +110,7 @@ The mapping is implemented in `ctterm/lib/map_tui_mapping.dart`:
 | Fog | Gray |
 | Capital | Gold |
 | Port | Magenta |
+| Resource glyphs | Default foreground; disambiguated via legend text for Resources layer |
 
 ---
 

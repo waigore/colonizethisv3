@@ -54,11 +54,32 @@ void main() {
       WorkOrder? workOrder;
       if (units.isNotEmpty) {
         final unit = units.first;
-        workOrder = WorkOrder(
-          unitId: unit.id,
-          target: 'build_improvement',
-          targetTileKey: unit.provinceId,
-        );
+        // Choose a concrete tile in one of the human player's provinces so
+        // targetTileKey is a full tile key (regionId|provinceLocalId|x|y).
+        final tileKeysByRegionAndProvince =
+            game.worldState.tileKeysByRegionAndProvince;
+        String? chosenTileKey;
+        for (final entry in tileKeysByRegionAndProvince.entries) {
+          final byProvince = entry.value;
+          for (final provEntry in byProvince.entries) {
+            final tiles = provEntry.value;
+            if (tiles.isNotEmpty) {
+              chosenTileKey = tiles.first;
+              break;
+            }
+          }
+          if (chosenTileKey != null) {
+            break;
+          }
+        }
+
+        if (chosenTileKey != null) {
+          workOrder = WorkOrder(
+            unitId: unit.id,
+            target: 'build_improvement',
+            targetTileKey: chosenTileKey,
+          );
+        }
       }
 
       final orders = Orders(
