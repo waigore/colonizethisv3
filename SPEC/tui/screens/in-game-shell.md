@@ -120,15 +120,49 @@ The map area is a **topology graph** of the current region’s **land provinces*
 +----------------------------------------------------------+
 | Turn: 3 | Year: 1850 | Treasury: $5000 | Region: OW [R] |
 +----------------------------------------------------------+
-|  [TOPOLOGY GRAPH]          |  Province Info              |
-|  Nodes = provinces,        |  Name: ...                  |
-|  edges = land-adjacent     |  Owner: ...                 |
+|  [MAP GRID viewport]         |  Province Info              |
+|  Layer: Terrain [ ]=layer; centered on selected province |  Name: ...                  |
+|  [TOPOLOGY GRAPH]             |  Owner: ...                  |
 |  (grid-like layout)        |  Terrain / Fort / Town      |
 |  Selected node highlighted |  Visibility: ...            |
 +----------------------------------------------------------+
 |  [M]ap Context [R]egion [U]nits [D]ev [P]rod ...        |
 +----------------------------------------------------------+
 ```
+
+## Map Grid Widget (Empire Overview)
+
+The map area **complements** the topology graph with a **map grid widget** that shows the current region as an ASCII tile grid. The grid uses a **viewport** that **centers on the selected province** (the same province shown as the center of the topology graph). Scrolling is **indirect**: when the user switches province via the graph (j/l or arrows to cycle neighbours, **1–9** to jump to a neighbour), the grid viewport updates to center on the newly selected province. There are **no keys for manual viewport scrolling**.
+
+### Behaviour
+
+- **Content:** The widget displays the **entire** region's tile map in ASCII (one character per tile). Data source: same as [SPEC/tui/map-tui-mapping.md](../map-tui-mapping.md) (terrain, ownership, resources, visibility). Province and tile identity: [SPEC/game/world-model-identity.md](../../game/world-model-identity.md) (prefixed province id, tile key `regionId|localId|x|y`).
+- **Viewport:** The visible area is a rectangle of fixed size (e.g. terminal lines × columns). The full region may be larger. The viewport **centers on the selected province** when possible: the selected province’s tile centroid (from `tileKeysByRegionAndProvince`) is used to compute viewport offset so that province appears centered; offset is clamped so the viewport never shows out-of-bounds cells. When the user changes the selected province (via topology graph navigation), the grid viewport updates to center on the new province. There are **no manual scroll keys**.
+- **Layers:** The user can switch between **four** display layers:
+  - **Terrain** — terrain type per tile (sea, plains, forest, hills, mountain, swamp, desert) per map-tui-mapping.
+  - **Political** — province ownership (Great Power / minor / tribe / unclaimed) per map-tui-mapping.
+  - **Resources** — resource type per tile (when present) using resource glyphs per map-tui-mapping; empty tiles show terrain as fallback.
+  - **Unit locations** — tiles that contain at least one unit show a unit symbol (e.g. `U` or type initial); other tiles show terrain as fallback. Units with `tileKey` are placed at that tile; units without `tileKey` use a representative tile of their province (e.g. first tile in `tileKeysByRegionAndProvince`).
+- **Layer switching:** Keys **[** and **]** cycle the active layer (Terrain → Political → Resources → Units → Terrain). The current layer is indicated in the widget (e.g. "Layer: Terrain"). The topology graph uses **j**/**l** or **arrow keys** for neighbour cycle and **1–9** for direct neighbour selection so key bindings do not conflict.
+- **Placement:** The map grid is shown **above** the topology graph in the same map area column so both are visible without switching screens.
+
+### Acceptance criteria (Given–When–Then)
+
+- **Given** the player is in the in-game shell and the current region has a tile map  
+  **When** the screen renders  
+  **Then** the map area shows the map grid widget above the topology graph, with the viewport displaying a subset of the region's tiles in ASCII centered (as much as possible) on the selected province, and the current layer label.
+
+- **Given** the player is in the in-game shell with a province selected and the map grid is visible  
+  **When** the user changes the selected province via the topology graph (e.g. j/l or arrows to cycle neighbours, or **1–9** to select a neighbour)  
+  **Then** the map grid viewport updates to center on the newly selected province (using that province’s tile centroid from `tileKeysByRegionAndProvince`), so that the grid and graph stay in sync with no manual scroll keys.
+
+- **Given** the user is viewing the map grid  
+  **When** the user presses **[** or **]** to cycle layer  
+  **Then** the active layer changes (Terrain → Political → Resources → Units → Terrain), and the grid and layer label update accordingly.
+
+- **Given** the user is on the unit locations layer  
+  **When** a tile contains one or more units  
+  **Then** that tile displays a unit symbol (e.g. `U`); tiles without units show the terrain character.
 
 ## Implementation Notes
 

@@ -187,6 +187,10 @@ GameSetupResult createGameFromGeneratedMaps({
         ),
   ];
 
+  /// Explicit designation of which Great Power is human-controlled (respects game setup: slot 0 = human).
+  /// Used by ctterm and other clients for visibility and input; AI uses true, human uses false.
+  final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
+
   var game = Game(
     id: gameId,
     worldState: worldState,
@@ -195,6 +199,7 @@ GameSetupResult createGameFromGeneratedMaps({
     tribes: tribes,
     turnTimeMapping: TurnTimeMapping.gdd01,
     diplomacyRelations: diplomacyRelations,
+    aiControlByGpId: aiControlByGpId,
   );
 
   // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.

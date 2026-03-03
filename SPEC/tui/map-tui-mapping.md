@@ -65,6 +65,8 @@ The mapping is implemented in `ctterm/lib/map_tui_mapping.dart`:
 - `ownerToChar(String? ownerId, PlayerType? playerType)` - converts owner to character
 - `getTileDisplay(String tileKey, TileMapResult tileMap, Province? province, String? ownerId, bool isVisible)` - assembles full tile display
 - `renderRegionMap(TileMapResult tileMap, Map<String, Province> provincesById, Map<String, String> playerVisibility, bool showTerrain, bool showOwnership)` - renders complete ASCII map
+- `renderRegionMapViewport(regionId, tileMap, ..., offsetX, offsetY, viewportWidth, viewportHeight, layer, unitSymbolByTileKey?)` - renders a viewport for the in-game shell map grid; **layer** is `MapGridLayer` (terrain, political, resources, units)
+- `MapGridLayer` enum; `makeFullTileKey(regionId, localId, x, y)` for full tile keys per world-model-identity
 
 ### Color palette (terminal)
 

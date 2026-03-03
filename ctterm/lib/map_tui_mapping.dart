@@ -165,6 +165,19 @@ String makeTileKey(String regionId, int x, int y) {
   return '$regionId|$x|$y';
 }
 
+/// Full tile key per SPEC/game/world-model-identity.md: regionId|localId|x|y.
+String makeFullTileKey(String regionId, String localId, int x, int y) {
+  return '$regionId|$localId|$x|$y';
+}
+
+/// Map grid display layer for the in-game shell map grid widget. SPEC/tui/screens/in-game-shell.md.
+enum MapGridLayer {
+  terrain,
+  political,
+  resources,
+  units,
+}
+
 /// Renders a single tile for display.
 /// Returns a tuple: [character, isFogged, isCapital, isPort]
 ({String char, bool fogged, bool capital, bool port}) getTileDisplay({
@@ -296,7 +309,75 @@ List<String> renderRegionMap({
   return lines;
 }
 
-/// Gets province coordinates (min x, min y) from the tile map.
+/// Renders a viewport of the region map for the in-game shell map grid widget.
+/// [offsetX], [offsetY] are the top-left cell of the viewport; [viewportWidth] and [viewportHeight] are the visible size.
+/// [layer] selects which layer to display (terrain, political, resources, units).
+/// [unitSymbolByTileKey] maps full tile key (regionId|localId|x|y) to a character for the units layer; only used when [layer] is [MapGridLayer.units].
+/// Visibility is from [playerVisibilityByTile] (game setup gives the human player visibility of their own provinces).
+/// Returns one line per viewport row; each line is one character per column (no padding).
+List<String> renderRegionMapViewport({
+  required String regionId,
+  required TileMapResult tileMap,
+  required Map<String, Province> provincesById,
+  required Map<String, String>? playerVisibilityByTile,
+  required List<Player> players,
+  required Set<String> capitalTiles,
+  required Set<String> portTiles,
+  required int offsetX,
+  required int offsetY,
+  required int viewportWidth,
+  required int viewportHeight,
+  required MapGridLayer layer,
+  Map<String, String>? unitSymbolByTileKey,
+}) {
+  final lines = <String>[];
+  final endX = (offsetX + viewportWidth).clamp(0, tileMap.width);
+  final endY = (offsetY + viewportHeight).clamp(0, tileMap.height);
+  final startX = offsetX.clamp(0, tileMap.width);
+  final startY = offsetY.clamp(0, tileMap.height);
+
+  for (var y = startY; y < endY; y++) {
+    final buffer = StringBuffer();
+    for (var x = startX; x < endX; x++) {
+      final localId = tileMap.cell(x, y);
+      final fullTileKey = makeFullTileKey(regionId, localId, x, y);
+      final fullProvinceId = '$regionId|$localId';
+      final visibility = getTileVisibility(fullTileKey, playerVisibilityByTile);
+      final isVisible = visibility != TileVisibility.unexplored;
+
+      String char = ' ';
+      if (!isVisible) {
+        // Unexplored: show distinct character so visibility is clear (e.g. New World at game start).
+        buffer.write('?');
+        continue;
+      }
+
+      final terrain = tileMap.terrainAt(x, y);
+      switch (layer) {
+        case MapGridLayer.terrain:
+          char = terrainToChar(terrain);
+          break;
+        case MapGridLayer.political:
+          final province = provincesById[fullProvinceId];
+          final ownerId = province?.ownerId;
+          final playerType = getPlayerType(ownerId, players);
+          char = ownerToChar(ownerId, playerType);
+          break;
+        case MapGridLayer.resources:
+          final resource = tileMap.resourceAt(x, y);
+          char = resource != null ? resourceToChar(resource) : terrainToChar(terrain);
+          break;
+        case MapGridLayer.units:
+          final unitChar = unitSymbolByTileKey?[fullTileKey];
+          char = unitChar ?? terrainToChar(terrain);
+          break;
+      }
+      buffer.write(char);
+    }
+    lines.add(buffer.toString());
+  }
+  return lines;
+}
 ({int x, int y })? getProvinceTilePosition(
   TileMapResult tileMap,
   String provinceId,
