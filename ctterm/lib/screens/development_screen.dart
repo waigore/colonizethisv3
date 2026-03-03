@@ -4,11 +4,14 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/widgets/map_grid_widget.dart';
+import 'package:ctterm/map_tui_mapping.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
-/// Valid work targets per spec.
+/// Valid work targets per spec: work target id -> display label.
 const _validWorkTargets = {
   'build_improvement': 'Build Improvement',
   'build_road': 'Build Road',
@@ -18,12 +21,39 @@ const _validWorkTargets = {
   'upgrade_town': 'Upgrade Town',
 };
 
+/// Keyboard mapping for work-type selection: key -> work target id.
+///
+/// Note: lower-case `r` = build_road, upper-case `R` = build_rail.
+const Map<String, String> _workKeyToTarget = {
+  'i': 'build_improvement',
+  'I': 'build_improvement',
+  'r': 'build_road',
+  'p': 'build_port',
+  'P': 'build_port',
+  'f': 'build_fort',
+  'F': 'build_fort',
+  'R': 'build_rail',
+  'u': 'upgrade_town',
+  'U': 'upgrade_town',
+};
+
+/// Primary hotkey per work target id for display in Available Work.
+const Map<String, String> _targetToPrimaryKey = {
+  'build_improvement': 'i',
+  'build_road': 'r',
+  'build_port': 'p',
+  'build_fort': 'f',
+  'build_rail': 'R',
+  'upgrade_town': 'u',
+};
+
 /// Development screen for managing civilian unit work orders.
 class DevelopmentScreen extends StatefulComponent {
   const DevelopmentScreen({
     super.key,
     required this.game,
     required this.orders,
+    this.tileMapByRegion,
     required this.onNavigate,
     required this.onOrdersChanged,
   });
@@ -32,6 +62,8 @@ class DevelopmentScreen extends StatefulComponent {
   final Game game;
   /// Current orders for the human player.
   final Orders orders;
+  /// Tile maps by region for map context (mini-map).
+  final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
   /// Callback when orders are changed (to propagate to game).
   final void Function(Orders) onOrdersChanged;
@@ -40,16 +72,48 @@ class DevelopmentScreen extends StatefulComponent {
   State<DevelopmentScreen> createState() => _DevelopmentScreenState();
 }
 
+enum _DevelopmentInputMode {
+  idle,
+  selectingProvince,
+  selectingTile,
+}
+
 class _DevelopmentScreenState extends State<DevelopmentScreen> {
+  static const int _maxProvincesVisible = 5;
+  static const int _maxTilesVisible = 6;
+
   /// Currently selected unit index in the list.
   int _selectedIndex = 0;
-  
-  /// Current input mode: none, selectingWorkTarget.
-  String _inputMode = 'none';
-  
+
+  /// Current input mode for keyboard handling.
+  _DevelopmentInputMode _inputMode = _DevelopmentInputMode.idle;
+
+  /// Work target id currently selected while in selectingWorkType/selectingTile.
+  String? _pendingWorkTarget;
+
+  /// Candidate provinces (full province ids) that have at least one eligible tile.
+  List<String> _candidateProvinces = const [];
+
+  /// Province id -> candidate tile keys for that province.
+  Map<String, List<String>> _candidateTilesByProvince = const {};
+
+  /// Currently selected province index when in province/tile selection flow.
+  int _selectedProvinceIndex = 0;
+
+  /// Currently selected tile index within the selected province's tile list.
+  int _selectedTileIndexWithinProvince = 0;
+
+  /// Sliding-window start index for the province list when there are more
+  /// provinces than can be shown at once.
+  int _provinceWindowStart = 0;
+
+  /// Sliding-window start index for the tile list within the current province
+  /// when there are more tiles than can be shown at once.
+  int _tileWindowStart = 0;
+
   /// Feedback message to display (e.g., order accepted/rejected).
   String _feedbackMessage = '';
-  
+
   /// Color for feedback message.
   Color _feedbackColor = Colors.white;
 
@@ -125,7 +189,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   // ignore: strict_top_level_inference
   bool _handleKeyEvent(event) {
     final key = event.logicalKey;
-    final c = event.character?.toLowerCase();
+    final rawChar = event.character;
+    final c = rawChar?.toLowerCase();
     final units = _playerCivilianUnits;
     
     if (units.isEmpty) {
@@ -138,16 +203,42 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     // Escape: back to shell or cancel input mode
     if (key == LogicalKey.escape) {
-      if (_inputMode != 'none') {
+      if (_inputMode == _DevelopmentInputMode.selectingTile) {
+        // Step back to province selection.
         setState(() {
-          _inputMode = 'none';
-          _feedbackMessage = '';
+          _inputMode = _DevelopmentInputMode.selectingProvince;
+          _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+          _feedbackColor = Colors.cyan;
         });
-        _log.d('tui:nav: cancelled input mode');
         return true;
       }
+      if (_inputMode == _DevelopmentInputMode.selectingProvince) {
+        // Step back to idle navigation.
+        setState(() {
+          _inputMode = _DevelopmentInputMode.idle;
+          _pendingWorkTarget = null;
+          _candidateProvinces = const [];
+          _candidateTilesByProvince = const {};
+          _selectedProvinceIndex = 0;
+          _selectedTileIndexWithinProvince = 0;
+          _provinceWindowStart = 0;
+          _tileWindowStart = 0;
+          _feedbackMessage = '';
+        });
+        _log.d('tui:nav: cancelled development input mode');
+        return true;
+      }
+      // Idle: leave Development screen back to in-game shell.
       component.onNavigate(CttermRoute.inGameShell);
       return true;
+    }
+
+    // Province or tile selection modes: handle navigation and confirmation separately.
+    if (_inputMode == _DevelopmentInputMode.selectingProvince) {
+      return _handleProvinceSelectionKey(event);
+    }
+    if (_inputMode == _DevelopmentInputMode.selectingTile) {
+      return _handleTileSelectionKey(event, units);
     }
 
     // Navigation: arrow keys / j/k to navigate unit list
@@ -160,62 +251,263 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return true;
     }
 
-    // Enter/Space: enter work target selection mode if unit is idle
+    // Enter/Space: soft hint only; actual work-type choice is via hotkeys
+    // tied to Available Work. Do not change mode here.
     if (key == LogicalKey.enter || key == LogicalKey.space) {
-      final unit = units[_selectedIndex];
-      if (!_unitHasWorkOrder(unit.id)) {
-        setState(() {
-          _inputMode = 'selectingWorkTarget';
-          _feedbackMessage = 'Select work target (i/r/p/f/R/u)';
-          _feedbackColor = Colors.cyan;
-        });
-      }
       return true;
     }
 
-    // Work target selection mode
-    if (_inputMode == 'selectingWorkTarget') {
-      return _handleWorkTargetSelection(c, units[_selectedIndex]);
-    }
-
-    // x: cancel work order for selected unit
-    if (c == 'x') {
+    // x: cancel work order for selected unit (from idle mode only)
+    if (_inputMode == _DevelopmentInputMode.idle && c == 'x') {
       final unit = units[_selectedIndex];
       _cancelWorkOrder(unit.id);
       return true;
     }
 
-    // Direct work target keys (even without Enter)
-    if (_validWorkTargets.containsKey(c)) {
-      final unit = units[_selectedIndex];
-      if (!_unitHasWorkOrder(unit.id)) {
-        _assignWorkOrder(unit, c!);
-        return true;
+    // Direct work target keys (even without Enter): start work-type + tile selection.
+    if (_inputMode == _DevelopmentInputMode.idle && rawChar != null) {
+      final target = _workKeyToTarget[rawChar];
+      if (target != null) {
+        final unit = units[_selectedIndex];
+        if (!_unitHasWorkOrder(unit.id)) {
+          _startTileSelection(unit, target);
+          return true;
+        }
       }
     }
 
     return false;
   }
 
-  /// Handle work target selection keys.
-  bool _handleWorkTargetSelection(String? c, Unit unit) {
-    if (_validWorkTargets.containsKey(c)) {
-      _assignWorkOrder(unit, c!);
+  /// Begin tile-selection mode for [unit] and [target].
+  void _startTileSelection(Unit unit, String target) {
+    final byProvince = _candidateTilesByProvinceFor(unit, target);
+    if (byProvince.isEmpty) {
+      setState(() {
+        _inputMode = _DevelopmentInputMode.idle;
+        _pendingWorkTarget = null;
+        _candidateProvinces = const [];
+        _candidateTilesByProvince = const {};
+        _selectedProvinceIndex = 0;
+        _selectedTileIndexWithinProvince = 0;
+        _feedbackMessage = 'No eligible tiles for ${_getWorkTargetName(target)}';
+        _feedbackColor = Colors.yellow;
+      });
+      _log.d('tui:development: no eligible tiles for $target and unit ${unit.id}');
+      return;
+    }
+
+    final provinces = byProvince.keys.toList();
+    provinces.sort();
+    final builderProvince = unit.locationProvinceId;
+    var initialProvinceIndex = 0;
+    if (builderProvince.isNotEmpty) {
+      final idx = provinces.indexOf(builderProvince);
+      if (idx >= 0) {
+        initialProvinceIndex = idx;
+      }
+    }
+
+    setState(() {
+      _inputMode = _DevelopmentInputMode.selectingProvince;
+      _pendingWorkTarget = target;
+      _candidateProvinces = provinces;
+      _candidateTilesByProvince = byProvince;
+      _selectedProvinceIndex = initialProvinceIndex;
+      _selectedTileIndexWithinProvince = 0;
+      _provinceWindowStart = 0;
+      _tileWindowStart = 0;
+      _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+      _feedbackColor = Colors.cyan;
+    });
+    _log.d('tui:development: selecting province/tile for $target and unit ${unit.id}');
+  }
+
+  /// Ensure the province sliding window keeps the selected province visible.
+  void _updateProvinceWindow(int windowSize) {
+    if (_candidateProvinces.isEmpty || windowSize <= 0) {
+      _provinceWindowStart = 0;
+      return;
+    }
+    final total = _candidateProvinces.length;
+    final maxStart = (total - windowSize) < 0 ? 0 : (total - windowSize);
+    if (_selectedProvinceIndex < _provinceWindowStart) {
+      _provinceWindowStart = _selectedProvinceIndex;
+    } else if (_selectedProvinceIndex >= _provinceWindowStart + windowSize) {
+      _provinceWindowStart = _selectedProvinceIndex - windowSize + 1;
+    }
+    if (_provinceWindowStart < 0) {
+      _provinceWindowStart = 0;
+    } else if (_provinceWindowStart > maxStart) {
+      _provinceWindowStart = maxStart;
+    }
+  }
+
+  /// Ensure the tile sliding window for the current province keeps the selected
+  /// tile visible.
+  void _updateTileWindowForCurrentProvince(int windowSize) {
+    if (_candidateProvinces.isEmpty ||
+        _candidateTilesByProvince.isEmpty ||
+        windowSize <= 0) {
+      _tileWindowStart = 0;
+      return;
+    }
+    final provinceIndex =
+        _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+    final provinceId = _candidateProvinces[provinceIndex];
+    final tiles = _candidateTilesByProvince[provinceId] ?? const <String>[];
+    if (tiles.isEmpty) {
+      _tileWindowStart = 0;
+      return;
+    }
+    final total = tiles.length;
+    final maxStart = (total - windowSize) < 0 ? 0 : (total - windowSize);
+    final clampedSelected =
+        _selectedTileIndexWithinProvince.clamp(0, total - 1);
+
+    if (clampedSelected < _tileWindowStart) {
+      _tileWindowStart = clampedSelected;
+    } else if (clampedSelected >= _tileWindowStart + windowSize) {
+      _tileWindowStart = clampedSelected - windowSize + 1;
+    }
+    if (_tileWindowStart < 0) {
+      _tileWindowStart = 0;
+    } else if (_tileWindowStart > maxStart) {
+      _tileWindowStart = maxStart;
+    }
+  }
+
+  /// Handle keys while in province-selection mode.
+  // ignore: strict_top_level_inference
+  bool _handleProvinceSelectionKey(event) {
+    final key = event.logicalKey;
+    final rawChar = event.character;
+    final c = rawChar?.toLowerCase();
+
+    if (_candidateProvinces.isEmpty) {
+      setState(() {
+        _inputMode = _DevelopmentInputMode.idle;
+        _pendingWorkTarget = null;
+      });
       return true;
     }
+
+    final lastIndex = _candidateProvinces.length - 1;
+
+    // Navigation within province list.
+    if (key == LogicalKey.arrowUp || c == 'k') {
+      setState(() {
+        _selectedProvinceIndex =
+            (_selectedProvinceIndex - 1).clamp(0, lastIndex);
+        _selectedTileIndexWithinProvince = 0;
+        _updateProvinceWindow(_maxProvincesVisible);
+        _updateTileWindowForCurrentProvince(_maxTilesVisible);
+      });
+      return true;
+    }
+    if (key == LogicalKey.arrowDown || c == 'j') {
+      setState(() {
+        _selectedProvinceIndex =
+            (_selectedProvinceIndex + 1).clamp(0, lastIndex);
+        _selectedTileIndexWithinProvince = 0;
+        _updateProvinceWindow(_maxProvincesVisible);
+        _updateTileWindowForCurrentProvince(_maxTilesVisible);
+      });
+      return true;
+    }
+
+    // Enter: switch to tile-selection mode for current province.
+    if (key == LogicalKey.enter || key == LogicalKey.space) {
+      setState(() {
+        _inputMode = _DevelopmentInputMode.selectingTile;
+        _feedbackMessage =
+            'Select tile in province [↑/↓/j/k]nav [Enter]confirm [Esc]back';
+        _feedbackColor = Colors.cyan;
+        _selectedTileIndexWithinProvince = 0;
+        _tileWindowStart = 0;
+        _updateTileWindowForCurrentProvince(_maxTilesVisible);
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Handle keys while in tile-selection mode.
+  // ignore: strict_top_level_inference
+  bool _handleTileSelectionKey(event, List<Unit> units) {
+    final key = event.logicalKey;
+    final rawChar = event.character;
+    final c = rawChar?.toLowerCase();
+
+    if (_candidateProvinces.isEmpty ||
+        _candidateTilesByProvince.isEmpty ||
+        _pendingWorkTarget == null) {
+      // Nothing to select; fall back to idle.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.idle;
+        _pendingWorkTarget = null;
+      });
+      return true;
+    }
+
+    final provinceIndex =
+        _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+    final provinceId = _candidateProvinces[provinceIndex];
+    final tiles = _candidateTilesByProvince[provinceId] ?? const <String>[];
+    if (tiles.isEmpty) {
+      // No tiles in this province: treat as province selection again.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.selectingProvince;
+        _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+        _feedbackColor = Colors.cyan;
+      });
+      return true;
+    }
+
+    final lastTileIndex = tiles.length - 1;
+
+    // Navigation within tile list.
+    if (key == LogicalKey.arrowUp || c == 'k') {
+      setState(() {
+        _selectedTileIndexWithinProvince =
+            (_selectedTileIndexWithinProvince - 1).clamp(0, lastTileIndex);
+        _updateTileWindowForCurrentProvince(_maxTilesVisible);
+      });
+      return true;
+    }
+    if (key == LogicalKey.arrowDown || c == 'j') {
+      setState(() {
+        _selectedTileIndexWithinProvince =
+            (_selectedTileIndexWithinProvince + 1).clamp(0, lastTileIndex);
+        _updateTileWindowForCurrentProvince(_maxTilesVisible);
+      });
+      return true;
+    }
+
+    // Confirm selection.
+    if (key == LogicalKey.enter || key == LogicalKey.space) {
+      final unit = units[_selectedIndex];
+      final target = _pendingWorkTarget!;
+      final tileKey = tiles[_selectedTileIndexWithinProvince];
+      _assignWorkOrder(unit, target, tileKey);
+      return true;
+    }
+
+    // Escape is handled at top-level; other keys are ignored here.
     return false;
   }
 
   /// Assign a work order to a unit.
-  void _assignWorkOrder(Unit unit, String target) {
+  void _assignWorkOrder(Unit unit, String target, String targetTileKey) {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return;
 
-    // Create new work order
+    // Create new work order with full tile key.
     final order = WorkOrder(
       unitId: unit.id,
       target: target,
-      targetTileKey: unit.provinceId, // Use province as default target
+      targetTileKey: targetTileKey,
     );
 
     // Add to existing orders
@@ -238,8 +530,17 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     component.onOrdersChanged(newOrders);
     
     setState(() {
-      _inputMode = 'none';
-      _feedbackMessage = 'Work order assigned: ${_getWorkTargetName(target)}';
+      _inputMode = _DevelopmentInputMode.idle;
+      _pendingWorkTarget = null;
+      _candidateProvinces = const [];
+      _candidateTilesByProvince = const {};
+      _selectedProvinceIndex = 0;
+      _selectedTileIndexWithinProvince = 0;
+      _provinceWindowStart = 0;
+      _tileWindowStart = 0;
+      final label = _getWorkTargetName(target);
+      final tileLabel = _formatTileLabel(targetTileKey);
+      _feedbackMessage = 'Work order assigned: $label at $tileLabel';
       _feedbackColor = Colors.green;
     });
     
@@ -280,6 +581,185 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   /// Get display name for work target.
   String _getWorkTargetName(String target) {
     return _validWorkTargets[target] ?? target;
+  }
+
+  /// Compute candidate tiles grouped by province for a unit and work target.
+  ///
+  /// Tiles are restricted to fully-visible tiles in provinces owned by the
+  /// human player; target-specific eligibility is enforced later by the
+  /// core order/development logic.
+  Map<String, List<String>> _candidateTilesByProvinceFor(
+    Unit unit,
+    String target,
+  ) {
+    final game = component.game;
+    final world = game.worldState;
+    final playerId = _getHumanPlayerId();
+    if (playerId == null) {
+      return const {};
+    }
+
+    final visibilityByPlayer = world.playerVisibilityByTile[playerId];
+    final tileKeysByRegionAndProv = world.tileKeysByRegionAndProvince;
+
+    final byProvince = <String, List<String>>{};
+
+    void addProvinceTiles(List<Province> provinces) {
+      for (final prov in provinces) {
+        if (prov.ownerId != playerId) {
+          continue;
+        }
+        final regionId = ProvinceId.regionIdFrom(prov.id);
+        final byProv = tileKeysByRegionAndProv[regionId];
+        final provTiles = byProv?[prov.id];
+        if (provTiles == null) {
+          continue;
+        }
+        final tileMap = component.tileMapByRegion?[regionId];
+        final list = <String>[];
+        for (final tk in provTiles) {
+          // Only fully-visible tiles.
+          final vis = visibilityByPlayer?[tk];
+          if (vis != 'fullyVisible') {
+            continue;
+          }
+          // For build_improvement, restrict to tiles that actually have a resource,
+          // so Builders do not offer improvement work on empty tiles.
+          if (target == 'build_improvement' && tileMap != null) {
+            final parts = tk.split('|');
+            if (parts.length >= 4) {
+              final x = int.tryParse(parts[2]) ?? 0;
+              final y = int.tryParse(parts[3]) ?? 0;
+              final resource = tileMap.resourceAt(x, y);
+              if (resource == null) {
+                continue;
+              }
+            }
+          }
+          list.add(tk);
+        }
+        if (list.isNotEmpty) {
+          byProvince[prov.id] = list;
+        }
+      }
+    }
+
+    addProvinceTiles(world.oldWorld.provinces);
+    addProvinceTiles(world.newWorld.provinces);
+
+    return byProvince;
+  }
+
+  /// Format a tile label from a full tile key regionId|provinceLocalId|x|y,
+  /// including terrain and resource glyphs.
+  String _formatTileLabel(String tileKey) {
+    final parts = tileKey.split('|');
+    if (parts.length < 4) {
+      return tileKey;
+    }
+    final regionId = parts[0];
+    final localId = parts[1];
+    final x = parts[2];
+    final y = parts[3];
+    final fullProvinceId = '$regionId|$localId';
+    final name = _provinceLabel(fullProvinceId);
+
+    final tileMap = component.tileMapByRegion?[regionId];
+    if (tileMap == null) {
+      return '$name ($x,$y)';
+    }
+    final xx = int.tryParse(x) ?? 0;
+    final yy = int.tryParse(y) ?? 0;
+    final terrain = tileMap.terrainAt(xx, yy);
+    final resource = tileMap.resourceAt(xx, yy);
+    final terrainChar = terrainToChar(terrain);
+    final resourceChar = resourceToChar(resource);
+    final resourcePart = resourceChar.isEmpty ? '' : ' $resourceChar';
+    return '$name ($x,$y) $terrainChar$resourcePart';
+  }
+
+  /// Returns the tile key that should be shown in the mini-map, based on the
+  /// current mode and selection (selection takes precedence over existing work).
+  String? _currentHighlightedTileKey(Unit unit, WorkOrder? workOrder) {
+    if (_inputMode == _DevelopmentInputMode.selectingTile &&
+        _candidateProvinces.isNotEmpty &&
+        _candidateTilesByProvince.isNotEmpty) {
+      final provinceIndex =
+          _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+      final provinceId = _candidateProvinces[provinceIndex];
+      final tiles = _candidateTilesByProvince[provinceId];
+      if (tiles != null && tiles.isNotEmpty) {
+        final tileIndex =
+            _selectedTileIndexWithinProvince.clamp(0, tiles.length - 1);
+        return tiles[tileIndex];
+      }
+    }
+    if (workOrder != null && workOrder.targetTileKey.isNotEmpty) {
+      return workOrder.targetTileKey;
+    }
+    return null;
+  }
+
+  /// Build a small resources-layer mini map centered on [tileKey] when tile maps
+  /// are available for the tile's region.
+  Component _buildMiniMap(String tileKey) {
+    final parts = tileKey.split('|');
+    if (parts.length < 4) {
+      return const SizedBox.shrink();
+    }
+    final regionId = parts[0];
+    final x = int.tryParse(parts[2]) ?? 0;
+    final y = int.tryParse(parts[3]) ?? 0;
+
+    final tileMap = component.tileMapByRegion?[regionId];
+    if (tileMap == null) {
+      return const SizedBox.shrink();
+    }
+
+    const viewportWidth = 14;
+    const viewportHeight = 4;
+
+    final maxX = tileMap.width - viewportWidth;
+    final maxY = tileMap.height - viewportHeight;
+    final clampedMaxX = maxX < 0 ? 0 : maxX;
+    final clampedMaxY = maxY < 0 ? 0 : maxY;
+
+    final rawViewX = x - viewportWidth ~/ 2;
+    final rawViewY = y - viewportHeight ~/ 2;
+    final viewX = rawViewX.clamp(0, clampedMaxX);
+    final viewY = rawViewY.clamp(0, clampedMaxY);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 1, bottom: 1),
+      child: MapGridWidget(
+        regionId: regionId,
+        tileMap: tileMap,
+        game: component.game,
+        viewportWidth: viewportWidth,
+        viewportHeight: viewportHeight,
+        viewX: viewX,
+        viewY: viewY,
+        layer: MapGridLayer.resources,
+      ),
+    );
+  }
+
+  /// Returns the set of work target ids that are valid for this civilian unit
+  /// type, based on SPEC/game/civilian-units.md.
+  Set<String> _allowedTargetsFor(Unit unit) {
+    final t = unit.type.toLowerCase();
+    // Rail Builder: only build_rail.
+    if (t.contains('rail')) {
+      return {'build_rail'};
+    }
+    final allowed = <String>{};
+    if (t.contains('builder')) {
+      allowed.addAll(['build_improvement', 'upgrade_town']);
+    }
+    if (t.contains('engineer')) {
+      allowed.addAll(['build_road', 'build_port', 'build_fort']);
+    }
+    return allowed;
   }
 
   @override
@@ -356,9 +836,15 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
   /// Build help text for current mode.
   Component _buildHelpText() {
-    if (_inputMode == 'selectingWorkTarget') {
+    if (_inputMode == _DevelopmentInputMode.selectingProvince) {
       return const Text(
-        '[i]mprove [r]oad [p]ort [f]ort [R]ail [u]pgrade [x]ancel [Esc]back',
+        '[↑/↓/j/k]nav provinces [Enter]tiles [Esc]back',
+        style: TextStyle(color: Colors.cyan),
+      );
+    }
+    if (_inputMode == _DevelopmentInputMode.selectingTile) {
+      return const Text(
+        '[↑/↓/j/k]nav tiles [Enter]confirm [Esc]back',
         style: TextStyle(color: Colors.cyan),
       );
     }
@@ -446,6 +932,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       );
     }
 
+    final highlightedTileKey = _currentHighlightedTileKey(unit, workOrder);
+    final allowedTargets = _allowedTargetsFor(unit);
+
     return Container(
       color: const Color(0xFF0d0d1a),
       padding: const EdgeInsets.all(1),
@@ -475,31 +964,211 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           if (workOrder != null) ...[
             const SizedBox(height: 1),
             _buildDetailRow('Work Target', _getWorkTargetName(workOrder.target)),
-            _buildDetailRow('Target Tile', workOrder.targetTileKey),
+            _buildDetailRow('Target Tile', _formatTileLabel(workOrder.targetTileKey)),
           ],
           const SizedBox(height: 1),
-          // Available work targets
-          const Text(' Available Work: ', style: TextStyle(color: Colors.white)),
-          const SizedBox(height: 1),
-          for (final entry in _validWorkTargets.entries)
-            Padding(
-              padding: const EdgeInsets.only(left: 1),
-              child: Text(
-                '[${entry.key}] ${entry.value}',
-                style: TextStyle(
-                  color: workOrder == null ? Colors.gray : const Color(0xFF333344),
+          // Lower area: split horizontally between text lists (available work
+          // + province/tile tree) and mini-map, and cap list lengths so the
+          // whole panel stays within 80x24.
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left side: Available Work and province/tile tree (only while assigning).
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (workOrder == null) ...[
+                        const Text(' Available Work: ',
+                            style: TextStyle(color: Colors.white)),
+                        const SizedBox(height: 1),
+                        for (final entry in _validWorkTargets.entries)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 1),
+                            child: Text(
+                              '[${_targetToPrimaryKey[entry.key] ?? '?'}] ${entry.value}',
+                              style: TextStyle(
+                                color: allowedTargets.contains(entry.key)
+                                    ? Colors.white
+                                    : Colors.gray,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 1),
+                        if ((_inputMode ==
+                                    _DevelopmentInputMode.selectingProvince ||
+                                _inputMode ==
+                                    _DevelopmentInputMode.selectingTile) &&
+                            _candidateProvinces.isNotEmpty) ...[
+                          const Text(' Provinces: ',
+                              style: TextStyle(color: Colors.white)),
+                          const SizedBox(height: 1),
+                          ...() {
+                            final total = _candidateProvinces.length;
+                            final windowSize = _maxProvincesVisible;
+                            final maxStart =
+                                (total - windowSize) < 0 ? 0 : (total - windowSize);
+                            final start = _provinceWindowStart
+                                .clamp(0, maxStart);
+                            final end = (start + windowSize) > total
+                                ? total
+                                : (start + windowSize);
+
+                            final components = <Component>[];
+
+                            if (start > 0) {
+                              components.add(
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 1),
+                                  child: Text(
+                                    '...',
+                                    style: TextStyle(color: Colors.gray),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            for (var i = start; i < end; i++) {
+                              final isSelected = i == _selectedProvinceIndex;
+                              components.add(
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 1),
+                                  child: Text(
+                                    '${isSelected ? '>' : ' '} ${_provinceLabel(_candidateProvinces[i])}',
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.cyan
+                                          : Colors.gray,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (end < total) {
+                              components.add(
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 1),
+                                  child: Text(
+                                    '...',
+                                    style: TextStyle(color: Colors.gray),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return components;
+                          }(),
+                          const SizedBox(height: 1),
+                          const Text(' Tiles: ',
+                              style: TextStyle(color: Colors.white)),
+                          const SizedBox(height: 1),
+                          if (_candidateProvinces.isNotEmpty)
+                            ...() {
+                              final provinceIndex = _selectedProvinceIndex
+                                  .clamp(0, _candidateProvinces.length - 1);
+                              final provinceId =
+                                  _candidateProvinces[provinceIndex];
+                              final tiles =
+                                  _candidateTilesByProvince[provinceId] ??
+                                      const <String>[];
+                              if (tiles.isEmpty) return <Component>[];
+                              final totalTiles = tiles.length;
+                              final windowSize = _maxTilesVisible;
+                              final maxStart =
+                                  (totalTiles - windowSize) < 0
+                                      ? 0
+                                      : (totalTiles - windowSize);
+                              final start = _tileWindowStart
+                                  .clamp(0, maxStart);
+                              final end = (start + windowSize) > totalTiles
+                                  ? totalTiles
+                                  : (start + windowSize);
+                              final selectedTileIndex =
+                                  _selectedTileIndexWithinProvince
+                                      .clamp(0, totalTiles - 1);
+
+                              final components = <Component>[];
+
+                              if (start > 0) {
+                                components.add(
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 1),
+                                    child: Text(
+                                      '...',
+                                      style: TextStyle(color: Colors.gray),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              for (var i = start; i < end; i++) {
+                                final isSelected = i == selectedTileIndex;
+                                components.add(
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 1),
+                                    child: Text(
+                                      '${isSelected ? '>' : ' '} ${_formatTileLabel(tiles[i])}',
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.cyan
+                                            : Colors.gray,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              if (end < totalTiles) {
+                                components.add(
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 1),
+                                    child: Text(
+                                      '...',
+                                      style: TextStyle(color: Colors.gray),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return components;
+                            }(),
+                        ],
+                      ],
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 1),
+                // Right side: mini-map (resources view), when we have a tile.
+                Expanded(
+                  flex: 2,
+                  child: highlightedTileKey != null
+                      ? _buildMiniMap(highlightedTileKey)
+                      : const SizedBox.shrink(),
+                ),
+              ],
             ),
-          const Spacer(),
-          // Current mode hint
-          if (_inputMode == 'selectingWorkTarget')
+          ),
+          // Current mode hint (also surfaced in header help text)
+          if (_inputMode == _DevelopmentInputMode.selectingProvince)
             Container(
               width: double.infinity,
               color: const Color(0xFF2a2a4e),
               padding: const EdgeInsets.all(1),
               child: const Text(
-                ' Select work target... ',
+                ' Select province... ',
+                style: TextStyle(color: Colors.cyan),
+              ),
+            )
+          else if (_inputMode == _DevelopmentInputMode.selectingTile)
+            Container(
+              width: double.infinity,
+              color: const Color(0xFF2a2a4e),
+              padding: const EdgeInsets.all(1),
+              child: const Text(
+                ' Select work tile... ',
                 style: TextStyle(color: Colors.cyan),
               ),
             ),

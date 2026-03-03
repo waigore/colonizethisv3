@@ -20,6 +20,8 @@ class MapGridWidget extends StatelessComponent {
     required this.viewX,
     required this.viewY,
     required this.layer,
+    this.highlightTileKey,
+    this.highlightProvinceId,
   });
 
   final String regionId;
@@ -30,6 +32,10 @@ class MapGridWidget extends StatelessComponent {
   final int viewX;
   final int viewY;
   final MapGridLayer layer;
+  /// Optional full tile key to highlight (regionId|provinceLocalId|x|y).
+  final String? highlightTileKey;
+  /// Optional full province id to highlight (regionId|provinceLocalId).
+  final String? highlightProvinceId;
 
   /// Builds map from full tile key to unit symbol for the units layer.
   static Map<String, String> buildUnitSymbolByTileKey(
@@ -84,22 +90,6 @@ class MapGridWidget extends StatelessComponent {
         ? buildUnitSymbolByTileKey(game, regionId)
         : null;
 
-    final lines = renderRegionMapViewport(
-      regionId: regionId,
-      tileMap: tileMap,
-      provincesById: provincesById,
-      playerVisibilityByTile: playerVisibilityByTile,
-      players: game.players,
-      capitalTiles: capitalTiles,
-      portTiles: portTiles,
-      offsetX: viewX,
-      offsetY: viewY,
-      viewportWidth: viewportWidth,
-      viewportHeight: viewportHeight,
-      layer: layer,
-      unitSymbolByTileKey: unitSymbolByTileKey,
-    );
-
     final layerLabel = switch (layer) {
       MapGridLayer.terrain => 'Terrain',
       MapGridLayer.political => 'Political',
@@ -116,16 +106,120 @@ class MapGridWidget extends StatelessComponent {
         Padding(
           padding: const EdgeInsets.only(bottom: 1),
           child: Text(
-              'Map [Layer: $layerLabel]  [ ]=layer (scroll follows province)',
-              style: TextStyle(color: Colors.cyan),
-            ),
+            'Map [Layer: $layerLabel]  [ ]=layer (scroll follows province)',
+            style: TextStyle(color: Colors.cyan),
+          ),
         ),
-        ...lines.map((line) => Text(line)),
+        if (highlightTileKey == null && highlightProvinceId == null) ...[
+          // Default rendering: reuse existing ASCII viewport.
+          ...renderRegionMapViewport(
+            regionId: regionId,
+            tileMap: tileMap,
+            provincesById: provincesById,
+            playerVisibilityByTile: playerVisibilityByTile,
+            players: game.players,
+            capitalTiles: capitalTiles,
+            portTiles: portTiles,
+            offsetX: viewX,
+            offsetY: viewY,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            layer: layer,
+            unitSymbolByTileKey: unitSymbolByTileKey,
+          ).map((line) => Text(line)),
+        ] else ...[
+          // Highlight-aware rendering: color the selected tile, its province,
+          // and dim non-province tiles for additional context.
+          _buildHighlightedGrid(
+            regionId: regionId,
+            tileMap: tileMap,
+            provincesById: provincesById,
+            playerVisibilityByTile: playerVisibilityByTile,
+            unitSymbolByTileKey: unitSymbolByTileKey,
+          ),
+        ],
         Padding(
           padding: const EdgeInsets.only(top: 1),
           child: Text(legend, style: TextStyle(color: Colors.gray)),
         ),
       ],
+    );
+  }
+
+  /// Render a colored grid where the highlighted tile is bright, tiles in the
+  /// same province use normal color, and all other tiles are dimmed.
+  Component _buildHighlightedGrid({
+    required String regionId,
+    required TileMapResult tileMap,
+    required Map<String, Province> provincesById,
+    required Map<String, String>? playerVisibilityByTile,
+    required Map<String, String>? unitSymbolByTileKey,
+  }) {
+    final rows = <Component>[];
+
+    final endX = (viewX + viewportWidth).clamp(0, tileMap.width);
+    final endY = (viewY + viewportHeight).clamp(0, tileMap.height);
+    final startX = viewX.clamp(0, tileMap.width);
+    final startY = viewY.clamp(0, tileMap.height);
+
+    for (var y = startY; y < endY; y++) {
+      final cells = <Component>[];
+      for (var x = startX; x < endX; x++) {
+        final localId = tileMap.cell(x, y);
+        final fullTileKey = makeFullTileKey(regionId, localId, x, y);
+        final fullProvinceId = '$regionId|$localId';
+
+        final visibility = getTileVisibility(fullTileKey, playerVisibilityByTile);
+        final isVisible = visibility != TileVisibility.unexplored;
+
+        String char = ' ';
+        if (!isVisible) {
+          char = '?';
+        } else {
+          final terrain = tileMap.terrainAt(x, y);
+          switch (layer) {
+            case MapGridLayer.terrain:
+              char = terrainToChar(terrain);
+              break;
+            case MapGridLayer.political:
+              final province = provincesById[fullProvinceId];
+              final ownerId = province?.ownerId;
+              final playerType = getPlayerType(ownerId, game.players);
+              char = ownerToChar(ownerId, playerType);
+              break;
+            case MapGridLayer.resources:
+              final resource = tileMap.resourceAt(x, y);
+              char = resource != null ? resourceToChar(resource) : terrainToChar(terrain);
+              break;
+            case MapGridLayer.units:
+              final unitChar = unitSymbolByTileKey?[fullTileKey];
+              char = unitChar ?? terrainToChar(terrain);
+              break;
+          }
+        }
+
+        Color color;
+        if (highlightTileKey != null && fullTileKey == highlightTileKey) {
+          color = Colors.yellow;
+        } else if (highlightProvinceId != null &&
+            fullProvinceId == highlightProvinceId) {
+          color = Colors.white;
+        } else {
+          color = Colors.gray;
+        }
+
+        cells.add(Text(
+          char,
+          style: TextStyle(color: color),
+        ));
+      }
+      rows.add(Row(children: cells));
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rows,
     );
   }
 
@@ -137,7 +231,9 @@ class MapGridWidget extends StatelessComponent {
       case MapGridLayer.political:
         return '?=unexplored ·unclaimed A–Z=GP mX=minor tX=tribe';
       case MapGridLayer.resources:
-        return '?=unexplored g=gra m=meat w=wool h=horse t=timber i=iron c=copper k=coal G=gold … (empty=terrain)';
+        return '?=unexplored ~sea .plains ♣forest ^hills ▲mt ≈swamp ▒desert '
+            'g=grain m=meat w=wool h=horses t=timber i=iron c=copper n=tin k=coal '
+            's=sugar b=tobac u=cottn f=furs p=spice v=silver G=gold e=gems d=diams empty=terrain';
       case MapGridLayer.units:
         return '?=unexplored Letter=unit type (1st letter); no letter=terrain';
     }
