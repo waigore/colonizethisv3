@@ -6,8 +6,10 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/widgets/map_grid_widget.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:ctterm/map_tui_mapping.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -54,6 +56,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   bool _isEndingTurn = false;
   bool _isConfirmingEndTurn = false;
   int _idleCivilianCountForPrompt = 0;
+  /// Map grid layer only; viewport is derived from selected province (SPEC/tui/screens/in-game-shell.md § Map Grid Widget).
+  MapGridLayer _mapGridLayer = MapGridLayer.terrain;
 
   int get _turn => component.game?.worldState.turnState.turnNumber ?? 1;
   int get _year => inGameShellHudYear(component.game, _turn);
@@ -84,7 +88,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     for (final entry in game.aiControlByGpId.entries) {
       if (!entry.value) return entry.key;
     }
-    return game.players.isNotEmpty ? game.players.first.id : null;
+    return null;
   }
 
   bool _isCivilianUnit(Unit unit) {
@@ -267,6 +271,45 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     });
   }
 
+  /// Viewport (viewX, viewY) to center the map grid on the selected province when possible.
+  /// Tile key format per SPEC/game/world-model-identity.md: regionId|localId|x|y.
+  (int, int) _mapGridViewportFromSelectedProvince(
+    TileMapResult tileMap,
+    int viewportWidth,
+    int viewportHeight,
+  ) {
+    final localId = _selectedProvinceLocalId;
+    if (localId == null) return (0, 0);
+    final game = component.game;
+    if (game == null) return (0, 0);
+    final fullProvinceId = '$_selectedRegion|$localId';
+    final byProvince =
+        game.worldState.tileKeysByRegionAndProvince[_selectedRegion];
+    final tileKeys = byProvince?[fullProvinceId];
+    if (tileKeys == null || tileKeys.isEmpty) return (0, 0);
+
+    int sumX = 0;
+    int sumY = 0;
+    for (final key in tileKeys) {
+      final parts = key.split('|');
+      if (parts.length >= 4) {
+        final x = int.tryParse(parts[2]) ?? 0;
+        final y = int.tryParse(parts[3]) ?? 0;
+        sumX += x;
+        sumY += y;
+      }
+    }
+    final count = tileKeys.length;
+    if (count == 0) return (0, 0);
+    final centerX = sumX ~/ count;
+    final centerY = sumY ~/ count;
+    final maxX = (tileMap.width - viewportWidth).clamp(0, tileMap.width);
+    final maxY = (tileMap.height - viewportHeight).clamp(0, tileMap.height);
+    final viewX = (centerX - viewportWidth ~/ 2).clamp(0, maxX);
+    final viewY = (centerY - viewportHeight ~/ 2).clamp(0, maxY);
+    return (viewX, viewY);
+  }
+
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
     setState(() => _isEndingTurn = true);
@@ -361,7 +404,49 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           _cycleRegion();
           return true;
         }
-        // Graph navigation: next/prev neighbour (j/k or left/right)
+        // Map grid: [ / ] cycle layer (Terrain→Political→Resources→Units). Viewport centers on selected province. 1–9 = graph. SPEC/tui/screens/in-game-shell.md § Map Grid Widget.
+        final tileMap = component.tileMapByRegion?[_selectedRegion];
+        if (tileMap != null) {
+          if (c == '[') {
+            setState(() {
+              switch (_mapGridLayer) {
+                case MapGridLayer.terrain:
+                  _mapGridLayer = MapGridLayer.units;
+                  break;
+                case MapGridLayer.political:
+                  _mapGridLayer = MapGridLayer.terrain;
+                  break;
+                case MapGridLayer.resources:
+                  _mapGridLayer = MapGridLayer.political;
+                  break;
+                case MapGridLayer.units:
+                  _mapGridLayer = MapGridLayer.resources;
+                  break;
+              }
+            });
+            return true;
+          }
+          if (c == ']') {
+            setState(() {
+              switch (_mapGridLayer) {
+                case MapGridLayer.terrain:
+                  _mapGridLayer = MapGridLayer.political;
+                  break;
+                case MapGridLayer.political:
+                  _mapGridLayer = MapGridLayer.resources;
+                  break;
+                case MapGridLayer.resources:
+                  _mapGridLayer = MapGridLayer.units;
+                  break;
+                case MapGridLayer.units:
+                  _mapGridLayer = MapGridLayer.terrain;
+                  break;
+              }
+            });
+            return true;
+          }
+        }
+        // Graph navigation: next/prev neighbour (j/l, arrows). Direct selection 1–9.
         if (c == 'j' || key == LogicalKey.arrowLeft) {
           _selectPrevNeighbour();
           return true;
@@ -370,7 +455,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           _selectNextNeighbour();
           return true;
         }
-        // Direct neighbour selection via number keys 1–9.
+        // Direct neighbour selection via number keys 1–9 (indices 0–8). Map layers use t/p/r/u.
         if (c != null && c.length == 1 && c.codeUnitAt(0) >= '1'.codeUnitAt(0) &&
             c.codeUnitAt(0) <= '9'.codeUnitAt(0)) {
           final index = c.codeUnitAt(0) - '1'.codeUnitAt(0);
@@ -431,80 +516,124 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   Component _buildMapArea() {
     final top = component.combinedTopology;
     final land = _landProvinceLocalIds;
-    if (top == null || top.nodes.isEmpty || land.isEmpty) {
+    final tileMap = component.tileMapByRegion?[_selectedRegion];
+    const viewportWidth = 24;
+    const viewportHeight = 8;
+
+    final topologySection = (top == null || top.nodes.isEmpty || land.isEmpty)
+        ? Container(
+            padding: const EdgeInsets.all(1),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('No topology', style: TextStyle(color: Colors.gray)),
+                Text('Provinces in region: ${_provinces.length}',
+                    style: TextStyle(color: Colors.gray)),
+              ],
+            ),
+          )
+        : _buildTopologyContent();
+
+    if (tileMap == null || component.game == null) {
       return Container(
         padding: const EdgeInsets.all(1),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('No topology', style: TextStyle(color: Colors.gray)),
-            Text('Provinces in region: ${_provinces.length}',
-                style: TextStyle(color: Colors.gray)),
+            Text('=== $_regionDisplayName (land graph) ===',
+                style: TextStyle(color: Colors.cyan)),
+            topologySection,
           ],
         ),
       );
     }
 
-    final selected = _selectedProvinceLocalId;
-    final selectedProv =
-        selected != null ? _provinceByLocalId(selected) : null;
-    final neighbours =
-        selected != null ? _neighboursOf(selected) : <String>[];
+    final (viewX, viewY) = _mapGridViewportFromSelectedProvince(
+      tileMap,
+      viewportWidth,
+      viewportHeight,
+    );
 
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          MapGridWidget(
+            regionId: _selectedRegion,
+            tileMap: tileMap,
+            game: component.game!,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            viewX: viewX,
+            viewY: viewY,
+            layer: _mapGridLayer,
+          ),
+          const SizedBox(height: 1),
           Text('=== $_regionDisplayName (land graph) ===',
               style: TextStyle(color: Colors.cyan)),
           Text(
-              'Center = current province; 1–9: neighbour, j/l or ←/→: cycle',
+              'Center = current province; 1–9: neighbour, j/l or arrows: cycle',
               style: TextStyle(color: Colors.gray)),
           const SizedBox(height: 1),
-          if (selected == null || selectedProv == null)
-            Text('No province selected', style: TextStyle(color: Colors.gray))
-          else ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _provinceLabel(selectedProv, selected),
-                  style: TextStyle(
-                    color: _provinceTextColor(selectedProv),
-                    fontWeight: FontWeight.bold,
-                  ),
+          Expanded(child: topologySection),
+        ],
+      ),
+    );
+  }
+
+  Component _buildTopologyContent() {
+    final selected = _selectedProvinceLocalId;
+    final selectedProv =
+        selected != null ? _provinceByLocalId(selected) : null;
+    final neighbours =
+        selected != null ? _neighboursOf(selected) : <String>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (selected == null || selectedProv == null)
+          Text('No province selected', style: TextStyle(color: Colors.gray))
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _provinceLabel(selectedProv, selected),
+                style: TextStyle(
+                  color: _provinceTextColor(selectedProv),
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(width: 2),
-                Text('->', style: TextStyle(color: Colors.gray)),
-                const SizedBox(width: 1),
-                if (neighbours.isEmpty)
-                  Text('No neighbours', style: TextStyle(color: Colors.gray))
-                else
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (var i = 0; i < neighbours.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 1),
-                            child: Text(
-                              _neighbourLabel(neighbours[i], i),
-                              style: TextStyle(
-                                color: _provinceTextColor(
-                                  _provinceByLocalId(neighbours[i]),
-                                ),
+              ),
+              const SizedBox(width: 2),
+              Text('->', style: TextStyle(color: Colors.gray)),
+              const SizedBox(width: 1),
+              if (neighbours.isEmpty)
+                Text('No neighbours', style: TextStyle(color: Colors.gray))
+              else
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < neighbours.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 1),
+                          child: Text(
+                            _neighbourLabel(neighbours[i], i),
+                            style: TextStyle(
+                              color: _provinceTextColor(
+                                _provinceByLocalId(neighbours[i]),
                               ),
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
-          ],
-        ],
-      ),
+                ),
+            ],
+          ),
+      ],
     );
   }
 
@@ -547,7 +676,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
             Text('Visibility: full', style: TextStyle(color: Colors.gray)),
           ],
           const Spacer(),
-          Text('1–9: neighbour, j/l or ←/→: cycle',
+          Text('1–9: neighbour, j/l or arrows: cycle',
               style: TextStyle(color: Colors.gray)),
         ],
       ),

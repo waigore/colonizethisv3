@@ -7,15 +7,10 @@ import 'package:ctterm/screens/in_game_shell_screen.dart';
 import 'package:test/test.dart';
 
 String _humanPlayerId(Game game) {
-  if (game.aiControlByGpId.isNotEmpty) {
-    for (final entry in game.aiControlByGpId.entries) {
-      if (!entry.value) return entry.key;
-    }
+  for (final entry in game.aiControlByGpId.entries) {
+    if (!entry.value) return entry.key;
   }
-  if (game.players.isNotEmpty) {
-    return game.players.first.id;
-  }
-  throw StateError('Game has no players');
+  throw StateError('Game has no human player (aiControlByGpId has no false entry)');
 }
 
 void main() {
