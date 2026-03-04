@@ -44,7 +44,8 @@ class _MapContextScreenState extends State<MapContextScreen> {
   Game get game => component.game;
 
   /// Gets the current region's display name.
-  String get _regionDisplayName => _currentRegion == 'oldWorld' ? 'Old World' : 'New World';
+  String get _regionDisplayName =>
+      _currentRegion == 'oldWorld' ? 'Old World' : 'New World';
 
   /// Gets the region ID prefix for the current region (oldWorld -> 'ow', newWorld -> 'nw').
   String get _regionId {
@@ -77,7 +78,9 @@ class _MapContextScreenState extends State<MapContextScreen> {
     // Check if any tile in the province is at least revealed
     for (final tileKey in provTileKeys) {
       final levelName = visibilityByTile[tileKey];
-      if (levelName == 'revealed' || levelName == 'fogged' || levelName == 'fullyVisible') {
+      if (levelName == 'revealed' ||
+          levelName == 'fogged' ||
+          levelName == 'fullyVisible') {
         return true;
       }
     }
@@ -128,7 +131,8 @@ class _MapContextScreenState extends State<MapContextScreen> {
           break;
       }
     });
-    _log.d('tui:map: layer toggled: terrain=$_showTerrain ownership=$_showOwnership towns=$_showTowns fog=$_showFog');
+    _log.d(
+        'tui:map: layer toggled: terrain=$_showTerrain ownership=$_showOwnership towns=$_showTowns fog=$_showFog');
   }
 
   void _moveCursor(int dx, int dy) {
@@ -152,6 +156,56 @@ class _MapContextScreenState extends State<MapContextScreen> {
 
   /// Gets the currently selected province data.
   Province? get _currentProvince => _selectedProvince;
+
+  /// Builds the full tile key for the current cursor position, or null if
+  /// the province or tile mapping is unavailable.
+  String? _currentTileKey() {
+    final province = _currentProvince;
+    if (province == null) return null;
+
+    final tileKeysByProv =
+        game.worldState.tileKeysByRegionAndProvince[_regionId];
+    final tiles = tileKeysByProv?[province.id];
+    if (tiles == null || tiles.isEmpty) return null;
+
+    final x = _cursorX * 2;
+    final y = _cursorY * 2;
+    final candidate = '$_regionId|${province.id}|$x|$y';
+
+    // If the exact tile exists in the mapping, use it; otherwise fall back to
+    // the first tile key for this province.
+    if (tiles.contains(candidate)) {
+      return candidate;
+    }
+    return tiles.first;
+  }
+
+  String _tileTerrainLabel() {
+    final tileKey = _currentTileKey();
+    if (tileKey == null) return 'Unknown';
+    // Tile terrain comes from the region tile map; ctterm does not currently
+    // have direct access here, so show Unknown rather than a hardcoded value.
+    return 'Unknown';
+  }
+
+  String _tileImprovementLabel() {
+    final tileKey = _currentTileKey();
+    if (tileKey == null) return 'Unknown';
+    final level = game.worldState.tileState.improvementLevel(tileKey);
+    if (level <= 0) return 'None';
+    return 'Level $level';
+  }
+
+  String _tileUnitsLabel() {
+    final tileKey = _currentTileKey();
+    if (tileKey == null) return 'Unknown';
+    final regionUnits = _currentRegion == 'oldWorld'
+        ? game.worldState.oldWorld.units
+        : game.worldState.newWorld.units;
+    final unitsHere = regionUnits.where((u) => u.tileKey == tileKey).toList();
+    if (unitsHere.isEmpty) return 'None';
+    return unitsHere.map((u) => u.type.isNotEmpty ? u.type : u.id).join(', ');
+  }
 
   String _getVisibilityIcon(_Visibility visibility) {
     switch (visibility) {
@@ -245,7 +299,8 @@ class _MapContextScreenState extends State<MapContextScreen> {
     if (provinces.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(1),
-        child: Text('No map data available', style: TextStyle(color: Colors.gray)),
+        child:
+            Text('No map data available', style: TextStyle(color: Colors.gray)),
       );
     }
 
@@ -259,7 +314,8 @@ class _MapContextScreenState extends State<MapContextScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Region indicator
-          Text('Region: $_regionDisplayName', style: TextStyle(color: Colors.cyan)),
+          Text('Region: $_regionDisplayName',
+              style: TextStyle(color: Colors.cyan)),
           const SizedBox(height: 1),
           // Map grid
           ...List.generate(rows, (y) {
@@ -267,10 +323,10 @@ class _MapContextScreenState extends State<MapContextScreen> {
               children: List.generate(cols, (x) {
                 final idx = y * cols + x;
                 final isSelected = x == _cursorX && y == _cursorY;
-                
+
                 String cellChar;
                 var style = TextStyle();
-                
+
                 if (idx < provinces.length) {
                   final prov = provinces[idx];
                   final name = prov.displayName ?? prov.id;
@@ -279,9 +335,10 @@ class _MapContextScreenState extends State<MapContextScreen> {
                 } else {
                   cellChar = '  ';
                 }
-                
+
                 if (isSelected) {
-                  style = TextStyle(backgroundColor: Colors.cyan, color: Colors.black);
+                  style = TextStyle(
+                      backgroundColor: Colors.cyan, color: Colors.black);
                   cellChar = '[$cellChar]';
                 } else {
                   cellChar = ' $cellChar ';
@@ -349,50 +406,58 @@ class _MapContextScreenState extends State<MapContextScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Text('Province Info', style: TextStyle(color: Colors.cyan, fontWeight: FontWeight.bold)),
+          Text('Province Info',
+              style:
+                  TextStyle(color: Colors.cyan, fontWeight: FontWeight.bold)),
           const SizedBox(height: 1),
           if (prov == null)
             Text('No data available', style: TextStyle(color: Colors.gray))
           else ...[
             // Name
-            Text('Name: ${prov.displayName ?? prov.id}', style: TextStyle(color: Colors.yellow)),
+            Text('Name: ${prov.displayName ?? prov.id}',
+                style: TextStyle(color: Colors.yellow)),
             const SizedBox(height: 1),
-            
+
             // Owner
             Text('Owner: ${getOwnerName(prov.ownerId)}'),
             const SizedBox(height: 1),
-            
+
             // Terrain
             Text('Terrain: ${_showTerrain ? prov.terrain : "[hidden]"}'),
             const SizedBox(height: 1),
-            
+
             // Fort Level
             Text('Fort: ${_showTowns ? prov.fortLevel : "[hidden]"}'),
             const SizedBox(height: 1),
-            
+
             // Town Development
-            Text('Town Dev: ${_showTowns ? prov.townDevelopmentLevel : "[hidden]"}'),
+            Text(
+                'Town Dev: ${_showTowns ? prov.townDevelopmentLevel : "[hidden]"}'),
             const SizedBox(height: 1),
-            
+
             // Visibility (placeholder - would come from PlayerView)
             Text('Visibility: ${_getVisibilityIcon(_Visibility.full)} full'),
           ],
-          
+
           const SizedBox(height: 2),
           // Selection mode indicator
           Text(
             'Mode: ${_tileMode ? "Tile" : "Province"} (Tab to toggle)',
             style: TextStyle(color: Colors.gray),
           ),
-          
+
           if (_tileMode) ...[
             const SizedBox(height: 1),
-            Text('Tile: (${_cursorX * 2}, ${_cursorY * 2})', style: TextStyle(color: Colors.yellow)),
-            Text('Terrain: Plains', style: TextStyle(color: Colors.gray)),
-            Text('Improvement: None', style: TextStyle(color: Colors.gray)),
-            Text('Units: None', style: TextStyle(color: Colors.gray)),
+            Text('Tile: (${_cursorX * 2}, ${_cursorY * 2})',
+                style: TextStyle(color: Colors.yellow)),
+            Text('Terrain: ${_tileTerrainLabel()}',
+                style: TextStyle(color: Colors.gray)),
+            Text('Improvement: ${_tileImprovementLabel()}',
+                style: TextStyle(color: Colors.gray)),
+            Text('Units: ${_tileUnitsLabel()}',
+                style: TextStyle(color: Colors.gray)),
           ],
-          
+
           const Spacer(),
           // Help
           Text('Controls:', style: TextStyle(color: Colors.cyan)),
@@ -404,7 +469,6 @@ class _MapContextScreenState extends State<MapContextScreen> {
       ),
     );
   }
-
 }
 
 enum _Visibility { full, revealed, fog }
