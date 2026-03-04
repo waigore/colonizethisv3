@@ -146,12 +146,32 @@ There is no separate `--tile-map` flag: topology and map summary are always prod
 
 ### Acceptance criteria
 
+**Topology and tile map contracts**
+
+- **MapTopology and TileMapResult** are the single source of truth for topology and tile map format; the JSON schemas (keys, structure) are documented in this spec (Topology format, Tile map format). The `colonizethis_data` package owns (de)serialization via `MapTopology.toJson/fromJson`, `TopologyNode.toJson/fromJson`, and `TileMapResult.toJson/fromJson`; any schema change must update both code and this spec.
+- **TileMapResult** defines the on-disk/in-memory format for tile maps used by tools: required keys `width`, `height`, `grid`; optional `terrainGrid`, `resourceGrid` with dimensions matching `grid`; rectangular grids; constraints are described in this spec and validated in colonizethis_data.
+- **Adjacency semantics** for topology (P↔P, P↔S, S↔S) and centroid/tile-count helpers are described in this spec and in [map-topology.md](../game/map-topology.md); behaviour is testable against a small sample grid (unit tests in colonizethis_data).
+
+**Map generation tool (generate_map)**
+
+- All options listed in the Map generation tool section (`--provinces`, `--continents`, `--region`, `--tiles-per-province`, `--sea-fraction`, `--interactive`, `--tile-map-image`, `--tile-size`, `--topology-graph`, `--seed`, `--world-state`, `--join-continents`, `--seed-before-assignment`, `--skip-fill-lakes`, `--continent-buffer`) are supported by the CLI and validated per the table; invalid values (e.g. negative `--provinces`, out-of-range `--continents`, bad `--region`) cause exit code 1, a clear error message to stderr, and no partial output files.
 - Given valid options and no invalid numeric/range values, when the user runs `melos run generate_map -- [options]`, then the tool exits with code 0 and stdout contains the topology graph section and map summary with province and sea-zone counts.
 - Given `--provinces` with a non-positive value (or non-integer), when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
 - Given `--continents` outside [2, 4], when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr (e.g. indicating the valid range).
 - Given `--region` with a value other than `oldWorld` or `newWorld`, when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
 - Given `--tile-map-image=path` and a valid run, when the tool completes, then the file at `path` exists and is a PNG; if topology graph is written, the DOT path is printed and the DOT file exists.
 - Given `--world-state path` and a non-existent file, when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
+- A basic CLI integration test (e.g. via `Process.run` or tool test) generates a small map with valid options and asserts: when `--tile-map-image` and/or `--topology-graph` are used, the tile map PNG and topology DOT files are created; stdout includes the map summary with province and sea-zone counts; the process exits with code 0.
+
+**Integration with map-visualization and world-model**
+
+- Ownership overlays in the game world state visualizer use the full province id (`regionId|localId`) consistently, matching [world-model-identity.md](../game/world-model-identity.md) and this spec. Operational behaviour is tested in map-visualization tests; this spec states the contract.
+
+**Test and implementation references**
+
+- **Unit / round-trip tests** for `MapTopology` and `TileMapResult` (de)serialization and topology helpers: `colonizethis_data` package.
+- **CLI tests** for generate_map (exit codes, invalid args, output files): `tool/generate_map` (or equivalent integration test location).
+- **Ownership overlay** behaviour and province id usage: map-visualization spec and tests.
 
 ---
 
