@@ -257,17 +257,20 @@ Game applyBuildAndWorkOrders(
         continue;
       }
       // Cancel work if province containing target tile is no longer owned (conquest). SPEC #376.
-      final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
-      if (targetProvinceId != null) {
-        final provinces = getProvinces();
-        final targetProvince =
-            provinces.where((p) => p.id == targetProvinceId).firstOrNull;
-        if (targetProvince != null && targetProvince.ownerId != u.ownerId) {
-          unitsById[entry.key] =
-              u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
-          _log.d(
-              'logic: work cancelled unit=${u.id} reason=province conquered provinceId=$targetProvinceId tileKey=${cw.tileKey}');
-          continue;
+      // Skip for counter_spy and steal_tech: those work targets are in enemy/other territory by design.
+      if (cw.workTarget != 'counter_spy' && cw.workTarget != 'steal_tech') {
+        final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
+        if (targetProvinceId != null) {
+          final provinces = getProvinces();
+          final targetProvince =
+              provinces.where((p) => p.id == targetProvinceId).firstOrNull;
+          if (targetProvince != null && targetProvince.ownerId != u.ownerId) {
+            unitsById[entry.key] =
+                u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
+            _log.d(
+                'logic: work cancelled unit=${u.id} reason=province conquered provinceId=$targetProvinceId tileKey=${cw.tileKey}');
+            continue;
+          }
         }
       }
       if (cw.workTarget == 'counter_spy') {
@@ -346,23 +349,6 @@ Game applyBuildAndWorkOrders(
     }
     return currentGame;
   }
-
-  game = processWorkUnits(
-      game, oldUnitsById, () => oldProvinces, (p) => oldProvinces = p);
-  game = processWorkUnits(
-      game, newUnitsById, () => newProvinces, (p) => newProvinces = p);
-  game = game.copyWith(
-    worldState: game.worldState.copyWith(
-      tileState: tileState,
-      playerVisibilityByTile: visibilityByTile,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-      purchasedTilesByTileKey: purchasedTilesByTileKey,
-      oldWorld: RegionData(
-          provinces: oldProvinces, units: oldUnitsById.values.toList()),
-      newWorld: RegionData(
-          provinces: newProvinces, units: newUnitsById.values.toList()),
-    ),
-  );
 
   final updatedPlayers = <Player>[];
 
@@ -823,6 +809,25 @@ Game applyBuildAndWorkOrders(
       ),
     );
   }
+
+  // Process work (decrement remainingTurns, apply effects when 0) after applying
+  // new work orders from Orders so same-turn assignments can complete. SPEC/program/development-resolution.md.
+  game = processWorkUnits(
+      game, oldUnitsById, () => oldProvinces, (p) => oldProvinces = p);
+  game = processWorkUnits(
+      game, newUnitsById, () => newProvinces, (p) => newProvinces = p);
+  game = game.copyWith(
+    worldState: game.worldState.copyWith(
+      tileState: tileState,
+      playerVisibilityByTile: visibilityByTile,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
+      oldWorld: RegionData(
+          provinces: oldProvinces, units: oldUnitsById.values.toList()),
+      newWorld: RegionData(
+          provinces: newProvinces, units: newUnitsById.values.toList()),
+    ),
+  );
 
   final updatedOldWorld = RegionData(
     provinces: game.worldState.oldWorld.provinces,

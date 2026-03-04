@@ -235,6 +235,8 @@ This subsection specifies how automated agents (and CI) interact with ctterm usi
   - To test §5.1 lock behaviour, the test harness prepares `<test-data-dir>` with or without a Hive lock file before starting ctterm.
   - The same `agent-tui` workflow applies; assertions target the presence of the lock-prompt text and options `[Y]` / `[N]`, plus the subsequent navigation to Main Menu or process exit as specified in §5.1.
 
+- **Example scenario (builder improves tile):** Assign a builder to work a tile (Development screen: select unit, `i` for build_improvement, choose province and tile, confirm), end turn, then assert on the next turn that the tile is improved (e.g. open Production screen and assert presence of improvement level or improvement name such as Farm/Mine per [extraction-and-improvements.md](../game/extraction-and-improvements.md)). A ready-to-run script is `ctterm/scripts/agent_tui_builder_improvement_test.sh`; run from repo root. It uses the workflow above and asserts via `agent-tui screenshot --strip-ansi` that the Production screen shows an improved tile.
+
 This automation contract ensures that any testing agent (Python, Rust, or other) can drive ctterm via `agent-tui` in a consistent way, without relying on project-internal implementation details beyond what is specified here.
 
 ---

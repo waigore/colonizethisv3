@@ -1045,7 +1045,7 @@ void main() {
       expect(prospected, isNot(contains(tileKey)));
     });
 
-    test('build_improvement work order sets currentWork', () {
+    test('build_improvement work order sets currentWork then completes when totalTurns=1', () {
       final unit = Unit(
         id: 'u1',
         type: 'Builder',
@@ -1067,6 +1067,7 @@ void main() {
             units: [unit],
           ),
           newWorld: const RegionData(),
+          resourceByTileKey: {tileKey: 'grain'},
         ),
         players: [
           Player(
@@ -1086,9 +1087,10 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       final u = next.worldState.oldWorld.units.single;
-      expect(u.currentWork, isNotNull);
-      expect(u.currentWork!.workTarget, 'build_improvement');
-      expect(u.currentWork!.remainingTurns, 1);
+      // totalTurns=1 for build_improvement at level 0, so work completes in same phase; unit is idle and tile improved.
+      expect(u.currentWork, isNull);
+      expect(u.status, UnitStatus.idle);
+      expect(next.worldState.tileState.improvementLevel(tileKey), 1);
     });
 
     test('steal_tech work order sets currentWork for Spy unit', () {
@@ -1153,7 +1155,8 @@ void main() {
       expect(spyAfter.currentWork, isNotNull);
       expect(spyAfter.currentWork!.workTarget, 'steal_tech');
       expect(spyAfter.currentWork!.totalTurns, 5);
-      expect(spyAfter.currentWork!.remainingTurns, 5);
+      // One turn processed in same phase after applying, so remainingTurns 5 -> 4.
+      expect(spyAfter.currentWork!.remainingTurns, 4);
     });
 
     test('explore work order sets currentWork when province has tiles', () {
@@ -1197,6 +1200,8 @@ void main() {
       expect(u.currentWork, isNotNull);
       expect(u.currentWork!.workTarget, 'explore');
       expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
+      // One turn processed in same phase after applying.
+      expect(u.currentWork!.remainingTurns, u.currentWork!.totalTurns - 1);
     });
 
     test('Engineer build_road work order sets currentWork', () {
@@ -1240,9 +1245,10 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       final u = next.worldState.oldWorld.units.single;
-      expect(u.currentWork, isNotNull);
-      expect(u.currentWork!.workTarget, 'build_road');
-      expect(u.currentWork!.remainingTurns, 1);
+      // build_road totalTurns=1, so work completes in same phase; unit idle and road level 1.
+      expect(u.currentWork, isNull);
+      expect(u.status, UnitStatus.idle);
+      expect(next.worldState.tileState.roadLevel(tileKey), 1);
     });
 
     test('build_port work order sets currentWork when materials sufficient',
@@ -1294,9 +1300,9 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       final u = next.worldState.oldWorld.units.single;
-      expect(u.currentWork, isNotNull);
-      expect(u.currentWork!.workTarget, 'build_port');
-      expect(u.currentWork!.remainingTurns, greaterThanOrEqualTo(1));
+      // build_port totalTurns=1, so work completes in same phase; unit idle.
+      expect(u.currentWork, isNull);
+      expect(u.status, UnitStatus.idle);
     });
 
     test('unknown work target is skipped and unit stays idle', () {
@@ -1665,8 +1671,10 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       final u = next.worldState.oldWorld.units.single;
-      expect(u.currentWork, isNotNull);
-      expect(u.currentWork!.workTarget, 'build_road');
+      // build_road totalTurns=1, so work completes in same phase; unit idle and road level 1.
+      expect(u.currentWork, isNull);
+      expect(u.status, UnitStatus.idle);
+      expect(next.worldState.tileState.roadLevel(tileKey), 1);
       for (final e in cost.entries) {
         expect(
           next.players.single.stockpile.quantityOf(e.key),
