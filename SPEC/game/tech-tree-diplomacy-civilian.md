@@ -37,7 +37,7 @@ The **Propaganda** tech effect "Decreases diplomatic penalties for declaring war
 
 - **Diplomatic Expertise:** Unlocks embassy overture and allows civilian units to work in Minor Nations with embassy.
 - **Merchant Companies:** Unlocks building Merchant civilian unit. **Purchasing land** (Merchant `purchase_land` work order) in a Minor Nation or Tribe requires Merchant Companies **and** an **embassy** with that Minor/Tribe (see [diplomacy.md](diplomacy.md), [civilian-units.md](civilian-units.md)).
-- **Empire Building:** Unlocks Join Empire (GP can ask another GP to join when nearly defeated). See [diplomacy.md](diplomacy.md).
+- **Empire Building:** Unlocks Join Empire (GP can ask another GP to join when that target is **nearly defeated** as defined in [diplomacy.md](diplomacy.md) — three or fewer provinces remaining and original capital lost). See [diplomacy.md](diplomacy.md).
 
 ---
 

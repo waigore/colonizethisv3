@@ -26,6 +26,15 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 - **Alliances:** Offer/accept between GPs. Mutual defence: when ally is attacked, the other receives a demand to join; refusal breaks the alliance with relation penalties. Joining an ally's offensive war is optional; no penalty for refusing.
 - **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
 
+#### Nearly defeated (GP target)
+
+For MVP, a Great Power is treated as **nearly defeated** when **both** of the following are true:
+
+- The target currently owns **three or fewer provinces** in total (Old World + New World combined; count is based on current world state, not starting setup).
+- The target **no longer controls its original capital province** (its `capitalProvinceId` in world state is not owned by that faction at the time the Join Empire overture is resolved).
+
+When these conditions hold, other Great Powers that meet the tech and overture requirements may offer **Join Empire** to that target.
+
 ### GP–Minor Rules
 
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
@@ -116,7 +125,6 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
   When the system decides that the AI Great Power **will not intervene** based on the relation-score-driven probability  
   Then the system does not change the relation state or relation score between that AI Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between that AI Great Power and that Minor from the game state.
-
 - Given the Player controls a Great Power with a Non-Aggression Pact overture with a target Minor Nation or Tribe, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
   When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor or Tribe in the Diplomacy phase and the order is valid  
   Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation or Tribe from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
@@ -128,6 +136,9 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the Player controls a Great Power at relation state `AT_WAR` with a target Minor Nation or Tribe in turn `t` and the Player has at least the Consulate or Embassy cost in treasury  
   When the Player issues an `Establish Overture` diplomatic order targeting that Minor or Tribe in the Diplomacy phase of turn `t`  
   Then the system treats that order as **invalid** for the current turn, does **not** create or advance any overture state between those factions, and does **not** deduct any overture cost from the Player’s treasury for that order.
+- Given the Player controls a Great Power A and there is a target Great Power B such that B currently owns three or fewer provinces in total, B does **not** own its original capital province (its `capitalProvinceId` in world state is owned by some other faction), and A has unlocked the `empire_building` tech and is not at war with B  
+  When the Player issues a `Join Empire` diplomatic order targeting B in the Diplomacy phase and all other Join Empire preconditions are satisfied  
+  Then the system treats B as **nearly defeated**, accepts the `Join Empire` order as valid, and resolves it per the Join Empire rules (absorbing B’s remaining provinces, units, and fleets into A and removing B from the game).
 
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
