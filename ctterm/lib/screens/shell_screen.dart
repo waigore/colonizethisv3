@@ -46,6 +46,7 @@ class ShellScreen extends StatefulComponent {
     this.runGeneration,
     this.onTurnProcessed,
     this.onOrdersChanged,
+    this.onCancelUnitWork,
     this.onGameEvent,
     this.onGameUpdated,
     this.onClearGame,
@@ -76,6 +77,8 @@ class ShellScreen extends StatefulComponent {
   final void Function(Game)? onTurnProcessed;
   /// Callback when orders are changed in a panel.
   final void Function(Orders)? onOrdersChanged;
+  /// Callback to cancel a unit's in-progress work (Development screen). SPEC/tui/screens/development.md.
+  final void Function(String unitId)? onCancelUnitWork;
   /// Game events to display to the user (from turn processing).
   final List<GameEvent>? gameEvents;
   /// Callback to receive game events (combat, diplomacy, research, victory, etc.).
@@ -278,6 +281,7 @@ class _ShellScreenState extends State<ShellScreen> {
           onOrdersChanged: (Orders orders) {
             component.onOrdersChanged?.call(orders);
           },
+          onCancelUnitWork: component.onCancelUnitWork,
         );
       case CttermRoute.production:
         return ProductionScreen(

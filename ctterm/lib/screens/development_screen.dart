@@ -56,6 +56,7 @@ class DevelopmentScreen extends StatefulComponent {
     this.tileMapByRegion,
     required this.onNavigate,
     required this.onOrdersChanged,
+    this.onCancelUnitWork,
   });
 
   /// Current game state (required for unit data).
@@ -67,6 +68,8 @@ class DevelopmentScreen extends StatefulComponent {
   final void Function(CttermRoute) onNavigate;
   /// Callback when orders are changed (to propagate to game).
   final void Function(Orders) onOrdersChanged;
+  /// Callback to clear a unit's in-progress work (currentWork). SPEC/tui/screens/development.md § Cancel Work Order.
+  final void Function(String unitId)? onCancelUnitWork;
 
   @override
   State<DevelopmentScreen> createState() => _DevelopmentScreenState();
@@ -184,6 +187,11 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     return _getWorkOrderForUnit(unitId) != null;
   }
 
+  /// True if unit has work to cancel: pending order or in-progress currentWork.
+  bool _unitHasWork(Unit unit) {
+    return _getWorkOrderForUnit(unit.id) != null || unit.currentWork != null;
+  }
+
   /// Handle keyboard input.
   // Type is inferred from Nocterm's Focusable.onKeyEvent callback
   // ignore: strict_top_level_inference
@@ -257,10 +265,12 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return true;
     }
 
-    // x: cancel work order for selected unit (from idle mode only)
+    // x: cancel work order for selected unit (from idle mode only, when unit has work)
     if (_inputMode == _DevelopmentInputMode.idle && c == 'x') {
       final unit = units[_selectedIndex];
-      _cancelWorkOrder(unit.id);
+      if (_unitHasWork(unit)) {
+        _cancelWorkOrder(unit);
+      }
       return true;
     }
 
@@ -547,14 +557,14 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     _log.d('tui:development: assigned $target to unit ${unit.id}');
   }
 
-  /// Cancel a work order for a unit.
-  void _cancelWorkOrder(String unitId) {
+  /// Cancel work for a unit: remove pending order and/or clear in-progress currentWork.
+  void _cancelWorkOrder(Unit unit) {
+    final unitId = unit.id;
     final playerId = _getHumanPlayerId();
     if (playerId == null) return;
 
     final existingOrders = component.orders.workOrdersByPlayerId[playerId] ?? [];
     final updatedOrders = existingOrders.where((o) => o.unitId != unitId).toList();
-    
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
       buildUnitOrdersByPlayerId: component.orders.buildUnitOrdersByPlayerId,
@@ -567,8 +577,11 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       navalMoveOrdersByPlayerId: component.orders.navalMoveOrdersByPlayerId,
       navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
     );
-
     component.onOrdersChanged(newOrders);
+
+    if (unit.currentWork != null) {
+      component.onCancelUnitWork?.call(unitId);
+    }
     
     setState(() {
       _feedbackMessage = 'Work order cancelled (no refund)';
@@ -604,6 +617,51 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     final byProvince = <String, List<String>>{};
 
+    // Per-player tile exclusivity (Builder, Engineer, Merchant) — match core logic:
+    // exclude tiles that already have active or newly assigned development/purchase
+    // work for this player so the UI does not offer invalid targets.
+    final reservedTiles = <String>{};
+
+    // Existing multi-turn work (currentWork) for Builder/Engineer/Merchant units.
+    bool _isDevExclusiveUnitType(String type) =>
+        type == 'Builder' || type == 'Engineer' || type == 'Merchant';
+
+    for (final u in world.oldWorld.units) {
+      final w = u.currentWork;
+      if (u.ownerId == playerId &&
+          _isDevExclusiveUnitType(u.type) &&
+          w != null &&
+          w.tileKey.isNotEmpty) {
+        reservedTiles.add(w.tileKey);
+      }
+    }
+    for (final u in world.newWorld.units) {
+      final w = u.currentWork;
+      if (u.ownerId == playerId &&
+          _isDevExclusiveUnitType(u.type) &&
+          w != null &&
+          w.tileKey.isNotEmpty) {
+        reservedTiles.add(w.tileKey);
+      }
+    }
+
+    // Pending work orders for this player for dev-exclusive targets.
+    bool _isDevExclusiveTarget(String t) =>
+        t == 'build_improvement' ||
+        t == 'upgrade_town' ||
+        t == 'build_road' ||
+        t == 'build_port' ||
+        t == 'build_fort' ||
+        t == 'purchase_land';
+
+    final existingOrders =
+        component.orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
+    for (final w in existingOrders) {
+      if (_isDevExclusiveTarget(w.target)) {
+        reservedTiles.add(w.targetTileKey);
+      }
+    }
+
     void addProvinceTiles(List<Province> provinces) {
       for (final prov in provinces) {
         if (prov.ownerId != playerId) {
@@ -618,6 +676,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         final tileMap = component.tileMapByRegion?[regionId];
         final list = <String>[];
         for (final tk in provTiles) {
+          if (reservedTiles.contains(tk)) {
+            continue;
+          }
           // Only fully-visible tiles.
           final vis = visibilityByPlayer?[tk];
           if (vis != 'fullyVisible') {
@@ -696,6 +757,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     }
     if (workOrder != null && workOrder.targetTileKey.isNotEmpty) {
       return workOrder.targetTileKey;
+    }
+    if (unit.currentWork != null && unit.currentWork!.tileKey.isNotEmpty) {
+      return unit.currentWork!.tileKey;
     }
     return null;
   }
@@ -875,13 +939,13 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
               itemBuilder: (context, index) {
                 final unit = units[index];
                 final isSelected = index == _selectedIndex;
-                final hasWork = _unitHasWorkOrder(unit.id);
+                final hasWork = _unitHasWork(unit);
                 final workOrder = _getWorkOrderForUnit(unit.id);
+                final workTargetName = workOrder != null
+                    ? _getWorkTargetName(workOrder.target)
+                    : (unit.currentWork != null ? _getWorkTargetName(unit.currentWork!.workTarget) : null);
                 
-                String status = 'idle';
-                if (hasWork && workOrder != null) {
-                  status = _getWorkTargetName(workOrder.target);
-                }
+                final status = workTargetName ?? 'idle';
                 
                 final bg = isSelected ? const Color(0xFF2a2a4e) : null;
                 final fg = isSelected ? Colors.white : Colors.gray;
@@ -960,11 +1024,11 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           _buildDetailRow('Unit ID', unit.id),
           _buildDetailRow('Location', _getProvinceName(unit)),
           _buildDetailRow('Type', _isCivilianUnit(unit) ? 'Civilian' : 'Military'),
-          _buildDetailRow('Status', workOrder != null ? 'Working' : 'Idle'),
-          if (workOrder != null) ...[
+          _buildDetailRow('Status', (workOrder != null || unit.currentWork != null) ? 'Working' : 'Idle'),
+          if (workOrder != null || unit.currentWork != null) ...[
             const SizedBox(height: 1),
-            _buildDetailRow('Work Target', _getWorkTargetName(workOrder.target)),
-            _buildDetailRow('Target Tile', _formatTileLabel(workOrder.targetTileKey)),
+            _buildDetailRow('Work Target', _getWorkTargetName(workOrder?.target ?? unit.currentWork!.workTarget)),
+            _buildDetailRow('Target Tile', _formatTileLabel(workOrder?.targetTileKey ?? unit.currentWork!.tileKey)),
           ],
           const SizedBox(height: 1),
           // Lower area: split horizontally between text lists (available work

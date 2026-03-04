@@ -331,6 +331,40 @@ class OrderEngine {
     final unitsById = {for (final u in game.worldState.oldWorld.units) u.id: u}
       ..addAll({for (final u in game.worldState.newWorld.units) u.id: u});
 
+    bool _isDevExclusiveUnitType(String type) =>
+        type == 'Builder' || type == 'Engineer' || type == 'Merchant';
+
+    bool _isDevExclusiveTarget(String target) =>
+        target == 'build_improvement' ||
+        target == 'upgrade_town' ||
+        target == 'build_road' ||
+        target == 'build_port' ||
+        target == 'build_fort' ||
+        target == 'purchase_land';
+
+    // Per-player tile exclusivity (SPEC/game/civilian-units.md, SPEC/program/orders.md):
+    // track tiles already reserved by this player's Builder/Engineer/Merchant work
+    // (existing multi-turn currentWork and newly accepted work orders in this validation pass).
+    final devExclusiveTiles = <String>{};
+    for (final u in game.worldState.oldWorld.units) {
+      final w = u.currentWork;
+      if (u.ownerId == playerId &&
+          _isDevExclusiveUnitType(u.type) &&
+          w != null &&
+          w.tileKey.isNotEmpty) {
+        devExclusiveTiles.add(w.tileKey);
+      }
+    }
+    for (final u in game.worldState.newWorld.units) {
+      final w = u.currentWork;
+      if (u.ownerId == playerId &&
+          _isDevExclusiveUnitType(u.type) &&
+          w != null &&
+          w.tileKey.isNotEmpty) {
+        devExclusiveTiles.add(w.tileKey);
+      }
+    }
+
     bool _ownerIsGreatPower(String? ownerId) {
       if (ownerId == null) return false;
       return game.players.any((p) => p.id == ownerId);
@@ -692,6 +726,17 @@ class OrderEngine {
         }
       }
 
+      // Per-player tile exclusivity: at most one Builder/Engineer/Merchant work stream
+      // per player per tile in a turn.
+      if (_isDevExclusiveUnitType(type) &&
+          _isDevExclusiveTarget(o.target) &&
+          devExclusiveTiles.contains(o.targetTileKey)) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Tile already has development or purchase work for this player',
+        );
+      }
+
       // Cost validation: materials for build_* and upgrade_town; treasury for purchase_land already checked above
       if (o.target != 'steal_tech' &&
           o.target != 'counter_spy' &&
@@ -733,6 +778,12 @@ class OrderEngine {
             status: OrderValidationStatus.rejected,
             reason: 'Province or tile not visible for this work');
       }
+
+      if (_isDevExclusiveUnitType(type) &&
+          _isDevExclusiveTarget(o.target)) {
+        devExclusiveTiles.add(o.targetTileKey);
+      }
+
       return const OrderValidationResult(
           status: OrderValidationStatus.accepted);
     }
