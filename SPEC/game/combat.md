@@ -6,7 +6,7 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 ## Rules
 
-**Trigger:** A unit's move ending in an enemy-owned province constitutes an attack. Only Great Powers initiate; Minor Nations and Tribes defend only.
+**Trigger:** A unit's move ending in an enemy-owned province constitutes an attack. Only Great Powers initiate; Minor Nations and Tribes defend only. Province ids used in conflict detection, battle context construction, and combat resolution follow [world-model-identity.md](world-model-identity.md): all province ids are the prefixed `regionId|localId` form, not bare local ids.
 
 **Attacker / Defender:** Attacker = faction that moved in. Defender = province owner (tie-break: lowest faction id). One defender per province; multiple attackers possible.
 
@@ -72,15 +72,29 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 | Parameter | Default | Notes |
 |---|---|---|
-| W_cav | 1.0 | Initiative cavalry weight — **CLARIFICATION NEEDED:** verify against Imperialism II |
-| W_medal | 0.5 | Initiative medal weight — **CLARIFICATION NEEDED:** verify against Imperialism II |
+| W_cav | 50.0 | Initiative cavalry weight; tuned to make high-cavalry forces reliably win initiative. Matches `initiativeCavalryShareWeight` in `combat_config.dart`. |
+| W_medal | 10.0 | Initiative medal weight; tuned so each general medal gives a noticeable but smaller boost than full cavalry share. Matches `initiativeGeneralMedalWeight` in `combat_config.dart`. |
 | Medal multipliers | 1.0 / 1.1 / 1.2 / 1.3 / 1.4 | Per medal level 0–4 |
 | DEF divisor | 9 | Durability scaling |
 | Recovery % | 20% (ceil) | Mutual-annihilation garrison |
-| Feeding modifiers | 1.0 / 0.75 / 0.5 | Coverage ≥ 1.0 / 0.5–1.0 / < 0.5 |
+| Feeding modifiers | 1.0 / 0.75 / 0.5 | Coverage ≥ 1.0 / 0.5–1.0 / < 0.5; implemented via morale multiplier and **adopted as the intended rule** (no open question). |
 | Terrain modifiers | Per terrain type | In ruleset config |
 | Fort modifiers | Per fort level 0–3 | In ruleset config |
 | Difficulty modifiers | Per difficulty level | In ruleset config |
+
+### Auto-resolve ratio bands and loss fractions
+
+Auto-resolve currently uses deterministic ratio bands and loss fractions to select a winner and assign casualties when resolving engagements by strength ratio:
+
+| Ratio band (attacker strength ÷ defender strength after modifiers) | Attacker morale relative to defender | Attacker loss fraction | Defender loss fraction | Outcome when both sides lose all regiments |
+|---|---|---|---|---|
+| `ratio >= 1.5` and `< 4.0` | Attacker has **lower** morale | 0.6 | 0.4 | Attacker victory is **blunted**: if all defending regiments are eliminated, result is a stalemate rather than attacker victory. |
+| `ratio >= 1.5` | Any (including higher/equal morale) | 0.15 | 1.0 | Attacker victory (defender eliminated) if both sides lose all regiments. |
+| `ratio <= 0.67` | Any | 1.0 | 0.15 | Defender victory if both sides lose all regiments. |
+| `1.0 <= ratio < 1.5` | Any | 0.3 | 0.6 | Attacker victory if both sides lose all regiments. |
+| `0.67 < ratio < 1.0` | Any | 0.5 | 0.4 | Stalemate if both sides lose all regiments. |
+
+Casualty counts are derived by applying these loss fractions to the number of deployed regiments on each side (with ceilings and clamping), and casualties are selected from the deployed regiment lists in deterministic order.
 
 ## Interactions
 
@@ -88,11 +102,10 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 - Siege rules: [siege-mechanics.md](siege-mechanics.md)
 - Factions / minor parity: [factions.md](factions.md)
 - Ruleset config: [ruleset-config.md](ruleset-config.md)
+- Province identity and lookup: [world-model-identity.md](world-model-identity.md) — defines the `regionId|localId` prefixed province id format used by conflict detection, BattleContext, and combat resolution.
 - Resolution pipeline: [../program/combat-resolution.md](../program/combat-resolution.md)
 
 ## Open Questions
 
-1. W_cav / W_medal values — Imp2 confirms factors, no numeric weights.
-2. FPN + FPM blending — simple sum or range/melee phase weighting.
-3. Auto-resolve formula details: (a) strength ratio → winner, (b) casualties from differential + DEF/9, (c) unit-by-unit vs proportional casualties.
-4. Feeding modifier — provisional; Imp2 has no unfed penalty. Confirm mechanic and thresholds.
+1. FPN + FPM blending — **Owner decision:** For the current auto-resolve implementation we use simple `FPN + FPM` aggregation per regiment (with medal multiplier and global modifiers) as described above. If we later introduce explicit ranged/melee phases, this blending rule MAY be revisited and moved into the ruleset as a configurable weighting between phases.
+2. Auto-resolve formula future evolution — **Owner decision:** The ratio bands and loss fractions documented above are the single source of truth for the current implementation. Future changes (for example, modelling DEF/9 durability and damaged-unit health scaling explicitly) MUST update this section and corresponding tests but do not block the current implementation.

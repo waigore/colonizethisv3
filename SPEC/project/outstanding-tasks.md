@@ -39,8 +39,8 @@ No outstanding P0 tasks.
 |-------------------|----------------|--------|
 | Wall damage reduction percentages | `siege-mechanics.md` | **Done** — 0/25/45/60% in combat_config, combat_resolver |
 | Emplaced artillery resolution | `siege-mechanics.md` | **Done** — fortGunCount, wallHp in resolver |
-| Gates and sortie logic | `siege-mechanics.md` | Spec clarified; deferred to future tactical expansion |
-| Units on/behind wall behavior | `siege-mechanics.md` | Spec clarified; deferred to future tactical expansion |
+| Gates and sortie logic | `siege-mechanics.md` (Gates and Sortie; deferred to future tactical expansion) | Spec clarified; deferred to future tactical expansion |
+| Units on/behind wall behavior | `siege-mechanics.md` (Gates and Sortie; deferred to future tactical expansion) | Spec clarified; deferred to future tactical expansion |
 
 **Referenced specs:**
 - [SPEC/game/siege-mechanics.md](SPEC/game/siege-mechanics.md)
@@ -50,8 +50,8 @@ No outstanding P0 tasks.
 1. ~~Define exact damage reduction percentages in spec~~ — **Done.** 0/25/45/60% in combat_config, combat_resolver.
 2. ~~Implement wall HP and breach mechanics in `CombatResolver`~~ — **Done.** wallHpByFortLevel, fortGunCount in resolver.
 3. ~~Implement emplaced artillery fire during siege (bonus to defender)~~ — **Done.** Emplaced artillery resolution in resolver.
-4. Implement gate mechanics — units can sortie/retreat through gates (deferred to future tactical expansion)
-5. Implement "units on wall" vs "units behind wall" targeting rules (deferred to future tactical expansion)
+4. Implement gate mechanics — units can sortie/retreat through gates (deferred to future tactical expansion per `siege-mechanics.md` § Gates and Sortie)
+5. Implement "units on wall" vs "units behind wall" targeting rules (deferred to future tactical expansion per `siege-mechanics.md` § Gates and Sortie)
 6. Update combat mode selection to use siege rules when `fortLevel >= 1` (as needed)
 
 **Acceptance criteria:** Done when combat resolution uses fortLevel for damage reduction and wall HP; tests assert percentages and wall HP by level; gates/sortie and on-wall vs behind-wall behavior remain deferred per spec.
@@ -149,6 +149,8 @@ No outstanding P0 tasks.
 ### Task: Complete Diplomacy Full Actions
 
 **Gap:** `DiplomacyResolver` exists but many diplomatic actions are incomplete:
+
+**Prerequisite:** Resolve [#233](https://github.com/waigore/colonizethisv3/issues/233) so the diplomacy phase receives `diplomaticOrdersByPlayerId` (OrderEngine/turn filter must pass diplomatic orders into turn resolution); otherwise player diplomacy actions cannot be exercised.
 
 | Missing Action | Spec Reference | Status |
 |----------------|----------------|--------|
