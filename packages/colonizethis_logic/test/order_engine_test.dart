@@ -1439,6 +1439,7 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
             // Tile is fully visible so visibility is not the rejecting reason.
             playerVisibilityByTile: const {
               'p1': {tileKey: 'fullyVisible'},

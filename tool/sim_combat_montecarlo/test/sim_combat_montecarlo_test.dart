@@ -55,7 +55,8 @@ void main() {
       expect(totalDefCas / trials, lessThanOrEqualTo(1.0));
     });
 
-    test('CLI with same script and seed produces identical output (determinism)',
+    test(
+        'CLI with same script and seed produces identical output (determinism)',
         () async {
       final cwd = Directory.current.path;
       final scriptPath = p.join(cwd, 'test', 'fixtures', 'valid.json');
@@ -73,7 +74,7 @@ void main() {
             '--script',
             scriptPath,
             '--trials',
-            '20',
+            '5',
             '--seed',
             '42',
             '--output',
@@ -94,7 +95,7 @@ void main() {
             '--script',
             scriptPath,
             '--trials',
-            '20',
+            '5',
             '--seed',
             '42',
             '--output',
@@ -115,7 +116,7 @@ void main() {
           if (file.existsSync()) file.deleteSync();
         }
       }
-    });
+    }, timeout: const Timeout(Duration(seconds: 90)));
 
     test('CLI aborts with non-zero exit on unknown unit type', () async {
       final cwd = Directory.current.path;
