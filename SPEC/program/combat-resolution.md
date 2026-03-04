@@ -6,7 +6,7 @@ Conflict detection, auto-resolve pipeline, and application of combat outcomes to
 
 ## Data Model
 
-**BattleContext:** Province id, defender side (faction id + unit ids), list of attacking sides (each: faction id + unit ids + optional general id), battle type (field / siege), province terrain and fort level snapshot.
+**BattleContext:** Province id, defender side (faction id + unit ids), list of attacking sides (each: faction id + unit ids + optional general id), battle type (field / siege), province terrain and fort level snapshot. Province ids in BattleContext and in all conflict-detection inputs (unit locations, move-order destinations) are always the **prefixed** form `regionId|localId` per [../game/world-model-identity.md](../game/world-model-identity.md); conflict detection and resolution MUST NOT use bare local province ids.
 
 **EngagementResult:** Winner side (attacker / defender / stalemate / mutual annihilation), casualty unit ids per side.
 
@@ -22,7 +22,7 @@ For each province with units from multiple factions:
 2. Determine defender and attacker sides per game/combat.md § Rules (Attacker / Defender).
 3. If ≥ 1 attacker and a defender exist, create a BattleContext.
 
-**Output:** List of BattleContexts, ordered deterministically by province id.
+**Output:** List of BattleContexts, ordered deterministically by province id (the prefixed `regionId|localId` form).
 
 ### 2. Initiative Ordering
 
@@ -89,5 +89,5 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 
 - Resolver is a pure function: same inputs (including seed) → same output.
 - No global RNG access; callers provide explicit seed when randomness is needed.
-- Province battles are independent; processing order is deterministic (province id).
+- Province battles are independent; processing order is deterministic (prefixed province id `regionId|localId`).
 - Results applied in a single pass after full chain resolution per BattleContext.

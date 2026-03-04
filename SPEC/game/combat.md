@@ -6,7 +6,7 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 ## Rules
 
-**Trigger:** A unit's move ending in an enemy-owned province constitutes an attack. Only Great Powers initiate; Minor Nations and Tribes defend only.
+**Trigger:** A unit's move ending in an enemy-owned province constitutes an attack. Only Great Powers initiate; Minor Nations and Tribes defend only. Province ids used in conflict detection, battle context construction, and combat resolution follow [world-model-identity.md](world-model-identity.md): all province ids are the prefixed `regionId|localId` form, not bare local ids.
 
 **Attacker / Defender:** Attacker = faction that moved in. Defender = province owner (tie-break: lowest faction id). One defender per province; multiple attackers possible.
 
@@ -102,6 +102,7 @@ Casualty counts are derived by applying these loss fractions to the number of de
 - Siege rules: [siege-mechanics.md](siege-mechanics.md)
 - Factions / minor parity: [factions.md](factions.md)
 - Ruleset config: [ruleset-config.md](ruleset-config.md)
+- Province identity and lookup: [world-model-identity.md](world-model-identity.md) — defines the `regionId|localId` prefixed province id format used by conflict detection, BattleContext, and combat resolution.
 - Resolution pipeline: [../program/combat-resolution.md](../program/combat-resolution.md)
 
 ## Open Questions
