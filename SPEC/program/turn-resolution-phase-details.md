@@ -54,7 +54,7 @@ Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship 
 
 ## Naval Interception & Naval Combat
 
-(1) Resolve patrol/blockade interceptions, trade/transport raids, conflicts between hostile fleets per [naval-movement-resolution.md](naval-movement-resolution.md). (2) For contested sea zones: build BattleContextSea; resolve per [naval-combat-resolution.md](naval-combat-resolution.md); update fleet compositions and locations. (3) Beachhead fleets resolved before associated land invasions.
+(1) Resolve patrol/blockade interceptions, trade/transport raids, conflicts between hostile fleets per [naval-movement-resolution.md](naval-movement-resolution.md). (2) For contested sea zones: build BattleContextSea; resolve per [naval-combat-resolution.md](naval-combat-resolution.md); update fleet compositions and locations. (3) Beachhead fleets resolved before associated land invasions; when a fleet successfully completes a `Beachhead` mission against a hostile coastal province, the System records a **beachhead marker** for that province that lasts for exactly the next turn and is consulted by land movement/combat resolution to permit associated coastal invasions; after that turn's invasions resolve (or if no invasions occur), the marker is removed.
 
 ---
 

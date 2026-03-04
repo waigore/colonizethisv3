@@ -17,7 +17,7 @@ Each fleet can either **move** or perform **one mission** per turn, never both:
 - **Move:** P<->S or S<->S along topology edges; resolves in the Movement phase.
 - **Patrol:** Fleet remains in its current sea zone and attempts to **intercept hostile fleets** moving through that sea zone (including enemy patrols/blockaders).
 - **Blockade:** Fleet targets a specific enemy port in its sea zone and attempts to **intercept hostile fleets entering or leaving that port**; higher interception chance than Patrol, but no reach to other ports or zones.
-- **Beachhead:** Fleet establishes a landing site on a hostile coastal province, enabling overseas invasion on the following turn; the fleet is exposed to interception while on beachhead duty.
+- **Beachhead:** Fleet establishes a landing site on a hostile coastal province, enabling overseas invasion on the following turn; the fleet is exposed to interception while on beachhead duty. A beachhead is **valid for exactly one full turn after it is created**: during the next turn's Movement and Combat phases, land units of the same faction may invade that province from eligible adjacent tiles or sea zones; after the associated invasion is resolved (or if no invasion occurs that turn), the beachhead marker for that province expires.
 - **Defend (no mission):** Fleet stays in place and avoids actively seeking combat; it can still be attacked or drawn into combat if enemy fleets patrol/blockade the same zone.
 
 Mission choice is per fleet and stored with the fleet state; details of interception and retreat are specified below and in [naval-movement-resolution.md](../program/naval-movement-resolution.md).
@@ -145,6 +145,11 @@ Only **home fleet** ships (in the capital port sea zone) carry a faction's trans
 - Patrolling or blockading fleets in relevant sea zones can intercept **cargo** (reducing delivered quantities) and **civilian ships** (higher vulnerability than warships).
 - Escorts: warships accompanying the home fleet reduce both cargo and ship loss probabilities.
 
+For trade/transport interception:
+
+- **escortStrength** is defined as the sum of `HULL` values for all **warships** assigned as escorts to the home fleet's transport route during Extraction/Trade.
+- **cargoStrength** is defined as the sum of `HULL` values for all **merchant ships** in the home fleet that are carrying overseas cargo during Extraction/Trade.
+
 Escort protection
 
 ```
@@ -173,7 +178,7 @@ raidEfficiency = 0.3 to 0.7 depending on relative strength
 
 - Given a fleet is assigned one of the missions `Move`, `Patrol`, `Blockade`, `Beachhead`, or `Defend` for a turn and the naval movement resolver runs per [naval-movement-resolution.md](../program/naval-movement-resolution.md)  
   When the System processes that fleet’s orders  
-  Then the System either moves the fleet along valid P–S or S–S edges for `Move`, leaves it in place and evaluates interception chances for `Patrol` and `Blockade` using the base and modified probabilities in the interception table, or treats it as stationary and vulnerable for `Beachhead` and `Defend` while still allowing it to be attacked by enemy fleets in the same sea zone.
+  Then the System either moves the fleet along valid P–S or S–S edges for `Move`, leaves it in place and evaluates interception chances for `Patrol` and `Blockade` using the base and modified probabilities in the interception table, or treats it as stationary and vulnerable for `Beachhead` and `Defend` while still allowing it to be attacked by enemy fleets in the same sea zone, and for `Beachhead` additionally marks the targeted hostile coastal province with a one-turn beachhead that permits associated land invasions during the next turn before expiring.
 
 - Given two opposing fleets with known ship stats (FRP, RNG, ARM, HULL, MV) and medals occupy the same sea zone and a naval battle is triggered  
   When the System computes naval combat strength and resolves the battle  
@@ -181,4 +186,12 @@ raidEfficiency = 0.3 to 0.7 depending on relative strength
 
 - Given a Great Power’s home fleet carries overseas cargo during Extraction/Trade and hostile fleets at war with that Great Power are patrolling or blockading relevant sea zones  
   When the System resolves overseas transport and trade for that turn  
-  Then the System uses the interception probabilities and escort protection formulas in this document to determine whether cargo and civilian ships are lost, reduces delivered quantities and ship counts accordingly, and applies at most the documented maximum loss reduction from escorts.
+  Then the System uses the interception probabilities and escort protection formulas in this document (including the definitions of `escortStrength` and `cargoStrength`) to determine whether cargo and civilian ships are lost, reduces delivered quantities and ship counts accordingly, and applies at most the documented maximum loss reduction from escorts.
+
+---
+
+## Testing Approach
+
+- **Unit tests:** Cover naval strength aggregation, retreat probability, interception probability, and the trade/transport interception formulas (including use of `escortStrength` and `cargoStrength`) with deterministic inputs and expected outputs.
+- **Integration tests:** Use sim_game or focused scenarios to verify ship reveal on movement into a sea zone, mission handling (Move/Patrol/Blockade/Beachhead/Defend), one-turn beachhead lifecycle and its interaction with land invasions, and trade/transport raids during Extraction/Trade.
+- **Scenario tests:** Construct scenario data for edge cases (e.g. minimal escorts, overwhelming escorts, symmetric and asymmetric naval strength) to validate that interception and raid outcomes remain within documented clamps and respect war/peace conditions.

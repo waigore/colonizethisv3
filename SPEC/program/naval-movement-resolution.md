@@ -42,9 +42,10 @@ During Extraction/Trade phase, overseas cargo on home-fleet ships may be raided.
 
 1. Only evaluated when intercepting faction is at war with home fleet owner.
 2. Compute `base` as above. Civilian-only targets may receive a `civilianTargetBonus` (e.g. ×1.25–1.5).
-3. `P_cargo_intercept = clamp(1.2 × base, 0.1, 0.9)`.
-4. `P_ship_sunk = clamp(0.4 × base, 0.02, 0.5)`.
-5. Reduce delivered quantities; remove sunk merchant ships from home fleet.
+3. Compute `escortStrength` and `cargoStrength` exactly as defined in [ships-and-naval.md](../game/ships-and-naval.md) and derive `escortFactor` from the documented `lossReduction` formula.
+4. `P_cargo_intercept = clamp(1.2 × base × (1 - escortFactor), 0.1, 0.9)`.
+5. `P_ship_sunk = clamp(0.4 × base × (1 - escortFactor), 0.02, 0.5)`.
+6. Reduce delivered quantities; remove sunk merchant ships from home fleet.
 
 **Build Ship:**
 
