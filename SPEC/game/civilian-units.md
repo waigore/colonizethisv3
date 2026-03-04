@@ -57,6 +57,16 @@ Spy does not have explore/prospect; Spy's garrison reveal is handled by visibili
 - **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves, the province returns to fogged after 5 turns (turn timer). (2) **steal_tech:** WorkOrder target = other GP's **capital province**; up to 5 turns; 8% per turn to steal a random tech the player does not have; completion or expiry clears work. (3) **counter_spy:** WorkOrder target = any **owned** province; each friendly Spy in that province adds 5% per turn (capped 30%) chance to kill an enemy Spy there. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner.
 - **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury); requires **embassy** with that Minor/Tribe. Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
 
+---
+
+### Per-player tile exclusivity (Builder, Engineer, Merchant)
+
+- **Rule:** For a given **player** and **tile** (`targetTileKey`), at most **one** of that player's **Builder**, **Engineer**, or **Merchant** units may have **active or newly assigned** work targeting that tile in a turn. This applies to:
+  - Multi-turn development work (`build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`) on owned tiles.
+  - Tile-level **purchase_land** work by Merchants on Minor/Tribe tiles.
+  - Both existing `Unit.currentWork` (multi-turn work already in progress) and newly submitted `WorkOrder`s for the same tile in the current turn.
+- **Scope:** This exclusivity is **per player** only — other factions may still have their own development or purchase work on the same tile when game rules allow them to be present there. Explorers, Spies, and Rail Builders are **not** subject to this exclusivity rule.
+
 Multi-turn progress for all civilian work is tracked in the model and resolved during the Build/Work phase; `Unit.status` is **idle** or **working** only (on completion, status is set to idle). See [orders.md](../program/orders.md) and [development-resolution.md](../program/development-resolution.md).
 
 ---
@@ -102,6 +112,14 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
 - Given the system resolves the Build/Work phase for all civilians in a turn  
   When it completes processing of all active `WorkOrder`s for that turn  
   Then every civilian unit has `status` equal to either `idle` or `working` (no other values), with `working` only for units that still have an active, incomplete multi-turn `WorkOrder`.
+
+- Given a player controls at least one Builder, Engineer, or Merchant unit and any of those units already has active multi-turn `currentWork` whose `tileKey` is `T`  
+  When the player submits a new `WorkOrder` for any of their Builder, Engineer, or Merchant units with `targetTileKey = T` in the same turn  
+  Then the system rejects the new work order during validation with a reason that clearly indicates the tile already has development or purchase work for that player, and the new order is not added to that player's `workOrdersByPlayerId`.
+
+- Given a player submits multiple `WorkOrder`s in the same turn for their Builder, Engineer, or Merchant units where two or more of those work orders have `targetTileKey` equal to the same tile `T`  
+  When the system validates that player's work orders in submission order  
+  Then the first valid work order for tile `T` may be accepted, and every subsequent Builder/Engineer/Merchant work order for tile `T` from that player in that turn is rejected with a reason indicating per-player tile exclusivity.
 
 ---
 

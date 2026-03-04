@@ -188,6 +188,57 @@ class _CttermAppState extends State<CttermApp> {
     setState(() => _currentOrders = orders);
   }
 
+  /// Clears in-progress work for a unit (Development screen cancel). SPEC/tui/screens/development.md § Cancel Work Order.
+  void _cancelUnitWork(String unitId) {
+    final game = _currentGame;
+    if (game == null) return;
+    final ws = game.worldState;
+    Unit? found;
+    String? region;
+    for (final u in ws.oldWorld.units) {
+      if (u.id == unitId) {
+        found = u;
+        region = 'oldWorld';
+        break;
+      }
+    }
+    if (found == null) {
+      for (final u in ws.newWorld.units) {
+        if (u.id == unitId) {
+          found = u;
+          region = 'newWorld';
+          break;
+        }
+      }
+    }
+    if (found == null || found.currentWork == null) return;
+    final updated = found.copyWith(
+      clearCurrentWork: true,
+      status: UnitStatus.idle,
+    );
+    final newUnits = region == 'oldWorld'
+        ? ws.oldWorld.units
+            .map((u) => u.id == unitId ? updated : u)
+            .toList()
+        : ws.oldWorld.units;
+    final newWorldUnits = region == 'newWorld'
+        ? ws.newWorld.units
+            .map((u) => u.id == unitId ? updated : u)
+            .toList()
+        : ws.newWorld.units;
+    final newRegion = region == 'oldWorld'
+        ? RegionData(provinces: ws.oldWorld.provinces, units: newUnits)
+        : ws.oldWorld;
+    final newNwRegion = region == 'newWorld'
+        ? RegionData(provinces: ws.newWorld.provinces, units: newWorldUnits)
+        : ws.newWorld;
+    final newGame = game.copyWith(
+      worldState: ws.copyWith(oldWorld: newRegion, newWorld: newNwRegion),
+    );
+    _log.d('tui:app: cancelled in-progress work for unit $unitId');
+    setState(() => _currentGame = newGame);
+  }
+
   void _exit() {
     shutdownApp(0);
   }
@@ -237,6 +288,7 @@ class _CttermAppState extends State<CttermApp> {
         runGeneration: _route == CttermRoute.generatingWorld ? _runGeneration : null,
         onTurnProcessed: _onTurnProcessed,
         onOrdersChanged: _updateOrders,
+        onCancelUnitWork: _cancelUnitWork,
         onGameEvent: _onGameEvent,
         onGameUpdated: (game) {
           _log.d('tui:app: game updated from panel');
