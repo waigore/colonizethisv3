@@ -13,6 +13,7 @@
   - `currentWork` (optional): `(target: WorkTarget, tileKey, totalTurns, remainingTurns)`.
 - `WorkTarget` values and allowed unit types/tiles are defined in [orders.md](orders.md) (`explore`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`). **Builder upgrade_town tech gate (MVP):** The requirement for `national_bureaucracy` in `techUnlocked` for Builder `upgrade_town` work is **deferred** in MVP; currently all Builders may submit and complete `upgrade_town`. When enforced, validation will require `techUnlocked['national_bureaucracy']` per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md).
 - Costs (lumber, castIron, bronze, steel, etc.) and max levels come from program-level config in `colonizethis_data`, mirroring Imperialism II tables.
+- **Per-player tile exclusivity:** For each **player** and **tile** (`tileKey`), at most one Builder/Engineer/Merchant work stream may target that tile at any time. The development resolver assumes the order engine has already enforced that no two Builder/Engineer/Merchant units owned by the same player have `currentWork.tileKey` equal to the same value.
 
 ---
 
@@ -26,6 +27,7 @@
     - Material **costs** per action.
   - If validation passes and the player has sufficient materials (or no material cost for that target):
     - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled). Look up costs from ruleset/config.
+    - Enforce **per-player tile exclusivity** for development and purchase work: if another Builder, Engineer, or Merchant unit owned by the same player already has `currentWork` targeting that `targetTileKey`, the new work order must have been rejected earlier and is not applied here.
     - Set unit `status = working`, `currentWork = (target, targetTileKey, totalTurns, remainingTurns = totalTurns)`, and **unit.tileKey = targetTileKey** (civilian unit is considered on the target tile for the turn).
   - `totalTurns` comes from ruleset config (default 1); config can vary by action and level (e.g. higher improvement/fort levels take more turns).
 

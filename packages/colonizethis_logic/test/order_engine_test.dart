@@ -1398,6 +1398,99 @@ void main() {
         expect(results.single.status, OrderValidationStatus.accepted);
       });
 
+      test(
+          'rejects second Builder/Engineer/Merchant work order on same tile for same player (per-tile exclusivity)',
+          () {
+        const ow = 'oldWorld';
+        const provinceId = '$ow|P1';
+        const tileKey = '$ow|P1|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+                id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        );
+
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: const [
+                Unit(
+                  id: 'builder1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  provinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'engineer1',
+                  type: 'Engineer',
+                  ownerId: 'p1',
+                  provinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            // Tile is fully visible so visibility is not the rejecting reason.
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fullyVisible'},
+            },
+            tileKeysByRegionAndProvince: const {
+              ow: {provinceId: [tileKey]}
+            },
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              // Provide enough materials so material-cost validation passes and
+              // the first work order can be accepted.
+              stockpile: Stockpile()
+                  .applyDelta(CommodityCatalog.lumber.id, 10)
+                  .applyDelta(CommodityCatalog.castIron.id, 10),
+            ),
+          ],
+        );
+
+        final engine = OrderEngine();
+        engine
+          ..addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          )
+          ..addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'engineer1',
+              target: 'build_road',
+              targetTileKey: tileKey,
+            ),
+          );
+
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+
+        expect(results.length, 2);
+        expect(results[0].status, OrderValidationStatus.accepted);
+        expect(results[1].status, OrderValidationStatus.rejected);
+        expect(results[1].reason,
+            contains('Tile already has development or purchase work'));
+      });
+
       test('accepts purchase_land for mineral when prospected', () {
         final game = _baseGame(
           treasury: 500,
