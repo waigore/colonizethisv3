@@ -179,7 +179,7 @@ This section records development decisions for ctterm. Package placement is defi
 - **Navigation:** Full navigation structure with stubs for all panels: Main Menu, Game Setup, Load Game, Generating World, Settings, In-game shell, Units, Development, Production, Academy, Shipyard, Diplomacy, Technology, Victory/Progress, Defeat, Pause/Options.
 - **Map TUI mapping:** Ctterm defines its own TUI-specific mapping (terrain/ownership → characters or styles). Document in [SPEC/tui/map-tui-mapping.md](map-tui-mapping.md). Base map layer uses the same data as [SPEC/program/map-visualization.md](../program/map-visualization.md); ctterm is a consumer.
 - **Logging:** Use multiple log prefixes for easy identification: `tui:`, `tui:menu:`, `tui:save:`, `tui:nav:` (and later `tui:map:`, `tui:event:`). Use Dart `logger`; no `print` for operational output. See [SPEC/program/ctdev-logging.md](../program/ctdev-logging.md) for level and prefix conventions.
-- **Project tools:** Ctterm is documented in [docs/project-tools.md](../../docs/project-tools.md) (invocation, optional `--data-dir`, link to this spec).
+- **Project tools:** Ctterm is documented in [docs/project-tools.md](../../docs/project-tools.md) (invocation, optional `--data-dir`, link to this spec and ready-to-run `agent-tui` automation scripts for starting games, driving panels such as Development, taking screenshots, and related test flows).
 
 ### 5.2 TUI automation testing with `agent-tui`
 
