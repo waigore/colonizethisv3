@@ -22,6 +22,7 @@ class MapGridWidget extends StatelessComponent {
     required this.layer,
     this.highlightTileKey,
     this.highlightProvinceId,
+    this.improvementLevelByTileKey,
   });
 
   final String regionId;
@@ -36,6 +37,8 @@ class MapGridWidget extends StatelessComponent {
   final String? highlightTileKey;
   /// Optional full province id to highlight (regionId|provinceLocalId).
   final String? highlightProvinceId;
+  /// Optional map of full tile key -> improvement level (> 0 indicates improved).
+  final Map<String, int>? improvementLevelByTileKey;
 
   /// Builds map from full tile key to unit symbol for the units layer.
   static Map<String, String> buildUnitSymbolByTileKey(
@@ -99,6 +102,14 @@ class MapGridWidget extends StatelessComponent {
 
     final legend = _legendForLayer(layer);
 
+    final grid = _buildHighlightedGrid(
+      regionId: regionId,
+      tileMap: tileMap,
+      provincesById: provincesById,
+      playerVisibilityByTile: playerVisibilityByTile,
+      unitSymbolByTileKey: unitSymbolByTileKey,
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,34 +121,9 @@ class MapGridWidget extends StatelessComponent {
             style: TextStyle(color: Colors.cyan),
           ),
         ),
-        if (highlightTileKey == null && highlightProvinceId == null) ...[
-          // Default rendering: reuse existing ASCII viewport.
-          ...renderRegionMapViewport(
-            regionId: regionId,
-            tileMap: tileMap,
-            provincesById: provincesById,
-            playerVisibilityByTile: playerVisibilityByTile,
-            players: game.players,
-            capitalTiles: capitalTiles,
-            portTiles: portTiles,
-            offsetX: viewX,
-            offsetY: viewY,
-            viewportWidth: viewportWidth,
-            viewportHeight: viewportHeight,
-            layer: layer,
-            unitSymbolByTileKey: unitSymbolByTileKey,
-          ).map((line) => Text(line)),
-        ] else ...[
-          // Highlight-aware rendering: color the selected tile, its province,
-          // and dim non-province tiles for additional context.
-          _buildHighlightedGrid(
-            regionId: regionId,
-            tileMap: tileMap,
-            provincesById: provincesById,
-            playerVisibilityByTile: playerVisibilityByTile,
-            unitSymbolByTileKey: unitSymbolByTileKey,
-          ),
-        ],
+        // Render viewport as a colored grid, optionally highlighting a tile
+        // or province and tinting improved tiles on the resources layer.
+        grid,
         Padding(
           padding: const EdgeInsets.only(top: 1),
           child: Text(legend, style: TextStyle(color: Colors.gray)),
@@ -198,15 +184,18 @@ class MapGridWidget extends StatelessComponent {
           }
         }
 
-        Color color;
-        if (highlightTileKey != null && fullTileKey == highlightTileKey) {
-          color = Colors.yellow;
-        } else if (highlightProvinceId != null &&
-            fullProvinceId == highlightProvinceId) {
-          color = Colors.white;
-        } else {
-          color = Colors.gray;
-        }
+        final isImproved = layer == MapGridLayer.resources &&
+            isVisible &&
+            (improvementLevelByTileKey?[fullTileKey] ?? 0) > 0;
+
+        final color = tileColorFor(
+          layer: layer,
+          isImproved: isImproved,
+          isHighlightedTile:
+              highlightTileKey != null && fullTileKey == highlightTileKey,
+          isHighlightedProvince: highlightProvinceId != null &&
+              fullProvinceId == highlightProvinceId,
+        );
 
         cells.add(Text(
           char,
@@ -233,9 +222,29 @@ class MapGridWidget extends StatelessComponent {
       case MapGridLayer.resources:
         return '?=unexplored ~sea .plains ♣forest ^hills ▲mt ≈swamp ▒desert '
             'g=grain m=meat w=wool h=horses t=timber i=iron c=copper n=tin k=coal '
-            's=sugar b=tobac u=cottn f=furs p=spice v=silver G=gold e=gems d=diams empty=terrain';
+            's=sugar b=tobac u=cottn f=furs p=spice v=silver G=gold e=gems d=diams empty=terrain '
+            'imp>0=green(improved)';
       case MapGridLayer.units:
         return '?=unexplored Letter=unit type (1st letter); no letter=terrain';
     }
+  }
+
+  /// Determines the base color for a tile given its state and layer.
+  static Color tileColorFor({
+    required MapGridLayer layer,
+    required bool isImproved,
+    required bool isHighlightedTile,
+    required bool isHighlightedProvince,
+  }) {
+    if (isHighlightedTile) {
+      return Colors.yellow;
+    }
+    if (isHighlightedProvince) {
+      return Colors.white;
+    }
+    if (layer == MapGridLayer.resources && isImproved) {
+      return Colors.green;
+    }
+    return Colors.gray;
   }
 }
