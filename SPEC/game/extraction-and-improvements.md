@@ -78,6 +78,10 @@ Tech only **allows** building — it does not upgrade existing tiles. Ports and 
 
 Connected tiles' effective yields are summed by commodity. **Same-region:** added to owning player's stockpile. **Overseas:** sea transport step (cargo limit + priority). No per-province storage. See [stockpiles-and-production.md](stockpiles-and-production.md).
 
+### Improvement Build Eligibility (Builder)
+
+A Builder may build an improvement on a tile only if: (a) the tile has a **resource** (per terrain/ruleset; no improvement on empty tiles), (b) the tile's improvement level is below the **max improvement level** (4), and (c) the **next** improvement level (current + 1) does not exceed the player's **tech-allowed extraction cap** (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)). The order engine rejects build_improvement work orders when the tile has no resource or when the player lacks sufficient tech to build the next level.
+
 ### Improvement Build Costs (Builder)
 
 | Level | Material Cost | Output |
@@ -151,6 +155,14 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
 - Given a tile with a resource that requires prospecting (iron, copper, tin, coal, silver, gold, gems, or diamonds)
   When the system evaluates whether that resource can be extracted
   Then the system requires both (a) the tile is connected to a town and (b) the player has prospected that tile
+
+- Given a player submits a build_improvement work order for a tile that has no resource (resource id missing or empty)
+  When the order engine validates the work order
+  Then the system rejects the order with reason that the tile has no resource
+
+- Given a player submits a build_improvement work order for a tile whose next improvement level (current + 1) would exceed the player's tech-allowed extraction cap
+  When the order engine validates the work order
+  Then the system rejects the order with reason that the player lacks sufficient tech to build the next level
 
 - Given a Builder civilian unit completes a build_improvement work order on a tile
   When the system applies the work effect

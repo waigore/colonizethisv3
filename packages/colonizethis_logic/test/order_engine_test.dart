@@ -1439,6 +1439,7 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
             // Tile is fully visible so visibility is not the rejecting reason.
             playerVisibilityByTile: const {
               'p1': {tileKey: 'fullyVisible'},
@@ -1512,6 +1513,145 @@ void main() {
             const WorkOrder(
                 unitId: 'merchant1',
                 target: 'purchase_land',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.accepted);
+      });
+    });
+
+    group('validateWork (build_improvement)', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$provinceId|0|0';
+
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      Game _baseGame({
+        Map<String, String>? resourceByTileKey,
+        TileMapState tileState = const TileMapState(),
+        Map<String, bool>? techUnlocked,
+        Stockpile? stockpile,
+      }) {
+        return Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [
+                Unit(
+                    id: 'builder1',
+                    type: 'Builder',
+                    ownerId: 'p1',
+                    provinceId: provinceId,
+                    tileKey: tileKey),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
+            tileState: tileState,
+            tileKeysByRegionAndProvince: {
+              ow: {provinceId: [tileKey]},
+            },
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fullyVisible'},
+            },
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              stockpile: stockpile ??
+                  Stockpile().applyDelta(CommodityCatalog.lumber.id, 2).applyDelta(
+                      CommodityCatalog.castIron.id, 2),
+              techUnlocked: techUnlocked ?? const {'gathering_3': true},
+            ),
+          ],
+        );
+      }
+
+      test('rejects build_improvement when tile has no resource', () {
+        final game = _baseGame(resourceByTileKey: {});
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'builder1',
+                target: 'build_improvement',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('no resource'));
+      });
+
+      test('rejects build_improvement when improvement level already 4', () {
+        final game = _baseGame(
+          tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 4}),
+          stockpile: Stockpile()
+              .applyDelta(CommodityCatalog.lumber.id, 20)
+              .applyDelta(CommodityCatalog.castIron.id, 20),
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'builder1',
+                target: 'build_improvement',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('maximum'));
+      });
+
+      test('rejects build_improvement when tech cap would be exceeded', () {
+        // gathering_1 gives cap 2; tile at level 2 → next would be 3 > 2
+        final game = _baseGame(
+          techUnlocked: const {'gathering_1': true},
+          tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 2}),
+          stockpile: Stockpile()
+              .applyDelta(CommodityCatalog.lumber.id, 10)
+              .applyDelta(CommodityCatalog.castIron.id, 10),
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'builder1',
+                target: 'build_improvement',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('Insufficient tech'));
+        expect(results.single.reason, contains('cap 2'));
+      });
+
+      test('accepts build_improvement when tile has resource, level < 4, tech cap allows', () {
+        final game = _baseGame(
+          resourceByTileKey: {tileKey: 'grain'},
+          tileState: const TileMapState(),
+          techUnlocked: const {'gathering_3': true},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'builder1',
+                target: 'build_improvement',
                 targetTileKey: tileKey));
         final results =
             engine.validatePlayerOrdersWithContext(game, topology, 'p1');

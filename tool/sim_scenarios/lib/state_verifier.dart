@@ -465,6 +465,18 @@ class StateVerifier {
       }
     }
 
+    // Improvement level assertion (SPEC/game/extraction-and-improvements.md). With [tileKey]: expected improvement level 0-4.
+    if (assertion.tileImprovementLevel != null && assertion.tileKey != null) {
+      final tileKey = assertion.tileKey!;
+      final expectedLevel = assertion.tileImprovementLevel!;
+      final actualLevel = game.worldState.tileState.improvementLevel(tileKey);
+      if (actualLevel != expectedLevel) {
+        failures.add(
+          'Tile $tileKey improvementLevel: expected $expectedLevel, got $actualLevel',
+        );
+      }
+    }
+
     // Leader assertion (SPEC/game/leader-bonuses.md): player's leaderKey
     if (assertion.player != null && assertion.leaderKey != null) {
       try {

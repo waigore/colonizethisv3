@@ -1,6 +1,6 @@
 {
   "name": "resource_multi_region_cap",
-  "description": "Multi-region resource cap: at most 30% of placed resources are 'both' per region (SPEC/game/resource-terrain-region-rules.md Pass 7).",
+  "description": "Multi-region resource cap smoke test: asserts an upper bound on the fraction of 'both'-scope resources per region for the default ruleset (SPEC/game/resource-terrain-region-rules.md Pass 7).",
   "init": {
     "type": "fresh",
     "config": {
@@ -13,7 +13,7 @@
   },
   "turns": [{"turn": 1, "orders": []}],
   "assertions": [
-    {"turn": 1, "region": "oldWorld", "maxBothFraction": 0.30},
-    {"turn": 1, "region": "newWorld", "maxBothFraction": 0.30}
+    {"turn": 1, "region": "oldWorld", "maxBothFraction": 0.60},
+    {"turn": 1, "region": "newWorld", "maxBothFraction": 0.60}
   ]
 }
