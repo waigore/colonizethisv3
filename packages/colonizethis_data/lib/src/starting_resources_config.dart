@@ -5,7 +5,7 @@ class StartingResourcesConfig {
     this.initialPeasants = 4,
     this.initialGrainTurns = 10,
     this.initialTreasury = 5000,
-    this.initialImprovementSlots = 4,
+    this.initialImprovementSlots = 5,
     this.initialMilitaryRegiments = 5,
     this.initialNavalShips = 3,
     this.startingCivilianUnits = _defaultStartingCivilianUnits,
@@ -26,9 +26,9 @@ class StartingResourcesConfig {
   /// Starting treasury in ducats (game currency).
   final int initialTreasury;
 
-  /// Number of level-1 extraction improvements the starting stockpile can support.
-  /// Each slot represents 1 lumber + 1 castIron available for a Builder to spend
-  /// on a level-1 improvement per SPEC/game/extraction-and-improvements.md.
+  /// Number of level-1 extraction improvements the starting stockpile can support (bootstrap).
+  /// Default 5: each player has enough to build 5 level-1 improvements at game start.
+  /// Each slot = 1 lumber + 1 castIron per SPEC/game/extraction-and-improvements.md.
   final int initialImprovementSlots;
 
   /// Number of starting land regiments to spawn in each Great Power's capital.
