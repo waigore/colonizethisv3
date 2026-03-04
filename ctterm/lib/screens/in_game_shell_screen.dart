@@ -338,6 +338,28 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return (viewX, viewY);
   }
 
+  /// Builds a map of full tile key -> improvement level (> 0) for the
+  /// currently selected region. Tiles with level 0 are omitted.
+  Map<String, int> _improvementLevelsForSelectedRegion(Game game) {
+    final worldState = game.worldState;
+    final byRegion =
+        worldState.tileKeysByRegionAndProvince[_selectedRegion];
+    if (byRegion == null || byRegion.isEmpty) {
+      return const {};
+    }
+    final tileState = worldState.tileState;
+    final result = <String, int>{};
+    for (final entry in byRegion.entries) {
+      for (final key in entry.value) {
+        final level = tileState.improvementLevel(key);
+        if (level > 0) {
+          result[key] = level;
+        }
+      }
+    }
+    return result;
+  }
+
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
     setState(() => _isEndingTurn = true);
@@ -564,7 +586,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           )
         : _buildTopologyContent();
 
-    if (tileMap == null || component.game == null) {
+    final game = component.game;
+    if (tileMap == null || game == null) {
       return Container(
         padding: const EdgeInsets.all(1),
         child: Column(
@@ -584,6 +607,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       viewportHeight,
     );
 
+    final improvementLevels = _improvementLevelsForSelectedRegion(game);
+
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
@@ -592,12 +617,13 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           MapGridWidget(
             regionId: _selectedRegion,
             tileMap: tileMap,
-            game: component.game!,
+            game: game,
             viewportWidth: viewportWidth,
             viewportHeight: viewportHeight,
             viewX: viewX,
             viewY: viewY,
             layer: _mapGridLayer,
+            improvementLevelByTileKey: improvementLevels,
           ),
           const SizedBox(height: 1),
           Text('=== $_regionDisplayName (land graph) ===',
@@ -675,6 +701,22 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     final isSeabound = _selectedProvinceLocalId != null &&
         _isProvinceSeaBound(_selectedProvinceLocalId!);
 
+    int improvedTiles = 0;
+    if (prov != null && game != null) {
+      final worldState = game.worldState;
+      final byRegion =
+          worldState.tileKeysByRegionAndProvince[_selectedRegion];
+      final tiles = byRegion?[prov.id];
+      if (tiles != null) {
+        final tileState = worldState.tileState;
+        for (final key in tiles) {
+          if (tileState.improvementLevel(key) > 0) {
+            improvedTiles++;
+          }
+        }
+      }
+    }
+
     String ownerName(String? ownerId) {
       if (ownerId == null) return 'Unclaimed';
       if (game == null) return ownerId;
@@ -703,6 +745,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
             Text('Fort: ${prov.fortLevel}'),
             Text('Town Dev: ${prov.townDevelopmentLevel}'),
             Text('Seabound: ${isSeabound ? "Yes" : "No"}'),
+            Text('Improved tiles: $improvedTiles'),
             Text('Visibility: full', style: TextStyle(color: Colors.gray)),
           ],
           const Spacer(),

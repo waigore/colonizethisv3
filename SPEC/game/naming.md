@@ -32,9 +32,9 @@ The **default** minor nation and tribe identities and province name pools are de
 
 ## Application During Game Setup
 
-**Province naming is mandatory** for all factions (Great Powers, Minor Nations, Tribes). Every province receives a non-null `Province.displayName`.
+**Province naming is mandatory** for all factions (Great Powers, Minor Nations, Tribes). After the Naming phase of game setup completes, every province stored in the starting `WorldState` has a non-null, non-empty `Province.displayName`. During earlier pipeline steps or in tooling, `Province.displayName` MAY be absent or null, but game logic MUST treat a missing name at the end of setup as a bug.
 
-Order: **after** province assignment and **after** capital auto-choice, assign province names and faction display names.
+Order: **after** province assignment and **after** capital auto-choice, assign province names and faction display names. All province ids used during naming (e.g. capital province id, owned-province lists) use the **prefixed** `regionId|localId` form per [world-model-identity.md](world-model-identity.md); naming logic must never look up provinces by bare local id.
 
 - **Capital province:** Gets the faction’s capital name (`capitalCityName` for GPs; for minors and tribes, the capital province **always** receives the first entry of the province name pool).
 - **Other provinces:** Names are chosen **randomly** from the faction’s `provinceNamePool` using a RNG seeded from the game setup seed so that:
@@ -55,10 +55,15 @@ When a faction acquires a province during the game (e.g. conquest), that provinc
 
 ### Fallback when naming is missing or empty
 
-When a faction has no matching entry in the naming config (e.g. tribe count > 10), or when the resolved capital name or pool is empty, game setup **must** assign a non-empty name via a **deterministic procedural fallback**. The fallback satisfies the requirement that every province receives a non-null `Province.displayName` when the ruleset does not supply one.
+When a faction has no matching entry in the naming config (e.g. tribe count > 10), or when the resolved capital name or pool is empty, game setup **must** assign a non-empty name via a **deterministic fallback** so that every province still ends setup with a non-null `Province.displayName`.
 
-- **Fallback algorithm:** Combine a **word stub** (e.g. Tan, Ver, Ash) with a **place suffix** (e.g. ton, ville, ford) using a RNG seeded from the naming seed and faction/province context so the same setup yields the same names.
-- **Uniqueness:** During naming, all **generated** names are added to an in-memory set; when generating a new name, the implementation must ensure the name is not already in that set (re-roll or append ordinal until unique). Names from the ruleset (pool/capital) may repeat across factions; only procedural names are guaranteed unique.
+- **Configured-but-empty entries (hybrid fallback):**
+  - If a Minor Nation or Tribe has a naming entry but its province name pool is empty, the **capital province** uses the faction `displayName` (e.g. `Italy`, `Aztec`) as its name.
+  - In the same empty-pool case, **non-capital provinces** for that faction receive a deterministic prefix+ordinal form such as `\"Italy 1\"`, `\"Italy 2\"` or `\"Aztec Territory 1\"`, `\"Aztec Territory 2\"`, derived from a fallback prefix and deterministic ordering of owned provinces.
+  - If any computed fallback string is empty, naming switches to the procedural algorithm below for that province.
+- **No naming entry or unusable capital name (procedural fallback):**
+  - When a faction has **no naming entry** at all (e.g. more tribes than configured ids) or when the chosen name for a province would be empty, the System uses a **procedural stub+suffix** algorithm: combine a **word stub** (e.g. Tan, Ver, Ash) with a **place suffix** (e.g. ton, ville, ford) using a RNG seeded from the naming seed and faction/province context so the same setup yields the same names.
+- **Uniqueness:** During naming, all **procedurally generated** names (from the stub+suffix algorithm) are added to an in-memory set; when generating a new procedural name, the implementation must ensure the name is not already in that set (re-roll or append ordinal until unique). Names from the ruleset (pool/capital) and from prefix+ordinal hybrid fallback may repeat across factions; only procedural stub+suffix names are guaranteed unique.
 
 ---
 
@@ -72,6 +77,6 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
   When the System assigns names in the Naming phase  
   Then every province receives a non-null `Province.displayName`, capital provinces receive the configured capital city name for their faction or the first entry from the province name pool as specified, and other provinces draw names from their faction’s pool using a RNG seeded from the setup seed so that identical seeds yield identical name assignments.
 
-- Given a faction or province lacks a matching entry or usable name pool in the naming config (for example, when there are more tribes than configured entries)  
+- Given a faction or province lacks a matching entry or usable name pool in the naming config (for example, when there are more tribes than configured entries or when a configured pool is empty)  
   When the System assigns names for that faction’s provinces  
-  Then the System invokes the deterministic fallback algorithm described here to generate unique, reproducible names per province using a naming seed and faction/province context, ensures that generated names are not reused across procedural names in the same game, and still guarantees that every province ends the setup process with a non-empty `Province.displayName`.
+  Then the System applies the deterministic fallback rules described here: for configured-but-empty entries, capital provinces may use faction `displayName` and non-capital provinces may use deterministic prefix+ordinal names; for factions with no usable naming entry or when a computed name would be empty, the System invokes the procedural stub+suffix algorithm to generate unique, reproducible names per province using a naming seed and faction/province context; in all cases, the System ensures that procedurally generated names are not reused across procedural names in the same game and still guarantees that every province ends the setup process with a non-empty `Province.displayName`.
