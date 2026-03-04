@@ -34,7 +34,30 @@ melos run ctterm
 **TUI automation (agent-tui)**
 
 - Automated TUI tests use [agent-tui](https://github.com/pproenca/agent-tui) per SPEC/tui/ctterm.md §5.2. From repo root, run:
-  - `./ctterm/scripts/agent_tui_builder_improvement_test.sh` — assigns a builder to build_improvement on a tile, ends turn, then asserts the tile is improved (Production screen shows improvement level or name).
+  - `./ctterm/scripts/agent_tui_new_game_default.sh [data_dir]` — starts ctterm (if needed), creates a new game via Main Menu → Game Setup, auto-assigns nations/leaders, and waits until the in-game shell (screen `100006`) is visible. When `data_dir` is omitted, a temporary ctterm data directory is created for the session.
+  - `./ctterm/scripts/agent_tui_assign_all_civilians_improvement.sh` — scenario script that assumes the in-game shell (screen `100006`) is visible, opens the Development screen (`100009` via `D`), and attempts to assign a basic `build_improvement` work order to each civilian unit row by selecting the unit, pressing `i`, and accepting the default province and tile before moving to the next row.
+  - `./ctterm/scripts/agent_tui_quit_to_main_menu.sh` — from an in-game shell session, opens Pause/Options and quits back to the Main Menu (screen `100001`) via the exit confirmation dialog.
+  - `./ctterm/scripts/agent_tui_screenshot.sh [output_path]` — captures the current ctterm screen via `agent-tui screenshot --strip-ansi`. When `output_path` is provided, writes the text snapshot there; otherwise prints to stdout.
+  - `./ctterm/scripts/agent_tui_save_game.sh` — placeholder for an explicit in-game save flow. As of the current ctterm TUI spec/implementation there is no dedicated "Save Game" hotkey or menu item; this script fails fast and documents that limitation so tests do not assume a manual save is available yet.
+
+  Example chained usage from repo root:
+
+  ```bash
+  # Start a fresh game into in-game shell (temp data dir)
+  ./ctterm/scripts/agent_tui_new_game_default.sh
+
+  # Open Development and attempt to assign work to all civilians
+  ./ctterm/scripts/agent_tui_assign_all_civilians_improvement.sh
+
+  # Capture a screenshot of the initial in-game shell
+  ./ctterm/scripts/agent_tui_screenshot.sh tmp/in_game_shell_start.txt
+
+  # (When a TUI save flow exists, this will attempt to save)
+  ./ctterm/scripts/agent_tui_save_game.sh || echo "Save not available yet"
+
+  # Quit back to Main Menu via Pause/Options
+  ./ctterm/scripts/agent_tui_quit_to_main_menu.sh
+  ```
 
 ---
 
