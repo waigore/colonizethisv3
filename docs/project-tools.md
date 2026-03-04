@@ -31,6 +31,11 @@ melos run ctterm
 - Shows Main Menu first (New Game, Load Game, Settings, Quit). Load Game is enabled only when at least one save exists in the ctterm data directory. Saves are separate from app/ctdev.
 - Logs to **ctterm.log** in the ctterm data directory (same as `--data-dir` when set). All logger output (tui:*, logic:*, etc.) is appended to this file.
 
+**TUI automation (agent-tui)**
+
+- Automated TUI tests use [agent-tui](https://github.com/pproenca/agent-tui) per SPEC/tui/ctterm.md §5.2. From repo root, run:
+  - `./ctterm/scripts/agent_tui_builder_improvement_test.sh` — assigns a builder to build_improvement on a tile, ends turn, then asserts the tile is improved (Production screen shows improvement level or name).
+
 ---
 
 ## init_game
