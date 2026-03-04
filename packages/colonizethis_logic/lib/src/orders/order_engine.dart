@@ -661,6 +661,28 @@ class OrderEngine {
               status: OrderValidationStatus.rejected,
               reason: 'Insufficient treasury for purchase_land (need $cost)');
         }
+      } else if (o.target == 'build_improvement') {
+        // SPEC/game/extraction-and-improvements.md, development-resolution.md: tile must have resource; next level must not exceed tech cap.
+        final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
+        if (resourceId == null || resourceId.isEmpty) {
+          return const OrderValidationResult(
+              status: OrderValidationStatus.rejected,
+              reason: 'Tile has no resource; build_improvement requires a resource on the tile');
+        }
+        final currentLevel =
+            game.worldState.tileState.improvementLevel(o.targetTileKey);
+        if (currentLevel >= 4) {
+          return const OrderValidationResult(
+              status: OrderValidationStatus.rejected,
+              reason: 'Improvement level already at maximum (4)');
+        }
+        final techCap = extractionCapForUnlocked(player.techUnlocked);
+        if (currentLevel + 1 > techCap) {
+          return OrderValidationResult(
+              status: OrderValidationStatus.rejected,
+              reason:
+                  'Insufficient tech to build next improvement level (cap $techCap)');
+        }
       } else if (!isExplorerUnit(type)) {
         // Builder, Engineer, Rail Builder: must work in owned province
         if (ownerId != null && ownerId != playerId) {

@@ -344,10 +344,12 @@ Game _applyInitialVisibility({
   final playerProspectedTiles = <String, Set<String>>{};
 
   // Build tile keys per region and province for explore resolution. SPEC/program/fog-and-exploration-resolution.md.
+  // Build resourceByTileKey from tile map resourceGrid for build_improvement validation and extraction. SPEC/game/extraction-and-improvements.md.
   final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{
     kRegionOldWorld: <String, List<String>>{},
     kRegionNewWorld: <String, List<String>>{},
   };
+  final resourceByTileKey = <String, String>{};
   for (var y = 0; y < owMap.height; y++) {
     for (var x = 0; x < owMap.width; x++) {
       final localId = owMap.cell(x, y);
@@ -358,6 +360,8 @@ Game _applyInitialVisibility({
       tileKeysByRegionAndProvince[kRegionOldWorld]!
           .putIfAbsent(fullId, () => <String>[])
           .add(tileKey);
+      final res = owMap.resourceAt(x, y);
+      if (res != null) resourceByTileKey[tileKey] = res.name;
     }
   }
   for (var y = 0; y < nwMap.height; y++) {
@@ -370,6 +374,8 @@ Game _applyInitialVisibility({
       tileKeysByRegionAndProvince[kRegionNewWorld]!
           .putIfAbsent(fullId, () => <String>[])
           .add(tileKey);
+      final res = nwMap.resourceAt(x, y);
+      if (res != null) resourceByTileKey[tileKey] = res.name;
     }
   }
 
@@ -403,6 +409,7 @@ Game _applyInitialVisibility({
     playerVisibilityByTile: playerVisibilityByTile,
     playerProspectedTiles: playerProspectedTiles,
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+    resourceByTileKey: resourceByTileKey,
   );
   return game.copyWith(worldState: updatedWorldState);
 }

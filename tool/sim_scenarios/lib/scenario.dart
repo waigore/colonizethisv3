@@ -249,6 +249,7 @@ class Assertion {
     this.techUnlocked,
     this.provinceDisplayName,
     this.tileRoadLevel,
+    this.tileImprovementLevel,
     this.generalCount,
     this.effectiveMilitaryLevel,
   });
@@ -345,6 +346,9 @@ class Assertion {
   /// Road / transport-level assertion (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md).
   /// With [tileKey]: expected road/transport level on that tile (0, 1, 2, or 4).
   final int? tileRoadLevel;
+
+  /// Improvement level assertion (SPEC/game/extraction-and-improvements.md). With [tileKey]: expected improvement level (0-4).
+  final int? tileImprovementLevel;
 
   /// General count assertion (SPEC/game/military-generals.md). With [player]: expected number of generals for that Great Power.
   final int? generalCount;
@@ -620,6 +624,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
         .toList(),
     provinceDisplayName: json['provinceDisplayName'] as String?,
     tileRoadLevel: json['tileRoadLevel'] as int?,
+    tileImprovementLevel: json['tileImprovementLevel'] as int?,
     generalCount: json['generalCount'] as int?,
     effectiveMilitaryLevel: json['effectiveMilitaryLevel'] as int?,
   );

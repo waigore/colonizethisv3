@@ -21,6 +21,7 @@
 - WorkOrder applies to **civilian units only** and carries **targetTileKey**. Military and naval units do not have tileKey or work orders of this kind.
 - When a `WorkOrder` is accepted for a civilian:
   - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for transport level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
+  - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
   - Look up:
     - `totalTurns` for this action from ruleset config (higher levels → more turns; fort and rail slower than level-1 road/improvement).
     - Material **costs** per action.
@@ -69,6 +70,7 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 ### Acceptance criteria
 
 - **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
+- **build_improvement validation:** The order engine rejects build_improvement when the target tile has no resource, when the tile's improvement level is already 4, or when the player's tech-allowed extraction cap is less than (current improvement level + 1).
 - **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
 - **build_port:** Completion requires topology to be defined. If topology is `null`, the build_port completion has no effect—no port is registered in `portsByProvinceSeaboard` and the transport level is not set on the tile. Therefore, build_port must only be offered/completed when topology is available. Port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
 - **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
