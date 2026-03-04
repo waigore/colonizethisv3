@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:nocterm/nocterm.dart';
 import 'package:ctterm/map_tui_mapping.dart';
 import 'package:ctterm/widgets/map_grid_widget.dart';
 import 'package:test/test.dart';
@@ -61,6 +62,44 @@ void main() {
         ],
         aiControlByGpId: {'gp1': false, 'gp2': true},
       );
+    });
+
+    test('tileColorFor applies improvement tint on resources layer', () {
+      // Improved tile on resources layer, not highlighted -> green.
+      final colorImproved = MapGridWidget.tileColorFor(
+        layer: MapGridLayer.resources,
+        isImproved: true,
+        isHighlightedTile: false,
+        isHighlightedProvince: false,
+      );
+      expect(colorImproved, Colors.green);
+
+      // Highlighted tile always wins and uses yellow.
+      final colorHighlightedTile = MapGridWidget.tileColorFor(
+        layer: MapGridLayer.resources,
+        isImproved: true,
+        isHighlightedTile: true,
+        isHighlightedProvince: false,
+      );
+      expect(colorHighlightedTile, Colors.yellow);
+
+      // Highlighted province wins over improvement.
+      final colorHighlightedProvince = MapGridWidget.tileColorFor(
+        layer: MapGridLayer.resources,
+        isImproved: true,
+        isHighlightedTile: false,
+        isHighlightedProvince: true,
+      );
+      expect(colorHighlightedProvince, Colors.white);
+
+      // Non-improved resources default to gray.
+      final colorDefault = MapGridWidget.tileColorFor(
+        layer: MapGridLayer.resources,
+        isImproved: false,
+        isHighlightedTile: false,
+        isHighlightedProvince: false,
+      );
+      expect(colorDefault, Colors.gray);
     });
 
     test('can be constructed with required parameters', () {

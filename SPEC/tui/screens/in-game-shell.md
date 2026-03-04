@@ -36,6 +36,7 @@ The map area is a **topology graph** of the current region’s **land provinces*
 - When a province is selected, the shell shows **basic information** for that province.
 - **Content:** Reuse the same information as the Map Context screen’s province panel per [SPEC/tui/screens/map-context.md](map-context.md): province name (or prefixed id), owner (Great Power name or “Unclaimed”), terrain type, fort level, town/settlement level, visibility status (fog/revealed/fully visible). Omit tile-level detail; province-level only.
 - **Sea-bound indicator:** The panel shows whether the selected province is **sea-bound** (has at least one P–S edge in the topology within the current region). When sea-bound, the panel labels it clearly (e.g. `Seabound: Yes (coastal)`); this matches the `*` marker used in the graph view.
+- **Improved tiles count:** The panel shows how many **land tiles in the selected province** currently have an **improvement level > 0** in the world tile state (per [SPEC/game/tile-map-and-generation.md](../../game/tile-map-and-generation.md)). This is displayed as a simple numeric field (e.g. `Improved tiles: 3`) and updates as improvements are built or removed.
 
 ## Acceptance Criteria (Given-When-Then)
 
@@ -62,6 +63,11 @@ The map area is a **topology graph** of the current region’s **land provinces*
 - **Given** a province is selected in the in-game shell
 - **When** the screen renders
 - **Then** the province information panel shows that province’s name/id, owner, terrain, fort level, town development level, a **sea-bound indicator** (Yes/No, based on presence of at least one P–S edge in the topology for the current region), and visibility (same content as Map Context province panel, province-level only).
+
+### G3b: Province Improvement Summary
+- **Given** a province is selected in the in-game shell and the game world state includes tile-state data for that province
+- **When** the screen renders the province information panel
+- **Then** the panel shows a line `Improved tiles: N` where `N` is the number of land tiles whose full tile key belongs to that province (per `tileKeysByRegionAndProvince` and [SPEC/game/world-model-identity.md](../../game/world-model-identity.md)) and whose improvement level in the tile state is strictly greater than zero.
 
 ### G4: HUD (Heads-Up Display)
 - **Given** the player is in the in-game shell

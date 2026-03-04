@@ -111,6 +111,7 @@ Mini-map views (such as the Development screen’s context panel) may apply **ad
 | Capital | Gold |
 | Port | Magenta |
 | Resource glyphs | Default foreground; disambiguated via legend text for Resources layer |
+| Improved resource tiles | Green tint on glyph when `improvementLevel > 0` and the tile is at least revealed; character mapping is unchanged |
 
 ---
 
