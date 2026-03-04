@@ -58,3 +58,28 @@ Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/co
 ## Output
 
 Player stockpile updated with land totals (all) and overseas totals (up to cargo cap by priority).
+
+---
+
+## Acceptance Criteria
+
+- **Land transport:** Given per-player same-region extraction totals from the extraction pipeline and a current stockpile  
+  When auto-transport runs for that player  
+  Then all same-region extracted quantities are added to the player’s central stockpile, without creating any per-province commodity storage and without iterating raw tiles.
+
+- **Sea transport and cargo cap:** Given per-player overseas extraction totals, a derived cargo-hold capacity from the player’s home fleet at the capital port (or a configured stub value when allowed by ruleset), and a current stockpile  
+  When auto-transport runs  
+  Then it allocates overseas quantities to the central stockpile by category priority (food, raw materials, riches, manufactured/advanced per `CommodityCategory`), does not exceed the effective cargo-hold capacity, and leaves any undelivered overseas quantities outside the central stockpile for that turn.
+
+- **Stockpile capacity:** Given a commodity catalog that defines stockpile capacity for one or more commodities and a player whose stockpile is near capacity  
+  When auto-transport adds land and overseas quantities  
+  Then it never increases any commodity above its configured capacity in the central stockpile (this constraint may be stubbed or logged until #40 is fully implemented, but the spec requires that capacity is not exceeded).
+
+- **Trade interception:** Given overseas extraction and trade/export shipments for a player and that naval trade/transport interception has reduced delivered cargo per [naval-movement-resolution.md](naval-movement-resolution.md) § Trade/Transport Interception  
+  When auto-transport applies sea transport for that turn  
+  Then it uses the already-reduced delivered amounts as input and does not attempt to re-run interception; any further cargo reductions are applied upstream and only the post-interception totals are added to stockpile.
+
+- **World-model identity:** Given extraction inputs where land and overseas totals were computed from tile keys and province ownership per [world-model-identity.md](../game/world-model-identity.md)  
+  When auto-transport runs  
+  Then it treats those totals as per-player aggregates and does not reinterpret or modify province or tile identity, relying on upstream systems for province lookup and identity correctness.
+
