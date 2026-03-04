@@ -205,7 +205,7 @@ class GameFactory {
         initialTreasury:
             (raw['initialTreasury'] as num?)?.toInt() ?? 5000,
         initialImprovementSlots:
-            (raw['initialImprovementSlots'] as num?)?.toInt() ?? 4,
+            (raw['initialImprovementSlots'] as num?)?.toInt() ?? 5,
         initialMilitaryRegiments:
             (raw['initialMilitaryRegiments'] as num?)?.toInt() ?? 5,
         initialNavalShips:
