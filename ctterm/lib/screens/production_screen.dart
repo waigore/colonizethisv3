@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' as data;
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -113,21 +114,12 @@ const _productionRecipes = [
   ),
 ];
 
-/// Default commodity list from SPEC/game/commodity-catalog.md.
-const _defaultCommodities = [
-  // Food
-  'grain', 'meat',
-  // Raw materials
-  'timber', 'iron', 'wool', 'cotton', 'coal', 'copper', 'tin',
-  'sugarCane', 'tobacco', 'furs', 'horses',
-  // Manufactured
-  'lumber', 'castIron', 'fabric', 'refinedSugar', 'cigars',
-  'furHats', 'steel', 'paper', 'bronze',
-  // Riches
-  'gold', 'silver', 'gems', 'diamonds',
-  // Advanced
-  'spices',
-];
+/// Commodity ids from the canonical catalog (SPEC/game/commodity-catalog.md).
+List<String> _allCommodityIds() {
+  final ids = data.CommodityCatalog.all.map((c) => c.id).toList();
+  ids.sort();
+  return ids;
+}
 
 /// Production screen for managing resource extraction, stockpile, and production.
 class ProductionScreen extends StatefulComponent {
@@ -329,7 +321,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
         if (_selectedPanel == 'extraction') {
           maxIndex = _getExtractionTiles().length - 1;
         } else if (_selectedPanel == 'stockpile') {
-          maxIndex = _defaultCommodities.length - 1;
+          maxIndex = _allCommodityIds().length - 1;
         } else {
           maxIndex = _productionRecipes.length - 1;
         }
@@ -554,6 +546,8 @@ class _ProductionScreenState extends State<ProductionScreen> {
     }
 
     final stockpile = player.stockpile;
+    final commodities = _allCommodityIds();
+    final half = (commodities.length + 1) ~/ 2;
     return Container(
       color: const Color(0xFF0d0d1a),
       child: Column(
@@ -569,23 +563,48 @@ class _ProductionScreenState extends State<ProductionScreen> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _defaultCommodities.length,
-              itemBuilder: (context, index) {
-                final commodity = _defaultCommodities[index];
-                final quantity = stockpile.quantityOf(commodity);
-                final isSelected = _selectedPanel == 'stockpile' && _selectedIndex == index;
-                final isZero = quantity == 0;
-                final bg = isSelected ? const Color(0xFF2a2a4e) : null;
-                final fg = isSelected 
-                    ? const Color(0xFFFFFFFF) 
-                    : (isZero ? const Color(0xFFFF6666) : const Color(0xFFAAAAAA));
-                
+              itemCount: half,
+              itemBuilder: (context, rowIndex) {
+                final leftIndex = rowIndex;
+                final rightIndex = rowIndex + half;
+                final leftId = commodities[leftIndex];
+                final rightId = rightIndex < commodities.length ? commodities[rightIndex] : null;
+
+                Component buildCell(String id, int globalIndex) {
+                  final quantity = stockpile.quantityOf(id);
+                  final isSelected =
+                      _selectedPanel == 'stockpile' && _selectedIndex == globalIndex;
+                  final isZero = quantity == 0;
+                  final fg = isSelected
+                      ? const Color(0xFFFFFFFF)
+                      : (isZero
+                          ? const Color(0xFFFF6666)
+                          : const Color(0xFFAAAAAA));
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                    child: Text(
+                      '$id: $quantity',
+                      style: TextStyle(color: fg),
+                    ),
+                  );
+                }
+
+                final rowIsSelected = _selectedPanel == 'stockpile' &&
+                    (_selectedIndex == leftIndex ||
+                        (rightId != null && _selectedIndex == rightIndex));
+                final rowBg =
+                    rowIsSelected ? const Color(0xFF2a2a4e) : null;
+
                 return Container(
-                  color: bg,
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
-                  child: Text(
-                    '  $commodity: $quantity',
-                    style: TextStyle(color: fg),
+                  color: rowBg,
+                  child: Row(
+                    children: [
+                      Expanded(child: buildCell(leftId, leftIndex)),
+                      if (rightId != null)
+                        Expanded(child: buildCell(rightId, rightIndex))
+                      else
+                        Expanded(child: SizedBox.shrink()),
+                    ],
                   ),
                 );
               },

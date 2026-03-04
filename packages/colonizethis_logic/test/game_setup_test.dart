@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('GameSetup', () {
@@ -102,6 +103,71 @@ void main() {
 
       expect(result.tileMapByRegion['oldWorld'], owTileMap);
       expect(result.topologyByRegion['oldWorld'], owTopology);
+    });
+
+    test('each Great Power has enough resources to build 5 improvements (bootstrap)', () {
+      // SPEC/program/game-setup-pipeline.md §7f: initialImprovementSlots default 5.
+      final owGrid = [
+        ['p1', 'sea1'],
+        ['p2', 'p1'],
+      ];
+      final owTopology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p2', id2: 'p1'),
+        ],
+      );
+      final owTileMap = TileMapResult(width: 2, height: 2, grid: owGrid);
+      final nwGrid = [['nw1', 'sea1'], ['nw1', 'nw1']];
+      final nwTopology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'nw1', id2: 'sea1')],
+      );
+      final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 2,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+      );
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'test-bootstrap',
+      );
+      final start = config.startingResources;
+      final expectedGrain = start.initialPeasants * start.initialGrainTurns;
+      for (final player in result.game.players) {
+        expect(
+          player.stockpile.quantityOf(CommodityCatalog.grain.id),
+          expectedGrain,
+          reason: '${player.id} grain',
+        );
+        expect(
+          player.stockpile.quantityOf(CommodityCatalog.lumber.id),
+          start.initialImprovementSlots,
+          reason: '${player.id} lumber for 5 improvements',
+        );
+        expect(
+          player.stockpile.quantityOf(CommodityCatalog.castIron.id),
+          start.initialImprovementSlots,
+          reason: '${player.id} castIron for 5 improvements',
+        );
+      }
     });
 
     test('Old World assignment reserves provinces for minors based on config', () {

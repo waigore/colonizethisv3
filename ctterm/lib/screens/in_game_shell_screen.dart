@@ -79,6 +79,34 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return 0;
   }
 
+  /// Computes a short resources summary string for the HUD (grain, lumber, castIron).
+  /// Format: g:<grain> L:<lumber> CI:<castIron>. Returns empty string when no resources.
+  String inGameShellHudResourceSummary(Game? game) {
+    if (game == null) return '';
+
+    Player? human;
+    for (final player in game.players) {
+      final isAiControlled = game.aiControlByGpId[player.id] ?? false;
+      if (!isAiControlled) {
+        human = player;
+        break;
+      }
+    }
+    if (human == null) return '';
+
+    final stockpile = human.stockpile;
+    final grain = stockpile.quantityOf('grain');
+    final lumber = stockpile.quantityOf('lumber');
+    final castIron = stockpile.quantityOf('castIron');
+    if (grain <= 0 && lumber <= 0 && castIron <= 0) {
+      return '';
+    }
+    return 'g:$grain L:$lumber CI:$castIron';
+  }
+
+  String get _resourceSummary =>
+      inGameShellHudResourceSummary(component.game);
+
   String get _regionDisplayName =>
       _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
 
@@ -507,7 +535,9 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-              'Turn: $_turn | Year: $_year | Treasury: \$$_treasury | Region: $_regionDisplayName [R]'),
+              'Turn: $_turn | Year: $_year | Treasury: \$$_treasury | '
+              'Res: ${_resourceSummary.isEmpty ? "-" : _resourceSummary} | '
+              'Region: $_regionDisplayName [R]'),
         ],
       ),
     );

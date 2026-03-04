@@ -200,5 +200,66 @@ void main() {
       expect(hudYear, expectedYear);
     });
 
+    test('HUD resource summary shows starting resources for human player', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: List<String>.from(
+          GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        ),
+        leaderVariantByGpId: {},
+        seed: 42,
+        continentCount: GameSetupConfig.defaultConfig.continentCount,
+        minorNationCount: GameSetupConfig.defaultConfig.minorNationCount,
+        tribeCount: GameSetupConfig.defaultConfig.tribeCount,
+        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+      );
+
+      final starting = config.startingResources;
+      final expectedGrain =
+          starting.initialPeasants * starting.initialGrainTurns;
+      final expectedSlots = starting.initialImprovementSlots;
+
+      final initResult = runInitGame(
+        config: config,
+        options: const InitGameOptions(renderPng: false),
+      );
+
+      final game = initResult.game;
+
+      Player? human;
+      for (final p in game.players) {
+        final isAiControlled = game.aiControlByGpId[p.id] ?? false;
+        if (!isAiControlled) {
+          human = p;
+          break;
+        }
+      }
+
+      expect(human, isNotNull);
+      final stock = human!.stockpile;
+      expect(stock.quantityOf('grain'), expectedGrain);
+      expect(stock.quantityOf('lumber'), expectedSlots);
+      expect(stock.quantityOf('castIron'), expectedSlots);
+
+      final screen = InGameShellScreen(
+        orders: const Orders(),
+        onNavigate: (route) {},
+        onEndTurn: () async {},
+        onVictory: () {},
+        onDefeat: () {},
+        onExitToMainMenu: () {},
+        game: game,
+      );
+
+      final state = screen.createState() as dynamic;
+      final summary =
+          state.inGameShellHudResourceSummary(game) as String;
+
+      expect(summary, contains('g:$expectedGrain'));
+      expect(summary, contains('L:$expectedSlots'));
+      expect(summary, contains('CI:$expectedSlots'));
+    });
+
   });
 }
