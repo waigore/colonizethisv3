@@ -150,6 +150,8 @@ No outstanding P0 tasks.
 
 **Gap:** `DiplomacyResolver` exists but many diplomatic actions are incomplete:
 
+**Prerequisite:** Resolve [#233](https://github.com/waigore/colonizethisv3/issues/233) so the diplomacy phase receives `diplomaticOrdersByPlayerId` (OrderEngine/turn filter must pass diplomatic orders into turn resolution); otherwise player diplomacy actions cannot be exercised.
+
 | Missing Action | Spec Reference | Status |
 |----------------|----------------|--------|
 | Join Empire (GP absorbing GP) | `diplomacy.md` | Not implemented |
