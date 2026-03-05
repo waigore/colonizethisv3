@@ -1,6 +1,6 @@
 # Military Strength Aggregation
 
-**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md), [combat_resolver.dart](../../packages/colonizethis_logic/lib/src/combat_resolver.dart). This API uses **faction id** for ownership only and does **not** use province id (no province lookup); for identity rules see [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md). Implementation: colonizethis_logic (combat resolver, `aggregateMilitaryStrengthForPlayer`). This API uses **faction id** for ownership only and does **not** use province id (no province lookup); for identity rules see [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
