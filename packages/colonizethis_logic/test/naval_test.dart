@@ -98,8 +98,43 @@ void main() {
         expect(regionIdForSeaZone(topology, 'sea2'), 'oldWorld');
       });
 
-      test('returns oldWorld when sea zone not found', () {
-        expect(regionIdForSeaZone(topology, 'nonexistent'), 'oldWorld');
+      test('returns null when sea zone not found (no default region)', () {
+        expect(regionIdForSeaZone(topology, 'nonexistent'), isNull);
+      });
+    });
+
+    group('provinceIdsAdjacentToSeaZone region-scoped', () {
+      test('when regionId passed, returns only provinces in that region', () {
+        final multiRegion = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
+            TopologyNode(id: 'sea1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 'sea1'),
+          ],
+        );
+        expect(
+          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'oldWorld'),
+          equals({'p1'}),
+        );
+        expect(
+          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'newWorld'),
+          equals({'p1'}),
+        );
+        expect(
+          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'otherRegion'),
+          isEmpty,
+        );
+      });
+
+      test('when sea zone not in topology, returns empty', () {
+        expect(
+          provinceIdsAdjacentToSeaZone(topology, 'nonexistent'),
+          isEmpty,
+        );
       });
     });
   });

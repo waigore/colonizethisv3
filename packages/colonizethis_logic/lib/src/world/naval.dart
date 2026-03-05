@@ -1,7 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import '../constants.dart';
-
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
@@ -61,21 +59,41 @@ String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? r
   return null;
 }
 
-/// Province ids that share an edge with [seaZoneId] (coastal provinces).
-Set<String> provinceIdsAdjacentToSeaZone(MapTopology topology, String seaZoneId) {
-  final nodesById = {for (final n in topology.nodes) n.id: n};
+/// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
+/// restricted to [regionId] per SPEC/game/world-model-identity.md (region-scoped lookup).
+/// When [regionId] is null, uses the destination sea zone's region from topology when
+/// unique; when the sea zone is not found or ambiguous, returns empty.
+Set<String> provinceIdsAdjacentToSeaZone(
+  MapTopology topology,
+  String seaZoneId, {
+  String? regionId,
+}) {
+  final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
+  for (final n in topology.nodes) {
+    nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
+  }
+  String? effectiveRegion = regionId;
+  if (effectiveRegion == null) {
+    final seaNodes = topology.nodes.where((n) => n.id == seaZoneId).toList();
+    effectiveRegion = seaNodes.isNotEmpty ? seaNodes.first.regionId : null;
+  }
+  if (effectiveRegion == null) return {};
+  final regionNodes = nodesByRegionAndId[effectiveRegion];
+  if (regionNodes == null) return {};
   final out = <String>{};
   for (final e in topology.edges) {
     final otherId = e.id1 == seaZoneId ? e.id2 : (e.id2 == seaZoneId ? e.id1 : null);
-    if (otherId != null && nodesById[otherId]?.type == TopologyNodeType.province) {
-      out.add(otherId);
+    if (otherId != null) {
+      final node = regionNodes[otherId];
+      if (node != null && node.type == TopologyNodeType.province) out.add(otherId);
     }
   }
   return out;
 }
 
-/// Region id for a sea zone (from topology node). Defaults to oldWorld if not found.
-String regionIdForSeaZone(MapTopology topology, String seaZoneId) {
+/// Region id for a sea zone (from topology node). Returns null when not found;
+/// callers must not infer region by defaulting (SPEC/game/world-model-identity.md).
+String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
   final list = topology.nodes.where((n) => n.id == seaZoneId).toList();
-  return list.isNotEmpty ? list.first.regionId : kRegionOldWorld;
+  return list.isNotEmpty ? list.first.regionId : null;
 }

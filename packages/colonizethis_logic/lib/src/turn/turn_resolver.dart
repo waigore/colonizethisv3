@@ -888,7 +888,6 @@ Game _applyNavalMovesAndShipReveal(
   var visibilityByTile = Map<String, Map<String, String>>.from(
       game.worldState.playerVisibilityByTile);
   final fleetById = {for (final f in fleets) f.id: f};
-  final nodesById = {for (final n in topology.nodes) n.id: n};
 
   for (final entry in navalMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -904,32 +903,37 @@ Game _applyNavalMovesAndShipReveal(
       if (!isAdjacentSeaZone(
           topology, fleet.seaZoneId, order.destinationSeaZoneId)) continue;
 
-      final newFleet = fleet.copyWith(seaZoneId: order.destinationSeaZoneId);
+      final destRegionId = regionIdForSeaZone(topology, order.destinationSeaZoneId);
+      final newFleet = fleet.copyWith(
+        seaZoneId: order.destinationSeaZoneId,
+        regionId: destRegionId ?? fleet.regionId,
+      );
       final idx = fleets.indexWhere((f) => f.id == fleet.id);
       if (idx >= 0) {
         fleets = List<Fleet>.from(fleets)..[idx] = newFleet;
         fleetById[fleet.id] = newFleet;
       }
 
-      // Ship reveal: coastal provinces of destination sea zone -> revealed for owner.
-      final provinceIds =
-          provinceIdsAdjacentToSeaZone(topology, order.destinationSeaZoneId);
-      final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-      for (final localProvinceId in provinceIds) {
-        final node = nodesById[localProvinceId];
-        if (node == null) continue;
-        final regionId = node.regionId;
-        if (regionId.isEmpty) continue;
-        final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
-        final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]
-                ?[fullProvinceId] ??
-            [];
-        for (final tk in tileKeys) {
-          vis[tk] = VisibilityLevel.revealed.name;
+      // Ship reveal: coastal provinces of destination sea zone (region-scoped) -> revealed for owner.
+      if (destRegionId != null) {
+        final provinceIds = provinceIdsAdjacentToSeaZone(
+          topology,
+          order.destinationSeaZoneId,
+          regionId: destRegionId,
+        );
+        final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+        for (final localProvinceId in provinceIds) {
+          final fullProvinceId = ProvinceId.full(destRegionId, localProvinceId);
+          final tileKeys = game.worldState.tileKeysByRegionAndProvince[destRegionId]
+                  ?[fullProvinceId] ??
+              [];
+          for (final tk in tileKeys) {
+            vis[tk] = VisibilityLevel.revealed.name;
+          }
         }
+        visibilityByTile = Map<String, Map<String, String>>.from(visibilityByTile)
+          ..[playerId] = vis;
       }
-      visibilityByTile = Map<String, Map<String, String>>.from(visibilityByTile)
-        ..[playerId] = vis;
     }
   }
 
@@ -964,7 +968,12 @@ Game _runNavalInterceptionCombatPhase(
   for (final battle in battles) {
     final result = resolveSeaBattle(battle, seed);
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    final regionId = regionIdForSeaZone(topology, battle.seaZoneId);
+    final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
+    final fleetsInZone =
+        state.worldState.fleets.where((f) => f.seaZoneId == battle.seaZoneId);
+    final regionId = zoneRegionId ??
+        (fleetsInZone.isEmpty ? null : fleetsInZone.first.regionId) ??
+        kRegionOldWorld;
     state = applyNavalBattleResults(state, battle, result, regionId,
         topology: topology);
     // Evidence: AI won naval battle (one side eliminated). SPEC/ai/hidden-agendas.md, ai-events-and-dossier.md.
