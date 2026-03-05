@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import 'province_lookup.dart';
+
 final Logger _log = Logger();
 
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
@@ -26,15 +28,55 @@ class ConnectivityResult {
 /// Also computes [ConnectivityResult.pathTransportCap]: for each connected tile,
 /// the maximum over paths from capital of (min road/port level on that path).
 
+/// Blockade state: per player, the set of port province ids (full prefixed) that are blockaded.
+///
+/// A province is blockaded for its owner when an **enemy fleet at war** with that owner is on
+/// Blockade mission targeting it. **Diplomatic state:** only blockaders that are at war with the
+/// province owner count; blockading a faction you are at peace with has no effect. **Same-region**
+/// and **cross-region** blockades are both valid: the fleet's [Fleet.regionId] is where the fleet
+/// is; [targetProvinceId] may be in any region (oldWorld, newWorld, etc.). SPEC/game/capital-and-connectivity.md § Blockade.
+Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game) {
+  final result = <String, Set<String>>{};
+  for (final player in game.players) {
+    result[player.id] = {};
+  }
+  final fleets = game.worldState.fleets;
+  final relations = game.diplomacyRelations;
+  for (final fleet in fleets) {
+    if (fleet.mission != FleetMission.blockade) continue;
+    final targetProvinceId = fleet.targetProvinceId;
+    if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
+    if (!ProvinceId.isPrefixed(targetProvinceId)) continue;
+    final province = tryGetProvince(game.worldState, targetProvinceId);
+    final ownerId = province?.ownerId;
+    if (ownerId == null) continue;
+    final blockaderId = fleet.ownerId;
+    // Only factions at war with the province owner can blockade it.
+    final atWar = relations.any((rel) =>
+        rel.atWar &&
+        rel.factionId1 != rel.factionId2 &&
+        {rel.factionId1, rel.factionId2}.contains(blockaderId) &&
+        {rel.factionId1, rel.factionId2}.contains(ownerId));
+    if (!atWar) continue;
+    result[ownerId] ??= {};
+    result[ownerId]!.add(targetProvinceId);
+  }
+  return result;
+}
+
 /// Returns per player id [ConnectivityResult] (connected set + path transport cap).
 /// Players without capital or with no tile map get an empty result.
+/// When [blockadedPortProvincesByPlayerId] is null, it is computed from [game] (fleets on Blockade mission, at war). SPEC/game/capital-and-connectivity.md § Blockade.
 Map<String, ConnectivityResult> resolveConnectivity({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
+  Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
   _log.d('logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}');
   final provinceIdsByType = _provinceIdsFromTopology(topology);
+  final blockadedByPlayer =
+      blockadedPortProvincesByPlayerId ?? computeBlockadedPortProvincesByPlayer(game);
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
@@ -52,6 +94,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       provinceIdsByType: provinceIdsByType,
+      blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
     );
     result[player.id] = cr;
   }
@@ -182,6 +225,7 @@ ConnectivityResult _connectedTilesForPlayer({
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   required Set<String> provinceIdsByType,
+  Set<String> blockadedPortProvinces = const {},
 }) {
   final worldState = game.worldState;
   final tileState = worldState.tileState;
@@ -254,12 +298,13 @@ ConnectivityResult _connectedTilesForPlayer({
   }
 
   final seaConnectedPortKeys = <String>{};
+  final capitalProvinceBlockaded = blockadedPortProvinces.contains(capital.provinceId);
   final capitalOnSeaboard = _isCapitalTileOnSeaboard(
     capital,
     tileMapByRegion,
     provinceIdsByType,
   );
-  if (capitalOnSeaboard) {
+  if (capitalOnSeaboard && !capitalProvinceBlockaded) {
     final prefixedTopology = _topologyUsesPrefixedIds(topology);
     final provinceIdForLookup = prefixedTopology
         ? capital.provinceId
@@ -273,6 +318,7 @@ ConnectivityResult _connectedTilesForPlayer({
       final seaZoneId = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : null);
       final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : (parts.length >= 2 ? parts[0] : null);
       if (seaZoneId == null || fullProvinceId == null) continue;
+      if (blockadedPortProvinces.contains(fullProvinceId)) continue;
       final seaZoneIdForReachable = prefixedTopology && parts.length >= 3
           ? '${parts[0]}|$seaZoneId'
           : seaZoneId;
@@ -280,9 +326,20 @@ ConnectivityResult _connectedTilesForPlayer({
       if (!owned.contains(fullProvinceId)) continue;
       seaConnectedPortKeys.add(tileKey);
     }
-  } else {
-    seaConnectedPortKeys.addAll(capitalRegionPortKeys);
+  } else if (!capitalOnSeaboard) {
+    for (final portKey in capitalRegionPortKeys) {
+      final parts = portKey.split('|');
+      if (parts.length >= 2) {
+        final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : parts[0];
+        if (!blockadedPortProvinces.contains(fullProvinceId)) {
+          seaConnectedPortKeys.add(portKey);
+        }
+      } else {
+        seaConnectedPortKeys.add(portKey);
+      }
+    }
   }
+  // When capital province is blockaded, seaConnectedPortKeys stays empty (no sea connectivity). SPEC § Blockade.
 
   for (final portKey in seaConnectedPortKeys) {
     if (connected.contains(portKey)) continue;
@@ -337,6 +394,22 @@ ConnectivityResult _connectedTilesForPlayer({
         connected.add(n);
         pathCap[n] = candidate;
         queue.add(n);
+      }
+    }
+  }
+
+  // SPEC § Blockade: no tiles in a blockaded port province contribute; remove any tile in such a province (except capital province: its tiles remain when it is blockaded, only sea connectivity is severed).
+  if (blockadedPortProvinces.isNotEmpty) {
+    for (final key in connected.toList()) {
+      final parts = key.split('|');
+      if (parts.length >= 2) {
+        final fullProvinceId =
+            parts.length >= 3 ? '${parts[0]}|${parts[1]}' : parts[0];
+        if (blockadedPortProvinces.contains(fullProvinceId) &&
+            fullProvinceId != capital.provinceId) {
+          connected.remove(key);
+          pathCap.remove(key);
+        }
       }
     }
   }

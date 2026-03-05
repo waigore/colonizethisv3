@@ -708,9 +708,8 @@ Game _runMovementPhase(
 
   // Naval mission assignment. Phase 6. Apply after moves so fleet position is final.
   final missionOrders = orders.navalMissionOrdersByPlayerId;
-  if (missionOrders.isNotEmpty) {
-    state = _applyNavalMissionOrders(state, missionOrders);
-  }
+  // Always apply so we run the clearing pass for blockades when not at war.
+  state = _applyNavalMissionOrders(state, missionOrders);
 
   return state;
 }
@@ -867,6 +866,35 @@ Game _applyNavalMissionOrders(
           break;
         }
       }
+
+      // Blockade only applies when at war with the target province owner. SPEC/game/capital-and-connectivity.md § Blockade.
+      if (mission == FleetMission.blockade) {
+        final targetProvinceId = order.targetProvinceId;
+        final province = targetProvinceId != null &&
+                targetProvinceId.isNotEmpty &&
+                ProvinceId.isPrefixed(targetProvinceId)
+            ? tryGetProvince(game.worldState, targetProvinceId)
+            : null;
+        final ownerId = province?.ownerId;
+        final atWar = ownerId != null &&
+            ownerId != playerId &&
+            getRelation(game, playerId, ownerId)?.atWar == true;
+        if (!atWar) {
+          // Do not apply blockade: leave fleet mission unchanged (or clear blockade if they made peace).
+          final cleared = fleet.copyWith(
+            mission: FleetMission.none,
+            targetPortId: null,
+            targetProvinceId: null,
+          );
+          final idx = fleets.indexWhere((f) => f.id == fleet.id);
+          if (idx >= 0) {
+            fleets = List<Fleet>.from(fleets)..[idx] = cleared;
+            fleetById[fleet.id] = cleared;
+          }
+          continue;
+        }
+      }
+
       final newFleet = fleet.copyWith(
         mission: mission,
         targetPortId: order.targetPortId,
@@ -877,6 +905,29 @@ Game _applyNavalMissionOrders(
         fleets = List<Fleet>.from(fleets)..[idx] = newFleet;
         fleetById[fleet.id] = newFleet;
       }
+    }
+  }
+
+  // Clear blockade from any fleet whose owner is no longer at war with the target province owner.
+  for (var i = 0; i < fleets.length; i++) {
+    final f = fleets[i];
+    if (f.mission != FleetMission.blockade) continue;
+    final targetProvinceId = f.targetProvinceId;
+    if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
+    final province = ProvinceId.isPrefixed(targetProvinceId)
+        ? tryGetProvince(game.worldState, targetProvinceId)
+        : null;
+    final ownerId = province?.ownerId;
+    final atWar = ownerId != null &&
+        ownerId != f.ownerId &&
+        getRelation(game, f.ownerId, ownerId)?.atWar == true;
+    if (!atWar) {
+      fleets = List<Fleet>.from(fleets)
+        ..[i] = f.copyWith(
+          mission: FleetMission.none,
+          targetPortId: null,
+          targetProvinceId: null,
+        );
     }
   }
 

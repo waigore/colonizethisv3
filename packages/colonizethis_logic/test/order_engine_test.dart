@@ -900,6 +900,119 @@ void main() {
       expect(results.single.reason, contains('Fleet not found'));
     });
 
+    test('blockade order rejected when not at war with province owner', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final engine = OrderEngine();
+      final result = engine.addNavalMissionOrderWithContext(
+        game,
+        topology,
+        'p1',
+        NavalMissionOrder(
+          fleetId: 'f1',
+          mission: FleetMission.blockade.name,
+          targetProvinceId: '$ow|P2',
+        ),
+      );
+      expect(result.status, OrderValidationStatus.rejected);
+      expect(result.reason, contains('at war'));
+    });
+
+    test('blockade order accepted when at war with province owner', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final engine = OrderEngine();
+      final result = engine.addNavalMissionOrderWithContext(
+        game,
+        topology,
+        'p1',
+        NavalMissionOrder(
+          fleetId: 'f1',
+          mission: FleetMission.blockade.name,
+          targetProvinceId: '$ow|P2',
+        ),
+      );
+      expect(result.status, OrderValidationStatus.accepted);
+    });
+
     test('projectedEffects returns treasuryDelta when orders affect treasury',
         () {
       const ow = 'oldWorld';

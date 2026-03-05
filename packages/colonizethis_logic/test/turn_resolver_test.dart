@@ -1483,6 +1483,125 @@ void main() {
       expect(resultingFleet.shipTypeIds, containsAll(['carrack', 'fluyte']));
     });
 
+    test('blockade order not applied when not at war with province owner', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(
+        navalMissionOrdersByPlayerId: {
+          'p1': [
+            NavalMissionOrder(
+              fleetId: 'f1',
+              mission: FleetMission.blockade.name,
+              targetProvinceId: '$ow|P2',
+            ),
+          ],
+        },
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
+      expect(fleet.mission, FleetMission.none);
+    });
+
+    test('existing blockade cleared when not at war with target owner', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              mission: FleetMission.blockade,
+              targetProvinceId: '$ow|P2',
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final next = resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: const Orders(),
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      );
+      final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
+      expect(fleet.mission, FleetMission.none);
+    });
+
     test('naval interception phase runs when two at-war fleets in same zone',
         () {
       final topology = MapTopology(

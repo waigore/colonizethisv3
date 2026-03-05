@@ -81,6 +81,8 @@ A province is **overseas** for a player if it is in a **different region** from 
 
 Blockade affects **connectivity** for extraction. It is determined by enemy fleets on **Blockade** mission targeting a specific port (see [ships-and-naval.md](ships-and-naval.md) § Missions and Movement).
 
+- **At war only:** A player may only **order** or **maintain** a blockade against a nation they are **at war** with. Submitting or validating a blockade order requires the fleet owner to be at war with the target province owner; otherwise the order is rejected. Existing blockade missions are not applied (or are cleared) when the two nations are not at war—e.g. after peace is declared.
+
 - **Blockaded port province:** A port province is **blockaded** for a player when an enemy fleet (at war with that player) is on Blockade mission and targets that province's port (the fleet's sea zone is adjacent to that port). For connectivity, a **blockaded port is not connected** to the capital: the connection between that port province and the capital is **severed**. No tiles in that province contribute to extraction for that player via that port (overseas provinces that relied on that port for sea connection are also cut off for that path).
 
 - **Capital province blockaded:** If the **capital province** itself is blockaded (an enemy fleet is blockading the capital's port), then for that player **all overseas** provinces and **all same-region provinces that are only reachable via sea** (i.e. no land path from capital) are **not** connected. In effect, the entire sea-based connectivity is severed; only tiles reachable by land (road/rail) from the capital remain connected.
