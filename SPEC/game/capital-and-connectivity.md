@@ -49,7 +49,7 @@ A tile T is **connected** to the capital for a player iff there is a path of roa
 
 **Road level** on a tile is the same as **transport level** used for extraction (effective yield = min(production, transport level)); railroads are a higher road/transport level gated by tech (see [extraction-and-improvements.md](extraction-and-improvements.md), [tech-tree-transport.md](tech-tree-transport.md)).
 
-**Overseas provinces:** A tile in an overseas province is connected if it has a road/rail path to **a port in that province that is connected to the capital** (per the port-connection rule above). Blockade can intercept cargo; blockade is currently stubbed (no effect).
+**Overseas provinces:** A tile in an overseas province is connected if it has a road/rail path to **a port in that province that is connected to the capital** (per the port-connection rule above). **Blockade** (see § Blockade) severs connectivity for blockaded ports; it does not only intercept cargo.
 
 ---
 
@@ -72,8 +72,20 @@ A province is **overseas** for a player if it is in a **different region** from 
 **Connectivity edge cases (per Imp2):**
 
 - **Severed road:** Losing a province along a road path to the capital breaks all connections through it. Resources from disconnected tiles no longer flow to stockpile.
-- **Port connection:** Ports are connected to the capital only by (1) capital on seaboard or (2) road/rail path from capital to port (see § Port connection to capital). They do not automatically stay connected "via sea" regardless of land path. Blockade may intercept cargo but does not sever the port's network membership for connectivity (stub).
+- **Port connection:** Ports are connected to the capital only by (1) capital on seaboard or (2) road/rail path from capital to port (see § Port connection to capital). They do not automatically stay connected "via sea" regardless of land path. **Blockade** severs connectivity for the blockaded port (see § Blockade).
 - **Retaking a province:** Re-establishes connections through it immediately.
+
+---
+
+## Blockade
+
+Blockade affects **connectivity** for extraction. It is determined by enemy fleets on **Blockade** mission targeting a specific port (see [ships-and-naval.md](ships-and-naval.md) § Missions and Movement).
+
+- **Blockaded port province:** A port province is **blockaded** for a player when an enemy fleet (at war with that player) is on Blockade mission and targets that province's port (the fleet's sea zone is adjacent to that port). For connectivity, a **blockaded port is not connected** to the capital: the connection between that port province and the capital is **severed**. No tiles in that province contribute to extraction for that player via that port (overseas provinces that relied on that port for sea connection are also cut off for that path).
+
+- **Capital province blockaded:** If the **capital province** itself is blockaded (an enemy fleet is blockading the capital's port), then for that player **all overseas** provinces and **all same-region provinces that are only reachable via sea** (i.e. no land path from capital) are **not** connected. In effect, the entire sea-based connectivity is severed; only tiles reachable by land (road/rail) from the capital remain connected.
+
+Connectivity is recomputed each turn; blockade state is taken from the current fleet missions and positions before the extraction phase. Implementation must pass a set of blockaded province ids (or equivalent) into the connectivity resolver so that these rules are applied; see [extraction-pipeline.md](../program/extraction-pipeline.md).
 
 ---
 
@@ -164,5 +176,13 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 - Given a player has no owned provinces remaining in the original capital region after capital loss  
   When the system executes capital loss and reassignment during turn resolution  
   Then the system sets the player’s capital province and capital tile to `null`, performs no new port or road setup, and in the subsequent extraction phase treats all tiles for that player as not connected for extraction until a new capital is defined by later rules.
+
+- Given a Great Power player has an owned port province `P_port` and an enemy fleet (at war with that player) is on Blockade mission targeting `P_port`'s port in its sea zone  
+  When the system recomputes connectivity during the extraction phase  
+  Then no tiles in `P_port` are considered connected to the capital for that player, and any overseas province that was connected only via `P_port` is no longer connected.
+
+- Given a Great Power player's capital province is blockaded (an enemy fleet on Blockade mission targets the capital's port)  
+  When the system recomputes connectivity during the extraction phase  
+  Then all overseas provinces and all same-region provinces that are only reachable via sea (no land path from capital) are not connected for that player; only tiles reachable by road/rail from the capital remain connected.
 
 - **Implementation:** Capital choice and init: [capital-choice-phase.md](capital-choice-phase.md). Connectivity and extraction: [extraction-pipeline.md](../program/extraction-pipeline.md). Capital reassignment on loss: [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat.
