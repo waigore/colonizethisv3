@@ -251,10 +251,56 @@ class _UnitsScreenState extends State<UnitsScreen> {
     return neighbours.map((n) => ProvinceId.full(regionId, n)).toList();
   }
 
+  /// Get adjacent enemy-controlled provinces for attack targeting.
+  List<String> _getAdjacentEnemyProvinces(Unit unit) {
+    final allAdj = _getAdjacentProvinces(unit);
+    if (allAdj.isEmpty) return const [];
+
+    final playerId = _getHumanPlayerId();
+    if (playerId == null) return const [];
+
+    final world = component.game.worldState;
+    final enemyProvinces = <String>[];
+
+    for (final provinceId in allAdj) {
+      String? ownerId;
+      // Check old world
+      for (final p in world.oldWorld.provinces) {
+        if (p.id == provinceId) {
+          ownerId = p.ownerId;
+          break;
+        }
+      }
+      // Check new world if not found
+      if (ownerId == null) {
+        for (final p in world.newWorld.provinces) {
+          if (p.id == provinceId) {
+            ownerId = p.ownerId;
+            break;
+          }
+        }
+      }
+      // Add if enemy (not owned by player)
+      if (ownerId != null && ownerId != playerId) {
+        enemyProvinces.add(provinceId);
+      }
+    }
+
+    return enemyProvinces;
+  }
+
   int _selectedAdjacentIndex = 0;
 
+  /// Get the list of adjacent provinces based on current input mode.
+  List<String> _getAdjacentProvincesForMode(Unit unit) {
+    if (_inputMode == 'attackTarget') {
+      return _getAdjacentEnemyProvinces(unit);
+    }
+    return _getAdjacentProvinces(unit);
+  }
+
   void _selectAdjacentProvince(int delta) {
-    final adj = _getAdjacentProvinces(_playerUnits[_selectedIndex]);
+    final adj = _getAdjacentProvincesForMode(_playerUnits[_selectedIndex]);
     if (adj.isEmpty) return;
     setState(() {
       _selectedAdjacentIndex = (_selectedAdjacentIndex + delta).clamp(0, adj.length - 1);
@@ -266,7 +312,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
     if (_selectedIndex >= units.length) return;
     
     final unit = units[_selectedIndex];
-    final adj = _getAdjacentProvinces(unit);
+    final adj = _getAdjacentProvincesForMode(unit);
     if (_selectedAdjacentIndex >= adj.length) return;
     
     final targetProvince = adj[_selectedAdjacentIndex];
@@ -294,7 +340,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
     setState(() {
       _inputMode = 'moveTarget';
       _selectedAdjacentIndex = 0;
-      _feedbackMessage = 'Select target province (y/n)';
+      _feedbackMessage = 'Move to province:';
       _feedbackColor = Colors.yellow;
     });
     _log.d('tui:units: start move order for ${unit.id}');
@@ -309,7 +355,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
       _log.w('tui:units: startAttackOrder called for non-combat unit ${unit.id} (${unit.type})');
       return;
     }
-    final adj = _getAdjacentProvinces(unit);
+    // Use only enemy-controlled adjacent provinces for attack targeting
+    final adj = _getAdjacentEnemyProvinces(unit);
     if (adj.isEmpty) {
       setState(() {
         _feedbackMessage = 'No enemy provinces in range';
@@ -320,7 +367,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
     setState(() {
       _inputMode = 'attackTarget';
       _selectedAdjacentIndex = 0;
-      _feedbackMessage = 'Select enemy province to attack (y/n)';
+      _feedbackMessage = 'Select enemy province to attack:';
       _feedbackColor = Colors.yellow;
     });
     _log.d('tui:units: start attack order for ${unit.id}');
@@ -631,7 +678,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
           ? Row(
               children: [
                 Text(
-                  'Target: ${_getAdjacentProvinces(selectedUnit!).isNotEmpty ? _provinceLabelFor(_getAdjacentProvinces(selectedUnit)[_selectedAdjacentIndex]) : "none"}',
+                  'Target: ${_getAdjacentProvincesForMode(selectedUnit!).isNotEmpty ? _provinceLabelFor(_getAdjacentProvincesForMode(selectedUnit)[_selectedAdjacentIndex]) : "none"}',
                   style: const TextStyle(color: Colors.yellow),
                 ),
                 const Text(' [Y]es [N]o '),
