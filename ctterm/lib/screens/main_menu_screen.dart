@@ -8,7 +8,7 @@ import 'package:ctterm/save_service.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
-/// Main menu: New Game, Load Game (enabled only when saves exist), Settings, Quit.
+/// Main menu: New Game, Load Game (L always navigates; list empty when no saves), Settings, Quit.
 class MainMenuScreen extends StatefulComponent {
   const MainMenuScreen({
     super.key,
@@ -76,7 +76,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           component.onNewGame();
           return true;
         }
-        if (c == 'l' && _loadGameEnabled) {
+        if (c == 'l') {
           component.onLoadGame();
           return true;
         }
@@ -97,7 +97,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             Text('ColonizeThis', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
             _menuRow('N', 'New Game', true, component.onNewGame),
-            _menuRow('L', 'Load Game', _loadGameEnabled, component.onLoadGame),
+            _menuRow('L', 'Load Game', true, component.onLoadGame),
             if (!_savesChecked)
               Padding(
                 padding: const EdgeInsets.only(left: 4),
