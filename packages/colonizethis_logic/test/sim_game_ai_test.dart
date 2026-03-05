@@ -24,22 +24,22 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
-              Province(id: 'P3', regionId: 'oldWorld', ownerId: 'p3'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
+              Province(id: 'oldWorld|P3', regionId: 'oldWorld', ownerId: 'p3'),
             ],
             units: const [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P2',
+                provinceId: 'oldWorld|P2',
               ),
             ],
           ),
@@ -100,15 +100,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'p2'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
             ],
             units: const [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
