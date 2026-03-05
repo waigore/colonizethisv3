@@ -147,6 +147,33 @@ melos run generate_map -- --interactive
 
 ---
 
+## sim_economy
+
+Standalone Phase 2 economy simulation (extraction, riches, production, consumption) over N turns. No map, movement, combat, or trade. Spec: [SPEC/program/sim-economy.md](../SPEC/program/sim-economy.md).
+
+**Invocation**
+
+```bash
+melos run sim_economy -- [--script <path>] [--turns <N>] [--seed <int>] [--output <path>] [--json-output <path>]
+```
+
+**Options**
+
+- `--script <path>` — JSON script with initial state and per-turn instructions (optional)
+- `--turns <N>` — Turns to simulate (when no script)
+- `--seed <int>` — RNG seed for reproducibility (optional)
+- `--output <path>` — Markdown report path (default: sim_economy.md in cwd)
+- `--json-output <path>` — Per-turn JSON log path (optional)
+
+**Examples**
+
+```bash
+melos run sim_economy -- --turns 10 --seed 42
+melos run sim_economy -- --script tmp/economy_script.json --output report.md
+```
+
+---
+
 ## sim_combat
 
 Probabilistic combat simulation on scripted scenarios. Up to 5 rounds per engagement, clamped hit odds, strength-weighted casualties. Outputs detailed per-round formula and probability stats. Spec: [SPEC/program/sim-combat.md](../SPEC/program/sim-combat.md).
