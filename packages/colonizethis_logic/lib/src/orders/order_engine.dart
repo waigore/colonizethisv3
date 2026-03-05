@@ -1108,16 +1108,44 @@ class OrderEngine {
       }
       final fleet = fleetById[o.fleetId];
       final homeFleetId = 'fleet_$playerId';
-      final valid = fleet != null &&
+      var valid = fleet != null &&
           fleet.ownerId == playerId &&
           (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
+      String? rejectReason =
+          valid ? null : (fleet == null ? 'Fleet not found' : 'Fleet not owned by player');
+
+      // Blockade: only allowed against nations at war. SPEC/game/capital-and-connectivity.md § Blockade.
+      if (valid && o.mission == 'blockade') {
+        final targetProvinceId = o.targetProvinceId;
+        if (targetProvinceId == null ||
+            targetProvinceId.isEmpty ||
+            !ProvinceId.isPrefixed(targetProvinceId)) {
+          valid = false;
+          rejectReason = 'Blockade requires a target province';
+        } else {
+          final province = tryGetProvince(game.worldState, targetProvinceId);
+          final ownerId = province?.ownerId;
+          if (province == null || ownerId == null || ownerId.isEmpty) {
+            valid = false;
+            rejectReason = 'Blockade target province not found or unowned';
+          } else if (ownerId == playerId) {
+            valid = false;
+            rejectReason = 'Cannot blockade own province';
+          } else {
+            final rel = getRelation(game, playerId, ownerId);
+            if (rel?.atWar != true) {
+              valid = false;
+              rejectReason = 'Blockade only allowed against nations at war';
+            }
+          }
+        }
+      }
+
       results.add(OrderValidationResult(
         status: valid
             ? OrderValidationStatus.accepted
             : OrderValidationStatus.rejected,
-        reason: valid
-            ? null
-            : (fleet == null ? 'Fleet not found' : 'Fleet not owned by player'),
+        reason: rejectReason,
       ));
       if (!valid) rejected = true;
     }
