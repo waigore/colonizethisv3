@@ -9,8 +9,9 @@ import '../constants.dart';
 /// not found. Do not fall back to oldWorld/newWorld.
 
 /// Resolves [provinceId] to full form (regionId|localId). If already prefixed, returns as-is.
-/// Otherwise finds a province in [world] with matching local id and returns ProvinceId.full(regionId, provinceId).
-/// Throws [StateError] if not prefixed and no matching province found.
+/// Legacy: accepts short (unprefixed) id and resolves by searching oldWorld then newWorld; when
+/// the same local id exists in both regions, first match (oldWorld) wins. New code should use
+/// prefixed id only. SPEC/game/world-model-identity.md.
 String resolveToFullProvinceId(WorldState world, String provinceId) {
   if (ProvinceId.isPrefixed(provinceId)) return provinceId;
   final r = _resolveShort(world, provinceId);
@@ -20,15 +21,21 @@ String resolveToFullProvinceId(WorldState world, String provinceId) {
 
 String? _resolveShort(WorldState world, String provinceId) {
   for (final p in world.oldWorld.provinces) {
-    if (p.id == provinceId) return ProvinceId.full(kRegionOldWorld, provinceId);
+    final localId = ProvinceId.isPrefixed(p.id) ? ProvinceId.localIdFrom(p.id) : p.id;
+    if (p.id == provinceId || localId == provinceId) {
+      return ProvinceId.full(kRegionOldWorld, localId);
+    }
   }
   for (final p in world.newWorld.provinces) {
-    if (p.id == provinceId) return ProvinceId.full(kRegionNewWorld, provinceId);
+    final localId = ProvinceId.isPrefixed(p.id) ? ProvinceId.localIdFrom(p.id) : p.id;
+    if (p.id == provinceId || localId == provinceId) {
+      return ProvinceId.full(kRegionNewWorld, localId);
+    }
   }
   return null;
 }
 
-/// Returns the province for [fullProvinceId] (format regionId|localId) or short local id.
+/// Returns the province for [fullProvinceId] (prefixed regionId|localId or legacy short id).
 /// Throws [StateError] if the id cannot be resolved or the province is not found.
 Province getProvince(WorldState world, String fullProvinceId) {
   final resolved = resolveToFullProvinceId(world, fullProvinceId);
@@ -48,7 +55,7 @@ Province getProvince(WorldState world, String fullProvinceId) {
   return region.provinces[idx];
 }
 
-/// Optional lookup. Returns null if province is not found or id (when short) cannot be resolved.
+/// Optional lookup. Returns null if province is not found. Accepts prefixed or legacy short id.
 Province? tryGetProvince(WorldState world, String fullProvinceId) {
   final resolved = ProvinceId.isPrefixed(fullProvinceId)
       ? fullProvinceId

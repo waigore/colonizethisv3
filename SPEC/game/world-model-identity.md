@@ -36,6 +36,8 @@ When turning topology/tile maps into view models (ownership fill, per-player map
 
 Logic must never locate a province by province id alone. Use (regionId, provinceId) or a prefixed full id, and resolve the province only within that region. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found, treat it as a logic error; do not fall back to a default region.
 
+**API:** `getProvince` and `tryGetProvince` accept prefixed ids; legacy short (unprefixed) ids are resolved by searching oldWorld then newWorld. When the same local id exists in both regions, first match (oldWorld) wins. New code should use prefixed id only.
+
 ---
 
 ## Acceptance Criteria
