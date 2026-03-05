@@ -257,8 +257,8 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
     if (_selectedSlot < 0) _selectedSlot = 0;
     if (_selectedTechIndex >= techs.length) _selectedTechIndex = techs.isEmpty ? 0 : techs.length - 1;
 
-    return KeyboardListener(
-      autofocus: true,
+    return Focusable(
+      focused: true,
       onKeyEvent: _handleKeyEvent,
       child: _showCancelConfirm
           ? _buildCancelConfirm()
