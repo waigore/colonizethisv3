@@ -310,6 +310,27 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     });
   }
 
+  void _updateSelectedFactionOvertureStage(OvertureStage newStage) {
+    if (_selectedFaction == null || _factions.isEmpty) {
+      return;
+    }
+    setState(() {
+      final index = _selectedIndex.clamp(0, _factions.length - 1);
+      final current = _factions[index];
+      final updated = FactionDisplayInfo(
+        id: current.id,
+        name: current.name,
+        type: current.type,
+        relationState: current.relationState,
+        relationLevel: current.relationLevel,
+        relationScore: current.relationScore,
+        overtureStage: newStage,
+      );
+      _factions[index] = updated;
+      _selectedFaction = updated;
+    });
+  }
+
   // Get current orders for human player
   List<DiplomaticOrder> get _diplomaticOrders {
     return component.orders.diplomaticOrdersByPlayerId[_humanPlayerId] ?? [];
@@ -431,6 +452,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       targetFactionId: targetId,
       overtureStage: stage,
     ));
+    _updateSelectedFactionOvertureStage(stage);
     _setStatus('Established $stage with ${_selectedFaction!.name}');
     _log.d('tui:diplomacy: established $stage with $targetId');
   }
