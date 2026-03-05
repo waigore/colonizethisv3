@@ -25,7 +25,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game. Province and capital ids use the prefixed format and lookup rules in [world-model-identity.md](world-model-identity.md).
 
-**Capital-Choice Phase:** Runs after setup for Great Powers only — each GP may confirm or override its capital province + tile (sea-bound). Minor Nations and Tribes do not participate; their capitals come from setup.
+**Capital-Choice Phase:** Runs **during** setup (after province assignment): each GP's capital is auto-chosen (sea-bound province + tile); a future UI may let GPs confirm or override. Minor Nations and Tribes do not participate; their capitals are assigned at setup.
 
 ## Configurable Values
 
