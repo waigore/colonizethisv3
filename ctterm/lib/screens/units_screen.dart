@@ -369,15 +369,41 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   void _issueAttackOrder(Unit unit, String targetProvince) {
-    // For MVP, just accept the attack order with simplified validation
-    // Full implementation would check enemy ownership and visibility
-    
+    // Validate: target must be enemy-controlled province
     final playerId = _getHumanPlayerId();
     if (playerId == null) {
       setState(() {
         _feedbackMessage = 'Error: no human player';
         _feedbackColor = Colors.red;
       });
+      return;
+    }
+
+    // Find target province and check ownership
+    final world = component.game.worldState;
+    String? targetOwnerId;
+    for (final p in world.oldWorld.provinces) {
+      if (p.id == targetProvince) {
+        targetOwnerId = p.ownerId;
+        break;
+      }
+    }
+    if (targetOwnerId == null) {
+      for (final p in world.newWorld.provinces) {
+        if (p.id == targetProvince) {
+          targetOwnerId = p.ownerId;
+          break;
+        }
+      }
+    }
+
+    // Reject if target is owned by the player (cannot attack own province)
+    if (targetOwnerId == playerId) {
+      setState(() {
+        _feedbackMessage = 'Invalid: cannot attack your own province';
+        _feedbackColor = Colors.red;
+      });
+      _log.w('tui:units: attack rejected - target ${targetProvince} owned by player ${playerId}');
       return;
     }
 
