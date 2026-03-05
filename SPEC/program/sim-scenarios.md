@@ -199,6 +199,8 @@ Assertion fields:
 
 **Research-state assertions** (SPEC/game/research-state.md): use `player` and `techUnlocked` (array of tech ids that must be true in that player’s techUnlocked map). Example: `{"turn": 1, "player": "gp1", "techUnlocked": ["gathering_1", "road_construction"]}`.
 
+**Victory assertions** (SPEC/game/victory.md): use `victoryWinner` (expected winner player id), `victoryType` (e.g. `military`), and optionally `victoryTurn` (turn number when victory was set). Verifies `Game.victory` after end-of-turn. Example: `{"turn": 1, "victoryWinner": "gp1", "victoryType": "military", "victoryTurn": 0}`.
+
 ---
 
 ## Execution Flow

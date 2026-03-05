@@ -525,6 +525,34 @@ class StateVerifier {
       }
     }
 
+    // Victory assertions (SPEC/game/victory.md)
+    if (assertion.victoryWinner != null ||
+        assertion.victoryType != null ||
+        assertion.victoryTurn != null) {
+      final v = game.victory;
+      if (v == null) {
+        failures.add(
+          'Victory: expected victory to be set (winner=${assertion.victoryWinner}, type=${assertion.victoryType}, turn=${assertion.victoryTurn}), but Game.victory is null',
+        );
+      } else {
+        if (assertion.victoryWinner != null && v.winnerPlayerId != assertion.victoryWinner) {
+          failures.add(
+            'Victory winner: expected "${assertion.victoryWinner}", got "${v.winnerPlayerId}"',
+          );
+        }
+        if (assertion.victoryType != null && v.type.name != assertion.victoryType) {
+          failures.add(
+            'Victory type: expected "${assertion.victoryType}", got "${v.type.name}"',
+          );
+        }
+        if (assertion.victoryTurn != null && v.turnNumber != assertion.victoryTurn) {
+          failures.add(
+            'Victory turn: expected ${assertion.victoryTurn}, got ${v.turnNumber}',
+          );
+        }
+      }
+    }
+
     // Faction effective military level (SPEC/game/factions.md): Minor or Tribe [player] must have expected effectiveMilitaryLevel.
     if (assertion.player != null && assertion.effectiveMilitaryLevel != null) {
       final factionId = assertion.player!;
