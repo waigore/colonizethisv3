@@ -252,6 +252,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   /// Get adjacent enemy-controlled provinces for attack targeting.
+  /// Filters to only include provinces not owned by the human player.
   List<String> _getAdjacentEnemyProvinces(Unit unit) {
     final allAdj = _getAdjacentProvinces(unit);
     if (allAdj.isEmpty) return const [];
