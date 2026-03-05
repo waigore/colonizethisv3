@@ -121,6 +121,11 @@ class _VictoryProgressScreenState extends State<VictoryProgressScreen> {
     final sortedEntries = _gpProvinces.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     
+    // Find the maximum province count for leading GP detection
+    final maxProvinces = _gpProvinces.values.isEmpty 
+        ? 0 
+        : _gpProvinces.values.reduce((a, b) => a > b ? a : b);
+    
     return Container(
       padding: const EdgeInsets.all(1),
       child: Column(
@@ -133,7 +138,7 @@ class _VictoryProgressScreenState extends State<VictoryProgressScreen> {
             final provinces = entry.value;
             final progress = (provinces / _victoryThreshold * 100).clamp(0, 100).toInt();
             final isPlayer = entry.key == 'player';
-            final isLeading = provinces == sortedEntries.first.value;
+            final isLeading = provinces == maxProvinces;
             
             // Build progress bar
             final barLength = 20;
