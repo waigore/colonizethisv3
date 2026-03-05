@@ -229,43 +229,154 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
             const Text(' Shipyard ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             const Text('[b]uild [c]ancel [h]ome [Esc]back', style: TextStyle(color: Colors.grey)),
           ])),
-          Expanded(child: Row(children: [
-            Expanded(flex: 2, child: Container(padding: const EdgeInsets.all(1), child: Column(children: [
-              const Text('Available Ships:', style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 1),
-              Expanded(child: ListView(children: [for (var i = 0; i < ships.length; i++) _shipRow(ships[i], i == _selectedIndex)])),
-            ]))),
-            Container(width: 40, padding: const EdgeInsets.all(1), child: Column(children: [
-              const Text('Details:', style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 1),
-              if (selected != null) ...[
-                Text(selected.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text('Category: ${selected.category}', style: const TextStyle(color: Colors.grey)),
-                Text('Cost: ${selected.cost}g', style: const TextStyle(color: Colors.white)),
-                const Text('Stats:', style: TextStyle(color: Colors.cyan)),
-                Text('  FRP:${selected.firepower} RNG:${selected.range}', style: const TextStyle(color: Colors.white)),
-                Text('  ARM:${selected.armour} HULL:${selected.hull}', style: const TextStyle(color: Colors.white)),
-                Text('  MV:${selected.movement}', style: const TextStyle(color: Colors.white)),
-                Text(selected.isAvailable ? '[b]uild' : 'Locked', style: TextStyle(color: selected.isAvailable ? Colors.green : Colors.red)),
-              ] else const Text('No selection', style: TextStyle(color: Colors.grey)),
-            ])),
-            Container(width: 40, padding: const EdgeInsets.all(1), child: Column(children: [
-              Text(_showHomeFleet ? 'Home Fleet:' : 'Build Queue:', style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 1),
-              if (_showHomeFleet) ...[
-                if (homeFleet.isEmpty) const Text('No ships', style: TextStyle(color: Colors.grey))
-                else ...homeFleet.map((u) => Text(_fmtShip(u.type), style: const TextStyle(color: Colors.white))),
-                Text('Ports: ${ports.length}', style: const TextStyle(color: Colors.grey)),
-              ] else ...[
-              if (buildOrders.isEmpty) const Text('No orders', style: TextStyle(color: Colors.grey))
-              else ...buildOrders.asMap().entries.map((e) => Text(
-                    '${e.key + 1}.${e.value.shipName}>${_provinceLabel(e.value.provinceId)}',
-                    style: TextStyle(
-                        color: e.key == _selectedIndex ? Colors.green : Colors.white),
-                  )),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Available Ships:',
+                          style: TextStyle(
+                            color: Colors.yellow,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Expanded(
+                          child: ListView(
+                            children: [
+                              for (var i = 0; i < ships.length; i++)
+                                _shipRow(ships[i], i == _selectedIndex),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Details:',
+                          style: TextStyle(
+                            color: Colors.yellow,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        if (selected != null) ...[
+                          Text(
+                            selected.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Category: ${selected.category}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          Text(
+                            'Cost: ${selected.cost}g',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          const Text(
+                            'Stats:',
+                            style: TextStyle(color: Colors.cyan),
+                          ),
+                          Text(
+                            '  FRP:${selected.firepower} RNG:${selected.range}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            '  ARM:${selected.armour} HULL:${selected.hull}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            '  MV:${selected.movement}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            selected.isAvailable ? '[b]uild' : 'Locked',
+                            style: TextStyle(
+                              color: selected.isAvailable
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                        ] else
+                          const Text(
+                            'No selection',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    child: Column(
+                      children: [
+                        Text(
+                          _showHomeFleet ? 'Home Fleet:' : 'Build Queue:',
+                          style: const TextStyle(
+                            color: Colors.yellow,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        if (_showHomeFleet) ...[
+                          if (homeFleet.isEmpty)
+                            const Text(
+                              'No ships',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            ...homeFleet.map(
+                              (u) => Text(
+                                _fmtShip(u.type),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          Text(
+                            'Ports: ${ports.length}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ] else ...[
+                          if (buildOrders.isEmpty)
+                            const Text(
+                              'No orders',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            ...buildOrders.asMap().entries.map(
+                              (e) => Text(
+                                '${e.key + 1}.${e.value.shipName}>${_provinceLabel(e.value.provinceId)}',
+                                style: TextStyle(
+                                  color: e.key == _selectedIndex
+                                      ? Colors.green
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            ])),
-          ])),
+            ),
+          ),
           Container(padding: const EdgeInsets.all(1), color: Colors.grey, child: Row(children: [
             if (_inputMode == 'province') ...[
               Text(_provinceInput.isEmpty ? 'Province: ' : _provinceInput, style: TextStyle(color: _feedbackColor)),
