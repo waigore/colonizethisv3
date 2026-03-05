@@ -30,11 +30,14 @@ class InGameShellScreen extends StatefulComponent {
   });
 
   final Game? game;
+
   /// Current orders for the human player (used for idle-civilian end-turn checks).
   final Orders orders;
+
   /// Topology for the current game (from save/init). Used for land graph and neighbour navigation.
   final MapTopology? combinedTopology;
   final List<GameEvent>? gameEvents;
+
   /// Tile maps by region (oldWorld, newWorld) for future map overlays (currently unused in this screen).
   final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
@@ -49,13 +52,16 @@ class InGameShellScreen extends StatefulComponent {
 
 class _InGameShellScreenState extends State<InGameShellScreen> {
   String _selectedRegion = 'oldWorld';
+
   /// Local province id (in current region) of the selected node in the graph.
   String? _selectedProvinceLocalId;
+
   /// Index into current province's neighbour list when moving next/prev.
   int _neighbourIndex = 0;
   bool _isEndingTurn = false;
   bool _isConfirmingEndTurn = false;
   int _idleCivilianCountForPrompt = 0;
+
   /// Map grid layer only; viewport is derived from selected province (SPEC/tui/screens/in-game-shell.md § Map Grid Widget).
   MapGridLayer _mapGridLayer = MapGridLayer.terrain;
 
@@ -77,6 +83,45 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       if (!(game.aiControlByGpId[player.id] ?? false)) return player.treasury;
     }
     return 0;
+  }
+
+  int _pendingDiplomacyTreasuryCost() {
+    final game = component.game;
+    final humanId = _humanPlayerId();
+    if (game == null || humanId == null) return 0;
+
+    final diploOrders = _orders.diplomaticOrdersByPlayerId[humanId] ??
+        const <DiplomaticOrder>[];
+    var total = 0;
+
+    for (final order in diploOrders) {
+      switch (order.type) {
+        case DiplomaticOrderType.establishOverture:
+          final stage = order.overtureStage;
+          if (stage == null || stage == OvertureStage.none) {
+            break;
+          }
+          if (stage == OvertureStage.tradeConsulate) {
+            total += overtureConsulateCost;
+          } else if (stage == OvertureStage.embassy) {
+            total += overtureEmbassyCost;
+          } else if (stage == OvertureStage.joinEmpire) {
+            total += joinEmpireCostForMinorOrTribe(game, order.targetFactionId);
+          }
+          break;
+        case DiplomaticOrderType.grantAid:
+        case DiplomaticOrderType.setSubsidy:
+          final amount = order.amount ?? 0;
+          if (amount > 0) {
+            total += amount;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    return total;
   }
 
   /// Computes a short resources summary string for the HUD (grain, lumber, castIron).
@@ -104,8 +149,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return 'g:$grain L:$lumber CI:$castIron';
   }
 
-  String get _resourceSummary =>
-      inGameShellHudResourceSummary(component.game);
+  String get _resourceSummary => inGameShellHudResourceSummary(component.game);
 
   String get _regionDisplayName =>
       _selectedRegion == 'oldWorld' ? 'Old World' : 'New World';
@@ -143,11 +187,11 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     final civs = _playerCivilianUnits;
     if (civs.isEmpty) return 0;
 
-    final workOrders = _orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
+    final workOrders =
+        _orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     int idle = 0;
     for (final unit in civs) {
-      final hasOrder =
-          workOrders.any((order) => order.unitId == unit.id);
+      final hasOrder = workOrders.any((order) => order.unitId == unit.id);
       if (!hasOrder) {
         idle++;
       }
@@ -161,7 +205,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     if (top == null || top.nodes.isEmpty) return [];
     final provinceIds = top.nodes
         .where((n) =>
-            n.regionId == _selectedRegion && n.type == TopologyNodeType.province)
+            n.regionId == _selectedRegion &&
+            n.type == TopologyNodeType.province)
         .map((n) => ProvinceId.localIdFrom(n.id))
         .toList();
     provinceIds.sort();
@@ -243,8 +288,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
 
   void _cycleRegion() {
     setState(() {
-      _selectedRegion =
-          _selectedRegion == 'oldWorld' ? 'newWorld' : 'oldWorld';
+      _selectedRegion = _selectedRegion == 'oldWorld' ? 'newWorld' : 'oldWorld';
       _selectedProvinceLocalId = null;
       _neighbourIndex = 0;
     });
@@ -342,8 +386,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   /// currently selected region. Tiles with level 0 are omitted.
   Map<String, int> _improvementLevelsForSelectedRegion(Game game) {
     final worldState = game.worldState;
-    final byRegion =
-        worldState.tileKeysByRegionAndProvince[_selectedRegion];
+    final byRegion = worldState.tileKeysByRegionAndProvince[_selectedRegion];
     if (byRegion == null || byRegion.isEmpty) {
       return const {};
     }
@@ -368,8 +411,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     final game = component.game;
     if (game?.victory != null) {
       final winnerId = game!.victory!.winnerPlayerId;
-      final isHumanWinner =
-          !(game.aiControlByGpId[winnerId] ?? false);
+      final isHumanWinner = !(game.aiControlByGpId[winnerId] ?? false);
       setState(() => _isEndingTurn = false);
       if (isHumanWinner) {
         component.onVictory();
@@ -506,7 +548,9 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         // Direct neighbour selection via number keys 1–9 (indices 0–8). Map layers use t/p/r/u.
-        if (c != null && c.length == 1 && c.codeUnitAt(0) >= '1'.codeUnitAt(0) &&
+        if (c != null &&
+            c.length == 1 &&
+            c.codeUnitAt(0) >= '1'.codeUnitAt(0) &&
             c.codeUnitAt(0) <= '9'.codeUnitAt(0)) {
           final index = c.codeUnitAt(0) - '1'.codeUnitAt(0);
           _selectNeighbourByIndex(index);
@@ -551,13 +595,18 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   }
 
   Component _buildHUD() {
+    final pendingDiplo = _pendingDiplomacyTreasuryCost();
+    final effectiveTreasury =
+        pendingDiplo > 0 ? (_treasury - pendingDiplo) : _treasury;
+    final pendingSuffix = pendingDiplo > 0 ? ' (committed £$pendingDiplo)' : '';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-              'Turn: $_turn | Year: $_year | Treasury: \$$_treasury | '
+              'Turn: $_turn | Year: $_year | Treasury: \$$effectiveTreasury$pendingSuffix | '
               'Res: ${_resourceSummary.isEmpty ? "-" : _resourceSummary} | '
               'Region: $_regionDisplayName [R]'),
         ],
@@ -640,10 +689,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
 
   Component _buildTopologyContent() {
     final selected = _selectedProvinceLocalId;
-    final selectedProv =
-        selected != null ? _provinceByLocalId(selected) : null;
-    final neighbours =
-        selected != null ? _neighboursOf(selected) : <String>[];
+    final selectedProv = selected != null ? _provinceByLocalId(selected) : null;
+    final neighbours = selected != null ? _neighboursOf(selected) : <String>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,8 +751,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     int improvedTiles = 0;
     if (prov != null && game != null) {
       final worldState = game.worldState;
-      final byRegion =
-          worldState.tileKeysByRegionAndProvince[_selectedRegion];
+      final byRegion = worldState.tileKeysByRegionAndProvince[_selectedRegion];
       final tiles = byRegion?[prov.id];
       if (tiles != null) {
         final tileState = worldState.tileState;
@@ -732,8 +778,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Province Info',
-              style: TextStyle(
-                  color: Colors.cyan, fontWeight: FontWeight.bold)),
+              style:
+                  TextStyle(color: Colors.cyan, fontWeight: FontWeight.bold)),
           const SizedBox(height: 1),
           if (prov == null)
             Text('No province selected', style: TextStyle(color: Colors.gray))
@@ -773,8 +819,8 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     if (provinceNodeIds.isEmpty) return false;
 
     final seaNodeIds = top.nodes
-        .where((n) =>
-            n.regionId == regionId && n.type == TopologyNodeType.seaZone)
+        .where(
+            (n) => n.regionId == regionId && n.type == TopologyNodeType.seaZone)
         .map((n) => n.id)
         .toSet();
     if (seaNodeIds.isEmpty) return false;
