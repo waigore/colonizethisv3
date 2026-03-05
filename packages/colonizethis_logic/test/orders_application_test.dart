@@ -1734,6 +1734,98 @@ void main() {
       }
     });
 
+    test('build_fort to level 2 is skipped without Mine Engineering', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                  id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 1),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            techUnlocked: {},
+          ),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'build_fort',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
+      expect(next.worldState.oldWorld.units.single.currentWork, isNull);
+    });
+
+    test('build_fort to level 3 is skipped without Modern Forts', () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Engineer',
+        ownerId: 'p1',
+        provinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                  id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 2),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            techUnlocked: {'mine_engineering': true},
+          ),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: 'build_fort',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.oldWorld.provinces.single.fortLevel, 2);
+      expect(next.worldState.oldWorld.units.single.currentWork, isNull);
+    });
+
     test('upgrade_town completion increases province townDevelopmentLevel', () {
       final unit = Unit(
         id: 'u1',
