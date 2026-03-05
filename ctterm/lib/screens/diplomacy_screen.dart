@@ -364,6 +364,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       type: DiplomaticOrderType.offerPeace,
       targetFactionId: targetId,
     ));
+    _updateSelectedFactionRelationState(RelationState.atPeace);
     _setStatus('Offered peace to ${_selectedFaction!.name}');
     _log.d('tui:diplomacy: offered peace to $targetId');
   }
