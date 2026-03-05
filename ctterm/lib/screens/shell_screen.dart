@@ -123,8 +123,7 @@ class _ShellScreenState extends State<ShellScreen> {
     return KeyboardListener(
       onKeyEvent: (LogicalKey key) {
         if (key == LogicalKey.escape) {
-          // Let in-game routes handle their own escape (pause menu, etc.)
-          // Only handle escape at shell level for routes outside game flow
+          // Routes outside game flow: Esc -> main menu
           if (component.route == CttermRoute.mainMenu ||
               component.route == CttermRoute.gameSetup ||
               component.route == CttermRoute.loadGame ||
@@ -134,7 +133,21 @@ class _ShellScreenState extends State<ShellScreen> {
             component.onNavigate(CttermRoute.mainMenu);
             return true;
           }
-          // For in-game routes, let them handle escape themselves
+          // In-game panels: Esc -> back to in-game shell (so Escape works even if panel does not receive key)
+          if (component.route == CttermRoute.mapContext ||
+              component.route == CttermRoute.units ||
+              component.route == CttermRoute.development ||
+              component.route == CttermRoute.production ||
+              component.route == CttermRoute.academy ||
+              component.route == CttermRoute.shipyard ||
+              component.route == CttermRoute.diplomacy ||
+              component.route == CttermRoute.technology ||
+              component.route == CttermRoute.victoryProgress ||
+              component.route == CttermRoute.pauseOptions) {
+            _log.d('tui:nav: Esc -> in-game shell');
+            component.onNavigate(CttermRoute.inGameShell);
+            return true;
+          }
           return false;
         }
         return false;

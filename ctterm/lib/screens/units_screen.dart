@@ -176,13 +176,19 @@ class _UnitsScreenState extends State<UnitsScreen> {
       return false;
     }
 
-    // Navigation: arrow keys / j/k to navigate unit list
+    // Navigation: arrow keys / j/k to navigate unit list (clear non-blocking error when selection changes)
     if (key == LogicalKey.arrowUp || c == 'k') {
-      setState(() => _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1));
+      setState(() {
+        _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1);
+        _feedbackMessage = '';
+      });
       return true;
     }
     if (key == LogicalKey.arrowDown || c == 'j') {
-      setState(() => _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1));
+      setState(() {
+        _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1);
+        _feedbackMessage = '';
+      });
       return true;
     }
 
