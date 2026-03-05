@@ -90,4 +90,25 @@ void main() {
       expect(tryGetProvince(world, 'p1')!.displayName, 'Alpha');
     });
   });
+
+  group('getProvinceByRegion / tryGetProvinceByRegion (region-scoped)', () {
+    test('getProvinceByRegion finds province only in given region', () {
+      expect(getProvinceByRegion(world, 'oldWorld', 'p1').displayName, 'Alpha');
+      expect(getProvinceByRegion(world, 'newWorld', 'n1').displayName, 'Gamma');
+    });
+    test('getProvinceByRegion throws for wrong region', () {
+      expect(
+        () => getProvinceByRegion(world, 'newWorld', 'p1'),
+        throwsStateError,
+      );
+    });
+    test('tryGetProvinceByRegion returns null for missing in region', () {
+      expect(tryGetProvinceByRegion(world, 'oldWorld', 'missing'), isNull);
+      expect(tryGetProvinceByRegion(world, 'unknownRegion', 'p1'), isNull);
+    });
+    test('getProvince(fullId) delegates to region-scoped lookup', () {
+      expect(getProvince(world, 'oldWorld|p1').displayName, 'Alpha');
+      expect(getProvince(world, 'newWorld|n1').displayName, 'Gamma');
+    });
+  });
 }

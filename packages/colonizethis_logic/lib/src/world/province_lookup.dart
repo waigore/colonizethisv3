@@ -2,16 +2,16 @@ import 'package:colonizethis_models/colonizethis_models.dart' show Province, Pro
 
 import '../constants.dart';
 
-/// Central province lookup. In a multi-region world, province must be located
-/// using regionId + provinceId (or a prefixed full id). SPEC/game/world-model.
+/// Central province lookup. Lookup is by **full disambiguated id** (`regionId|localId`)
+/// and is **region-scoped**: resolution happens only within the given region.
+/// SPEC/game/world-model-identity.md.
 ///
-/// Use [getProvince] when the province is required; it throws [StateError] if
-/// not found. Do not fall back to oldWorld/newWorld.
+/// Prefer [getProvince]/[tryGetProvince] with a prefixed id or [getProvinceByRegion]/[tryGetProvinceByRegion]
+/// with explicit (regionId, localId). Do not rely on short-id resolution for new code.
 
 /// Resolves [provinceId] to full form (regionId|localId). If already prefixed, returns as-is.
-/// Legacy: accepts short (unprefixed) id and resolves by searching oldWorld then newWorld; when
-/// the same local id exists in both regions, first match (oldWorld) wins. New code should use
-/// prefixed id only. SPEC/game/world-model-identity.md.
+/// **Legacy (deprecated):** Accepts short (unprefixed) id by searching oldWorld then newWorld;
+/// that is not region-scoped. New code must use prefixed id only. SPEC/game/world-model-identity.md.
 String resolveToFullProvinceId(WorldState world, String provinceId) {
   if (ProvinceId.isPrefixed(provinceId)) return provinceId;
   final r = _resolveShort(world, provinceId);
@@ -35,40 +35,50 @@ String? _resolveShort(WorldState world, String provinceId) {
   return null;
 }
 
-/// Returns the province for [fullProvinceId] (prefixed regionId|localId or legacy short id).
-/// Throws [StateError] if the id cannot be resolved or the province is not found.
-Province getProvince(WorldState world, String fullProvinceId) {
-  final resolved = resolveToFullProvinceId(world, fullProvinceId);
-  final regionId = ProvinceId.regionIdFrom(resolved);
-  final localId = ProvinceId.localIdFrom(resolved);
+/// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
+/// Throws [StateError] if the region is unknown or the province is not found.
+Province getProvinceByRegion(WorldState world, String regionId, String localId) {
   final region = regionId == kRegionOldWorld
       ? world.oldWorld
       : (regionId == kRegionNewWorld ? world.newWorld : null);
   if (region == null) {
-    throw StateError('Unknown region "$regionId" for province "$fullProvinceId"');
+    throw StateError('Unknown region "$regionId" for province $regionId|$localId');
   }
+  final fullId = ProvinceId.full(regionId, localId);
   final idx = region.provinces.indexWhere((p) =>
-      p.id == resolved || (p.regionId == regionId && p.id == localId));
+      p.id == fullId || (p.regionId == regionId && (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
   if (idx < 0) {
-    throw StateError('Province not found: "$fullProvinceId" in region "$regionId"');
+    throw StateError('Province not found: $regionId|$localId in region "$regionId"');
   }
   return region.provinces[idx];
 }
 
-/// Optional lookup. Returns null if province is not found. Accepts prefixed or legacy short id.
+/// Optional region-scoped lookup: province in [regionId] with local id [localId], or null.
+Province? tryGetProvinceByRegion(WorldState world, String regionId, String localId) {
+  final region = regionId == kRegionOldWorld
+      ? world.oldWorld
+      : (regionId == kRegionNewWorld ? world.newWorld : null);
+  if (region == null) return null;
+  final fullId = ProvinceId.full(regionId, localId);
+  final idx = region.provinces.indexWhere((p) =>
+      p.id == fullId || (p.regionId == regionId && (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
+  if (idx < 0) return null;
+  return region.provinces[idx];
+}
+
+/// Returns the province for [fullProvinceId]. Use full disambiguated id (regionId|localId); resolution is
+/// region-scoped within the region implied by the id. Legacy: accepts short id via [resolveToFullProvinceId].
+/// Throws [StateError] if the id cannot be resolved or the province is not found.
+Province getProvince(WorldState world, String fullProvinceId) {
+  final resolved = resolveToFullProvinceId(world, fullProvinceId);
+  return getProvinceByRegion(world, ProvinceId.regionIdFrom(resolved), ProvinceId.localIdFrom(resolved));
+}
+
+/// Optional lookup by full id. Prefer prefixed id; resolution is region-scoped. Legacy: accepts short id.
 Province? tryGetProvince(WorldState world, String fullProvinceId) {
   final resolved = ProvinceId.isPrefixed(fullProvinceId)
       ? fullProvinceId
       : _resolveShort(world, fullProvinceId);
   if (resolved == null) return null;
-  final regionId = ProvinceId.regionIdFrom(resolved);
-  final localId = ProvinceId.localIdFrom(resolved);
-  final region = regionId == kRegionOldWorld
-      ? world.oldWorld
-      : (regionId == kRegionNewWorld ? world.newWorld : null);
-  if (region == null) return null;
-  final idx = region.provinces.indexWhere((p) =>
-      p.id == resolved || (p.regionId == regionId && p.id == localId));
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return tryGetProvinceByRegion(world, ProvinceId.regionIdFrom(resolved), ProvinceId.localIdFrom(resolved));
 }
