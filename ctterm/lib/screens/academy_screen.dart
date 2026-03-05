@@ -480,7 +480,8 @@ class _AcademyScreenState extends State<AcademyScreen> {
     final regimentList = _getRegimentList();
     final trainingQueue = _getTrainingQueue();
 
-    return KeyboardListener(
+    return Focusable(
+      focused: true,
       onKeyEvent: _handleKeyEvent,
       child: Container(
         color: Colors.black,

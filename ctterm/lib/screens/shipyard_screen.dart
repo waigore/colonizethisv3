@@ -220,7 +220,8 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     final homeFleet = _getHomeFleet();
     final ports = _getPortProvinces();
     final selected = ships.isNotEmpty && _selectedIndex < ships.length ? ships[_selectedIndex] : null;
-    return KeyboardListener(
+    return Focusable(
+      focused: true,
       onKeyEvent: _handleKeyEvent,
       child: Container(
         color: Colors.black,
