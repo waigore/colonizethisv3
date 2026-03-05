@@ -286,11 +286,18 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Row(children: [
-            const Text('Technology'),
-            const Spacer(),
-            const Text('[Esc: Back]'),
-          ]),
+          Row(
+            children: [
+              const Text('Technology'),
+              const SizedBox(width: 2),
+              Text(
+                'Turn ${component.game.worldState.turnState.turnNumber}',
+                style: TextStyle(color: Colors.gray),
+              ),
+              const Spacer(),
+              const Text('[Esc: Back]'),
+            ],
+          ),
           Text('─' * 60),
 
           // Research Slots
@@ -308,7 +315,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
           const SizedBox(height: 1),
 
           // Footer
-          Text('Unlocked: $_unlockedCount/$_totalTechCount'),
+          Text('Unlocked Techs: $_unlockedCount/$_totalTechCount'),
           const Text('[F1-F4: Slot] [Enter: Assign] [1-5: Funding] [Del: Cancel] [Tab: Filter] [W/S: Scroll]'),
         ],
       ),
