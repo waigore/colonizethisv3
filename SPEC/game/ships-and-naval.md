@@ -38,6 +38,8 @@ Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine
 
 When a fleet **enters** a sea zone (move order), all **coastal land tiles** of provinces adjacent to that sea zone are set to **revealed** for that player. This enables Explorer deployment to New World (at least one coastal tile must be revealed first). Reference: I2 03-units-civilian — "first terrain tile is uncovered when a ship enters a sea zone adjacent to the New World."
 
+Province identity for visibility updates must use **full** province id (`regionId|localId`) and **region-scoped** lookup (only provinces in the destination sea zone's region); see [world-model-identity.md](world-model-identity.md).
+
 ---
 
 ## Home Fleet

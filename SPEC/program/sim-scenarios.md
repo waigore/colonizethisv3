@@ -25,7 +25,9 @@ Run composite integration tests that verify game systems work correctly together
 |------|-------------|
 | **Single scenario** | Run one scenario file (`--scenario=path.json`) |
 | **Batch** | Run all JSON files in directory (`--directory=scenarios/`) |
-| **Generate** | Run scenario and output current state as assertions (`--generate-assertions`) |
+| **Generate** | Run scenario and output current state as assertions (`--generate-assertions`); **not yet implemented** (see below) |
+
+**Generate mode (`--generate-assertions`):** The CLI accepts the flag but this mode is **not yet implemented**. The tool does not currently serialize the current game state to assertion JSON. When implemented, it will run the scenario (or a subset of turns) and output the resulting state in the assertion format for use as a scaffold in scenario authoring.
 
 ---
 
