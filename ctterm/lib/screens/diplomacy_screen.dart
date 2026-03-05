@@ -289,6 +289,27 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     });
   }
 
+  void _updateSelectedFactionRelationState(RelationState newState) {
+    if (_selectedFaction == null || _factions.isEmpty) {
+      return;
+    }
+    setState(() {
+      final index = _selectedIndex.clamp(0, _factions.length - 1);
+      final current = _factions[index];
+      final updated = FactionDisplayInfo(
+        id: current.id,
+        name: current.name,
+        type: current.type,
+        relationState: newState,
+        relationLevel: current.relationLevel,
+        relationScore: current.relationScore,
+        overtureStage: current.overtureStage,
+      );
+      _factions[index] = updated;
+      _selectedFaction = updated;
+    });
+  }
+
   // Get current orders for human player
   List<DiplomaticOrder> get _diplomaticOrders {
     return component.orders.diplomaticOrdersByPlayerId[_humanPlayerId] ?? [];
@@ -324,6 +345,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       type: DiplomaticOrderType.declareWar,
       targetFactionId: targetId,
     ));
+    _updateSelectedFactionRelationState(RelationState.atWar);
     _setStatus('Declared war on ${_selectedFaction!.name}');
     _log.d('tui:diplomacy: declared war on $targetId');
   }
