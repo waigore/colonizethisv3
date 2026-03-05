@@ -6,7 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 ///
 /// Phase 2: cargo holds derived from home fleet (with stub fallback). Fill by priority until cap; rest left behind.
 
-/// Default cargo holds per player when no ships or no cargoHold data (stub fallback).
+/// Default cargo holds per player when no ships or no cargoHold data.
+/// Sensible default per SPEC/program/extraction-pipeline.md § Cargo holds (GDD convention-over-configuration).
 const int defaultCargoHoldsStub = 24;
 
 /// Priority order for filling cargo: food, raw materials, riches, then manufactured/advanced.
@@ -55,7 +56,7 @@ Map<CommodityId, int> allocateOverseasToStockpile(
 ///
 /// Home fleet convention: fleet id = 'fleet_<playerId>'. Each ship's cargoHold is read from
 /// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
-/// falls back to [defaultCargoHoldsStub] for backwards compatibility.
+/// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
 int cargoHoldsForHomeFleet(Game game, String playerId) {
   final homeFleetId = 'fleet_$playerId';
   final fleets = game.worldState.fleets;
