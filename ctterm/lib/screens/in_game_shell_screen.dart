@@ -503,16 +503,16 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
             setState(() {
               switch (_mapGridLayer) {
                 case MapGridLayer.terrain:
-                  _mapGridLayer = MapGridLayer.units;
-                  break;
-                case MapGridLayer.political:
-                  _mapGridLayer = MapGridLayer.terrain;
-                  break;
-                case MapGridLayer.resources:
                   _mapGridLayer = MapGridLayer.political;
                   break;
-                case MapGridLayer.units:
+                case MapGridLayer.political:
                   _mapGridLayer = MapGridLayer.resources;
+                  break;
+                case MapGridLayer.resources:
+                  _mapGridLayer = MapGridLayer.units;
+                  break;
+                case MapGridLayer.units:
+                  _mapGridLayer = MapGridLayer.terrain;
                   break;
               }
             });
