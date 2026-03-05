@@ -90,6 +90,7 @@ Game resolveTurnForGameFromOrderEngine({
   required OrderEngine orderEngine,
   Orders? aiOrders,
   Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
@@ -107,6 +108,7 @@ Game resolveTurnForGameFromOrderEngine({
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
@@ -127,6 +129,7 @@ Game validateOrdersAndResolveTurn({
   required MapTopology topology,
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
@@ -147,6 +150,7 @@ Game validateOrdersAndResolveTurn({
     topology: topology,
     orders: filtered,
     tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
@@ -158,6 +162,8 @@ Game resolveTurnForGame({
   required MapTopology topology,
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
+  /// Per-region topology for capital reassignment (SPEC/game/world-model-identity). When set, capital reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this.
+  Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   /// Per-player production assignments; when set, used for that player instead of [defaultAssignments]. SPEC/ai/economy-planner.md.
@@ -289,6 +295,7 @@ Game resolveTurnForGame({
           feedingCoverageByPlayerId,
           topology,
           tileMapByRegion,
+          topologyByRegion: topologyByRegion,
           onDialogue: onDialogue,
           onGameEvent: onGameEvent,
         );
@@ -1015,6 +1022,7 @@ Game _runCombatPhase(
   Map<String, double> feedingCoverageByPlayerId,
   MapTopology topology,
   Map<String, TileMapResult>? tileMapByRegion, {
+  Map<String, MapTopology>? topologyByRegion,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
@@ -1051,10 +1059,14 @@ Game _runCombatPhase(
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     battleIndex++;
   }
-  // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+  // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment. Uses region-scoped topology when topologyByRegion is set (#315).
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
-    state =
-        _applyCapitalReassignmentAfterCombat(state, topology, tileMapByRegion);
+    state = _applyCapitalReassignmentAfterCombat(
+      state,
+      topology,
+      tileMapByRegion,
+      topologyByRegion: topologyByRegion,
+    );
   }
   // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
   state = _applyGreatPowerFall(state, previousCapitalByPlayer);
@@ -1062,16 +1074,19 @@ Game _runCombatPhase(
 }
 
 /// For each Great Power that lost their capital province, pick new capital in original region (prefer seaboard), apply port/road and road path. Same shared API as init.
+/// When [topologyByRegion] is set, uses [topologyByRegion][regionId] for that player's region (SPEC/game/world-model-identity.md #315).
 Game _applyCapitalReassignmentAfterCombat(
   Game state,
   MapTopology topology,
-  Map<String, TileMapResult> tileMapByRegion,
-) {
+  Map<String, TileMapResult> tileMapByRegion, {
+  Map<String, MapTopology>? topologyByRegion,
+}) {
   Game game = state;
   for (final player in state.players) {
     final capProvinceId = player.capitalProvinceId;
     if (capProvinceId == null || player.capitalTile == null) continue;
     final regionId = ProvinceId.regionIdFrom(capProvinceId);
+    final regionTopology = topologyByRegion?[regionId] ?? topology;
     final region = regionId == kRegionOldWorld
         ? state.worldState.oldWorld
         : state.worldState.newWorld;
@@ -1100,7 +1115,7 @@ Game _applyCapitalReassignmentAfterCombat(
       final (newProvinceId, tile) = pickCapitalForFaction(
         ownedInRegion,
         regionId,
-        topology,
+        regionTopology,
         tileMap,
         requireSeaBound: false,
       );
@@ -1109,7 +1124,7 @@ Game _applyCapitalReassignmentAfterCombat(
         playerId: player.id,
         provinceId: newProvinceId,
         tile: tile,
-        topology: topology,
+        topology: regionTopology,
         tileMapByRegion: tileMapByRegion,
       );
       _log.i(
