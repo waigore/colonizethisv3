@@ -756,6 +756,20 @@ class OrderEngine {
                     'Road Construction tech required for transport level 2');
           }
         }
+        if (o.target == 'build_fort') {
+          if (fortLevel == 1 &&
+              player.techUnlocked?['mine_engineering'] != true) {
+            return const OrderValidationResult(
+                status: OrderValidationStatus.rejected,
+                reason: 'Mine Engineering tech required for fort level 2');
+          }
+          if (fortLevel == 2 &&
+              player.techUnlocked?['modern_forts'] != true) {
+            return const OrderValidationResult(
+                status: OrderValidationStatus.rejected,
+                reason: 'Modern Forts tech required for fort level 3');
+          }
+        }
         final costMap = workOrderMaterialCost(
           o.target,
           improvementLevel: improvementLevel,

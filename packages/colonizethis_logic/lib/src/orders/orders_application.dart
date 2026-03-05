@@ -789,6 +789,20 @@ Game applyBuildAndWorkOrders(
         if (applyStandardWorkOrder('build_port')) continue;
       }
       if (workTarget == 'build_fort') {
+        final prov = provinceById(u.locationProvinceId);
+        final fortLevel = prov?.fortLevel ?? 0;
+        if (fortLevel == 1 &&
+            player.techUnlocked?['mine_engineering'] != true) {
+          _log.d(
+              'logic: build_fort skipped - Mine Engineering required for fort level 2');
+          continue;
+        }
+        if (fortLevel == 2 &&
+            player.techUnlocked?['modern_forts'] != true) {
+          _log.d(
+              'logic: build_fort skipped - Modern Forts required for fort level 3');
+          continue;
+        }
         if (applyStandardWorkOrder('build_fort')) continue;
       }
       if (workTarget == 'build_rail') {

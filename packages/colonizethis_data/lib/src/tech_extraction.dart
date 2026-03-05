@@ -12,6 +12,7 @@ const List<String> techIds = [
   'gathering_1',
   'gathering_2',
   'gathering_3',
+  'mine_engineering',
   'organised_regiments',
   'improved_iron_weapons',
   'improved_infantry_tactics',
@@ -86,6 +87,13 @@ const Map<String, TechDefinition> techCatalog = {
     cost: 160,
     prerequisiteIds: ['gathering_2'],
   ),
+  // SPEC/game/tech-tree-gathering.md. Fort level 2 prerequisite per siege-mechanics.md.
+  'mine_engineering': TechDefinition(
+    id: 'mine_engineering',
+    era: 1,
+    category: 'gathering',
+    cost: 80,
+  ),
   // Military (SPEC/game/tech-tree-military.md). Prereqs simplified for MVP.
   'organised_regiments': TechDefinition(
     id: 'organised_regiments',
@@ -138,6 +146,13 @@ const Map<String, TechDefinition> techCatalog = {
     category: 'military',
     cost: 120,
     regimentUnlockIds: ['royal_artillery'],
+  ),
+  'modern_forts': TechDefinition(
+    id: 'modern_forts',
+    era: 3,
+    category: 'military',
+    cost: 160,
+    prerequisiteIds: ['siege_engineering', 'university'],
   ),
   // Labour/economy (SPEC/game/tech-tree-labour-economy.md). University grants 4th research slot.
   'university': TechDefinition(
