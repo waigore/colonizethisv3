@@ -53,11 +53,22 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 | Aspect | Detail |
 |---|---|
-| Phase | Extraction (after Build/Work, before Production) |
+| Phase | Extraction runs **after Orders and Diplomacy, before Riches to treasury and Production** per [turn-resolution-phases.md](turn-resolution-phases.md). |
 | Upstream | World state, connectivity resolver, prospected state (fog module) |
 | Downstream | Player stockpiles, overseas transport ([auto-transport.md](auto-transport.md)) |
 
 Read-only with respect to terrain: extraction consumes improvement/road/port state produced by setup and development resolution; it does not mutate terrain.
+
+---
+
+## Acceptance criteria
+
+- **Phase order:** Extraction runs in the position defined in [turn-resolution-phases.md](turn-resolution-phases.md) (after Orders and Diplomacy, before Riches to treasury and Production).
+- **Connectivity:** Recomputed every turn; no caching across turns. Input: world state, topology, tile maps; output: per-player connected tile set and path transport cap.
+- **Province lookup:** Town development cap lookup is **region-scoped**: resolve province only within the tile's region ([world-model-identity.md](../game/world-model-identity.md)). Do not search regions in sequence.
+- **Mineral gating:** Mineral resources only from tiles in the player's prospected set (fog-and-exploration). Non-minerals do not require prospecting.
+- **Land vs overseas:** Same-region totals added to stockpile; overseas totals allocated by priority, cargo cap (stub), then to stockpile.
+- **Logging:** Extraction and connectivity resolution log per [ctdev-logging.md](ctdev-logging.md) (e.g. `logic: extraction compute start/end`, `logic: connectivity resolve start/end`).
 
 ---
 

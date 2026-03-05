@@ -59,3 +59,12 @@ Logic must never locate a province by province id alone. Use (regionId, province
 - Given any game logic that is asked to resolve a province identifier and provided with a string that does not contain a `|` prefix separator or a pair of `(regionId, provinceId)` values that match a known province  
   When the System attempts to perform the lookup  
   Then the System treats the request as a logic error and does not fall back to a default region, does not guess a region by name pattern, and does not silently resolve the identifier to a different region’s province.
+
+
+---
+
+## Implementation (TDD)
+
+**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
+
+**Contract:** New code must not look up province by bare local id when region is unknown. Use prefixed id (\`regionId|localId\`) or an explicit (regionId, localId) pair. Resolution is region-scoped only within the given region.
