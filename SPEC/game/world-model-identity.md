@@ -34,9 +34,11 @@ When turning topology/tile maps into view models (ownership fill, per-player map
 
 ## Lookup Rule
 
-Logic must never locate a province by province id alone. Use (regionId, provinceId) or a prefixed full id, and resolve the province only within that region. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found, treat it as a logic error; do not fall back to a default region.
+Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). Resolution is **region-scoped**: the system resolves the province only within the region indicated by that id. Logic must never locate a province by bare local id when the region is unknown. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found in the given region, treat it as a logic error; do not fall back to another region.
 
-**API:** `getProvince` and `tryGetProvince` accept prefixed ids; legacy short (unprefixed) ids are resolved by searching oldWorld then newWorld. When the same local id exists in both regions, first match (oldWorld) wins. New code should use prefixed id only.
+**API (required):** `getProvince` and `tryGetProvince` accept a full, prefixed province id and resolve **only within that region**. `getProvinceByRegion` and `tryGetProvinceByRegion` accept explicit `(regionId, localId)` for region-scoped lookup. New code must use full id or the region-scoped API only.
+
+**Legacy (deprecated):** `resolveToFullProvinceId` may accept short (unprefixed) ids by searching oldWorld then newWorld; that behavior is not region-scoped and is deprecated. New code must not depend on it—always pass a prefixed id or explicit `(regionId, localId)`.
 
 ---
 
@@ -67,6 +69,6 @@ Logic must never locate a province by province id alone. Use (regionId, province
 
 ## Implementation (TDD)
 
-**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
+**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, getProvinceByRegion, tryGetProvinceByRegion, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
 
-**Contract:** New code must not look up province by bare local id when region is unknown. Use prefixed id (\`regionId|localId\`) or an explicit (regionId, localId) pair. Resolution is region-scoped only within the given region.
+**Contract:** Lookup is by full disambiguated id or explicit (regionId, localId). New code must not look up province by bare local id when region is unknown. Use prefixed id (`regionId|localId`) or `getProvinceByRegion`/`tryGetProvinceByRegion`. Resolution is region-scoped: the implementation resolves only within the given region and does not search other regions.
