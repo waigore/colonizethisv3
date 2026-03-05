@@ -8,6 +8,7 @@ import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
 
 final Logger _log = Logger();
 
@@ -507,10 +508,7 @@ Game applyBuildAndWorkOrders(
         oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
 
     Province? provinceById(String id) =>
-        game.worldState.oldWorld.provinces
-            .where((p) => p.id == id)
-            .firstOrNull ??
-        game.worldState.newWorld.provinces.where((p) => p.id == id).firstOrNull;
+        tryGetProvince(game.worldState, id);
 
     bool canAffordMaterialCost(WorkOrderCost cost) {
       for (final e in cost.entries) {
