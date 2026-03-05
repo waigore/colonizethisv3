@@ -20,7 +20,7 @@ Resolves fleet movement orders, triggers ship-reveal for coastal provinces, and 
 
 **Ship Reveal:**
 
-On fleet entering sea zone S: for each province P with a P↔S edge, set coastal tiles of P to `revealed` for fleet owner. Updates visibility state per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
+On fleet entering sea zone S: for each province P with a P↔S edge (within the **destination sea zone's region** only), set coastal tiles of P to `revealed` for fleet owner. Province identity for which tiles to reveal must use full province id (`regionId|localId`) and region-scoped lookup per [world-model-identity.md](../game/world-model-identity.md). Updates visibility state per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 
 **Interception Checks:**
 
