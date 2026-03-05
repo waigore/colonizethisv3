@@ -35,8 +35,12 @@ void main() {
       expect(tryGetProvince(world, 'unknownRegion|p1'), isNull);
     });
 
-    test('returns null for empty id', () {
+    test('returns null for empty id (non-prefixed)', () {
       expect(tryGetProvince(world, ''), isNull);
+    });
+
+    test('returns null for short id (prefixed required)', () {
+      expect(tryGetProvince(world, 'p1'), isNull);
     });
   });
 
@@ -53,9 +57,11 @@ void main() {
       );
     });
 
-    test('resolves short id (legacy) by searching oldWorld first', () {
-      final p = getProvince(world, 'p1');
-      expect(p.displayName, 'Alpha');
+    test('throws StateError for short id (prefixed required)', () {
+      expect(
+        () => getProvince(world, 'p1'),
+        throwsStateError,
+      );
     });
   });
 
@@ -65,29 +71,11 @@ void main() {
       expect(resolveToFullProvinceId(world, 'newWorld|n1'), 'newWorld|n1');
     });
 
-    test('resolves short id to full (oldWorld first)', () {
-      expect(resolveToFullProvinceId(world, 'p1'), 'oldWorld|p1');
-    });
-
-    test('when same local id in both regions, short id resolves to first match (oldWorld)', () {
-      final worldBoth = WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(provinces: [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', displayName: 'OW p1'),
-        ]),
-        newWorld: RegionData(provinces: [
-          Province(id: 'newWorld|p1', regionId: 'newWorld', displayName: 'NW p1'),
-        ]),
+    test('throws StateError for short id (no short-id resolution)', () {
+      expect(
+        () => resolveToFullProvinceId(world, 'p1'),
+        throwsStateError,
       );
-      expect(resolveToFullProvinceId(worldBoth, 'p1'), 'oldWorld|p1');
-      expect(tryGetProvince(worldBoth, 'p1')!.displayName, 'OW p1');
-    });
-  });
-
-  group('tryGetProvince short id', () {
-    test('resolves short id (legacy)', () {
-      expect(tryGetProvince(world, 'p1'), isNotNull);
-      expect(tryGetProvince(world, 'p1')!.displayName, 'Alpha');
     });
   });
 

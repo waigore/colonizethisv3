@@ -61,15 +61,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'gp2'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp2'),
             ],
             units: const [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -97,15 +97,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'minor1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'minor1'),
             ],
             units: const [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -131,7 +131,7 @@ void main() {
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? const [];
       // AI should not emit attacks against Minor1 because there is no war relation.
       expect(
-        moves.where((m) => m.destinationProvinceId == 'P2'),
+        moves.where((m) => m.destinationProvinceId == 'oldWorld|P2'),
         isEmpty,
       );
     });
@@ -151,7 +151,7 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(provinces: const [
-            Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
           ]),
           newWorld: const RegionData(),
         ),
@@ -170,10 +170,10 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
             units: const [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'P1'),
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'oldWorld|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -227,10 +227,10 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
             units: const [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'P1'),
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'oldWorld|P1'),
             ],
           ),
           newWorld: const RegionData(),

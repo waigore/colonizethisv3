@@ -8,7 +8,7 @@ void main() {
     test('add order and validate', () {
       final engine = OrderEngine();
       final result = engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'));
+          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
       expect(result.status, OrderValidationStatus.accepted);
       expect(engine.orders.moveOrdersByPlayerId['p1']?.length, 1);
     });
@@ -16,9 +16,9 @@ void main() {
     test('removeMoveOrder removes order at index', () {
       final engine = OrderEngine();
       engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'));
+          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
       engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u2', destinationProvinceId: 'P3'));
+          'p1', const MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|P3'));
       expect(engine.orders.moveOrdersByPlayerId['p1']!.length, 2);
       engine.removeMoveOrder('p1', 0);
       expect(engine.orders.moveOrdersByPlayerId['p1']!.length, 1);

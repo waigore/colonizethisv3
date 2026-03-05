@@ -104,15 +104,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'gp2'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp2'),
             ],
             units: const [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'P1',
+                provinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -297,7 +297,7 @@ void main() {
             id: 'gp1',
             displayName: 'AI',
             isHuman: false,
-            capitalProvinceId: 'P1',
+            capitalProvinceId: 'oldWorld|P1',
             capitalTile: CapitalTile(regionId: ow, provinceId: 'P1', x: 0, y: 0),
           ),
         ],
