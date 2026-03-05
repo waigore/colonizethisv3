@@ -210,7 +210,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       final unit = units[_selectedIndex];
       if (!canUnitInitiateCombat(unit.type)) {
         setState(() {
-          _feedbackMessage = 'Selected unit cannot attack';
+          _feedbackMessage = 'ERROR: Selected unit cannot attack';
           _feedbackColor = Colors.red;
         });
         _log.w('tui:units: attack rejected - ${unit.type} cannot initiate combat');
@@ -350,7 +350,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
   void _startAttackOrder(Unit unit) {
     if (!canUnitInitiateCombat(unit.type)) {
       setState(() {
-        _feedbackMessage = 'Selected unit cannot attack';
+        _feedbackMessage = 'ERROR: Selected unit cannot attack';
         _feedbackColor = Colors.red;
       });
       _log.w('tui:units: startAttackOrder called for non-combat unit ${unit.id} (${unit.type})');
@@ -558,9 +558,10 @@ class _UnitsScreenState extends State<UnitsScreen> {
           // Feedback/message area
           if (_feedbackMessage.isNotEmpty)
             Container(
+              color: const Color(0xFF1a1a2e),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
               child: Text(
-                _feedbackMessage,
+                ' ${_feedbackMessage}',
                 style: TextStyle(color: _feedbackColor),
               ),
             ),
