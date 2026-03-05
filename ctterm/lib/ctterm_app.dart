@@ -1,4 +1,4 @@
-// Root ctterm app: navigation shell and main menu. SPEC/tui/ctterm.md.
+// Root ctterm app: navigation shell and main menu. SPEC/tui/ctterm.md. /// CTTerm application entry point
 
 import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart';
