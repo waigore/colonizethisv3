@@ -252,6 +252,9 @@ class Assertion {
     this.tileImprovementLevel,
     this.generalCount,
     this.effectiveMilitaryLevel,
+    this.victoryWinner,
+    this.victoryType,
+    this.victoryTurn,
   });
 
   /// Which turn to check (null = final state)
@@ -355,6 +358,11 @@ class Assertion {
 
   /// Faction effective military level (SPEC/game/factions.md). With [player] (Minor or Tribe faction id): expected effectiveMilitaryLevel (minors get parity; tribes always 1).
   final int? effectiveMilitaryLevel;
+
+  /// Victory assertions (SPEC/game/victory.md). [victoryWinner]: expected winner player id; [victoryType]: e.g. military; [victoryTurn]: turn when victory was set.
+  final String? victoryWinner;
+  final String? victoryType;
+  final int? victoryTurn;
 }
 
 /// Type of value matching for assertions.
@@ -627,6 +635,9 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     tileImprovementLevel: json['tileImprovementLevel'] as int?,
     generalCount: json['generalCount'] as int?,
     effectiveMilitaryLevel: json['effectiveMilitaryLevel'] as int?,
+    victoryWinner: json['victoryWinner'] as String?,
+    victoryType: json['victoryType'] as String?,
+    victoryTurn: json['victoryTurn'] as int?,
   );
 }
 
