@@ -40,11 +40,6 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
   @override
   void initState() {
     super.initState();
-    if (component.runGeneration != null) {
-      // Run real init; runGeneration will set game state and navigate when done.
-      scheduleMicrotask(() => component.runGeneration!());
-      return;
-    }
     _startGeneration();
   }
 
@@ -55,8 +50,6 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
   }
 
   void _startGeneration() {
-    // Simulate world generation with progress updates
-    // In full implementation, this would call the actual game init logic
     _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       if (_cancelled) {
         timer.cancel();
@@ -68,10 +61,19 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
         _updateStatus(timer.tick);
       });
 
-      // Simulate generation complete after ~3 seconds
       if (timer.tick >= 6) {
         timer.cancel();
-        _onGenerationComplete();
+        if (_cancelled) {
+          return;
+        }
+
+        // When real generation is wired, delegate to app callback so it can
+        // run init_game and navigate. Otherwise, use the simulated completion.
+        if (component.runGeneration != null) {
+          component.runGeneration!();
+        } else {
+          _onGenerationComplete();
+        }
       }
     });
   }
@@ -80,14 +82,19 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
     switch (tick) {
       case 1:
         _status = 'Loading ruleset...';
+        break;
       case 2:
         _status = 'Generating Old World map...';
+        break;
       case 3:
         _status = 'Generating New World map...';
+        break;
       case 4:
         _status = 'Assigning provinces...';
+        break;
       case 5:
         _status = 'Placing capitals and towns...';
+        break;
       default:
         _status = 'Finalizing...';
     }
