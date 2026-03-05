@@ -77,7 +77,7 @@ The map area is a **topology graph** of the current region’s **land provinces*
     - Turn number comes from `Game.worldState.turnState.turnNumber`
     - Year is derived via `turnToYear(Game.worldState.turnState.turnNumber, Game.turnTimeMapping)` per [SPEC/game/turn-time-mapping.md](../../game/turn-time-mapping.md), falling back to the default mapping when `turnTimeMapping` is null (legacy saves)
   - Current region (Old World / New World) and way to cycle (e.g. R)
-  - Player's treasury/resources summary
+  - Player's treasury/resources summary. When the player has **diplomatic orders this turn that consume treasury** (Establish Overture, Grant Aid, Set Subsidy, Join Empire), the HUD shows treasury as **current treasury minus committed diplomacy cost** and MAY show the committed amount in parentheses (e.g. `Treasury: £4500 (committed £500)`). When those diplomacy orders have been resolved and no new treasury-consuming diplomacy orders exist for the current turn, the HUD shows the **actual current treasury with no committed suffix**.
 
 - **Given** a game with a non-null `turnTimeMapping`
 - **When** the HUD is shown for turn `N`
