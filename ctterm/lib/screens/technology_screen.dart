@@ -38,6 +38,8 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
   String _categoryFilter = 'all';
   // Show cancel confirmation
   bool _showCancelConfirm = false;
+  // Feedback message (for errors, etc.)
+  String _feedbackMessage = '';
 
   // Categories for filtering
   static const _categories = [
@@ -147,6 +149,30 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
   // Assign tech to slot
   void _assignTech(String techId) {
     if (techId.isEmpty) return;
+
+    // Validate prerequisites per SPEC/tui/screens/technology.md lines 118-120
+    final techDef = techCatalog[techId];
+    if (techDef != null && techDef.prerequisiteIds.isNotEmpty) {
+      final unlocked = _techUnlocked;
+      final missing = <String>[];
+      for (final prereqId in techDef.prerequisiteIds) {
+        if (unlocked[prereqId] != true) {
+          missing.add(techById(prereqId)?.id ?? prereqId);
+        }
+      }
+      if (missing.isNotEmpty) {
+        setState(() {
+          _feedbackMessage = 'Prerequisites not met: ${missing.join(', ')}';
+        });
+        _log.d('tui:tech: failed to assign $techId - missing prerequisites: $missing');
+        return;
+      }
+    }
+
+    // Clear any previous feedback
+    setState(() {
+      _feedbackMessage = '';
+    });
 
     final humanId = _humanPlayerId;
     final currentOrders = List<ResearchOrder>.from(_researchOrders);
@@ -299,6 +325,16 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
             ],
           ),
           Text('─' * 60),
+
+          // Feedback message
+          if (_feedbackMessage.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 1),
+              child: Text(
+                _feedbackMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
 
           // Research Slots
           Text('Research Slots (${_selectedSlot + 1}/$slots)'),
