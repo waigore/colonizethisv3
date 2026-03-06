@@ -217,7 +217,20 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       });
       return true;
     }
-    if (key == LogicalKey.arrowDown || c == 'j' || c == 's') {
+    // Navigation: Use arrow keys, k/w for up, but NOT j/s for down
+    // because j=Join Empire (Minor/Tribe) and s=Subsidy (Minor/Tribe)
+    // Check if selected faction is eligible for these actions before allowing navigation
+    final isNavigationKeyDown = key == LogicalKey.arrowDown;
+    final canNavigateWithJ = _selectedFaction != null &&
+        (_selectedFaction!.type == FactionType.greatPower ||
+            _selectedFaction!.overtureStage != OvertureStage.nap ||
+            (_selectedFaction!.relationScore ?? 0) < 51);
+    final canNavigateWithS = _selectedFaction != null &&
+        _selectedFaction!.type == FactionType.greatPower;
+
+    if (isNavigationKeyDown ||
+        (c == 'j' && canNavigateWithJ) ||
+        (c == 's' && canNavigateWithS)) {
       setState(() {
         if (_selectedIndex < _factions.length - 1) {
           _selectedIndex++;
