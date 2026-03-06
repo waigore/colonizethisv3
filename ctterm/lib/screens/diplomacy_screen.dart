@@ -259,7 +259,15 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         return true;
       }
     } else {
-      // Minor/Tribe actions: c=consulate, e=embassy, n=nap, j=join, g=grant aid, s=subsidy
+      // Minor/Tribe actions: d=declare war, p=peace, c=consulate, e=embassy, n=nap, j=join, g=grant aid, s=subsidy
+      if (c == 'd') {
+        _handleDeclareWar();
+        return true;
+      }
+      if (c == 'p') {
+        _handleOfferPeace();
+        return true;
+      }
       if (c == 'c') {
         _handleEstablishOverture(OvertureStage.tradeConsulate);
         return true;
@@ -293,6 +301,17 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       _statusMessage = null;
       _isStatusError = false;
     });
+  }
+
+  String _formatOvertureStage(OvertureStage? stage) {
+    if (stage == null || stage == OvertureStage.none) return 'None';
+    switch (stage) {
+      case OvertureStage.tradeConsulate: return 'Trade Consulate';
+      case OvertureStage.embassy: return 'Embassy';
+      case OvertureStage.nap: return 'NAP';
+      case OvertureStage.joinEmpire: return 'Join Empire';
+      default: return stage.name; // Fallback for any new stages
+    }
   }
 
   void _setStatus(String message, {bool isError = false}) {
@@ -430,13 +449,23 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     if (_selectedFaction == null) return;
     final targetId = _selectedFaction!.id;
     final currentStage = _selectedFaction!.overtureStage ?? OvertureStage.none;
-    
+
     // Validate prerequisites
     if (_selectedFaction!.relationState == RelationState.atWar) {
       _setStatus('Cannot establish overture: at war with ${_selectedFaction!.name}', isError: true);
       return;
     }
-    
+
+    // Check if overture stage already exists (prevent duplicates)
+    if (currentStage == stage) {
+      _setStatus('${_selectedFaction!.name} already has ${stage.name}', isError: true);
+      return;
+    }
+
+    if (stage == OvertureStage.tradeConsulate && currentStage != OvertureStage.none) {
+      _setStatus('${_selectedFaction!.name} already has a Consulate or higher overture', isError: true);
+      return;
+    }
     if (stage == OvertureStage.embassy && currentStage != OvertureStage.tradeConsulate) {
       _setStatus('Need Consulate first', isError: true);
       return;
@@ -468,8 +497,24 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     // Capture name before update to ensure correct display in status message
     final factionName = _selectedFaction!.name;
     _updateSelectedFactionOvertureStage(stage);
-    _setStatus('Established $stage with $factionName');
+    final stageName = _getOvertureStageDisplayName(stage);
+    _setStatus('Established $stageName with $factionName');
     _log.d('tui:diplomacy: established $stage with $targetId');
+  }
+
+  String _getOvertureStageDisplayName(OvertureStage stage) {
+    switch (stage) {
+      case OvertureStage.tradeConsulate:
+        return 'Trade Consulate';
+      case OvertureStage.embassy:
+        return 'Embassy';
+      case OvertureStage.nap:
+        return 'Non-Aggression Pact';
+      case OvertureStage.joinEmpire:
+        return 'Empire Join';
+      case OvertureStage.none:
+        return 'None';
+    }
   }
 
   void _handleJoinEmpire() {
@@ -517,6 +562,14 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       if (province.ownerId == factionId) count++;
     }
     return count > 0 ? count : 1; // Minimum 1 for cost calculation
+  }
+
+  int _getJoinEmpireCost(String factionId) {
+    // Calculate cost: 5000 + 2000 per province
+    const baseCost = 5000;
+    const perProvinceCost = 2000;
+    final provinceCount = _getProvinceCount(factionId);
+    return baseCost + (provinceCount * perProvinceCost);
   }
 
   void _handleGrantAid() {
@@ -765,7 +818,9 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
             Text('Level: ${faction.relationLevel?.name ?? "neutral"}'),
           ] else ...[
             Text('Relation: ${faction.relationState?.name ?? "unknown"}'),
-            Text('Overture: ${faction.overtureStage?.name ?? "none"}'),
+            Text('Score: ${faction.relationScore ?? "unknown"}'),
+            Text('Level: ${faction.relationLevel?.name ?? "neutral"}'),
+            Text('Overture: ${_formatOvertureStage(faction.overtureStage)}'),
           ],
           const SizedBox(height: 1),
           Text('Actions:', style: TextStyle(decoration: TextDecoration.underline)),
@@ -775,13 +830,15 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
             _buildActionHint('p', 'Offer Peace', faction.relationState == RelationState.atWar),
             _buildActionHint('l', 'Alliance', faction.relationState == RelationState.atPeace && (faction.relationScore ?? 0) >= 76),
           ] else ...[
-            _buildActionHint('c', 'Consulate (£500)', 
+            _buildActionHint('d', 'Declare War', faction.relationState == RelationState.atPeace),
+            _buildActionHint('p', 'Offer Peace', faction.relationState == RelationState.atWar),
+            _buildActionHint('c', 'Consulate (£500)',
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.none),
-            _buildActionHint('e', 'Embassy (£1000)', 
+            _buildActionHint('e', 'Embassy (£1000)',
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.tradeConsulate),
-            _buildActionHint('n', 'NAP (free)', 
+            _buildActionHint('n', 'NAP (free)',
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.embassy),
-            _buildActionHint('j', 'Join Empire', 
+            _buildActionHint('j', 'Join Empire (£${_getJoinEmpireCost(faction.id)})',
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.nap && (faction.relationScore ?? 0) >= 51),
             _buildActionHint('g', 'Grant Aid (£1000)', 
               faction.overtureStage == OvertureStage.embassy || faction.overtureStage == OvertureStage.nap),
