@@ -1062,7 +1062,6 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                       if (workOrder == null) ...[
                         const Text(' Available Work: ',
                             style: TextStyle(color: Colors.white)),
-                        const SizedBox(height: 1),
                         for (final entry in _validWorkTargets.entries)
                           Padding(
                             padding: const EdgeInsets.only(left: 1),
