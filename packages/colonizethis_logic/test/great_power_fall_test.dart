@@ -58,11 +58,11 @@ void main() {
 
       // No battles needed; state already reflects lost capital. Run resolveTurnForGame
       // to drive combat phase (which will run capital reassignment + GP fall).
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
 
       // All former p1 provinces should now belong to p2.
       for (final p in next.worldState.oldWorld.provinces) {

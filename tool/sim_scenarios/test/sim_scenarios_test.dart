@@ -233,6 +233,35 @@ void main() {
         expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
       });
 
+      test('parses turn with overtureDecisions (blocking human GP target)', () {
+        final json = {
+          'name': 'overture_decisions',
+          'init': {'type': 'fresh', 'config': {'seed': 42, 'greatPowers': ['england', 'france']}},
+          'turns': [
+            {
+              'turn': 1,
+              'orders': [
+                {'player': 'gp2', 'type': 'diplomatic', 'diplomaticType': 'establishOverture', 'targetFactionId': 'gp1', 'overtureStage': 'tradeConsulate'},
+              ],
+              'overtureDecisions': [
+                {'offererGpId': 'gp2', 'targetFactionId': 'gp1', 'stage': 'tradeConsulate', 'accepted': true},
+              ],
+            },
+          ],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.turns.length, 1);
+        expect(scenario.turns[0].overtureDecisions, isNotNull);
+        expect(scenario.turns[0].overtureDecisions!.length, 1);
+        expect(scenario.turns[0].overtureDecisions![0].offererGpId, 'gp2');
+        expect(scenario.turns[0].overtureDecisions![0].targetFactionId, 'gp1');
+        expect(scenario.turns[0].overtureDecisions![0].stage, 'tradeConsulate');
+        expect(scenario.turns[0].overtureDecisions![0].accepted, isTrue);
+      });
+
       test('parses setup leaderKeys and assertion leaderKey', () {
         final json = {
           'name': 'leader_setup',

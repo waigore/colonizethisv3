@@ -27,7 +27,7 @@ ProjectedEffects projectOrderEffects({
     _log.d('logic: projectOrderEffects with empty tileMapByRegion; extraction will be zero');
   }
   Map<String, Map<String, int>>? productionByRecipeByPlayerId;
-  final next = resolveTurnForGame(
+  final next = requireTurnResolutionComplete(resolveTurnForGame(
     game: game,
     topology: topology,
     orders: orders,
@@ -36,7 +36,7 @@ ProjectedEffects projectOrderEffects({
     onProductionComplete: defaultAssignments.isNotEmpty
         ? (map) => productionByRecipeByPlayerId = map
         : null,
-  );
+  ));
   final player = next.playerById(playerId);
   if (player == null) return const ProjectedEffects();
 

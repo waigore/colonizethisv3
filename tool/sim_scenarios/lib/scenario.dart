@@ -130,12 +130,29 @@ class WorkerAssignment {
   final int assignedLabour;
 }
 
+/// Scripted overture decision for a turn (when resolution blocks on human GP target).
+/// SPEC/program/diplomacy-resolution.md, SPEC/program/turn-resolution-phases.md.
+class OvertureDecisionScript {
+  const OvertureDecisionScript({
+    required this.offererGpId,
+    required this.targetFactionId,
+    required this.stage,
+    required this.accepted,
+  });
+
+  final String offererGpId;
+  final String targetFactionId;
+  final String stage;
+  final bool accepted;
+}
+
 /// Scripted orders for a single turn.
 class TurnScript {
   const TurnScript({
     required this.turn,
     required this.orders,
     this.workerAssignments,
+    this.overtureDecisions,
   });
 
   final int turn;
@@ -143,6 +160,10 @@ class TurnScript {
 
   /// Production phase: recipe assignments for this turn (defaultAssignments).
   final List<WorkerAssignment>? workerAssignments;
+
+  /// When turn resolution returns pending overtures (human GP target), these
+  /// decisions are applied via resumeTurnResolutionWithOvertureDecisions.
+  final List<OvertureDecisionScript>? overtureDecisions;
 }
 
 /// A single order command from a scenario.
@@ -555,7 +576,31 @@ TurnScript _parseTurnScript(Map<String, dynamic> json) {
             .toList() ??
         [],
     workerAssignments: _parseWorkerAssignments(json['workerAssignments']),
+    overtureDecisions: _parseOvertureDecisions(json['overtureDecisions']),
   );
+}
+
+List<OvertureDecisionScript>? _parseOvertureDecisions(dynamic raw) {
+  if (raw is! List<dynamic> || raw.isEmpty) return null;
+  final list = <OvertureDecisionScript>[];
+  for (final e in raw) {
+    if (e is! Map<String, dynamic>) continue;
+    final offererGpId = e['offererGpId'] as String?;
+    final targetFactionId = e['targetFactionId'] as String?;
+    final stage = e['stage'] as String?;
+    final accepted = e['accepted'] as bool?;
+    if (offererGpId == null ||
+        targetFactionId == null ||
+        stage == null ||
+        accepted == null) continue;
+    list.add(OvertureDecisionScript(
+      offererGpId: offererGpId,
+      targetFactionId: targetFactionId,
+      stage: stage,
+      accepted: accepted,
+    ));
+  }
+  return list.isEmpty ? null : list;
 }
 
 OrderCommand _parseOrderCommand(Map<String, dynamic> json) {

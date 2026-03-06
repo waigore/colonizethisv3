@@ -52,12 +52,13 @@ class GameService {
     final resolvedOrders = aiOrders != null
         ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
         : humanOrders;
-    final newGame = resolveTurnForGame(
+    final result = resolveTurnForGame(
       game: current,
       topology: topo,
       orders: resolvedOrders,
       tileMapByRegion: tileMaps,
     );
+    final newGame = requireTurnResolutionComplete(result);
     saveGame(newGame);
     return newGame;
   }

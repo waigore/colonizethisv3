@@ -92,12 +92,12 @@ void main() {
         'p2': {'grain': 1},
       };
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: extracted,
-      );
+      ));
 
       // Turn advanced
       expect(next.worldState.turnState.turnNumber, 1);
@@ -147,11 +147,11 @@ void main() {
         ],
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 6);
     });
@@ -249,11 +249,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       final provinceB = next.worldState.oldWorld.provinces

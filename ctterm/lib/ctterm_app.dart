@@ -60,6 +60,8 @@ class _CttermAppState extends State<CttermApp> {
   Orders _currentOrders = const Orders();
   _PendingNewGameConfig? _pendingNewGameConfig;
   _MapCache? _mapCache;
+  /// When non-null, turn resolution is suspended; user must accept/reject overtures. SPEC/program/turn-resolution-phases.md.
+  List<OvertureOffer>? _pendingOvertures;
   /// Game events received during turn processing (displayed to user).
   final List<GameEvent> _gameEvents = [];
   /// Current terminal theme.
@@ -178,8 +180,54 @@ class _CttermAppState extends State<CttermApp> {
       _currentOrders = const Orders();
       _mapCache = null;
       _pendingNewGameConfig = null;
+      _pendingOvertures = null;
       _gameEvents.clear();
     });
+  }
+
+  /// Called when turn resolution returns pending overtures; navigate to pending overtures screen.
+  void _onTurnResolutionPending(Game game, List<OvertureOffer> pending) {
+    _log.d('tui:app: turn resolution pending ${pending.length} overture(s)');
+    setState(() {
+      _currentGame = game;
+      _pendingOvertures = pending;
+      _route = CttermRoute.pendingOvertures;
+    });
+  }
+
+  /// Called when user submits accept/reject decisions; resume turn resolution.
+  void _onOvertureDecisions(List<OvertureDecision> decisions) {
+    final game = _currentGame;
+    final pending = _pendingOvertures;
+    final mapCache = _mapCache;
+    if (game == null || pending == null || mapCache == null) {
+      _log.w('tui:app: onOvertureDecisions with null game/pending/mapCache');
+      return;
+    }
+    final result = resumeTurnResolutionWithOvertureDecisions(
+      game: game,
+      pendingOvertures: pending,
+      decisions: decisions,
+      topology: mapCache.combinedTopology,
+      orders: _currentOrders,
+      tileMapByRegion: mapCache.tileMapByRegion,
+      onGameEvent: _onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      _log.d('tui:app: turn resolution complete after overture decisions');
+      setState(() {
+        _currentGame = result.game;
+        _pendingOvertures = null;
+        _route = CttermRoute.inGameShell;
+      });
+      _onTurnProcessed(result.game);
+    } else if (result is TurnResolutionPendingOvertures) {
+      _log.d('tui:app: turn resolution still pending ${result.pendingOvertures.length} overture(s)');
+      setState(() {
+        _currentGame = result.game;
+        _pendingOvertures = result.pendingOvertures;
+      });
+    }
   }
 
   /// Updates current orders (e.g., from Units panel).
@@ -296,6 +344,9 @@ class _CttermAppState extends State<CttermApp> {
         },
         onClearGame: _clearGame,
         onLoadGame: _loadGame,
+        pendingOvertures: _pendingOvertures,
+        onTurnResolutionPending: _onTurnResolutionPending,
+        onOvertureDecisions: _onOvertureDecisions,
         initialTheme: _terminalTheme,
         onThemeChanged: _onThemeChanged,
         /// When in Settings, Back goes to Pause if we came from Pause. SPEC/tui/screens/pause-options.md §7.
