@@ -742,6 +742,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   /// Returns the tile key that should be shown in the mini-map, based on the
   /// current mode and selection (selection takes precedence over existing work).
   String? _currentHighlightedTileKey(Unit unit, WorkOrder? workOrder) {
+    // During tile selection, show the currently selected tile.
     if (_inputMode == _DevelopmentInputMode.selectingTile &&
         _candidateProvinces.isNotEmpty &&
         _candidateTilesByProvince.isNotEmpty) {
@@ -753,6 +754,20 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         final tileIndex =
             _selectedTileIndexWithinProvince.clamp(0, tiles.length - 1);
         return tiles[tileIndex];
+      }
+    }
+    // During province selection, show the first tile of the selected province
+    // to give context about where we're selecting work.
+    if (_inputMode == _DevelopmentInputMode.selectingProvince &&
+        _candidateProvinces.isNotEmpty &&
+        _candidateTilesByProvince.isNotEmpty) {
+      final provinceIndex =
+          _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+      final provinceId = _candidateProvinces[provinceIndex];
+      final tiles = _candidateTilesByProvince[provinceId];
+      if (tiles != null && tiles.isNotEmpty) {
+        // Show the first tile of the selected province as the mini-map center.
+        return tiles.first;
       }
     }
     if (workOrder != null && workOrder.targetTileKey.isNotEmpty) {
