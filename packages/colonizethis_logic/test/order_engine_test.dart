@@ -1985,54 +1985,6 @@ void main() {
         );
       }
 
-      // Helper for testing GP-GP-MinOR scenarios (issue #942)
-      Game _gpGPMinorBaseGame({
-        RelationState gp1RelationWithMinor = RelationState.atPeace,
-        RelationState gp1RelationWithGP2 = RelationState.atPeace,
-        int treasury = 5000,
-      }) {
-        return Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            Player(
-              id: 'gp1',
-              displayName: 'GP1',
-              isHuman: true,
-              treasury: treasury,
-            ),
-            const Player(
-              id: 'gp2',
-              displayName: 'GP2',
-              isHuman: false,
-              treasury: 5000,
-            ),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Minor 1'),
-          ],
-          diplomacyRelations: [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'minor1',
-              state: gp1RelationWithMinor,
-              score: 50,
-            ),
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp2',
-              state: gp1RelationWithGP2,
-              score: 50,
-            ),
-          ],
-          overtureStates: const [],
-        );
-      }
-
       test('declareWar rejected when already at war', () {
         final game = _gpMinorBaseGame(relationState: RelationState.atWar);
         final engine = OrderEngine();
@@ -2084,28 +2036,6 @@ void main() {
         );
         expect(result.status, OrderValidationStatus.rejected);
         expect(result.reason, contains('at war'));
-      });
-
-      // Issue #942: Overtures should be rejected when at war with ANY Great Power
-      test('establishOverture rejected when at war with another Great Power', () {
-        // Create game with gp1 at peace with minor1, but at war with gp2
-        final game = _gpGPMinorBaseGame(
-          gp1RelationWithMinor: RelationState.atPeace,
-          gp1RelationWithGP2: RelationState.atWar,
-        );
-        final engine = OrderEngine();
-        final result = engine.addDiplomaticOrderWithContext(
-          game,
-          emptyTopology,
-          'gp1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'minor1',
-            overtureStage: OvertureStage.tradeConsulate,
-          ),
-        );
-        expect(result.status, OrderValidationStatus.rejected);
-        expect(result.reason, contains('at war with any Great Power'));
       });
 
       test('establishOverture consulate rejected when treasury too low', () {

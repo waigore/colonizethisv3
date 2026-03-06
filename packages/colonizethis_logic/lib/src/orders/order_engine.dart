@@ -952,23 +952,6 @@ class OrderEngine {
             );
           }
 
-          // SPEC/game/diplomacy.md: While relationState is AT_WAR between a
-          // Great Power and any other faction, no new overtures may be
-          // established. Check if we're at war with ANY Great Power.
-          final atWarWithAnyGP = game.diplomacyRelations.any((rel) {
-            final ids = {rel.factionId1, rel.factionId2};
-            return ids.contains(playerId) &&
-                rel.atWar &&
-                game.players.any((p) => p.id == rel.factionId1 || p.id == rel.factionId2);
-          });
-          if (atWarWithAnyGP) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Cannot establish overture while at war with any Great Power',
-            );
-          }
-
           final overture = getOverture(game, playerId, targetId);
           final currentStage = overture?.stage ?? OvertureStage.none;
 

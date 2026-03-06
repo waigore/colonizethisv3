@@ -179,17 +179,6 @@ Game _processOverturePayments(
       final rel = getRelation(game, gpId, targetId);
       if (rel != null && rel.atWar) continue;
 
-      // While relationState is AT_WAR between a Great Power and any other
-      // faction, no new overtures may be established. Check if we're at war
-      // with ANY Great Power.
-      final atWarWithAnyGP = game.diplomacyRelations.any((r) {
-        final ids = {r.factionId1, r.factionId2};
-        return ids.contains(gpId) &&
-            r.atWar &&
-            players.any((p) => p.id == r.factionId1 || p.id == r.factionId2);
-      });
-      if (atWarWithAnyGP) continue;
-
       OvertureState? existing;
       for (final o in overtures) {
         if (o.gpId == gpId && o.targetId == targetId) {
