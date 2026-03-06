@@ -423,6 +423,29 @@ class OrderEngine {
               reason: 'Civilian cannot enter Minor/Tribe territory');
         }
       }
+
+      // Attack validation: cannot move into another Great Power's province
+      // without war declared. SPEC/game/diplomacy.md: "Declare War: Requires
+      // AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn."
+      // Validation allows either an existing AT_WAR relation or a same-turn
+      // declareWar diplomatic order targeting that faction.
+      if (destOwnerId != null &&
+          destOwnerId != playerId &&
+          _ownerIsGreatPower(destOwnerId)) {
+        final rel = getRelation(game, playerId, destOwnerId);
+        final atWar = rel?.atWar ?? false;
+        final declaringWarThisTurn = diplomatic.any((o) =>
+            o.type == DiplomaticOrderType.declareWar &&
+            o.targetFactionId == destOwnerId);
+        if (!atWar && !declaringWarThisTurn) {
+          return const OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason:
+                'Must declare war before attacking Great Power province',
+          );
+        }
+      }
+
       if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
           !moveDestVisibilityOk(
               view, destRegion, o.destinationProvinceId, unit.type)) {

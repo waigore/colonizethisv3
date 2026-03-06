@@ -32,6 +32,7 @@
     {
       "turn": 1,
       "orders": [
+        {"player": "gp2", "type": "diplomatic", "diplomaticType": "declareWar", "targetFactionId": "gp1"},
         {"player": "gp2", "type": "move", "unit": "gp2_peasant_levies_0", "to": "oldWorld|p1"},
         {"player": "gp2", "type": "move", "unit": "gp2_peasant_levies_1", "to": "oldWorld|p1"}
       ]
