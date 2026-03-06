@@ -3,26 +3,33 @@
   "description": "Explorer moves into enemy-controlled province without initiating combat; ownership remains with defender per SPEC/game/combat.md and unit role rules.",
   "init": {
     "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england", "france"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "startingResources": {
+        "initialMilitaryRegiments": 0,
+        "initialNavalShips": 0
+      }
+    },
     "oldWorld": {
-      "grid": {
-        "rows": 1,
-        "cols": 2,
-        "cells": [
-          ["p1", "p2"]
-        ]
-      },
+      "grid": [
+        ["p1", "sea1", "p2"]
+      ],
       "nodes": [
         { "id": "p1", "regionId": "oldWorld", "type": "province" },
-        { "id": "p2", "regionId": "oldWorld", "type": "province" }
+        { "id": "p2", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
       ],
       "edges": [
-        ["p1", "p2"]
+        { "id1": "p1", "id2": "sea1" },
+        { "id1": "p2", "id2": "sea1" }
       ]
     }
   },
   "setup": {
     "units": [
-      { "playerId": "gp1", "unitType": "Explorer", "provinceId": "oldWorld|p1", "count": 1 }
+      { "player": "gp1", "type": "Explorer", "province": "oldWorld|p1", "count": 1 }
     ],
     "initialTreasury": {
       "gp1": 1000,
