@@ -465,8 +465,10 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       targetFactionId: targetId,
       overtureStage: stage,
     ));
+    // Capture name before update to ensure correct display in status message
+    final factionName = _selectedFaction!.name;
     _updateSelectedFactionOvertureStage(stage);
-    _setStatus('Established $stage with ${_selectedFaction!.name}');
+    _setStatus('Established $stage with $factionName');
     _log.d('tui:diplomacy: established $stage with $targetId');
   }
 
