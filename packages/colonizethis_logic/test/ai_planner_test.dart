@@ -145,6 +145,60 @@ void main() {
       expect(o1, equals(o2));
     });
 
+    test('generateOrdersForGame produces moves and research when legal targets exist', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g3',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+              // Unowned neighbor so movement is rules-legal and not blocked by diplomacy.
+              Province(id: '$ow|P2', regionId: ow),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              '$ow|P1|0|0': 'fullyVisible',
+              '$ow|P2|0|0': 'fogged',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI GP', isHuman: false),
+        ],
+        globalGameSeed: 123,
+        aiSeedByGpId: const {'gp1': 999},
+      );
+
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final orders = generateOrdersForGame(game, topology);
+      final moves = orders.moveOrdersByPlayerId['gp1'] ?? const [];
+      final research = orders.researchOrdersByPlayerId['gp1'] ?? const [];
+
+      expect(moves, isNotEmpty, reason: 'AI should move into unowned neighboring province');
+      expect(research, isNotEmpty, reason: 'AI should also pick at least one research target');
+    });
+
     test('generateOrdersForPlayer returns empty for human player', () {
       final game = Game(
         id: 'g1',
