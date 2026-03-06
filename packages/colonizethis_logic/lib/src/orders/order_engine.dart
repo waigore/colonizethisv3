@@ -423,6 +423,22 @@ class OrderEngine {
               reason: 'Civilian cannot enter Minor/Tribe territory');
         }
       }
+
+      // Attack validation: cannot move into another Great Power's province
+      // without being at war. SPEC/game/diplomacy.md: "Declare War: Requires
+      // AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn."
+      if (destOwnerId != null &&
+          destOwnerId != playerId &&
+          _ownerIsGreatPower(destOwnerId)) {
+        final rel = getRelation(game, playerId, destOwnerId);
+        if (rel == null || !rel.atWar) {
+          return const OrderValidationResult(
+              status: OrderValidationStatus.rejected,
+              reason:
+                  'Must declare war before attacking Great Power province');
+        }
+      }
+
       if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
           !moveDestVisibilityOk(
               view, destRegion, o.destinationProvinceId, unit.type)) {
@@ -933,6 +949,23 @@ class OrderEngine {
               status: OrderValidationStatus.rejected,
               reason:
                   'Cannot establish overture while at war with that faction',
+            );
+          }
+
+          // SPEC/game/diplomacy.md: While relationState is AT_WAR between a
+          // Great Power and any other faction, no new overtures may be
+          // established. Check if we're at war with ANY Great Power.
+          final atWarWithAnyGP = game.diplomacyRelations.any((rel) {
+            final ids = {rel.factionId1, rel.factionId2};
+            return ids.contains(playerId) &&
+                rel.atWar &&
+                game.players.any((p) => p.id == rel.factionId1 || p.id == rel.factionId2);
+          });
+          if (atWarWithAnyGP) {
+            return const OrderValidationResult(
+              status: OrderValidationStatus.rejected,
+              reason:
+                  'Cannot establish overture while at war with any Great Power',
             );
           }
 

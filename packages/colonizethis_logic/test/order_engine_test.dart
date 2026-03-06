@@ -339,6 +339,62 @@ void main() {
       expect(results.single.status, OrderValidationStatus.rejected);
     });
 
+    // Issue #943: Cannot attack GP province without declaring war first
+    test('military cannot move into other GP province without war', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      // Create game with two GPs at peace
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'pikemen',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'revealed',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+        // At peace - no diplomacy relations
+        diplomacyRelations: const [],
+      );
+
+      final engine = OrderEngine();
+      engine.addMoveOrder('p1',
+          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.single.status, OrderValidationStatus.rejected);
+      expect(results.single.reason, contains('declare war'));
+    });
+
     test('explorer may move into tribal province', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
@@ -1929,6 +1985,54 @@ void main() {
         );
       }
 
+      // Helper for testing GP-GP-MinOR scenarios (issue #942)
+      Game _gpGPMinorBaseGame({
+        RelationState gp1RelationWithMinor = RelationState.atPeace,
+        RelationState gp1RelationWithGP2 = RelationState.atPeace,
+        int treasury = 5000,
+      }) {
+        return Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP1',
+              isHuman: true,
+              treasury: treasury,
+            ),
+            const Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              treasury: 5000,
+            ),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              state: gp1RelationWithMinor,
+              score: 50,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: gp1RelationWithGP2,
+              score: 50,
+            ),
+          ],
+          overtureStates: const [],
+        );
+      }
+
       test('declareWar rejected when already at war', () {
         final game = _gpMinorBaseGame(relationState: RelationState.atWar);
         final engine = OrderEngine();
@@ -1980,6 +2084,28 @@ void main() {
         );
         expect(result.status, OrderValidationStatus.rejected);
         expect(result.reason, contains('at war'));
+      });
+
+      // Issue #942: Overtures should be rejected when at war with ANY Great Power
+      test('establishOverture rejected when at war with another Great Power', () {
+        // Create game with gp1 at peace with minor1, but at war with gp2
+        final game = _gpGPMinorBaseGame(
+          gp1RelationWithMinor: RelationState.atPeace,
+          gp1RelationWithGP2: RelationState.atWar,
+        );
+        final engine = OrderEngine();
+        final result = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.establishOverture,
+            targetFactionId: 'minor1',
+            overtureStage: OvertureStage.tradeConsulate,
+          ),
+        );
+        expect(result.status, OrderValidationStatus.rejected);
+        expect(result.reason, contains('at war with any Great Power'));
       });
 
       test('establishOverture consulate rejected when treasury too low', () {
