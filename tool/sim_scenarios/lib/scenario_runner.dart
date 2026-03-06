@@ -121,11 +121,13 @@ class ScenarioRunner {
         
         // Resolve turn (returns updated game). Use per-turn workerAssignments when
         // present; otherwise fall back to scenario-level productionAssignments.
+        // When resolution blocks on human overture decisions, turnScript.overtureDecisions are applied.
         final nextGame = _resolveTurn(
           currentContext,
           orders,
           scenario,
           turnScript.workerAssignments,
+          turnScript,
         );
         currentContext = ScenarioContext(
           game: nextGame,
@@ -449,11 +451,14 @@ class ScenarioRunner {
   }
 
   /// Resolves one turn and returns the updated game.
+  /// When resolution returns [TurnResolutionPendingOvertures], [turnScript.overtureDecisions]
+  /// must be non-null; they are applied via resumeTurnResolutionWithOvertureDecisions.
   Game _resolveTurn(
     ScenarioContext context,
     Orders orders,
     Scenario scenario, [
     List<WorkerAssignment>? workerAssignments,
+    TurnScript? turnScript,
   ]) {
     final topology = context.topology;
     if (topology == null) {
@@ -473,7 +478,7 @@ class ScenarioRunner {
         : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
-    return resolveTurnForGameFromOrderEngine(
+    final result = resolveTurnForGameFromOrderEngine(
       game: context.game,
       topology: topology,
       orderEngine: orderEngine,
@@ -481,6 +486,42 @@ class ScenarioRunner {
       tileMapByRegion: context.tileMapByRegion,
       defaultAssignments: defaultAssignments,
     );
+
+    if (result is TurnResolutionPendingOvertures) {
+      final decisions = turnScript?.overtureDecisions;
+      if (decisions == null || decisions.isEmpty) {
+        throw StateError(
+          'Turn ${turnScript?.turn ?? 0} resolution is pending overture decisions '
+          '(human GP target) but scenario has no overtureDecisions for this turn. '
+          'Add overtureDecisions to the turn script.',
+        );
+      }
+      final logicDecisions = decisions
+          .map(
+            (d) => OvertureDecision(
+              offererGpId: d.offererGpId,
+              targetFactionId: d.targetFactionId,
+              stage: OvertureStage.values.firstWhere(
+                (e) => e.name == d.stage,
+                orElse: () => OvertureStage.none,
+              ),
+              accepted: d.accepted,
+            ),
+          )
+          .toList();
+      final resumed = resumeTurnResolutionWithOvertureDecisions(
+        game: result.game,
+        pendingOvertures: result.pendingOvertures,
+        decisions: logicDecisions,
+        topology: topology,
+        orders: orderEngine.orders,
+        tileMapByRegion: context.tileMapByRegion,
+        defaultAssignments: defaultAssignments,
+      );
+      return requireTurnResolutionComplete(resumed);
+    }
+
+    return requireTurnResolutionComplete(result);
   }
 
   /// Converts scenario setup productionAssignments to AssignedRecipe list for resolver.

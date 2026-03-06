@@ -1,0 +1,28 @@
+{
+  "name": "diplomacy_overture_ai_gp_accept",
+  "description": "Two-way overture to AI GP (SPEC/game/diplomacy.md): Human GP (gp1) offers Trade Consulate to AI GP (gp2); AI accepts by relation (default score 50). No blocking.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england", "france"],
+      "continentCount": 2,
+      "minorNationCount": 2,
+      "tribeCount": 2
+    }
+  },
+  "setup": {
+    "initialTreasury": { "gp1": 5000 }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "establishOverture", "targetFactionId": "gp2", "overtureStage": "tradeConsulate" }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "player": "gp1", "relationWith": "gp2", "overtureStage": "tradeConsulate" }
+  ]
+}

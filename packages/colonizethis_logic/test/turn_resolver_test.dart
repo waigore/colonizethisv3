@@ -89,13 +89,13 @@ void main() {
 
       final defaultAssignments = const <AssignedRecipe>[];
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: extractedByPlayerId,
         defaultAssignments: defaultAssignments,
-      );
+      ));
 
       // Turn number advanced.
       expect(next.worldState.turnState.turnNumber, 1);
@@ -164,11 +164,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
 
       // Turn number advanced.
       expect(next.worldState.turnState.turnNumber, 1);
@@ -244,11 +244,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units, isEmpty);
@@ -288,11 +288,11 @@ void main() {
           ),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.players.single.treasury, greaterThan(0));
       expect(next.players.single.stockpile.quantityOf('gold'), lessThan(2));
@@ -351,11 +351,11 @@ void main() {
           'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));
     });
@@ -410,13 +410,13 @@ void main() {
           ),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         tileMapByRegion: {'oldWorld': tileMap},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.players.single.stockpile.quantityOf('grain'), 1);
     });
@@ -483,13 +483,13 @@ void main() {
           ),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         tileMapByRegion: {'oldWorld': tileMapOw, 'newWorld': tileMapNw},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.players.single.stockpile.quantityOf('grain'),
           greaterThanOrEqualTo(0));
@@ -538,13 +538,13 @@ void main() {
           ),
         ],
       };
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         defaultAssignments: const [],
         defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-      );
+      ));
       final player1 = next.playerById('p1')!;
       final player2 = next.playerById('p2')!;
       expect(player1.stockpile.quantityOf(CommodityCatalog.lumber.id), 5);
@@ -610,13 +610,13 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
 
@@ -715,12 +715,12 @@ void main() {
           'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         tileMapByRegion: {'oldWorld': tileMap},
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       final p2Province = next.worldState.oldWorld.provinces
           .where((p) => p.id == '$ow|P2')
@@ -798,12 +798,12 @@ void main() {
       );
 
       final dialogueEvents = <DialogueEvent>[];
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         onDialogue: dialogueEvents.add,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       final eventDialogue = dialogueEvents
@@ -869,11 +869,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       final p2 = next.worldState.oldWorld.provinces
@@ -952,12 +952,12 @@ void main() {
       );
 
       final dialogueEvents = <DialogueEvent>[];
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         onDialogue: dialogueEvents.add,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       final eventDialogue = dialogueEvents
@@ -1034,12 +1034,12 @@ void main() {
       );
 
       final dialogueEvents = <DialogueEvent>[];
-      resolveTurnForGame(
+      requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         onDialogue: dialogueEvents.add,
-      );
+      ));
 
       final eventDialogue = dialogueEvents
           .where((e) =>
@@ -1096,12 +1096,12 @@ void main() {
         ],
       );
       final dialogueEvents = <DialogueEvent>[];
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         onDialogue: dialogueEvents.add,
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       // Naval battle may or may not eliminate one side; when it does, event dialogue is emitted.
       final eventDialogue = dialogueEvents
@@ -1136,12 +1136,12 @@ void main() {
         turnTimeMapping: TurnTimeMapping.gdd01,
       );
       final dialogueEvents = <DialogueEvent>[];
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         onDialogue: dialogueEvents.add,
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 101);
       final eraChange = dialogueEvents
           .where((e) => e.category == 'event' && e.situation == 'era_change')
@@ -1203,11 +1203,11 @@ void main() {
       engine.addMoveOrder('p1',
           const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
 
-      final next = resolveTurnForGameFromOrderEngine(
+      final next = requireTurnResolutionComplete(resolveTurnForGameFromOrderEngine(
         game: game,
         topology: topology,
         orderEngine: engine,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
@@ -1261,13 +1261,13 @@ void main() {
           ],
         },
       );
-      final next = validateOrdersAndResolveTurn(
+      final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units.length, 1);
       expect(next.worldState.oldWorld.units.single.provinceId, '$ow|P2');
@@ -1309,13 +1309,13 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.fleets.single.mission, FleetMission.patrol);
       expect(next.worldState.turnState.turnNumber, 1);
     });
@@ -1359,13 +1359,13 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.fleets.single.seaZoneId, 'sea2');
       expect(next.worldState.turnState.turnNumber, 1);
     });
@@ -1411,13 +1411,13 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.fleets.single.seaZoneId, 'sea1');
       expect(next.worldState.turnState.turnNumber, 1);
     });
@@ -1468,13 +1468,13 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.fleets.length, 1);
@@ -1536,13 +1536,13 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
       expect(fleet.mission, FleetMission.none);
     });
@@ -1591,13 +1591,13 @@ void main() {
           ),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
       expect(fleet.mission, FleetMission.none);
     });
@@ -1646,13 +1646,13 @@ void main() {
           ),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.fleets, isNotEmpty);
     });
@@ -1706,14 +1706,14 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         tileMapByRegion: tileMapByRegion,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
     });
@@ -1745,11 +1745,11 @@ void main() {
         ],
         edges: const [],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNotNull);
       expect(next.victory!.winnerPlayerId, 'p1');
       expect(next.victory!.type, VictoryType.military);
@@ -1783,11 +1783,11 @@ void main() {
         ],
         edges: const [],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNotNull);
       expect(next.victory!.winnerPlayerId, 'p1');
       expect(next.victory!.type, VictoryType.military);
@@ -1828,11 +1828,11 @@ void main() {
         ],
         edges: const [],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNotNull);
       expect(next.victory!.winnerPlayerId, 'p1');
     });
@@ -1863,11 +1863,11 @@ void main() {
         ],
         edges: const [],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNull);
     });
 
@@ -1904,11 +1904,11 @@ void main() {
         ],
         edges: const [],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNull);
     });
 
@@ -1932,7 +1932,7 @@ void main() {
           turnNumber: 10,
         ),
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -1944,7 +1944,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
       expect(next.victory, isNotNull);
       expect(next.victory!.winnerPlayerId, 'p1');
       expect(next.worldState.turnState.turnNumber, 10);
@@ -1983,7 +1983,7 @@ void main() {
           Player(id: 'p2', displayName: 'P2', isHuman: false),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -1995,7 +1995,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
       expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
           VisibilityLevel.fogged.name);
     });
@@ -2040,7 +2040,7 @@ void main() {
           Player(id: 'p2', displayName: 'P2', isHuman: false),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -2052,7 +2052,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
       expect(next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
           VisibilityLevel.fullyVisible.name);
     });
@@ -2108,7 +2108,7 @@ void main() {
           Player(id: 'p2', displayName: 'P2', isHuman: false),
         ],
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -2122,7 +2122,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
       expect(
         next.worldState.playerVisibilityByTile['p1']?[tileKeyOwP1],
         VisibilityLevel.fullyVisible.name,
@@ -2173,7 +2173,7 @@ void main() {
         ],
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -2185,7 +2185,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
 
       // Timer decremented but still present.
       expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], 4);
@@ -2233,7 +2233,7 @@ void main() {
         ],
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -2245,7 +2245,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
 
       // Timer cleared once it reaches 0.
       expect(next.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P2'], isNull);
@@ -2322,13 +2322,13 @@ void main() {
 
       // Turn 1: Spy moves out of other-faction province; timer starts at 5 and is
       // decremented to 4 at end-of-turn; province remains fully visible.
-      var current = resolveTurnForGame(
+      var current = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: moveOrders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
       expect(
         current.worldState.spyRevealTurnsByPlayer['p1']?['$ow|P1'],
         4,
@@ -2341,13 +2341,13 @@ void main() {
       // Turns 2–5: no further movement; timer counts down to 0 and province fogs
       // only when the timer expires.
       for (var i = 0; i < 4; i++) {
-        current = resolveTurnForGame(
+        current = requireTurnResolutionComplete(resolveTurnForGame(
           game: current,
           topology: topology,
           orders: const Orders(),
           extractedByPlayerId: const {},
           defaultAssignments: const [],
-        );
+        ));
       }
 
       expect(
@@ -2423,13 +2423,13 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: moveOrders,
         extractedByPlayerId: const {},
         defaultAssignments: const [],
-      );
+      ));
 
       expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
       expect(
@@ -2475,7 +2475,7 @@ void main() {
         ],
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: MapTopology(
           nodes: const [
@@ -2485,7 +2485,7 @@ void main() {
           edges: const [],
         ),
         orders: const Orders(),
-      );
+      ));
 
       // Timer entry is cleared.
       expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
@@ -2545,11 +2545,11 @@ void main() {
       );
 
       // Resolve turn via validateOrdersAndResolveTurn (full pipeline).
-      final next = validateOrdersAndResolveTurn(
+      final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
         game: game,
         topology: topology,
         orders: engine.orders, // Start with engine orders (mimics human orders)
-      );
+      ));
 
       // Verify diplomatic order was applied: consulate should be established.
       final overture = getOverture(next, 'p1', 'minor1');
@@ -2603,12 +2603,12 @@ void main() {
       );
 
       // AI has no orders.
-      final next = resolveTurnForGameFromOrderEngine(
+      final next = requireTurnResolutionComplete(resolveTurnForGameFromOrderEngine(
         game: game,
         topology: topology,
         orderEngine: engine,
         aiOrders: const Orders(),
-      );
+      ));
 
       // Verify war was declared: relation state should be AT_WAR.
       final rel = getRelation(next, 'p1', 'minor1')!;

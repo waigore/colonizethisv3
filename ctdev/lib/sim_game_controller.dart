@@ -246,14 +246,14 @@ class SimGameController {
   }) {
     _recordOrderHistory(orders);
     final before = _game;
-    final next = validateOrdersAndResolveTurn(
+    final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
       game: _game,
       topology: _topology,
       orders: orders,
       tileMapByRegion: _tileMapByRegion,
       defaultAssignments: const [],
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    );
+    ));
     _game = next;
     _recordTurnLog(before: before, after: next);
   }

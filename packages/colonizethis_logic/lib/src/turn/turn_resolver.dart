@@ -29,6 +29,7 @@ import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import 'combat_phase_helpers.dart';
 import 'end_of_turn_resolver.dart';
+import 'turn_resolution_result.dart';
 
 final Logger _log = Logger();
 
@@ -84,7 +85,8 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
 
 /// Resolves turn using OrderEngine output. Merges human + AI orders (AI optional).
 /// SPEC/program/order-engine.md: merge at turn resolution.
-Game resolveTurnForGameFromOrderEngine({
+/// Returns [TurnResolutionResult]; may be [TurnResolutionPendingOvertures] when a human must accept/reject an overture.
+TurnResolutionResult resolveTurnForGameFromOrderEngine({
   required Game game,
   required MapTopology topology,
   required OrderEngine orderEngine,
@@ -124,7 +126,9 @@ Game resolveTurnForGameFromOrderEngine({
 /// [extractedByPlayerId] is empty, extraction phase leaves stockpiles unchanged.
 /// [extractedByPlayerId] override (non-empty) is used for tests/sim_economy.
 
-Game validateOrdersAndResolveTurn({
+/// Validates orders and resolves the turn. Returns [TurnResolutionResult];
+/// may be [TurnResolutionPendingOvertures] when a human must accept/reject an overture.
+TurnResolutionResult validateOrdersAndResolveTurn({
   required Game game,
   required MapTopology topology,
   required Orders orders,
@@ -157,7 +161,12 @@ Game validateOrdersAndResolveTurn({
   );
 }
 
-Game resolveTurnForGame({
+/// Resolves one full turn. Returns [TurnResolutionComplete] with the new game state,
+/// or [TurnResolutionPendingOvertures] when the Diplomacy phase needs a human target
+/// to accept/reject an overture (SPEC/program/turn-resolution-phases.md § Blocking human input).
+/// When [startFromPhase] is set (e.g. [TurnPhase.diplomacy] for resume), phases before it are skipped.
+/// When [overtureDecisions] is set, those decisions are applied in the Diplomacy phase (resume path).
+TurnResolutionResult resolveTurnForGame({
   required Game game,
   required MapTopology topology,
   required Orders orders,
@@ -176,13 +185,24 @@ Game resolveTurnForGame({
   /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
       onProductionComplete,
+
+  /// When non-null, skip phases before this (used when resuming after pending overture decisions).
+  TurnPhase? startFromPhase,
+
+  /// Overture accept/reject decisions from human target(s); when set, Diplomacy phase uses these and does not suspend.
+  List<OvertureDecision>? overtureDecisions,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
   Game state = game;
   final feedingCoverageByPlayerId = <String, double>{};
+  final phaseIndex = startFromPhase != null
+      ? turnResolutionSequence.indexOf(startFromPhase)
+      : 0;
 
-  for (final phase in turnResolutionSequence) {
+  for (var i = 0; i < turnResolutionSequence.length; i++) {
+    final phase = turnResolutionSequence[i];
+    if (i < phaseIndex) continue;
     _log.d('logic: phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
@@ -252,7 +272,19 @@ Game resolveTurnForGame({
           previousRelations[rel.factionId1]![rel.factionId2] = rel.state;
           previousRelations[rel.factionId2]![rel.factionId1] = rel.state;
         }
-        state = resolveDiplomacyPhase(state, orders, onDialogue: onDialogue);
+        final diploResult = resolveDiplomacyPhase(
+          state,
+          orders,
+          onDialogue: onDialogue,
+          overtureDecisions: overtureDecisions,
+        );
+        if (diploResult.isPending) {
+          return TurnResolutionPendingOvertures(
+            game: diploResult.game,
+            pendingOvertures: diploResult.pendingOvertures!,
+          );
+        }
+        state = diploResult.game;
         // Emit diplomacy_change events for changed relations
         if (onGameEvent != null) {
           for (final rel in state.diplomacyRelations) {
@@ -343,7 +375,54 @@ Game resolveTurnForGame({
   }
 
   _log.i('logic: turn $turn resolve end');
-  return state;
+  return TurnResolutionComplete(state);
+}
+
+/// Returns the game when [result] is [TurnResolutionComplete]; throws when pending.
+/// Use in tests or callers that do not yet handle [TurnResolutionPendingOvertures].
+Game requireTurnResolutionComplete(TurnResolutionResult result) {
+  return switch (result) {
+    TurnResolutionComplete(:final game) => game,
+    TurnResolutionPendingOvertures() => throw StateError(
+        'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions'),
+  };
+}
+
+/// Resumes turn resolution after the app has collected overture accept/reject decisions
+/// from the human target(s). Call with the [game] and [pendingOvertures] from
+/// [TurnResolutionPendingOvertures], and the [decisions] from the user. Other parameters
+/// must match those used for the original resolveTurnForGame call (orders, topology, etc.).
+TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
+  required Game game,
+  required List<OvertureOffer> pendingOvertures,
+  required List<OvertureDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+      onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    overtureDecisions: decisions,
+  );
 }
 
 Orders _filterAcceptedOrdersForAllPlayers({

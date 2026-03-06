@@ -37,7 +37,7 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 
 ### GP–Minor Rules
 
-- **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
+- **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. **Overtures are two-way:** one player offers; the **target** faction must accept or reject. When the target is a Minor or Tribe, the accept/reject decision is applied at turn resolution by rule (e.g. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and cost). When the target is a Great Power, that GP's controller decides: if the target is **AI**, the decision is made during the Diplomacy phase; if the target is **human**, turn resolution **blocks** until the human responds (see [turn-resolution-phases.md](../program/turn-resolution-phases.md) § Blocking human input). Only when the target accepts are cost deducted and overture stage advanced. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
 - **Intervention (human and AI):**
@@ -68,7 +68,7 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 - **Declare War** — target faction; valid if AT_PEACE.
 - **Offer Peace** — target faction; valid if AT_WAR.
 - **Alliance** — target GP; propose, accept, or refuse.
-- **Establish Overture** — target Minor/Tribe, overture type; valid if previous step achieved and costs met.
+- **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, amount; valid if Embassy exists; deducts treasury.
 - **Set Subsidy** — target, amount/percentage; valid if consulate/embassy exists.
 
@@ -139,6 +139,18 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the Player controls a Great Power A and there is a target Great Power B such that B currently owns three or fewer provinces in total, B does **not** own its original capital province (its `capitalProvinceId` in world state is owned by some other faction), and A has unlocked the `empire_building` tech and is not at war with B  
   When the Player issues a `Join Empire` diplomatic order targeting B in the Diplomacy phase and all other Join Empire preconditions are satisfied  
   Then the system treats B as **nearly defeated**, accepts the `Join Empire` order as valid, and resolves it per the Join Empire rules (absorbing B’s remaining provinces, units, and fleets into A and removing B from the game).
+
+- Given the Player controls a Great Power and has already submitted one `Establish Overture` diplomatic order targeting a Minor Nation or Tribe in the current turn  
+  When the Player submits a second `Establish Overture` order targeting the same Minor or Tribe in the same turn  
+  Then the system rejects the second order at validation (e.g. reason: already have an Establish Overture order for this faction this turn) and does **not** apply it at resolution.
+
+- Given a Great Power has submitted an `Establish Overture` order targeting a Minor Nation or Tribe and preconditions (previous stage, cost, not at war) are met at resolution  
+  When the Diplomacy phase processes that overture  
+  Then the system applies the target’s accept/reject decision per rules (e.g. Minor/Tribe accept Consulate/Embassy/NAP by rule); only when the decision is **accept** does the system deduct cost and advance overture stage.
+
+- Given a Great Power has submitted an `Establish Overture` order whose **target is a human-controlled Great Power** and preconditions are met at resolution  
+  When the Diplomacy phase reaches that overture  
+  Then the system does **not** apply it immediately; it suspends turn resolution and returns a **pending overture decision** for that target. The app must prompt the human target to accept or reject; when the app supplies the decision and resumes resolution, the system applies the decision (deduct cost and advance stage if accept, else leave state unchanged) and continues the turn.
 
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).

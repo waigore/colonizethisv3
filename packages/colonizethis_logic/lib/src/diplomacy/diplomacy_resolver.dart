@@ -1,12 +1,13 @@
 /// Diplomacy phase resolution. SPEC/program/diplomacy-resolution.md.
-/// Steps: overture payments, advance overtures, Join Empire/Colony,
-/// alliance proposals, Declare War/Peace, relation modifiers, score update.
+/// Steps: overture payments (two-way accept/reject), advance overtures,
+/// Join Empire/Colony, alliance proposals, Declare War/Peace, relation modifiers, score update.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
+import '../turn/turn_resolution_result.dart';
 
 final Logger _diploLog = Logger();
 
@@ -112,13 +113,41 @@ bool _isGreatPower(Game game, String factionId) {
   return game.players.any((p) => p.id == factionId);
 }
 
+/// True if [factionId] is a GP whose player is human-controlled.
+bool _isTargetHumanGp(Game game, String factionId) {
+  final p = getPlayer(game, factionId);
+  return p != null && p.isHuman;
+}
+
+OvertureDecision? _findDecision(
+  List<OvertureDecision>? decisions,
+  String offererGpId,
+  String targetFactionId,
+  OvertureStage stage,
+) {
+  if (decisions == null) return null;
+  for (final d in decisions) {
+    if (d.offererGpId == offererGpId &&
+        d.targetFactionId == targetFactionId &&
+        d.stage == stage) {
+      return d;
+    }
+  }
+  return null;
+}
+
 /// Resolves Diplomacy phase. Runs before Movement per turn-resolution-phases.
 /// When an AI applies declare war or offer peace, [onDialogue] is invoked with
 /// a [DialogueEvent] (SPEC/ai/dialogue-and-mood.md).
-Game resolveDiplomacyPhase(
+/// Returns [DiplomacyPhaseResult]: when an overture targets a human GP and
+/// [overtureDecisions] does not supply a decision, returns pending so turn
+/// resolution can block. When [overtureDecisions] is provided (resume path),
+/// applies those decisions and does not suspend.
+DiplomacyPhaseResult resolveDiplomacyPhase(
   Game game,
   Orders orders, {
   void Function(DialogueEvent)? onDialogue,
+  List<OvertureDecision>? overtureDecisions,
 }) {
   _diploLog.d('logic: diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
@@ -126,8 +155,19 @@ Game resolveDiplomacyPhase(
 
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
 
-  // 1. Process overture payments (Consulate, Embassy)
-  state = _processOverturePayments(state, diploByPlayer, turn);
+  // 1. Process overture offers (two-way: target accepts/rejects)
+  final overtureResult = _processOverturePayments(
+    state,
+    diploByPlayer,
+    turn,
+    overtureDecisions: overtureDecisions,
+  );
+  state = overtureResult.game;
+  if (overtureResult.pendingOvertures != null &&
+      overtureResult.pendingOvertures!.isNotEmpty) {
+    _diploLog.d('logic: diplomacy phase suspended (pending overture decisions)');
+    return DiplomacyPhaseResult(state, overtureResult.pendingOvertures);
+  }
 
   // 2. Advance in-progress overtures (turn delays)
   state = _advanceOvertures(state, turn);
@@ -149,16 +189,39 @@ Game resolveDiplomacyPhase(
   state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
 
   _diploLog.d('logic: diplomacy phase end');
-  return state;
+  return DiplomacyPhaseResult(state);
 }
 
-Game _processOverturePayments(
+/// Result of processing overture payments: game state and optional pending offers (human target).
+class _OverturePaymentsResult {
+  _OverturePaymentsResult(this.game, [this.pendingOvertures]);
+  final Game game;
+  final List<OvertureOffer>? pendingOvertures;
+}
+
+/// Accept by rule for Minor/Tribe: Consulate/Embassy/NAP always accepted. SPEC/game/diplomacy.md.
+bool _minorOrTribeAcceptsByRule(OvertureStage stage) {
+  return stage == OvertureStage.tradeConsulate ||
+      stage == OvertureStage.embassy ||
+      stage == OvertureStage.nap;
+}
+
+/// AI GP target: accept if relation score >= 50 (Neutral or better). MVP rule.
+bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
+  final rel = getRelation(game, offererGpId, targetGpId);
+  final score = rel?.score ?? 50;
+  return score >= 50;
+}
+
+_OverturePaymentsResult _processOverturePayments(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  List<OvertureDecision>? overtureDecisions,
+}) {
   var players = List<Player>.from(game.players);
   var overtures = List<OvertureState>.from(game.overtureStates);
+  var state = game;
 
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
@@ -172,11 +235,12 @@ Game _processOverturePayments(
       if (stage == null || stage == OvertureStage.none) continue;
 
       final targetId = order.targetFactionId;
-      if (!_isMinorOrTribe(game, targetId)) continue;
+      final targetIsMinorOrTribe = _isMinorOrTribe(state, targetId);
+      final targetIsGp = _isGreatPower(state, targetId);
+      if (!targetIsMinorOrTribe && !targetIsGp) continue;
 
-      // SPEC/game/diplomacy.md: While relationState is AT_WAR between a GP and
-      // a Minor/Tribe, no new overtures may be established between that pair.
-      final rel = getRelation(game, gpId, targetId);
+      // SPEC/game/diplomacy.md: While relationState is AT_WAR, no new overtures.
+      final rel = getRelation(state, gpId, targetId);
       if (rel != null && rel.atWar) continue;
 
       OvertureState? existing;
@@ -186,7 +250,6 @@ Game _processOverturePayments(
           break;
         }
       }
-      // Must be at previous stage to advance to this one.
       final prevStage = _previousStage(stage);
       final atPrevStage =
           (existing == null && prevStage == OvertureStage.none) ||
@@ -199,12 +262,33 @@ Game _processOverturePayments(
       } else if (stage == OvertureStage.embassy) {
         cost = overtureEmbassyCost;
       } else if (stage == OvertureStage.nap) {
-        cost = 0; // NAP is free; advance below
+        cost = 0;
       } else {
-        continue; // Join Empire is handled in step 3 (_resolveJoinEmpireColony)
+        continue; // Join Empire in step 3
       }
 
-      if (player.treasury < cost) continue;
+      if (player.treasury < cost && cost > 0) continue;
+
+      // Two-way: target accepts or rejects.
+      bool accepted;
+      if (targetIsMinorOrTribe) {
+        accepted = _minorOrTribeAcceptsByRule(stage);
+      } else {
+        // Target is GP.
+        final decision = _findDecision(overtureDecisions, gpId, targetId, stage);
+        if (decision != null) {
+          accepted = decision.accepted;
+        } else if (_isTargetHumanGp(state, targetId)) {
+          // Suspend: need human response.
+          final pending = [OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage)];
+          state = state.copyWith(players: players, overtureStates: overtures);
+          return _OverturePaymentsResult(state, pending);
+        } else {
+          accepted = _aiGpAccepts(state, gpId, targetId);
+        }
+      }
+
+      if (!accepted) continue;
 
       if (cost > 0) {
         player = player.copyWith(treasury: player.treasury - cost);
@@ -224,11 +308,12 @@ Game _processOverturePayments(
               gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)
         ];
       }
-      _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage');
+      _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage (accepted)');
     }
   }
 
-  return game.copyWith(players: players, overtureStates: overtures);
+  state = state.copyWith(players: players, overtureStates: overtures);
+  return _OverturePaymentsResult(state);
 }
 
 OvertureStage _previousStage(OvertureStage stage) {
