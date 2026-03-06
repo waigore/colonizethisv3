@@ -128,6 +128,15 @@ void main() {
           Player(id: 'gp1', displayName: 'AI', isHuman: false),
           Player(id: 'gp2', displayName: 'Other', isHuman: true),
         ],
+        // At war so that attacking move into gp2 province is rules-legal
+        // per SPEC/game/diplomacy.md and OrderEngine movement validation.
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atWar,
+          ),
+        ],
         globalGameSeed: 0,
         aiSeedByGpId: {'gp1': 42},
       );
