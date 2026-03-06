@@ -938,10 +938,10 @@ class OrderEngine {
               reason: 'Overture stage is required for establishOverture',
             );
           }
-          if (!_factionIsMinorOrTribe(targetId)) {
+          if (!_factionIsMinorOrTribe(targetId) && !_factionIsGreatPower(targetId)) {
             return const OrderValidationResult(
               status: OrderValidationStatus.rejected,
-              reason: 'Overtures are only valid toward Minor Nations or Tribes',
+              reason: 'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
             );
           }
           if (atWar) {
@@ -1075,6 +1075,8 @@ class OrderEngine {
       }
     }
 
+    // At most one Establish Overture per (player, target) per turn. SPEC/game/diplomacy.md, SPEC/program/orders.md.
+    final overtureTargetsThisTurn = <String>{};
     for (final o in diplomatic) {
       if (rejected) {
         results.add(const OrderValidationResult(
@@ -1083,8 +1085,21 @@ class OrderEngine {
         ));
         continue;
       }
+      if (o.type == DiplomaticOrderType.establishOverture &&
+          overtureTargetsThisTurn.contains(o.targetFactionId)) {
+        results.add(const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason:
+              'Already have an Establish Overture order for this faction this turn',
+        ));
+        rejected = true;
+        continue;
+      }
       final r = validateDiplomatic(o);
       results.add(r);
+      if (r.isAccepted && o.type == DiplomaticOrderType.establishOverture) {
+        overtureTargetsThisTurn.add(o.targetFactionId);
+      }
       if (!r.isAccepted) {
         rejected = true;
       }

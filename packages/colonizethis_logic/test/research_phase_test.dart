@@ -47,11 +47,11 @@ void main() {
       );
 
       final topology = const MapTopology();
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
       final player = next.players.single;
 
       // One turn of maximum funding should make progress > 0 and reduce treasury.
@@ -89,11 +89,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       final player = next.players.single;
 
       // Treasury unchanged and no progress recorded because prerequisite not met.
@@ -115,11 +115,11 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       expect(next.players.single.treasury, 100);
       expect(next.players.single.researchProgressByTechId, isNull);
     });
@@ -138,11 +138,11 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       // Low funding: 50 gold cost, 100 RP per turn (per SPEC/game/tech-tree.md)
       expect(next.players.single.treasury, 50);
       expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
@@ -161,11 +161,11 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
       // gathering_1 cost is 80, so tech unlocks and progress is cleared.
       expect(next.players.single.treasury, 1000);
@@ -185,7 +185,7 @@ void main() {
           ],
         },
       );
-      var next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      var next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 50);
       expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
 
@@ -198,7 +198,7 @@ void main() {
           ],
         },
       );
-      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 50);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
 
@@ -211,7 +211,7 @@ void main() {
           ],
         },
       );
-      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 100);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
 
@@ -224,7 +224,7 @@ void main() {
           ],
         },
       );
-      next = resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders);
+      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 500);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
     });
@@ -246,11 +246,11 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       final player = next.players.single;
       expect(player.techUnlocked!['university'], isTrue);
       expect(player.researchSlots, 4);
@@ -267,11 +267,11 @@ void main() {
           ],
         },
       );
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: const MapTopology(),
         orders: orders,
-      );
+      ));
       final player = next.players.single;
       // Last wins => maximum only: 1000 spent, 2500 RP => gathering_1 (cost 80) unlocks.
       expect(player.treasury, 1000);

@@ -2080,6 +2080,43 @@ void main() {
         expect(result.reason, contains('requires existing Trade Consulate'));
       });
 
+      test('establishOverture second order for same faction in same turn rejected',
+          () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.none,
+          treasury: overtureConsulateCost * 3,
+        );
+        final engine = OrderEngine();
+        final first = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.establishOverture,
+            targetFactionId: 'minor1',
+            overtureStage: OvertureStage.tradeConsulate,
+          ),
+        );
+        expect(first.status, OrderValidationStatus.accepted);
+        final second = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.establishOverture,
+            targetFactionId: 'minor1',
+            overtureStage: OvertureStage.tradeConsulate,
+          ),
+        );
+        expect(second.status, OrderValidationStatus.rejected);
+        expect(
+          second.reason,
+          contains(
+              'Already have an Establish Overture order for this faction this turn'),
+        );
+      });
+
       test('grantAid requires embassy and sufficient treasury', () {
         final game = _gpMinorBaseGame(
           relationState: RelationState.atPeace,

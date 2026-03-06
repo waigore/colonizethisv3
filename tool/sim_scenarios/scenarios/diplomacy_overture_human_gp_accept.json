@@ -1,0 +1,31 @@
+{
+  "name": "diplomacy_overture_human_gp_accept",
+  "description": "Two-way overture to human GP (SPEC/program/turn-resolution-phases.md): AI GP (gp2) offers Trade Consulate to human GP (gp1); resolution blocks until human responds. Scenario supplies overtureDecisions (accept); resume completes turn.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england", "france"],
+      "continentCount": 2,
+      "minorNationCount": 2,
+      "tribeCount": 2
+    }
+  },
+  "setup": {
+    "initialTreasury": { "gp2": 5000 }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        { "player": "gp2", "type": "diplomatic", "diplomaticType": "establishOverture", "targetFactionId": "gp1", "overtureStage": "tradeConsulate" }
+      ],
+      "overtureDecisions": [
+        { "offererGpId": "gp2", "targetFactionId": "gp1", "stage": "tradeConsulate", "accepted": true }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "player": "gp2", "relationWith": "gp1", "overtureStage": "tradeConsulate" }
+  ]
+}

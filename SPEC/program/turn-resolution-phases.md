@@ -29,9 +29,15 @@ Extraction → riches to treasury → production → consumption **must** run be
 
 ---
 
+## Blocking human input
+
+Some phases may require input from a **human player** before resolution can continue. When that happens, turn resolution **suspends** and returns a result indicating **pending human input** (e.g. overture accept/reject for a human-controlled target faction). The **app** is responsible for: (1) presenting the decision to the human (e.g. “GP X offers Embassy; accept or reject?”); (2) collecting the response; (3) calling the **resume** API with the decision(s). The resolver then continues from the point of suspension (e.g. applies the overture decision and runs the rest of the Diplomacy phase and remaining phases). See [diplomacy-resolution.md](diplomacy-resolution.md) for overture accept/reject; [diplomacy.md](../game/diplomacy.md) for two-way overture rules.
+
+---
+
 ## Determinism
 
-Same TurnResolver and phase order used in main game and ctdev sim_game; identical development and exploration rules for reproducible simulations.
+Same TurnResolver and phase order used in main game and ctdev sim_game; identical development and exploration rules for reproducible simulations. When resolution suspends for human input, the eventual outcome depends on that input; given the same input (including human decisions on resume), the result is deterministic.
 
 ---
 
@@ -41,3 +47,4 @@ Same TurnResolver and phase order used in main game and ctdev sim_game; identica
 - **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Production; Production before Consumption. Extraction through Consumption complete before Movement and before Build / work. Research runs after Consumption so treasury is current. Build vs Movement relative order is implementation-defined subject to that constraint. Given a resolver run, the system does not apply extraction/riches/production/consumption effects after movement or build has started.
 - **Determinism:** Given the same starting WorldState, merged orders, ruleset, and random seeds, TurnResolver produces the same resulting WorldState (and victory state) in main game and in ctdev sim_game; phase order is identical in both.
 - **Implementation contract:** Per-phase behaviour is specified in [turn-resolution-phase-details.md](turn-resolution-phase-details.md); this document is the single source of truth for phase sequence and ordering. Tests may assert phase order and dependency rules by inspecting resolver behaviour or by comparing outcomes across runs.
+- **Blocking:** When the Diplomacy phase encounters an overture whose target is a human-controlled Great Power, turn resolution returns a result indicating pending overture decision(s). The app must not advance the turn until it has collected the human’s response and called the resume API. When no human input is pending, resolution runs to completion and returns the final game state.

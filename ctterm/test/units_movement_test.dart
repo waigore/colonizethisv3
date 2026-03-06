@@ -93,12 +93,12 @@ void main() {
         },
       );
 
-      final nextGame = resolveTurnForGame(
+      final nextGame = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         tileMapByRegion: initResult.tileMapByRegion,
-      );
+      ));
 
       final movedUnit = nextGame.worldState.oldWorld.units
           .firstWhere((u) => u.id == unit.id);

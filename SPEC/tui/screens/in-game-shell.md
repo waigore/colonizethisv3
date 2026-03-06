@@ -99,7 +99,7 @@ The map area is a **topology graph** of the current region’s **land provinces*
 ### G6: End Turn
 - **Given** the player is in the in-game shell and there are **no idle civilian units** for the human player (all civilian units have a work order or none exist)
 - **When** pressing `Enter` or `E` to end turn
-- **Then** simulate turn processing and update the display (show turn progress, then refresh map/HUD)
+- **Then** the shell runs turn resolution. If resolution completes, the display updates (turn progress, refresh map/HUD). If resolution **blocks** because another player has offered a diplomatic overture to the human (per [SPEC/program/turn-resolution-phases.md](../../program/turn-resolution-phases.md)), the app navigates to the **Pending Overtures** screen ([pending-overtures.md](pending-overtures.md)); after the human accepts or rejects each offer and submits, resolution resumes and the turn completes (or the Pending Overtures screen is shown again if more offers are pending).
 -
 - **Given** the player is in the in-game shell and there is **at least one idle civilian unit** for the human player (a Builder/Engineer-family unit owned by the human player with **no** work order in `Orders.workOrdersByPlayerId` for that player)
 - **When** pressing `Enter` or `E` to end turn

@@ -20,6 +20,8 @@ enum CttermRoute {
   victory,
   defeat,
   pauseOptions,
+  /// Shown when turn resolution blocks on human accept/reject of diplomatic overtures. SPEC/program/turn-resolution-phases.md.
+  pendingOvertures,
 }
 
 /// Unique 6-digit screen ID for each route. Displayed at top of each screen for identification.
@@ -63,6 +65,8 @@ extension CttermRouteScreenId on CttermRoute {
         return '100017';
       case CttermRoute.pauseOptions:
         return '100018';
+      case CttermRoute.pendingOvertures:
+        return '100019';
     }
   }
 }

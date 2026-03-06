@@ -16,6 +16,7 @@ export 'src/setup/province_name_fallback.dart';
 
 // Turn
 export 'src/turn/research_resolver.dart';
+export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
 
 // Combat

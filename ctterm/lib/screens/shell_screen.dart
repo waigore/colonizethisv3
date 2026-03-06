@@ -22,6 +22,7 @@ import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/pause_options_screen.dart';
+import 'package:ctterm/screens/pending_overtures_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -54,6 +55,9 @@ class ShellScreen extends StatefulComponent {
     this.initialTheme,
     this.onThemeChanged,
     this.settingsReturnRoute,
+    this.pendingOvertures,
+    this.onTurnResolutionPending,
+    this.onOvertureDecisions,
   });
 
   final CttermRoute route;
@@ -93,6 +97,13 @@ class ShellScreen extends StatefulComponent {
   final TerminalTheme? initialTheme;
   /// Callback when theme is changed in settings.
   final void Function(TerminalTheme)? onThemeChanged;
+
+  /// When non-null, turn resolution is suspended awaiting human overture decisions. SPEC/program/turn-resolution-phases.md.
+  final List<OvertureOffer>? pendingOvertures;
+  /// Called when resolve returns pending; app should navigate to pendingOvertures and show prompt.
+  final void Function(Game game, List<OvertureOffer> pending)? onTurnResolutionPending;
+  /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
+  final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -245,20 +256,22 @@ class _ShellScreenState extends State<ShellScreen> {
             }
             _log.d('tui:game: processing turn ${game.worldState.turnState.turnNumber}');
             
-            // Process turn with current orders and minimal topology
-            // Full implementation would load map data and use real topology
             final currentOrders = component.orders ?? const Orders();
             final topology = component.combinedTopology ?? const MapTopology();
             final tileMapByRegion = component.tileMapByRegion;
-            final nextGame = resolveTurnForGame(
+            final result = resolveTurnForGame(
               game: game,
               topology: topology,
               orders: currentOrders,
               tileMapByRegion: tileMapByRegion,
               onGameEvent: component.onGameEvent,
             );
-            
-            // Notify parent of updated game state
+            if (result is TurnResolutionPendingOvertures) {
+              _log.d('tui:game: turn resolution pending ${result.pendingOvertures.length} overture(s)');
+              component.onTurnResolutionPending?.call(result.game, result.pendingOvertures);
+              return;
+            }
+            final nextGame = requireTurnResolutionComplete(result);
             component.onTurnProcessed?.call(nextGame);
             _log.i('tui:game: turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
           },
@@ -382,6 +395,19 @@ class _ShellScreenState extends State<ShellScreen> {
             component.onClearGame?.call();
             component.onNavigate(CttermRoute.mainMenu);
           },
+        );
+      case CttermRoute.pendingOvertures:
+        final game = component.game;
+        final pending = component.pendingOvertures;
+        final onDecisions = component.onOvertureDecisions;
+        if (game == null || pending == null || pending.isEmpty || onDecisions == null) {
+          _log.w('tui:nav: pendingOvertures route with missing game/pending/onDecisions');
+          return const Padding(padding: EdgeInsets.all(1), child: Text('No pending overtures.'));
+        }
+        return PendingOverturesScreen(
+          game: game,
+          pendingOvertures: pending,
+          onDecisions: onDecisions,
         );
     }
   }

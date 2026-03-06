@@ -91,7 +91,7 @@ void main() {
         },
       );
 
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final overture = getOverture(after, 'gp1', 'minor1');
       expect(overture, isNotNull);
       expect(overture!.hasEmbassy, isTrue);
@@ -123,7 +123,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'gp2');
       expect(rel, isNotNull);
       expect(rel!.level, RelationLevel.allied);
@@ -143,7 +143,7 @@ void main() {
         },
       );
 
-      final afterWar = resolveDiplomacyPhase(game, declareOrders);
+      final afterWar = resolveDiplomacyPhase(game, declareOrders).game;
       final relWar = getRelation(afterWar, 'gp1', 'minor1')!;
       expect(relWar.atWar, isTrue);
 
@@ -157,7 +157,7 @@ void main() {
           ],
         },
       );
-      final afterPeace = resolveDiplomacyPhase(afterWar, peaceOrders);
+      final afterPeace = resolveDiplomacyPhase(afterWar, peaceOrders).game;
       final relPeace = getRelation(afterPeace, 'gp1', 'minor1')!;
       expect(relPeace.atPeace, isTrue);
     });
@@ -181,7 +181,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.atWar, isTrue);
       expect(rel.score, lessThan(60));
@@ -218,7 +218,7 @@ void main() {
         },
       );
 
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, greaterThan(initialRel.score));
       expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 1);
@@ -269,7 +269,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(after.minorNations.any((m) => m.id == 'minor1'), isFalse);
       expect(getOverture(after, 'gp1', 'minor1'), isNull);
       final p1 = after.worldState.oldWorld.provinces
@@ -347,7 +347,7 @@ void main() {
         },
       );
 
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       // Province now owned by gp1.
       final p1 = after.worldState.oldWorld.provinces
           .where((p) => p.id == '$ow|m1')
@@ -407,7 +407,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(after.minorNations.any((m) => m.id == 'minor1'), isTrue);
       expect(after.worldState.oldWorld.provinces
           .where((p) => p.id == '$ow|m1')
@@ -438,7 +438,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, 50);
       expect(getPlayer(after, 'gp1')!.treasury, 2000);
@@ -474,7 +474,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(getPlayer(after, 'gp1')!.treasury, 2000 - 80);
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, 53); // +3 per subsidy
@@ -512,7 +512,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(getPlayer(after, 'gp1')!.treasury, 800);
       expect(getPlayer(after, 'gp2')!.treasury, 700);
     });
@@ -539,7 +539,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(getPlayer(after, 'gp1')!.treasury, 2000);
     });
   });
@@ -575,7 +575,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final evidence = after.dossierEvidenceEntries;
       expect(evidence.any((e) =>
           e.observerId == 'gp1' && e.subjectId == 'gp2' && e.agendaType == 'warmonger' && e.scoreDelta == 2),
@@ -613,7 +613,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final evidence = after.dossierEvidenceEntries;
       expect(evidence.any((e) =>
           e.observerId == 'gp1' && e.subjectId == 'gp2' && e.agendaType == 'backstabber' && e.scoreDelta == 2),
@@ -655,7 +655,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       final evidence = after.dossierEvidenceEntries;
       expect(evidence.any((e) =>
           e.observerId == 'gp1' && e.subjectId == 'gp2' && e.agendaType == 'peacemaker' && e.scoreDelta == 1),
@@ -691,7 +691,7 @@ void main() {
           ],
         },
       );
-      final after = resolveDiplomacyPhase(game, orders);
+      final after = resolveDiplomacyPhase(game, orders).game;
       expect(after.dossierEvidenceEntries, isEmpty);
     });
   });
@@ -812,6 +812,75 @@ void main() {
       var callCount = 0;
       resolveDiplomacyPhase(game, orders, onDialogue: (_) => callCount++);
       expect(callCount, 0);
+    });
+
+    test('overture to human GP returns pending; resume with accept applies overture',
+        () {
+      // gp1 offers Consulate to gp2 (human). Phase should return pending.
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(id: 'gp1', displayName: 'GP1', isHuman: false)
+              .copyWith(treasury: overtureConsulateCost + 100),
+          const Player(id: 'gp2', displayName: 'GP2', isHuman: true),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 50,
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+            sinceTurn: 0,
+            lastInteractionTurn: 0,
+          ),
+        ],
+        overtureStates: const [],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp2',
+              overtureStage: OvertureStage.tradeConsulate,
+            ),
+          ],
+        },
+      );
+      final result = resolveDiplomacyPhase(game, orders);
+      expect(result.isPending, isTrue);
+      expect(result.pendingOvertures, isNotNull);
+      expect(result.pendingOvertures!.length, 1);
+      expect(result.pendingOvertures!.first.offererGpId, 'gp1');
+      expect(result.pendingOvertures!.first.targetFactionId, 'gp2');
+      expect(result.pendingOvertures!.first.stage, OvertureStage.tradeConsulate);
+
+      // Resume with accept: overture should be applied.
+      final gp1Before = getPlayer(game, 'gp1')!;
+      final afterAccept = resolveDiplomacyPhase(
+        game,
+        orders,
+        overtureDecisions: [
+          const OvertureDecision(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+            accepted: true,
+          ),
+        ],
+      );
+      expect(afterAccept.isPending, isFalse);
+      final overture = getOverture(afterAccept.game, 'gp1', 'gp2');
+      expect(overture, isNotNull);
+      expect(overture!.stage, OvertureStage.tradeConsulate);
+      final gp1After = getPlayer(afterAccept.game, 'gp1')!;
+      expect(gp1After.treasury, gp1Before.treasury - overtureConsulateCost);
     });
   });
 

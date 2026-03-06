@@ -45,12 +45,12 @@ void main() {
       expect(result.game.worldState.turnState.turnNumber, 0, reason: 'game starts at turn 0');
 
       // In-game shell: End Turn.
-      final nextGame = resolveTurnForGame(
+      final nextGame = requireTurnResolutionComplete(resolveTurnForGame(
         game: result.game,
         topology: result.combinedTopology,
         orders: const Orders(),
         tileMapByRegion: result.tileMapByRegion,
-      );
+      ));
 
       expect(nextGame.worldState.turnState.turnNumber, 1);
       expect(nextGame.victory, isNull, reason: 'no victory on turn 1');
