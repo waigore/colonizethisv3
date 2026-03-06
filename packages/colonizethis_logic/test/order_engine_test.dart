@@ -395,6 +395,71 @@ void main() {
       expect(results.single.reason, contains('declare war'));
     });
 
+    test('military may move into other GP province with same-turn declareWar', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'P2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'pikemen',
+                  ownerId: 'p1',
+                  provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'revealed',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+        diplomacyRelations: const [],
+      );
+
+      final engine = OrderEngine();
+      engine
+        ..addDiplomaticOrder(
+          'p1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'p2',
+          ),
+        )
+        ..addMoveOrder(
+          'p1',
+          const MoveOrder(
+              unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        );
+
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.length, 2);
+      expect(results[0].status, OrderValidationStatus.accepted);
+      expect(results[1].status, OrderValidationStatus.accepted);
+    });
+
     test('explorer may move into tribal province', () {
       const ow = 'oldWorld';
       final topology = MapTopology(

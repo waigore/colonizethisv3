@@ -328,6 +328,108 @@ void main() {
       expect(orders.researchOrdersByPlayerId['gp1'], isNotNull);
     });
 
+    test('can generate work order when only work suggestions available', () {
+      const ow = 'oldWorld';
+      const tileKey = '$ow|P1|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: const [
+              Unit(
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'gp1',
+                provinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {tileKey: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {'$ow|P1': [tileKey]},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: const {'gp1': 1},
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final works = orders.workOrdersByPlayerId['gp1'] ?? const [];
+      expect(works, isNotEmpty);
+    });
+
+    test('can generate build order when only build suggestions available', () {
+      const ow = 'oldWorld';
+      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'AI',
+            isHuman: false,
+            capitalProvinceId: '$ow|P1',
+            stockpile: stockpile,
+            workerPool: const WorkerPool(peasants: 3),
+            treasury: econ.buildTreasuryCost + 100,
+          ),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: const {'gp1': 7},
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final builds = orders.buildUnitOrdersByPlayerId['gp1'] ?? const [];
+      expect(builds, isNotEmpty);
+    });
+
     test('diplomacy filter works when Province has local id (full id used for lookup)', () {
       // Game state may store Province.id as local id (e.g. P2). Order suggestion
       // emits full province id (oldWorld|P2). Owner map must key by full id.
