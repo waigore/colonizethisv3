@@ -387,13 +387,19 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
   void _handleDeclareWar() {
     if (_selectedFaction == null) return;
     final targetId = _selectedFaction!.id;
-    
-    // Validate: must be at peace
-    if (_selectedFaction!.relationState != RelationState.atPeace) {
+
+    // Validate: must be at peace (or unknown for Minor Nations/Tribes)
+    // Great Powers: must be at peace
+    // Minor Nations/Tribes: can declare war from any state (including unknown)
+    final currentState = _selectedFaction!.relationState;
+    if (_selectedFaction!.type == FactionType.greatPower &&
+        currentState != RelationState.atPeace) {
       _setStatus('Cannot declare war: not at peace with ${_selectedFaction!.name}', isError: true);
       return;
     }
-    
+    // For Minor Nations/Tribes, war declaration is always allowed initially
+    // (they start with unknown relation state)
+
     _addDiplomaticOrder(DiplomaticOrder(
       type: DiplomaticOrderType.declareWar,
       targetFactionId: targetId,
