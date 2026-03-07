@@ -320,10 +320,22 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
   }
 
   void _setStatus(String message, {bool isError = false}) {
+    // Workaround for nocterm buffer corruption (issue #953):
+    // Force string copy via substring to avoid buffer reuse issues
+    final sanitizedMessage = _sanitizeDisplayString(message);
     setState(() {
-      _statusMessage = message;
+      _statusMessage = sanitizedMessage;
       _isStatusError = isError;
     });
+  }
+
+  /// Sanitizes string for TUI display to work around nocterm buffer corruption.
+  /// Creates a new string instance and removes any non-printable characters.
+  String _sanitizeDisplayString(String input) {
+    // Force a new string allocation via substring
+    final freshString = input.substring(0);
+    // Remove any characters that might be buffer residue (non-printable or unexpected)
+    return freshString.replaceAll(RegExp(r'[^\x20-\x7E£]'), '');
   }
 
   void _updateSelectedFactionRelationState(RelationState newState) {
