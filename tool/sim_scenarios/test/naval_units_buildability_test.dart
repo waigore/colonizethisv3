@@ -3,10 +3,10 @@
 // when unlocking tech is required, player must have it in techUnlocked.
 // For each ship type we run a scenario: capital sea-bound, treasury and stockpile, one build order, assert fleet ship count increases.
 
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:sim_scenarios/scenario.dart';
 import 'package:sim_scenarios/scenario_runner.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('naval units buildability', () {

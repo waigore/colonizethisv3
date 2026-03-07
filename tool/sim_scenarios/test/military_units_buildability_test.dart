@@ -3,10 +3,10 @@
 // For each regiment we run a scenario with the same shape as military_units_buildability.json:
 // grant unlocking tech (if any), workers and stockpile, one build order, assert unit count >= 6.
 
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:sim_scenarios/scenario.dart';
 import 'package:sim_scenarios/scenario_runner.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('military units buildability', () {
