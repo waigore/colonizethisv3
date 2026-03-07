@@ -907,6 +907,20 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       return 'Research: ${event.techId}';
     } else if (event is VictorySetEvent) {
       return 'Victory: ${event.winnerPlayerId}';
+    } else if (event is DiplomacyChangeEvent) {
+      final changeType = event.changeType;
+      final actor = event.actorId;
+      final target = event.targetId;
+      switch (changeType) {
+        case 'declare_war':
+          return 'Diplomacy: $actor declared war on $target';
+        case 'peace':
+          return 'Diplomacy: $actor offered peace to $target';
+        case 'alliance':
+          return 'Diplomacy: $actor formed alliance with $target';
+        default:
+          return 'Diplomacy: $changeType between $actor and $target';
+      }
     }
     return event.toString();
   }
