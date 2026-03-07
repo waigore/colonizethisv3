@@ -126,8 +126,8 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'gp2');
       expect(rel, isNotNull);
-      expect(rel!.level, RelationLevel.allied);
-      expect(rel.score, greaterThanOrEqualTo(76));
+      expect(rel!.level, RelationLevel.friendly); // 76 - 1 convergence = 75 (friendly)
+      expect(rel.score, 75); // 76 alliance - 1 convergence
     });
 
     test('declare war and offer peace update relation state', () {
@@ -444,7 +444,7 @@ void main() {
       expect(getPlayer(after, 'gp1')!.treasury, 2000);
     });
 
-    test('setSubsidy to Minor requires consulate and improves relation', () {
+    test('setSubsidy to Minor creates ongoing subsidy and deducts initial payment', () {
       var game = _baseGame().copyWith(
         overtureStates: const [
           OvertureState(
@@ -469,18 +469,22 @@ void main() {
             DiplomaticOrder(
               type: DiplomaticOrderType.setSubsidy,
               targetFactionId: 'minor1',
-              amount: 80,
+              amount: 500,
             ),
           ],
         },
       );
       final after = resolveDiplomacyPhase(game, orders).game;
-      expect(getPlayer(after, 'gp1')!.treasury, 2000 - 80);
-      final rel = getRelation(after, 'gp1', 'minor1')!;
-      expect(rel.score, 53); // +3 per subsidy
+      // Initial payment deducted
+      expect(getPlayer(after, 'gp1')!.treasury, 2000 - 500);
+      // Ongoing subsidy created
+      expect(after.subsidyStates.length, 1);
+      expect(after.subsidyStates.first.payerId, 'gp1');
+      expect(after.subsidyStates.first.targetId, 'minor1');
+      expect(after.subsidyStates.first.amountPerTurn, 500);
     });
 
-    test('setSubsidy to GP transfers treasury', () {
+    test('setSubsidy to GP creates ongoing subsidy with initial payment', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -513,8 +517,201 @@ void main() {
         },
       );
       final after = resolveDiplomacyPhase(game, orders).game;
+      // Initial payment deducted from payer
       expect(getPlayer(after, 'gp1')!.treasury, 800);
-      expect(getPlayer(after, 'gp2')!.treasury, 700);
+      // Ongoing subsidy created (treasury transfer happens each turn during processing)
+      expect(after.subsidyStates.length, 1);
+      expect(after.subsidyStates.first.payerId, 'gp1');
+      expect(after.subsidyStates.first.targetId, 'gp2');
+      expect(after.subsidyStates.first.amountPerTurn, 200);
+    });
+
+    test('ongoing subsidy processes each turn: deducts payment and improves relation', () {
+      // Turn 1: Create subsidy
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+        subsidyStates: const [
+          SubsidyState(payerId: 'gp1', targetId: 'minor1', amountPerTurn: 500),
+        ],
+      );
+      final orders = Orders(diplomaticOrdersByPlayerId: {});
+      
+      // Turn 1: Process ongoing subsidy
+      final afterTurn1 = resolveDiplomacyPhase(game, orders).game;
+      expect(getPlayer(afterTurn1, 'gp1')!.treasury, 2000 - 500); // Payment deducted
+      final relAfterTurn1 = getRelation(afterTurn1, 'gp1', 'minor1')!;
+      expect(relAfterTurn1.score, 51); // +2 subsidy, -1 convergence = +1 net // +2 per 500 ducats
+      expect(afterTurn1.subsidyStates.length, 1); // Subsidy still active
+    });
+
+    test('ongoing subsidy cancels when payer has insufficient funds', () {
+      var game = _baseGame().copyWith(
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 400), // Less than 500
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+        subsidyStates: const [
+          SubsidyState(payerId: 'gp1', targetId: 'minor1', amountPerTurn: 500),
+        ],
+      );
+      final orders = Orders(diplomaticOrdersByPlayerId: {});
+      
+      final after = resolveDiplomacyPhase(game, orders).game;
+      expect(after.subsidyStates, isEmpty); // Subsidy cancelled
+      expect(getPlayer(after, 'gp1')!.treasury, 400); // No deduction
+    });
+
+    test('ongoing subsidy cancels when war declared', () {
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+          ),
+        ],
+        subsidyStates: const [
+          SubsidyState(payerId: 'gp1', targetId: 'minor1', amountPerTurn: 500),
+        ],
+      );
+      
+      // Declare war
+      final warOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+        },
+      );
+      
+      final after = resolveDiplomacyPhase(game, warOrders).game;
+      expect(after.subsidyStates, isEmpty); // Subsidy cancelled
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.atWar, isTrue);
+      expect(rel.score, 20); // Reset to hostile
+    });
+
+    test('relation convergence: scores drift toward 50 each turn', () {
+      var game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 60, // Above 50, should decrease
+            level: RelationLevel.friendly,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(diplomaticOrdersByPlayerId: {});
+      
+      final after = resolveDiplomacyPhase(game, orders).game;
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.score, 59); // Decreased by 1 toward 50
+    });
+
+    test('relation convergence: scores below 50 increase toward neutral', () {
+      var game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 40, // Below 50, should increase
+            level: RelationLevel.neutral,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(diplomaticOrdersByPlayerId: {});
+      
+      final after = resolveDiplomacyPhase(game, orders).game;
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.score, 41); // Increased by 1 toward 50
+    });
+
+    test('war relations do not converge: scores stay fixed', () {
+      var game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 20, // At war, score should stay at 20
+            level: RelationLevel.hostile,
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final orders = Orders(diplomaticOrdersByPlayerId: {});
+      
+      final after = resolveDiplomacyPhase(game, orders).game;
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.score, 20); // Unchanged
+      expect(rel.atWar, isTrue);
+    });
+
+    test('war declaration resets both sides to score 20', () {
+      var game = _baseGame().copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 80, // High score
+            level: RelationLevel.allied,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+        },
+      );
+      
+      final after = resolveDiplomacyPhase(game, orders).game;
+      final rel = getRelation(after, 'gp1', 'minor1')!;
+      expect(rel.atWar, isTrue);
+      expect(rel.score, 20); // Reset to 20 (Hostile)
+      expect(rel.level, RelationLevel.hostile);
     });
 
     test('setSubsidy without consulate does not deduct treasury', () {

@@ -77,6 +77,7 @@ class Game {
     this.combatModeByProvinceId = const {},
     this.diplomacyRelations = const [],
     this.overtureStates = const [],
+    this.subsidyStates = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
     this.hiddenAgendaByGpId = const {},
@@ -110,6 +111,9 @@ class Game {
 
   /// Overture state per Minor/Tribe per GP. Phase 4.
   final List<OvertureState> overtureStates;
+
+  /// Active ongoing subsidies (payer -> target with amount per turn). Phase 4.
+  final List<SubsidyState> subsidyStates;
 
   /// AI control: true = AI-controlled. When empty, use !player.isHuman. Phase 4.
   final Map<String, bool> aiControlByGpId;
@@ -152,6 +156,8 @@ class Game {
           'diplomacyRelations': diplomacyRelations.map((r) => r.toJson()).toList(),
         if (overtureStates.isNotEmpty)
           'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
+        if (subsidyStates.isNotEmpty)
+          'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
         if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
         if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
         if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
@@ -184,6 +190,10 @@ class Game {
     final overtureList = json['overtureStates'] as List<dynamic>? ?? [];
     final overtureStates = overtureList
         .map((e) => OvertureState.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    final subsidyList = json['subsidyStates'] as List<dynamic>? ?? [];
+    final subsidyStates = subsidyList
+        .map((e) => SubsidyState.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
 
     final aiControlRaw = json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -240,6 +250,7 @@ class Game {
       combatModeByProvinceId: combatModeByProvinceId,
       diplomacyRelations: diplomacyRelations,
       overtureStates: overtureStates,
+      subsidyStates: subsidyStates,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId,
@@ -267,6 +278,7 @@ class Game {
     Map<String, CombatMode>? combatModeByProvinceId,
     List<DiplomacyRelation>? diplomacyRelations,
     List<OvertureState>? overtureStates,
+    List<SubsidyState>? subsidyStates,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
     Map<String, String>? hiddenAgendaByGpId,
@@ -288,6 +300,7 @@ class Game {
       combatModeByProvinceId: combatModeByProvinceId ?? this.combatModeByProvinceId,
       diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
       overtureStates: overtureStates ?? this.overtureStates,
+      subsidyStates: subsidyStates ?? this.subsidyStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
@@ -315,6 +328,7 @@ class Game {
           _mapEquals(combatModeByProvinceId, other.combatModeByProvinceId) &&
           _listEquals(diplomacyRelations, other.diplomacyRelations) &&
           _listEquals(overtureStates, other.overtureStates) &&
+          _listEquals(subsidyStates, other.subsidyStates) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
           _mapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
@@ -337,6 +351,7 @@ class Game {
         Object.hashAll(combatModeByProvinceId.entries),
         Object.hashAll(diplomacyRelations),
         Object.hashAll(overtureStates),
+        Object.hashAll(subsidyStates),
         Object.hashAll(aiControlByGpId.entries),
         Object.hashAll(aiSeedByGpId.entries),
         Object.hashAll(hiddenAgendaByGpId.entries),

@@ -211,3 +211,51 @@ enum InterventionChoice {
   doNothing,
   protest,
 }
+
+/// Ongoing subsidy from a GP to a Minor/Tribe. SPEC/game/diplomacy.md.
+/// Each turn: payer loses amount, relation improves.
+class SubsidyState {
+  const SubsidyState({
+    required this.payerId,
+    required this.targetId,
+    required this.amountPerTurn,
+  });
+
+  final String payerId;
+  final String targetId;
+  final int amountPerTurn;
+
+  SubsidyState copyWith({
+    String? payerId,
+    String? targetId,
+    int? amountPerTurn,
+  }) =>
+      SubsidyState(
+        payerId: payerId ?? this.payerId,
+        targetId: targetId ?? this.targetId,
+        amountPerTurn: amountPerTurn ?? this.amountPerTurn,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'payerId': payerId,
+        'targetId': targetId,
+        'amountPerTurn': amountPerTurn,
+      };
+
+  static SubsidyState fromJson(Map<String, dynamic> json) => SubsidyState(
+        payerId: json['payerId'] as String,
+        targetId: json['targetId'] as String,
+        amountPerTurn: json['amountPerTurn'] as int,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SubsidyState &&
+          payerId == other.payerId &&
+          targetId == other.targetId &&
+          amountPerTurn == other.amountPerTurn;
+
+  @override
+  int get hashCode => Object.hash(payerId, targetId, amountPerTurn);
+}
