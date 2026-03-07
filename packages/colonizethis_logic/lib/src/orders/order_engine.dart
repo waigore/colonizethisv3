@@ -446,6 +446,26 @@ class OrderEngine {
         }
       }
 
+      // Attack validation for Minor Nations and Tribes: war declaration required
+      // SPEC/game/diplomacy.md line 19: "Minor Nations (Old World): Declaration of
+      // war required before attacking provinces or units."
+      if (destOwnerId != null &&
+          destOwnerId != playerId &&
+          _ownerIsMinorOrTribe(destOwnerId)) {
+        final rel = getRelation(game, playerId, destOwnerId);
+        final atWar = rel?.atWar ?? false;
+        final declaringWarThisTurn = diplomatic.any((o) =>
+            o.type == DiplomaticOrderType.declareWar &&
+            o.targetFactionId == destOwnerId);
+        if (!atWar && !declaringWarThisTurn) {
+          return const OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason:
+                'Must declare war before attacking Minor Nation or Tribe province',
+          );
+        }
+      }
+
       if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
           !moveDestVisibilityOk(
               view, destRegion, o.destinationProvinceId, unit.type)) {
