@@ -20,6 +20,13 @@ const List<String> techIds = [
   'horse_artillery',
   'siege_engineering',
   'university',
+  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
+  'diplomatic_expertise',
+  'merchant_companies',
+  'national_bureaucracy',
+  'propaganda',
+  'nationalism',
+  'empire_building',
 ];
 
 /// Default max effective extraction level when player has no tech or no extraction-cap tech.
@@ -146,6 +153,45 @@ const Map<String, TechDefinition> techCatalog = {
     category: 'labour',
     cost: 200,
     prerequisiteIds: const [],
+  ),
+  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
+  'diplomatic_expertise': TechDefinition(
+    id: 'diplomatic_expertise',
+    era: 1,
+    category: 'diplomacy',
+    cost: 100,
+  ),
+  'merchant_companies': TechDefinition(
+    id: 'merchant_companies',
+    era: 1,
+    category: 'civilian',
+    cost: 100,
+    prerequisiteIds: ['diplomatic_expertise'],
+  ),
+  'national_bureaucracy': TechDefinition(
+    id: 'national_bureaucracy',
+    era: 2,
+    category: 'civilian',
+    cost: 150,
+  ),
+  'propaganda': TechDefinition(
+    id: 'propaganda',
+    era: 3,
+    category: 'diplomacy',
+    cost: 150,
+  ),
+  'nationalism': TechDefinition(
+    id: 'nationalism',
+    era: 3,
+    category: 'diplomacy',
+    cost: 200,
+  ),
+  'empire_building': TechDefinition(
+    id: 'empire_building',
+    era: 4,
+    category: 'diplomacy',
+    cost: 250,
+    prerequisiteIds: ['nationalism'],
   ),
 };
 
