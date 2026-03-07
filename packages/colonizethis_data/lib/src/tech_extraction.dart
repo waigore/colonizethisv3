@@ -28,7 +28,7 @@ const List<String> techIds = [
 const int defaultExtractionCap = 4;
 
 /// Simple tech definition used by the MVP tech catalog.
-/// Effects: regimentUnlockIds = regiment types this tech unlocks (buildability).
+/// Effects: regimentUnlockIds / shipUnlockIds = unit types this tech unlocks (buildability).
 class TechDefinition {
   const TechDefinition({
     required this.id,
@@ -37,6 +37,7 @@ class TechDefinition {
     required this.cost,
     this.prerequisiteIds = const [],
     this.regimentUnlockIds = const [],
+    this.shipUnlockIds = const [],
   });
 
   final String id;
@@ -46,6 +47,8 @@ class TechDefinition {
   final List<String> prerequisiteIds;
   /// Regiment ids this tech unlocks. SPEC/game/tech-tree-military.md.
   final List<String> regimentUnlockIds;
+  /// Ship type ids this tech unlocks. SPEC/game/tech-tree-naval.md.
+  final List<String> shipUnlockIds;
 }
 
 /// Minimal tech catalog backing extraction and research for Phase 5.
@@ -162,6 +165,14 @@ const Map<String, TechDefinition> techCatalog = {
     cost: 200,
     prerequisiteIds: const [],
   ),
+  // Naval (SPEC/game/tech-tree-naval.md). Fluytes require Superior Hull Design; carrack is baseline (no tech).
+  'superior_hull_design': TechDefinition(
+    id: 'superior_hull_design',
+    era: 1,
+    category: 'naval',
+    cost: 100,
+    shipUnlockIds: ['fluyte'],
+  ),
 };
 
 TechDefinition? techById(String id) => techCatalog[id];
@@ -205,6 +216,18 @@ Map<String, String> get unlockingTechByRegimentId {
   for (final t in techCatalog.values) {
     for (final rid in t.regimentUnlockIds) {
       m[rid] = t.id;
+    }
+  }
+  return m;
+}
+
+/// Ship type id -> tech id that unlocks it. Derived from catalog. Absent = buildable without tech (e.g. carrack).
+/// SPEC/game/tech-tree-naval.md.
+Map<String, String> get unlockingTechByShipId {
+  final m = <String, String>{};
+  for (final t in techCatalog.values) {
+    for (final sid in t.shipUnlockIds) {
+      m[sid] = t.id;
     }
   }
   return m;

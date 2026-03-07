@@ -276,6 +276,7 @@ class Assertion {
     this.victoryWinner,
     this.victoryType,
     this.victoryTurn,
+    this.fleetShipCount,
   });
 
   /// Which turn to check (null = final state)
@@ -384,6 +385,9 @@ class Assertion {
   final String? victoryWinner;
   final String? victoryType;
   final int? victoryTurn;
+
+  /// Fleet ship count (SPEC/game/ships-and-naval.md). With [player]: total ships in that player's fleets (sum of shipTypeIds.length). Use [matchType] for atLeast/atMost/exact.
+  final int? fleetShipCount;
 }
 
 /// Type of value matching for assertions.
@@ -683,6 +687,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     victoryWinner: json['victoryWinner'] as String?,
     victoryType: json['victoryType'] as String?,
     victoryTurn: json['victoryTurn'] as int?,
+    fleetShipCount: json['fleetShipCount'] as int?,
   );
 }
 

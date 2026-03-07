@@ -965,7 +965,7 @@ String _startingShipTypeForPlayer(Player player) {
 
   for (final entry in ShipEconomyCatalog.all) {
     final typeId = entry.shipTypeId;
-    final requiredTech = _unlockingTechForShip(typeId);
+    final requiredTech = unlockingTechByShipId[typeId];
     if (requiredTech != null && !hasTech(requiredTech)) {
       continue;
     }
@@ -978,15 +978,6 @@ String _startingShipTypeForPlayer(Player player) {
 
   // Fallback: baseline carrack if nothing matched.
   return bestTypeId ?? ShipEconomyCatalog.carrack.shipTypeId;
-}
-
-String? _unlockingTechForShip(String shipTypeId) {
-  switch (shipTypeId) {
-    case 'fluyte':
-      return 'superior_hull_design';
-    default:
-      return null;
-  }
 }
 
 /// Builds a map of province id -> neighbouring province ids using only P–P edges.
