@@ -58,10 +58,43 @@ Submission order is stable. Merge uses stable ordering (player id, order type, o
 
 ---
 
+## Supplying Research and Diplomatic Orders (Caller Contract)
+
+The OrderEngine validates and stores **move, build, work, diplomatic, naval move, and naval mission** orders via `addMoveOrder`, `addBuildOrder`, `addWorkOrder`, `addDiplomaticOrder`, `addNavalMoveOrder`, and `addNavalMissionOrder`. **Research orders are not added to the engine**; they are validated and applied in the Research phase (TurnResolver) per [research-resolution.md](research-resolution.md).
+
+### Research Orders
+
+- **Not stored in OrderEngine.** The engine has no `addResearchOrder` method.
+- **How supplied:** Research orders are passed directly to TurnResolver via `Orders.researchOrdersByPlayerId` (map of player id → list of research slot orders).
+- **Caller flow:** The app/UI collects research orders separately from the tactical orders (move/build/work). At turn resolution, the caller constructs an `Orders` object with `researchOrdersByPlayerId` populated and passes this to `resolveTurnForGame(orders, ...)` or merges it with AI orders via `mergeOrderLists` before resolution.
+
+### Diplomatic Orders
+
+- **Stored in OrderEngine.** Use `addDiplomaticOrder` to validate and add diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, Grant Aid, Set Subsidy).
+- **Validation:** The engine validates diplomatic preconditions (war/peace state, overture stage chain, treasury costs, embassy/consulate requirements) before accepting.
+- **How supplied:** Diplomatic orders are part of `OrderEngine.orders.diplomaticOrdersByPlayerId` after validation. At turn resolution, `orderEngine.orders` contributes diplomatic orders to the merge.
+- **Turn sequence:** Diplomatic orders are resolved in the Diplomacy phase, which runs before Movement phase. The order engine stores but does not execute them.
+
+### Summary Table
+
+| Order Type | OrderEngine Method | Stored in Engine | Supplied To Resolver Via |
+|------------|-------------------|------------------|-------------------------|
+| Move | `addMoveOrder` | Yes | `orderEngine.orders` |
+| Build | `addBuildOrder` | Yes | `orderEngine.orders` |
+| Work | `addWorkOrder` | Yes | `orderEngine.orders` |
+| Naval Move | `addNavalMoveOrder` | Yes | `orderEngine.orders` |
+| Naval Mission | `addNavalMissionOrder` | Yes | `orderEngine.orders` |
+| Diplomatic | `addDiplomaticOrder` | Yes | `orderEngine.orders` |
+| Research | *None* | **No** | `Orders.researchOrdersByPlayerId` |
+
+---
+
 ## Acceptance criteria
 
 - **Validation:** On add/remove with context, the full list for that player is validated in submission order; first rejection rejects that order and all subsequent; validation results (accepted/rejected + reason) are returned for UI.
 - **Diplomatic validation:** Diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, GrantAid, SetSubsidy) are validated by the engine with the same submission-order semantics as other orders. At a minimum, Declare War and Offer Peace respect current relationState preconditions, overtures respect the overture-stage chain and treasury costs, GrantAid requires an Embassy and SetSubsidy requires at least a Consulate, and `Establish Overture` orders targeting a faction currently at `AT_WAR` with the player are rejected and do not deduct treasury.
+- **Research orders:** Research orders are **not** added to OrderEngine; they are supplied separately via `Orders.researchOrdersByPlayerId` and validated/applied in the Research phase (TurnResolver).
+- **Caller contract:** The caller (app or ctdev) supplies move/build/work/diplomatic/naval orders via OrderEngine methods; research orders are collected separately and passed to the resolver via `Orders.researchOrdersByPlayerId`.
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns worker count, treasury delta, and when implemented unit locations and stockpile deltas for UI; no mutation of the passed-in game from the caller's perspective.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.

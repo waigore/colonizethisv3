@@ -18,6 +18,12 @@ All AI randomness flows from these seeds. Same save + seeds → same orders and 
 
 ## Algorithm / Flow
 
+### When to Use Each Phase
+
+- **Phase 4 (Minimal / Simple Heuristics):** Default for the main game. Use for all AI-controlled Great Powers in standard gameplay. Suitable for production and casual play.
+
+- **Phase 6 (Full AI):** Advanced AI for simulation, testing, or optional hard mode. Used by ctdev Sim Game when "Use Full AI" is enabled. May be offered as an optional setting in the main game (e.g., "Advanced AI" difficulty toggle). Note: Full AI requires hidden agenda assignment at game setup (see below).
+
 ### Phase 4 (Minimal)
 1. Build PlayerView for each AI GP.
 2. Query order suggestion API for candidate orders (move, build/work, research).
