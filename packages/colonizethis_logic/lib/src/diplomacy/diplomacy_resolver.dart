@@ -185,12 +185,12 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
 
-  // 7. Apply relation convergence (+/-1 toward 50 for all non-war relations)
-  // Note: Convergence happens BEFORE subsidies so subsidy boosts aren't immediately reduced
-  state = _applyRelationConvergence(state, turn);
-
-  // 8. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
+  // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
+  // Note: Convergence happens AFTER subsidies
   state = _processOngoingSubsidies(state, turn);
+
+  // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
+  state = _applyRelationConvergence(state, turn);
 
   // 9. Apply relation modifiers (grants, etc.)
   state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
@@ -878,8 +878,6 @@ Game _applyRelationConvergence(Game game, int turn) {
   for (var i = 0; i < relations.length; i++) {
     final rel = relations[i];
     // Skip war relations - they don't converge and scores stay fixed at war declaration
-    // Skip relations created or modified this turn - they shouldn't converge yet
-    if (rel.sinceTurn == turn) continue;
     if (rel.atWar) continue;
 
     // Converge toward 50 (neutral)

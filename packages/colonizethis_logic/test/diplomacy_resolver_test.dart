@@ -126,8 +126,8 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'gp2');
       expect(rel, isNotNull);
-      expect(rel!.level, RelationLevel.allied);
-      expect(rel.score, greaterThanOrEqualTo(76));
+      expect(rel!.level, RelationLevel.friendly); // 76 - 1 convergence = 75 (friendly)
+      expect(rel.score, 75); // 76 alliance - 1 convergence
     });
 
     test('declare war and offer peace update relation state', () {
@@ -555,7 +555,7 @@ void main() {
       final afterTurn1 = resolveDiplomacyPhase(game, orders).game;
       expect(getPlayer(afterTurn1, 'gp1')!.treasury, 2000 - 500); // Payment deducted
       final relAfterTurn1 = getRelation(afterTurn1, 'gp1', 'minor1')!;
-      expect(relAfterTurn1.score, 52); // +2 per 500 ducats
+      expect(relAfterTurn1.score, 51); // +2 subsidy, -1 convergence = +1 net // +2 per 500 ducats
       expect(afterTurn1.subsidyStates.length, 1); // Subsidy still active
     });
 
