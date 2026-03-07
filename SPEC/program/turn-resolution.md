@@ -45,3 +45,23 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 - Resolver has a **defined phase list** (e.g. list of enum values or named steps).
 - **At least one phase** performs a minimal change: e.g. increment turn number in WorldState.
 - Unit tests: resolve(currentState) returns new state; new state’s turn number is current + 1 (or equivalent); no other game logic required until full phases are implemented.
+
+## Loaded Game Behavior
+
+When a game is **loaded from save**, the map data (`tileMapByRegion`, `topologyByRegion`) may be absent (not serialized with the game). In this case, the resolver operates with empty or null map topology:
+
+- **Extraction Phase:** When `tileMapByRegion` is empty or null, extraction leaves stockpiles unchanged. No resources are extracted because the tile map data required to calculate yields is unavailable. This is a graceful degradation: the turn advances without crashing, but no economic progress occurs until the map is restored.
+
+- **Movement Phase:** When `topologyByRegion` is empty or null, land movement applies no adjacency validation. Units may not be able to move to adjacent provinces because the topology data defining adjacency is missing. Sea movement similarly lacks topology for sea zone adjacency.
+
+- **Combat Phase:** Combat resolution proceeds with available world state data. Unit strengths and casualties are calculated normally, but terrain modifiers may be unavailable without tile map data.
+
+**Acceptance Criteria:**
+
+- Given a game is loaded from save without serialized tileMapByRegion or topologyByRegion
+- When TurnResolver runs the next turn
+- Then the turn advances successfully (turn number increments, no crash)
+- And extraction leaves stockpiles unchanged (graceful degradation)
+- And movement is limited or blocked by missing topology
+
+**App-Level Note:** The app may cache map data separately and re-provide it on load. If the app provides cached map data to the resolver, full extraction and movement are restored. This behavior is app-level (GameService) and not part of the core resolver contract.
