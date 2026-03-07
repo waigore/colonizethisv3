@@ -592,13 +592,17 @@ Game _processWarAndPeace(
           // SPEC/game/diplomacy.md:
           // - GP–GP peace: both sides must agree (both offer peace in this phase).
           // - Minors never refuse peace offers.
+          // - AI-controlled GPs auto-accept peace offers from humans (gameplay convenience).
           var bothSidesAgreed = true;
           final isGpTarget = _isGreatPower(game, targetId);
           if (isGpTarget && _isGreatPower(game, gpId)) {
             final key = _pairKey(gpId, targetId);
             final offerers = peaceOffersByPairKey[key] ?? const <String>{};
-            bothSidesAgreed =
-                offerers.contains(gpId) && offerers.contains(targetId);
+            final playerOffered = offerers.contains(gpId);
+            final targetOffered = offerers.contains(targetId);
+            // Auto-accept if target is AI-controlled (human offers peace to AI)
+            final targetIsAi = isAiControlledForEvidence(game, targetId);
+            bothSidesAgreed = playerOffered && (targetOffered || targetIsAi);
           }
           if (!bothSidesAgreed) {
             continue;
