@@ -185,7 +185,13 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
 
-  // 7. Apply relation modifiers (grants, etc.) and update scores
+  // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
+  state = _processOngoingSubsidies(state, turn);
+
+  // 8. Apply relation convergence (+/-1 toward 50 for all non-war relations)
+  state = _applyRelationConvergence(state, turn);
+
+  // 9. Apply relation modifiers (grants, etc.)
   state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
 
   _diploLog.d('logic: diplomacy phase end');
@@ -549,35 +555,49 @@ Game _processWarAndPeace(
           }
           final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
           final ids = _pairIds(gpId, targetId);
+          
+          // War declaration: reset both sides to score 20 (Hostile)
           relations = upsertRelation(relations, gpId, targetId, (existing) {
             if (existing == null) {
               return DiplomacyRelation(
                 factionId1: ids.id1,
                 factionId2: ids.id2,
-                score: 40,
-                level: RelationLevel.neutral,
+                score: 20,
+                level: RelationLevel.hostile,
                 state: RelationState.atWar,
                 sinceTurn: turn,
                 lastInteractionTurn: turn,
               );
             }
-            final newScore = (existing.score - 10).clamp(0, 100);
             return existing.copyWith(
               state: RelationState.atWar,
               sinceTurn: turn,
               lastInteractionTurn: turn,
-              score: newScore,
-              level: scoreToLevel(newScore),
+              score: 20,
+              level: RelationLevel.hostile,
             );
           });
+          
+          // Cancel any active subsidies between these factions
+          var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+          final beforeCount = subsidyStates.length;
+          subsidyStates = subsidyStates
+              .where((s) => !((s.payerId == gpId && s.targetId == targetId) ||
+                  (s.payerId == targetId && s.targetId == gpId)))
+              .toList();
+          if (subsidyStates.length < beforeCount) {
+            _diploLog.i('logic: diplomacy subsidies cancelled due to war $gpId vs $targetId');
+          }
+          
           game = game.copyWith(
             diplomacyRelations: relations,
+            subsidyStates: subsidyStates,
             dossierEvidenceEntries: [
               ...game.dossierEvidenceEntries,
               ...evidence
             ],
           );
-          _diploLog.i('logic: diplomacy war declared $gpId vs $targetId');
+          _diploLog.i('logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)');
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
@@ -715,7 +735,9 @@ Game _applyRelationModifiersAndUpdateScores(
     }
   }
 
-  // SetSubsidy: deduct treasury, transfer to target GP or apply relation modifier for Minor/Tribe. Requires Consulate or Embassy.
+  // SetSubsidy: Create or update ongoing subsidy. Requires Consulate or Embassy.
+  // Deducts initial payment immediately; ongoing payments processed each turn.
+  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
 
@@ -729,6 +751,7 @@ Game _applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasConsulate) continue;
 
+      // Deduct initial payment
       final payerIdx = players.indexWhere((p) => p.id == gpId);
       if (payerIdx >= 0) {
         players = List<Player>.from(players);
@@ -736,41 +759,141 @@ Game _applyRelationModifiersAndUpdateScores(
             .copyWith(treasury: players[payerIdx].treasury - amount);
       }
 
+      // Store/update ongoing subsidy state
+      final existingSubsidyIdx = subsidyStates.indexWhere(
+          (s) => s.payerId == gpId && s.targetId == targetId);
+      if (existingSubsidyIdx >= 0) {
+        // Update existing subsidy
+        subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
+            .copyWith(amountPerTurn: amount);
+      } else {
+        // Create new subsidy
+        subsidyStates.add(SubsidyState(
+          payerId: gpId,
+          targetId: targetId,
+          amountPerTurn: amount,
+        ));
+      }
+
       final targetPlayer = getPlayer(game, targetId);
       if (targetPlayer != null) {
-        final receiverIdx = players.indexWhere((p) => p.id == targetId);
-        if (receiverIdx >= 0) {
-          players[receiverIdx] = players[receiverIdx]
-              .copyWith(treasury: players[receiverIdx].treasury + amount);
-        }
         _diploLog.i(
-            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (treasury)');
+            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)');
       } else {
-        // Minor/Tribe: no treasury; apply relation modifier (+3 per subsidy per diplomacy.md-style)
-        final ids = _pairIds(gpId, targetId);
-        relations = upsertRelation(relations, gpId, targetId, (existing) {
-          final newScore = ((existing?.score ?? 50) + 3).clamp(0, 100);
-          final newLevel = scoreToLevel(newScore);
-          if (existing == null) {
-            return DiplomacyRelation(
-              factionId1: ids.id1,
-              factionId2: ids.id2,
-              score: newScore,
-              level: newLevel,
-              lastInteractionTurn: turn,
-            );
-          }
-          return existing.copyWith(
-              score: newScore, level: newLevel, lastInteractionTurn: turn);
-        });
         _diploLog.i(
-            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount (relation)');
+            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)');
       }
-      game = game.copyWith(players: players, diplomacyRelations: relations);
+      game = game.copyWith(players: players, subsidyStates: subsidyStates);
     }
   }
 
   return game;
+}
+
+/// Process ongoing subsidies each turn.
+/// Deducts amount from payer treasury and improves relation by +2 per 500 ducats (max +8).
+/// Per SPEC/game/diplomacy.md.
+Game _processOngoingSubsidies(Game game, int turn) {
+  var players = game.players;
+  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+
+  for (final subsidy in subsidyStates) {
+    final payerId = subsidy.payerId;
+    final targetId = subsidy.targetId;
+    final amount = subsidy.amountPerTurn;
+
+    // Check if payer can afford subsidy
+    final payer = getPlayer(game, payerId);
+    if (payer == null || payer.treasury < amount) {
+      // Cancel subsidy if payer can't afford it
+      subsidyStates = subsidyStates
+          .where((s) => s.payerId != payerId || s.targetId != targetId)
+          .toList();
+      _diploLog.i('logic: diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)');
+      continue;
+    }
+
+    // Check if still at peace (subsidies cancel on war)
+    final rel = getRelation(game, payerId, targetId);
+    if (rel != null && rel.atWar) {
+      // Cancel subsidy when war declared
+      subsidyStates = subsidyStates
+          .where((s) => s.payerId != payerId || s.targetId != targetId)
+          .toList();
+      _diploLog.i('logic: diplomacy subsidy cancelled $payerId -> $targetId (war declared)');
+      continue;
+    }
+
+    // Deduct subsidy payment
+    final payerIdx = players.indexWhere((p) => p.id == payerId);
+    if (payerIdx >= 0) {
+      players = List<Player>.from(players);
+      players[payerIdx] = players[payerIdx]
+          .copyWith(treasury: players[payerIdx].treasury - amount);
+    }
+
+    // Calculate relation boost: +2 per 500 ducats, max +8
+    final boost = ((amount ~/ 500) * 2).clamp(0, 8);
+
+    // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
+    if (_isMinorOrTribe(game, targetId)) {
+      final ids = _pairIds(payerId, targetId);
+      relations = upsertRelation(relations, payerId, targetId, (existing) {
+        final newScore = ((existing?.score ?? 50) + boost).clamp(0, 100);
+        final newLevel = scoreToLevel(newScore);
+        if (existing == null) {
+          return DiplomacyRelation(
+            factionId1: ids.id1,
+            factionId2: ids.id2,
+            score: newScore,
+            level: newLevel,
+            lastInteractionTurn: turn,
+          );
+        }
+        return existing.copyWith(
+            score: newScore, level: newLevel, lastInteractionTurn: turn);
+      });
+      _diploLog.i('logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost');
+    } else {
+      // GP target: transfer treasury
+      final targetIdx = players.indexWhere((p) => p.id == targetId);
+      if (targetIdx >= 0) {
+        players[targetIdx] = players[targetIdx]
+            .copyWith(treasury: players[targetIdx].treasury + amount);
+      }
+      _diploLog.i('logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount (treasury transfer)');
+    }
+  }
+
+  return game.copyWith(players: players, diplomacyRelations: relations, subsidyStates: subsidyStates);
+}
+
+/// Apply relation convergence: all non-war relations move +/-1 toward 50 (neutral).
+/// Per SPEC/game/diplomacy.md.
+Game _applyRelationConvergence(Game game, int turn) {
+  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+
+  for (var i = 0; i < relations.length; i++) {
+    final rel = relations[i];
+    // Skip war relations - they don't converge and scores stay fixed at war declaration
+    if (rel.atWar) continue;
+
+    // Converge toward 50 (neutral)
+    int newScore;
+    if (rel.score < 50) {
+      newScore = (rel.score + 1).clamp(0, 100);
+    } else if (rel.score > 50) {
+      newScore = (rel.score - 1).clamp(0, 100);
+    } else {
+      continue; // Already at 50
+    }
+
+    final newLevel = scoreToLevel(newScore);
+    relations[i] = rel.copyWith(score: newScore, level: newLevel);
+  }
+
+  return game.copyWith(diplomacyRelations: relations);
 }
 
 /// Trade slots gated by embassy. Stub: 0 without embassy, 1 with embassy.
