@@ -20,6 +20,7 @@ class FactionDisplayInfo {
   final RelationLevel? relationLevel;
   final int? relationScore;
   final OvertureStage? overtureStage;
+  final int? relationLastInteractionTurn;
 
   const FactionDisplayInfo({
     required this.id,
@@ -29,6 +30,7 @@ class FactionDisplayInfo {
     this.relationLevel,
     this.relationScore,
     this.overtureStage,
+    this.relationLastInteractionTurn,
   });
 }
 
@@ -92,6 +94,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationState: relation?.state,
         relationLevel: relation?.level,
         relationScore: relation?.score,
+        relationLastInteractionTurn: relation?.lastInteractionTurn,
       ));
     }
 
@@ -107,6 +110,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationLevel: relation?.level,
         relationScore: relation?.score,
         overtureStage: overture?.stage,
+        relationLastInteractionTurn: relation?.lastInteractionTurn,
       ));
     }
 
@@ -122,6 +126,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationLevel: relation?.level,
         relationScore: relation?.score,
         overtureStage: overture?.stage,
+        relationLastInteractionTurn: relation?.lastInteractionTurn,
       ));
     }
 
@@ -328,6 +333,8 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     setState(() {
       final index = _selectedIndex.clamp(0, _factions.length - 1);
       final current = _factions[index];
+      // Update lastInteractionTurn to current turn when relation changes
+      final currentTurn = component.game.worldState.turnState.turnNumber;
       final updated = FactionDisplayInfo(
         id: current.id,
         name: current.name,
@@ -336,6 +343,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationLevel: current.relationLevel,
         relationScore: current.relationScore,
         overtureStage: current.overtureStage,
+        relationLastInteractionTurn: currentTurn,
       );
       _factions[index] = updated;
       _selectedFaction = updated;
@@ -357,6 +365,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationLevel: current.relationLevel,
         relationScore: current.relationScore,
         overtureStage: newStage,
+        relationLastInteractionTurn: current.relationLastInteractionTurn,
       );
       _factions[index] = updated;
       _selectedFaction = updated;
@@ -419,13 +428,32 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       return;
     }
     
+    // Validate: cannot offer peace in same turn as war declaration
+    // SPEC: One overture per turn per counterparty faction
+    final currentTurn = component.game.worldState.turnState.turnNumber;
+    final lastInteractionTurn = _selectedFaction!.relationLastInteractionTurn ?? 0;
+    if (lastInteractionTurn == currentTurn) {
+      _setStatus('Cannot offer peace: war declared this turn. Wait until next turn.', isError: true);
+      return;
+    }
+    
+    // Validate: only one peace offer per turn per faction
+    final existingOrders = _diplomaticOrders;
+    final alreadyOffered = existingOrders.any((o) =>
+        o.type == DiplomaticOrderType.offerPeace && o.targetFactionId == targetId);
+    if (alreadyOffered) {
+      _setStatus('Peace offer already sent to ${_selectedFaction!.name} this turn', isError: true);
+      return;
+    }
+    
     _addDiplomaticOrder(DiplomaticOrder(
       type: DiplomaticOrderType.offerPeace,
       targetFactionId: targetId,
     ));
-    _updateSelectedFactionRelationState(RelationState.atPeace);
-    _setStatus('Offered peace to ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: offered peace to $targetId');
+    // Do NOT update UI to AT_PEACE immediately - wait for turn resolution
+    // For GP-GP, peace requires mutual agreement
+    _setStatus('Peace offer sent to ${_selectedFaction!.name} (pending resolution)');
+    _log.d('tui:diplomacy: peace offer sent to $targetId');
   }
 
   void _handleAlliance() {
