@@ -295,6 +295,25 @@ class StateVerifier {
         }
       }
 
+      // Fleet ship count (SPEC/game/ships-and-naval.md): total ships in this player's fleets
+      if (assertion.fleetShipCount != null) {
+        final totalShips = game.worldState.fleets
+            .where((f) => f.ownerId == assertion.player)
+            .fold<int>(0, (n, f) => n + f.shipTypeIds.length);
+        final matchResult = _matchCount(
+          totalShips,
+          assertion.fleetShipCount!,
+          assertion.matchType,
+          assertion.matchMin,
+          assertion.matchMax,
+        );
+        if (!matchResult.passed) {
+          failures.add(
+            'Player ${assertion.player} fleet ship count: ${matchResult.message}',
+          );
+        }
+      }
+
       // Worker pool assertions (SPEC/game/workers-and-population.md)
       if (assertion.workerPeasants != null) {
         if (player.workerPool.peasants != assertion.workerPeasants) {
