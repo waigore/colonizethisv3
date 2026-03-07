@@ -171,14 +171,32 @@ GameSetupResult createGameFromGeneratedMaps({
       Tribe(id: tribeIds[i], displayName: 'Tribe ${i + 1}'),
   ];
 
-  // Initial GP–GP relations per SPEC/game/diplomacy.md: all Great Powers
-  // start at peace with neutral relations and turn index 0 metadata.
+  // Initial diplomatic relations per SPEC/game/diplomacy.md:
+  // - All factions start at peace with neutral relations within the SAME region
+  // - Cross-region relations (Old World vs New World) are undiscovered at game start
+  // - This means: GP↔GP, GP↔Minor, Minor↔Minor (Old World); Tribe↔Tribe (New World)
+  final allOldWorldIds = [...gpIds, ...minorIds];
+  final allNewWorldIds = [...tribeIds];
+  
   final diplomacyRelations = <DiplomacyRelation>[
-    for (var i = 0; i < players.length; i++)
-      for (var j = i + 1; j < players.length; j++)
+    // Old World: GP ↔ GP, GP ↔ Minor, Minor ↔ Minor
+    for (var i = 0; i < allOldWorldIds.length; i++)
+      for (var j = i + 1; j < allOldWorldIds.length; j++)
         DiplomacyRelation(
-          factionId1: players[i].id,
-          factionId2: players[j].id,
+          factionId1: allOldWorldIds[i],
+          factionId2: allOldWorldIds[j],
+          score: 50,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
+        ),
+    // New World: Tribe ↔ Tribe only
+    for (var i = 0; i < allNewWorldIds.length; i++)
+      for (var j = i + 1; j < allNewWorldIds.length; j++)
+        DiplomacyRelation(
+          factionId1: allNewWorldIds[i],
+          factionId2: allNewWorldIds[j],
           score: 50,
           level: RelationLevel.neutral,
           state: RelationState.atPeace,

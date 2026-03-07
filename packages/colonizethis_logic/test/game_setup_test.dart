@@ -641,5 +641,83 @@ void main() {
         expect(p.displayName!.isNotEmpty, isTrue, reason: 'tribe11 fallback must produce non-empty name');
       }
     });
+
+    test('regional faction discovery - same-region relations initialized, cross-region undiscovered', () {
+      // OW: 2 provinces for 1 GP, 1 Minor
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p3', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p2', id2: 'p1'),
+          TopologyEdge(id1: 'p2', id2: 'p3'),
+        ],
+      );
+      final owTileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: const [
+          ['p2', 'p3'],
+          ['p1', 'p1'],
+        ],
+      );
+
+      // NW: 1 province for 1 Tribe
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'nw2', regionId: 'newWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'nw2', id2: 'nw1')],
+      );
+      final nwTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [
+          ['nw2'],
+          ['nw1'],
+        ],
+      );
+
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 1,
+        tribeCount: 1,
+        numProvincesOldWorld: 2,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+      );
+
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'regional-discovery',
+      );
+
+      // Old World pairs should have relations initialized
+      // gp1-minor1 (OW-OW) should have a relation
+      final owRelation = result.game.diplomacyRelations.firstWhere(
+        (r) => (r.factionId1 == 'gp1' && r.factionId2 == 'minor1') ||
+               (r.factionId1 == 'minor1' && r.factionId2 == 'gp1'),
+        orElse: () => throw Exception('GP-Minor relation not found'),
+      );
+      expect(owRelation.state, RelationState.atPeace);
+      expect(owRelation.score, 50);
+
+      // Cross-region pairs should be absent (undiscovered)
+      final crossRelationCount = result.game.diplomacyRelations.where(
+        (r) => (r.factionId1 == 'gp1' && r.factionId2 == 'tribe1') ||
+               (r.factionId2 == 'gp1' && r.factionId1 == 'tribe1') ||
+               (r.factionId1 == 'minor1' && r.factionId2 == 'tribe1') ||
+               (r.factionId2 == 'minor1' && r.factionId1 == 'tribe1'),
+      ).length;
+      expect(crossRelationCount, 0, reason: 'No cross-region relations should exist');
+    });
   });
 }
