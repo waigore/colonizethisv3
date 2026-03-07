@@ -877,7 +877,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
             _buildActionHint('g', 'Grant Aid (£1000)', 
               faction.overtureStage == OvertureStage.embassy || faction.overtureStage == OvertureStage.nap),
             _buildActionHint('s', 'Set Subsidy (£500)', 
-              faction.overtureStage != OvertureStage.none),
+              faction.overtureStage != null && faction.overtureStage != OvertureStage.none),
           ],
         ],
       ),
