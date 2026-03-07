@@ -12,6 +12,8 @@ import '../constants.dart';
 import '../world/province_lookup.dart';
 import 'projected_effects.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import 'validators/move_validator.dart';
+import 'validators/work_order_cost_calculator.dart';
 
 final Logger _log = Logger();
 
