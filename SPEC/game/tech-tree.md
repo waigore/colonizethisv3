@@ -75,7 +75,7 @@ Techs grant **effects** when researched (no separate "apply" step):
 | High    | 400       | 800     | 2.0 RP/gold                    |
 | Maximum | 1000      | 2500    | 2.5 RP/gold (efficiency bonus) |
 
-**Goal slot:** Optional goal tech for UI sorting only; no spending. **Cancel:** Clearing a slot **loses all progress** (per Imp2). Research phase runs after Production and Consumption; see [research-resolution.md](../program/research-resolution.md).
+**Goal slot:** Optional goal tech for UI sorting only; no spending. **The goal slot is UI-only and is NOT part of the research order payload**; it is purely client/UI state for sorting the research queue display. **Cancel:** Clearing a slot **loses all progress** (per Imp2). Research phase runs after Production and Consumption; see [research-resolution.md](../program/research-resolution.md).
 
 ---
 
