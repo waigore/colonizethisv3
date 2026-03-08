@@ -26,7 +26,8 @@ void main() {
       return Game(id: 'g', worldState: world, players: [player]);
     }
 
-    test('accumulates research progress and unlocks tech when cost reached', () {
+    test('accumulates research progress and unlocks tech when cost reached',
+        () {
       final tech = techById('gathering_1')!;
       // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
       final game = _baseGame(
@@ -102,7 +103,8 @@ void main() {
       expect(player.techUnlocked?['gathering_2'], isNot(true));
     });
 
-    test('research with funding none does not spend treasury or add progress', () {
+    test('research with funding none does not spend treasury or add progress',
+        () {
       final game = _baseGame(treasury: 100, techUnlocked: const {});
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -126,7 +128,8 @@ void main() {
 
     test('research with low funding deducts treasury and adds progress', () {
       // Use gathering_2 (cost 120) with prereq so 100 RP does not complete in one turn.
-      final game = _baseGame(treasury: 100, techUnlocked: const {'gathering_1': true});
+      final game =
+          _baseGame(treasury: 100, techUnlocked: const {'gathering_1': true});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -145,7 +148,10 @@ void main() {
       ));
       // Low funding: 50 gold cost, 100 RP per turn (per SPEC/game/tech-tree.md)
       expect(next.players.single.treasury, 50);
-      expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
+      expect(
+          (next.players.single.researchProgressByTechId ??
+              const {})['gathering_2'],
+          100);
     });
 
     test('research with maximum funding has efficiency bonus', () {
@@ -181,24 +187,35 @@ void main() {
       var orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
-            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.low),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_2',
+                funding: ResearchFundingLevel.low),
           ],
         },
       );
-      var next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
+      var next = requireTurnResolutionComplete(resolveTurnForGame(
+          game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 50);
-      expect((next.players.single.researchProgressByTechId ?? const {})['gathering_2'], 100);
+      expect(
+          (next.players.single.researchProgressByTechId ??
+              const {})['gathering_2'],
+          100);
 
       // Medium: 150 gold, 300 RP (unlocks gathering_2)
       game = _baseGame(treasury: 200, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
-            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.medium),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_2',
+                funding: ResearchFundingLevel.medium),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(resolveTurnForGame(
+          game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 50);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
 
@@ -207,11 +224,15 @@ void main() {
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
-            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.high),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_2',
+                funding: ResearchFundingLevel.high),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(resolveTurnForGame(
+          game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 100);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
 
@@ -220,20 +241,29 @@ void main() {
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
-            ResearchOrder(slotIndex: 0, techId: 'gathering_2', funding: ResearchFundingLevel.maximum),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_2',
+                funding: ResearchFundingLevel.maximum),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(resolveTurnForGame(
+          game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 500);
       expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
     });
 
     test('completing University sets researchSlots to 4', () {
       // SPEC/game/tech-tree.md: 3 slots by default, 4 with University tech.
+      // University requires: money_lending, apprentice_workers, printing_press
       final game = _baseGame(
         treasury: 3000,
-        techUnlocked: const {},
+        techUnlocked: const {
+          'money_lending': true,
+          'apprentice_workers': true,
+          'printing_press': true,
+        },
       );
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -256,14 +286,22 @@ void main() {
       expect(player.researchSlots, 4);
     });
 
-    test('duplicate slotIndex: only one order per slot applied (last wins), no double spend', () {
+    test(
+        'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
+        () {
       // SPEC: one assignment per slot. If list has two orders for same slot, resolver uses one (last wins).
       final game = _baseGame(treasury: 2000, techUnlocked: const {});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
-            ResearchOrder(slotIndex: 0, techId: 'gathering_1', funding: ResearchFundingLevel.low),
-            ResearchOrder(slotIndex: 0, techId: 'gathering_1', funding: ResearchFundingLevel.maximum),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_1',
+                funding: ResearchFundingLevel.low),
+            ResearchOrder(
+                slotIndex: 0,
+                techId: 'gathering_1',
+                funding: ResearchFundingLevel.maximum),
           ],
         },
       );
@@ -280,4 +318,3 @@ void main() {
     });
   });
 }
-

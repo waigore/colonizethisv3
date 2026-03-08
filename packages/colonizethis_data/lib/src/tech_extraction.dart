@@ -21,6 +21,26 @@ const List<String> techIds = [
   'horse_artillery',
   'siege_engineering',
   'university',
+  // Labour/Economy (SPEC/game/tech-tree-labour-economy.md)
+  'printing_press',
+  'money_lending',
+  'apprentice_workers',
+  'trained_journeymen',
+  'master_artisans',
+  'trade_fairs',
+  'banking',
+  // Transport (additional from SPEC/game/tech-tree-transport.md)
+  'land_enclosure',
+  'hat_production',
+  // Military (additional from SPEC/game/tech-tree-military.md)
+  'modern_forts',
+  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
+  'diplomatic_expertise',
+  'merchant_companies',
+  'national_bureaucracy',
+  'propaganda',
+  'nationalism',
+  'empire_building',
 ];
 
 /// Default max effective extraction level when player has no tech or no extraction-cap tech.
@@ -45,8 +65,10 @@ class TechDefinition {
   final String category;
   final int cost;
   final List<String> prerequisiteIds;
+
   /// Regiment ids this tech unlocks. SPEC/game/tech-tree-military.md.
   final List<String> regimentUnlockIds;
+
   /// Ship type ids this tech unlocks. SPEC/game/tech-tree-naval.md.
   final List<String> shipUnlockIds;
 }
@@ -158,12 +180,73 @@ const Map<String, TechDefinition> techCatalog = {
     prerequisiteIds: ['siege_engineering', 'university'],
   ),
   // Labour/economy (SPEC/game/tech-tree-labour-economy.md). University grants 4th research slot.
+  // Note: Prereqs simplified for MVP - some deep prereqs (e.g. land_enclosure, sugar_refining)
+  // are represented as direct techs without full dependency chains.
+  'printing_press': TechDefinition(
+    id: 'printing_press',
+    era: 1,
+    category: 'labour',
+    cost: 80,
+  ),
+  'money_lending': TechDefinition(
+    id: 'money_lending',
+    era: 1,
+    category: 'labour',
+    cost: 80,
+  ),
+  'apprentice_workers': TechDefinition(
+    id: 'apprentice_workers',
+    era: 2,
+    category: 'labour',
+    cost: 100,
+    prerequisiteIds: ['land_enclosure'],
+  ),
+  'trained_journeymen': TechDefinition(
+    id: 'trained_journeymen',
+    era: 2,
+    category: 'labour',
+    cost: 120,
+    prerequisiteIds: ['printing_press'],
+  ),
+  'master_artisans': TechDefinition(
+    id: 'master_artisans',
+    era: 3,
+    category: 'labour',
+    cost: 160,
+    prerequisiteIds: ['apprentice_workers', 'university', 'hat_production'],
+  ),
+  'trade_fairs': TechDefinition(
+    id: 'trade_fairs',
+    era: 2,
+    category: 'labour',
+    cost: 120,
+    prerequisiteIds: ['merchant_companies'],
+  ),
+  'banking': TechDefinition(
+    id: 'banking',
+    era: 3,
+    category: 'labour',
+    cost: 200,
+    prerequisiteIds: ['master_artisans', 'trade_fairs'],
+  ),
+  'land_enclosure': TechDefinition(
+    id: 'land_enclosure',
+    era: 1,
+    category: 'labour',
+    cost: 60,
+  ),
+  'hat_production': TechDefinition(
+    id: 'hat_production',
+    era: 2,
+    category: 'labour',
+    cost: 80,
+  ),
   'university': TechDefinition(
     id: 'university',
     era: 3,
     category: 'labour',
     cost: 200,
-    prerequisiteIds: const [],
+    prerequisiteIds: ['money_lending', 'apprentice_workers', 'printing_press'],
   ),
   // Naval (SPEC/game/tech-tree-naval.md). Fluytes require Superior Hull Design; carrack is baseline (no tech).
   'superior_hull_design': TechDefinition(
@@ -172,6 +255,51 @@ const Map<String, TechDefinition> techCatalog = {
     category: 'naval',
     cost: 100,
     shipUnlockIds: ['fluyte'],
+  ),
+  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
+  'diplomatic_expertise': TechDefinition(
+    id: 'diplomatic_expertise',
+    era: 1,
+    category: 'diplomacy',
+    cost: 100,
+  ),
+  'merchant_companies': TechDefinition(
+    id: 'merchant_companies',
+    era: 1,
+    category: 'civilian',
+    cost: 100,
+  ),
+  'national_bureaucracy': TechDefinition(
+    id: 'national_bureaucracy',
+    era: 2,
+    category: 'civilian',
+    cost: 150,
+    prerequisiteIds: [
+      'printing_press',
+      'money_lending',
+      'diplomatic_expertise',
+    ],
+  ),
+  'propaganda': TechDefinition(
+    id: 'propaganda',
+    era: 3,
+    category: 'diplomacy',
+    cost: 150,
+    prerequisiteIds: ['national_bureaucracy', 'university'],
+  ),
+  'nationalism': TechDefinition(
+    id: 'nationalism',
+    era: 3,
+    category: 'diplomacy',
+    cost: 200,
+    prerequisiteIds: ['propaganda', 'master_artisans', 'modern_forts'],
+  ),
+  'empire_building': TechDefinition(
+    id: 'empire_building',
+    era: 4,
+    category: 'diplomacy',
+    cost: 250,
+    prerequisiteIds: ['nationalism', 'banking'],
   ),
 };
 
