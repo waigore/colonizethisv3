@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
@@ -96,4 +97,27 @@ Set<String> provinceIdsAdjacentToSeaZone(
 String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
   final list = topology.nodes.where((n) => n.id == seaZoneId).toList();
   return list.isNotEmpty ? list.first.regionId : null;
+}
+
+/// Fleets in port at [provinceId]. Per SPEC/game/ships-and-naval.md: ships in port
+/// are fleets in sea zones adjacent to the province's port(s). Uses
+/// [worldState.portsByProvinceSeaboard] (key: fullProvinceId|seaZoneId) and
+/// [worldState.fleets]. Returns fleets whose seaZoneId and regionId match a port
+/// of the province.
+List<Fleet> fleetsInPortAtProvince(WorldState worldState, String provinceId) {
+  final regionId = provinceId.contains('|')
+      ? provinceId.split('|').first
+      : 'oldWorld';
+  final seaZones = <String>{};
+  final prefix = '$provinceId|';
+  for (final key in worldState.portsByProvinceSeaboard.keys) {
+    if (key.startsWith(prefix)) {
+      seaZones.add(key.substring(prefix.length));
+    }
+  }
+  if (seaZones.isEmpty) return [];
+  return worldState.fleets
+      .where((f) =>
+          f.regionId == regionId && seaZones.contains(f.seaZoneId))
+      .toList();
 }

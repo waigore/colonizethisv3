@@ -1,4 +1,5 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -6,21 +7,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/map_view_provider.dart';
+import '../../../../widgets/region_map_debug.dart';
+import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_panel.dart';
 import 'game_canvas.dart';
 
-/// Hosts the Flame game canvas. Phase 1: Next turn invokes TurnResolver and persists.
+/// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final game = ref.watch(currentGameProvider);
+    final mapViewData = ref.watch(mapViewDataProvider);
     final victory = game?.victory;
     return Scaffold(
       body: Stack(
         children: [
-          GameWidget(game: ColonizeThisGame()),
+          if (mapViewData != null && game != null)
+            _GameMapArea(
+              game: game,
+              mapViewData: mapViewData,
+            )
+          else
+            GameWidget(game: ColonizeThisGame()),
           if (game != null && victory == null) ...[
             Positioned(
               right: 16,
@@ -69,6 +80,105 @@ class GameScreen extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
+class _GameMapArea extends StatefulWidget {
+  const _GameMapArea({
+    required this.game,
+    required this.mapViewData,
+  });
+
+  final ct_models.Game game;
+  final InitGameMapViewData mapViewData;
+
+  @override
+  State<_GameMapArea> createState() => _GameMapAreaState();
+}
+
+class _GameMapAreaState extends State<_GameMapArea> {
+  int _regionIndex = 0;
+  String? _selectedDetailId;
+  String? _highlightedTileKey;
+
+  String get _humanPlayerId =>
+      widget.game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
+      widget.game.players.first.id;
+
+  RegionMapViewData get _currentRegion =>
+      _regionIndex == 0 ? widget.mapViewData.oldWorld : widget.mapViewData.newWorld;
+
+  void _onProvinceSelected(String provinceId) {
+    setState(() {
+      _selectedDetailId = _selectedDetailId == provinceId ? null : provinceId;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ChoiceChip(
+                label: const Text('Old World'),
+                selected: _regionIndex == 0,
+                onSelected: (_) => setState(() => _regionIndex = 0),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('New World'),
+                selected: _regionIndex == 1,
+                onSelected: (_) => setState(() => _regionIndex = 1),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: CtRegionMapDebug(
+                  region: _currentRegion,
+                  cellSizePx: 24,
+                  onProvinceSelected: _onProvinceSelected,
+                  highlightedTileKey: _highlightedTileKey,
+                ),
+              ),
+              if (!isNarrow && _selectedDetailId != null)
+                SizedBox(
+                  width: 320,
+                  child: ProvinceSeaZoneDetailOverlay(
+                    game: widget.game,
+                    region: _currentRegion,
+                    selectedId: _selectedDetailId!,
+                    humanPlayerId: _humanPlayerId,
+                    onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
+                    onClose: () => setState(() => _selectedDetailId = null),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (isNarrow && _selectedDetailId != null)
+          SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.33,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: widget.game,
+              region: _currentRegion,
+              selectedId: _selectedDetailId!,
+              humanPlayerId: _humanPlayerId,
+              onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
+              onClose: () => setState(() => _selectedDetailId = null),
+            ),
+          ),
+      ],
     );
   }
 }

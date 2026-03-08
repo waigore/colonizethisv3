@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'config/themes.dart';
+import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
+import 'widgets/province_overlay_demo_data.dart';
 import 'widgets/region_map_debug.dart';
 import 'widgets/region_map_demo_data.dart';
 
@@ -38,6 +40,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...mainMenuDirectories,
         ...gameSetupDirectories,
         ...mapWidgetDirectories,
+        ...provinceOverlayDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -261,3 +264,142 @@ List<WidgetbookNode> get mapWidgetDirectories => [
         ],
       ),
     ];
+
+/// Province/Sea Zone Detail Overlay stories. SPEC/ui/province-sea-zone-detail-overlay.md.
+List<WidgetbookNode> get provinceOverlayDirectories => [
+      WidgetbookFolder(
+        name: 'Province Overlay',
+        children: [
+          WidgetbookUseCase(
+            name: 'Standalone — province',
+            builder: (context) {
+              final game = buildDemoGameForOverlay();
+              final region = demoRegionForOverlay;
+              return SizedBox(
+                width: 320,
+                height: 400,
+                child: ProvinceSeaZoneDetailOverlay(
+                  game: game,
+                  region: region,
+                  selectedId: 'demo|p2',
+                  humanPlayerId: 'gp1',
+                  onClose: () {},
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'Standalone — sea zone',
+            builder: (context) {
+              final game = buildDemoGameForOverlay();
+              final region = demoRegionForOverlay;
+              return SizedBox(
+                width: 320,
+                height: 280,
+                child: ProvinceSeaZoneDetailOverlay(
+                  game: game,
+                  region: region,
+                  selectedId: 'demo|s1',
+                  humanPlayerId: 'gp1',
+                  onClose: () {},
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'Standalone (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              Builder(
+                builder: (context) {
+                  final game = buildDemoGameForOverlay();
+                  final region = demoRegionForOverlay;
+                  return ProvinceSeaZoneDetailOverlay(
+                    game: game,
+                    region: region,
+                    selectedId: 'demo|p1',
+                    humanPlayerId: 'gp1',
+                    onClose: () {},
+                  );
+                },
+              ),
+            ),
+          ),
+          WidgetbookUseCase(
+            name: 'With map — province selected',
+            builder: (context) => _MapWithOverlayStory(selectedId: 'demo|p2'),
+          ),
+          WidgetbookUseCase(
+            name: 'With map — sea zone selected',
+            builder: (context) => _MapWithOverlayStory(selectedId: 'demo|s1'),
+          ),
+        ],
+      ),
+    ];
+
+/// Map + overlay in tandem for Widgetbook. SPEC/ui/province-sea-zone-detail-overlay.md.
+class _MapWithOverlayStory extends StatefulWidget {
+  const _MapWithOverlayStory({required this.selectedId});
+
+  final String selectedId;
+
+  @override
+  State<_MapWithOverlayStory> createState() => _MapWithOverlayStoryState();
+}
+
+class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
+  late String _selectedId;
+  String? _highlightedTileKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedId = widget.selectedId;
+  }
+
+  @override
+  void didUpdateWidget(covariant _MapWithOverlayStory oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedId != widget.selectedId) {
+      _selectedId = widget.selectedId;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final game = buildDemoGameForOverlay();
+    final region = demoRegionForOverlay;
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+    return SizedBox(
+      width: 800,
+      height: 500,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: CtRegionMapDebug(
+              region: region,
+              cellSizePx: 28,
+              onProvinceSelected: (id) =>
+                  setState(() => _selectedId = _selectedId == id ? '' : id),
+              highlightedTileKey: _highlightedTileKey,
+            ),
+          ),
+          if (!isNarrow && _selectedId.isNotEmpty)
+            SizedBox(
+              width: 320,
+              child: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                selectedId: _selectedId,
+                humanPlayerId: 'gp1',
+                onHighlightTile: (k) =>
+                    setState(() => _highlightedTileKey = k),
+                onClose: () => setState(() => _selectedId = ''),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

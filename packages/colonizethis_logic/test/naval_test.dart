@@ -1,6 +1,7 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Naval', () {
@@ -135,6 +136,48 @@ void main() {
           provinceIdsAdjacentToSeaZone(topology, 'nonexistent'),
           isEmpty,
         );
+      });
+    });
+
+    group('fleetsInPortAtProvince', () {
+      test('returns fleets in sea zones adjacent to province port', () {
+        final worldState = WorldState(
+          turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          portsByProvinceSeaboard: {'oldWorld|p1|sea1': 'oldWorld|p1|0|0'},
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'gp1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack', 'carrack'],
+            ),
+            Fleet(
+              id: 'f2',
+              ownerId: 'gp2',
+              seaZoneId: 'sea2',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+        );
+        final inPort = fleetsInPortAtProvince(worldState, 'oldWorld|p1');
+        expect(inPort.length, 1);
+        expect(inPort.first.id, 'f1');
+        expect(inPort.first.seaZoneId, 'sea1');
+      });
+
+      test('returns empty when province has no port', () {
+        final worldState = WorldState(
+          turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|0'},
+          fleets: const [],
+        );
+        expect(fleetsInPortAtProvince(worldState, 'oldWorld|p1'), isEmpty);
       });
     });
   });

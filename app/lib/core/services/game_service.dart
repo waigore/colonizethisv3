@@ -7,9 +7,14 @@ import 'package:hive/hive.dart';
 
 /// Cached map data for a game (topology and tile maps for turn resolution).
 class _GameMapCache {
-  _GameMapCache({required this.combinedTopology, required this.tileMapByRegion});
+  _GameMapCache({
+    required this.combinedTopology,
+    required this.tileMapByRegion,
+    required this.topologyByRegion,
+  });
   final MapTopology combinedTopology;
   final Map<String, TileMapResult> tileMapByRegion;
+  final Map<String, MapTopology> topologyByRegion;
 }
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
@@ -20,12 +25,55 @@ class GameService {
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
 
-  /// In-memory cache: game id -> map data for resolveTurnForGame (extraction, movement).
-  /// Populated when creating a new game; not persisted (loaded games have no map data unless re-created).
+  /// In-memory cache: game id -> map data for resolveTurnForGame and map rendering.
+  /// Populated when creating a new game or when loading a game with persisted map data.
   final Map<String, _GameMapCache> _mapCache = {};
 
   /// Loads game by id. Returns null if not found.
-  Game? loadGame(String gameId) => _adapter.load(_box, gameId);
+  /// When map data exists in storage, populates _mapCache so map rendering works.
+  Game? loadGame(String gameId) {
+    final game = _adapter.load(_box, gameId);
+    if (game == null) return null;
+    final cached = _mapCache[gameId];
+    if (cached != null) return game;
+    final mapData = _adapter.loadMapData(_box, gameId);
+    if (mapData != null) {
+      _mapCache[gameId] = _GameMapCache(
+        combinedTopology: mapData.combinedTopology,
+        tileMapByRegion: mapData.tileMapByRegion,
+        topologyByRegion: mapData.topologyByRegion,
+      );
+    }
+    return game;
+  }
+
+  /// Returns map data for [gameId] from cache or storage. Null if not available (legacy save).
+  ({
+    MapTopology combinedTopology,
+    Map<String, TileMapResult> tileMapByRegion,
+    Map<String, MapTopology> topologyByRegion,
+  })? getMapData(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached != null) {
+      return (
+        combinedTopology: cached.combinedTopology,
+        tileMapByRegion: cached.tileMapByRegion,
+        topologyByRegion: cached.topologyByRegion,
+      );
+    }
+    final mapData = _adapter.loadMapData(_box, gameId);
+    if (mapData == null) return null;
+    _mapCache[gameId] = _GameMapCache(
+      combinedTopology: mapData.combinedTopology,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topologyByRegion: mapData.topologyByRegion,
+    );
+    return (
+      combinedTopology: mapData.combinedTopology,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topologyByRegion: mapData.topologyByRegion,
+    );
+  }
 
   /// Saves game to storage.
   void saveGame(Game game) => _adapter.save(_box, game);
@@ -112,6 +160,14 @@ class GameService {
     _mapCache[gameId] = _GameMapCache(
       combinedTopology: result.combinedTopology,
       tileMapByRegion: result.tileMapByRegion,
+      topologyByRegion: result.topologyByRegion,
+    );
+    _adapter.saveMapData(
+      _box,
+      gameId,
+      tileMapByRegion: result.tileMapByRegion,
+      topologyByRegion: result.topologyByRegion,
+      combinedTopology: result.combinedTopology,
     );
     saveGame(result.game);
     return result.game;
