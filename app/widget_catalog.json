@@ -21,7 +21,7 @@
     "id": "ct_region_map_debug",
     "name": "CtRegionMapDebug",
     "dart_file_path": "lib/widgets/region_map_debug.dart",
-    "constructor_props": "region: RegionMapViewData, showPoliticalOverlay: bool, cellSizePx: double, onProvinceSelected: void Function(String)?, onRegionViewChanged: VoidCallback?",
+    "constructor_props": "region: RegionMapViewData, showPoliticalOverlay: bool, cellSizePx: double, onProvinceSelected: void Function(String)?, onRegionViewChanged: VoidCallback?, onProvinceHovered: void Function(String?)?",
     "category": "game/map",
     "source": "pipeline",
     "widgetbook_story_path": "Map Widget / Debug mode"

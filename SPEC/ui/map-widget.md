@@ -10,7 +10,7 @@
 - **Viewport:** The visible area is the widget's layout size. Map extent is the full 2D tile grid; user pans and zooms to see it.
 - **Base layer:** Single 2D tile layer: terrain, resources, improvements, towns, capitals.
 - **Overlays:** Political ownership (borders) as a **separate overlay** on top; user can toggle overlay visibility.
-- **Interaction:** Pan; fixed zoom levels with smooth zooming; tap/click to select a province (callbacks; province details content TBD elsewhere).
+- **Interaction:** Pan; fixed zoom levels with smooth zooming; tap/click to select a province (callbacks; province details content TBD elsewhere). **Hover:** When the pointer is over a tile, a selector (e.g. a simple square) is shown on that tile with a subtle bouncing animation; the hovered tile's province (or sea zone) borders glow and use a subtle animation (e.g. pulse).
 - **Animation:** Widget supports animation of individual tiles and other assets (e.g. highlights, build progress); Flame is the implementation fit.
 
 ---
@@ -44,8 +44,17 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 |----------|---------|
 | **onProvinceSelected** | Invoked when the user taps/clicks a province (e.g. with prefixed province id). Province details (what to show, where) are defined by the parent/screen; the map widget only reports selection. |
 | **onRegionViewChanged** | Optional: viewport or zoom level changed (e.g. for syncing with sidebar or URL). |
+| **onProvinceHovered** | Optional: invoked when hover enters or leaves a province (prefixed province id, or null when leaving). Enables e.g. tooltips. |
 
 Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget only supports selection via these callbacks.
+
+---
+
+## Hover
+
+- **Selector:** When the pointer hovers over a tile, the widget shows a selector on that tile (e.g. a simple square outline). The selector has a **subtle bouncing animation** (e.g. scale or position) so it is clearly visible and responsive.
+- **Province border highlight:** The province (or sea zone) that contains the hovered tile is highlighted: its borders **glow** and use a **subtle animation** (e.g. opacity or stroke pulse). This applies to both land provinces and sea zones.
+- **Optional callback:** The widget may expose **onProvinceHovered**(prefixed province id, or null when hover leaves) so the parent can show tooltips or other feedback.
 
 ---
 
@@ -71,6 +80,8 @@ Details of what “province details” shows are **not** defined in this spec; t
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
 - **When** the user zooms, **then** only fixed zoom levels are used and zooming is smooth between levels.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
+- **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
+- **When** the user hovers over a tile, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation; when hover leaves, the highlight is removed.
 - **Given** the component is implemented with Flame, **then** it is possible to drive per-tile or per-asset animations from external events or timers.
 
 ---
