@@ -33,6 +33,7 @@ coverage_merged/
 # Temporary files and logs
 tmp/
 logs/
+out/
 .test_output.txt
 
 # Flutter generated
