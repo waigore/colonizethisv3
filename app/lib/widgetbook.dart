@@ -5,6 +5,8 @@ import 'package:widgetbook/widgetbook.dart';
 import 'config/themes.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
+import 'widgets/region_map_debug.dart';
+import 'widgets/region_map_demo_data.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
 void main() {
@@ -32,7 +34,11 @@ class CtWidgetbookApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Widgetbook.material(
-      directories: [...mainMenuDirectories, ...gameSetupDirectories],
+      directories: [
+        ...mainMenuDirectories,
+        ...gameSetupDirectories,
+        ...mapWidgetDirectories,
+      ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
     );
@@ -191,6 +197,64 @@ List<WidgetbookNode> get gameSetupDirectories => [
                 initialLeaderVariantByGpId: {},
                 onStartGame: (_, __) {},
                 onBack: () {},
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+/// Map Widget stories (debug mode). SPEC/ui/map-widget.md.
+List<WidgetbookNode> get mapWidgetDirectories => [
+      WidgetbookFolder(
+        name: 'Map Widget',
+        children: [
+          WidgetbookUseCase(
+            name: 'Debug mode',
+            builder: (context) {
+              final region = buildDemoRegionMapViewData();
+              return SizedBox(
+                width: 400,
+                height: 320,
+                child: CtRegionMapDebug(
+                  region: region,
+                  showPoliticalOverlay: true,
+                  cellSizePx: 28,
+                  onProvinceSelected: (id) {},
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'Debug mode (political overlay off)',
+            builder: (context) {
+              final region = buildDemoRegionMapViewData();
+              return SizedBox(
+                width: 400,
+                height: 320,
+                child: CtRegionMapDebug(
+                  region: region,
+                  showPoliticalOverlay: false,
+                  cellSizePx: 28,
+                  onProvinceSelected: (id) {},
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'Debug mode (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              Builder(
+                builder: (context) {
+                  final region = buildDemoRegionMapViewData();
+                  return CtRegionMapDebug(
+                    region: region,
+                    showPoliticalOverlay: true,
+                    cellSizePx: 24,
+                    onProvinceSelected: (id) {},
+                  );
+                },
               ),
             ),
           ),
