@@ -43,6 +43,8 @@ Each personality defines **domain weights** (economy, military, diplomacy, resea
 
 Exact numbers live in config data; SPEC does not mandate values, only that each leader has a defined vector and that it biases goal selection and utility scores.
 
+**Config source:** Personality config (domain weights, goal weights, behavioral thresholds) lives in program-level config (`colonizethis_data/lib/src/ai_personality_config.dart`) per [ruleset-config.md](../program/ruleset-config.md). Ruleset-configurable personality bundles are deferred to a future phase when the ruleset loader supports JSON merge. The `personalityId` field in AIConfig is reserved for future ruleset-driven personality overrides.
+
 ---
 
 ## Behavioral modifiers

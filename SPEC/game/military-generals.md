@@ -27,6 +27,8 @@ Generals are **not** assigned to provinces or stacks by default. Assignment is *
 - **When attacking:** A faction that orders an attack (move into an enemy province) must commit one general to that attack. The system chooses **one general at random** from that faction’s generals who are not already committed to another battle this turn. That general is “assigned” to that attacking force for the **duration of that battle only**. This **caps the number of attacks** a faction can make in one turn: at most one attack per general (so at most general cap attacks per turn).
 - **When defending:** When a province owned by the faction is attacked, the system automatically assigns **one general at random** from that faction’s generals who are not already committed to another battle this turn. If the faction has **no uncommitted general**, the province **may still be defended**, but **without a general** (defender general medals = 0 for that battle).
 
+**Defender general modeling:** Currently, defender generals are **not modeled** in combat resolution—defender general medals are treated as 0. This means the defender side does not receive +1 per defender general medal to the deployment limit, and no defender morale aura or initiative bonus is applied. When defender general state is added in a future phase, the defender side should symmetrically receive +1 per defender general medal to the deployment limit (matching attacker behavior).
+
 **Commitment lifetime:** A general is committed only for the duration of one battle. When that battle’s resolution completes, the generals assigned to that battle (attacker and defender) are **freed**. If there is a subsequent battle in the same turn (e.g. another province), the assignment process runs again and any general may be assigned, including one who was just in a previous battle.
 
 Assignment is only for applying general bonuses in combat (deployment limit, initiative, morale aura). It does not imply any map location.
@@ -41,7 +43,7 @@ Each general has **medals** 0–4.
 Medal effects in combat (see [combat.md](combat.md) and [combat-resolution.md](../program/combat-resolution.md)):
 
 - **Deployment:** +1 regiment per general medal to the per-side deployment limit (base 10; Nationalism tech → 12).
-- **Morale aura:** Regiments on that side receive a strength bonus of **5% per general medal**, up to a maximum of **20%** (at 4 medals). Configurable via ruleset; default 5% per medal, cap 20%.
+- **Morale aura:** Regiments on that side receive a strength bonus of **5% per general medal**, up to a maximum of **20%** (at 4 medals). These values are program-level constants; ruleset-configurable morale aura is deferred to a future phase.
 - **Initiative:** Army initiative uses `cavalryShare × W_cav + generalMedals × W_medal` for ordering multi-attacker chains.
 
 Defender without a general uses 0 general medals for deployment, morale, and initiative.
@@ -52,12 +54,14 @@ Defender without a general uses 0 general medals for deployment, morale, and ini
 
 ## Regiment Economy (Training & Upkeep)
 
-Each regiment type has **training cost** and **food upkeep** defined in ruleset config:
+Each regiment type has **training cost** and **food upkeep** defined in **program-level config**:
 
 - **Training cost:** Cash + material inputs (fabric, cast iron, lumber, steel, bronze) + **one worker** consumed from the player's WorkerPool at construction time. Cavalry and artillery cost more than line infantry; late-era elites are most expensive.
 - **Upkeep (food):** Per-turn food demand per regiment, consumed during the Consumption phase. Light infantry and early-era units have lower upkeep; cavalry, artillery, and late-era elites have higher upkeep.
 
 Per-regiment values follow the same era/category progression as the tactical stats table in [military-units.md](military-units.md).
+
+**Config source:** Regiment economy values (training cost, food upkeep) live in program-level config (`colonizethis_data/lib/src/regiment_economy.dart`) per [ruleset-config.md](../program/ruleset-config.md). Ruleset-configurable regiment economy is deferred to a future phase when the ruleset loader supports JSON merge.
 
 **Implementation:** Training cost (cash, materials, worker) is applied at build time when BuildUnitOrder (military) is resolved per [orders.md](../program/orders.md). Food upkeep is consumed during the Consumption phase per [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Consumption and [economy-models.md](../program/economy-models.md).
 
