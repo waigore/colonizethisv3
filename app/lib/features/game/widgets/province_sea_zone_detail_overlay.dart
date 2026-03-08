@@ -39,7 +39,6 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.33;
     final content = _isSeaZone
         ? _seaZoneContent(
             game: game,
@@ -53,57 +52,65 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             humanPlayerId: humanPlayerId,
             onHighlightTile: onHighlightTile,
           );
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Card(
-        margin: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _isSeaZone ? 'Sea zone' : 'Province',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onClose,
-                    tooltip: 'Close',
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: isNarrow
-                  ? DefaultTabController(
-                      length: content.tabCount,
-                      child: Column(
-                        children: [
-                          TabBar(
-                            tabs: content.tabs,
-                            isScrollable: true,
-                          ),
-                          Expanded(
-                            child: TabBarView(
-                              children: content.tabViews,
-                            ),
-                          ),
-                        ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Desktop: full height of side panel; mobile: max one-third screen (SPEC).
+        final maxHeight = isNarrow
+            ? MediaQuery.sizeOf(context).height * 0.33
+            : constraints.maxHeight;
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: Card(
+            margin: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _isSeaZone ? 'Sea zone' : 'Province',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(12),
-                      child: content.sections,
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: onClose,
+                        tooltip: 'Close',
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: isNarrow
+                      ? DefaultTabController(
+                          length: content.tabCount,
+                          child: Column(
+                            children: [
+                              TabBar(
+                                tabs: content.tabs,
+                                isScrollable: true,
+                              ),
+                              Expanded(
+                                child: TabBarView(
+                                  children: content.tabViews,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: content.sections,
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
