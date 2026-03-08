@@ -165,7 +165,7 @@ void main() {
       expect(lines[0][1], '♣');
     });
 
-    test('political layer uses owner character', () {
+    test('political layer uses 1-char owner glyphs (GP uppercase, others lowercase)', () {
       const regionId = 'oldWorld';
       final visibility = {
         'oldWorld|p1|0|0': 'fullyVisible',
@@ -186,9 +186,12 @@ void main() {
         layer: MapGridLayer.political,
       );
       expect(lines.length, 2);
-      // gp1 is human -> Great Power -> first letter uppercase G; gp2 is AI -> minor -> m + g
+      // gp1 is human -> Great Power -> first letter uppercase G; gp2 is AI -> non-GP -> lowercase g.
       expect(lines[0][0], 'G');
-      expect(lines[1][1], 'm'); // minor nation prefix
+      expect(lines[1][1], 'g');
+      // Political layer must remain 1-char-per-tile horizontally.
+      expect(lines[0].length, 3);
+      expect(lines[1].length, 3);
     });
   });
 }

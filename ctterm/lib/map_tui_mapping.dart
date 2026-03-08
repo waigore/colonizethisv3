@@ -90,23 +90,21 @@ PlayerType? getPlayerType(String? ownerId, List<Player> players) {
   return PlayerType.minorNation;
 }
 
-/// Converts owner ID to its ASCII character prefix.
+/// Converts owner ID to its ASCII character representation for the political layer.
+/// Great Powers use an uppercase first letter; all other owners (minors, tribes)
+/// use a lowercase first letter. Unclaimed tiles use `·`.
 String ownerToChar(String? ownerId, PlayerType? playerType) {
   if (ownerId == null) return '·'; // Unclaimed/wilderness
-  
-  switch (playerType) {
-    case PlayerType.greatPower:
-      // First letter of GP ID, uppercase
-      return ownerId.substring(0, 1).toUpperCase();
-    case PlayerType.minorNation:
-      // 'm' prefix + first letter
-      return 'm${ownerId.substring(0, 1).toLowerCase()}';
-    case PlayerType.tribe:
-      // 't' prefix + first letter
-      return 't${ownerId.substring(0, 1).toLowerCase()}';
-    case null:
-      return '·';
+
+  final first = ownerId.substring(0, 1);
+
+  if (playerType == PlayerType.greatPower) {
+    return first.toUpperCase();
   }
+
+  // For non-Great-Power owners (minor nations, tribes, or unknown type),
+  // use a lowercase first letter so the political layer remains 1-char-per-tile.
+  return first.toLowerCase();
 }
 
 /// Visibility level for a tile.
