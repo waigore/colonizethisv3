@@ -2,18 +2,20 @@
 // solid lines for province and faction borders. SPEC/ui/map-widget.md.
 // For Widgetbook mockup and development; production map uses Flame.
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Debug-mode region map widget. Renders [region] with:
 /// - Solid colors per terrain (sea = fixed blue).
 /// - Single letters for resources (g, t, i, etc.), improvement level (I0–I4), road (R0/R1/R2/R4).
 /// - Solid lines: province borders (black), faction borders when [showPoliticalOverlay] (darker/thicker).
-/// Pan/zoom via [InteractiveViewer]; tap reports province via [onProvinceSelected].
-/// Hover: selector (square) with subtle bounce; hovered province borders glow with subtle animation.
+/// Pan/scroll by keyboard only (arrow keys, repeat when held); zoom via [InteractiveViewer] wheel.
+/// Tap reports province via [onProvinceSelected]; hover uses viewport-to-scene conversion.
 class CtRegionMapDebug extends StatefulWidget {
   const CtRegionMapDebug({
     super.key,
@@ -45,8 +47,21 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
   int? _hoveredTileX;
   int? _hoveredTileY;
   late AnimationController _hoverAnimationController;
+  final TransformationController _transformationController =
+      TransformationController();
+  final FocusNode _focusNode = FocusNode();
+  Offset? _pointerDownPosition;
+  double _viewportWidth = 0;
+  double _viewportHeight = 0;
+  final Set<LogicalKeyboardKey> _pressedArrowKeys = {};
+  Timer? _keyScrollTimer;
+  static const int _keyScrollRepeatMs = 90;
 
   static const int _hoverAnimationDurationMs = 800;
+  static const double _tapSlop = 8.0;
+  static const double _arrowKeyScrollStep = 48.0;
+  static const double _scrollbarThickness = 8.0;
+  static const double _scrollbarMinLength = 24.0;
 
   @override
   void initState() {
@@ -56,6 +71,14 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
       duration: const Duration(milliseconds: _hoverAnimationDurationMs),
     );
     _hoverAnimationController.addListener(_onHoverAnimationTick);
+    _transformationController.addListener(_onTransformChanged);
+  }
+
+  void _onTransformChanged() {
+    if (_viewportWidth > 0 && _viewportHeight > 0) {
+      _clampAndApplyTransformation(_transformationController.value.clone());
+    }
+    setState(() {});
   }
 
   void _onHoverAnimationTick() {
@@ -77,9 +100,114 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
 
   @override
   void dispose() {
+    _keyScrollTimer?.cancel();
+    _keyScrollTimer = null;
+    _transformationController.removeListener(_onTransformChanged);
+    _focusNode.dispose();
+    _transformationController.dispose();
     _hoverAnimationController.removeListener(_onHoverAnimationTick);
     _hoverAnimationController.dispose();
     super.dispose();
+  }
+
+  void _clampAndApplyTransformation(Matrix4 value) {
+    final mapWidth = widget.region.width * widget.cellSizePx;
+    final mapHeight = widget.region.height * widget.cellSizePx;
+    if (_viewportWidth <= 0 || _viewportHeight <= 0) return;
+    final scale = value.storage[0];
+    final tx = value.storage[12];
+    final ty = value.storage[13];
+    final mapW = mapWidth * scale;
+    final mapH = mapHeight * scale;
+    final txClamp = tx.clamp(
+      _viewportWidth - mapW,
+      0.0,
+    );
+    final tyClamp = ty.clamp(
+      _viewportHeight - mapH,
+      0.0,
+    );
+    if (txClamp == tx && tyClamp == ty) return;
+    final clamped = Matrix4.identity()..scale(scale, scale, 1.0);
+    clamped.storage[12] = txClamp;
+    clamped.storage[13] = tyClamp;
+    _transformationController.value = clamped;
+  }
+
+  void _applyKeyScrollStep(double dx, double dy) {
+    final current = _transformationController.value.clone();
+    final next = Matrix4.translationValues(dx, dy, 0)..multiply(current);
+    _transformationController.value = next;
+    if (_viewportWidth > 0 && _viewportHeight > 0) {
+      _clampAndApplyTransformation(_transformationController.value.clone());
+    }
+  }
+
+  void _startKeyScrollTimer() {
+    _keyScrollTimer?.cancel();
+    _keyScrollTimer = Timer.periodic(
+      const Duration(milliseconds: _keyScrollRepeatMs),
+      (_) {
+        if (!mounted || _pressedArrowKeys.isEmpty) {
+          _keyScrollTimer?.cancel();
+          _keyScrollTimer = null;
+          return;
+        }
+        double dx = 0;
+        double dy = 0;
+        for (final key in _pressedArrowKeys) {
+          if (key == LogicalKeyboardKey.arrowLeft) {
+            dx += _arrowKeyScrollStep;
+          } else if (key == LogicalKeyboardKey.arrowRight) {
+            dx -= _arrowKeyScrollStep;
+          } else if (key == LogicalKeyboardKey.arrowUp) {
+            dy += _arrowKeyScrollStep;
+          } else if (key == LogicalKeyboardKey.arrowDown) {
+            dy -= _arrowKeyScrollStep;
+          }
+        }
+        if (dx != 0 || dy != 0) {
+          _applyKeyScrollStep(dx, dy);
+        }
+      },
+    );
+  }
+
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    final key = event.logicalKey;
+    if (key != LogicalKeyboardKey.arrowLeft &&
+        key != LogicalKeyboardKey.arrowRight &&
+        key != LogicalKeyboardKey.arrowUp &&
+        key != LogicalKeyboardKey.arrowDown) {
+      return KeyEventResult.ignored;
+    }
+    if (event is KeyDownEvent) {
+      if (_pressedArrowKeys.add(key)) {
+        double dx = 0;
+        double dy = 0;
+        if (key == LogicalKeyboardKey.arrowLeft) {
+          dx = _arrowKeyScrollStep;
+        } else if (key == LogicalKeyboardKey.arrowRight) {
+          dx = -_arrowKeyScrollStep;
+        } else if (key == LogicalKeyboardKey.arrowUp) {
+          dy = _arrowKeyScrollStep;
+        } else if (key == LogicalKeyboardKey.arrowDown) {
+          dy = -_arrowKeyScrollStep;
+        }
+        _applyKeyScrollStep(dx, dy);
+        _startKeyScrollTimer();
+      }
+      return KeyEventResult.handled;
+    }
+    if (event is KeyUpEvent) {
+      _pressedArrowKeys.remove(key);
+      if (_pressedArrowKeys.isEmpty) {
+        _keyScrollTimer?.cancel();
+        _keyScrollTimer = null;
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _updateHover(Offset? local) {
@@ -133,34 +261,198 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
         ? region.cellAt(_hoveredTileX!, _hoveredTileY!).regionCellId
         : null;
 
-    return InteractiveViewer(
-      minScale: 0.25,
-      maxScale: 4,
-      child: SizedBox(
-        width: mapWidth,
-        height: mapHeight,
-        child: MouseRegion(
-          hitTestBehavior: HitTestBehavior.opaque,
-          onHover: (event) => _updateHover(event.localPosition),
-          onExit: (_) => _updateHover(null),
-          child: GestureDetector(
-            onTapUp: (details) =>
-                _handleTap(details.localPosition, mapWidth, mapHeight),
-            child: CustomPaint(
-              size: Size(mapWidth, mapHeight),
-              painter: _RegionMapDebugPainter(
-                region: region,
-                cellSize: widget.cellSizePx,
-                showPoliticalOverlay: widget.showPoliticalOverlay,
-                hoveredTileX: _hoveredTileX,
-                hoveredTileY: _hoveredTileY,
-                hoveredProvinceId: hoveredProvinceId,
-                hoverAnimationT: animationT,
-                highlightedTileKey: widget.highlightedTileKey,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final vw = constraints.maxWidth;
+        final vh = constraints.maxHeight;
+        if (vw > 0 &&
+            vh > 0 &&
+            (_viewportWidth != vw || _viewportHeight != vh)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _viewportWidth = vw;
+                _viewportHeight = vh;
+              });
+            }
+          });
+        }
+        final matrix = _transformationController.value;
+        final scale = matrix.storage[0];
+        final tx = matrix.storage[12];
+        final ty = matrix.storage[13];
+        final contentW = mapWidth * scale;
+        final contentH = mapHeight * scale;
+        final horizExtent = (contentW - vw).clamp(0.0, double.infinity);
+        final vertExtent = (contentH - vh).clamp(0.0, double.infinity);
+        final horizPos = (-tx).clamp(0.0, horizExtent);
+        final vertPos = (-ty).clamp(0.0, vertExtent);
+
+        return Focus(
+          focusNode: _focusNode,
+          onKeyEvent: _onKeyEvent,
+          child: Stack(
+            children: [
+              MouseRegion(
+                hitTestBehavior: HitTestBehavior.opaque,
+                onHover: (event) {
+                  final scene =
+                      _transformationController.toScene(event.localPosition);
+                  _updateHover(scene);
+                },
+                onExit: (_) => _updateHover(null),
+                child: Listener(
+                  onPointerDown: (event) {
+                    _pointerDownPosition = event.localPosition;
+                    _focusNode.requestFocus();
+                  },
+                  onPointerUp: (event) {
+                    final down = _pointerDownPosition;
+                    _pointerDownPosition = null;
+                    if (down != null &&
+                        (event.localPosition - down).distance < _tapSlop) {
+                      final scene = _transformationController
+                          .toScene(event.localPosition);
+                      _handleTap(scene, mapWidth, mapHeight);
+                    }
+                  },
+                  onPointerCancel: (_) {
+                    _pointerDownPosition = null;
+                  },
+                  child: InteractiveViewer(
+                    transformationController: _transformationController,
+                    panEnabled: false,
+                    minScale: 0.25,
+                    maxScale: 4,
+                    child: SizedBox(
+                      width: mapWidth,
+                      height: mapHeight,
+                      child: CustomPaint(
+                        size: Size(mapWidth, mapHeight),
+                        painter: _RegionMapDebugPainter(
+                          region: region,
+                          cellSize: widget.cellSizePx,
+                          showPoliticalOverlay: widget.showPoliticalOverlay,
+                          hoveredTileX: _hoveredTileX,
+                          hoveredTileY: _hoveredTileY,
+                          hoveredProvinceId: hoveredProvinceId,
+                          hoverAnimationT: animationT,
+                          highlightedTileKey: widget.highlightedTileKey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (vertExtent > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: _scrollbarThickness + 2,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildVerticalScrollbar(
+                      trackHeight: vh - _scrollbarThickness - 2,
+                      extent: vertExtent,
+                      position: vertPos,
+                      contentHeight: contentH,
+                    ),
+                  ),
+                ),
+              if (horizExtent > 0)
+                Positioned(
+                  left: 0,
+                  right: _scrollbarThickness + 2,
+                  bottom: 0,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _buildHorizontalScrollbar(
+                      trackWidth: vw - _scrollbarThickness - 2,
+                      extent: horizExtent,
+                      position: horizPos,
+                      contentWidth: contentW,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVerticalScrollbar({
+    required double trackHeight,
+    required double extent,
+    required double position,
+    required double contentHeight,
+  }) {
+    final thumbLength = (trackHeight * (trackHeight / contentHeight))
+        .clamp(_scrollbarMinLength, trackHeight);
+    final thumbOffset = extent > 0
+        ? (position / extent) * (trackHeight - thumbLength)
+        : 0.0;
+    return Container(
+      width: _scrollbarThickness,
+      height: trackHeight,
+      margin: const EdgeInsets.only(right: 2),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: thumbOffset,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: thumbLength,
+              decoration: BoxDecoration(
+                color: Colors.black38,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalScrollbar({
+    required double trackWidth,
+    required double extent,
+    required double position,
+    required double contentWidth,
+  }) {
+    final thumbLength = (trackWidth * (trackWidth / contentWidth))
+        .clamp(_scrollbarMinLength, trackWidth);
+    final thumbOffset = extent > 0
+        ? (position / extent) * (trackWidth - thumbLength)
+        : 0.0;
+    return Container(
+      width: trackWidth,
+      height: _scrollbarThickness,
+      margin: const EdgeInsets.only(bottom: 2),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            left: thumbOffset,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: thumbLength,
+              decoration: BoxDecoration(
+                color: Colors.black38,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

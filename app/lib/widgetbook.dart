@@ -7,8 +7,8 @@ import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
+import 'widgets/debug_init_game.dart';
 import 'widgets/region_map_debug.dart';
-import 'widgets/region_map_demo_data.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
 void main() {
@@ -215,7 +215,7 @@ List<WidgetbookNode> get mapWidgetDirectories => [
           WidgetbookUseCase(
             name: 'Debug mode',
             builder: (context) {
-              final region = buildDemoRegionMapViewData();
+              final region = getDebugInitGameResult().mapViewData.oldWorld;
               return SizedBox(
                 width: 400,
                 height: 320,
@@ -231,7 +231,7 @@ List<WidgetbookNode> get mapWidgetDirectories => [
           WidgetbookUseCase(
             name: 'Debug mode (political overlay off)',
             builder: (context) {
-              final region = buildDemoRegionMapViewData();
+              final region = getDebugInitGameResult().mapViewData.oldWorld;
               return SizedBox(
                 width: 400,
                 height: 320,
@@ -250,7 +250,7 @@ List<WidgetbookNode> get mapWidgetDirectories => [
               context,
               Builder(
                 builder: (context) {
-                  final region = buildDemoRegionMapViewData();
+                  final region = getDebugInitGameResult().mapViewData.oldWorld;
                   return CtRegionMapDebug(
                     region: region,
                     showPoliticalOverlay: true,
@@ -273,7 +273,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           WidgetbookUseCase(
             name: 'Standalone — province',
             builder: (context) {
-              final game = buildDemoGameForOverlay();
+              final game = demoGameForOverlay;
               final region = demoRegionForOverlay;
               return SizedBox(
                 width: 320,
@@ -281,8 +281,8 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 child: ProvinceSeaZoneDetailOverlay(
                   game: game,
                   region: region,
-                  selectedId: 'demo|p2',
-                  humanPlayerId: 'gp1',
+                  selectedId: sampleProvinceIdForOverlay,
+                  humanPlayerId: game.players.first.id,
                   onClose: () {},
                 ),
               );
@@ -291,7 +291,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           WidgetbookUseCase(
             name: 'Standalone — sea zone',
             builder: (context) {
-              final game = buildDemoGameForOverlay();
+              final game = demoGameForOverlay;
               final region = demoRegionForOverlay;
               return SizedBox(
                 width: 320,
@@ -299,8 +299,8 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 child: ProvinceSeaZoneDetailOverlay(
                   game: game,
                   region: region,
-                  selectedId: 'demo|s1',
-                  humanPlayerId: 'gp1',
+                  selectedId: sampleSeaZoneIdForOverlay,
+                  humanPlayerId: game.players.first.id,
                   onClose: () {},
                 ),
               );
@@ -312,13 +312,13 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               context,
               Builder(
                 builder: (context) {
-                  final game = buildDemoGameForOverlay();
+                  final game = demoGameForOverlay;
                   final region = demoRegionForOverlay;
                   return ProvinceSeaZoneDetailOverlay(
                     game: game,
                     region: region,
-                    selectedId: 'demo|p1',
-                    humanPlayerId: 'gp1',
+                    selectedId: sampleProvinceIdForOverlay,
+                    humanPlayerId: game.players.first.id,
                     onClose: () {},
                   );
                 },
@@ -327,11 +327,13 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           ),
           WidgetbookUseCase(
             name: 'With map — province selected',
-            builder: (context) => _MapWithOverlayStory(selectedId: 'demo|p2'),
+            builder: (context) =>
+                _MapWithOverlayStory(selectedId: sampleProvinceIdForOverlay),
           ),
           WidgetbookUseCase(
             name: 'With map — sea zone selected',
-            builder: (context) => _MapWithOverlayStory(selectedId: 'demo|s1'),
+            builder: (context) =>
+                _MapWithOverlayStory(selectedId: sampleSeaZoneIdForOverlay),
           ),
         ],
       ),
@@ -367,7 +369,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
 
   @override
   Widget build(BuildContext context) {
-    final game = buildDemoGameForOverlay();
+    final game = demoGameForOverlay;
     final region = demoRegionForOverlay;
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
     return SizedBox(

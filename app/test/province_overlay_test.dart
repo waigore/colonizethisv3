@@ -7,20 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/widgets/region_map_debug.dart';
-import 'package:colonizethis_app/widgets/region_map_demo_data.dart';
 
 void main() {
   suppressLogsForTests();
 
-  group('buildDemoGameForOverlay', () {
-    test('returns game with demo region provinces and units', () {
-      final game = buildDemoGameForOverlay();
-      expect(game.id, 'demo_overlay');
-      expect(game.players.length, 2);
-      expect(game.worldState.oldWorld.provinces.length, 4);
-      expect(game.worldState.oldWorld.units.length, 3);
+  group('demoGameForOverlay', () {
+    test('returns game with Old World provinces and players', () {
+      final game = demoGameForOverlay;
+      expect(game.players.length, greaterThanOrEqualTo(1));
+      expect(game.worldState.oldWorld.provinces.length, greaterThanOrEqualTo(1));
       expect(
-        game.worldState.tileKeysByRegionAndProvince.containsKey('demo'),
+        game.worldState.tileKeysByRegionAndProvince.containsKey('oldWorld'),
         isTrue,
       );
     });
@@ -32,7 +29,7 @@ void main() {
       void Function(String?)? onHighlightTile,
       VoidCallback? onClose,
     }) {
-      final game = buildDemoGameForOverlay();
+      final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
       return MaterialApp(
         home: Scaffold(
@@ -40,7 +37,7 @@ void main() {
             game: game,
             region: region,
             selectedId: selectedId,
-            humanPlayerId: 'gp1',
+            humanPlayerId: game.players.first.id,
             onHighlightTile: onHighlightTile,
             onClose: onClose,
           ),
@@ -50,7 +47,7 @@ void main() {
 
     testWidgets('AC: Standalone province overlay displays Political, Economic, Military, Civilian, Naval',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildOverlay(selectedId: 'demo|p2'));
+      await tester.pumpWidget(buildOverlay(selectedId: sampleProvinceIdForOverlay));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
@@ -65,16 +62,36 @@ void main() {
 
     testWidgets('AC: Province overlay shows province name and owner',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildOverlay(selectedId: 'demo|p2'));
+      final region = demoRegionForOverlay;
+      final selectedId = sampleProvinceIdForOverlay;
+      final cell = region.cells.firstWhere(
+        (c) => !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
+      );
+      final game = demoGameForOverlay;
+      await tester.pumpWidget(buildOverlay(selectedId: selectedId));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Kent'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('England'), findsAtLeastNWidgets(1));
+      final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
+      expect(provinceName, isNotEmpty);
+      expect(find.textContaining(provinceName), findsAtLeastNWidgets(1));
+      final ownerId = cell.ownerFactionId;
+      if (ownerId != null && ownerId.isNotEmpty) {
+        final ownerName = game.players
+                .where((p) => p.id == ownerId)
+                .map((p) => p.displayName)
+                .firstOrNull ??
+            game.minorNations
+                .where((m) => m.id == ownerId)
+                .map((m) => m.displayName ?? m.id)
+                .firstOrNull ??
+            ownerId;
+        expect(find.textContaining(ownerName), findsAtLeastNWidgets(1));
+      }
     });
 
     testWidgets('AC: Sea zone overlay displays Political and Naval',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildOverlay(selectedId: 'demo|s1'));
+      await tester.pumpWidget(buildOverlay(selectedId: sampleSeaZoneIdForOverlay));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
@@ -86,7 +103,7 @@ void main() {
     testWidgets('AC: Close button invokes onClose', (WidgetTester tester) async {
       var closed = false;
       await tester.pumpWidget(buildOverlay(
-        selectedId: 'demo|p1',
+        selectedId: sampleProvinceIdForOverlay,
         onClose: () => closed = true,
       ));
       await tester.pumpAndSettle();
@@ -97,17 +114,20 @@ void main() {
       expect(closed, isTrue);
     });
 
-    testWidgets('AC: Overlay constrained to max height', (WidgetTester tester) async {
+    testWidgets('AC: Overlay constrained to one-third height on narrow viewport',
+        (WidgetTester tester) async {
+      const viewportHeight = 600.0;
+      const expectedMaxHeight = 198.0; // 0.33 * 600
       await tester.pumpWidget(
         MediaQuery(
-          data: const MediaQueryData(size: Size(800, 600)),
+          data: const MediaQueryData(size: Size(400, viewportHeight)),
           child: MaterialApp(
             home: Scaffold(
               body: ProvinceSeaZoneDetailOverlay(
-                game: buildDemoGameForOverlay(),
+                game: demoGameForOverlay,
                 region: demoRegionForOverlay,
-                selectedId: 'demo|p2',
-                humanPlayerId: 'gp1',
+                selectedId: sampleProvinceIdForOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
             ),
@@ -116,15 +136,38 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final overlay = tester.widget<ProvinceSeaZoneDetailOverlay>(
-        find.byType(ProvinceSeaZoneDetailOverlay),
-      );
-      expect(overlay.selectedId, 'demo|p2');
       final constrained = find.byWidgetPredicate(
         (w) =>
             w is ConstrainedBox &&
-            w.constraints.maxHeight == 198 &&
-            w.constraints.maxHeight < 600,
+            w.constraints.maxHeight == expectedMaxHeight,
+      );
+      expect(constrained, findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('AC: Overlay uses full height on desktop', (WidgetTester tester) async {
+      const viewportHeight = 600.0;
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, viewportHeight)),
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: demoGameForOverlay,
+                region: demoRegionForOverlay,
+                selectedId: sampleProvinceIdForOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final constrained = find.byWidgetPredicate(
+        (w) =>
+            w is ConstrainedBox &&
+            w.constraints.maxHeight == viewportHeight,
       );
       expect(constrained, findsAtLeastNWidgets(1));
     });
@@ -133,6 +176,7 @@ void main() {
   group('ProvinceSeaZoneDetailOverlay with map', () {
     testWidgets('AC: Map and overlay appear side by side when province selected',
         (WidgetTester tester) async {
+      final game = demoGameForOverlay;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -140,7 +184,7 @@ void main() {
               children: [
                 Expanded(
                   child: CtRegionMapDebug(
-                    region: buildDemoRegionMapViewData(),
+                    region: demoRegionForOverlay,
                     cellSizePx: 28,
                     onProvinceSelected: (_) {},
                     highlightedTileKey: null,
@@ -149,10 +193,10 @@ void main() {
                 SizedBox(
                   width: 320,
                   child: ProvinceSeaZoneDetailOverlay(
-                    game: buildDemoGameForOverlay(),
+                    game: game,
                     region: demoRegionForOverlay,
-                    selectedId: 'demo|p2',
-                    humanPlayerId: 'gp1',
+                    selectedId: sampleProvinceIdForOverlay,
+                    humanPlayerId: game.players.first.id,
                     onClose: () {},
                   ),
                 ),
@@ -169,6 +213,7 @@ void main() {
 
     testWidgets('AC: Map tap invokes onProvinceSelected; overlay can show selection',
         (WidgetTester tester) async {
+      final region = demoRegionForOverlay;
       String? selectedId;
       await tester.pumpWidget(
         MaterialApp(
@@ -181,7 +226,7 @@ void main() {
                       width: 400,
                       height: 320,
                       child: CtRegionMapDebug(
-                        region: buildDemoRegionMapViewData(),
+                        region: region,
                         cellSizePx: 28,
                         onProvinceSelected: (id) =>
                             setState(() => selectedId = id),
@@ -192,10 +237,10 @@ void main() {
                       SizedBox(
                         width: 320,
                         child: ProvinceSeaZoneDetailOverlay(
-                          game: buildDemoGameForOverlay(),
+                          game: demoGameForOverlay,
                           region: demoRegionForOverlay,
                           selectedId: selectedId!,
-                          humanPlayerId: 'gp1',
+                          humanPlayerId: demoGameForOverlay.players.first.id,
                           onClose: () => setState(() => selectedId = null),
                         ),
                       ),
@@ -222,7 +267,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(selectedId, isNotNull);
-      expect(selectedId!, startsWith('demo|'));
+      expect(selectedId!, startsWith('${region.regionId}|'));
     });
   });
 }

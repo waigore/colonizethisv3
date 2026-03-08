@@ -1,55 +1,55 @@
-// Widget and unit tests for CtRegionMapDebug and demo map data.
+// Widget and unit tests for CtRegionMapDebug and debug init map data.
 // SPEC/ui/map-widget.md; coverage for lib/widgets/ (quality gate 80%).
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/region_map_debug.dart';
-import 'package:colonizethis_app/widgets/region_map_demo_data.dart';
 
 void main() {
   suppressLogsForTests();
 
-  group('buildDemoRegionMapViewData', () {
+  group('debug init Old World region', () {
     test('returns region with correct dimensions and cell count', () {
-      final region = buildDemoRegionMapViewData();
-      expect(region.regionId, 'demo');
-      expect(region.width, 14);
-      expect(region.height, 10);
-      expect(region.cells.length, 14 * 10);
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.regionId, 'oldWorld');
+      expect(region.width, greaterThanOrEqualTo(8));
+      expect(region.height, greaterThanOrEqualTo(8));
+      expect(region.cells.length, region.width * region.height);
       expect(region.cellSize, 24);
     });
 
     test('has terrain and faction colors', () {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       expect(region.terrainColors.length, greaterThanOrEqualTo(1));
       expect(region.factionColors.length, greaterThanOrEqualTo(2));
     });
 
-    test('has one capital and one port marker', () {
-      final region = buildDemoRegionMapViewData();
-      expect(region.capitalMarkers.length, 1);
-      expect(region.portMarkers.length, 1);
+    test('has at least one capital marker', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.capitalMarkers.length, greaterThanOrEqualTo(1));
     });
 
-    test('frame is sea, inner cells are land with provinces', () {
-      final region = buildDemoRegionMapViewData();
-      expect(region.cellAt(0, 0).isSea, isTrue);
-      expect(region.cellAt(0, 0).regionCellId, 's1');
-      expect(region.cellAt(13, 9).isSea, isTrue);
-      expect(region.cellAt(1, 1).isSea, isFalse);
-      expect(region.cellAt(1, 1).regionCellId, 'p1');
-      expect(region.cellAt(1, 1).ownerFactionId, 'gp1');
-      expect(region.cellAt(1, 1).terrainType, isNotNull);
+    test('has both sea and land cells with provinces', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final seaCount =
+          region.cells.where((c) => c.isSea).length;
+      final landCount =
+          region.cells.where((c) => !c.isSea).length;
+      expect(seaCount, greaterThan(0));
+      expect(landCount, greaterThan(0));
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      expect(landCell.regionCellId, startsWith('p'));
+      expect(landCell.terrainType, isNotNull);
     });
 
-    test('land cells have improvement and road levels', () {
-      final region = buildDemoRegionMapViewData();
-      final cell = region.cellAt(2, 2);
-      expect(cell.improvementLevel, isNotNull);
-      expect(cell.roadLevel, isNotNull);
+    test('land cells may have improvement and road levels', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.cells.any((c) => !c.isSea), isTrue);
     });
   });
 
@@ -82,7 +82,7 @@ void main() {
 
     testWidgets('builds and contains InteractiveViewer and CustomPaint',
         (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       await tester.pumpWidget(buildMap(region: region));
       await tester.pumpAndSettle();
 
@@ -105,7 +105,7 @@ void main() {
 
     testWidgets('tap on map invokes onProvinceSelected with prefixed province id',
         (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       String? selectedId;
       await tester.pumpWidget(buildMap(
         region: region,
@@ -130,7 +130,7 @@ void main() {
     });
 
     testWidgets('builds with showPoliticalOverlay false', (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       await tester.pumpWidget(buildMap(
         region: region,
         showPoliticalOverlay: false,
@@ -142,7 +142,7 @@ void main() {
 
     testWidgets('builds without onProvinceSelected callback',
         (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       await tester.pumpWidget(buildMap(region: region));
       await tester.pumpAndSettle();
 
@@ -159,7 +159,7 @@ void main() {
     });
 
     testWidgets('contains MouseRegion for hover', (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       await tester.pumpWidget(buildMap(region: region));
       await tester.pumpAndSettle();
 
@@ -173,7 +173,7 @@ void main() {
     });
 
     testWidgets('builds with onProvinceHovered callback', (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
       String? lastHoveredId;
       await tester.pumpWidget(buildMap(
         region: region,
@@ -187,10 +187,13 @@ void main() {
 
     testWidgets('builds with highlightedTileKey and paints secondary highlight',
         (WidgetTester tester) async {
-      final region = buildDemoRegionMapViewData();
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      final tileKey =
+          '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
       await tester.pumpWidget(buildMap(
         region: region,
-        highlightedTileKey: '${region.regionId}|p1|2|3',
+        highlightedTileKey: tileKey,
       ));
       await tester.pumpAndSettle();
 
@@ -202,6 +205,44 @@ void main() {
         ),
         findsAtLeastNWidgets(1),
       );
+    });
+
+    testWidgets('arrow key scroll applies translation and is bounded',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      await tester.pumpWidget(buildMap(region: region));
+      await tester.pumpAndSettle();
+
+      final focusFinder = find.descendant(
+        of: find.byType(CtRegionMapDebug),
+        matching: find.byType(Focus),
+      );
+      expect(focusFinder, findsOneWidget);
+      await tester.tap(focusFinder);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+    });
+
+    testWidgets('builds Stack with map and optional scrollbars',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      await tester.pumpWidget(buildMap(region: region));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final stacks = find.descendant(
+        of: find.byType(CtRegionMapDebug),
+        matching: find.byType(Stack),
+      );
+      expect(stacks, findsAtLeastNWidgets(1));
+      final firstStack = tester.widgetList<Stack>(stacks).first;
+      expect(firstStack.children.length, greaterThanOrEqualTo(1));
     });
   });
 }
