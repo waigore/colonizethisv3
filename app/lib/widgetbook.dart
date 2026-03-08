@@ -6,7 +6,7 @@ import 'config/themes.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
-import 'widgets/province_overlay_demo_data.dart';
+import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'widgets/region_map_debug.dart';
 import 'widgets/region_map_demo_data.dart';
 

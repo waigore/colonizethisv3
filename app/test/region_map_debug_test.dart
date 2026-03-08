@@ -1,7 +1,6 @@
 // Widget and unit tests for CtRegionMapDebug and demo map data.
 // SPEC/ui/map-widget.md; coverage for lib/widgets/ (quality gate 80%).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -61,6 +60,7 @@ void main() {
       double cellSizePx = 28,
       void Function(String)? onProvinceSelected,
       void Function(String?)? onProvinceHovered,
+      String? highlightedTileKey,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -73,6 +73,7 @@ void main() {
               cellSizePx: cellSizePx,
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
+              highlightedTileKey: highlightedTileKey,
             ),
           ),
         ),
@@ -182,6 +183,25 @@ void main() {
 
       expect(find.byType(CtRegionMapDebug), findsOneWidget);
       expect(lastHoveredId, isNull);
+    });
+
+    testWidgets('builds with highlightedTileKey and paints secondary highlight',
+        (WidgetTester tester) async {
+      final region = buildDemoRegionMapViewData();
+      await tester.pumpWidget(buildMap(
+        region: region,
+        highlightedTileKey: '${region.regionId}|p1|2|3',
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(CtRegionMapDebug),
+          matching: find.byType(CustomPaint),
+        ),
+        findsAtLeastNWidgets(1),
+      );
     });
   });
 }
