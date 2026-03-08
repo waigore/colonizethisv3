@@ -117,7 +117,9 @@ void main() {
           reason: 'Fort should affect outcome when strengths are close');
     });
 
-    test('low attacker feeding coverage penalises strength via morale multiplier', () {
+    test(
+        'low attacker feeding coverage penalises strength via morale multiplier',
+        () {
       final attackerUnits = [
         Unit(
           id: 'a1',
@@ -162,31 +164,59 @@ void main() {
       expect(
         underfed.result == EngagementResult.attackerVictory,
         isFalse,
-        reason: 'Underfed attacker should not perform better than well-fed attacker',
+        reason:
+            'Underfed attacker should not perform better than well-fed attacker',
       );
     });
 
-    test('leader keys from Game produce correct multipliers in resolveEngagement path', () {
+    test(
+        'leader keys from Game produce correct multipliers in resolveEngagement path',
+        () {
       final attackerUnits = [
-        Unit(id: 'a1', type: 'grenadiers', ownerId: 'att', provinceId: 'p', medals: 2),
-        Unit(id: 'a2', type: 'grenadiers', ownerId: 'att', provinceId: 'p', medals: 1),
+        Unit(
+            id: 'a1',
+            type: 'grenadiers',
+            ownerId: 'att',
+            provinceId: 'p',
+            medals: 2),
+        Unit(
+            id: 'a2',
+            type: 'grenadiers',
+            ownerId: 'att',
+            provinceId: 'p',
+            medals: 1),
       ];
       final defenderUnits = [
-        Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'p', medals: 0),
+        Unit(
+            id: 'd1',
+            type: 'peasant_levies',
+            ownerId: 'def',
+            provinceId: 'p',
+            medals: 0),
       ];
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
-            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
             units: [...attackerUnits, ...defenderUnits],
           ),
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'att', displayName: 'France', isHuman: true, leaderKey: 'napoleon'),
-          Player(id: 'def', displayName: 'Prussia', isHuman: false, leaderKey: 'frederick'),
+          Player(
+              id: 'att',
+              displayName: 'France',
+              isHuman: true,
+              leaderKey: 'napoleon'),
+          Player(
+              id: 'def',
+              displayName: 'Prussia',
+              isHuman: false,
+              leaderKey: 'frederick'),
         ],
       );
       const ctx = BattleContext(
@@ -194,7 +224,9 @@ void main() {
         regionId: 'oldWorld',
         defenderFactionId: 'def',
         defenderUnitIds: ['d1'],
-        attackers: [AttackingSide(factionId: 'att', unitIds: ['a1', 'a2'])],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2'])
+        ],
         fortLevel: 0,
         terrain: 'plains',
       );
@@ -215,9 +247,24 @@ void main() {
               Province(id: 'N1', regionId: 'newWorld', ownerId: 'def'),
             ],
             units: const [
-              Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'N1', medals: 0),
-              Unit(id: 'a1', type: 'grenadiers', ownerId: 'att', provinceId: 'N1', medals: 3),
-              Unit(id: 'a2', type: 'grenadiers', ownerId: 'att', provinceId: 'N1', medals: 2),
+              Unit(
+                  id: 'd1',
+                  type: 'peasant_levies',
+                  ownerId: 'def',
+                  provinceId: 'N1',
+                  medals: 0),
+              Unit(
+                  id: 'a1',
+                  type: 'grenadiers',
+                  ownerId: 'att',
+                  provinceId: 'N1',
+                  medals: 3),
+              Unit(
+                  id: 'a2',
+                  type: 'grenadiers',
+                  ownerId: 'att',
+                  provinceId: 'N1',
+                  medals: 2),
             ],
           ),
         ),
@@ -232,7 +279,8 @@ void main() {
         defenderFactionId: 'def',
         defenderUnitIds: ['d1'],
         attackers: [
-          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2'], generalMedals: 0),
+          AttackingSide(
+              factionId: 'att', unitIds: ['a1', 'a2'], generalMedals: 0),
         ],
         fortLevel: 0,
         terrain: 'plains',
@@ -246,7 +294,9 @@ void main() {
       );
     });
 
-    test('deployment limit caps participating regiments per side (base 10, no Nationalism)', () {
+    test(
+        'deployment limit caps participating regiments per side (base 10, no Nationalism)',
+        () {
       // 15 attackers, 15 defenders; deployment limit 10 per side without Nationalism.
       final attackerUnits = List.generate(
         15,
@@ -273,7 +323,9 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
-            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
             units: [...attackerUnits, ...defenderUnits],
           ),
           newWorld: const RegionData(),
@@ -299,15 +351,24 @@ void main() {
         terrain: 'plains',
       );
       final result = resolveBattleContext(game, ctx);
-      final survivingAtt = result.worldState.oldWorld.units.where((u) => u.ownerId == 'att').length;
-      final survivingDef = result.worldState.oldWorld.units.where((u) => u.ownerId == 'def').length;
+      final survivingAtt = result.worldState.oldWorld.units
+          .where((u) => u.ownerId == 'att')
+          .length;
+      final survivingDef = result.worldState.oldWorld.units
+          .where((u) => u.ownerId == 'def')
+          .length;
       // Only 10 per side participate; so at least 5 attackers never participated and must survive.
-      expect(survivingAtt, greaterThanOrEqualTo(5), reason: 'deployment limit 10: at most 10 attackers participate, so ≥5 must remain');
+      expect(survivingAtt, greaterThanOrEqualTo(5),
+          reason:
+              'deployment limit 10: at most 10 attackers participate, so ≥5 must remain');
       // Defender had 15; at most 10 in engagement; so ≥5 defenders could survive if they win or stalemate.
-      expect(survivingAtt + survivingDef, greaterThanOrEqualTo(5), reason: 'at least one side has non-participants');
+      expect(survivingAtt + survivingDef, greaterThanOrEqualTo(5),
+          reason: 'at least one side has non-participants');
     });
 
-    test('deployment limit with Nationalism tech is 12 (attacker has 13 units, ≥1 does not participate)', () {
+    test(
+        'deployment limit with Nationalism tech is 12 (attacker has 13 units, ≥1 does not participate)',
+        () {
       final attackerUnits = List.generate(
         13,
         (i) => Unit(
@@ -319,20 +380,31 @@ void main() {
         ),
       );
       final defenderUnits = [
-        Unit(id: 'd1', type: 'peasant_levies', ownerId: 'def', provinceId: 'p', medals: 0),
+        Unit(
+            id: 'd1',
+            type: 'peasant_levies',
+            ownerId: 'def',
+            provinceId: 'p',
+            medals: 0),
       ];
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
-            provinces: const [Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')],
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
             units: [...attackerUnits, ...defenderUnits],
           ),
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'att', displayName: 'Att', isHuman: true, techUnlocked: {'nationalism': true}),
+          Player(
+              id: 'att',
+              displayName: 'Att',
+              isHuman: true,
+              techUnlocked: {'nationalism': true}),
           Player(id: 'def', displayName: 'Def', isHuman: false),
         ],
       );
@@ -352,9 +424,13 @@ void main() {
         terrain: 'plains',
       );
       final result = resolveBattleContext(game, ctx);
-      final survivingAtt = result.worldState.oldWorld.units.where((u) => u.ownerId == 'att').length;
+      final survivingAtt = result.worldState.oldWorld.units
+          .where((u) => u.ownerId == 'att')
+          .length;
       // With Nationalism, limit 12; 13 attackers so ≥1 does not participate and must survive.
-      expect(survivingAtt, greaterThanOrEqualTo(1), reason: 'deployment limit 12 with Nationalism: at most 12 participate');
+      expect(survivingAtt, greaterThanOrEqualTo(1),
+          reason:
+              'deployment limit 12 with Nationalism: at most 12 participate');
     });
   });
 
@@ -436,6 +512,19 @@ void main() {
         after.worldState.playerVisibilityByTile['att']?[tileKey],
         'fullyVisible',
       );
+    });
+
+    test('general medals provide morale aura bonus (5% per medal, max 20%)',
+        () {
+      expect(moraleMultiplierForGeneralMedals(0), 1.0);
+      expect(moraleMultiplierForGeneralMedals(1), 1.05);
+      expect(moraleMultiplierForGeneralMedals(2), 1.10);
+      expect(moraleMultiplierForGeneralMedals(3), 1.15);
+      expect(moraleMultiplierForGeneralMedals(4), 1.20);
+      expect(moraleMultiplierForGeneralMedals(5), 1.20,
+          reason: 'capped at 4 medals');
+      expect(moraleMultiplierForGeneralMedals(-1), 1.0,
+          reason: 'negative clamped to 0');
     });
   });
 }
