@@ -1,6 +1,6 @@
 # Pytool: Python image manipulation tools
 
-**SPEC/ui** — Python scripts under `pytool/` for UI asset processing. Used to refine main-menu pixel-art assets (e.g. button contrast and wood grain). Authority: [main-menu.md](main-menu.md) (pixel aesthetic, palette).
+**SPEC/ui** — Python scripts under `pytool/` for UI asset processing. Used to refine main-menu pixel-art assets (e.g. button contrast and wood grain) and to run the Wang tileset asset pipeline. Authority: [main-menu.md](main-menu.md) (pixel aesthetic, palette); [wang-tileset-and-assets.md](wang-tileset-and-assets.md) (tileset layers and tools).
 
 ---
 
@@ -8,6 +8,7 @@
 
 - **Path:** `pytool/` at repo root (sibling to `tool/`, `app/`).
 - **Venv:** The project uses a dedicated Python venv for pixel/image tools: **`.venv_pixel`** at repo root. Activate it before running any script, e.g. `source .venv_pixel/bin/activate`. Then install deps once: `pip install -r pytool/requirements.txt` (from repo root). Run scripts as below.
+- **Tileset pipeline (uv):** For the Wang tileset pipeline (Layer 1–4), use **uv** for dependency management: from repo root run `cd pytool && uv sync`, then `uv run pytool/tileset_terrain.py ...` (or from pytool: `uv run python tileset_terrain.py ...`). Layer 1–3 require **PIXELLAB_API_KEY**; Layer 4 (pack) does not. See [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
 
 ---
 
