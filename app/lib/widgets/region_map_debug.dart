@@ -23,6 +23,7 @@ class CtRegionMapDebug extends StatefulWidget {
     this.onProvinceSelected,
     this.onRegionViewChanged,
     this.onProvinceHovered,
+    this.highlightedTileKey,
   });
 
   final RegionMapViewData region;
@@ -31,6 +32,9 @@ class CtRegionMapDebug extends StatefulWidget {
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
+  /// When set, shows a secondary highlight over the tile (e.g. from overlay coordinate hover).
+  /// Format: regionId|provinceId|x|y. Only used when regionId matches and x,y are in bounds.
+  final String? highlightedTileKey;
 
   @override
   State<CtRegionMapDebug> createState() => _CtRegionMapDebugState();
@@ -152,6 +156,7 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
                 hoveredTileY: _hoveredTileY,
                 hoveredProvinceId: hoveredProvinceId,
                 hoverAnimationT: animationT,
+                highlightedTileKey: widget.highlightedTileKey,
               ),
             ),
           ),
@@ -170,6 +175,7 @@ class _RegionMapDebugPainter extends CustomPainter {
     this.hoveredTileY,
     this.hoveredProvinceId,
     this.hoverAnimationT = 0.0,
+    this.highlightedTileKey,
   });
 
   final RegionMapViewData region;
@@ -179,6 +185,7 @@ class _RegionMapDebugPainter extends CustomPainter {
   final int? hoveredTileY;
   final String? hoveredProvinceId;
   final double hoverAnimationT;
+  final String? highlightedTileKey;
 
   static const Color _seaColor = Color(0xFF003366);
   static const Color _provinceBorderColor = Colors.black;
@@ -187,6 +194,8 @@ class _RegionMapDebugPainter extends CustomPainter {
   static const double _factionBorderWidth = 2.0;
   static const Color _selectorColor = Color(0xFFFFFFFF);
   static const Color _hoverGlowColor = Color(0x88FFFFFF);
+  static const Color _highlightedTileColor = Color(0xFFFFAA00);
+  static const double _highlightedTileStrokeWidth = 2.5;
   static const double _selectorInset = 2.0;
   static const double _selectorStrokeWidth = 2.0;
   static const double _hoverGlowStrokeWidth = 3.0;
@@ -208,6 +217,28 @@ class _RegionMapDebugPainter extends CustomPainter {
     if (hoveredTileX != null && hoveredTileY != null) {
       _paintSelector(canvas);
     }
+    if (highlightedTileKey != null) {
+      _paintHighlightedTile(canvas);
+    }
+  }
+
+  void _paintHighlightedTile(Canvas canvas) {
+    final key = highlightedTileKey!;
+    final parts = key.split('|');
+    if (parts.length < 4) return;
+    if (parts[0] != region.regionId) return;
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) return;
+    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
+    final left = x * cellSize;
+    final top = y * cellSize;
+    final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _highlightedTileStrokeWidth
+      ..color = _highlightedTileColor;
+    canvas.drawRect(rect, paint);
   }
 
   void _paintTiles(Canvas canvas) {
@@ -434,6 +465,7 @@ class _RegionMapDebugPainter extends CustomPainter {
         old.hoveredTileX != hoveredTileX ||
         old.hoveredTileY != hoveredTileY ||
         old.hoveredProvinceId != hoveredProvinceId ||
-        old.hoverAnimationT != hoverAnimationT;
+        old.hoverAnimationT != hoverAnimationT ||
+        old.highlightedTileKey != highlightedTileKey;
   }
 }
