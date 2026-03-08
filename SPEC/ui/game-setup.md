@@ -38,6 +38,8 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
+**App flow after Start Game.** When the user taps Start Game, the shell builds GameSetupConfig and starts game initialization. The shell then shows the [Game Initializing](game-initializing.md) screen (discrete steps, one-way). On success the shell navigates to the [Empire overview](empire-overview.md) (in-game shell). On failure the shell navigates to the Main Menu (crash to home).
+
 **Automated tests.** Widget tests in `app/test/screen_spec_acceptance_test.dart` assert the acceptance criteria above (visibility, initial state, Start disabled until complete, no duplicate nations, leader follows nation, onStartGame/onBack payloads, loading state). Run: `flutter test test/screen_spec_acceptance_test.dart` from the app package.
 
 ---
