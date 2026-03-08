@@ -376,8 +376,7 @@ class Game {
         globalGameSeed,
         greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
         victory,
-        richesCashMultiplier,
-        Object.hashAll(politicalGlyphByPlayerId.entries),
+        Object.hash(richesCashMultiplier, Object.hashAll(politicalGlyphByPlayerId.entries)),
       );
 
   static bool _mapListEquals(Map<String, List<int>>? a, Map<String, List<int>>? b) {
