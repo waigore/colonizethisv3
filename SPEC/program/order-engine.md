@@ -22,6 +22,16 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 Returns validation results (accepted / rejected with reason) for UI feedback.
 
+### Validation components
+
+Move and work-order validation are delegated to dedicated components for single-responsibility and reuse:
+
+- **MoveValidator** (`validators/move_validator.dart`): Validates move orders per [orders.md](orders.md) § Move orders. Checks unit ownership, region/adjacency, civilian vs Great Power (Spy allowed), civilian vs Minor/Tribe (Explorer/Merchant/Spy allowed), war declaration for GP provinces, war declaration for military into Minor/Tribe provinces, and visibility. Used by OrderEngine in `validatePlayerOrdersWithContext` when validating move orders.
+
+- **WorkOrderCostCalculator** (`validators/work_order_cost_calculator.dart`): Computes work order material costs for a given target and tile (improvement/fort/road level). Returns null for steal_tech, counter_spy, purchase_land. Used by OrderEngine for work-order cost validation and for projecting work-order costs in the same validation pass.
+
+**Build validation (naval):** Build orders for naval units are validated for treasury, stockpile, and the **unlocking tech** for that ship type when applicable (see [tech-tree-naval.md](../game/tech-tree-naval.md)); starting ships such as Carrack have no prerequisite. OrderEngine validates before accepting.
+
 ---
 
 ## Per-Player Scope
@@ -98,6 +108,8 @@ The OrderEngine validates and stores **move, build, work, diplomatic, naval move
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns worker count, treasury delta, and when implemented unit locations and stockpile deltas for UI; no mutation of the passed-in game from the caller's perspective.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.
+- **Move validation (extracted):** Given a move order that violates civilian-into-GP or civilian-into-Minor/Tribe rules (per [orders.md](orders.md)), when validated with context, the result is rejected with reason "Civilian cannot enter other Great Power territory" or "Civilian cannot enter Minor/Tribe territory" as applicable. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
+- **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
 
 ---
 
