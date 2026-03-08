@@ -9,6 +9,7 @@ alwaysApply: false
 UI specs in `SPEC/ui/` derive from GDD/TDD (spec-required rule).
 
 - **Implementing UI:** Widgetbook story per new/changed component/screen; register in **widget catalog** (Ct-prefix, name, category, path/story). Keep catalog up to date for reuse.
+- **Mobile:** When designing screens, consider how layouts will appear on mobile from the start; see [SPEC/ui/mobile-adaptation.md](../SPEC/ui/mobile-adaptation.md). Provide at least one mobile viewport use case per screen; add a **mobile-only mockup** in Widgetbook when the mobile layout differs meaningfully (e.g. stacked vs row) so the mobile design can be reviewed in isolation.
 - **Wireframe:** Every UI spec has a wireframe; positions, layout, hierarchy visible to reviewers. Prefer UXD 07 schema (canvas, regions, positions, hierarchy).
 - **Components:** Define which components each screen uses (UXD 03, UXD 07). Use catalog; prefer reuse; new components: name, category, props, register. Reusable where pattern appears 2+ times.
 - **Behavior:** Define inputs, outputs, callbacks, user-visible outcomes; document in spec or interaction manifest (UXD 07).

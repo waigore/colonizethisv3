@@ -23,6 +23,9 @@ enum GameSetupState {
 /// Number of player slots. Slot 0 = human, 1..5 = AI. SPEC/ui/game-setup.md.
 const int _kNumSlots = 6;
 
+/// Viewport width below which slot rows use stacked layout. SPEC/ui/mobile-adaptation.md.
+const double _kNarrowBreakpoint = 500;
+
 /// Asset path for pixel-art variant (reuse main menu). SPEC/ui/game-setup.md.
 const String _kAssetButton = 'assets/images/ui_main_menu_button.png';
 
@@ -103,6 +106,8 @@ class _CtGameSetupState extends State<CtGameSetup> {
 
   @override
   Widget build(BuildContext context) {
+    final bool narrow =
+        MediaQuery.sizeOf(context).width < _kNarrowBreakpoint;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -120,7 +125,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 24),
-                    _buildSlots(context),
+                    _buildSlots(context, narrow: narrow),
                     const SizedBox(height: 24),
                     if (_isLoading)
                       Padding(
@@ -165,11 +170,11 @@ class _CtGameSetupState extends State<CtGameSetup> {
     );
   }
 
-  Widget _buildSlots(BuildContext context) {
+  Widget _buildSlots(BuildContext context, {required bool narrow}) {
     final rows = <Widget>[];
     for (var i = 0; i < _kNumSlots; i++) {
       final label = i == 0 ? 'Player 1 (You)' : 'Player ${i + 1} (AI)';
-      rows.add(_buildSlotRow(context, i, label));
+      rows.add(_buildSlotRow(context, i, label, narrow: narrow));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -178,7 +183,12 @@ class _CtGameSetupState extends State<CtGameSetup> {
     );
   }
 
-  Widget _buildSlotRow(BuildContext context, int slotIndex, String slotLabel) {
+  Widget _buildSlotRow(
+    BuildContext context,
+    int slotIndex,
+    String slotLabel, {
+    required bool narrow,
+  }) {
     final gpId = _orderedGpIdsBySlot[slotIndex];
     final gp = gpId.isEmpty ? null : widget.naming.gpById(gpId);
     final availableGpIds = _availableGpIdsForSlot(slotIndex);
@@ -187,6 +197,93 @@ class _CtGameSetupState extends State<CtGameSetup> {
         ? (_leaderVariantByGpId[gpId] ?? gp.defaultLeaderVariantId)
         : '';
 
+    final Widget labelWidget = Text(
+      slotLabel,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: slotIndex == 0 ? FontWeight.w600 : null,
+          ),
+    );
+
+    final Widget nationDropdown = DropdownButton<String>(
+      value: availableGpIds.contains(gpId) ? gpId : (availableGpIds.isNotEmpty ? availableGpIds.first : null),
+      isExpanded: true,
+      items: [
+        for (final id in availableGpIds)
+          DropdownMenuItem(
+            value: id,
+            child: Text(
+              id.isEmpty ? 'Select nation' : (widget.naming.gpById(id)?.countryName ?? id),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: _isLoading
+          ? null
+          : (value) {
+              if (value != null) {
+                if (value.isEmpty) {
+                  setState(() {
+                    _orderedGpIdsBySlot[slotIndex] = '';
+                  });
+                  return;
+                }
+                final newGp = widget.naming.gpById(value);
+                if (newGp != null) {
+                  setState(() {
+                    _orderedGpIdsBySlot[slotIndex] = value;
+                    _leaderVariantByGpId[value] = newGp.defaultLeaderVariantId;
+                  });
+                }
+              }
+            },
+    );
+
+    final Widget leaderDropdown = gpId.isEmpty
+        ? DropdownButton<String>(
+            value: '',
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: '', child: Text('Select leader')),
+            ],
+            onChanged: null,
+          )
+        : DropdownButton<String>(
+            value: variants.any((v) => v.id == currentVariantId) ? currentVariantId : (variants.isNotEmpty ? variants.first.id : null),
+            isExpanded: true,
+            items: [
+              for (final v in variants)
+                DropdownMenuItem(
+                  value: v.id,
+                  child: Text(v.name, overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            onChanged: _isLoading
+                ? null
+                : (value) {
+                    if (value != null) {
+                      setState(() => _leaderVariantByGpId[gpId] = value);
+                    }
+                  },
+          );
+
+    if (narrow) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            labelWidget,
+            const SizedBox(height: 4),
+            nationDropdown,
+            const SizedBox(height: 4),
+            leaderDropdown,
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -194,82 +291,12 @@ class _CtGameSetupState extends State<CtGameSetup> {
         children: [
           SizedBox(
             width: 100,
-            child: Text(
-              slotLabel,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: slotIndex == 0 ? FontWeight.w600 : null,
-                  ),
-            ),
+            child: labelWidget,
           ),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 1,
-            child: DropdownButton<String>(
-              value: availableGpIds.contains(gpId) ? gpId : (availableGpIds.isNotEmpty ? availableGpIds.first : null),
-              isExpanded: true,
-              items: [
-                for (final id in availableGpIds)
-                  DropdownMenuItem(
-                    value: id,
-                    child: Text(
-                      id.isEmpty ? 'Select nation' : (widget.naming.gpById(id)?.countryName ?? id),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: _isLoading
-                  ? null
-                  : (value) {
-                      if (value != null) {
-                        if (value.isEmpty) {
-                          setState(() {
-                            _orderedGpIdsBySlot[slotIndex] = '';
-                          });
-                          return;
-                        }
-                        final newGp = widget.naming.gpById(value);
-                        if (newGp != null) {
-                          setState(() {
-                            _orderedGpIdsBySlot[slotIndex] = value;
-                            _leaderVariantByGpId[value] = newGp.defaultLeaderVariantId;
-                          });
-                        }
-                      }
-                    },
-            ),
-          ),
+          Expanded(flex: 1, child: nationDropdown),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 1,
-            child: gpId.isEmpty
-                ? DropdownButton<String>(
-                    value: '',
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: '', child: Text('Select leader')),
-                    ],
-                    onChanged: null,
-                  )
-                : DropdownButton<String>(
-                    value: variants.any((v) => v.id == currentVariantId) ? currentVariantId : (variants.isNotEmpty ? variants.first.id : null),
-                    isExpanded: true,
-                    items: [
-                      for (final v in variants)
-                        DropdownMenuItem(
-                          value: v.id,
-                          child: Text(v.name, overflow: TextOverflow.ellipsis),
-                        ),
-                    ],
-                    onChanged: _isLoading
-                        ? null
-                        : (value) {
-                            if (value != null) {
-                              setState(() => _leaderVariantByGpId[gpId] = value);
-                            }
-                          },
-                  ),
-          ),
+          Expanded(flex: 1, child: leaderDropdown),
         ],
       ),
     );

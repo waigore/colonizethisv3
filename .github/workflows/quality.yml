@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # CI quality scope: packages + tool packages only (no app/ctdev UI tests). Full scope via tool/test_coverage.py locally.
+      # CI quality scope: packages, app (Flutter widget tests), tool packages. Full scope via tool/run_quality_gate_tests.sh locally.
       - name: Detect source changes
         id: changes
         uses: dorny/paths-filter@v3
@@ -24,6 +24,7 @@ jobs:
           filters: |
             tests:
               - 'packages/**'
+              - 'app/**'
               - 'ctterm/**'
               - 'tool/sim_scenarios/**'
               - 'tool/sim_combat_montecarlo/**'
@@ -59,7 +60,6 @@ jobs:
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
-      # Reduced scope: packages + tool packages only (app/ctdev run via tool/test_coverage.py locally).
       - name: Test packages (Dart)
         if: steps.changes.outputs.tests == 'true'
         env:
@@ -94,6 +94,20 @@ jobs:
             (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
             (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
           done
+
+      - name: Test app (Flutter)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          set -e
+          if [ -d app ]; then
+            (cd app && flutter test --coverage --reporter=compact)
+          fi
+
+      - name: App coverage gate (lib/widgets/ >= 80%)
+        if: steps.changes.outputs.tests == 'true'
+        run: tool/check_coverage_threshold.sh 80 app
 
       - name: Coverage gate (logic/map/ai >= 90%)
         if: steps.changes.outputs.tests == 'true'

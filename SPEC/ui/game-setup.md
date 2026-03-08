@@ -38,6 +38,8 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
+**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_test.dart` assert the acceptance criteria above (visibility, initial state, Start disabled until complete, no duplicate nations, leader follows nation, onStartGame/onBack payloads, loading state). Run: `flutter test test/screen_spec_acceptance_test.dart` from the app package.
+
 ---
 
 ## Wireframe
@@ -66,6 +68,8 @@ When the user has selected a nation and leader for every slot, Start Game become
 **Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); optional loading_region when state is loading.
 
 **Layout (pixel-art variant):** Content column constrained to **max width 400 dp**; Start/Back use main menu button asset. Content centered. Slots may scroll on small screens.
+
+**Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The screen scrolls (slots + buttons inside `SingleChildScrollView`). Below 500 dp width, each player-slot row uses a **stacked layout**: slot label on one line, nation dropdown full width, leader dropdown full width below. Above 500 dp, one row: label | nation | leader. Safe area and 44 dp touch targets apply.
 
 ---
 
