@@ -86,6 +86,13 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system initializes diplomatic relations at turn index 0  
   Then the system sets each unordered Great Power pair to relation state `AT_PEACE`, relation score `50`, relation level `Neutral`, and records `sinceTurn = 0` and `lastInteractionTurn = 0`.
 
+- Given a new game has started with Great Powers, Minor Nations, and Tribes  
+  When the system initializes diplomatic relations at turn index 0  
+  Then the system sets diplomatic relations **only between factions in the same region**:
+  - Old World: all pairs among Great Powers and Minor Nations (GP↔GP, GP↔Minor, Minor↔Minor) at `AT_PEACE`, score `50`
+  - New World: all pairs among Tribes (Tribe↔Tribe) at `AT_PEACE`, score `50`
+  - Cross-region pairs (GP/Minor ↔ Tribe) are **not initialized** (undiscovered/unknown)
+
 - Given the Player is a Great Power at relation state `AT_PEACE` with a target Great Power and the current turn index is an integer `t ≥ 0`  
   When the Player issues a `Declare War` diplomatic order targeting that Great Power in the Diplomacy phase of turn `t` and the order is valid  
   Then the system changes the relation state between the two Great Powers to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t`, and uses this `AT_WAR` state for all Movement and Combat validation during turn `t`.

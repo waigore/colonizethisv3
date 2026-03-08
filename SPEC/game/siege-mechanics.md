@@ -18,7 +18,23 @@ Engineers build forts on the town tile using `WorkOrder` target `build_fort`. Ea
 
 ## Wall Protection
 
-All damage to defenders on or behind the wall is reduced by a percentage based on fort level:
+All damage to defenders on or behind the wall is reduced by a percentage based on fort level.
+
+### Auto-resolve HP Soak
+
+In **auto-resolved combat**, the wall absorbs a fixed amount of damage (HP soak) before the remaining attacker strength affects the defender casualty ratio:
+
+| Fort Level | Wall HP | Description |
+|-----------|----------|-------------|
+| 1 (Wood) | 10 | Light wall absorbs 10 damage |
+| 2 (Stone) | 20 | Medium wall absorbs 20 damage |
+| 3 (Modern) | 30 | Heavy wall absorbs 30 damage |
+
+**Mechanism:** Attacker strength is first reduced by the wall HP value. Damage exceeding the wall HP is applied to the defender casualty ratio. Exact values are configurable in the ruleset (SPEC/program/combat-resolution.md, `combat_config.dart`).
+
+### Damage Reduction (Tactical Combat)
+
+In tactical/quick battle, damage to defenders on or behind the wall is reduced by percentage:
 
 | Fort Level  | Damage Reduction | Rationale             |
 | ----------- | ---------------- | --------------------- |

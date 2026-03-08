@@ -580,6 +580,13 @@ class OrderEngine {
                 status: OrderValidationStatus.rejected,
                 reason: 'Insufficient resources');
           }
+          final shipUnlockTech = unlockingTechByShipId[o.unitType];
+          if (shipUnlockTech != null &&
+              (player.techUnlocked?[shipUnlockTech] != true)) {
+            return const OrderValidationResult(
+                status: OrderValidationStatus.rejected,
+                reason: 'Insufficient tech');
+          }
           if (treasury < shipEcon.buildTreasuryCost) {
             return const OrderValidationResult(
                 status: OrderValidationStatus.rejected,

@@ -163,6 +163,7 @@ void main() {
         stockpile: const Stockpile(),
         workerPool: const WorkerPool(peasants: 0),
         treasury: 100,
+        techUnlocked: {'superior_hull_design': true},
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -229,6 +230,7 @@ void main() {
         capitalProvinceId: '$ow|P1',
         stockpile: stockpile,
         treasury: shipEcon.buildTreasuryCost * 2 + 10,
+        techUnlocked: {'superior_hull_design': true},
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -2123,6 +2125,64 @@ void main() {
       expect(next.worldState.oldWorld.units, isEmpty);
     });
 
+    test('skips ship build when tech not unlocked', () {
+      const shipTypeId = 'fluyte';
+      final shipEcon = ShipEconomyCatalog.byId[shipTypeId];
+      if (shipEcon == null ||
+          unlockingTechByShipId[shipTypeId] == null) return;
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
+      );
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1')
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|P1',
+            stockpile: stockpile,
+            treasury: shipEcon.buildTreasuryCost + 10,
+            techUnlocked: {}, // fluyte requires superior_hull_design
+          ),
+        ],
+      );
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: shipTypeId,
+              isMilitary: buildUnitCategoryForUnitType(shipTypeId) ==
+                  BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders, topology: topology);
+      expect(next.worldState.fleets, isEmpty);
+    });
+
     test('ship build with topology null does not add fleet', () {
       final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
       var stockpile = const Stockpile();
@@ -2137,6 +2197,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: shipEcon.buildTreasuryCost + 10,
+        techUnlocked: {'superior_hull_design': true},
       );
       final game = Game(
         id: 'g',
@@ -2191,6 +2252,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: shipEcon.buildTreasuryCost + 10,
+        techUnlocked: {'superior_hull_design': true},
       );
       final game = Game(
         id: 'g',
@@ -2245,6 +2307,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: shipEcon.buildTreasuryCost + 10,
+        techUnlocked: {'superior_hull_design': true},
       );
       final game = Game(
         id: 'g',

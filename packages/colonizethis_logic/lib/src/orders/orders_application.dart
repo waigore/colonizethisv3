@@ -393,6 +393,11 @@ Game applyBuildAndWorkOrders(
       } else if (category == BuildUnitCategory.naval) {
         final shipEcon = ShipEconomyCatalog.byId[order.unitType];
         if (shipEcon == null) continue;
+        final shipUnlockTechId = unlockingTechByShipId[order.unitType];
+        if (shipUnlockTechId != null &&
+            (player.techUnlocked?[shipUnlockTechId] != true)) {
+          continue;
+        }
         final capProvinceId = player.capitalProvinceId;
         if (capProvinceId == null) continue;
         if (treasury < shipEcon.buildTreasuryCost) continue;

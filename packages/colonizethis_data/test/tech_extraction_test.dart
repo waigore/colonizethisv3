@@ -61,4 +61,13 @@ void main() {
       );
     });
   });
+
+  group('unlockingTechByShipId', () {
+    test('fluyte requires superior_hull_design', () {
+      expect(unlockingTechByShipId['fluyte'], 'superior_hull_design');
+    });
+    test('carrack has no unlocking tech (buildable from start)', () {
+      expect(unlockingTechByShipId['carrack'], isNull);
+    });
+  });
 }
