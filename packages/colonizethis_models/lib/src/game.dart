@@ -86,6 +86,7 @@ class Game {
     this.greatPowerColorOverride,
     this.victory,
     this.richesCashMultiplier = 1.0,
+    this.politicalGlyphByPlayerId = const {},
   });
 
   final String id;
@@ -140,6 +141,10 @@ class Game {
   /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
   final double richesCashMultiplier;
 
+  /// 1-character political map glyph per faction id. Used by ctterm and other
+  /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
+  final Map<String, String> politicalGlyphByPlayerId;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'worldState': worldState.toJson(),
@@ -169,6 +174,8 @@ class Game {
         if (victory != null) 'victory': victory!.toJson(),
         if (richesCashMultiplier != 1.0) 'richesCashMultiplier': richesCashMultiplier,
         if (generals.isNotEmpty) 'generals': generals.map((e) => e.toJson()).toList(),
+        if (politicalGlyphByPlayerId.isNotEmpty)
+          'politicalGlyphByPlayerId': politicalGlyphByPlayerId,
       };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -236,6 +243,11 @@ class Game {
     final generals = generalsList
         .map((e) => General.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
+    final politicalGlyphRaw =
+        json['politicalGlyphByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final politicalGlyphByPlayerId = politicalGlyphRaw.map(
+      (k, v) => MapEntry(k.toString(), v.toString()),
+    );
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(Map<String, dynamic>.from(json['worldState'] as Map)),
@@ -263,6 +275,7 @@ class Game {
               ? VictoryState.fromJson(Map<String, dynamic>.from(json['victory'] as Map))
               : null,
       richesCashMultiplier: richesCashMultiplier,
+      politicalGlyphByPlayerId: politicalGlyphByPlayerId,
     );
   }
 
@@ -287,6 +300,7 @@ class Game {
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
     double? richesCashMultiplier,
+    Map<String, String>? politicalGlyphByPlayerId,
   }) {
     return Game(
       id: id ?? this.id,
@@ -309,6 +323,8 @@ class Game {
       greatPowerColorOverride: greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
       richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
+      politicalGlyphByPlayerId:
+          politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
     );
   }
 
@@ -336,7 +352,8 @@ class Game {
           globalGameSeed == other.globalGameSeed &&
           _mapListEquals(greatPowerColorOverride, other.greatPowerColorOverride) &&
           victory == other.victory &&
-          richesCashMultiplier == other.richesCashMultiplier;
+          richesCashMultiplier == other.richesCashMultiplier &&
+          _mapEquals(politicalGlyphByPlayerId, other.politicalGlyphByPlayerId);
 
   @override
   int get hashCode => Object.hash(
@@ -360,6 +377,7 @@ class Game {
         greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
         victory,
         richesCashMultiplier,
+        Object.hashAll(politicalGlyphByPlayerId.entries),
       );
 
   static bool _mapListEquals(Map<String, List<int>>? a, Map<String, List<int>>? b) {

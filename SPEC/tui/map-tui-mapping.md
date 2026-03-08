@@ -57,14 +57,22 @@ Resources are rendered using single-character glyphs so that the **Resources** m
 | Gems       | `e`       | Gems               |
 | Diamonds   | `d`       | Diamonds           |
 
-### Province ownership → Character prefix
+### Province ownership → Character (political layer)
 
-| Owner type | Prefix | Example |
-|------------|--------|---------|
-| Unclaimed/Wilderness | `·` | `·A` (province A) |
-| Great Power | First letter of GP ID (uppercase) | `FA` (France) |
-| Minor Nation | `m` + first letter | `mA` (Austria) |
-| Tribe | `t` + first letter | `tI` (Inuit) |
+The **political** map layer in ctterm uses **exactly one character per tile** so that the viewport shape is identical across all layers (terrain, political, resources, units). Ownership glyphs are **precomputed once per game** in the core model and persisted in the save (`Game.politicalGlyphByPlayerId`, keyed by player/faction id). Ctterm and other UIs **only read** this mapping; they do not recompute glyphs ad hoc.
+
+Glyph rules:
+
+- **Great Powers (GPs)** — one unique **uppercase letter A–Z** per GP:
+  - Start from the GP’s `Player.displayName` (e.g. `England`, `France`).
+  - Take the first letter (uppercased). If already used by another GP, scan the rest of the name left-to-right for an unused A–Z.
+  - If no unique letter exists in the name, pick any remaining unused A–Z.
+- **Minor Nations & Tribes** — single-character **digits then lowercase letters**:
+  - Order all non-GP owners deterministically (e.g. by id).
+  - Assign glyphs `1`, `2`, … up to `9`, then `a`, `b`, `c`, … for additional owners.
+- **Unclaimed/Wilderness** — always `·` (dot).
+
+The **Resources** and **Units** layers continue to use their own single-character glyphs per tile (see tables above and implementation in `map_tui_mapping.dart`). Full-width ASCII map renderers that are not constrained by the ctterm viewport (e.g. debug maps) may append separate capital/port markers while keeping the base ownership glyph single-character.
 
 ### Special markers
 

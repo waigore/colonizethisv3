@@ -64,6 +64,7 @@ void main() {
       );
     });
 
+
     test('tileColorFor applies improvement tint on resources layer', () {
       // Improved tile on resources layer, not highlighted -> green.
       final colorImproved = MapGridWidget.tileColorFor(

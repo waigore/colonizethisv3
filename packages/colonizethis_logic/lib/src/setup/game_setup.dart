@@ -276,6 +276,15 @@ GameSetupResult createGameFromGeneratedMaps({
     namingSeed: namingSeed ?? config.seed,
   );
 
+  // Compute 1-character political glyphs per faction for political map layer.
+  final politicalGlyphByPlayerId = _buildPoliticalGlyphByPlayerId(
+    game: game,
+    greatPowerIds: gpIds,
+    minorNationIds: minorIds,
+    tribeIds: tribeIds,
+  );
+  game = game.copyWith(politicalGlyphByPlayerId: politicalGlyphByPlayerId);
+
   // Spawn starting units for each Great Power in their capital provinces.
   game = _addStartingUnits(game: game, config: config);
 
@@ -299,6 +308,61 @@ GameSetupResult createGameFromGeneratedMaps({
     combinedTopology: combinedTopology,
     warpLinks: links,
   );
+}
+
+Map<String, String> _buildPoliticalGlyphByPlayerId({
+  required Game game,
+  required List<String> greatPowerIds,
+  required List<String> minorNationIds,
+  required List<String> tribeIds,
+}) {
+  final glyphs = <String, String>{};
+
+  String pickUpperForGp(String name, Set<String> used) {
+    final upper = name.toUpperCase();
+    for (var i = 0; i < upper.length; i++) {
+      final ch = upper[i];
+      if (ch.codeUnitAt(0) >= 'A'.codeUnitAt(0) &&
+          ch.codeUnitAt(0) <= 'Z'.codeUnitAt(0) &&
+          !used.contains(ch)) {
+        return ch;
+      }
+    }
+    for (var code = 'A'.codeUnitAt(0); code <= 'Z'.codeUnitAt(0); code++) {
+      final ch = String.fromCharCode(code);
+      if (!used.contains(ch)) return ch;
+    }
+    return 'X';
+  }
+
+  final usedUpper = <String>{};
+  for (final gpId in greatPowerIds) {
+    final player =
+        game.players.firstWhere((p) => p.id == gpId, orElse: () => game.players.first);
+    final glyph = pickUpperForGp(player.displayName, usedUpper);
+    glyphs[gpId] = glyph;
+    usedUpper.add(glyph);
+  }
+
+  final nonGpIds = <String>[
+    ...minorNationIds,
+    ...tribeIds,
+  ]..sort();
+
+  const digitGlyphs = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  for (var i = 0; i < nonGpIds.length; i++) {
+    String glyph;
+    if (i < digitGlyphs.length) {
+      glyph = digitGlyphs[i];
+    } else {
+      final letterIndex = i - digitGlyphs.length;
+      final baseCode = 'a'.codeUnitAt(0);
+      glyph = String.fromCharCode(baseCode + letterIndex);
+    }
+    glyphs[nonGpIds[i]] = glyph;
+  }
+
+  return glyphs;
 }
 
 /// Builds a single topology with prefixed node ids (regionId|localId) and warp edges.

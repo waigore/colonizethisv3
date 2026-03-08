@@ -87,8 +87,6 @@ class MapGridWidget extends StatelessComponent {
     final playerVisibilityByTile = humanPlayerId != null
         ? game.worldState.playerVisibilityByTile[humanPlayerId]
         : null;
-    final capitalTiles = getCapitalTiles(game);
-    final portTiles = getPortTiles(game.worldState);
     final unitSymbolByTileKey = layer == MapGridLayer.units
         ? buildUnitSymbolByTileKey(game, regionId)
         : null;
@@ -170,8 +168,11 @@ class MapGridWidget extends StatelessComponent {
             case MapGridLayer.political:
               final province = provincesById[fullProvinceId];
               final ownerId = province?.ownerId;
-              final playerType = getPlayerType(ownerId, game.players);
-              char = ownerToChar(ownerId, playerType);
+              if (ownerId != null) {
+                char = game.politicalGlyphByPlayerId[ownerId] ?? '·';
+              } else {
+                char = '·';
+              }
               break;
             case MapGridLayer.resources:
               final resource = tileMap.resourceAt(x, y);
@@ -218,7 +219,7 @@ class MapGridWidget extends StatelessComponent {
       case MapGridLayer.terrain:
         return '?=unexplored ~sea .plains ♣forest ^hills ▲mt ≈swamp ▒desert';
       case MapGridLayer.political:
-        return '?=unexplored ·unclaimed A–Z=GP mX=minor tX=tribe';
+        return '?=unexplored ·unclaimed A–Z=Great Powers 1–9/a–z=other owners';
       case MapGridLayer.resources:
         return '?=unexplored ~sea .plains ♣forest ^hills ▲mt ≈swamp ▒desert '
             'g=grain m=meat w=wool h=horses t=timber i=iron c=copper n=tin k=coal '
