@@ -1,0 +1,128 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../diplomacy/diplomacy_resolver.dart';
+import '../../world/movement.dart';
+import '../../world/player_view.dart';
+import '../../world/province_lookup.dart';
+import '../order_validation_result.dart';
+import '../order_visibility.dart';
+
+/// Validates move orders. SPEC/program/orders.md § Move orders.
+/// Used by OrderEngine in validatePlayerOrdersWithContext.
+class MoveValidator {
+  const MoveValidator();
+
+  OrderValidationResult validate(
+    MoveOrder order,
+    Game game,
+    String playerId,
+    Map<String, Unit> unitsById,
+    List<DiplomaticOrder> diplomaticOrders,
+    PlayerView view,
+    MapTopology topology,
+  ) {
+    final unit = unitsById[order.unitId];
+    if (unit == null || unit.ownerId != playerId) {
+      return const OrderValidationResult(
+          status: OrderValidationStatus.rejected, reason: 'Invalid move');
+    }
+    final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
+        ? Unit.requireRegionIdFromTileKey(unit.tileKey)
+        : ProvinceId.regionIdFrom(
+            resolveToFullProvinceId(game.worldState, unit.provinceId));
+    final destFullId =
+        resolveToFullProvinceId(game.worldState, order.destinationProvinceId);
+    final destRegion = ProvinceId.regionIdFrom(destFullId);
+    final destProvince = tryGetProvince(game.worldState, destFullId);
+    final destOwnerId = destProvince?.ownerId;
+    // Movement within own provinces: always allowed. SPEC/program/movement.md.
+    final moveToOwnProvince = destOwnerId == playerId;
+    if (!moveToOwnProvince && destRegion != unitRegion) {
+      return const OrderValidationResult(
+          status: OrderValidationStatus.rejected, reason: 'Invalid move');
+    }
+    if (!moveToOwnProvince) {
+      final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
+      final destLocalId = ProvinceId.localIdFrom(destFullId);
+      if (!isValidLandMoveInRegion(
+          topology, unitRegion, unitLocalId, destLocalId)) {
+        return const OrderValidationResult(
+            status: OrderValidationStatus.rejected, reason: 'Invalid move');
+      }
+    }
+
+    // Civilian vs foreign territory
+    if (!isMilitaryUnit(unit.type) &&
+        destOwnerId != null &&
+        destOwnerId != playerId) {
+      if (_ownerIsGreatPower(game, destOwnerId) && !isSpyUnit(unit.type)) {
+        return const OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason: 'Civilian cannot enter other Great Power territory');
+      }
+      if (_ownerIsMinorOrTribe(game, destOwnerId) &&
+          !isExplorerUnit(unit.type) &&
+          !isMerchantUnit(unit.type) &&
+          !isSpyUnit(unit.type)) {
+        return const OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason: 'Civilian cannot enter Minor/Tribe territory');
+      }
+    }
+
+    // Attack validation: GP province requires war or same-turn declareWar.
+    if (destOwnerId != null &&
+        destOwnerId != playerId &&
+        _ownerIsGreatPower(game, destOwnerId)) {
+      final rel = getRelation(game, playerId, destOwnerId);
+      final atWar = rel?.atWar ?? false;
+      final declaringWarThisTurn = diplomaticOrders.any((o) =>
+          o.type == DiplomaticOrderType.declareWar &&
+          o.targetFactionId == destOwnerId);
+      if (!atWar && !declaringWarThisTurn) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Must declare war before attacking Great Power province',
+        );
+      }
+    }
+
+    // Attack validation: Minor/Tribe province requires war for military units.
+    if (destOwnerId != null &&
+        destOwnerId != playerId &&
+        _ownerIsMinorOrTribe(game, destOwnerId) &&
+        isMilitaryUnit(unit.type)) {
+      final rel = getRelation(game, playerId, destOwnerId);
+      final atWar = rel?.atWar ?? false;
+      final declaringWarThisTurn = diplomaticOrders.any((o) =>
+          o.type == DiplomaticOrderType.declareWar &&
+          o.targetFactionId == destOwnerId);
+      if (!atWar && !declaringWarThisTurn) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason:
+              'Must declare war before attacking Minor Nation or Tribe province',
+        );
+      }
+    }
+
+    if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
+        !moveDestVisibilityOk(
+            view, destRegion, order.destinationProvinceId, unit.type)) {
+      return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Source or destination not visible');
+    }
+    return const OrderValidationResult(status: OrderValidationStatus.accepted);
+  }
+
+  bool _ownerIsGreatPower(Game game, String ownerId) {
+    return game.players.any((p) => p.id == ownerId);
+  }
+
+  bool _ownerIsMinorOrTribe(Game game, String ownerId) {
+    return game.minorNations.any((m) => m.id == ownerId) ||
+        game.tribes.any((t) => t.id == ownerId);
+  }
+}

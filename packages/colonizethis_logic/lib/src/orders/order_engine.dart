@@ -3,7 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../economy/economy_production.dart';
-import '../world/movement.dart';
 import '../world/naval.dart';
 import 'order_visibility.dart';
 import 'order_projections.dart';
@@ -12,26 +11,15 @@ import '../constants.dart';
 import '../world/province_lookup.dart';
 import 'projected_effects.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import 'order_validation_result.dart';
+export 'order_validation_result.dart';
+import 'validators/move_validator.dart';
+import 'validators/work_order_cost_calculator.dart';
 
 final Logger _log = Logger();
 
 /// Order engine: current-turn orders per player, validation, projected effects.
 /// SPEC/program/order-engine.md. Does not mutate world state.
-
-/// Validation result for one order. First invalid + all subsequent rejected.
-enum OrderValidationStatus { accepted, rejected }
-
-class OrderValidationResult {
-  const OrderValidationResult({
-    required this.status,
-    this.reason,
-  });
-
-  final OrderValidationStatus status;
-  final String? reason;
-
-  bool get isAccepted => status == OrderValidationStatus.accepted;
-}
 
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. No world state mutation.
@@ -365,118 +353,12 @@ class OrderEngine {
       }
     }
 
-    bool _ownerIsGreatPower(String? ownerId) {
-      if (ownerId == null) return false;
-      return game.players.any((p) => p.id == ownerId);
-    }
-
-    bool _ownerIsMinorOrTribe(String? ownerId) {
-      if (ownerId == null) return false;
-      return game.minorNations.any((m) => m.id == ownerId) ||
-          game.tribes.any((t) => t.id == ownerId);
-    }
+    const _moveValidator = MoveValidator();
 
     OrderValidationResult validateMove(MoveOrder o) {
-      final unit = unitsById[o.unitId];
-      if (unit == null || unit.ownerId != playerId) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
-          ? Unit.requireRegionIdFromTileKey(unit.tileKey)
-          : ProvinceId.regionIdFrom(
-              resolveToFullProvinceId(game.worldState, unit.provinceId));
-      final destFullId =
-          resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
-      final destRegion = ProvinceId.regionIdFrom(destFullId);
-      final destProvince = tryGetProvince(game.worldState, destFullId);
-      final destOwnerId = destProvince?.ownerId;
-      // Movement within own provinces: always allowed (no adjacency, no cargo, no region restriction). SPEC/program/movement.md.
-      final moveToOwnProvince = destOwnerId == playerId;
-      if (!moveToOwnProvince && destRegion != unitRegion) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Invalid move');
-      }
-      if (!moveToOwnProvince) {
-        final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
-        final destLocalId = ProvinceId.localIdFrom(destFullId);
-        if (!isValidLandMoveInRegion(
-            topology, unitRegion, unitLocalId, destLocalId)) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected, reason: 'Invalid move');
-        }
-      }
-      if (!isMilitaryUnit(unit.type) &&
-          destOwnerId != null &&
-          destOwnerId != playerId) {
-        if (_ownerIsGreatPower(destOwnerId) && !isSpyUnit(unit.type)) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Civilian cannot enter other Great Power territory');
-        }
-        if (_ownerIsMinorOrTribe(destOwnerId) &&
-            !isExplorerUnit(unit.type) &&
-            !isMerchantUnit(unit.type) &&
-            !isSpyUnit(unit.type)) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Civilian cannot enter Minor/Tribe territory');
-        }
-      }
-
-      // Attack validation: cannot move into another Great Power's province
-      // without war declared. SPEC/game/diplomacy.md: "Declare War: Requires
-      // AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn."
-      // Validation allows either an existing AT_WAR relation or a same-turn
-      // declareWar diplomatic order targeting that faction.
-      if (destOwnerId != null &&
-          destOwnerId != playerId &&
-          _ownerIsGreatPower(destOwnerId)) {
-        final rel = getRelation(game, playerId, destOwnerId);
-        final atWar = rel?.atWar ?? false;
-        final declaringWarThisTurn = diplomatic.any((o) =>
-            o.type == DiplomaticOrderType.declareWar &&
-            o.targetFactionId == destOwnerId);
-        if (!atWar && !declaringWarThisTurn) {
-          return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason:
-                'Must declare war before attacking Great Power province',
-          );
-        }
-      }
-
-      // Attack validation for Minor Nations and Tribes: war declaration required for military units
-      // SPEC/game/diplomacy.md line 19: "Minor Nations (Old World): Declaration of
-      // war required before attacking provinces or units."
-      // Civilian units (Explorer, Merchant, Spy) can enter without war declaration.
-      if (destOwnerId != null &&
-          destOwnerId != playerId &&
-          _ownerIsMinorOrTribe(destOwnerId) &&
-          isMilitaryUnit(unit.type)) {
-        final rel = getRelation(game, playerId, destOwnerId);
-        final atWar = rel?.atWar ?? false;
-        final declaringWarThisTurn = diplomatic.any((o) =>
-            o.type == DiplomaticOrderType.declareWar &&
-            o.targetFactionId == destOwnerId);
-        if (!atWar && !declaringWarThisTurn) {
-          return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason:
-                'Must declare war before attacking Minor Nation or Tribe province',
-          );
-        }
-      }
-
-      if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
-          !moveDestVisibilityOk(
-              view, destRegion, o.destinationProvinceId, unit.type)) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Source or destination not visible');
-      }
-      return const OrderValidationResult(
-          status: OrderValidationStatus.accepted);
+      return _moveValidator.validate(
+        o, game, playerId, unitsById, diplomatic, view, topology,
+      );
     }
 
     for (final o in moves) {
@@ -822,8 +704,9 @@ class OrderEngine {
                 reason: 'Modern Forts tech required for fort level 3');
           }
         }
-        final costMap = workOrderMaterialCost(
+        final costMap = WorkOrderCostCalculator(game).calculateCost(
           o.target,
+          o.targetTileKey,
           improvementLevel: improvementLevel,
           fortLevel: fortLevel,
           roadLevel: roadLevel,
@@ -877,19 +760,14 @@ class OrderEngine {
         } else if (unit != null &&
             o.target != 'steal_tech' &&
             o.target != 'counter_spy') {
-          final provId = Unit.provinceIdFromTileKey(o.targetTileKey);
-          final province =
-              provId != null ? tryGetProvince(game.worldState, provId) : null;
           final improvementLevel = o.target == 'build_improvement'
               ? game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;
-          final fortLevel = province?.fortLevel ?? 0;
-          final roadLevel =
-              game.worldState.tileState.roadLevel(o.targetTileKey);
-          final costMap = workOrderMaterialCost(o.target,
-              improvementLevel: improvementLevel,
-              fortLevel: fortLevel,
-              roadLevel: roadLevel);
+          final costMap = WorkOrderCostCalculator(game).calculateCost(
+            o.target,
+            o.targetTileKey,
+            improvementLevel: improvementLevel,
+          );
           if (costMap != null) {
             for (final entry in costMap.entries) {
               if (stockpile.quantityOf(entry.key) >= entry.value) {
