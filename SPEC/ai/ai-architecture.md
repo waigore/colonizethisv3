@@ -25,7 +25,7 @@ Characterful, deterministic AI using only observable game state. Difficulty affe
 
 Behavior trees pick top-level goals; utility AI scores and selects concrete objectives; tactical layer produces combat and movement orders.
 
-**Goal selection implementation:** Goal selection may be implemented as **weighted choice** over strategic goals (expand, defend, trade, conquer, tech, diplomacy) using personality weights, agenda modifiers, and situational snapshot. This satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure (sequences, selectors) is optional and may be used where designer-editable trees are desired.
+**Goal selection implementation:** Goal selection may be implemented as **weighted choice** over strategic goals (expand, defend, trade, conquer, tech, diplomacy) using personality weights, agenda modifiers, and situational snapshot. This satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure (sequences, selectors) is optional and may be used where designer-editable trees are desired. **Weighted choice is the current implemented approach**; strict behavior-tree structure is deferred to future phases when designer-editable AI trees are required (e.g. for mod support or external AI editors).
 
 ### Turn Pipeline (per AI Great Power)
 1. **Perception** — Derive observable snapshot: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
