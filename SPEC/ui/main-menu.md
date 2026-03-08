@@ -30,6 +30,8 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 **Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
+**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_test.dart` assert the acceptance criteria above (visibility, Load Game state/tooltip, callbacks). Run: `flutter test test/screen_spec_acceptance_test.dart` from the app package.
+
 ---
 
 ## Wireframe
@@ -57,6 +59,8 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 **Regions (UXD 07–style):** canvas full-screen; logo_region (top, title + optional subtitle); buttons_region (column: New Game, Load Game, Settings); footer_region (version text, Quit button).
 
 **Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code).
+
+**Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The main menu scrolls when the viewport is short (wrap content in `SingleChildScrollView`). No breakpoint layout change; vertical list suits narrow width. Safe area and 44 dp touch targets apply.
 
 ---
 

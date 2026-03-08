@@ -63,11 +63,13 @@ class CtMainMenu extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 2),
-                _buildLogo(context),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 48),
+                  _buildLogo(context),
                 if (_showAfterVictorySubtitle) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -78,7 +80,7 @@ class CtMainMenu extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ],
-                const Spacer(flex: 2),
+                const SizedBox(height: 32),
                 _MenuButton(
                   label: 'New Game',
                   variant: variant,
@@ -96,7 +98,7 @@ class CtMainMenu extends StatelessWidget {
                   variant: variant,
                   onPressed: onSettings,
                 ),
-                const Spacer(flex: 2),
+                const SizedBox(height: 32),
                 Text(
                   version,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -109,6 +111,7 @@ class CtMainMenu extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
               ],
+            ),
             ),
           ),
         ),

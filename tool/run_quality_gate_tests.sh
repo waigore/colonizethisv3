@@ -22,6 +22,9 @@ echo ""
 echo "=== Test app (Flutter) ==="
 if [ -d app ]; then
   (cd app && flutter test --coverage --reporter=compact)
+  echo ""
+  echo "=== App coverage gate (>= 80% for widget tests) ==="
+  "$ROOT/tool/check_coverage_threshold.sh" 80 app
 fi
 
 echo ""

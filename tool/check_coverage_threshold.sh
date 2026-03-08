@@ -27,6 +27,14 @@ for dir in "${TARGETS[@]}"; do
     echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.py first)"
     continue
   fi
+  # App: enforce threshold on widget-unit code only (lib/widgets/). See SPEC/program/test-logging.md.
+  if [ "$dir" = "app" ]; then
+    app_widgets="$ROOT/app/coverage/lcov_widgets.info"
+    lcov -q --extract "$lcov_file" 'lib/widgets/*' -o "$app_widgets" --ignore-errors empty,unused 2>/dev/null || true
+    if [ -s "$app_widgets" ]; then
+      lcov_file="$app_widgets"
+    fi
+  fi
   summary=$(lcov --summary "$lcov_file" 2>/dev/null) || true
   line_pct=$(echo "$summary" | grep -E '^\s*lines' | sed -E 's/.*: ([0-9.]+)%.*/\1/') || true
   if [ -z "$line_pct" ]; then

@@ -11,7 +11,21 @@ void main() {
   runApp(const CtWidgetbookApp());
 }
 
-/// Widgetbook app with colonial theme. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b.
+/// Simulated mobile viewport (360×640 dp) for layout verification. SPEC/ui/mobile-adaptation.md.
+Widget mobileViewport(BuildContext context, Widget child) {
+  const double width = 360;
+  const double height = 640;
+  return MediaQuery(
+    data: MediaQuery.of(context).copyWith(size: Size(width, height)),
+    child: SizedBox(
+      width: width,
+      height: height,
+      child: child,
+    ),
+  );
+}
+
+/// Widgetbook app with colonial theme. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b. Mobile viewport: SPEC/ui/mobile-adaptation.md.
 class CtWidgetbookApp extends StatelessWidget {
   const CtWidgetbookApp({super.key});
 
@@ -90,6 +104,21 @@ List<WidgetbookNode> get mainMenuDirectories => [
               onQuit: () {},
             ),
           ),
+          WidgetbookUseCase(
+            name: 'Default (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              CtMainMenu(
+                variant: MainMenuVariant.plain,
+                state: MainMenuState.default_,
+                version: 'v1.0.0',
+                onNewGame: () {},
+                onLoadGame: () {},
+                onSettings: () {},
+                onQuit: () {},
+              ),
+            ),
+          ),
         ],
       ),
     ];
@@ -148,6 +177,21 @@ List<WidgetbookNode> get gameSetupDirectories => [
               initialLeaderVariantByGpId: {},
               onStartGame: (_, __) {},
               onBack: () {},
+            ),
+          ),
+          WidgetbookUseCase(
+            name: 'Default (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              CtGameSetup(
+                variant: GameSetupVariant.plain,
+                state: GameSetupState.default_,
+                naming: defaultNamingConfig,
+                initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+                initialLeaderVariantByGpId: {},
+                onStartGame: (_, __) {},
+                onBack: () {},
+              ),
             ),
           ),
         ],

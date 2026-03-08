@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Testing
 
-- **Coverage:** 90% per package (enforce in CI, e.g. `tool/test_coverage.py`).
+- **Coverage:** 90% per package (enforce in CI, e.g. `tool/test_coverage.py`). **App:** 80% line coverage for **widget-unit code only** (`lib/widgets/`); entry points, config, providers, and features are excluded. Enforced by `tool/run_quality_gate_tests.sh` and `tool/check_coverage_threshold.sh 80 app` (see SPEC/program/test-logging.md).
 - **Layers:** **Unit** — pure logic, models, services (no Flutter/Flame); mock deps. **Widget** — Flutter; `flutter_test`, `pumpWidget`; mock state/providers. **Game/component** — Flame in isolation (minimal `FlameGame` + component); test `onLoad`, `update`, removal.
 - **Layout:** `test/` mirrors `lib/`; **`*_test.dart`**; group by feature or class.
 - **Mocks:** mockito or mocktail; for Flame use minimal game or mock `Game`.

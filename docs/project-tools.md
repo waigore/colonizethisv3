@@ -277,7 +277,7 @@ melos run check_gdd_coverage
 
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
 
 **Invocation**
 
