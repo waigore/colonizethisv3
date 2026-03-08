@@ -60,6 +60,7 @@ void main() {
       bool showPoliticalOverlay = true,
       double cellSizePx = 28,
       void Function(String)? onProvinceSelected,
+      void Function(String?)? onProvinceHovered,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -71,6 +72,7 @@ void main() {
               showPoliticalOverlay: showPoliticalOverlay,
               cellSizePx: cellSizePx,
               onProvinceSelected: onProvinceSelected,
+              onProvinceHovered: onProvinceHovered,
             ),
           ),
         ),
@@ -153,6 +155,33 @@ void main() {
       await tester.tapAt(center);
       await tester.pumpAndSettle();
       // No throw; callback is optional.
+    });
+
+    testWidgets('contains MouseRegion for hover', (WidgetTester tester) async {
+      final region = buildDemoRegionMapViewData();
+      await tester.pumpWidget(buildMap(region: region));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(CtRegionMapDebug),
+          matching: find.byType(MouseRegion),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('builds with onProvinceHovered callback', (WidgetTester tester) async {
+      final region = buildDemoRegionMapViewData();
+      String? lastHoveredId;
+      await tester.pumpWidget(buildMap(
+        region: region,
+        onProvinceHovered: (id) => lastHoveredId = id,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+      expect(lastHoveredId, isNull);
     });
   });
 }
