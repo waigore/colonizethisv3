@@ -98,6 +98,9 @@ Game resolveBattleContext(
         feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
     final attackerLeaderMult = leaderBonusForFaction(game, attacker.factionId);
     final defenderLeaderMult = leaderBonusForFaction(game, defenderFactionId);
+    final attackerGeneralMorale =
+        moraleMultiplierForGeneralMedals(attacker.generalMedals);
+    final defenderGeneralMorale = moraleMultiplierForGeneralMedals(0);
     final outcome = resolveEngagement(
       attackerUnits: cappedAttackerUnits,
       defenderUnits: cappedDefenderUnits,
@@ -105,8 +108,10 @@ Game resolveBattleContext(
       fortLevel: ctx.fortLevel,
       terrain: ctx.terrain,
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
-      attackerMoraleMultiplier: _moraleMultiplierForCoverage(attackerCoverage),
-      defenderMoraleMultiplier: _moraleMultiplierForCoverage(defenderCoverage),
+      attackerMoraleMultiplier: _moraleMultiplierForCoverage(attackerCoverage) *
+          attackerGeneralMorale,
+      defenderMoraleMultiplier: _moraleMultiplierForCoverage(defenderCoverage) *
+          defenderGeneralMorale,
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
@@ -480,4 +485,11 @@ double _moraleMultiplierForCoverage(double coverage) {
   if (coverage >= 1.0) return 1.0;
   if (coverage >= 0.5) return 0.75;
   return 0.5;
+}
+
+/// Morale aura from general medals. SPEC/game/military-generals.md:
+/// 5% per general medal, up to 20% (at 4 medals).
+double moraleMultiplierForGeneralMedals(int generalMedals) {
+  final capped = generalMedals.clamp(0, 4);
+  return 1.0 + (capped * 0.05);
 }
