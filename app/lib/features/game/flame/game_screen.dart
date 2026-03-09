@@ -101,6 +101,8 @@ class _GameMapArea extends StatefulWidget {
 class _GameMapAreaState extends State<_GameMapArea> {
   int _regionIndex = 0;
   String? _selectedDetailId;
+  String? _hoveredDetailId;
+  String? _hoveredTileKey;
   String? _highlightedTileKey;
 
   String get _humanPlayerId =>
@@ -109,6 +111,17 @@ class _GameMapAreaState extends State<_GameMapArea> {
 
   RegionMapViewData get _currentRegion =>
       _regionIndex == 0 ? widget.mapViewData.oldWorld : widget.mapViewData.newWorld;
+
+  /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
+  String get _displayId {
+    if (_hoveredTileKey != null) {
+      final parts = _hoveredTileKey!.split('|');
+      if (parts.length >= 2) {
+        return '${parts[0]}|${parts[1]}';
+      }
+    }
+    return _hoveredDetailId ?? _selectedDetailId ?? '';
+  }
 
   void _onProvinceSelected(String provinceId) {
     setState(() {
@@ -148,6 +161,8 @@ class _GameMapAreaState extends State<_GameMapArea> {
                   region: _currentRegion,
                   cellSizePx: 24,
                   onProvinceSelected: _onProvinceSelected,
+                  onProvinceHovered: (id) => setState(() => _hoveredDetailId = id),
+                  onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   highlightedTileKey: _highlightedTileKey,
                 ),
               ),
@@ -158,7 +173,9 @@ class _GameMapAreaState extends State<_GameMapArea> {
                     game: widget.game,
                     region: _currentRegion,
                     selectedId: _selectedDetailId!,
+                    displayId: _displayId,
                     humanPlayerId: _humanPlayerId,
+                    hoveredTileKey: _hoveredTileKey,
                     onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
                     onClose: () => setState(() => _selectedDetailId = null),
                   ),
@@ -173,7 +190,9 @@ class _GameMapAreaState extends State<_GameMapArea> {
               game: widget.game,
               region: _currentRegion,
               selectedId: _selectedDetailId!,
+              displayId: _displayId,
               humanPlayerId: _humanPlayerId,
+              hoveredTileKey: _hoveredTileKey,
               onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
               onClose: () => setState(() => _selectedDetailId = null),
             ),

@@ -329,6 +329,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                   game: game,
                   region: region,
                   selectedId: sampleProvinceIdForOverlay,
+                  displayId: sampleProvinceIdForOverlay,
                   humanPlayerId: game.players.first.id,
                   onClose: () {},
                 ),
@@ -347,6 +348,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                   game: game,
                   region: region,
                   selectedId: sampleSeaZoneIdForOverlay,
+                  displayId: sampleSeaZoneIdForOverlay,
                   humanPlayerId: game.players.first.id,
                   onClose: () {},
                 ),
@@ -365,6 +367,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                     game: game,
                     region: region,
                     selectedId: sampleProvinceIdForOverlay,
+                    displayId: sampleProvinceIdForOverlay,
                     humanPlayerId: game.players.first.id,
                     onClose: () {},
                   );
@@ -437,7 +440,19 @@ class _MapWithOverlayStory extends StatefulWidget {
 
 class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   late String _selectedId;
+  String? _hoveredDetailId;
+  String? _hoveredTileKey;
   String? _highlightedTileKey;
+
+  String get _displayId {
+    if (_hoveredTileKey != null) {
+      final parts = _hoveredTileKey!.split('|');
+      if (parts.length >= 2) {
+        return '${parts[0]}|${parts[1]}';
+      }
+    }
+    return _hoveredDetailId ?? _selectedId;
+  }
 
   @override
   void initState() {
@@ -470,6 +485,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
               cellSizePx: 28,
               onProvinceSelected: (id) =>
                   setState(() => _selectedId = _selectedId == id ? '' : id),
+              onProvinceHovered: (id) => setState(() => _hoveredDetailId = id),
+              onTileHovered: (key) => setState(() => _hoveredTileKey = key),
               highlightedTileKey: _highlightedTileKey,
             ),
           ),
@@ -480,7 +497,9 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                 game: game,
                 region: region,
                 selectedId: _selectedId,
+                displayId: _displayId,
                 humanPlayerId: 'gp1',
+                hoveredTileKey: _hoveredTileKey,
                 onHighlightTile: (k) =>
                     setState(() => _highlightedTileKey = k),
                 onClose: () => setState(() => _selectedId = ''),

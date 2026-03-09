@@ -12,9 +12,10 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 
 ## Interaction
 
-- **Open:** User taps/clicks a province or sea zone on the map. The overlay appears. Tapping the same selection again toggles the overlay closed.
-- **Close:** User taps the close button, or taps the same selection again.
+- **Open:** User taps/clicks a province or sea zone on the map. The overlay appears and stays open.
+- **Close:** User taps the close button, or taps the same province/sea zone again to toggle the overlay closed.
 - **Switch:** Tapping a different province/sea zone updates the overlay content to the new selection.
+- **Hover:** When the overlay is open, hovering over the map immediately updates the overlay to show the hovered province and, in the Tile section, the hovered tile’s details (coordinates, terrain, resources, prospected, improvements, roads/railroads, civilian units in province).
 - **Data context:** All data is from the human player's view (visibility, prospecting, etc.).
 
 ---
@@ -29,6 +30,18 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 ---
 
 ## Province Overlay Content
+
+### Tile (hovered tile details)
+
+When the user hovers a tile on the map (with overlay open), this section shows that tile’s information. When no tile is hovered, it shows “Hover a tile to see details.”
+
+- **Tile coordinates:** (x, y) in the region grid.
+- **Terrain type:** From the tile map (e.g. plains, forest, hills).
+- **Resource:** Resource id on that tile (or —).
+- **Prospected:** Yes/no for the human player.
+- **Improvement:** Improvement name and level (e.g. Farm L2) or —.
+- **Road / railroad:** Road level (none, primitive, improved, port or railroad).
+- **Civilian units (province):** Count of civilian units in the tile’s province.
 
 ### Political
 
