@@ -25,6 +25,7 @@ class CtRegionMapDebug extends StatefulWidget {
     this.onProvinceSelected,
     this.onRegionViewChanged,
     this.onProvinceHovered,
+    this.onTileHovered,
     this.highlightedTileKey,
   });
 
@@ -34,6 +35,8 @@ class CtRegionMapDebug extends StatefulWidget {
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
+  /// When set, overlay can show tile details. Called with tile key (regionId|provinceId|x|y) or null on exit.
+  final void Function(String? tileKey)? onTileHovered;
   /// When set, shows a secondary highlight over the tile (e.g. from overlay coordinate hover).
   /// Format: regionId|provinceId|x|y. Only used when regionId matches and x,y are in bounds.
   final String? highlightedTileKey;
@@ -232,6 +235,10 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
     if (prevId != nextId) {
       widget.onProvinceHovered?.call(nextId);
     }
+    final nextTileKey = nx != null && ny != null
+        ? '${region.regionId}|${region.cellAt(nx, ny).regionCellId}|$nx|$ny'
+        : null;
+    widget.onTileHovered?.call(nextTileKey);
     setState(() {
       _hoveredTileX = nx;
       _hoveredTileY = ny;
@@ -323,7 +330,7 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
                     transformationController: _transformationController,
                     panEnabled: false,
                     minScale: 0.25,
-                    maxScale: 4,
+                    maxScale: 1,
                     child: SizedBox(
                       width: mapWidth,
                       height: mapHeight,

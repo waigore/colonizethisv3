@@ -7,26 +7,35 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
+/// When [hoveredTileKey] is set, overlay shows that tile's info and uses its province for content;
+/// otherwise shows [displayId]. Hover updates content immediately when overlay is open.
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   const ProvinceSeaZoneDetailOverlay({
     super.key,
     required this.game,
     required this.region,
     required this.selectedId,
+    required this.displayId,
     required this.humanPlayerId,
+    this.hoveredTileKey,
     this.onHighlightTile,
     this.onClose,
   });
 
   final Game game;
   final RegionMapViewData region;
+  /// Pinned selection (click-to-toggle close).
   final String selectedId;
+  /// Province or sea zone id to display (hovered when overlay open, else selected).
+  final String displayId;
   final String humanPlayerId;
+  /// When set, tile section shows this tile's coords, terrain, resources, prospected, improvements, roads, civilian units.
+  final String? hoveredTileKey;
   final void Function(String? tileKey)? onHighlightTile;
   final VoidCallback? onClose;
 
-  bool get _isSeaZone {
-    final parts = selectedId.split('|');
+  bool _isSeaZone(String id) {
+    final parts = id.split('|');
     if (parts.length < 2) return false;
     if (parts[0] != region.regionId) return false;
     final localId = parts.skip(1).join('|');
@@ -39,17 +48,19 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
-    final content = _isSeaZone
+    final content = _isSeaZone(displayId)
         ? _seaZoneContent(
             game: game,
             region: region,
-            seaZoneId: selectedId,
+            seaZoneId: displayId,
+            hoveredTileKey: hoveredTileKey,
           )
         : _provinceContent(
             game: game,
             region: region,
-            provinceId: selectedId,
+            provinceId: displayId,
             humanPlayerId: humanPlayerId,
+            hoveredTileKey: hoveredTileKey,
             onHighlightTile: onHighlightTile,
           );
     return LayoutBuilder(
@@ -71,7 +82,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          _isSeaZone ? 'Sea zone' : 'Province',
+                          _isSeaZone(displayId) ? 'Sea zone' : 'Province',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -133,6 +144,7 @@ _OverlayContent _provinceContent({
   required RegionMapViewData region,
   required String provinceId,
   required String humanPlayerId,
+  String? hoveredTileKey,
   void Function(String?)? onHighlightTile,
 }) {
   final province = _findProvince(game, provinceId);
@@ -178,6 +190,14 @@ _OverlayContent _provinceContent({
     }
   }
 
+  final tileSection = _buildTileSection(
+    game: game,
+    region: region,
+    provinceId: provinceId,
+    humanPlayerId: humanPlayerId,
+    civilianCount: civilian.length,
+    hoveredTileKey: hoveredTileKey,
+  );
   final political = _buildPoliticalSection(
     name: province?.displayName ?? provinceId,
     ownerName: _ownerName(game, province?.ownerId),
@@ -195,6 +215,7 @@ _OverlayContent _provinceContent({
   final naval = _buildNavalSection(game, fleetsInPort);
 
   final tabs = [
+    const Tab(text: 'Tile'),
     const Tab(text: 'Political'),
     const Tab(text: 'Economic'),
     const Tab(text: 'Military'),
@@ -202,6 +223,7 @@ _OverlayContent _provinceContent({
     const Tab(text: 'Naval'),
   ];
   final tabViews = [
+    tileSection,
     political,
     economic,
     militarySection,
@@ -212,6 +234,7 @@ _OverlayContent _provinceContent({
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
+      tileSection,
       political,
       economic,
       militarySection,
@@ -219,13 +242,71 @@ _OverlayContent _provinceContent({
       naval,
     ],
   );
-  return _OverlayContent(tabCount: 5, tabs: tabs, tabViews: tabViews, sections: sections);
+  return _OverlayContent(tabCount: 6, tabs: tabs, tabViews: tabViews, sections: sections);
+}
+
+Widget _buildTileSection({
+  required Game game,
+  required RegionMapViewData region,
+  required String provinceId,
+  required String humanPlayerId,
+  required int civilianCount,
+  String? hoveredTileKey,
+}) {
+  if (hoveredTileKey == null) {
+    return _buildSection('Tile', const Text('Hover a tile to see details.'));
+  }
+  final parts = hoveredTileKey.split('|');
+  if (parts.length < 4 || parts[0] != region.regionId) {
+    return _buildSection('Tile', const Text('—'));
+  }
+  final x = int.tryParse(parts[2]) ?? 0;
+  final y = int.tryParse(parts[3]) ?? 0;
+  if (x < 0 || x >= region.width || y < 0 || y >= region.height) {
+    return _buildSection('Tile', const Text('—'));
+  }
+  final cell = region.cellAt(x, y);
+  final tileState = game.worldState.tileState;
+  final resourceByTile = game.worldState.resourceByTileKey;
+  final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
+  final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
+  final resource = resourceByTile[hoveredTileKey] ?? cell.resourceId ?? '—';
+  final isProspected = prospected.contains(hoveredTileKey);
+  final impLevel = tileState.improvementLevel(hoveredTileKey);
+  final roadLevel = cell.isSea ? null : tileState.roadLevel(hoveredTileKey);
+  final roadLabel = roadLevel == null
+      ? '—'
+      : switch (roadLevel) {
+          0 => 'none',
+          1 => 'primitive',
+          2 => 'improved',
+          4 => 'port or railroad',
+          _ => 'level $roadLevel',
+        };
+  final improvementName = impLevel > 0 && resource != '—'
+      ? _improvementNameForResource(resource)
+      : null;
+
+  return _buildSection('Tile', Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text('Coordinates: ($x, $y)'),
+      Text('Terrain: $terrainStr'),
+      Text('Resource: $resource'),
+      Text('Prospected: ${isProspected ? 'yes' : 'no'}'),
+      Text('Improvement: ${improvementName != null ? '$improvementName L$impLevel' : '—'}'),
+      Text('Road / railroad: $roadLabel'),
+      Text('Civilian units (province): $civilianCount'),
+    ],
+  ));
 }
 
 _OverlayContent _seaZoneContent({
   required Game game,
   required RegionMapViewData region,
   required String seaZoneId,
+  String? hoveredTileKey,
 }) {
   final parts = seaZoneId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : 'oldWorld';

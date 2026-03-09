@@ -37,6 +37,7 @@ void main() {
             game: game,
             region: region,
             selectedId: selectedId,
+            displayId: selectedId,
             humanPlayerId: game.players.first.id,
             onHighlightTile: onHighlightTile,
             onClose: onClose,
@@ -52,6 +53,7 @@ void main() {
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
       expect(find.text('Province'), findsOneWidget);
+      expect(find.text('Tile'), findsOneWidget);
       expect(find.text('Political'), findsOneWidget);
       expect(find.text('Economic'), findsOneWidget);
       expect(find.text('Military'), findsOneWidget);
@@ -127,6 +129,7 @@ void main() {
                 game: demoGameForOverlay,
                 region: demoRegionForOverlay,
                 selectedId: sampleProvinceIdForOverlay,
+                displayId: sampleProvinceIdForOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
@@ -155,6 +158,7 @@ void main() {
                 game: demoGameForOverlay,
                 region: demoRegionForOverlay,
                 selectedId: sampleProvinceIdForOverlay,
+                displayId: sampleProvinceIdForOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
@@ -196,6 +200,7 @@ void main() {
                     game: game,
                     region: demoRegionForOverlay,
                     selectedId: sampleProvinceIdForOverlay,
+                    displayId: sampleProvinceIdForOverlay,
                     humanPlayerId: game.players.first.id,
                     onClose: () {},
                   ),
@@ -240,6 +245,7 @@ void main() {
                           game: demoGameForOverlay,
                           region: demoRegionForOverlay,
                           selectedId: selectedId!,
+                          displayId: selectedId!,
                           humanPlayerId: demoGameForOverlay.players.first.id,
                           onClose: () => setState(() => selectedId = null),
                         ),
