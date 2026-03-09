@@ -192,7 +192,7 @@ class WorkOrderValidator {
           );
         }
       }
-      final cost = 15 * landPurchaseBasePrice(resourceId);
+      final cost = purchaseLandCost(resourceId);
       if (_treasury < cost) {
         return OrderValidationResult(
           status: OrderValidationStatus.rejected,
@@ -311,7 +311,7 @@ class WorkOrderValidator {
     if (o.target == 'purchase_land') {
       final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
       if (resourceId != null && resourceId.isNotEmpty) {
-        final cost = 15 * landPurchaseBasePrice(resourceId);
+        final cost = purchaseLandCost(resourceId);
         _treasury -= cost;
       }
     } else if (o.target != 'steal_tech' && o.target != 'counter_spy') {

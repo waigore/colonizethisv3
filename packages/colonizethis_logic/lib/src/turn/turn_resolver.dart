@@ -29,6 +29,7 @@ import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import 'combat_phase_helpers.dart';
 import 'end_of_turn_resolver.dart';
+import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 
 final Logger _log = Logger();
@@ -231,34 +232,15 @@ TurnResolutionResult resolveTurnForGame({
         state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
         break;
       case TurnPhase.research: {
-        final previousTechs = <String, Set<String>>{};
-        for (final p in state.players) {
-          final unlocked = p.techUnlocked ?? {};
-          previousTechs[p.id] = unlocked.entries
-              .where((e) => e.value)
-              .map((e) => e.key)
-              .toSet();
-        }
+        final stateBeforeResearch = state;
         state = resolveResearchPhase(state, orders);
-        // Emit research_complete events for newly completed techs
         if (onGameEvent != null) {
-          for (final player in state.players) {
-            final unlocked = player.techUnlocked ?? {};
-            final current = unlocked.entries
-                .where((e) => e.value)
-                .map((e) => e.key)
-                .toSet();
-            final previous = previousTechs[player.id] ?? {};
-            for (final tech in current) {
-              if (!previous.contains(tech)) {
-                onGameEvent(ResearchCompleteEvent(
-                  playerId: player.id,
-                  techId: tech,
-                  turnNumber: turn,
-                ));
-              }
-            }
-          }
+          emitResearchCompleteEvents(
+            stateBeforeResearch,
+            state,
+            turn,
+            onGameEvent,
+          );
         }
         break;
       }
@@ -285,20 +267,13 @@ TurnResolutionResult resolveTurnForGame({
           );
         }
         state = diploResult.game;
-        // Emit diplomacy_change events for changed relations
         if (onGameEvent != null) {
-          for (final rel in state.diplomacyRelations) {
-            final prev1 = previousRelations[rel.factionId1]?[rel.factionId2];
-            if (prev1 == null || prev1 != rel.state) {
-              // Emit for faction1
-              onGameEvent(DiplomacyChangeEvent(
-                actorId: rel.factionId1,
-                targetId: rel.factionId2,
-                changeType: rel.state.name,
-                turnNumber: turn,
-              ));
-            }
-          }
+          emitDiplomacyChangeEvents(
+            previousRelations,
+            state,
+            turn,
+            onGameEvent,
+          );
         }
         break;
       }
@@ -331,21 +306,13 @@ TurnResolutionResult resolveTurnForGame({
           onDialogue: onDialogue,
           onGameEvent: onGameEvent,
         );
-        // Emit province_captured events for changed ownership
         if (onGameEvent != null) {
-          for (final region in [state.worldState.oldWorld, state.worldState.newWorld]) {
-            for (final prov in region.provinces) {
-              final previousOwner = previousOwnership[prov.id];
-              if (previousOwner != null && previousOwner != prov.ownerId) {
-                onGameEvent(ProvinceCapturedEvent(
-                  provinceId: prov.id,
-                  previousOwnerId: previousOwner,
-                  newOwnerId: prov.ownerId ?? '',
-                  turnNumber: turn,
-                ));
-              }
-            }
-          }
+          emitProvinceCapturedEvents(
+            previousOwnership,
+            state,
+            turn,
+            onGameEvent,
+          );
         }
         break;
       }
@@ -360,14 +327,7 @@ TurnResolutionResult resolveTurnForGame({
         break;
       case TurnPhase.endOfTurn: {
         state = runEndOfTurnPhase(state, onDialogue: onDialogue);
-        // Emit victory_set event if victory is set
-        if (onGameEvent != null && state.victory != null) {
-          onGameEvent(VictorySetEvent(
-            winnerPlayerId: state.victory!.winnerPlayerId,
-            victoryType: state.victory!.type.name,
-            turnNumber: turn,
-          ));
-        }
+        emitVictorySetEvent(state, turn, onGameEvent);
         break;
       }
     }

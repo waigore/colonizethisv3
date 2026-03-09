@@ -6,6 +6,8 @@ import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
+import '../economy/build_cost.dart';
+import 'orders_application_helpers.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
@@ -54,47 +56,6 @@ Game applyBuildAndWorkOrders(
       Map<String, String>.from(game.worldState.purchasedTilesByTileKey);
   var oldProvinces = List<Province>.from(game.worldState.oldWorld.provinces);
   var newProvinces = List<Province>.from(game.worldState.newWorld.provinces);
-
-  bool isMineralEligibleTile(String tileKey) {
-    const mineralTerrains = {
-      TerrainType.swamp,
-      TerrainType.hills,
-      TerrainType.mountain,
-      TerrainType.desert,
-    };
-
-    if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
-      final parts = tileKey.split('|');
-      if (parts.length == 4) {
-        final regionId = parts[0];
-        final x = int.tryParse(parts[2]);
-        final y = int.tryParse(parts[3]);
-        final tileMap = tileMapByRegion[regionId];
-        if (tileMap != null && x != null && y != null) {
-          final terrain = tileMap.terrainAt(x, y);
-          if (terrain != null) {
-            return mineralTerrains.contains(terrain);
-          }
-        }
-      }
-    }
-
-    final resourceId = game.worldState.resourceByTileKey[tileKey];
-    if (resourceId == null || resourceId.isEmpty) {
-      return false;
-    }
-    const mineralIds = {
-      'iron',
-      'copper',
-      'tin',
-      'coal',
-      'silver',
-      'gold',
-      'gems',
-      'diamonds',
-    };
-    return mineralIds.contains(resourceId);
-  }
 
   void applyExploreCompletion(Unit u, String regionId) {
     final cw = u.currentWork!;
@@ -358,63 +319,28 @@ Game applyBuildAndWorkOrders(
     var workers = player.workerPool;
     var treasury = player.treasury;
 
-    // Build units for this player. Branch on unit type category (civilian / military / naval).
+    // Build units for this player. Shared cost rules: build_cost.canAffordBuild / applyBuildCostDeduction.
     for (final order in buildOrders[player.id] ?? const []) {
       final category = buildUnitCategoryForUnitType(order.unitType);
       if (category == BuildUnitCategory.unknown) continue;
 
-      if (category == BuildUnitCategory.military) {
-        final econ = RegimentEconomyCatalog.byId[order.unitType];
-        if (econ == null) continue;
+      final check = canAffordBuild(player, order, workers, stockpile, treasury);
+      if (!check.canAfford) continue;
 
-        final techUnlocked = player.techUnlocked ?? const {};
-        final unlockingTechId = unlockingTechByRegimentId[order.unitType];
-        if (unlockingTechId != null && techUnlocked[unlockingTechId] != true) {
-          continue;
-        }
+      final after = applyBuildCostDeduction(
+        player,
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
+      workers = after.workers;
+      stockpile = after.stockpile;
+      treasury = after.treasury;
 
-        if (workers.peasants <= 0) continue;
-        if (treasury < econ.buildTreasuryCost) continue;
-
-        var hasAllInputs = true;
-        for (final entry in econ.buildInputs.entries) {
-          if (stockpile.quantityOf(entry.key) < entry.value) {
-            hasAllInputs = false;
-            break;
-          }
-        }
-        if (!hasAllInputs) continue;
-
-        treasury -= econ.buildTreasuryCost;
-        for (final entry in econ.buildInputs.entries) {
-          stockpile = stockpile.applyDelta(entry.key, -entry.value);
-        }
-        workers = workers.copyWith(peasants: workers.peasants - 1);
-      } else if (category == BuildUnitCategory.naval) {
-        final shipEcon = ShipEconomyCatalog.byId[order.unitType];
-        if (shipEcon == null) continue;
-        final shipUnlockTechId = unlockingTechByShipId[order.unitType];
-        if (shipUnlockTechId != null &&
-            (player.techUnlocked?[shipUnlockTechId] != true)) {
-          continue;
-        }
+      if (category == BuildUnitCategory.naval) {
         final capProvinceId = player.capitalProvinceId;
         if (capProvinceId == null) continue;
-        if (treasury < shipEcon.buildTreasuryCost) continue;
-        var hasAllInputs = true;
-        for (final entry in shipEcon.buildInputs.entries) {
-          if (stockpile.quantityOf(entry.key) < entry.value) {
-            hasAllInputs = false;
-            break;
-          }
-        }
-        if (!hasAllInputs) continue;
-
-        treasury -= shipEcon.buildTreasuryCost;
-        for (final entry in shipEcon.buildInputs.entries) {
-          stockpile = stockpile.applyDelta(entry.key, -entry.value);
-        }
-
         final regionId = ProvinceId.regionIdFrom(capProvinceId);
         final seaZoneId = topology != null
             ? seaZoneIdForProvince(
@@ -448,29 +374,6 @@ Game applyBuildAndWorkOrders(
           worldState: game.worldState.copyWith(fleets: fleets),
         );
         continue;
-      } else if (category == BuildUnitCategory.civilian) {
-        final econ = CivilianEconomyCatalog.byId[order.unitType];
-        if (econ == null) continue;
-
-        final unlockingTechId = unlockingTechByCivilianId[order.unitType];
-        if (unlockingTechId != null &&
-            (player.techUnlocked?[unlockingTechId] != true)) {
-          continue;
-        }
-        if (treasury < econ.buildTreasuryCost) continue;
-        var hasAllInputs = true;
-        for (final entry in econ.buildInputs.entries) {
-          if (stockpile.quantityOf(entry.key) < entry.value) {
-            hasAllInputs = false;
-            break;
-          }
-        }
-        if (!hasAllInputs) continue;
-
-        treasury -= econ.buildTreasuryCost;
-        for (final entry in econ.buildInputs.entries) {
-          stockpile = stockpile.applyDelta(entry.key, -entry.value);
-        }
       }
 
       // Spawn unit for military and civilian (naval already continued above).
@@ -680,7 +583,7 @@ Game applyBuildAndWorkOrders(
             continue;
           }
 
-          final cost = 15 * landPurchaseBasePrice(resourceId);
+          final cost = purchaseLandCost(resourceId);
           if (treasury >= cost) {
             treasury -= cost;
             purchasedTilesByTileKey[targetTileKey] = player.id;
@@ -736,7 +639,7 @@ Game applyBuildAndWorkOrders(
       if (order.target == 'prospect' &&
           hasValidTarget &&
           isExplorerUnit(u.type) &&
-          isMineralEligibleTile(targetTileKey)) {
+          isMineralEligibleTile(game, tileMapByRegion, targetTileKey)) {
         final existing =
             game.worldState.playerProspectedTiles[player.id] ?? const {};
         final newProspected = Set<String>.from(existing)..add(targetTileKey);

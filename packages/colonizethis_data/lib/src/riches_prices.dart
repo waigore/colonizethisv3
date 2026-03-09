@@ -51,3 +51,9 @@ int landPurchaseBasePrice(CommodityId id) {
   if (richesPrice > 0) return richesPrice;
   return landPurchaseDefaultBasePrice;
 }
+
+/// Total treasury cost for purchase_land on a tile with [resourceId]. SPEC/game/civilian-units.md.
+/// Formula: 15 × base price (single source of truth for validation and application).
+int purchaseLandCost(String resourceId) {
+  return 15 * landPurchaseBasePrice(resourceId);
+}
