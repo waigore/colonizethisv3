@@ -1,0 +1,89 @@
+// Demo players for ProductionPanel Widgetbook. SPEC/ui/production-panel.md.
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+
+/// Full stockpile: enough of every commodity for recipes (and worker luxuries).
+Stockpile get _fullStockpile => Stockpile(
+      quantities: {
+        CommodityCatalog.grain.id: 200,
+        CommodityCatalog.meat.id: 200,
+        CommodityCatalog.timber.id: 100,
+        CommodityCatalog.iron.id: 100,
+        CommodityCatalog.wool.id: 80,
+        CommodityCatalog.cotton.id: 80,
+        CommodityCatalog.coal.id: 60,
+        CommodityCatalog.sugarCane.id: 80,
+        CommodityCatalog.refinedSugar.id: 50,
+        CommodityCatalog.cigars.id: 20,
+        CommodityCatalog.furHats.id: 20,
+      },
+    );
+
+/// All worker tiers present; effective labour is high.
+WorkerPool get _fullWorkerPool => const WorkerPool(
+      peasants: 10,
+      apprentices: 5,
+      journeymen: 2,
+      masters: 1,
+    );
+
+/// Player with abundant resources and workers for "full availability" story.
+Player fullAvailabilityProductionPlayer() {
+  final game = demoGameForOverlay;
+  final base = game.players.isNotEmpty ? game.players.first : null;
+  if (base == null) {
+    return Player(
+      id: 'demo',
+      displayName: 'Demo',
+      isHuman: true,
+      stockpile: _fullStockpile,
+      workerPool: _fullWorkerPool,
+    );
+  }
+  return base.copyWith(
+    stockpile: _fullStockpile,
+    workerPool: _fullWorkerPool,
+  );
+}
+
+/// Limited stockpile: only enough for a few runs of some recipes.
+Stockpile get _partialStockpile => Stockpile(
+      quantities: {
+        CommodityCatalog.grain.id: 10,
+        CommodityCatalog.timber.id: 6,
+        CommodityCatalog.iron.id: 4,
+        CommodityCatalog.coal.id: 2,
+        CommodityCatalog.wool.id: 2,
+        CommodityCatalog.sugarCane.id: 4,
+      },
+    );
+
+/// Few workers, peasants only — effective labour = 2.
+WorkerPool get _partialWorkerPool => const WorkerPool(
+      peasants: 2,
+      apprentices: 0,
+      journeymen: 0,
+      masters: 0,
+    );
+
+/// Player with limited resources and workers for "partial availability" story.
+Player partialAvailabilityProductionPlayer() {
+  final game = demoGameForOverlay;
+  final base = game.players.isNotEmpty ? game.players.first : null;
+  if (base == null) {
+    return Player(
+      id: 'demo',
+      displayName: 'Demo',
+      isHuman: true,
+      stockpile: _partialStockpile,
+      workerPool: _partialWorkerPool,
+    );
+  }
+  return base.copyWith(
+    stockpile: _partialStockpile,
+    workerPool: _partialWorkerPool,
+  );
+}
