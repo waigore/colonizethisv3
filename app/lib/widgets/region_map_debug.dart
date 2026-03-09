@@ -27,6 +27,7 @@ class CtRegionMapDebug extends StatefulWidget {
     this.onProvinceHovered,
     this.onTileHovered,
     this.highlightedTileKey,
+    this.centerOnTileKey,
   });
 
   final RegionMapViewData region;
@@ -40,6 +41,10 @@ class CtRegionMapDebug extends StatefulWidget {
   /// When set, shows a secondary highlight over the tile (e.g. from overlay coordinate hover).
   /// Format: regionId|provinceId|x|y. Only used when regionId matches and x,y are in bounds.
   final String? highlightedTileKey;
+
+  /// When set (and matching this region), the map pans so this tile is centered in the viewport.
+  /// Format: regionId|provinceId|x|y. Applied once when value changes; cleared by caller if needed.
+  final String? centerOnTileKey;
 
   @override
   State<CtRegionMapDebug> createState() => _CtRegionMapDebugState();
@@ -99,6 +104,40 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
       _hoverAnimationController.stop();
       _hoverAnimationController.reset();
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant CtRegionMapDebug oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.centerOnTileKey != oldWidget.centerOnTileKey &&
+        widget.centerOnTileKey != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _applyCenterOnTileKey(widget.centerOnTileKey!);
+      });
+    }
+  }
+
+  void _applyCenterOnTileKey(String tileKey) {
+    final parts = tileKey.split('|');
+    if (parts.length < 4) return;
+    if (parts[0] != widget.region.regionId) return;
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) return;
+    if (x < 0 || x >= widget.region.width || y < 0 || y >= widget.region.height) return;
+    if (_viewportWidth <= 0 || _viewportHeight <= 0) return;
+    final cellSizePx = widget.cellSizePx;
+    final sceneX = x * cellSizePx + cellSizePx / 2;
+    final sceneY = y * cellSizePx + cellSizePx / 2;
+    final scale = _transformationController.value.storage[0];
+    final tx = _viewportWidth / 2 - sceneX * scale;
+    final ty = _viewportHeight / 2 - sceneY * scale;
+    final m = Matrix4.identity()..scale(scale, scale, 1.0);
+    m.storage[12] = tx;
+    m.storage[13] = ty;
+    _clampAndApplyTransformation(m.clone());
+    _transformationController.value = m;
   }
 
   @override
