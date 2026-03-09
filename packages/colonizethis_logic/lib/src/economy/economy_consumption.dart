@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import 'worker_economy.dart';
+
 final Logger _log = Logger();
 
 /// Consumption resolution helpers.
@@ -41,44 +43,17 @@ ConsumptionResult resolveConsumption({
 }) {
   Stockpile current = stockpile;
 
-  int consumeFood(int required) {
-    var remaining = required;
-    final grainId = CommodityCatalog.grain.id;
-    final meatId = CommodityCatalog.meat.id;
-
-    final grainAvailable = current.quantityOf(grainId);
-    final meatAvailable = current.quantityOf(meatId);
-
-    final grainToUse = remaining <= 0
-        ? 0
-        : remaining <= grainAvailable
-            ? remaining
-            : grainAvailable;
-    if (grainToUse > 0) {
-      current = current.applyDelta(grainId, -grainToUse);
-      remaining -= grainToUse;
-    }
-
-    final meatToUse = remaining <= 0
-        ? 0
-        : remaining <= meatAvailable
-            ? remaining
-            : meatAvailable;
-    if (meatToUse > 0) {
-      current = current.applyDelta(meatId, -meatToUse);
-      remaining -= meatToUse;
-    }
-
-    return required - remaining;
-  }
-
   int feedGroup({
     required int count,
     required int foodPerUnit,
   }) {
     if (count <= 0 || foodPerUnit <= 0) return count;
     final requiredFood = count * foodPerUnit;
-    final consumed = consumeFood(requiredFood);
+    final (nextStockpile, consumed) = consumeFoodUnits(
+      stockpile: current,
+      required: requiredFood,
+    );
+    current = nextStockpile;
     final fed = consumed ~/ foodPerUnit;
     return fed;
   }
@@ -108,7 +83,11 @@ ConsumptionResult resolveConsumption({
 
   int fullyFedRegiments = 0;
   if (totalFoodDemand > 0 && totalRegiments > 0) {
-    final consumedForMilitary = consumeFood(totalFoodDemand);
+    final (nextStockpile, consumedForMilitary) = consumeFoodUnits(
+      stockpile: current,
+      required: totalFoodDemand,
+    );
+    current = nextStockpile;
     // Approximate fully-fed regiments using average food per regiment.
     final avgFoodPerRegiment =
         (totalFoodDemand + totalRegiments - 1) ~/ totalRegiments; // ceil
@@ -140,45 +119,9 @@ ConsumptionResult resolveConsumption({
     masters: fedMasters,
   );
 
-  // --- Luxury consumption for trained workers ---
-  // SPEC/game/workers-and-population.md § Luxury consumption:
-  // - Apprentice → refinedSugar, Journeyman → cigars, Master → furHats.
-  // - During the Consumption phase, deduct up to 1 unit of the tier luxury
-  //   per surviving worker of that tier, capped by stockpile.
-  int _deductLuxury({
-    required int workerCount,
-    required CommodityId luxuryId,
-  }) {
-    if (workerCount <= 0) {
-      return 0;
-    }
-    final available = current.quantityOf(luxuryId);
-    if (available <= 0) {
-      return 0;
-    }
-    final toUse = workerCount < available ? workerCount : available;
-    if (toUse <= 0) {
-      return 0;
-    }
-    current = current.applyDelta(luxuryId, -toUse);
-    return toUse;
-  }
-
-  final refinedSugarId = CommodityCatalog.refinedSugar.id;
-  final cigarsId = CommodityCatalog.cigars.id;
-  final furHatsId = CommodityCatalog.furHats.id;
-
-  _deductLuxury(
-    workerCount: updatedWorkers.apprentices,
-    luxuryId: refinedSugarId,
-  );
-  _deductLuxury(
-    workerCount: updatedWorkers.journeymen,
-    luxuryId: cigarsId,
-  );
-  _deductLuxury(
-    workerCount: updatedWorkers.masters,
-    luxuryId: furHatsId,
+  current = deductLuxuryForWorkers(
+    stockpile: current,
+    workers: updatedWorkers,
   );
 
   _log.d(
@@ -191,4 +134,3 @@ ConsumptionResult resolveConsumption({
     fullyFedRegiments: fullyFedRegiments,
   );
 }
-

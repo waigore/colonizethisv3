@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const int _defaultResearchSlots = 3;
+import 'research_rules.dart';
 
 /// Research phase resolution. SPEC/program/research-resolution.md.
 Game resolveResearchPhase(Game game, Orders orders) {
@@ -21,7 +21,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
       continue;
     }
 
-    final slots = player.researchSlots ?? _defaultResearchSlots;
+    final slots = player.researchSlots ?? defaultResearchSlots;
     if (slots <= 0) {
       updatedPlayers.add(player);
       continue;
@@ -35,37 +35,6 @@ Game resolveResearchPhase(Game game, Orders orders) {
       player.researchProgressByTechId ?? const <String, int>{},
     );
     var treasury = player.treasury;
-
-    int _pointsForFunding(ResearchFundingLevel level) {
-      switch (level) {
-        case ResearchFundingLevel.none:
-          return 0;
-        case ResearchFundingLevel.low:
-          return 100;
-        case ResearchFundingLevel.medium:
-          return 300;
-        case ResearchFundingLevel.high:
-          return 800;
-        case ResearchFundingLevel.maximum:
-          // Maximum funding has 2.5x efficiency bonus
-          return 2500;
-      }
-    }
-
-    int _treasuryForFunding(ResearchFundingLevel level) {
-      switch (level) {
-        case ResearchFundingLevel.none:
-          return 0;
-        case ResearchFundingLevel.low:
-          return 50;
-        case ResearchFundingLevel.medium:
-          return 150;
-        case ResearchFundingLevel.high:
-          return 400;
-        case ResearchFundingLevel.maximum:
-          return 1000;
-      }
-    }
 
     // One order per slot (SPEC: each slot holds at most one active tech). Duplicate slotIndex
     // in the list: last wins, so only one assignment per slot is applied and no double spend.
@@ -106,12 +75,12 @@ Game resolveResearchPhase(Game game, Orders orders) {
         continue;
       }
 
-      final spend = _treasuryForFunding(order.funding);
+      final spend = treasuryCostForFunding(order.funding);
       if (spend <= 0 || treasury < spend) {
         continue;
       }
 
-      final points = _pointsForFunding(order.funding);
+      final points = pointsForFunding(order.funding);
       if (points <= 0) {
         continue;
       }
