@@ -60,6 +60,7 @@ void main() {
       double cellSizePx = 28,
       void Function(String)? onProvinceSelected,
       void Function(String?)? onProvinceHovered,
+      void Function(String?)? onTileHovered,
       String? highlightedTileKey,
       String? centerOnTileKey,
     }) {
@@ -74,6 +75,7 @@ void main() {
               cellSizePx: cellSizePx,
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
+              onTileHovered: onTileHovered,
               highlightedTileKey: highlightedTileKey,
               centerOnTileKey: centerOnTileKey,
             ),
@@ -259,6 +261,26 @@ void main() {
       ));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+    });
+
+    testWidgets('centerOnTileKey change triggers didUpdateWidget and applyCenterOnTileKey',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      final tileKey =
+          '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
+      await tester.pumpWidget(buildMap(region: region, centerOnTileKey: null));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.pumpWidget(buildMap(
+        region: region,
+        centerOnTileKey: tileKey,
+      ));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(CtRegionMapDebug), findsOneWidget);
     });
