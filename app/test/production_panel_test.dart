@@ -1,5 +1,6 @@
 // Tests for ProductionPanel. SPEC/ui/production-panel.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -46,30 +47,60 @@ void main() {
   }
 
   group('ProductionPanel', () {
-    testWidgets('AC: Available subpanel shows stockpile and worker pool',
+    testWidgets('Available subpanel shows commodity groups',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
       expect(find.text('Available'), findsOneWidget);
-      expect(find.text('Stockpile'), findsOneWidget);
+      expect(find.text('Food'), findsOneWidget);
+      expect(find.text('Raw Materials'), findsOneWidget);
+      expect(find.text('Manufactured'), findsOneWidget);
       expect(find.text('Workers'), findsOneWidget);
       expect(find.textContaining('Effective labour:'), findsOneWidget);
-      expect(find.textContaining('Peasants:'), findsOneWidget);
     });
 
-    testWidgets('AC: Allocation subpanel shows recipe labels and sliders',
+    testWidgets('Available subpanel shows raw materials used as inputs',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Timber:'), findsOneWidget);
+      expect(find.textContaining('Iron:'), findsOneWidget);
+      expect(find.textContaining('Coal:'), findsOneWidget);
+    });
+
+    testWidgets('Allocation subpanel shows recipe labels with inputs',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
       expect(find.text('Allocation'), findsOneWidget);
-      expect(find.text('Lumber'), findsOneWidget);
-      expect(find.text('Cast iron'), findsOneWidget);
-      expect(find.byType(Slider), findsNWidgets(5)); // 5 recipes
+      expect(find.byType(Slider),
+          findsNWidgets(ProductionRecipesCatalog.all.length));
+      expect(find.textContaining('Lumber'), findsWidgets);
+      expect(find.textContaining('Fabric'), findsWidgets);
     });
 
-    testWidgets('AC: Moving slider calls onDesiredOutputChanged',
+    testWidgets('Reset button clears all allocations',
+        (WidgetTester tester) async {
+      Map<String, int>? lastOutput;
+      await tester.pumpWidget(buildPanel(
+        player: fullPlayer,
+        desiredOutputByRecipe: {'lumber_from_timber': 5},
+        onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reset'), findsOneWidget);
+      await tester.tap(find.text('Reset'));
+      await tester.pumpAndSettle();
+
+      expect(lastOutput, isNotNull);
+      expect(lastOutput!.isEmpty, isTrue);
+    });
+
+    testWidgets('Moving slider calls onDesiredOutputChanged',
         (WidgetTester tester) async {
       Map<String, int>? lastOutput;
       await tester.pumpWidget(buildPanel(
@@ -79,7 +110,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final sliders = find.byType(Slider);
-      expect(sliders, findsNWidgets(5));
+      expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
       await tester.drag(sliders.first, const Offset(80, 0));
       await tester.pumpAndSettle();
 
@@ -87,7 +118,7 @@ void main() {
       expect(lastOutput!.values.any((v) => v > 0), isTrue);
     });
 
-    testWidgets('AC: Narrow viewport stacks subpanels and is scrollable',
+    testWidgets('Narrow viewport stacks subpanels and is scrollable',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
         player: fullPlayer,
@@ -101,7 +132,8 @@ void main() {
       expect(find.text('Allocation'), findsOneWidget);
     });
 
-    testWidgets('AC: Wide viewport shows subpanels in row', (WidgetTester tester) async {
+    testWidgets('Wide viewport shows subpanels in row',
+        (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
         player: fullPlayer,
         width: 800,
@@ -114,11 +146,25 @@ void main() {
       expect(find.text('Allocation'), findsOneWidget);
     });
 
-    testWidgets('AC: Total labour displayed', (WidgetTester tester) async {
+    testWidgets('Total labour displayed', (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Total labour:'), findsOneWidget);
+    });
+
+    testWidgets('Net changes shown when allocations exist',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        player: fullPlayer,
+        desiredOutputByRecipe: {'lumber_from_timber': 5},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Timber:'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
+      expect(find.textContaining('Lumber:'), findsOneWidget);
+      expect(find.textContaining(r'(+5)'), findsOneWidget);
     });
 
     testWidgets('Partial availability: sliders capped by achievable runs',
@@ -126,9 +172,20 @@ void main() {
       await tester.pumpWidget(buildPanel(player: partialPlayer));
       await tester.pumpAndSettle();
 
-      expect(find.byType(Slider), findsNWidgets(5));
+      expect(find.byType(Slider),
+          findsNWidgets(ProductionRecipesCatalog.all.length));
       expect(find.text('Available'), findsOneWidget);
       expect(find.textContaining('Effective labour: 2'), findsOneWidget);
+    });
+
+    testWidgets('Recipe labels show output with inputs in parentheses',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('('), findsWidgets);
+      expect(find.textContaining('Lumber'), findsWidgets);
+      expect(find.textContaining('Fabric'), findsWidgets);
     });
   });
 }

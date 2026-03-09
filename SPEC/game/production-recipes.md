@@ -17,6 +17,25 @@ Industry consumes inputs and labour from stockpile and WorkerPool; produces outp
 
 ---
 
+## Recipe Catalog
+
+The following recipes are defined for MVP:
+
+| Recipe | Output | Inputs | Labour |
+|--------|--------|--------|--------|
+| Lumber | lumber (1) | timber ×2 | 2 |
+| Fabric (wool) | fabric (1) | wool ×2 | 2 |
+| Fabric (cotton) | fabric (1) | cotton ×2 | 2 |
+| Cast Iron | castIron (1) | timber ×2, iron ×2, coal ×1 | 5 |
+| Refined Sugar | refinedSugar (1) | sugarCane ×2 | 2 |
+| Cigars | cigars (1) | tobacco ×3 | 3 |
+| Fur Hats | furHats (1) | furs ×2 | 2 |
+| Steel | steel (1) | castIron ×2, coal ×1 | 5 |
+| Paper | paper (1) | timber ×3 | 3 |
+| Bronze | bronze (1) | copper ×1, tin ×1 | 3 |
+
+---
+
 ## Examples
 
 - Timber ×2, Iron ×2, Coal ×1 → Cast Iron (labour per unit from constants).
