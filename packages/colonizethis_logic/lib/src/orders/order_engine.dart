@@ -3,18 +3,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../economy/economy_production.dart';
-import '../world/naval.dart';
-import 'order_visibility.dart';
 import 'order_projections.dart';
 import '../world/player_view.dart';
 import '../constants.dart';
-import '../world/province_lookup.dart';
 import 'projected_effects.dart';
-import '../diplomacy/diplomacy_resolver.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
 import 'validators/move_validator.dart';
-import 'validators/work_order_cost_calculator.dart';
+import 'validators/diplomatic_order_validator.dart';
+import 'validators/build_order_validator.dart';
+import 'validators/work_order_validator.dart';
+import 'validators/naval_order_validator.dart';
 
 final Logger _log = Logger();
 
@@ -322,14 +321,6 @@ class OrderEngine {
     bool _isDevExclusiveUnitType(String type) =>
         type == 'Builder' || type == 'Engineer' || type == 'Merchant';
 
-    bool _isDevExclusiveTarget(String target) =>
-        target == 'build_improvement' ||
-        target == 'upgrade_town' ||
-        target == 'build_road' ||
-        target == 'build_port' ||
-        target == 'build_fort' ||
-        target == 'purchase_land';
-
     // Per-player tile exclusivity (SPEC/game/civilian-units.md, SPEC/program/orders.md):
     // track tiles already reserved by this player's Builder/Engineer/Merchant work
     // (existing multi-turn currentWork and newly accepted work orders in this validation pass).
@@ -373,726 +364,68 @@ class OrderEngine {
       if (!r.isAccepted) rejected = true;
     }
 
-    var workers = player.workerPool;
     var stockpile = player.stockpile;
     var treasury = player.treasury;
 
-    OrderValidationResult validateBuild(BuildUnitOrder o) {
-      if (player.capitalProvinceId == null) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'No capital to spawn unit');
-      }
-      final category = buildUnitCategoryForUnitType(o.unitType);
-      switch (category) {
-        case BuildUnitCategory.civilian:
-          final econ = CivilianEconomyCatalog.byId[o.unitType];
-          if (econ == null) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          final unlockingTechId = unlockingTechByCivilianId[o.unitType];
-          if (unlockingTechId != null &&
-              (player.techUnlocked?[unlockingTechId] != true)) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          if (treasury < econ.buildTreasuryCost) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient treasury');
-          }
-          for (final e in econ.buildInputs.entries) {
-            if (stockpile.quantityOf(e.key) < e.value) {
-              return const OrderValidationResult(
-                  status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient materials');
-            }
-          }
-          treasury -= econ.buildTreasuryCost;
-          for (final e in econ.buildInputs.entries) {
-            stockpile = stockpile.applyDelta(e.key, -e.value);
-          }
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-        case BuildUnitCategory.military:
-          final econ = RegimentEconomyCatalog.byId[o.unitType];
-          if (econ == null) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          final regimentUnlockTech = unlockingTechByRegimentId[o.unitType];
-          if (regimentUnlockTech != null &&
-              (player.techUnlocked?[regimentUnlockTech] != true)) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          if (workers.peasants <= 0) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          if (treasury < econ.buildTreasuryCost) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient treasury');
-          }
-          for (final e in econ.buildInputs.entries) {
-            if (stockpile.quantityOf(e.key) < e.value) {
-              return const OrderValidationResult(
-                  status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient materials');
-            }
-          }
-          treasury -= econ.buildTreasuryCost;
-          for (final e in econ.buildInputs.entries) {
-            stockpile = stockpile.applyDelta(e.key, -e.value);
-          }
-          workers = workers.copyWith(peasants: workers.peasants - 1);
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-        case BuildUnitCategory.naval:
-          final shipEcon = ShipEconomyCatalog.byId[o.unitType];
-          if (shipEcon == null) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient resources');
-          }
-          final shipUnlockTech = unlockingTechByShipId[o.unitType];
-          if (shipUnlockTech != null &&
-              (player.techUnlocked?[shipUnlockTech] != true)) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient tech');
-          }
-          if (treasury < shipEcon.buildTreasuryCost) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Insufficient treasury');
-          }
-          for (final e in shipEcon.buildInputs.entries) {
-            if (stockpile.quantityOf(e.key) < e.value) {
-              return const OrderValidationResult(
-                  status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient materials');
-            }
-          }
-          treasury -= shipEcon.buildTreasuryCost;
-          for (final e in shipEcon.buildInputs.entries) {
-            stockpile = stockpile.applyDelta(e.key, -e.value);
-          }
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-        case BuildUnitCategory.unknown:
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient resources');
-      }
-    }
-
+    final buildValidator = BuildOrderValidator(game: game, player: player);
     for (final o in builds) {
-      if (rejected) {
-        results.add(const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Previous invalid'));
-        continue;
-      }
-      final r = validateBuild(o);
+      final r = buildValidator.validate(o, previousRejected: rejected);
       results.add(r);
       if (!r.isAccepted) rejected = true;
     }
+    stockpile = buildValidator.stockpile;
+    treasury = buildValidator.treasury;
 
-    OrderValidationResult validateWork(WorkOrder o) {
-      final unit = unitsById[o.unitId];
-      if (unit == null || unit.ownerId != playerId) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected, reason: 'Unit not found');
-      }
-      if (unit.currentWork != null) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Unit already has a work order; cancel first');
-      }
-      final type = unit.type;
-      if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Invalid work target for unit type');
-      }
-      if (o.targetTileKey.isEmpty) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Work order requires a target tile');
-      }
-      final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
-      final province = targetProvinceId != null
-          ? tryGetProvince(game.worldState, targetProvinceId)
-          : null;
-      final ownerId = province?.ownerId;
-
-      // steal_tech: target must be another GP's capital province; that GP must have tech we lack
-      if (o.target == 'steal_tech') {
-        if (targetProvinceId == null) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Invalid target for steal_tech');
-        }
-        final otherPlayer = game.players
-            .where((p) =>
-                p.id != playerId && p.capitalProvinceId == targetProvinceId)
-            .firstOrNull;
-        if (otherPlayer == null) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'steal_tech target must be another Great Power capital province');
-        }
-        final ourTech = player.techUnlocked ?? {};
-        final theirTech = otherPlayer.techUnlocked ?? {};
-        final hasTechWeLack = theirTech.entries
-            .any((e) => e.value == true && ourTech[e.key] != true);
-        if (!hasTechWeLack) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Target has no technology you lack');
-        }
-      } else if (o.target == 'counter_spy') {
-        if (ownerId != playerId) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'counter_spy target must be your own province');
-        }
-      } else if (o.target == 'purchase_land') {
-        if (ownerId == null || ownerId == playerId) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'purchase_land target must be a Minor or Tribe province');
-        }
-        final isMinor = game.minorNations.any((m) => m.id == ownerId);
-        final isTribe = game.tribes.any((t) => t.id == ownerId);
-        if (!isMinor && !isTribe) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'purchase_land target must be a Minor or Tribe province');
-        }
-        final rel = game.diplomacyRelations
-            .where((r) =>
-                (r.factionId1 == playerId && r.factionId2 == ownerId) ||
-                (r.factionId2 == playerId && r.factionId1 == ownerId))
-            .firstOrNull;
-        if (rel != null && rel.atWar) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot purchase land: at war with that faction');
-        }
-        final overture = game.overtureStates
-            .where((ov) => ov.gpId == playerId && ov.targetId == ownerId)
-            .firstOrNull;
-        if (overture == null || !overture.hasEmbassy) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Cannot purchase land: embassy required with that Minor/Tribe');
-        }
-        final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
-        if (resourceId == null || resourceId.isEmpty) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Tile has no resource');
-        }
-        const mineralIds = {
-          'iron',
-          'copper',
-          'tin',
-          'coal',
-          'silver',
-          'gold',
-          'gems',
-          'diamonds'
-        };
-        if (mineralIds.contains(resourceId)) {
-          final prospected = game.worldState.playerProspectedTiles[playerId] ??
-              const <String>{};
-          if (!prospected.contains(o.targetTileKey)) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Mineral tile must be prospected first');
-          }
-        }
-        final cost = 15 * landPurchaseBasePrice(resourceId);
-        if (treasury < cost) {
-          return OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient treasury for purchase_land (need $cost)');
-        }
-      } else if (o.target == 'build_improvement') {
-        // SPEC/game/extraction-and-improvements.md, development-resolution.md: tile must have resource; next level must not exceed tech cap.
-        final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
-        if (resourceId == null || resourceId.isEmpty) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Tile has no resource; build_improvement requires a resource on the tile');
-        }
-        final currentLevel =
-            game.worldState.tileState.improvementLevel(o.targetTileKey);
-        if (currentLevel >= 4) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Improvement level already at maximum (4)');
-        }
-        final techCap = extractionCapForUnlocked(player.techUnlocked);
-        if (currentLevel + 1 > techCap) {
-          return OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Insufficient tech to build next improvement level (cap $techCap)');
-        }
-      } else if (!isExplorerUnit(type)) {
-        // Builder, Engineer, Rail Builder: must work in owned province
-        if (ownerId != null && ownerId != playerId) {
-          return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot work in foreign province');
-        }
-      }
-
-      // Per-player tile exclusivity: at most one Builder/Engineer/Merchant work stream
-      // per player per tile in a turn.
-      if (_isDevExclusiveUnitType(type) &&
-          _isDevExclusiveTarget(o.target) &&
-          devExclusiveTiles.contains(o.targetTileKey)) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Tile already has development or purchase work for this player',
-        );
-      }
-
-      // Cost validation: materials for build_* and upgrade_town; treasury for purchase_land already checked above
-      if (o.target != 'steal_tech' &&
-          o.target != 'counter_spy' &&
-          o.target != 'purchase_land') {
-        final improvementLevel = o.target == 'build_improvement'
-            ? (game.worldState.tileState.improvementLevel(o.targetTileKey))
-            : 0;
-        final fortLevel = province?.fortLevel ?? 0;
-        final roadLevel = game.worldState.tileState.roadLevel(o.targetTileKey);
-        if (o.target == 'build_road' && roadLevel >= 1) {
-          final hasRoadConstruction =
-              player.techUnlocked?['road_construction'] == true;
-          if (!hasRoadConstruction) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Road Construction tech required for transport level 2');
-          }
-        }
-        if (o.target == 'build_fort') {
-          if (fortLevel == 1 &&
-              player.techUnlocked?['mine_engineering'] != true) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Mine Engineering tech required for fort level 2');
-          }
-          if (fortLevel == 2 &&
-              player.techUnlocked?['modern_forts'] != true) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Modern Forts tech required for fort level 3');
-          }
-        }
-        final costMap = WorkOrderCostCalculator(game).calculateCost(
-          o.target,
-          o.targetTileKey,
-          improvementLevel: improvementLevel,
-          fortLevel: fortLevel,
-          roadLevel: roadLevel,
-        );
-        if (costMap != null) {
-          for (final entry in costMap.entries) {
-            if (stockpile.quantityOf(entry.key) < entry.value) {
-              return const OrderValidationResult(
-                  status: OrderValidationStatus.rejected,
-                  reason: 'Insufficient materials for work order');
-            }
-          }
-        }
-      }
-
-      if (!workOrderVisibilityOk(view, unit, o.target, o.targetTileKey)) {
-        return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Province or tile not visible for this work');
-      }
-
-      if (_isDevExclusiveUnitType(type) &&
-          _isDevExclusiveTarget(o.target)) {
-        devExclusiveTiles.add(o.targetTileKey);
-      }
-
-      return const OrderValidationResult(
-          status: OrderValidationStatus.accepted);
-    }
-
+    final workValidator = WorkOrderValidator(
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      unitsById: unitsById,
+      devExclusiveTiles: devExclusiveTiles,
+      stockpile: stockpile,
+      treasury: treasury,
+    );
     for (final o in works) {
-      if (rejected) {
-        results.add(const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Previous invalid'));
-        continue;
-      }
-      final r = validateWork(o);
+      final r = workValidator.validate(o, previousRejected: rejected);
       results.add(r);
-      if (!r.isAccepted) {
-        rejected = true;
-      } else {
-        // Project cost so subsequent work orders see updated stockpile/treasury
-        final unit = unitsById[o.unitId];
-        if (unit != null && o.target == 'purchase_land') {
-          final resourceId = game.worldState.resourceByTileKey[o.targetTileKey];
-          if (resourceId != null && resourceId.isNotEmpty) {
-            final cost = 15 * landPurchaseBasePrice(resourceId);
-            treasury -= cost;
-          }
-        } else if (unit != null &&
-            o.target != 'steal_tech' &&
-            o.target != 'counter_spy') {
-          final improvementLevel = o.target == 'build_improvement'
-              ? game.worldState.tileState.improvementLevel(o.targetTileKey)
-              : 0;
-          final costMap = WorkOrderCostCalculator(game).calculateCost(
-            o.target,
-            o.targetTileKey,
-            improvementLevel: improvementLevel,
-          );
-          if (costMap != null) {
-            for (final entry in costMap.entries) {
-              if (stockpile.quantityOf(entry.key) >= entry.value) {
-                stockpile = stockpile.applyDelta(entry.key, -entry.value);
-              }
-            }
-          }
-        }
-      }
+      if (!r.isAccepted) rejected = true;
     }
+    stockpile = workValidator.stockpile;
+    treasury = workValidator.treasury;
 
-    bool _factionIsGreatPower(String id) => game.players.any((p) => p.id == id);
-    bool _factionIsMinorOrTribe(String id) =>
-        game.minorNations.any((m) => m.id == id) ||
-        game.tribes.any((t) => t.id == id);
-
-    OrderValidationResult validateDiplomatic(DiplomaticOrder o) {
-      final targetId = o.targetFactionId;
-
-      if (targetId == playerId) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Cannot target own faction with diplomatic order',
-        );
-      }
-
-      final targetExists =
-          _factionIsGreatPower(targetId) || _factionIsMinorOrTribe(targetId);
-      if (!targetExists) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Target faction not found',
-        );
-      }
-
-      final rel = getRelation(game, playerId, targetId);
-      final atWar = rel?.atWar ?? false;
-      final atPeace = rel == null || rel.atPeace;
-
-      switch (o.type) {
-        case DiplomaticOrderType.declareWar:
-          if (!atPeace) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Already at war with that faction',
-            );
-          }
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-
-        case DiplomaticOrderType.offerPeace:
-          if (!atWar) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot offer peace when not at war with that faction',
-            );
-          }
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-
-        case DiplomaticOrderType.alliance:
-          if (!_factionIsGreatPower(targetId)) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Alliance target must be a Great Power',
-            );
-          }
-          if (atWar) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot form alliance while at war with that faction',
-            );
-          }
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-
-        case DiplomaticOrderType.establishOverture:
-          final stage = o.overtureStage;
-          if (stage == null || stage == OvertureStage.none) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Overture stage is required for establishOverture',
-            );
-          }
-          if (!_factionIsMinorOrTribe(targetId) && !_factionIsGreatPower(targetId)) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
-            );
-          }
-          if (atWar) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Cannot establish overture while at war with that faction',
-            );
-          }
-
-          final overture = getOverture(game, playerId, targetId);
-          final currentStage = overture?.stage ?? OvertureStage.none;
-
-          if (stage == OvertureStage.tradeConsulate) {
-            if (currentStage != OvertureStage.none) {
-              return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Trade Consulate requires no existing overture',
-              );
-            }
-            if (treasury < overtureConsulateCost) {
-              return OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
-              );
-            }
-            treasury -= overtureConsulateCost;
-          } else if (stage == OvertureStage.embassy) {
-            if (currentStage != OvertureStage.tradeConsulate) {
-              return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Embassy requires existing Trade Consulate with that faction',
-              );
-            }
-            if (treasury < overtureEmbassyCost) {
-              return OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
-              );
-            }
-            treasury -= overtureEmbassyCost;
-          } else if (stage == OvertureStage.nap) {
-            if (currentStage != OvertureStage.embassy) {
-              return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Non-Aggression Pact requires existing Embassy with that faction',
-              );
-            }
-          } else if (stage == OvertureStage.joinEmpire) {
-            if (currentStage != OvertureStage.nap) {
-              return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires existing Non-Aggression Pact with that faction',
-              );
-            }
-            final score = rel?.score ?? 50;
-            if (score < 51) {
-              return const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires at least Friendly relations (score >= 51)',
-              );
-            }
-            final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-            if (treasury < cost) {
-              return OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires £$cost (scales with target size); treasury is $treasury',
-              );
-            }
-          }
-
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-
-        case DiplomaticOrderType.grantAid:
-          final amount = o.amount ?? 0;
-          if (amount <= 0) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'GrantAid amount must be positive',
-            );
-          }
-          final overture = getOverture(game, playerId, targetId);
-          if (overture == null || !overture.hasEmbassy) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Embassy required for GrantAid',
-            );
-          }
-          if (treasury < amount) {
-            return OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient treasury for GrantAid (need $amount)',
-            );
-          }
-          treasury -= amount;
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-
-        case DiplomaticOrderType.setSubsidy:
-          final amount = o.amount ?? 0;
-          if (amount <= 0) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'SetSubsidy amount must be positive',
-            );
-          }
-          final overture = getOverture(game, playerId, targetId);
-          if (overture == null || !overture.hasConsulate) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Consulate or Embassy required for SetSubsidy',
-            );
-          }
-          if (treasury < amount) {
-            return OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient treasury for SetSubsidy (need $amount)',
-            );
-          }
-          treasury -= amount;
-          return const OrderValidationResult(
-              status: OrderValidationStatus.accepted);
-      }
-    }
-
-    // At most one Establish Overture per (player, target) per turn. SPEC/game/diplomacy.md, SPEC/program/orders.md.
-    final overtureTargetsThisTurn = <String>{};
+    final diplomaticValidator = DiplomaticOrderValidator(
+      game: game,
+      playerId: playerId,
+      initialTreasury: treasury,
+    );
     for (final o in diplomatic) {
-      if (rejected) {
-        results.add(const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Previous invalid',
-        ));
-        continue;
-      }
-      if (o.type == DiplomaticOrderType.establishOverture &&
-          overtureTargetsThisTurn.contains(o.targetFactionId)) {
-        results.add(const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason:
-              'Already have an Establish Overture order for this faction this turn',
-        ));
-        rejected = true;
-        continue;
-      }
-      final r = validateDiplomatic(o);
-      results.add(r);
-      if (r.isAccepted && o.type == DiplomaticOrderType.establishOverture) {
-        overtureTargetsThisTurn.add(o.targetFactionId);
-      }
-      if (!r.isAccepted) {
+      final r = diplomaticValidator.validate(
+        o,
+        previousRejected: rejected,
+      );
+      results.add(r.result);
+      treasury = r.treasury;
+      if (!r.result.isAccepted) {
         rejected = true;
       }
     }
 
-    final fleetById = {for (final f in game.worldState.fleets) f.id: f};
+    final navalValidator = NavalOrderValidator(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+    );
     for (final o in navals) {
-      if (rejected) {
-        results.add(OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Previous invalid'));
-        continue;
-      }
-      final fleet = fleetById[o.fleetId];
-      final homeFleetId = 'fleet_$playerId';
-      final valid = fleet != null &&
-          fleet.ownerId == playerId &&
-          fleet.id != homeFleetId &&
-          isAdjacentSeaZone(topology, fleet.seaZoneId, o.destinationSeaZoneId);
-      results.add(OrderValidationResult(
-        status: valid
-            ? OrderValidationStatus.accepted
-            : OrderValidationStatus.rejected,
-        reason: valid
-            ? null
-            : (fleet == null ? 'Fleet not found' : 'Invalid naval move'),
-      ));
-      if (!valid) rejected = true;
+      final r = navalValidator.validateNavalMove(o, previousRejected: rejected);
+      results.add(r);
+      if (!r.isAccepted) rejected = true;
     }
-
     for (final o in missions) {
-      if (rejected) {
-        results.add(OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Previous invalid'));
-        continue;
-      }
-      final fleet = fleetById[o.fleetId];
-      final homeFleetId = 'fleet_$playerId';
-      var valid = fleet != null &&
-          fleet.ownerId == playerId &&
-          (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
-      String? rejectReason =
-          valid ? null : (fleet == null ? 'Fleet not found' : 'Fleet not owned by player');
-
-      // Blockade: only allowed against nations at war. SPEC/game/capital-and-connectivity.md § Blockade.
-      if (valid && o.mission == 'blockade') {
-        final targetProvinceId = o.targetProvinceId;
-        if (targetProvinceId == null ||
-            targetProvinceId.isEmpty ||
-            !ProvinceId.isPrefixed(targetProvinceId)) {
-          valid = false;
-          rejectReason = 'Blockade requires a target province';
-        } else {
-          final province = tryGetProvince(game.worldState, targetProvinceId);
-          final ownerId = province?.ownerId;
-          if (province == null || ownerId == null || ownerId.isEmpty) {
-            valid = false;
-            rejectReason = 'Blockade target province not found or unowned';
-          } else if (ownerId == playerId) {
-            valid = false;
-            rejectReason = 'Cannot blockade own province';
-          } else {
-            final rel = getRelation(game, playerId, ownerId);
-            if (rel?.atWar != true) {
-              valid = false;
-              rejectReason = 'Blockade only allowed against nations at war';
-            }
-          }
-        }
-      }
-
-      results.add(OrderValidationResult(
-        status: valid
-            ? OrderValidationStatus.accepted
-            : OrderValidationStatus.rejected,
-        reason: rejectReason,
-      ));
-      if (!valid) rejected = true;
+      final r =
+          navalValidator.validateNavalMission(o, previousRejected: rejected);
+      results.add(r);
+      if (!r.isAccepted) rejected = true;
     }
     return results;
   }
