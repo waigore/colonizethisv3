@@ -1,11 +1,14 @@
 // Unit tests for production allocation provider. SPEC/ui/production-panel.md.
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('desiredOutputToAssignments', () {
     test('empty map returns empty list', () {
       expect(desiredOutputToAssignments({}), isEmpty);
