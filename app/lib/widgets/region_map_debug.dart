@@ -22,6 +22,7 @@ class CtRegionMapDebug extends StatefulWidget {
     required this.region,
     this.showPoliticalOverlay = true,
     this.cellSizePx = 32,
+    this.visibilityMode = CtMapVisibilityMode.full,
     this.onProvinceSelected,
     this.onRegionViewChanged,
     this.onProvinceHovered,
@@ -33,6 +34,7 @@ class CtRegionMapDebug extends StatefulWidget {
   final RegionMapViewData region;
   final bool showPoliticalOverlay;
   final double cellSizePx;
+  final CtMapVisibilityMode visibilityMode;
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
@@ -48,6 +50,15 @@ class CtRegionMapDebug extends StatefulWidget {
 
   @override
   State<CtRegionMapDebug> createState() => _CtRegionMapDebugState();
+}
+
+/// Visibility mode for the debug map widget.
+enum CtMapVisibilityMode {
+  /// Full visibility: ignore per-tile visibility and render all tiles as visible.
+  full,
+
+  /// Player-constrained visibility: honor [CellViewData.visibility] for each tile.
+  playerConstrained,
 }
 
 class _CtRegionMapDebugState extends State<CtRegionMapDebug>
@@ -261,8 +272,13 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
       final x = (local.dx / cellSizePx).floor();
       final y = (local.dy / cellSizePx).floor();
       if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
-        nx = x;
-        ny = y;
+        final cell = region.cellAt(x, y);
+        final isUnrevealed = widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+            cell.visibility == TileVisibility.unrevealed;
+        if (!isUnrevealed) {
+          nx = x;
+          ny = y;
+        }
       }
     }
     final prevId = _hoveredTileX != null && _hoveredTileY != null
@@ -292,6 +308,10 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
     final y = (local.dy / cellSizePx).floor();
     if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
       final cell = region.cellAt(x, y);
+      if (widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed) {
+        return;
+      }
       final provinceId = '${region.regionId}|${cell.regionCellId}';
       widget.onProvinceSelected?.call(provinceId);
     }
@@ -379,6 +399,7 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
                           region: region,
                           cellSize: widget.cellSizePx,
                           showPoliticalOverlay: widget.showPoliticalOverlay,
+                          visibilityMode: widget.visibilityMode,
                           hoveredTileX: _hoveredTileX,
                           hoveredTileY: _hoveredTileY,
                           hoveredProvinceId: hoveredProvinceId,
@@ -509,6 +530,7 @@ class _RegionMapDebugPainter extends CustomPainter {
     required this.region,
     required this.cellSize,
     required this.showPoliticalOverlay,
+    required this.visibilityMode,
     this.hoveredTileX,
     this.hoveredTileY,
     this.hoveredProvinceId,
@@ -519,6 +541,7 @@ class _RegionMapDebugPainter extends CustomPainter {
   final RegionMapViewData region;
   final double cellSize;
   final bool showPoliticalOverlay;
+  final CtMapVisibilityMode visibilityMode;
   final int? hoveredTileX;
   final int? hoveredTileY;
   final String? hoveredProvinceId;
@@ -584,8 +607,11 @@ class _RegionMapDebugPainter extends CustomPainter {
     for (final cell in region.cells) {
       final left = cell.x * cellSize;
       final top = cell.y * cellSize;
+
+      // Determine base color from terrain/sea.
+      Color baseColor;
       if (cell.isSea) {
-        paint.color = _seaColor;
+        baseColor = _seaColor;
       } else {
         final terrain = cell.terrainType ??
             (cell.terrainTypeId != null
@@ -594,8 +620,27 @@ class _RegionMapDebugPainter extends CustomPainter {
         final rgb = terrain != null
             ? (region.terrainColors[terrain] ?? (128, 128, 128))
             : (128, 128, 128);
-        paint.color = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
+        baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
       }
+
+      Color finalColor = baseColor;
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
+        switch (cell.visibility) {
+          case TileVisibility.visible:
+            // Use base color unchanged.
+            break;
+          case TileVisibility.fogged:
+            // Blend towards grey to indicate fog.
+            finalColor = Color.lerp(baseColor, Colors.grey.shade700, 0.5)!;
+            break;
+          case TileVisibility.unrevealed:
+            // Solid black for unrevealed tiles.
+            finalColor = Colors.black;
+            break;
+        }
+      }
+
+      paint.color = finalColor;
       canvas.drawRect(
         Rect.fromLTWH(left, top, cellSize, cellSize),
         paint,
@@ -607,6 +652,10 @@ class _RegionMapDebugPainter extends CustomPainter {
     final double fontSize = math.max(10.0, cellSize * 0.35);
     for (final cell in region.cells) {
       if (cell.isSea) continue;
+       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed) {
+        continue;
+      }
       final parts = <String>[];
       final letter = resourceIdToLegendLetter(cell.resourceId);
       if (letter != null) parts.add(letter);
@@ -800,6 +849,7 @@ class _RegionMapDebugPainter extends CustomPainter {
     return old.region != region ||
         old.cellSize != cellSize ||
         old.showPoliticalOverlay != showPoliticalOverlay ||
+        old.visibilityMode != visibilityMode ||
         old.hoveredTileX != hoveredTileX ||
         old.hoveredTileY != hoveredTileY ||
         old.hoveredProvinceId != hoveredProvinceId ||

@@ -6,6 +6,18 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 /// Simple RGB tuple alias for readability.
 typedef Rgb = (int r, int g, int b);
 
+/// Visibility of a tile for a given player view.
+enum TileVisibility {
+  /// Tile is currently visible to the player this turn.
+  visible,
+
+  /// Tile has been seen before but is not currently visible (fog of war).
+  fogged,
+
+  /// Tile has never been seen by the player.
+  unrevealed,
+}
+
 /// Per-cell view data for a region map.
 class CellViewData {
   const CellViewData({
@@ -20,6 +32,7 @@ class CellViewData {
     this.provinceDisplayName,
     this.improvementLevel,
     this.roadLevel,
+    this.visibility = TileVisibility.visible,
   });
 
   final int x;
@@ -51,6 +64,9 @@ class CellViewData {
 
   /// Road level 0/1/2/4 for land tiles. From WorldState.tileState.roadLevelByTile. Null for sea or when not populated.
   final int? roadLevel;
+
+  /// Per-tile visibility for the current player view. Defaults to [TileVisibility.visible].
+  final TileVisibility visibility;
 }
 
 /// Capital marker location for a faction within a region.

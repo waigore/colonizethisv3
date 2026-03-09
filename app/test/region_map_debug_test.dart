@@ -58,6 +58,7 @@ void main() {
       required RegionMapViewData region,
       bool showPoliticalOverlay = true,
       double cellSizePx = 28,
+      CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
       void Function(String)? onProvinceSelected,
       void Function(String?)? onProvinceHovered,
       void Function(String?)? onTileHovered,
@@ -73,6 +74,7 @@ void main() {
               region: region,
               showPoliticalOverlay: showPoliticalOverlay,
               cellSizePx: cellSizePx,
+              visibilityMode: visibilityMode,
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
               onTileHovered: onTileHovered,
@@ -138,6 +140,18 @@ void main() {
       await tester.pumpWidget(buildMap(
         region: region,
         showPoliticalOverlay: false,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+    });
+
+    testWidgets('player-constrained visibility renders without throwing',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      await tester.pumpWidget(buildMap(
+        region: region,
+        visibilityMode: CtMapVisibilityMode.playerConstrained,
       ));
       await tester.pumpAndSettle();
 

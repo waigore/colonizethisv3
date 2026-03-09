@@ -52,6 +52,34 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ---
 
+## Tile visibility model (player view)
+
+Tile visibility for running-game tools (e.g. debug map widget, Widgetbook stories) is derived from **player view** and applied at the **tile key** level.
+
+- **Enum:** `TileVisibility` with values:
+  - `visible`: the tile is currently visible to the player this turn.
+  - `fogged`: the tile has been revealed previously but is not currently visible; the last-known terrain/ownership is shown but visually muted.
+  - `unrevealed`: the tile has never been seen; the tile is rendered as fully black.
+- **Granularity:** Visibility is determined **per tile key** using the canonical tile key format `regionId|provinceId|x|y` (see [world-model-identity.md](../game/world-model-identity.md)).
+- **View model field:** `CellViewData` carries a `TileVisibility visibility` field. When not explicitly set, tools treat the visibility as `visible` for backward compatibility.
+- **Player-constrained vs full views:**
+  - Full visibility views ignore `visibility` and treat all tiles as `visible`.
+  - Player-constrained views honor `visibility` for each tile and render tiles accordingly.
+- **Player selection:** When a tool renders a player-constrained view for a single player (e.g. Widgetbook map stories), it uses the **first player** in `Game.players` (`game.players.first`) as the source of `playerView`.
+
+### Player view integration
+
+- **Input:** `buildInitGameMapViewData` may accept a `playerView` argument (from `SPEC/program/player-view.md`) that exposes per-tile visibility keyed by tile key `regionId|provinceId|x|y`.
+- **Mapping:** For each tile in the map grid, the view builder:
+  - Computes the tile key for that cell (`regionId|provinceId|x|y`).
+  - Looks up the tile key in `playerView` to obtain visibility.
+  - Maps the player-view visibility to `TileVisibility.visible`, `TileVisibility.fogged`, or `TileVisibility.unrevealed`.
+  - Stores the result on `CellViewData.visibility`.
+- **Default behavior:** When `playerView` is `null` or does not contain an entry for a tile key, the builder sets `CellViewData.visibility` to `TileVisibility.visible`.
+- **PNG export:** `renderInitGameMapToPngFromViewData` ignores `visibility` and always renders full-visibility maps; constrained exports are out of scope for this spec.
+
+---
+
 ## Legend layout
 
 Shared utilities (padding, line height, swatch size). Game-state visualizer adds: Ownership, Capitals.
@@ -85,3 +113,6 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **View model:** `RegionMapViewData` and `InitGameMapViewData` provide per-cell and overlay data; `renderInitGameMapToPngFromViewData` supports geographic mode param. View modes: political (ownership fill) vs geographic (terrain, resource glyphs); same view model, UI toggle. **Geographic legend:** In geographic mode the legend and map glyphs show only the subset g (Grain), t (Timber), i (Iron); full resource legend is in the base tile map visualizer.
 - **Multi-region:** `renderMultiRegionMapToPng(oldWorld, newWorld, options)` renders OW left, NW right, shared legend below; used by init_game.
 - **Integration:** Implemented in colonizethis_map; consumed by generate_map, init_game, ctdev. Terrain palette and border/legend behaviour fixed as specified.
+- **Given** a `Game` with tile maps, topology, and a `playerView` that exposes visibility per tile key `regionId|provinceId|x|y`, **when** `buildInitGameMapViewData` is invoked with that `playerView`, **then** each `CellViewData` in the resulting `InitGameMapViewData` has `visibility` set to `TileVisibility.visible`, `TileVisibility.fogged`, or `TileVisibility.unrevealed` according to the visibility entry for its tile key, defaulting to `TileVisibility.visible` when no entry exists.
+- **Given** a `Game` with at least one player in `Game.players`, **when** a tool builds a player-constrained map view for that game using `buildInitGameMapViewData`, **then** the tool uses the first player (`game.players.first`) as the source of `playerView` and sets `CellViewData.visibility` based on that player’s view.
+- **Given** an `InitGameMapViewData` whose `CellViewData.visibility` values are populated from a `playerView`, **when** a consumer requests a **full visibility** view, **then** the consumer renders all tiles as if they were `TileVisibility.visible`, regardless of stored `visibility` values.
