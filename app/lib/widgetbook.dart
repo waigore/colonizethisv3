@@ -1,13 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'config/themes.dart';
+import 'features/game/widgets/production_panel.dart';
+import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'widgets/game_setup.dart';
-import 'widgets/main_menu.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'widgets/debug_init_game.dart';
+import 'widgets/game_setup.dart';
+import 'widgets/main_menu.dart';
 import 'widgets/region_map_debug.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
@@ -41,6 +44,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...gameSetupDirectories,
         ...mapWidgetDirectories,
         ...provinceOverlayDirectories,
+        ...productionPanelDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -265,6 +269,49 @@ List<WidgetbookNode> get mapWidgetDirectories => [
       ),
     ];
 
+/// Production Panel stories. SPEC/ui/production-panel.md.
+List<WidgetbookNode> get productionPanelDirectories => [
+      WidgetbookFolder(
+        name: 'Production Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'Full availability',
+            builder: (context) => const _ProductionPanelStory(
+              playerOverride: null,
+              useFullAvailability: true,
+            ),
+          ),
+          WidgetbookUseCase(
+            name: 'Partial availability',
+            builder: (context) => const _ProductionPanelStory(
+              playerOverride: null,
+              useFullAvailability: false,
+            ),
+          ),
+          WidgetbookUseCase(
+            name: 'Full availability (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              const _ProductionPanelStory(
+                playerOverride: null,
+                useFullAvailability: true,
+              ),
+            ),
+          ),
+          WidgetbookUseCase(
+            name: 'Partial availability (mobile)',
+            builder: (context) => mobileViewport(
+              context,
+              const _ProductionPanelStory(
+                playerOverride: null,
+                useFullAvailability: false,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+
 /// Province/Sea Zone Detail Overlay stories. SPEC/ui/province-sea-zone-detail-overlay.md.
 List<WidgetbookNode> get provinceOverlayDirectories => [
       WidgetbookFolder(
@@ -338,6 +385,45 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         ],
       ),
     ];
+
+/// Production panel with local state for Widgetbook. SPEC/ui/production-panel.md.
+class _ProductionPanelStory extends StatefulWidget {
+  const _ProductionPanelStory({
+    this.playerOverride,
+    this.useFullAvailability = true,
+  });
+
+  /// When set, used instead of the full/partial demo player.
+  final Player? playerOverride;
+  /// When true, use full-availability demo player; when false, partial.
+  final bool useFullAvailability;
+
+  @override
+  State<_ProductionPanelStory> createState() => _ProductionPanelStoryState();
+}
+
+class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
+  Map<String, int> _desiredOutputByRecipe = const {};
+
+  @override
+  Widget build(BuildContext context) {
+    final game = demoGameForOverlay;
+    final player = widget.playerOverride ??
+        (widget.useFullAvailability
+            ? fullAvailabilityProductionPlayer()
+            : partialAvailabilityProductionPlayer());
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
+      child: ProductionPanel(
+        game: game,
+        player: player,
+        desiredOutputByRecipe: _desiredOutputByRecipe,
+        onDesiredOutputChanged: (next) =>
+            setState(() => _desiredOutputByRecipe = next),
+      ),
+    );
+  }
+}
 
 /// Map + overlay in tandem for Widgetbook. SPEC/ui/province-sea-zone-detail-overlay.md.
 class _MapWithOverlayStory extends StatefulWidget {
