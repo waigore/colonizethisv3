@@ -10,6 +10,7 @@ import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'widgets/debug_init_game.dart';
+import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
 import 'widgets/region_map_debug.dart';
@@ -219,36 +220,16 @@ List<WidgetbookNode> get mapWidgetDirectories => [
         name: 'Map Widget',
         children: [
           WidgetbookUseCase(
-            name: 'Debug mode',
-            builder: (context) {
-              final region = getDebugInitGameResult().mapViewData.oldWorld;
-              return SizedBox(
-                width: 400,
-                height: 320,
-                child: CtRegionMapDebug(
-                  region: region,
-                  showPoliticalOverlay: true,
-                  cellSizePx: 28,
-                  onProvinceSelected: (id) {},
-                ),
-              );
-            },
+            name: 'Debug mode (visibility toggle)',
+            builder: (context) => const DebugMapVisibilityStory(
+              showPoliticalOverlay: true,
+            ),
           ),
           WidgetbookUseCase(
             name: 'Debug mode (political overlay off)',
-            builder: (context) {
-              final region = getDebugInitGameResult().mapViewData.oldWorld;
-              return SizedBox(
-                width: 400,
-                height: 320,
-                child: CtRegionMapDebug(
-                  region: region,
-                  showPoliticalOverlay: false,
-                  cellSizePx: 28,
-                  onProvinceSelected: (id) {},
-                ),
-              );
-            },
+            builder: (context) => const DebugMapVisibilityStory(
+              showPoliticalOverlay: false,
+            ),
           ),
           WidgetbookUseCase(
             name: 'Debug mode (mobile)',
@@ -256,12 +237,8 @@ List<WidgetbookNode> get mapWidgetDirectories => [
               context,
               Builder(
                 builder: (context) {
-                  final region = getDebugInitGameResult().mapViewData.oldWorld;
-                  return CtRegionMapDebug(
-                    region: region,
+                  return const DebugMapVisibilityStory(
                     showPoliticalOverlay: true,
-                    cellSizePx: 24,
-                    onProvinceSelected: (id) {},
                   );
                 },
               ),
@@ -570,6 +547,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   String? _hoveredDetailId;
   String? _hoveredTileKey;
   String? _highlightedTileKey;
+  CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
 
   String get _displayId {
     if (_hoveredTileKey != null) {
@@ -597,41 +575,81 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
 
   @override
   Widget build(BuildContext context) {
-    final game = demoGameForOverlay;
-    final region = demoRegionForOverlay;
+    final initResult = getDebugInitGameResult();
+    final game = initResult.game;
+    final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
+    final region = mapViewData.oldWorld;
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
     return SizedBox(
       width: 800,
       height: 500,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 2,
-            child: CtRegionMapDebug(
-              region: region,
-              cellSizePx: 28,
-              onProvinceSelected: (id) =>
-                  setState(() => _selectedId = _selectedId == id ? '' : id),
-              onProvinceHovered: (id) => setState(() => _hoveredDetailId = id),
-              onTileHovered: (key) => setState(() => _hoveredTileKey = key),
-              highlightedTileKey: _highlightedTileKey,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ChoiceChip(
+                  label: const Text('Full visibility'),
+                  selected: _visibilityMode == CtMapVisibilityMode.full,
+                  onSelected: (_) {
+                    setState(() {
+                      _visibilityMode = CtMapVisibilityMode.full;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Player-constrained'),
+                  selected:
+                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
+                  onSelected: (_) {
+                    setState(() {
+                      _visibilityMode = CtMapVisibilityMode.playerConstrained;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
-          if (!isNarrow && _selectedId.isNotEmpty)
-            SizedBox(
-              width: 320,
-              child: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                selectedId: _selectedId,
-                displayId: _displayId,
-                humanPlayerId: 'gp1',
-                hoveredTileKey: _hoveredTileKey,
-                onHighlightTile: (k) =>
-                    setState(() => _highlightedTileKey = k),
-                onClose: () => setState(() => _selectedId = ''),
-              ),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: CtRegionMapDebug(
+                    region: region,
+                    cellSizePx: 28,
+                    visibilityMode: _visibilityMode,
+                    onProvinceSelected: (id) =>
+                        setState(() => _selectedId = _selectedId == id ? '' : id),
+                    onProvinceHovered: (id) =>
+                        setState(() => _hoveredDetailId = id),
+                    onTileHovered: (key) =>
+                        setState(() => _hoveredTileKey = key),
+                    highlightedTileKey: _highlightedTileKey,
+                  ),
+                ),
+                if (!isNarrow && _selectedId.isNotEmpty)
+                  SizedBox(
+                    width: 320,
+                    child: ProvinceSeaZoneDetailOverlay(
+                      game: game,
+                      region: region,
+                      selectedId: _selectedId,
+                      displayId: _displayId,
+                      humanPlayerId: 'gp1',
+                      hoveredTileKey: _hoveredTileKey,
+                      onHighlightTile: (k) =>
+                          setState(() => _highlightedTileKey = k),
+                      onClose: () => setState(() => _selectedId = ''),
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

@@ -427,5 +427,100 @@ void main() {
       expect(viewData.oldWorld.portMarkers.single.provinceId, 'p1');
       expect(viewData.oldWorld.portMarkers.single.seaboardKey, 'oldWorld|p1|seaboard');
     });
+
+    test('applies visibilityByTile map to CellViewData.visibility', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['p1', 'p1'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['p1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'visibility',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'newWorld|p1',
+                regionId: 'newWorld',
+                ownerId: 'gp2',
+              ),
+            ],
+            units: [],
+          ),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        ],
+        minorNations: const [],
+        tribes: const [],
+      );
+
+      // Two tiles in OW: (0,0) and (1,0). One tile in NW: (0,0).
+      final visibilityByTile = <String, TileVisibility>{
+        'oldWorld|p1|0|0': TileVisibility.visible,
+        'oldWorld|p1|1|0': TileVisibility.fogged,
+        'newWorld|p1|0|0': TileVisibility.unrevealed,
+      };
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 8,
+        visibilityByTile: visibilityByTile,
+      );
+
+      // Old World visibility mapping.
+      final owCells = viewData.oldWorld.cells;
+      final firstOwCell = owCells.singleWhere((c) => c.x == 0 && c.y == 0);
+      final secondOwCell = owCells.singleWhere((c) => c.x == 1 && c.y == 0);
+      expect(firstOwCell.visibility, TileVisibility.visible);
+      expect(secondOwCell.visibility, TileVisibility.fogged);
+
+      // New World visibility mapping.
+      final nwCell = viewData.newWorld.cells.single;
+      expect(nwCell.visibility, TileVisibility.unrevealed);
+    });
   });
 }

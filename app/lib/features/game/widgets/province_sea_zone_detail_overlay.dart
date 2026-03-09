@@ -75,6 +75,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             margin: const EdgeInsets.all(8),
             child: Column(
               mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 12, right: 8, top: 8),

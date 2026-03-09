@@ -19,6 +19,10 @@ InitGameMapViewData buildInitGameMapViewData({
   int? seed,
   String? configSummary,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+  /// Optional per-tile visibility for the current player view, keyed by tile
+  /// key `regionId|provinceId|x|y`. When omitted, all tiles are treated as
+  /// [TileVisibility.visible] in the view data.
+  Map<String, TileVisibility>? visibilityByTile,
 }) {
   Logger().i('map: buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
@@ -34,6 +38,7 @@ InitGameMapViewData buildInitGameMapViewData({
     cellSize: cellSize,
     isOldWorld: true,
     greatPowerColorOverride: greatPowerColorOverride,
+    visibilityByTile: visibilityByTile,
   );
   final nwRegion = _buildRegionViewData(
     regionId: _regionNewWorld,
@@ -43,6 +48,7 @@ InitGameMapViewData buildInitGameMapViewData({
     cellSize: cellSize,
     isOldWorld: false,
     greatPowerColorOverride: greatPowerColorOverride,
+    visibilityByTile: visibilityByTile,
   );
 
   Logger().i('map: buildInitGameMapViewData end');
@@ -62,6 +68,7 @@ RegionMapViewData _buildRegionViewData({
   required int cellSize,
   required bool isOldWorld,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+  Map<String, TileVisibility>? visibilityByTile,
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -127,6 +134,8 @@ RegionMapViewData _buildRegionViewData({
       final tileKey = '$regionId|$localId|$x|$y';
       final improvement = isSea ? null : tileState.improvementLevel(tileKey);
       final road = isSea ? null : tileState.roadLevel(tileKey);
+      final visibility =
+          visibilityByTile != null ? (visibilityByTile[tileKey] ?? TileVisibility.visible) : TileVisibility.visible;
       final fullProvinceId =
           isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
@@ -147,6 +156,7 @@ RegionMapViewData _buildRegionViewData({
                   : null),
           improvementLevel: isSea ? null : improvement,
           roadLevel: isSea ? null : road,
+          visibility: visibility,
         ),
       );
     }
