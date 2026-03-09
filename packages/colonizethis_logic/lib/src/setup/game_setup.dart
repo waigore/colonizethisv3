@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 
 import 'capital_choice.dart';
 import '../constants.dart';
+import 'initial_visibility.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
 import 'province_assignment.dart';
@@ -260,7 +261,7 @@ GameSetupResult createGameFromGeneratedMaps({
 
   // Apply initial per-player visibility/prospection (knowledge state) after
   // provinces, capitals, and starting units are set.
-  game = _applyInitialVisibility(
+  game = applyInitialVisibility(
     game: game,
     tileMapByRegion: tileMapByRegion,
   );
@@ -404,96 +405,6 @@ List<String> _provinceIdsFromTopology(MapTopology topology) {
       .where((n) => n.type == TopologyNodeType.province)
       .map((n) => n.id)
       .toList();
-}
-
-Game _applyInitialVisibility({
-  required Game game,
-  required Map<String, TileMapResult> tileMapByRegion,
-}) {
-  final owMap = tileMapByRegion[kRegionOldWorld];
-  final nwMap = tileMapByRegion[kRegionNewWorld];
-  if (owMap == null || nwMap == null) return game;
-
-  // Province ownership lookup.
-  final owOwnerById = <String, String?>{
-    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
-  };
-  final nwOwnerById = <String, String?>{
-    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
-  };
-
-  final playerVisibilityByTile = <String, Map<String, String>>{};
-  final playerProspectedTiles = <String, Set<String>>{};
-
-  // Build tile keys per region and province for explore resolution. SPEC/program/fog-and-exploration-resolution.md.
-  // Build resourceByTileKey from tile map resourceGrid for build_improvement validation and extraction. SPEC/game/extraction-and-improvements.md.
-  final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{
-    kRegionOldWorld: <String, List<String>>{},
-    kRegionNewWorld: <String, List<String>>{},
-  };
-  final resourceByTileKey = <String, String>{};
-  for (var y = 0; y < owMap.height; y++) {
-    for (var x = 0; x < owMap.width; x++) {
-      final localId = owMap.cell(x, y);
-      final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final ownerId = owOwnerById[fullId];
-      if (ownerId == null) continue;
-      final tileKey = '$kRegionOldWorld|$localId|$x|$y';
-      tileKeysByRegionAndProvince[kRegionOldWorld]!
-          .putIfAbsent(fullId, () => <String>[])
-          .add(tileKey);
-      final res = owMap.resourceAt(x, y);
-      if (res != null) resourceByTileKey[tileKey] = res.name;
-    }
-  }
-  for (var y = 0; y < nwMap.height; y++) {
-    for (var x = 0; x < nwMap.width; x++) {
-      final localId = nwMap.cell(x, y);
-      final fullId = ProvinceId.full(kRegionNewWorld, localId);
-      final ownerId = nwOwnerById[fullId];
-      if (ownerId == null) continue;
-      final tileKey = '$kRegionNewWorld|$localId|$x|$y';
-      tileKeysByRegionAndProvince[kRegionNewWorld]!
-          .putIfAbsent(fullId, () => <String>[])
-          .add(tileKey);
-      final res = nwMap.resourceAt(x, y);
-      if (res != null) resourceByTileKey[tileKey] = res.name;
-    }
-  }
-
-  for (final player in game.players) {
-    final playerId = player.id;
-    final visibility = <String, String>{};
-
-    // Old World: own provinces fullyVisible, others fogged.
-    for (var y = 0; y < owMap.height; y++) {
-      for (var x = 0; x < owMap.width; x++) {
-        final localId = owMap.cell(x, y);
-        final fullId = ProvinceId.full(kRegionOldWorld, localId);
-        final ownerId = owOwnerById[fullId];
-        if (ownerId == null) {
-          // Sea zone or unowned; skip.
-          continue;
-        }
-        final tileKey = '$kRegionOldWorld|$localId|$x|$y';
-        visibility[tileKey] =
-            ownerId == playerId ? VisibilityLevel.fullyVisible.name : VisibilityLevel.fogged.name;
-      }
-    }
-
-    // New World: start unknown (absence = unknown in PlayerView).
-
-    playerVisibilityByTile[playerId] = visibility;
-    playerProspectedTiles[playerId] = <String>{};
-  }
-
-  final updatedWorldState = game.worldState.copyWith(
-    playerVisibilityByTile: playerVisibilityByTile,
-    playerProspectedTiles: playerProspectedTiles,
-    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-    resourceByTileKey: resourceByTileKey,
-  );
-  return game.copyWith(worldState: updatedWorldState);
 }
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;

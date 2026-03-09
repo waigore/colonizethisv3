@@ -5,103 +5,21 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
+import 'diplomacy_relation_lookup.dart';
+
+export 'diplomacy_relation_lookup.dart';
 
 final Logger _diploLog = Logger();
 
-/// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
-const int overtureConsulateCost = 500;
-const int overtureEmbassyCost = 1000;
-
-/// Join Empire cost: base + per-province. SPEC/game/diplomacy.md.
-const int joinEmpireBaseCost = 5000;
-const int joinEmpirePerProvinceCost = 2000;
-
-/// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
-int provinceCountOwnedBy(Game game, String factionId) {
-  int count = 0;
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId == factionId) count++;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId == factionId) count++;
-  }
-  return count;
-}
-
-/// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
-/// Cost = base + (provinceCount * perProvince). SPEC/game/diplomacy.md.
-int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
-  final n = provinceCountOwnedBy(game, targetId);
-  return joinEmpireBaseCost + n * joinEmpirePerProvinceCost;
-}
-
-/// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
-RelationLevel scoreToLevel(int score) {
-  if (score <= 25) return RelationLevel.hostile;
-  if (score <= 50) return RelationLevel.neutral;
-  if (score <= 75) return RelationLevel.friendly;
-  return RelationLevel.allied;
-}
-
-/// Normalizes faction pair for lookup (consistent ordering).
-String _pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
-
-/// Returns relation for faction pair, or null if not found.
-DiplomacyRelation? getRelation(
-    Game game, String factionId1, String factionId2) {
-  final key = _pairKey(factionId1, factionId2);
-  for (final r in game.diplomacyRelations) {
-    if (_pairKey(r.factionId1, r.factionId2) == key) return r;
-  }
-  return null;
-}
-
-/// Finds the relation between [factionId1] and [factionId2] in [relations],
-/// passes it (or null if absent) to [updater], and replaces or appends the result.
-List<DiplomacyRelation> upsertRelation(
-  List<DiplomacyRelation> relations,
-  String factionId1,
-  String factionId2,
-  DiplomacyRelation Function(DiplomacyRelation?) updater,
-) {
-  final key = _pairKey(factionId1, factionId2);
-  final idx =
-      relations.indexWhere((r) => _pairKey(r.factionId1, r.factionId2) == key);
-  final existing = idx >= 0 ? relations[idx] : null;
-  final updated = updater(existing);
-  final result = List<DiplomacyRelation>.from(relations);
-  if (idx >= 0) {
-    result[idx] = updated;
-  } else {
-    result.add(updated);
-  }
-  return result;
-}
-
 /// Canonical faction pair IDs for a pair key.
 ({String id1, String id2}) _pairIds(String a, String b) {
-  final key = _pairKey(a, b);
+  final key = pairKey(a, b);
   final parts = key.split('|');
   return (id1: parts[0], id2: parts[1]);
-}
-
-/// Returns overture state for GP–Minor/Tribe, or null.
-OvertureState? getOverture(Game game, String gpId, String targetId) {
-  for (final o in game.overtureStates) {
-    if (o.gpId == gpId && o.targetId == targetId) return o;
-  }
-  return null;
-}
-
-/// Returns player by id, or null.
-Player? getPlayer(Game game, String playerId) {
-  for (final p in game.players) {
-    if (p.id == playerId) return p;
-  }
-  return null;
 }
 
 bool _isMinorOrTribe(Game game, String factionId) {
@@ -115,7 +33,7 @@ bool _isGreatPower(Game game, String factionId) {
 
 /// True if [factionId] is a GP whose player is human-controlled.
 bool _isTargetHumanGp(Game game, String factionId) {
-  final p = getPlayer(game, factionId);
+  final p = game.playerById(factionId);
   return p != null && p.isHuman;
 }
 
@@ -360,7 +278,7 @@ Game _resolveJoinEmpireColony(
       final targetId = order.targetFactionId;
       if (!_isMinorOrTribe(game, targetId)) continue;
 
-      final player = getPlayer(game, gpId);
+      final player = game.playerById(gpId);
       if (player == null) continue;
 
       final existing = getOverture(game, gpId, targetId);
@@ -531,7 +449,7 @@ Game _processWarAndPeace(
       final targetId = order.targetFactionId;
       if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId))
         continue;
-      final key = _pairKey(gpId, targetId);
+      final key = pairKey(gpId, targetId);
       final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
       offerers.add(gpId);
     }
@@ -603,7 +521,7 @@ Game _processWarAndPeace(
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
         final rel = getRelation(game, gpId, targetId);
-        final key = _pairKey(gpId, targetId);
+        final key = pairKey(gpId, targetId);
         final bothGreatPowers =
             _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
         final hasMutualOffer = bothGreatPowers
@@ -616,7 +534,7 @@ Game _processWarAndPeace(
           var bothSidesAgreed = true;
           final isGpTarget = _isGreatPower(game, targetId);
           if (isGpTarget && _isGreatPower(game, gpId)) {
-            final key = _pairKey(gpId, targetId);
+            final key = pairKey(gpId, targetId);
             final offerers = peaceOffersByPairKey[key] ?? const <String>{};
             bothSidesAgreed =
                 offerers.contains(gpId) && offerers.contains(targetId);
@@ -695,7 +613,7 @@ Game _applyRelationModifiersAndUpdateScores(
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
-    final player = getPlayer(game, gpId);
+    final player = game.playerById(gpId);
     if (player == null) continue;
 
     for (final order in entry.value) {
@@ -745,7 +663,7 @@ Game _applyRelationModifiersAndUpdateScores(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.setSubsidy) continue;
       final amount = order.amount ?? 0;
-      final player = getPlayer(game, gpId);
+      final player = game.playerById(gpId);
       if (player == null || amount <= 0 || player.treasury < amount) continue;
 
       final targetId = order.targetFactionId;
@@ -776,7 +694,7 @@ Game _applyRelationModifiersAndUpdateScores(
         ));
       }
 
-      final targetPlayer = getPlayer(game, targetId);
+      final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
         _diploLog.i(
             'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)');
@@ -805,7 +723,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
     final amount = subsidy.amountPerTurn;
 
     // Check if payer can afford subsidy
-    final payer = getPlayer(game, payerId);
+    final payer = game.playerById(payerId);
     if (payer == null || payer.treasury < amount) {
       // Cancel subsidy if payer can't afford it
       subsidyStates = subsidyStates
