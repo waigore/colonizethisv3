@@ -80,6 +80,12 @@ OvertureState? getOverture(Game game, String gpId, String targetId) {
   return null;
 }
 
+/// True when [a] and [b] are at war according to [game.diplomacyRelations].
+bool factionsAtWar(Game game, String a, String b) {
+  final rel = getRelation(game, a, b);
+  return rel?.atWar ?? false;
+}
+
 /// Returns player by id, or null.
 Player? getPlayer(Game game, String playerId) {
   for (final p in game.players) {

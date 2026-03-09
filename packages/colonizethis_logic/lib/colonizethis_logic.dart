@@ -36,6 +36,7 @@ export 'src/economy/economy_production.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
+export 'src/economy/worker_economy.dart';
 
 // Orders
 export 'src/orders/order_engine.dart';
@@ -56,6 +57,7 @@ export 'src/dossier/event_dialogue.dart';
 
 // AI
 export 'src/ai/ai_planner.dart';
+export 'src/ai/ai_control.dart';
 export 'src/ai/sim_game_ai.dart';
 export 'src/ai/simple_ai_heuristics.dart';
 

@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/fog_resolution.dart';
 import 'conflict_detection.dart';
 
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
@@ -354,16 +355,11 @@ Game applyQuickBattleResultToGame(
       result.winner == QuickBattleWinner.attacker &&
       ctx.attackers.isNotEmpty) {
     final attackerFactionId = ctx.attackers.first.factionId;
-    final timers = <String, Map<String, int>>{};
-    game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
-      final inner = Map<String, int>.from(byProv);
-      if (playerId == attackerFactionId) {
-        inner.remove(ctx.provinceId);
-      }
-      if (inner.isNotEmpty) {
-        timers[playerId] = inner;
-      }
-    });
+    final timers = clearSpyRevealTimersForProvince(
+      game.worldState.spyRevealTurnsByPlayer,
+      attackerFactionId,
+      ctx.provinceId,
+    );
     newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
   }
 

@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'topology_helpers.dart';
+
 /// Movement validation and application.
 /// SPEC/program/movement.md
 /// Adjacency is region-scoped when topology has multiple regions (SPEC/game/world-model-identity.md).
@@ -13,11 +15,7 @@ Iterable<String> neighborProvinceIdsInRegion(
   String regionId,
   String localProvinceId,
 ) sync* {
-  final nodeIdsInRegion = topology.nodes
-      .where((n) =>
-          n.regionId == regionId && n.type == TopologyNodeType.province)
-      .map((n) => n.id)
-      .toSet();
+  final nodeIdsInRegion = provinceNodeIdsForRegion(topology, regionId);
   final localIdsInRegion = nodeIdsInRegion
       .map((id) => ProvinceId.localIdFrom(id))
       .toSet();

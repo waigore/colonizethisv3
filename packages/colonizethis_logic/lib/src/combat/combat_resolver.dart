@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/fog_resolution.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
@@ -172,24 +173,66 @@ Game resolveBattleContext(
     }
   }
 
+  final post = _buildPostBattleRegion(
+    region: region,
+    ctx: ctx,
+    allCasualties: allCasualties,
+    unitsById: unitsById,
+    provinceOwnerId: provinceOwnerId,
+    defenderFactionId: ctx.defenderFactionId,
+    survivingAttackerFactionId: survivingAttackerFactionId,
+    defenderUnitIds: defenderUnitIds,
+  );
+
+  var newWorldState = ctx.regionId == kRegionOldWorld
+      ? game.worldState.copyWith(oldWorld: post.region)
+      : game.worldState.copyWith(newWorld: post.region);
+
+  if (post.provinceChangedOwner && survivingAttackerFactionId != null) {
+    final timers = clearSpyRevealTimersForProvince(
+      game.worldState.spyRevealTurnsByPlayer,
+      survivingAttackerFactionId,
+      ctx.provinceId,
+    );
+    newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
+  }
+
+  return game.copyWith(worldState: newWorldState);
+}
+
+/// Builds post-battle region state: applies casualties, garrison recovery,
+/// province ownership change, and civilian cleanup when province changes hands.
+({RegionData region, bool provinceChangedOwner}) _buildPostBattleRegion({
+  required RegionData region,
+  required BattleContext ctx,
+  required List<String> allCasualties,
+  required Map<String, Unit> unitsById,
+  required String provinceOwnerId,
+  required String defenderFactionId,
+  required String? survivingAttackerFactionId,
+  required List<String> defenderUnitIds,
+}) {
   final survivingUnits =
       region.units.where((u) => !allCasualties.contains(u.id)).toList();
 
   var updatedProvinces = region.provinces;
-  bool provinceChangedOwner = false;
+  var ownerId = provinceOwnerId;
+  var provinceChangedOwner = false;
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
     final idx = updatedProvinces.indexWhere((p) => p.id == ctx.provinceId);
     if (idx >= 0) {
       final p = updatedProvinces[idx];
       updatedProvinces = List<Province>.from(updatedProvinces)
         ..[idx] = p.copyWith(ownerId: survivingAttackerFactionId);
+      ownerId = survivingAttackerFactionId;
       provinceChangedOwner = true;
     }
   }
 
   final recoveredUnits = unitsById.values
       .where(
-          (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id))
+        (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id),
+      )
       .toList();
   var finalUnits = [
     ...survivingUnits,
@@ -198,8 +241,8 @@ Game resolveBattleContext(
 
   // If the province changed hands during this battle, remove civilian units
   // in that province that do not belong to the new owner.
-  if (provinceOwnerId != ctx.defenderFactionId) {
-    final victorId = provinceOwnerId;
+  if (ownerId != defenderFactionId) {
+    final victorId = ownerId;
     finalUnits = finalUnits.where((u) {
       if (u.provinceId != ctx.provinceId) return true;
       // Military units remain; civilians of non-victor factions are removed.
@@ -212,41 +255,7 @@ Game resolveBattleContext(
     provinces: updatedProvinces,
     units: finalUnits,
   );
-
-  if (ctx.regionId == kRegionOldWorld) {
-    var newWorldState = game.worldState.copyWith(oldWorld: newRegion);
-    if (provinceChangedOwner && survivingAttackerFactionId != null) {
-      // Clear Spy timers for (newOwner, province) when province changes hands.
-      final timers = <String, Map<String, int>>{};
-      game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
-        final inner = Map<String, int>.from(byProv);
-        if (playerId == survivingAttackerFactionId) {
-          inner.remove(ctx.provinceId);
-        }
-        if (inner.isNotEmpty) {
-          timers[playerId] = inner;
-        }
-      });
-      newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
-    }
-    return game.copyWith(worldState: newWorldState);
-  } else {
-    var newWorldState = game.worldState.copyWith(newWorld: newRegion);
-    if (provinceChangedOwner && survivingAttackerFactionId != null) {
-      final timers = <String, Map<String, int>>{};
-      game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
-        final inner = Map<String, int>.from(byProv);
-        if (playerId == survivingAttackerFactionId) {
-          inner.remove(ctx.provinceId);
-        }
-        if (inner.isNotEmpty) {
-          timers[playerId] = inner;
-        }
-      });
-      newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
-    }
-    return game.copyWith(worldState: newWorldState);
-  }
+  return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
 }
 
 void _sortAttackersByInitiative(
