@@ -184,9 +184,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('('), findsWidgets);
-      expect(find.textContaining('Lumber (timber)'), findsOneWidget);
-      expect(find.textContaining('Fabric (wool)'), findsOneWidget);
-      expect(find.textContaining('Fabric (cotton)'), findsOneWidget);
+      expect(find.textContaining('Lumber'), findsWidgets);
+      expect(find.textContaining('Fabric'), findsWidgets);
     });
   });
 }

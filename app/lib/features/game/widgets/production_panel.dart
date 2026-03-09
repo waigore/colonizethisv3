@@ -139,13 +139,11 @@ class _AvailableSubpanel extends StatelessWidget {
             c.category == CommodityCategory.rawMaterial &&
             inputCommodityIds.contains(c.id))
         .toList();
-    final food = CommodityCatalog.all
-        .where((c) =>
-            c.category == CommodityCategory.food &&
-            inputCommodityIds.contains(c.id))
-        .toList();
     final manufactured = CommodityCatalog.all
         .where((c) => c.category == CommodityCategory.manufactured)
+        .toList();
+    final availableFood = CommodityCatalog.all
+        .where((c) => c.category == CommodityCategory.food)
         .toList();
 
     return Card(
@@ -158,20 +156,22 @@ class _AvailableSubpanel extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Available',
-                  style: theme.textTheme.titleSmall,
+                Expanded(
+                  child: Text(
+                    'Available',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            if (food.isNotEmpty) ...[
+            if (availableFood.isNotEmpty) ...[
               Text(
                 'Food',
                 style: theme.textTheme.labelMedium,
               ),
               const SizedBox(height: 4),
-              ...food.map((c) {
+              ...availableFood.map((c) {
                 final qty = player.stockpile.quantityOf(c.id);
                 final change = netChanges[c.id] ?? 0;
                 return Padding(
@@ -342,9 +342,11 @@ class _AllocationSubpanel extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Allocation',
-                  style: theme.textTheme.titleSmall,
+                Expanded(
+                  child: Text(
+                    'Allocation',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 TextButton(
                   onPressed: () => onDesiredOutputChanged({}),

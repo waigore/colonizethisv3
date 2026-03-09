@@ -66,6 +66,30 @@ Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
 
 ---
 
+## Training Costs
+
+Each regiment type has training costs defined in program-level config (`colonizethis_data/lib/src/regiment_economy.dart`). Costs include commodities consumed from stockpile and food upkeep per turn.
+
+### Cavalry Input Requirements
+
+Cavalry regiments require **horses** as input in addition to other commodities:
+
+| Regiment | Fabric | Cast Iron | Lumber | Horses | Food Upkeep |
+|----------|--------|-----------|--------|--------|-------------|
+| Squires | 1 | 1 | - | 2 | 3 |
+| Knights | 1 | 2 | - | 2 | 3 |
+| Cossacks | 1 | 2 | - | 2 | 3 |
+| Lancers | 1 | 2 | - | - | 3 |
+| Harquebusiers | 1 | 2 | - | - | 3 |
+| Hussars | 1 | 2 | - | - | 3 |
+| Cuirassiers | 1 | 2 | - | - | 3 |
+| Scouts | 1 | 2 | - | - | 3 |
+| Carbine Cavalry | 1 | 2 | - | - | 3 |
+
+Note: Horses are a raw material commodity (see [commodity-catalog.md](commodity-catalog.md)) that must be extracted from provinces with suitable terrain (plains) or acquired through trade.
+
+---
+
 ## Acceptance Criteria
 
 - Given the regiment table in this document and the global unit catalog in the implementation  
