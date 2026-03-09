@@ -7,16 +7,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/player_view.dart';
 import '../orders/order_suggestion_api_impl.dart';
+import 'ai_control.dart';
 import 'simple_ai_heuristics.dart';
-
-/// Returns true if [gpId] is AI-controlled. Uses aiControlByGpId when present,
-/// otherwise !player.isHuman.
-bool isAiControlled(Game game, String gpId) {
-  final explicit = game.aiControlByGpId[gpId];
-  if (explicit != null) return explicit;
-  final player = game.playerById(gpId);
-  return player != null && !player.isHuman;
-}
 
 /// Generates orders for a single AI-controlled GP. Deterministic given game
 /// state and seeds. Respects diplomacy: no attacks against factions at peace.

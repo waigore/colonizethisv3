@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import 'province_lookup.dart';
+import 'topology_helpers.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
 
 final Logger _log = Logger();
 
@@ -41,7 +43,6 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game) {
     result[player.id] = {};
   }
   final fleets = game.worldState.fleets;
-  final relations = game.diplomacyRelations;
   for (final fleet in fleets) {
     if (fleet.mission != FleetMission.blockade) continue;
     final targetProvinceId = fleet.targetProvinceId;
@@ -52,12 +53,7 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game) {
     if (ownerId == null) continue;
     final blockaderId = fleet.ownerId;
     // Only factions at war with the province owner can blockade it.
-    final atWar = relations.any((rel) =>
-        rel.atWar &&
-        rel.factionId1 != rel.factionId2 &&
-        {rel.factionId1, rel.factionId2}.contains(blockaderId) &&
-        {rel.factionId1, rel.factionId2}.contains(ownerId));
-    if (!atWar) continue;
+    if (!factionsAtWar(game, blockaderId, ownerId)) continue;
     result[ownerId] ??= {};
     result[ownerId]!.add(targetProvinceId);
   }
@@ -74,7 +70,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
   _log.d('logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}');
-  final provinceIdsByType = _provinceIdsFromTopology(topology);
+  final provinceIdsByType = provinceNodeIds(topology);
   final blockadedByPlayer =
       blockadedPortProvincesByPlayerId ?? computeBlockadedPortProvincesByPlayer(game);
   final result = <String, ConnectivityResult>{};
