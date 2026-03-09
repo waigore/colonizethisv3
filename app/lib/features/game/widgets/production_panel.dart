@@ -19,13 +19,26 @@ class ProductionPanel extends StatelessWidget {
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
+  static Set<String> get _inputCommodityIds {
+    final inputIds = <String>{};
+    for (final recipe in ProductionRecipesCatalog.all) {
+      inputIds.addAll(recipe.inputQuantities.keys);
+    }
+    return inputIds;
+  }
+
+  static Set<String> get _outputCommodityIds {
+    return ProductionRecipesCatalog.all.map((r) => r.outputCommodityId).toSet();
+  }
+
   @override
   Widget build(BuildContext context) {
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
       stockpile: player.stockpile,
     );
-    // SPEC/ui/production-panel.md: narrow viewport = vertically stacked, scrollable.
+    final inputCommodityIds = _inputCommodityIds;
+    final outputCommodityIds = _outputCommodityIds;
     const double narrowBreakpoint = 600;
     final isNarrow = MediaQuery.sizeOf(context).width < narrowBreakpoint;
 
@@ -38,6 +51,9 @@ class ProductionPanel extends StatelessWidget {
             _AvailableSubpanel(
               player: player,
               effectiveLabour: effectiveLabour,
+              inputCommodityIds: inputCommodityIds,
+              outputCommodityIds: outputCommodityIds,
+              desiredOutputByRecipe: desiredOutputByRecipe,
             ),
             const SizedBox(height: 24),
             _AllocationSubpanel(
@@ -61,6 +77,9 @@ class ProductionPanel extends StatelessWidget {
             child: _AvailableSubpanel(
               player: player,
               effectiveLabour: effectiveLabour,
+              inputCommodityIds: inputCommodityIds,
+              outputCommodityIds: outputCommodityIds,
+              desiredOutputByRecipe: desiredOutputByRecipe,
             ),
           ),
           const SizedBox(width: 24),
@@ -83,14 +102,52 @@ class _AvailableSubpanel extends StatelessWidget {
   const _AvailableSubpanel({
     required this.player,
     required this.effectiveLabour,
+    required this.inputCommodityIds,
+    required this.outputCommodityIds,
+    required this.desiredOutputByRecipe,
   });
 
   final Player player;
   final int effectiveLabour;
+  final Set<String> inputCommodityIds;
+  final Set<String> outputCommodityIds;
+  final Map<String, int> desiredOutputByRecipe;
+
+  Map<String, int> _computeNetChanges() {
+    final changes = <String, int>{};
+    for (final entry in desiredOutputByRecipe.entries) {
+      final recipe = ProductionRecipesCatalog.byId[entry.key];
+      if (recipe == null) continue;
+      for (final input in recipe.inputQuantities.entries) {
+        changes[input.key] =
+            (changes[input.key] ?? 0) - (input.value * entry.value);
+      }
+      changes[recipe.outputCommodityId] =
+          (changes[recipe.outputCommodityId] ?? 0) +
+              (recipe.outputQuantity * entry.value);
+    }
+    return changes;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final netChanges = _computeNetChanges();
+
+    final rawMaterials = CommodityCatalog.all
+        .where((c) =>
+            c.category == CommodityCategory.rawMaterial &&
+            inputCommodityIds.contains(c.id))
+        .toList();
+    final food = CommodityCatalog.all
+        .where((c) =>
+            c.category == CommodityCategory.food &&
+            inputCommodityIds.contains(c.id))
+        .toList();
+    final manufactured = CommodityCatalog.all
+        .where((c) => c.category == CommodityCategory.manufactured)
+        .toList();
+
     return Card(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
@@ -98,26 +155,70 @@ class _AvailableSubpanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Available',
-              style: theme.textTheme.titleSmall,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Available',
+                  style: theme.textTheme.titleSmall,
+                ),
+              ],
             ),
             const SizedBox(height: 8),
+            if (food.isNotEmpty) ...[
+              Text(
+                'Food',
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 4),
+              ...food.map((c) {
+                final qty = player.stockpile.quantityOf(c.id);
+                final change = netChanges[c.id] ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+            ],
             Text(
-              'Stockpile',
+              'Raw Materials',
               style: theme.textTheme.labelMedium,
             ),
             const SizedBox(height: 4),
-            ...CommodityCatalog.all.map((c) {
+            ...rawMaterials.map((c) {
               final qty = player.stockpile.quantityOf(c.id);
+              final change = netChanges[c.id] ?? 0;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(
-                  '${c.displayName ?? c.id}: $qty',
+                  '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
                   style: theme.textTheme.bodySmall,
                 ),
               );
             }),
+            if (manufactured.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Manufactured',
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 4),
+              ...manufactured.map((c) {
+                final qty = player.stockpile.quantityOf(c.id);
+                final change = netChanges[c.id] ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                );
+              }),
+            ],
             const SizedBox(height: 12),
             Text(
               'Workers',
@@ -168,31 +269,54 @@ class _AllocationSubpanel extends StatelessWidget {
 
   static const int _absoluteMaxSliderOutput = 50;
 
-  /// Max runs achievable for this recipe alone (inputs and labour). Used to cap slider.
+  int _remainingLabour(String excludeRecipeId) {
+    int used = 0;
+    for (final entry in desiredOutputByRecipe.entries) {
+      if (entry.key == excludeRecipeId) continue;
+      final recipe = ProductionRecipesCatalog.byId[entry.key];
+      if (recipe != null) {
+        used += entry.value * recipe.labourPerOutput;
+      }
+    }
+    return (effectiveLabour - used).clamp(0, effectiveLabour);
+  }
+
+  Map<String, int> _remainingInputs(String excludeRecipeId) {
+    final remaining = <String, int>{};
+    for (final comm in CommodityCatalog.all) {
+      remaining[comm.id] = player.stockpile.quantityOf(comm.id);
+    }
+    for (final entry in desiredOutputByRecipe.entries) {
+      if (entry.key == excludeRecipeId) continue;
+      final recipe = ProductionRecipesCatalog.byId[entry.key];
+      if (recipe != null) {
+        for (final input in recipe.inputQuantities.entries) {
+          remaining[input.key] =
+              (remaining[input.key] ?? 0) - (input.value * entry.value);
+        }
+      }
+    }
+    for (final key in remaining.keys.toList()) {
+      if (remaining[key]! < 0) remaining[key] = 0;
+    }
+    return remaining;
+  }
+
   int _achievableRunsForRecipe(ProductionRecipe recipe) {
-    var maxByLabour = effectiveLabour ~/ recipe.labourPerOutput;
+    final remainingLabour = _remainingLabour(recipe.id);
+    var maxByLabour = remainingLabour ~/ recipe.labourPerOutput;
     if (maxByLabour <= 0) return 0;
+    final remainingInputs = _remainingInputs(recipe.id);
     var maxByInputs = maxByLabour;
     for (final entry in recipe.inputQuantities.entries) {
-      final have = player.stockpile.quantityOf(entry.key);
+      final remaining = remainingInputs[entry.key] ?? 0;
       final perRun = entry.value;
       if (perRun <= 0) continue;
-      final runs = have ~/ perRun;
+      final runs = remaining ~/ perRun;
       if (runs < maxByInputs) maxByInputs = runs;
     }
     final cap = maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
     return cap.clamp(0, _absoluteMaxSliderOutput);
-  }
-
-  /// Whether required inputs for [desired] runs exceed stockpile.
-  bool _hasInsufficientInputs(ProductionRecipe recipe, int desired) {
-    if (desired <= 0) return false;
-    for (final entry in recipe.inputQuantities.entries) {
-      final have = player.stockpile.quantityOf(entry.key);
-      final need = entry.value * desired;
-      if (need > have) return true;
-    }
-    return false;
   }
 
   @override
@@ -215,21 +339,35 @@ class _AllocationSubpanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Allocation',
-              style: theme.textTheme.titleSmall,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Allocation',
+                  style: theme.textTheme.titleSmall,
+                ),
+                TextButton(
+                  onPressed: () => onDesiredOutputChanged({}),
+                  child: const Text('Reset'),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             ...ProductionRecipesCatalog.all.map((recipe) {
-              final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
-              final label = outputCommodity?.displayName ?? recipe.outputCommodityId;
+              final outputCommodity =
+                  CommodityCatalog.byId[recipe.outputCommodityId];
+              final outputName =
+                  outputCommodity?.displayName ?? recipe.outputCommodityId;
+              final inputNames = recipe.inputQuantities.entries.map((e) {
+                final comm = CommodityCatalog.byId[e.key];
+                return comm?.displayName ?? e.key;
+              }).join(', ');
+              final label = '$outputName ($inputNames)';
               final desired = desiredOutputByRecipe[recipe.id] ?? 0;
               final maxAchievable = _achievableRunsForRecipe(recipe);
               final sliderMax = maxAchievable == 0
                   ? 0.0
                   : maxAchievable.clamp(1, _absoluteMaxSliderOutput).toDouble();
-              final requiredLabour = desired * recipe.labourPerOutput;
-              final inputsInsufficient = _hasInsufficientInputs(recipe, desired);
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -250,10 +388,12 @@ class _AllocationSubpanel extends StatelessWidget {
                             max: sliderMax,
                             divisions: maxAchievable == 0
                                 ? 1
-                                : maxAchievable.clamp(1, _absoluteMaxSliderOutput),
+                                : maxAchievable.clamp(
+                                    1, _absoluteMaxSliderOutput),
                             label: '$desired',
                             onChanged: (v) {
-                              final next = Map<String, int>.from(desiredOutputByRecipe);
+                              final next =
+                                  Map<String, int>.from(desiredOutputByRecipe);
                               final val = v.round().clamp(0, maxAchievable);
                               if (val == 0) {
                                 next.remove(recipe.id);
@@ -273,37 +413,6 @@ class _AllocationSubpanel extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (desired > 0) ...[
-                      Text(
-                        'Labour: $requiredLabour',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      ...recipe.inputQuantities.entries.map(
-                        (e) {
-                          final comm = CommodityCatalog.byId[e.key];
-                          final name = comm?.displayName ?? e.key;
-                          final need = e.value * desired;
-                          final have = player.stockpile.quantityOf(e.key);
-                          final insufficient = need > have;
-                          return Text(
-                            '  $name: $need${insufficient ? ' (have $have)' : ''}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: insufficient
-                                  ? theme.colorScheme.error
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-                      if (inputsInsufficient)
-                        Text(
-                          'Insufficient inputs',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
                   ],
                 ),
               );

@@ -76,6 +76,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 1,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -86,6 +87,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -138,6 +140,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -148,6 +151,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -158,6 +162,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -169,6 +174,7 @@ class RegimentEconomyCatalog {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
       CommodityCatalog.lumber.id: 1,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -221,6 +227,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -231,6 +238,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 3,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -295,6 +303,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -305,6 +314,7 @@ class RegimentEconomyCatalog {
     buildInputs: {
       CommodityCatalog.fabric.id: 1,
       CommodityCatalog.castIron.id: 3,
+      CommodityCatalog.horses.id: 2,
     },
     foodUpkeep: 3,
   );
@@ -372,4 +382,3 @@ class RegimentEconomyCatalog {
     for (final e in all) e.id: e,
   };
 }
-
