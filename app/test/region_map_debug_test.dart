@@ -61,6 +61,7 @@ void main() {
       void Function(String)? onProvinceSelected,
       void Function(String?)? onProvinceHovered,
       String? highlightedTileKey,
+      String? centerOnTileKey,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -74,6 +75,7 @@ void main() {
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
               highlightedTileKey: highlightedTileKey,
+              centerOnTileKey: centerOnTileKey,
             ),
           ),
         ),
@@ -243,6 +245,22 @@ void main() {
       expect(stacks, findsAtLeastNWidgets(1));
       final firstStack = tester.widgetList<Stack>(stacks).first;
       expect(firstStack.children.length, greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('builds with centerOnTileKey and applies centering',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      final tileKey =
+          '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
+      await tester.pumpWidget(buildMap(
+        region: region,
+        centerOnTileKey: tileKey,
+      ));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
     });
   });
 }

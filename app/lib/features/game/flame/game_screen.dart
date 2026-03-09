@@ -9,6 +9,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../widgets/region_map_debug.dart';
+import '../widgets/civilian_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_panel.dart';
 import 'game_canvas.dart';
@@ -104,6 +105,7 @@ class _GameMapAreaState extends State<_GameMapArea> {
   String? _hoveredDetailId;
   String? _hoveredTileKey;
   String? _highlightedTileKey;
+  String? _centerOnTileKey;
 
   String get _humanPlayerId =>
       widget.game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
@@ -129,6 +131,25 @@ class _GameMapAreaState extends State<_GameMapArea> {
     });
   }
 
+  void _onLocateCivilianUnit(ct_models.Unit unit) {
+    final tileKey = unit.tileKey;
+    if (tileKey == null) return;
+    final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    Navigator.of(context).maybePop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
@@ -150,6 +171,21 @@ class _GameMapAreaState extends State<_GameMapArea> {
                 selected: _regionIndex == 1,
                 onSelected: (_) => setState(() => _regionIndex = 1),
               ),
+              const SizedBox(width: 16),
+              TextButton.icon(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    builder: (ctx) => CivilianUnitsPanel(
+                      game: widget.game,
+                      humanPlayerId: _humanPlayerId,
+                      onLocateUnit: _onLocateCivilianUnit,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.people_outline, size: 20),
+                label: const Text('Civilian Units'),
+              ),
             ],
           ),
         ),
@@ -164,6 +200,7 @@ class _GameMapAreaState extends State<_GameMapArea> {
                   onProvinceHovered: (id) => setState(() => _hoveredDetailId = id),
                   onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   highlightedTileKey: _highlightedTileKey,
+                  centerOnTileKey: _centerOnTileKey,
                 ),
               ),
               if (!isNarrow && _selectedDetailId != null)
