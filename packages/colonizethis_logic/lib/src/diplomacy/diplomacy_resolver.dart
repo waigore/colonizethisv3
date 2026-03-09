@@ -10,17 +10,11 @@ import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
 import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
 
 export 'diplomacy_relation_lookup.dart';
 
 final Logger _diploLog = Logger();
-
-/// Canonical faction pair IDs for a pair key.
-({String id1, String id2}) _pairIds(String a, String b) {
-  final key = pairKey(a, b);
-  final parts = key.split('|');
-  return (id1: parts[0], id2: parts[1]);
-}
 
 bool _isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
@@ -403,7 +397,7 @@ Game _processAlliances(
       final targetId = order.targetFactionId;
       if (!_isGreatPower(game, targetId)) continue;
 
-      final ids = _pairIds(gpId, targetId);
+      final ids = canonicalPairIds(gpId, targetId);
       final relations = upsertRelation(
         List<DiplomacyRelation>.from(game.diplomacyRelations),
         gpId,
@@ -473,29 +467,13 @@ Game _processWarAndPeace(
             ));
           }
           final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
-          final ids = _pairIds(gpId, targetId);
-          
-          // War declaration: reset both sides to score 20 (Hostile)
-          relations = upsertRelation(relations, gpId, targetId, (existing) {
-            if (existing == null) {
-              return DiplomacyRelation(
-                factionId1: ids.id1,
-                factionId2: ids.id2,
-                score: 20,
-                level: RelationLevel.hostile,
-                state: RelationState.atWar,
-                sinceTurn: turn,
-                lastInteractionTurn: turn,
-              );
-            }
-            return existing.copyWith(
-              state: RelationState.atWar,
-              sinceTurn: turn,
-              lastInteractionTurn: turn,
-              score: 20,
-              level: RelationLevel.hostile,
-            );
-          });
+
+          relations = setWarStateForPair(
+            relations: relations,
+            gpId: gpId,
+            targetId: targetId,
+            turn: turn,
+          );
           
           // Cancel any active subsidies between these factions
           var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
@@ -554,13 +532,12 @@ Game _processWarAndPeace(
           }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
           if (hasMutualOffer) {
-            relations = upsertRelation(relations, gpId, targetId, (existing) {
-              return existing!.copyWith(
-                state: RelationState.atPeace,
-                sinceTurn: turn,
-                lastInteractionTurn: turn,
-              );
-            });
+            relations = applyPeaceForPair(
+              relations: relations,
+              gpId: gpId,
+              targetId: targetId,
+              turn: turn,
+            );
             game = game.copyWith(
               diplomacyRelations: relations,
               dossierEvidenceEntries: [
@@ -632,22 +609,12 @@ Game _applyRelationModifiersAndUpdateScores(
             .copyWith(treasury: players[playerIdx].treasury - amount);
       }
 
-      final ids = _pairIds(gpId, targetId);
-      relations = upsertRelation(relations, gpId, targetId, (existing) {
-        final newScore = ((existing?.score ?? 50) + 5).clamp(0, 100);
-        final newLevel = scoreToLevel(newScore);
-        if (existing == null) {
-          return DiplomacyRelation(
-            factionId1: ids.id1,
-            factionId2: ids.id2,
-            score: newScore,
-            level: newLevel,
-            lastInteractionTurn: turn,
-          );
-        }
-        return existing.copyWith(
-            score: newScore, level: newLevel, lastInteractionTurn: turn);
-      });
+      relations = applyGrantAidModifier(
+        relations: relations,
+        gpId: gpId,
+        targetId: targetId,
+        turn: turn,
+      );
       game = game.copyWith(players: players, diplomacyRelations: relations);
       _diploLog
           .i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
@@ -757,22 +724,13 @@ Game _processOngoingSubsidies(Game game, int turn) {
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
     if (_isMinorOrTribe(game, targetId)) {
-      final ids = _pairIds(payerId, targetId);
-      relations = upsertRelation(relations, payerId, targetId, (existing) {
-        final newScore = ((existing?.score ?? 50) + boost).clamp(0, 100);
-        final newLevel = scoreToLevel(newScore);
-        if (existing == null) {
-          return DiplomacyRelation(
-            factionId1: ids.id1,
-            factionId2: ids.id2,
-            score: newScore,
-            level: newLevel,
-            lastInteractionTurn: turn,
-          );
-        }
-        return existing.copyWith(
-            score: newScore, level: newLevel, lastInteractionTurn: turn);
-      });
+      relations = applySubsidyBoost(
+        relations: relations,
+        payerId: payerId,
+        targetId: targetId,
+        boost: boost,
+        turn: turn,
+      );
       _diploLog.i('logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost');
     } else {
       // GP target: transfer treasury
@@ -862,7 +820,7 @@ Game applyInterventionChoice(
     if (!_isGreatPower(game, attackerId)) continue;
 
     if (choice == InterventionChoice.intervene) {
-      final ids = _pairIds(gpIdWithEmbassy, attackerId);
+      final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
       relations =
           upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
         if (existing == null) {
@@ -887,7 +845,7 @@ Game applyInterventionChoice(
         );
       });
     } else if (choice == InterventionChoice.protest) {
-      final ids = _pairIds(gpIdWithEmbassy, attackerId);
+      final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
       relations =
           upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
         final newScore = ((existing?.score ?? 50) - 10).clamp(0, 100);
