@@ -209,35 +209,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return false;
     }
 
-    // Escape: back to shell or cancel input mode
-    if (key == LogicalKey.escape) {
-      if (_inputMode == _DevelopmentInputMode.selectingTile) {
-        // Step back to province selection.
-        setState(() {
-          _inputMode = _DevelopmentInputMode.selectingProvince;
-          _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
-          _feedbackColor = Colors.cyan;
-        });
-        return true;
-      }
-      if (_inputMode == _DevelopmentInputMode.selectingProvince) {
-        // Step back to idle navigation.
-        setState(() {
-          _inputMode = _DevelopmentInputMode.idle;
-          _pendingWorkTarget = null;
-          _candidateProvinces = const [];
-          _candidateTilesByProvince = const {};
-          _selectedProvinceIndex = 0;
-          _selectedTileIndexWithinProvince = 0;
-          _provinceWindowStart = 0;
-          _tileWindowStart = 0;
-          _feedbackMessage = '';
-        });
-        _log.d('tui:nav: cancelled development input mode');
-        return true;
-      }
-      // Idle: leave Development screen back to in-game shell.
-      component.onNavigate(CttermRoute.inGameShell);
+    if (_handleEscapeKey(key)) {
       return true;
     }
 
@@ -249,20 +221,86 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return _handleTileSelectionKey(event, units);
     }
 
-    // Navigation: arrow keys / j/k to navigate unit list
-    if (key == LogicalKey.arrowUp || c == 'k') {
-      setState(() => _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1));
-      return true;
-    }
-    if (key == LogicalKey.arrowDown || c == 'j') {
-      setState(() => _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1));
+    if (_handleUnitNavigationKey(key, c, units.length)) {
       return true;
     }
 
+    if (_handleIdleActionKey(c, rawChar, units)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  bool _handleEscapeKey(LogicalKey key) {
+    // Escape: back to shell or cancel input mode
+    if (key != LogicalKey.escape) {
+      return false;
+    }
+
+    if (_inputMode == _DevelopmentInputMode.selectingTile) {
+      // Step back to province selection.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.selectingProvince;
+        _feedbackMessage =
+            'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+        _feedbackColor = Colors.cyan;
+      });
+      return true;
+    }
+    if (_inputMode == _DevelopmentInputMode.selectingProvince) {
+      // Step back to idle navigation.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.idle;
+        _pendingWorkTarget = null;
+        _candidateProvinces = const [];
+        _candidateTilesByProvince = const {};
+        _selectedProvinceIndex = 0;
+        _selectedTileIndexWithinProvince = 0;
+        _provinceWindowStart = 0;
+        _tileWindowStart = 0;
+        _feedbackMessage = '';
+      });
+      _log.d('tui:nav: cancelled development input mode');
+      return true;
+    }
+    // Idle: leave Development screen back to in-game shell.
+    component.onNavigate(CttermRoute.inGameShell);
+    return true;
+  }
+
+  bool _handleUnitNavigationKey(
+    LogicalKey key,
+    String? c,
+    int unitCount,
+  ) {
+    // Navigation: arrow keys / j/k to navigate unit list
+    if (key == LogicalKey.arrowUp || c == 'k') {
+      setState(
+        () => _selectedIndex = (_selectedIndex - 1).clamp(0, unitCount - 1),
+      );
+      return true;
+    }
+    if (key == LogicalKey.arrowDown || c == 'j') {
+      setState(
+        () => _selectedIndex = (_selectedIndex + 1).clamp(0, unitCount - 1),
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  bool _handleIdleActionKey(
+    String? c,
+    String? rawChar,
+    List<Unit> units,
+  ) {
     // Enter/Space: soft hint only; actual work-type choice is via hotkeys
     // tied to Available Work. Do not change mode here.
-    if (key == LogicalKey.enter || key == LogicalKey.space) {
-      return true;
+    if (_inputMode == _DevelopmentInputMode.idle &&
+        (c == null && (rawChar == null))) {
+      return false;
     }
 
     // x: cancel work order for selected unit (from idle mode only, when unit has work)
@@ -284,6 +322,13 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           return true;
         }
       }
+    }
+
+    // Enter/Space: handled last so they remain a soft hint when idle.
+    if (_inputMode == _DevelopmentInputMode.idle &&
+        (c == null || c.isEmpty) &&
+        (rawChar == null || rawChar.isEmpty)) {
+      return false;
     }
 
     return false;
