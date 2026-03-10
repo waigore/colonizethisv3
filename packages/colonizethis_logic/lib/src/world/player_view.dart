@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'unit_lookup.dart';
 
 /// Visibility level for a tile from a single player's perspective.
 /// Mirrors SPEC/game/fog-and-exploration.md.
@@ -93,12 +94,7 @@ PlayerView buildPlayerView(
 
   // Units owned by this player across both regions.
   final ownUnitsById = <String, Unit>{};
-  for (final u in game.worldState.oldWorld.units) {
-    if (u.ownerId == playerId) {
-      ownUnitsById[u.id] = u;
-    }
-  }
-  for (final u in game.worldState.newWorld.units) {
+  for (final u in allUnitsFromWorld(game.worldState)) {
     if (u.ownerId == playerId) {
       ownUnitsById[u.id] = u;
     }

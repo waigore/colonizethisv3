@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import '../constants.dart';
+import '../world/unit_lookup.dart';
 import 'game_setup.dart';
 import 'warp_zone_generator.dart';
 
@@ -256,10 +257,9 @@ String formatInitGameSetupMarkdown(Game game) {
         .map((e) => '${e.key}:${e.value}')
         .join(', ');
     final workers = '${p.workerPool.peasants}p/${p.workerPool.apprentices}a/${p.workerPool.journeymen}j/${p.workerPool.masters}m';
-    final units = game.worldState.oldWorld.units
-            .where((u) => u.ownerId == p.id)
-            .length +
-        game.worldState.newWorld.units.where((u) => u.ownerId == p.id).length;
+    final units = allUnitsFromWorld(game.worldState)
+        .where((u) => u.ownerId == p.id)
+        .length;
     buf.writeln('| ${p.displayName} (${p.id}) | ${stock.isEmpty ? "—" : stock} | $workers | ${p.treasury} | $units |');
   }
   for (final m in game.minorNations) {

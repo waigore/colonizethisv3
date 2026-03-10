@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'topology_helpers.dart';
+import 'unit_lookup.dart';
 
 /// Movement validation and application.
 /// SPEC/program/movement.md
@@ -93,9 +94,7 @@ RegionData applyMoveOrdersToRegion(
     return regionData;
   }
 
-  final unitsById = {
-    for (final u in regionData.units) u.id: u,
-  };
+  final unitsById = Map<String, Unit>.from(unitsByIdFromRegion(regionData));
 
   for (final entry in moveOrdersByPlayerId.entries) {
     final playerId = entry.key;

@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 
 import '../economy/economy_production.dart';
 import '../constants.dart';
+import '../world/unit_lookup.dart';
 import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
 
@@ -44,10 +45,7 @@ ProjectedEffects projectOrderEffects({
 
   // Unit locations after resolution (province identity: use locationProvinceId per SPEC/game/world-model.md).
   final unitLocations = <String, String>{};
-  for (final u in next.worldState.oldWorld.units) {
-    if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
-  }
-  for (final u in next.worldState.newWorld.units) {
+  for (final u in allUnitsFromWorld(next.worldState)) {
     if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
   }
 
