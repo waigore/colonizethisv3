@@ -1,0 +1,420 @@
+import 'dart:math' as math;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
+
+import '../../../widgets/region_map_debug.dart';
+
+/// Flame-based region map component that mirrors CtRegionMapDebug rendering.
+/// Renders one RegionMapViewData and exposes hover/selection state via callbacks.
+class CtRegionMapComponent extends PositionComponent {
+  CtRegionMapComponent({
+    required this.region,
+    required this.cellSize,
+    required this.showPoliticalOverlay,
+    required this.visibilityMode,
+    this.onProvinceSelected,
+    this.onProvinceHovered,
+    this.onTileHovered,
+    this.highlightedTileKey,
+    this.validTileKeys,
+  });
+
+  RegionMapViewData region;
+  double cellSize;
+  bool showPoliticalOverlay;
+  CtMapVisibilityMode visibilityMode;
+  void Function(String provinceId)? onProvinceSelected;
+  void Function(String? provinceId)? onProvinceHovered;
+  void Function(String? tileKey)? onTileHovered;
+  String? highlightedTileKey;
+  Set<String>? validTileKeys;
+
+  int? _hoveredTileX;
+  int? _hoveredTileY;
+  String? _hoveredProvinceId;
+  double _hoverAnimationT = 0.0;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    size = Vector2(
+      region.width * cellSize,
+      region.height * cellSize,
+    );
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _hoverAnimationT += dt;
+  }
+
+  /// Updates hover state from a world-space position.
+  void updateHoverFromWorld(Vector2 worldPosition) {
+    final local = worldPosition - absoluteTopLeftPosition;
+    final x = (local.x / cellSize).floor();
+    final y = (local.y / cellSize).floor();
+    int? nx;
+    int? ny;
+    if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
+      final cell = region.cellAt(x, y);
+      final isUnrevealed = visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed;
+      if (!isUnrevealed) {
+        nx = x;
+        ny = y;
+      }
+    }
+    final prevId = _hoveredTileX != null && _hoveredTileY != null
+        ? '${region.regionId}|${region.cellAt(_hoveredTileX!, _hoveredTileY!).regionCellId}'
+        : null;
+    final nextId = nx != null && ny != null
+        ? '${region.regionId}|${region.cellAt(nx, ny).regionCellId}'
+        : null;
+    if (prevId != nextId) {
+      onProvinceHovered?.call(nextId);
+    }
+    final nextTileKey = nx != null && ny != null
+        ? '${region.regionId}|${region.cellAt(nx, ny).regionCellId}|$nx|$ny'
+        : null;
+    onTileHovered?.call(nextTileKey);
+    _hoveredTileX = nx;
+    _hoveredTileY = ny;
+    _hoveredProvinceId = nx != null && ny != null
+        ? region.cellAt(nx, ny).regionCellId
+        : null;
+  }
+
+  /// Handles a tap at the given world-space position.
+  void handleTapAtWorld(Vector2 worldPosition) {
+    final local = worldPosition - absoluteTopLeftPosition;
+    final x = (local.x / cellSize).floor();
+    final y = (local.y / cellSize).floor();
+    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
+    final cell = region.cellAt(x, y);
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.unrevealed) {
+      return;
+    }
+    final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
+    if (validTileKeys != null && validTileKeys!.isNotEmpty) {
+      if (validTileKeys!.contains(tileKey)) {
+        // Work-target mode: widget wrapper will translate to onTileSelected.
+        onTileHovered?.call(tileKey);
+      } else {
+        // Non-valid tile: wrapper may treat as cancel.
+        onTileHovered?.call(null);
+      }
+      return;
+    }
+    final provinceId = '${region.regionId}|${cell.regionCellId}';
+    onProvinceSelected?.call(provinceId);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    _paintTiles(canvas);
+    _paintLetters(canvas);
+    _paintProvinceBorders(canvas);
+    if (_hoveredProvinceId != null) {
+      _paintHoveredProvinceGlow(canvas);
+    }
+    if (showPoliticalOverlay) _paintFactionBorders(canvas);
+    _paintCapitals(canvas);
+    _paintPorts(canvas);
+    if (_hoveredTileX != null && _hoveredTileY != null) {
+      _paintSelector(canvas);
+    }
+    if (highlightedTileKey != null) {
+      _paintHighlightedTile(canvas);
+    }
+    if (validTileKeys != null && validTileKeys!.isNotEmpty) {
+      _paintValidTilesGlow(canvas);
+    }
+  }
+
+  void _paintValidTilesGlow(Canvas canvas) {
+    final keys = validTileKeys!;
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0x44AAFF88);
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
+        if (!keys.contains(tileKey)) continue;
+        final left = x * cellSize;
+        final top = y * cellSize;
+        canvas.drawRect(
+          Rect.fromLTWH(left, top, cellSize, cellSize),
+          paint,
+        );
+      }
+    }
+  }
+
+  void _paintHighlightedTile(Canvas canvas) {
+    final key = highlightedTileKey!;
+    final parts = key.split('|');
+    if (parts.length < 4) return;
+    if (parts[0] != region.regionId) return;
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) return;
+    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
+    final left = x * cellSize;
+    final top = y * cellSize;
+    final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..color = const Color(0xFFFFAA00);
+    canvas.drawRect(rect, paint);
+  }
+
+  void _paintTiles(Canvas canvas) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    for (final cell in region.cells) {
+      final left = cell.x * cellSize;
+      final top = cell.y * cellSize;
+
+      Color baseColor;
+      if (cell.isSea) {
+        baseColor = const Color(0xFF003366);
+      } else {
+        final terrain = cell.terrainType ??
+            (cell.terrainTypeId != null
+                ? TerrainType.values.byName(cell.terrainTypeId!)
+                : null);
+        final rgb = terrain != null
+            ? (region.terrainColors[terrain] ?? (128, 128, 128))
+            : (128, 128, 128);
+        baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
+      }
+
+      Color finalColor = baseColor;
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
+        switch (cell.visibility) {
+          case TileVisibility.visible:
+            break;
+          case TileVisibility.fogged:
+            finalColor = Color.lerp(baseColor, Colors.grey.shade700, 0.5)!;
+            break;
+          case TileVisibility.unrevealed:
+            finalColor = Colors.black;
+            break;
+        }
+      }
+
+      paint.color = finalColor;
+      canvas.drawRect(
+        Rect.fromLTWH(left, top, cellSize, cellSize),
+        paint,
+      );
+    }
+  }
+
+  void _paintLetters(Canvas canvas) {
+    final double fontSize = math.max(10.0, cellSize * 0.35);
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    for (final cell in region.cells) {
+      if (cell.isSea) continue;
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed) {
+        continue;
+      }
+      final parts = <String>[];
+      final letter = resourceIdToLegendLetter(cell.resourceId);
+      if (letter != null) parts.add(letter);
+      final imp = cell.improvementLevel ?? 0;
+      parts.add('I$imp');
+      final road = cell.roadLevel ?? 0;
+      parts.add('R$road');
+      final text = parts.join(' ');
+      final cx = cell.x * cellSize + cellSize / 2;
+      final cy = cell.y * cellSize + cellSize / 2;
+      textPainter.text = TextSpan(
+        text: text,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
+      );
+    }
+  }
+
+  void _paintHoveredProvinceGlow(Canvas canvas) {
+    final t = _hoverAnimationT;
+    final opacity =
+        0.5 + 0.25 * math.sin(t * 2 * math.pi);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..color = const Color(0x88FFFFFF).withValues(alpha: opacity);
+    final provinceId = _hoveredProvinceId!;
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (cell.regionCellId != provinceId) continue;
+        if (x + 1 < region.width) {
+          final right = region.cellAt(x + 1, y);
+          if (right.regionCellId != provinceId) {
+            final xEdge = (x + 1) * cellSize;
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              paint,
+            );
+          }
+        }
+        if (y + 1 < region.height) {
+          final bottom = region.cellAt(x, y + 1);
+          if (bottom.regionCellId != provinceId) {
+            final yEdge = (y + 1) * cellSize;
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              paint,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _paintSelector(Canvas canvas) {
+    final x = _hoveredTileX!;
+    final y = _hoveredTileY!;
+    final bounce = 1.0 + 0.04 * math.sin(_hoverAnimationT * 2 * math.pi);
+    final cx = x * cellSize + cellSize / 2;
+    final cy = y * cellSize + cellSize / 2;
+    final half = (cellSize / 2 - 2.0) * bounce;
+    final left = cx - half;
+    final top = cy - half;
+    final size = half * 2;
+    final rect = Rect.fromLTWH(left, top, size, size);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..color = const Color(0xFFFFFFFF);
+    canvas.drawRect(rect, paint);
+  }
+
+  void _paintProvinceBorders(Canvas canvas) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = Colors.black;
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (x + 1 < region.width) {
+          final right = region.cellAt(x + 1, y);
+          if (cell.regionCellId != right.regionCellId) {
+            final xEdge = (x + 1) * cellSize;
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              paint,
+            );
+          }
+        }
+        if (y + 1 < region.height) {
+          final bottom = region.cellAt(x, y + 1);
+          if (cell.regionCellId != bottom.regionCellId) {
+            final yEdge = (y + 1) * cellSize;
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              paint,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _paintFactionBorders(Canvas canvas) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..color = const Color(0xFF1A237E);
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (cell.isSea) continue;
+        final owner = cell.ownerFactionId ?? '';
+        if (x + 1 < region.width) {
+          final right = region.cellAt(x + 1, y);
+          if (!right.isSea &&
+              (right.ownerFactionId ?? '') != owner) {
+            final xEdge = (x + 1) * cellSize;
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              paint,
+            );
+          }
+        }
+        if (y + 1 < region.height) {
+          final bottom = region.cellAt(x, y + 1);
+          if (!bottom.isSea &&
+              (bottom.ownerFactionId ?? '') != owner) {
+            final yEdge = (y + 1) * cellSize;
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              paint,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _paintCapitals(Canvas canvas) {
+    final fill = Paint()..style = PaintingStyle.fill;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.black;
+    for (final cap in region.capitalMarkers) {
+      final cx = cap.x * cellSize + cellSize / 2;
+      final cy = cap.y * cellSize + cellSize / 2;
+      fill.color = const Color(0xFFFFD700);
+      canvas.drawCircle(Offset(cx, cy), 6, fill);
+      canvas.drawCircle(Offset(cx, cy), 6, stroke);
+    }
+  }
+
+  void _paintPorts(Canvas canvas) {
+    final fill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFF00648C);
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.black;
+    const half = 4.0;
+    for (final port in region.portMarkers) {
+      final cx = port.x * cellSize + cellSize / 2;
+      final cy = port.y * cellSize + cellSize / 2;
+      final rect = Rect.fromLTWH(cx - half, cy - half, half * 2, half * 2);
+      canvas.drawRect(rect, fill);
+      canvas.drawRect(rect, stroke);
+    }
+  }
+}
+
