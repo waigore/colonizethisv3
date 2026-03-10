@@ -6,6 +6,7 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'config/themes.dart';
 import 'features/game/widgets/civilian_units_panel.dart';
+import 'features/game/widgets/diplomacy_panel.dart';
 import 'features/game/widgets/military_units_panel.dart';
 import 'features/game/widgets/production_panel.dart';
 import 'features/game/widgets/production_panel_demo_data.dart';
@@ -51,6 +52,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...productionPanelDirectories,
         ...civilianUnitsPanelDirectories,
         ...militaryUnitsPanelDirectories,
+        ...diplomacyPanelDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -276,6 +278,35 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'With map',
         builder: (context) => const _CivilianPanelWithMapStory(),
+      ),
+    ],
+  ),
+];
+
+/// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
+List<WidgetbookNode> get diplomacyPanelDirectories => [
+  WidgetbookFolder(
+    name: 'Diplomacy Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'With real game',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+            child: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              topology: result.combinedTopology,
+              currentOrders: const Orders(),
+              onOrdersChanged: (_) {},
+            ),
+          );
+        },
       ),
     ],
   ),
