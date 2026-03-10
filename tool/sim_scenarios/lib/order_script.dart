@@ -86,10 +86,17 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
         break;
 
       case 'naval_move':
-        final navalMoveOrder = NavalMoveOrder(
-          fleetId: cmd.fleetId ?? '',
-          destinationSeaZoneId: cmd.destinationSeaZoneId ?? '',
-        );
+        final portId = cmd.destinationPortProvinceId;
+        final isDock = portId != null && portId.isNotEmpty;
+        final navalMoveOrder = isDock
+            ? NavalMoveOrder(
+                fleetId: cmd.fleetId ?? '',
+                destinationPortProvinceId: portId,
+              )
+            : NavalMoveOrder(
+                fleetId: cmd.fleetId ?? '',
+                destinationSeaZoneId: cmd.destinationSeaZoneId ?? '',
+              );
         navalMoveOrdersByPlayerId
             .putIfAbsent(cmd.player, () => [])
             .add(navalMoveOrder);

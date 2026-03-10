@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import 'naval.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
@@ -32,12 +33,10 @@ class ConnectivityResult {
 
 /// Blockade state: per player, the set of port province ids (full prefixed) that are blockaded.
 ///
-/// A province is blockaded for its owner when an **enemy fleet at war** with that owner is on
-/// Blockade mission targeting it. **Diplomatic state:** only blockaders that are at war with the
-/// province owner count; blockading a faction you are at peace with has no effect. **Same-region**
-/// and **cross-region** blockades are both valid: the fleet's [Fleet.regionId] is where the fleet
-/// is; [targetProvinceId] may be in any region (oldWorld, newWorld, etc.). SPEC/game/capital-and-connectivity.md § Blockade.
-Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game) {
+/// A province is blockaded for its owner when an **enemy fleet at sea** (at war) is on Blockade
+/// mission targeting it and the fleet's sea zone is **adjacent to that province's port**.
+/// SPEC/game/capital-and-connectivity.md § Blockade.
+Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game, MapTopology topology) {
   final result = <String, Set<String>>{};
   for (final player in game.players) {
     result[player.id] = {};
@@ -45,14 +44,16 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game) {
   final fleets = game.worldState.fleets;
   for (final fleet in fleets) {
     if (fleet.mission != FleetMission.blockade) continue;
+    if (!fleet.isAtSea || fleet.seaZoneId == null) continue;
     final targetProvinceId = fleet.targetProvinceId;
     if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
     if (!ProvinceId.isPrefixed(targetProvinceId)) continue;
+    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(topology, targetProvinceId);
+    if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
     final province = tryGetProvince(game.worldState, targetProvinceId);
     final ownerId = province?.ownerId;
     if (ownerId == null) continue;
     final blockaderId = fleet.ownerId;
-    // Only factions at war with the province owner can blockade it.
     if (!factionsAtWar(game, blockaderId, ownerId)) continue;
     result[ownerId] ??= {};
     result[ownerId]!.add(targetProvinceId);
@@ -72,7 +73,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   _log.d('logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}');
   final provinceIdsByType = provinceNodeIds(topology);
   final blockadedByPlayer =
-      blockadedPortProvincesByPlayerId ?? computeBlockadedPortProvincesByPlayer(game);
+      blockadedPortProvincesByPlayerId ?? computeBlockadedPortProvincesByPlayer(game, topology);
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {

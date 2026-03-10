@@ -71,10 +71,12 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
   final byZone = <String, Map<String, List<String>>>{};
   final missionByZoneOwner = <String, Map<String, FleetMission>>{};
   for (final f in game.worldState.fleets) {
-    byZone.putIfAbsent(f.seaZoneId, () => {});
-    byZone[f.seaZoneId]!.putIfAbsent(f.ownerId, () => []).addAll(f.shipTypeIds);
-    missionByZoneOwner.putIfAbsent(f.seaZoneId, () => {});
-    missionByZoneOwner[f.seaZoneId]!.putIfAbsent(f.ownerId, () => f.mission);
+    if (!f.isAtSea || f.seaZoneId == null) continue; // Naval combat only in sea zones. SPEC/game/ships-and-naval.md.
+    final zoneId = f.seaZoneId!;
+    byZone.putIfAbsent(zoneId, () => {});
+    byZone[zoneId]!.putIfAbsent(f.ownerId, () => []).addAll(f.shipTypeIds);
+    missionByZoneOwner.putIfAbsent(zoneId, () => {});
+    missionByZoneOwner[zoneId]!.putIfAbsent(f.ownerId, () => f.mission);
   }
   final result = <BattleContextSea>[];
   for (final entry in byZone.entries) {
@@ -143,9 +145,9 @@ List<BattleContextSea> filterBattlesByInterception(
   for (final battle in battles) {
     final zone = battle.seaZoneId;
     final owner1Moved = game.worldState.fleets.any((f) =>
-        f.seaZoneId == zone && f.ownerId == battle.side1.ownerId && movedFleetIds.contains(f.id));
+        f.isAtSea && f.seaZoneId == zone && f.ownerId == battle.side1.ownerId && movedFleetIds.contains(f.id));
     final owner2Moved = game.worldState.fleets.any((f) =>
-        f.seaZoneId == zone && f.ownerId == battle.side2.ownerId && movedFleetIds.contains(f.id));
+        f.isAtSea && f.seaZoneId == zone && f.ownerId == battle.side2.ownerId && movedFleetIds.contains(f.id));
     final str1 = navalStrength(battle.side1.shipTypeIds);
     final str2 = navalStrength(battle.side2.shipTypeIds);
     final side2IsInterceptor = battle.side2.mission == FleetMission.patrol || battle.side2.mission == FleetMission.blockade;
@@ -272,7 +274,7 @@ Game applyNavalBattleResults(
   final owner1 = battle.side1.ownerId;
   final owner2 = battle.side2.ownerId;
 
-  fleets = fleets.where((f) => f.seaZoneId != zone || (f.ownerId != owner1 && f.ownerId != owner2)).toList();
+  fleets = fleets.where((f) => !f.isAtSea || f.seaZoneId != zone || (f.ownerId != owner1 && f.ownerId != owner2)).toList();
 
   var zone1 = zone;
   var zone2 = zone;
@@ -292,6 +294,7 @@ Game applyNavalBattleResults(
       id: 'naval_${owner1}_$zone1',
       ownerId: owner1,
       seaZoneId: zone1,
+      inPortAtProvinceId: null,
       regionId: regionIdForZone,
       shipTypeIds: result.survivingShipTypeIdsSide1,
     ));
@@ -301,6 +304,7 @@ Game applyNavalBattleResults(
       id: 'naval_${owner2}_$zone2',
       ownerId: owner2,
       seaZoneId: zone2,
+      inPortAtProvinceId: null,
       regionId: regionIdForZone,
       shipTypeIds: result.survivingShipTypeIdsSide2,
     ));

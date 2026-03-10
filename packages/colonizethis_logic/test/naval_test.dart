@@ -140,7 +140,7 @@ void main() {
     });
 
     group('fleetsInPortAtProvince', () {
-      test('returns fleets in sea zones adjacent to province port', () {
+      test('returns fleets in port at province (inPortAtProvinceId)', () {
         final worldState = WorldState(
           turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
           oldWorld: const RegionData(),
@@ -150,7 +150,8 @@ void main() {
             Fleet(
               id: 'f1',
               ownerId: 'gp1',
-              seaZoneId: 'sea1',
+              seaZoneId: null,
+              inPortAtProvinceId: 'oldWorld|p1',
               regionId: 'oldWorld',
               shipTypeIds: ['carrack', 'carrack'],
             ),
@@ -158,6 +159,7 @@ void main() {
               id: 'f2',
               ownerId: 'gp2',
               seaZoneId: 'sea2',
+              inPortAtProvinceId: null,
               regionId: 'oldWorld',
               shipTypeIds: ['carrack'],
             ),
@@ -166,10 +168,10 @@ void main() {
         final inPort = fleetsInPortAtProvince(worldState, 'oldWorld|p1');
         expect(inPort.length, 1);
         expect(inPort.first.id, 'f1');
-        expect(inPort.first.seaZoneId, 'sea1');
+        expect(inPort.first.inPortAtProvinceId, 'oldWorld|p1');
       });
 
-      test('returns empty when province has no port', () {
+      test('returns empty when no fleet in port at province', () {
         final worldState = WorldState(
           turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
           oldWorld: const RegionData(),

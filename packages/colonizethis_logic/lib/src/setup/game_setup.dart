@@ -870,13 +870,9 @@ Game _addStartingMilitaryAndNaval({
       }
     }
 
-    // Starting merchant ships in the home fleet at the capital port sea zone.
+    // Starting merchant ships in the home fleet (in port at capital province). SPEC/game/ships-and-naval.md.
     if (shipCount > 0 && regionId == kRegionOldWorld) {
-      final seaZoneId =
-          seaZoneIdForProvince(topologyOldWorld, localProvinceId, regionId: kRegionOldWorld);
-      if (seaZoneId == null) {
-        continue;
-      }
+      final fullProvinceId = '$regionId|$localProvinceId';
 
       final homeFleetId = 'fleet_${player.id}';
       final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
@@ -892,7 +888,8 @@ Game _addStartingMilitaryAndNaval({
       final homeFleet = Fleet(
         id: homeFleetId,
         ownerId: player.id,
-        seaZoneId: seaZoneId,
+        seaZoneId: null,
+        inPortAtProvinceId: fullProvinceId,
         regionId: regionId,
         shipTypeIds: newShipTypes,
       );

@@ -65,7 +65,7 @@ When the user hovers a tile on the map (with overlay open), this section shows t
 
 ### Naval
 
-- **Ships in port:** Fleets in sea zones adjacent to the province's port(s). Per [ships-and-naval.md](../game/ships-and-naval.md): home fleet and sea-going fleets in the capital port sea zone or other port sea zones count as "in port" at that province. Implementation uses `portsByProvinceSeaboard` and `WorldState.fleets`; see ships-in-port helper in colonizethis_logic.
+- **Ships in port:** Fleets that are **in port at this province** (attached to the province per [ships-and-naval.md](../game/ships-and-naval.md)). Implementation uses `Fleet.inPortAtProvinceId` (or equivalent); see ships-in-port helper in colonizethis_logic that returns fleets whose in-port province matches the selected province.
 
 ---
 
@@ -109,5 +109,5 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 ## Integration
 
 - **Map widget:** [map-widget.md](map-widget.md). Uses `onProvinceSelected`; selection may be province or sea zone (regionCellId). Map widget supports `highlightedTileKey` for coordinate hover.
-- **Ships in port:** Helper in colonizethis_logic returns fleets in port at a province.
+- **Ships in port:** Helper in colonizethis_logic returns fleets that are in port at a province (attachment: `inPortAtProvinceId` equals that province).
 - **Catalog:** Register overlay component in app widget catalog when implemented.

@@ -99,25 +99,38 @@ String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
   return list.isNotEmpty ? list.first.regionId : null;
 }
 
-/// Fleets in port at [provinceId]. Per SPEC/game/ships-and-naval.md: ships in port
-/// are fleets in sea zones adjacent to the province's port(s). Uses
-/// [worldState.portsByProvinceSeaboard] (key: fullProvinceId|seaZoneId) and
-/// [worldState.fleets]. Returns fleets whose seaZoneId and regionId match a port
-/// of the province.
-List<Fleet> fleetsInPortAtProvince(WorldState worldState, String provinceId) {
-  final regionId = provinceId.contains('|')
-      ? provinceId.split('|').first
-      : 'oldWorld';
-  final seaZones = <String>{};
-  final prefix = '$provinceId|';
-  for (final key in worldState.portsByProvinceSeaboard.keys) {
-    if (key.startsWith(prefix)) {
-      seaZones.add(key.substring(prefix.length));
-    }
+/// Sea zone ids that share an edge with [provinceId] (P↔S). [provinceId] may be
+/// prefixed (regionId|localId) or local; when [regionId] is provided, lookup is region-scoped.
+/// Cross-region edges (e.g. province in OW, sea zone in NW) are included.
+Set<String> seaZoneIdsAdjacentToProvince(
+  MapTopology topology,
+  String provinceId, {
+  String? regionId,
+}) {
+  String localProvinceId = provinceId;
+  if (provinceId.contains('|')) {
+    final parts = provinceId.split('|');
+    localProvinceId = parts.length > 1 ? parts.sublist(1).join('|') : provinceId;
   }
-  if (seaZones.isEmpty) return [];
+  final nodeById = {for (final n in topology.nodes) n.id: n};
+  final out = <String>{};
+  for (final e in topology.edges) {
+    final id1 = e.id1, id2 = e.id2;
+    final prov = (id1 == localProvinceId || id1 == provinceId) ? id1 : ((id2 == localProvinceId || id2 == provinceId) ? id2 : null);
+    if (prov == null) continue;
+    final other = id1 == prov ? id2 : id1;
+    final node = nodeById[other];
+    if (node != null && node.type == TopologyNodeType.seaZone) out.add(other);
+  }
+  return out;
+}
+
+/// Fleets in port at [provinceId]. Per SPEC/game/ships-and-naval.md: in port =
+/// fleet attached to that province ([inPortAtProvinceId] equals province id).
+/// [provinceId] must be prefixed (regionId|localId) when world is multi-region.
+List<Fleet> fleetsInPortAtProvince(WorldState worldState, String provinceId) {
+  final normalized = provinceId.contains('|') ? provinceId : 'oldWorld|$provinceId';
   return worldState.fleets
-      .where((f) =>
-          f.regionId == regionId && seaZones.contains(f.seaZoneId))
+      .where((f) => f.inPortAtProvinceId == normalized)
       .toList();
 }
