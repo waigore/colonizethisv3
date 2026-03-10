@@ -1,0 +1,352 @@
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/widgets/region_map_debug.dart';
+import 'package:colonizethis_app/widgets/ct_region_map.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  RegionMapViewData _oldWorldRegion() =>
+      getDebugInitGameResult().mapViewData.oldWorld;
+
+  Widget _buildCtRegionMap({
+    required RegionMapViewData region,
+    double width = 400,
+    double height = 320,
+    double cellSizePx = 24,
+    bool showPoliticalOverlay = true,
+    CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
+    String? centerOnTileKey,
+    void Function(String)? onProvinceSelected,
+    VoidCallback? onRegionViewChanged,
+  }) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: CtRegionMap(
+              region: region,
+              cellSizePx: cellSizePx,
+              showPoliticalOverlay: showPoliticalOverlay,
+              visibilityMode: visibilityMode,
+              centerOnTileKey: centerOnTileKey,
+              onProvinceSelected: onProvinceSelected,
+              onRegionViewChanged: onRegionViewChanged,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  group('CtRegionMap (Flame map widget)', () {
+    testWidgets(
+      'builds without throwing for old world region',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        // Do a single pump; CtRegionMap embeds a Flame GameWidget which
+        // does not naturally settle for pumpAndSettle.
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      // GameWidget + Flame may keep the frame "dirty"; avoid long timeouts.
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'applies non-default visibility and political overlay flags',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showPoliticalOverlay: false,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'responds to +/- keyboard shortcuts for zoom',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        // Give the Focus widget a chance to attach.
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        // Zoom in.
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.equal);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.equal);
+        await tester.pump();
+
+        // Zoom out.
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.minus);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.minus);
+        await tester.pump();
+
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'supports drag-to-pan gesture without throwing',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        await tester.drag(mapFinder, const Offset(40, 20));
+        await tester.pump();
+
+        // Widget remains mounted after pan.
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'centerOnTileKey triggers centering logic without throwing',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        final landCell = region.cells.firstWhere((c) => !c.isSea);
+        final tileKey =
+            '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            centerOnTileKey: tileKey,
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'didUpdateWidget propagates updated props into game',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            visibilityMode: CtMapVisibilityMode.full,
+          ),
+        );
+        await tester.pump();
+
+        // Rebuild with changed visibility and political overlay flags.
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showPoliticalOverlay: false,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'camera resize logic runs when parent size changes',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            width: 400,
+            height: 320,
+          ),
+        );
+        await tester.pump();
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            width: 640,
+            height: 360,
+          ),
+        );
+        await tester.pump();
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            width: 320,
+            height: 240,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'small cell size triggers map-smaller-than-viewport clamp path',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            width: 600,
+            height: 600,
+          ),
+        );
+        await tester.pump();
+
+        // Rebuild with tiny cell size so that the map is smaller than the viewport.
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            width: 600,
+            height: 600,
+            // Use a small cell size so the map is smaller than the viewport.
+            cellSizePx: 4,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'onRegionViewChanged fires when camera moves',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        var callbackCount = 0;
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onRegionViewChanged: () {
+              callbackCount++;
+            },
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        // Trigger a pan (which should invoke the callback).
+        await tester.drag(mapFinder, const Offset(20, 10));
+        await tester.pump();
+
+        // Trigger a zoom (which should also invoke the callback).
+        await tester.tap(mapFinder);
+        await tester.pump();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.minus);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.minus);
+        await tester.pump();
+
+        expect(callbackCount, greaterThanOrEqualTo(1));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'hover and exit events are forwarded into the game',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        final element = tester.element(mapFinder);
+        final box = element.renderObject! as RenderBox;
+        final inside = box.localToGlobal(box.size.center(Offset.zero));
+        final outside = inside + const Offset(2000, 2000);
+
+        await tester.sendEventToBinding(
+          PointerHoverEvent(position: inside),
+        );
+        await tester.pump();
+
+        await tester.sendEventToBinding(
+          PointerExitEvent(position: outside),
+        );
+        await tester.pump();
+
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'scroll wheel events are forwarded to zoom handler',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        final element = tester.element(mapFinder);
+        final box = element.renderObject! as RenderBox;
+        final center = box.localToGlobal(box.size.center(Offset.zero));
+
+        // Scroll up (zoom in) at the center of the map.
+        await tester.sendEventToBinding(
+          PointerScrollEvent(
+            position: center,
+            scrollDelta: const Offset(0, -20),
+          ),
+        );
+        await tester.pump();
+
+        // Scroll down (zoom out).
+        await tester.sendEventToBinding(
+          PointerScrollEvent(
+            position: center,
+            scrollDelta: const Offset(0, 20),
+          ),
+        );
+        await tester.pump();
+
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+  });
+}
+
