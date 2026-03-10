@@ -11,6 +11,7 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../widgets/region_map_debug.dart';
 import '../widgets/civilian_units_panel.dart';
+import '../widgets/diplomacy_panel.dart';
 import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_panel.dart';
@@ -293,6 +294,38 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                 },
                 icon: const Icon(Icons.military_tech_outlined, size: 20),
                 label: const Text('Military Units'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  final orders = ref.read(currentOrdersProvider);
+                  final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+                  final topology = mapData?.combinedTopology ?? const MapTopology();
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (ctx) => Scaffold(
+                        appBar: AppBar(
+                          title: const Text('Diplomacy'),
+                          leading: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ),
+                        body: DiplomacyPanel(
+                          game: widget.game,
+                          humanPlayerId: _humanPlayerId,
+                          topology: topology,
+                          currentOrders: orders,
+                          onOrdersChanged: (newOrders) {
+                            ref.read(currentOrdersProvider.notifier).state = newOrders;
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.handshake_outlined, size: 20),
+                label: const Text('Diplomacy'),
               ),
             ],
           ),
