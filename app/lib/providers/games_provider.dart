@@ -11,3 +11,7 @@ final gameListIdsProvider = FutureProvider<List<String>>((ref) async {
 
 /// Currently loaded game, if any. Updated on load and after next turn.
 final currentGameProvider = StateProvider<Game?>((ref) => null);
+
+/// Current-turn orders for the human player (work orders, move orders, etc.).
+/// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.
+final currentOrdersProvider = StateProvider<Orders>((ref) => const Orders());

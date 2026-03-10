@@ -17,6 +17,40 @@ final Logger _log = Logger();
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
 
+/// Returns a new [Game] with [unitId]'s in-progress work cleared (currentWork
+/// null, status idle). No material refund. SPEC/program/development-resolution.md
+/// § Player-initiated cancel. Returns [game] unchanged if unit not found or
+/// has no currentWork.
+Game clearUnitCurrentWork(Game game, String unitId) {
+  final oldUnits = game.worldState.oldWorld.units;
+  final newUnits = game.worldState.newWorld.units;
+  final inOld = oldUnits.where((u) => u.id == unitId).firstOrNull;
+  final inNew = newUnits.where((u) => u.id == unitId).firstOrNull;
+  final unit = inOld ?? inNew;
+  if (unit == null || unit.currentWork == null) return game;
+  final cleared =
+      unit.copyWith(clearCurrentWork: true, status: UnitStatus.idle);
+  if (inOld != null) {
+    final list = oldUnits.map((u) => u.id == unitId ? cleared : u).toList();
+    final newOldWorld = RegionData(
+      provinces: game.worldState.oldWorld.provinces,
+      units: list,
+    );
+    return game.copyWith(
+      worldState: game.worldState.copyWith(oldWorld: newOldWorld),
+    );
+  } else {
+    final list = newUnits.map((u) => u.id == unitId ? cleared : u).toList();
+    final newNewWorld = RegionData(
+      provinces: game.worldState.newWorld.provinces,
+      units: list,
+    );
+    return game.copyWith(
+      worldState: game.worldState.copyWith(newWorld: newNewWorld),
+    );
+  }
+}
+
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
 ///
 /// When [topology] is provided, ship builds spawn in home fleet.
