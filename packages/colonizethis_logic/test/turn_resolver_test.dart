@@ -1370,6 +1370,121 @@ void main() {
       expect(next.worldState.turnState.turnNumber, 1);
     });
 
+    test('dock order moves fleet from sea to port at owned province', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'sea1', id2: 'P1'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              inPortAtProvinceId: null,
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMoveOrdersByPlayerId: {
+          'p1': [
+            NavalMoveOrder(
+              fleetId: 'f1',
+              destinationPortProvinceId: '$ow|P1',
+            ),
+          ],
+        },
+      );
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      ));
+      final fleet = next.worldState.fleets.single;
+      expect(fleet.isInPort, isTrue);
+      expect(fleet.inPortAtProvinceId, '$ow|P1');
+      expect(fleet.seaZoneId, isNull);
+    });
+
+    test('naval move order undocks fleet from port to adjacent sea zone', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'sea1', id2: 'P1'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: null,
+              inPortAtProvinceId: '$ow|P1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        navalMoveOrdersByPlayerId: {
+          'p1': [
+            const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea1'),
+          ],
+        },
+      );
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
+        game: game,
+        topology: topology,
+        orders: orders,
+        extractedByPlayerId: const {},
+        defaultAssignments: const [],
+      ));
+      final fleet = next.worldState.fleets.single;
+      expect(fleet.isAtSea, isTrue);
+      expect(fleet.seaZoneId, 'sea1');
+      expect(fleet.inPortAtProvinceId, isNull);
+    });
+
     test('naval move order targeting home fleet does not move it', () {
       final topology = MapTopology(
         nodes: const [
@@ -1424,37 +1539,48 @@ void main() {
 
     test('join_home_fleet mission moves ships into home fleet and removes fleet',
         () {
+      const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
         ],
-        edges: const [],
+        edges: const [
+          TopologyEdge(id1: 'sea1', id2: 'P1'),
+        ],
       );
+      final capitalId = '$ow|P1';
       final homeFleet = Fleet(
         id: 'fleet_p1',
         ownerId: 'p1',
-        seaZoneId: 'sea1',
-        regionId: 'oldWorld',
+        seaZoneId: null,
+        inPortAtProvinceId: capitalId,
+        regionId: ow,
         shipTypeIds: const ['carrack'],
       );
       final otherFleet = Fleet(
         id: 'f2',
         ownerId: 'p1',
-        seaZoneId: 'sea1',
-        regionId: 'oldWorld',
+        seaZoneId: null,
+        inPortAtProvinceId: capitalId,
+        regionId: ow,
         shipTypeIds: const ['fluyte'],
       );
       final game = Game(
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: capitalId, regionId: ow, ownerId: 'p1'),
+            ],
+          ),
           newWorld: const RegionData(),
           fleets: [homeFleet, otherFleet],
         ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
+        players: [
+          const Player(id: 'p1', displayName: 'A', isHuman: true, capitalProvinceId: 'oldWorld|P1'),
         ],
       );
       final orders = Orders(

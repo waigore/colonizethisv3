@@ -178,18 +178,19 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
       byProvince.putIfAbsent(fullProvinceId, () => []).add(u);
     }
 
-    // Fleets in this region owned by player
+    // Fleets in this region owned by player that are at sea (have seaZoneId).
     final fleetsInRegion = game.worldState.fleets
         .where((f) =>
             f.ownerId == humanPlayerId &&
             f.regionId == regionId &&
-            f.shipTypeIds.isNotEmpty)
+            f.shipTypeIds.isNotEmpty &&
+            f.seaZoneId != null)
         .toList();
     final bySeaZone = <String, List<Fleet>>{};
     for (final f in fleetsInRegion) {
-      final zoneKey = f.seaZoneId.contains('|')
-          ? f.seaZoneId
-          : '$regionId|${f.seaZoneId}';
+      final seaZoneId = f.seaZoneId!;
+      final zoneKey =
+          seaZoneId.contains('|') ? seaZoneId : '$regionId|$seaZoneId';
       bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
     }
 

@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
+import '../world/province_lookup.dart';
 import 'order_engine.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_visibility.dart';
@@ -506,19 +507,60 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
   for (final o in currentOrders.navalMoveOrdersByPlayerId[playerId] ?? const []) {
-    existingByFleet.putIfAbsent(o.fleetId, () => <String>{}).add(o.destinationSeaZoneId);
+    final key = o.isDock ? 'port:${o.destinationPortProvinceId}' : (o.destinationSeaZoneId ?? '');
+    if (key.isNotEmpty) {
+      existingByFleet.putIfAbsent(o.fleetId, () => <String>{}).add(key);
+    }
   }
 
+  final homeFleetId = 'fleet_$playerId';
   for (final fleet in game.worldState.fleets) {
-    if (fleet.ownerId != playerId) continue;
+    if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
+    final String? currentZone;
+    if (fleet.isAtSea) {
+      currentZone = fleet.seaZoneId;
+    } else {
+      final inPortProvinceId = fleet.inPortAtProvinceId;
+      if (inPortProvinceId == null) continue;
+      final parts = inPortProvinceId.split('|');
+      final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
+      final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
+      currentZone = seaZoneIdForProvince(topology, localId, regionId: regionId);
+    }
+    if (currentZone == null) continue;
+
+    // Suggest move to adjacent sea zones.
     for (final node in topology.nodes) {
       if (node.type != TopologyNodeType.seaZone) continue;
       final destId = node.id;
-      if (!isAdjacentSeaZone(topology, fleet.seaZoneId, destId)) continue;
+      if (!isAdjacentSeaZone(topology, currentZone, destId)) continue;
       if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
       final candidate = NavalMoveOrder(fleetId: fleet.id, destinationSeaZoneId: destId);
       if (_isNavalMoveOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
         suggestions.add(candidate);
+      }
+    }
+
+    // Suggest dock at adjacent owned provinces (fleets at sea only). SPEC/game/ships-and-naval.md.
+    if (fleet.isAtSea) {
+      final zoneRegionId = regionIdForSeaZone(topology, currentZone);
+      if (zoneRegionId != null) {
+        final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
+          topology, currentZone, regionId: zoneRegionId,
+        );
+        for (final localId in adjacentLocalIds) {
+          final fullProvinceId = ProvinceId.full(zoneRegionId, localId);
+          if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ?? false) continue;
+          final province = tryGetProvince(game.worldState, fullProvinceId);
+          if (province?.ownerId != playerId) continue;
+          final candidate = NavalMoveOrder(
+            fleetId: fleet.id,
+            destinationPortProvinceId: fullProvinceId,
+          );
+          if (_isNavalMoveOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
+            suggestions.add(candidate);
+          }
+        }
       }
     }
   }
@@ -526,7 +568,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   suggestions.sort((a, b) {
     final c = a.fleetId.compareTo(b.fleetId);
     if (c != 0) return c;
-    return a.destinationSeaZoneId.compareTo(b.destinationSeaZoneId);
+    final keyA = a.isDock ? 'port:${a.destinationPortProvinceId}' : (a.destinationSeaZoneId ?? '');
+    final keyB = b.isDock ? 'port:${b.destinationPortProvinceId}' : (b.destinationSeaZoneId ?? '');
+    return keyA.compareTo(keyB);
   });
   _log.d('logic: suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}');
   return suggestions;

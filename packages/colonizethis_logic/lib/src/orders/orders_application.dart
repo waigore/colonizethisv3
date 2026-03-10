@@ -117,13 +117,12 @@ void _runBuildPhase(_BuildWorkState state) {
         final capProvinceId = player.capitalProvinceId;
         if (capProvinceId == null) continue;
         final regionId = ProvinceId.regionIdFrom(capProvinceId);
-        final seaZoneId = state.topology != null
-            ? seaZoneIdForProvince(
-                state.topology!,
-                ProvinceId.localIdFrom(capProvinceId),
-                regionId: regionId)
-            : null;
-        if (seaZoneId == null) continue;
+        // Only add ship when capital is sea-bound (has a port). SPEC/game/ships-and-naval.md.
+        if (state.topology == null) continue;
+        final seaZoneAtCap = seaZoneIdForProvince(
+            state.topology!, ProvinceId.localIdFrom(capProvinceId),
+            regionId: regionId);
+        if (seaZoneAtCap == null) continue;
 
         var fleets = List<Fleet>.from(state.game.worldState.fleets);
         final homeFleetId = 'fleet_${player.id}';
@@ -140,7 +139,8 @@ void _runBuildPhase(_BuildWorkState state) {
             Fleet(
               id: homeFleetId,
               ownerId: player.id,
-              seaZoneId: seaZoneId,
+              seaZoneId: null,
+              inPortAtProvinceId: capProvinceId,
               regionId: regionId,
               shipTypeIds: [order.unitType],
             )

@@ -23,7 +23,7 @@ class NavalOrderValidator {
         _playerId = playerId,
         _fleetById = {for (final f in game.worldState.fleets) f.id: f};
 
-  /// Validates one [NavalMoveOrder]. Home fleet cannot move; move must be to adjacent sea zone.
+  /// Validates one [NavalMoveOrder]. Home fleet cannot move; move must be to adjacent sea zone (or undock from port).
   OrderValidationResult validateNavalMove(
     NavalMoveOrder o, {
     required bool previousRejected,
@@ -36,18 +36,68 @@ class NavalOrderValidator {
     }
     final fleet = _fleetById[o.fleetId];
     final homeFleetId = 'fleet_$_playerId';
-    final valid = fleet != null &&
-        fleet.ownerId == _playerId &&
-        fleet.id != homeFleetId &&
-        isAdjacentSeaZone(
-            _topology, fleet.seaZoneId, o.destinationSeaZoneId);
+    if (fleet == null || fleet.ownerId != _playerId || fleet.id == homeFleetId) {
+      return OrderValidationResult(
+        status: OrderValidationStatus.rejected,
+        reason: fleet == null ? 'Fleet not found' : 'Invalid naval move',
+      );
+    }
+
+    if (o.isDock) {
+      // Dock: fleet must be at sea; current sea zone adjacent to province; province owned by player. SPEC/game/ships-and-naval.md.
+      final portProvinceId = o.destinationPortProvinceId!;
+      if (!fleet.isAtSea || fleet.seaZoneId == null) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Dock only allowed when fleet is at sea',
+        );
+      }
+      final fullProvinceId = ProvinceId.isPrefixed(portProvinceId)
+          ? portProvinceId
+          : ProvinceId.full(fleet.regionId, portProvinceId);
+      final province = tryGetProvince(_game.worldState, fullProvinceId);
+      if (province == null) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Port province not found',
+        );
+      }
+      if (province.ownerId != _playerId) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Can only dock at own province',
+        );
+      }
+      final adjacentSeaZones = seaZoneIdsAdjacentToProvince(_topology, fullProvinceId);
+      final valid = adjacentSeaZones.contains(fleet.seaZoneId);
+      return OrderValidationResult(
+        status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
+        reason: valid ? null : 'Invalid naval move',
+      );
+    }
+
+    // Move to sea zone: destination must be adjacent.
+    final String? currentZone;
+    if (fleet.isAtSea) {
+      currentZone = fleet.seaZoneId;
+    } else {
+      final inPortProvinceId = fleet.inPortAtProvinceId;
+      if (inPortProvinceId == null) {
+        return const OrderValidationResult(status: OrderValidationStatus.rejected, reason: 'Invalid naval move');
+      }
+      final parts = inPortProvinceId.split('|');
+      final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
+      final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
+      currentZone = seaZoneIdForProvince(_topology, localId, regionId: regionId);
+    }
+    final destZone = o.destinationSeaZoneId;
+    final valid = currentZone != null &&
+        destZone != null &&
+        destZone.isNotEmpty &&
+        (currentZone == destZone || isAdjacentSeaZone(_topology, currentZone, destZone));
     return OrderValidationResult(
-      status: valid
-          ? OrderValidationStatus.accepted
-          : OrderValidationStatus.rejected,
-      reason: valid
-          ? null
-          : (fleet == null ? 'Fleet not found' : 'Invalid naval move'),
+      status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
+      reason: valid ? null : 'Invalid naval move',
     );
   }
 

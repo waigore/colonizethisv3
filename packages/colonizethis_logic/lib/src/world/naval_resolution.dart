@@ -27,15 +27,15 @@ Game applyNavalMissionOrders(
 
       if (order.mission == 'join_home_fleet') {
         final homeFleet = fleetById[homeFleetId];
-        if (homeFleet == null) {
-          continue;
-        }
-        if (homeFleet.seaZoneId != fleet.seaZoneId) {
-          continue;
-        }
-        if (fleet.shipTypeIds.isEmpty) {
-          continue;
-        }
+        if (homeFleet == null) continue;
+        // Only fleets in port at the player's capital province can join home fleet. SPEC/game/ships-and-naval.md.
+        final capitalProvinceId = game.players
+            .where((p) => p.id == playerId)
+            .map((p) => p.capitalProvinceId)
+            .firstOrNull;
+        if (capitalProvinceId == null ||
+            fleet.inPortAtProvinceId != capitalProvinceId) continue;
+        if (fleet.shipTypeIds.isEmpty) continue;
         final updatedHome = homeFleet.copyWith(
           shipTypeIds: [...homeFleet.shipTypeIds, ...fleet.shipTypeIds],
         );
@@ -142,20 +142,69 @@ Game applyNavalMovesAndShipReveal(
       if (fleet == null || fleet.ownerId != playerId) continue;
       final homeFleetId = 'fleet_$playerId';
 
-      if (fleet.id == homeFleetId) {
+      if (fleet.id == homeFleetId) continue;
+
+      if (order.isDock) {
+        // Dock: fleet at sea moves to in port at owned province. SPEC/game/ships-and-naval.md.
+        final portProvinceId = order.destinationPortProvinceId!;
+        if (!fleet.isAtSea || fleet.seaZoneId == null) continue;
+        final fullProvinceId = ProvinceId.isPrefixed(portProvinceId)
+            ? portProvinceId
+            : ProvinceId.full(fleet.regionId, portProvinceId);
+        final province = tryGetProvince(game.worldState, fullProvinceId);
+        if (province == null || province.ownerId != playerId) continue;
+        final adjacentSeaZones = seaZoneIdsAdjacentToProvince(topology, fullProvinceId);
+        if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
+        final portRegionId = ProvinceId.regionIdFrom(fullProvinceId);
+        final newFleet = Fleet(
+          id: fleet.id,
+          ownerId: fleet.ownerId,
+          seaZoneId: null,
+          inPortAtProvinceId: fullProvinceId,
+          regionId: portRegionId,
+          shipTypeIds: fleet.shipTypeIds,
+          mission: fleet.mission,
+          targetPortId: fleet.targetPortId,
+          targetProvinceId: fleet.targetProvinceId,
+        );
+        final idx = fleets.indexWhere((f) => f.id == fleet.id);
+        if (idx >= 0) {
+          fleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+          fleetById[fleet.id] = newFleet;
+        }
         continue;
       }
-      if (!isAdjacentSeaZone(
-        topology,
-        fleet.seaZoneId,
-        order.destinationSeaZoneId,
-      )) continue;
 
-      final destRegionId =
-          regionIdForSeaZone(topology, order.destinationSeaZoneId);
-      final newFleet = fleet.copyWith(
-        seaZoneId: order.destinationSeaZoneId,
+      // Move to sea zone (or undock from port).
+      final String? currentSeaZoneId;
+      if (fleet.isAtSea) {
+        currentSeaZoneId = fleet.seaZoneId;
+      } else {
+        // Fleet in port: adjacency is from the port's sea zone.
+        final inPortProvinceId = fleet.inPortAtProvinceId;
+        if (inPortProvinceId == null) continue;
+        final parts = inPortProvinceId.split('|');
+        final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
+        final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
+        currentSeaZoneId = seaZoneIdForProvince(topology, localId, regionId: regionId);
+      }
+      final destZoneId = order.destinationSeaZoneId;
+      if (currentSeaZoneId == null || destZoneId == null || destZoneId.isEmpty) continue;
+      if (currentSeaZoneId != destZoneId &&
+          !isAdjacentSeaZone(topology, currentSeaZoneId, destZoneId)) continue;
+
+      final destRegionId = regionIdForSeaZone(topology, destZoneId);
+      // Moving to sea zone: fleet ends at sea (undock if was in port).
+      final newFleet = Fleet(
+        id: fleet.id,
+        ownerId: fleet.ownerId,
+        seaZoneId: destZoneId,
+        inPortAtProvinceId: null,
         regionId: destRegionId ?? fleet.regionId,
+        shipTypeIds: fleet.shipTypeIds,
+        mission: fleet.mission,
+        targetPortId: fleet.targetPortId,
+        targetProvinceId: fleet.targetProvinceId,
       );
       final idx = fleets.indexWhere((f) => f.id == fleet.id);
       if (idx >= 0) {
@@ -166,7 +215,7 @@ Game applyNavalMovesAndShipReveal(
       if (destRegionId != null) {
         final provinceIds = provinceIdsAdjacentToSeaZone(
           topology,
-          order.destinationSeaZoneId,
+          destZoneId,
           regionId: destRegionId,
         );
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});

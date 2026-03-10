@@ -185,6 +185,7 @@ class OrderCommand {
     this.overtureStage,
     this.fleetId,
     this.destinationSeaZoneId,
+    this.destinationPortProvinceId,
     this.mission,
     this.targetPortId,
     this.targetProvinceId,
@@ -214,6 +215,7 @@ class OrderCommand {
   // Naval move fields
   final String? fleetId;
   final String? destinationSeaZoneId;
+  final String? destinationPortProvinceId;
   // Naval mission fields
   final String? mission;
   final String? targetPortId;
@@ -625,6 +627,7 @@ OrderCommand _parseOrderCommand(Map<String, dynamic> json) {
     overtureStage: json['overtureStage'] as String?,
     fleetId: json['fleetId'] as String?,
     destinationSeaZoneId: json['destinationSeaZoneId'] as String?,
+    destinationPortProvinceId: json['destinationPortProvinceId'] as String?,
     mission: json['mission'] as String?,
     targetPortId: json['targetPortId'] as String?,
     targetProvinceId: json['targetProvinceId'] as String?,
