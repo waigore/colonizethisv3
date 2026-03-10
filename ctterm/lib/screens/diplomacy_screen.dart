@@ -181,27 +181,8 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     final key = event.logicalKey;
     final c = event.character?.toLowerCase();
 
-    // Handle intervention choice
     if (_showIntervention) {
-      if (c == 'i') {
-        _handleIntervention(InterventionChoice.intervene);
-        return true;
-      }
-      if (c == 'o') {
-        _handleIntervention(InterventionChoice.doNothing);
-        return true;
-      }
-      if (c == 'r') {
-        _handleIntervention(InterventionChoice.protest);
-        return true;
-      }
-      if (key == LogicalKey.escape || c == 'b') {
-        setState(() {
-          _showIntervention = false;
-        });
-        return true;
-      }
-      return false;
+      return _handleInterventionKey(key, c);
     }
 
     // Escape to go back
@@ -211,6 +192,36 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       return true;
     }
 
+    if (_handleNavigationKey(key, c)) {
+      return true;
+    }
+
+    return _handleActionKey(c);
+  }
+
+  bool _handleInterventionKey(LogicalKey key, String? c) {
+    if (c == 'i') {
+      _handleIntervention(InterventionChoice.intervene);
+      return true;
+    }
+    if (c == 'o') {
+      _handleIntervention(InterventionChoice.doNothing);
+      return true;
+    }
+    if (c == 'r') {
+      _handleIntervention(InterventionChoice.protest);
+      return true;
+    }
+    if (key == LogicalKey.escape || c == 'b') {
+      setState(() {
+        _showIntervention = false;
+      });
+      return true;
+    }
+    return false;
+  }
+
+  bool _handleNavigationKey(LogicalKey key, String? c) {
     // Navigation keys
     if (key == LogicalKey.arrowUp || c == 'k' || c == 'w') {
       setState(() {
@@ -222,6 +233,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       });
       return true;
     }
+
     // Navigation: Use arrow keys, k/w for up, but NOT j/s for down
     // because j=Join Empire (Minor/Tribe) and s=Subsidy (Minor/Tribe)
     // Check if selected faction is eligible for these actions before allowing navigation
@@ -246,6 +258,10 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       return true;
     }
 
+    return false;
+  }
+
+  bool _handleActionKey(String? c) {
     // Action keys
     if (_selectedFaction == null) return false;
 
@@ -264,7 +280,8 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         return true;
       }
     } else {
-      // Minor/Tribe actions: d=declare war, p=peace, c=consulate, e=embassy, n=nap, j=join, g=grant aid, s=subsidy
+      // Minor/Tribe actions: d=declare war, p=peace, c=consulate, e=embassy, n=nap,
+      // j=join, g=grant aid, s=subsidy
       if (c == 'd') {
         _handleDeclareWar();
         return true;

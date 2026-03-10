@@ -4,169 +4,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Converts a terrain type to its ASCII character representation.
-String terrainToChar(TerrainType? terrain) {
-  switch (terrain) {
-    case TerrainType.plains:
-      return '.';
-    case TerrainType.forest:
-      return '♣';
-    case TerrainType.hills:
-      return '^';
-    case TerrainType.mountain:
-      return '▲';
-    case TerrainType.swamp:
-      return '≈';
-    case TerrainType.desert:
-      return '▒';
-    case null:
-      // null terrain means water/sea
-      return '~';
-  }
-}
+import 'map_keys.dart';
+import 'map_symbols.dart';
+import 'tile_visibility.dart';
 
-/// Gets the character representation for a resource.
-String resourceToChar(Resource? resource) {
-  if (resource == null) return '';
-  
-  // Single-letter codes for common resources
-  switch (resource) {
-    case Resource.grain:
-      return 'g';
-    case Resource.meat:
-      return 'm';
-    case Resource.wool:
-      return 'w';
-    case Resource.horses:
-      return 'h';
-    case Resource.timber:
-      return 't';
-    case Resource.iron:
-      return 'i';
-    case Resource.copper:
-      return 'c';
-    case Resource.tin:
-      return 'n';
-    case Resource.coal:
-      return 'k';
-    case Resource.sugarCane:
-      return 's';
-    case Resource.tobacco:
-      return 'b';
-    case Resource.cotton:
-      return 'u';
-    case Resource.furs:
-      return 'f';
-    case Resource.spices:
-      return 'p';
-    case Resource.silver:
-      return 'v';
-    case Resource.gold:
-      return 'G';
-    case Resource.gems:
-      return 'e';
-    case Resource.diamonds:
-      return 'd';
-  }
-}
-
-/// Determines owner type from player data.
-enum PlayerType { greatPower, minorNation, tribe }
-
-/// Gets the owner type for a player ID.
-/// Players with isHuman=true are Great Powers (at game start).
-/// Tribes are AI-controlled but have territory in New World.
-PlayerType? getPlayerType(String? ownerId, List<Player> players) {
-  if (ownerId == null) return null;
-  
-  final player = players.where((p) => p.id == ownerId).firstOrNull;
-  if (player == null) return null;
-  
-  // Human players are Great Powers
-  if (player.isHuman) return PlayerType.greatPower;
-  
-  // For AI players, we need game context to determine if they're a tribe
-  // For now, treat all AI non-humans as minor nations (could be tribes in NW)
-  return PlayerType.minorNation;
-}
-
-/// Converts owner ID to its ASCII character representation for the political layer.
-/// Great Powers use an uppercase first letter; all other owners (minors, tribes)
-/// use a lowercase first letter. Unclaimed tiles use `·`.
-String ownerToChar(String? ownerId, PlayerType? playerType) {
-  if (ownerId == null) return '·'; // Unclaimed/wilderness
-
-  final first = ownerId.substring(0, 1);
-
-  if (playerType == PlayerType.greatPower) {
-    return first.toUpperCase();
-  }
-
-  // For non-Great-Power owners (minor nations, tribes, or unknown type),
-  // use a lowercase first letter so the political layer remains 1-char-per-tile.
-  return first.toLowerCase();
-}
-
-/// Visibility level for a tile.
-enum TileVisibility { unexplored, fogged, revealed, fullyVisible }
-
-/// Gets visibility level from player visibility map.
-TileVisibility getTileVisibility(
-  String tileKey,
-  Map<String, String>? playerVisibilityByTile,
-) {
-  if (playerVisibilityByTile == null) return TileVisibility.unexplored;
-  
-  final level = playerVisibilityByTile[tileKey];
-  switch (level) {
-    case 'fullyVisible':
-      return TileVisibility.fullyVisible;
-    case 'fogged':
-      return TileVisibility.fogged;
-    case 'revealed':
-      return TileVisibility.revealed;
-    case null:
-    default:
-      return TileVisibility.unexplored;
-  }
-}
-
-/// Checks if a tile is at least revealed (visible info shown).
-bool isTileVisible(
-  String tileKey,
-  Map<String, String>? playerVisibilityByTile,
-) {
-  final visibility = getTileVisibility(tileKey, playerVisibilityByTile);
-  return visibility == TileVisibility.fullyVisible ||
-         visibility == TileVisibility.revealed ||
-         visibility == TileVisibility.fogged;
-}
-
-/// Checks if a tile is fully visible (no fog).
-bool isTileFullyVisible(
-  String tileKey,
-  Map<String, String>? playerVisibilityByTile,
-) {
-  return getTileVisibility(tileKey, playerVisibilityByTile) == TileVisibility.fullyVisible;
-}
-
-/// Gets a tile's region ID from the grid.
-String? getTileRegionId(TileMapResult tileMap, int x, int y) {
-  if (x < 0 || x >= tileMap.width || y < 0 || y >= tileMap.height) {
-    return null;
-  }
-  return tileMap.cell(x, y);
-}
-
-/// Generates a tile key in format "regionId|x|y".
-String makeTileKey(String regionId, int x, int y) {
-  return '$regionId|$x|$y';
-}
-
-/// Full tile key per SPEC/game/world-model-identity.md: regionId|localId|x|y.
-String makeFullTileKey(String regionId, String localId, int x, int y) {
-  return '$regionId|$localId|$x|$y';
-}
+export 'map_keys.dart';
+export 'map_symbols.dart';
+export 'tile_visibility.dart';
 
 /// Map grid display layer for the in-game shell map grid widget. SPEC/tui/screens/in-game-shell.md.
 enum MapGridLayer {
@@ -196,19 +40,19 @@ enum MapGridLayer {
   final isRevealed = visibility == TileVisibility.revealed;
   final isFullyVisible = visibility == TileVisibility.fullyVisible;
   final isVisible = isFogged || isRevealed || isFullyVisible;
-  
+
   // Get terrain character
   String char = ' ';
   if (showTerrain) {
     final terrain = tileMap.terrainAt(x, y);
     char = terrainToChar(terrain);
   }
-  
+
   // Get province info if visible
   String? ownerId;
   bool isCapital = false;
   bool isPort = false;
-  
+
   if (isVisible) {
     final regionId = getTileRegionId(tileMap, x, y);
     if (regionId != null) {
@@ -218,7 +62,7 @@ enum MapGridLayer {
         ownerId = province.ownerId;
         isCapital = capitalTiles.contains(tileKey);
         isPort = portTiles.contains(tileKey);
-        
+
         // Add owner prefix if showing ownership
         if (showOwnership && ownerId != null) {
           final playerType = getPlayerType(ownerId, players);
@@ -231,7 +75,7 @@ enum MapGridLayer {
     // Unexplored - show space
     char = ' ';
   }
-  
+
   return (
     char: char,
     fogged: isFogged,
@@ -255,17 +99,20 @@ List<String> renderRegionMap({
   int? maxHeight,
 }) {
   final lines = <String>[];
-  
+
   // Calculate render bounds
-  final width = maxWidth != null && maxWidth < tileMap.width ? maxWidth : tileMap.width;
-  final height = maxHeight != null && maxHeight < tileMap.height ? maxHeight : tileMap.height;
-  
+  final width =
+      maxWidth != null && maxWidth < tileMap.width ? maxWidth : tileMap.width;
+  final height = maxHeight != null && maxHeight < tileMap.height
+      ? maxHeight
+      : tileMap.height;
+
   for (var y = 0; y < height; y++) {
     final buffer = StringBuffer();
-    
+
     for (var x = 0; x < width; x++) {
       final tileKey = makeTileKey(tileMap.cell(x, y), x, y);
-      
+
       final tile = getTileDisplay(
         tileMap: tileMap,
         x: x,
@@ -279,39 +126,42 @@ List<String> renderRegionMap({
         showTerrain: showTerrain,
         showOwnership: showOwnership,
       );
-      
+
       // Build display character with markers
       String displayChar = tile.char;
-      
+
       // Add capital marker
       if (tile.capital && tile.char != ' ') {
         displayChar = '${tile.char}*';
       }
-      
+
       // Add port marker
       if (tile.port && tile.char != ' ') {
         displayChar = '${tile.char}¶';
       }
-      
+
       // Pad to 2 characters for alignment
       if (displayChar.length == 1) {
         displayChar = '$displayChar ';
       }
-      
+
       buffer.write(displayChar);
     }
-    
+
     lines.add(buffer.toString());
   }
-  
+
   return lines;
 }
 
 /// Renders a viewport of the region map for the in-game shell map grid widget.
-/// [offsetX], [offsetY] are the top-left cell of the viewport; [viewportWidth] and [viewportHeight] are the visible size.
+/// [offsetX], [offsetY] are the top-left cell of the viewport; [viewportWidth] and
+/// [viewportHeight] are the visible size.
 /// [layer] selects which layer to display (terrain, political, resources, units).
-/// [unitSymbolByTileKey] maps full tile key (regionId|localId|x|y) to a character for the units layer; only used when [layer] is [MapGridLayer.units].
-/// Visibility is from [playerVisibilityByTile] (game setup gives the human player visibility of their own provinces).
+/// [unitSymbolByTileKey] maps full tile key (regionId|localId|x|y) to a character
+/// for the units layer; only used when [layer] is [MapGridLayer.units].
+/// Visibility is from [playerVisibilityByTile] (game setup gives the human player
+/// visibility of their own provinces).
 /// Returns one line per viewport row; each line is one character per column (no padding).
 List<String> renderRegionMapViewport({
   required String regionId,
@@ -345,7 +195,8 @@ List<String> renderRegionMapViewport({
 
       String char = ' ';
       if (!isVisible) {
-        // Unexplored: show distinct character so visibility is clear (e.g. New World at game start).
+        // Unexplored: show distinct character so visibility is clear
+        // (e.g. New World at game start).
         buffer.write('?');
         continue;
       }
@@ -363,7 +214,8 @@ List<String> renderRegionMapViewport({
           break;
         case MapGridLayer.resources:
           final resource = tileMap.resourceAt(x, y);
-          char = resource != null ? resourceToChar(resource) : terrainToChar(terrain);
+          char =
+              resource != null ? resourceToChar(resource) : terrainToChar(terrain);
           break;
         case MapGridLayer.units:
           final unitChar = unitSymbolByTileKey?[fullTileKey];
@@ -376,7 +228,8 @@ List<String> renderRegionMapViewport({
   }
   return lines;
 }
-({int x, int y })? getProvinceTilePosition(
+
+({int x, int y})? getProvinceTilePosition(
   TileMapResult tileMap,
   String provinceId,
 ) {
@@ -398,7 +251,7 @@ Map<String, Province> buildProvincesMap(List<Province> provinces) {
 /// Gets capital tile keys from game data.
 Set<String> getCapitalTiles(Game game) {
   final tiles = <String>{};
-  
+
   for (final player in game.players) {
     final capitalTile = player.capitalTile;
     if (capitalTile != null) {
@@ -406,14 +259,14 @@ Set<String> getCapitalTiles(Game game) {
       tiles.add(capitalTile.toTileKey());
     }
   }
-  
+
   return tiles;
 }
 
 /// Gets port tile keys from world state.
 Set<String> getPortTiles(WorldState worldState) {
   final tiles = <String>{};
-  
+
   final portsByProv = worldState.portsByProvinceSeaboard;
   // portsByProvinceSeaboard is Map<String, String> - provinceId -> tileKey
   for (final portTile in portsByProv.values) {
@@ -421,6 +274,7 @@ Set<String> getPortTiles(WorldState worldState) {
       tiles.add(portTile);
     }
   }
-  
+
   return tiles;
 }
+
