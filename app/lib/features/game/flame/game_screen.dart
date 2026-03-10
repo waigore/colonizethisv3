@@ -11,6 +11,7 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../widgets/region_map_debug.dart';
 import '../widgets/civilian_units_panel.dart';
+import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_panel.dart';
 import 'game_canvas.dart';
@@ -174,6 +175,22 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     });
   }
 
+  void _onLocateMilitaryTile(String tileKey, String regionId) {
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    Navigator.of(context).maybePop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
     if (sel == null) return;
@@ -261,6 +278,21 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                 },
                 icon: const Icon(Icons.people_outline, size: 20),
                 label: const Text('Civilian Units'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    builder: (ctx) => MilitaryUnitsPanel(
+                      game: widget.game,
+                      humanPlayerId: _humanPlayerId,
+                      onLocateTile: _onLocateMilitaryTile,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.military_tech_outlined, size: 20),
+                label: const Text('Military Units'),
               ),
             ],
           ),
