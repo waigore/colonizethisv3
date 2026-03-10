@@ -29,6 +29,9 @@ class CtRegionMapDebug extends StatefulWidget {
     this.onTileHovered,
     this.highlightedTileKey,
     this.centerOnTileKey,
+    this.validTileKeys,
+    this.onTileSelected,
+    this.onWorkTargetSelectionCancelled,
   });
 
   final RegionMapViewData region;
@@ -47,6 +50,14 @@ class CtRegionMapDebug extends StatefulWidget {
   /// When set (and matching this region), the map pans so this tile is centered in the viewport.
   /// Format: regionId|provinceId|x|y. Applied once when value changes; cleared by caller if needed.
   final String? centerOnTileKey;
+
+  /// When non-null and non-empty, work target selection mode: tiles in this set (for this region) get a subtle glow; tap reports via [onTileSelected]. SPEC/ui/map-widget.md.
+  final Set<String>? validTileKeys;
+
+  /// When set (with [validTileKeys]), tap on a valid tile invokes with that tile key; tap elsewhere invokes [onWorkTargetSelectionCancelled] if set.
+  final void Function(String tileKey)? onTileSelected;
+  /// When in work-target mode and user taps a tile not in [validTileKeys], invoked so caller can cancel selection mode.
+  final VoidCallback? onWorkTargetSelectionCancelled;
 
   @override
   State<CtRegionMapDebug> createState() => _CtRegionMapDebugState();
@@ -306,15 +317,23 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
     final cellSizePx = widget.cellSizePx;
     final x = (local.dx / cellSizePx).floor();
     final y = (local.dy / cellSizePx).floor();
-    if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
-      final cell = region.cellAt(x, y);
-      if (widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.unrevealed) {
-        return;
-      }
-      final provinceId = '${region.regionId}|${cell.regionCellId}';
-      widget.onProvinceSelected?.call(provinceId);
+    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
+    final cell = region.cellAt(x, y);
+    if (widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.unrevealed) {
+      return;
     }
+    final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
+    if (widget.validTileKeys != null && widget.onTileSelected != null) {
+      if (widget.validTileKeys!.contains(tileKey)) {
+        widget.onTileSelected!(tileKey);
+      } else {
+        widget.onWorkTargetSelectionCancelled?.call();
+      }
+      return;
+    }
+    final provinceId = '${region.regionId}|${cell.regionCellId}';
+    widget.onProvinceSelected?.call(provinceId);
   }
 
   @override
@@ -405,6 +424,7 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
                           hoveredProvinceId: hoveredProvinceId,
                           hoverAnimationT: animationT,
                           highlightedTileKey: widget.highlightedTileKey,
+                          validTileKeys: widget.validTileKeys,
                         ),
                       ),
                     ),
@@ -536,6 +556,7 @@ class _RegionMapDebugPainter extends CustomPainter {
     this.hoveredProvinceId,
     this.hoverAnimationT = 0.0,
     this.highlightedTileKey,
+    this.validTileKeys,
   });
 
   final RegionMapViewData region;
@@ -547,6 +568,7 @@ class _RegionMapDebugPainter extends CustomPainter {
   final String? hoveredProvinceId;
   final double hoverAnimationT;
   final String? highlightedTileKey;
+  final Set<String>? validTileKeys;
 
   static const Color _seaColor = Color(0xFF003366);
   static const Color _provinceBorderColor = Colors.black;
@@ -556,6 +578,7 @@ class _RegionMapDebugPainter extends CustomPainter {
   static const Color _selectorColor = Color(0xFFFFFFFF);
   static const Color _hoverGlowColor = Color(0x88FFFFFF);
   static const Color _highlightedTileColor = Color(0xFFFFAA00);
+  static const Color _validTileGlowColor = Color(0x44AAFF88);
   static const double _highlightedTileStrokeWidth = 2.5;
   static const double _selectorInset = 2.0;
   static const double _selectorStrokeWidth = 2.0;
@@ -580,6 +603,29 @@ class _RegionMapDebugPainter extends CustomPainter {
     }
     if (highlightedTileKey != null) {
       _paintHighlightedTile(canvas);
+    }
+    if (validTileKeys != null && validTileKeys!.isNotEmpty) {
+      _paintValidTilesGlow(canvas);
+    }
+  }
+
+  void _paintValidTilesGlow(Canvas canvas) {
+    final keys = validTileKeys!;
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = _validTileGlowColor;
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
+        if (!keys.contains(tileKey)) continue;
+        final left = x * cellSize;
+        final top = y * cellSize;
+        canvas.drawRect(
+          Rect.fromLTWH(left, top, cellSize, cellSize),
+          paint,
+        );
+      }
     }
   }
 

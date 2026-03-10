@@ -437,6 +437,52 @@ bool _isWorkOrderAccepted(
   return result.isAccepted;
 }
 
+/// Returns the set of tile keys that are valid targets for a work order
+/// (unitId, workTarget) given [currentOrders]. Used by the app to highlight
+/// valid tiles when the player is assigning work. SPEC/ui/civilian-units-panel.md.
+Set<String> getValidWorkOrderTileKeys(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  String unitId,
+  String workTarget,
+  Orders currentOrders,
+) {
+  final units = [
+    ...game.worldState.oldWorld.units,
+    ...game.worldState.newWorld.units,
+  ];
+  final unit = units.where((u) => u.id == unitId).firstOrNull;
+  if (unit == null || unit.ownerId != playerId) return {};
+  if (unit.currentWork != null) return {};
+  if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
+
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final valid = <String>{};
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      for (final tileKey in provinceEntry.value) {
+        final candidate = WorkOrder(
+          unitId: unitId,
+          target: workTarget,
+          targetTileKey: tileKey,
+        );
+        if (_isWorkOrderAccepted(
+          game,
+          topology,
+          playerId,
+          currentOrders,
+          candidate,
+        )) {
+          valid.add(tileKey);
+        }
+      }
+    }
+  }
+  _log.d('logic: getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}');
+  return valid;
+}
+
 bool _isBuildOrderAccepted(
   Game game,
   MapTopology topology,

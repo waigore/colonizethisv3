@@ -25,14 +25,24 @@ void main() {
   Widget buildPanel({
     required Game game,
     required String humanPlayerId,
+    Orders currentOrders = const Orders(),
     void Function(Unit unit)? onLocateUnit,
+    void Function(WorkOrder order)? onAddWorkOrder,
+    void Function(String playerId, int index)? onRemoveWorkOrder,
+    void Function(String unitId)? onCancelUnitWork,
+    void Function(Unit unit, String workTarget)? onStartWorkTargetSelection,
   }) {
     return MaterialApp(
       home: Scaffold(
         body: CivilianUnitsPanel(
           game: game,
           humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
           onLocateUnit: onLocateUnit,
+          onAddWorkOrder: onAddWorkOrder,
+          onRemoveWorkOrder: onRemoveWorkOrder,
+          onCancelUnitWork: onCancelUnitWork,
+          onStartWorkTargetSelection: onStartWorkTargetSelection,
         ),
       ),
     );
@@ -168,6 +178,154 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ListView), findsOneWidget);
+    });
+
+    testWidgets('Assign button shown for idle unit when onStartWorkTargetSelection provided',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        onStartWorkTargetSelection: (_, __) {},
+      ));
+      await tester.pumpAndSettle();
+
+      final listTiles = find.byType(ListTile);
+      if (listTiles.evaluate().isEmpty) return;
+      expect(find.text('Assign'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('builds with onCancelUnitWork and onRemoveWorkOrder callbacks',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        onCancelUnitWork: (_) {},
+        onRemoveWorkOrder: (_, __) {},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+    });
+
+    testWidgets('tap Assign opens order menu; tap order invokes onStartWorkTargetSelection',
+        (WidgetTester tester) async {
+      Unit? selectedUnit;
+      String? selectedTarget;
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        onStartWorkTargetSelection: (u, t) {
+          selectedUnit = u;
+          selectedTarget = t;
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Assign').first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Assign work'), findsOneWidget);
+      final listTiles = find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(ListTile),
+      ).evaluate().toList();
+      expect(listTiles, isNotEmpty);
+      final firstTile = listTiles.first;
+      final box = firstTile.renderObject! as RenderBox;
+      final center = box.localToGlobal(Offset(box.size.width / 2, box.size.height / 2));
+      await tester.tapAt(center);
+      await tester.pumpAndSettle();
+
+      expect(selectedUnit, isNotNull);
+      expect(selectedTarget, isNotNull);
+      expect(selectedUnit!.ownerId, humanPlayerIdWithUnits);
+    });
+
+    testWidgets('tap Cancel shows confirm dialog; tap Yes invokes onRemoveWorkOrder when unit has pending work',
+        (WidgetTester tester) async {
+      final units = [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ];
+      final idleCivilians = units.where((u) =>
+          u.ownerId == humanPlayerIdWithUnits &&
+          u.tileKey != null &&
+          _isCivilian(u) &&
+          u.currentWork == null);
+      if (idleCivilians.isEmpty) return;
+      final idleCivilian = idleCivilians.first;
+
+      String? removePlayerId;
+      int? removeIndex;
+      final pendingOrder = WorkOrder(
+        unitId: idleCivilian.id,
+        target: 'explore',
+        targetTileKey: '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
+      );
+      final ordersWithOne = Orders(
+        workOrdersByPlayerId: {
+          humanPlayerIdWithUnits: [pendingOrder],
+        },
+      );
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        currentOrders: ordersWithOne,
+        onRemoveWorkOrder: (pid, idx) {
+          removePlayerId = pid;
+          removeIndex = idx;
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cancel work order?'), findsOneWidget);
+      await tester.tap(find.text('Yes'));
+      await tester.pumpAndSettle();
+
+      expect(removePlayerId, humanPlayerIdWithUnits);
+      expect(removeIndex, 0);
+    });
+
+    testWidgets('tap Cancel then No dismisses dialog without invoking callback',
+        (WidgetTester tester) async {
+      var cancelCalled = false;
+      final units = [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ];
+      final idleCivilians = units.where((u) =>
+          u.ownerId == humanPlayerIdWithUnits &&
+          u.tileKey != null &&
+          _isCivilian(u) &&
+          u.currentWork == null);
+      if (idleCivilians.isEmpty) return;
+      final idleCivilian = idleCivilians.first;
+
+      final pendingOrder = WorkOrder(
+        unitId: idleCivilian.id,
+        target: 'explore',
+        targetTileKey: '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
+      );
+      final ordersWithOne = Orders(
+        workOrdersByPlayerId: {humanPlayerIdWithUnits: [pendingOrder]},
+      );
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        currentOrders: ordersWithOne,
+        onRemoveWorkOrder: (_, __) => cancelCalled = true,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('No'));
+      await tester.pumpAndSettle();
+
+      expect(cancelCalled, isFalse);
     });
   });
 }

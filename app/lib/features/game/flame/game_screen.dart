@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -45,8 +46,10 @@ class GameScreen extends ConsumerWidget {
                   ElevatedButton(
                     onPressed: () {
                       final service = ref.read(gameServiceProvider);
-                      final newGame = service.nextTurn(game);
+                      final orders = ref.read(currentOrdersProvider);
+                      final newGame = service.nextTurn(game, orders: orders);
                       ref.read(currentGameProvider.notifier).state = newGame;
+                      ref.read(currentOrdersProvider.notifier).state = const ct_models.Orders();
                     },
                     child: Text(
                       'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
@@ -87,7 +90,7 @@ class GameScreen extends ConsumerWidget {
 }
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
-class _GameMapArea extends StatefulWidget {
+class _GameMapArea extends ConsumerStatefulWidget {
   const _GameMapArea({
     required this.game,
     required this.mapViewData,
@@ -97,16 +100,17 @@ class _GameMapArea extends StatefulWidget {
   final InitGameMapViewData mapViewData;
 
   @override
-  State<_GameMapArea> createState() => _GameMapAreaState();
+  ConsumerState<_GameMapArea> createState() => _GameMapAreaState();
 }
 
-class _GameMapAreaState extends State<_GameMapArea> {
+class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   int _regionIndex = 0;
   String? _selectedDetailId;
   String? _hoveredDetailId;
   String? _hoveredTileKey;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
+  ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
 
   String get _humanPlayerId =>
       widget.game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
@@ -114,6 +118,26 @@ class _GameMapAreaState extends State<_GameMapArea> {
 
   RegionMapViewData get _currentRegion =>
       _regionIndex == 0 ? widget.mapViewData.oldWorld : widget.mapViewData.newWorld;
+
+  String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
+
+  Set<String>? get _validTileKeysForSelection {
+    if (_workTargetSelection == null) return null;
+    final game = ref.read(currentGameProvider);
+    if (game == null) return null;
+    final orders = ref.read(currentOrdersProvider);
+    final mapData = ref.read(gameServiceProvider).getMapData(game.id);
+    final topology = mapData?.combinedTopology ?? const MapTopology();
+    final valid = getValidWorkOrderTileKeys(
+      game,
+      topology,
+      _humanPlayerId,
+      _workTargetSelection!.unit.id,
+      _workTargetSelection!.workTarget,
+      orders,
+    );
+    return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+  }
 
   /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
   String get _displayId {
@@ -167,6 +191,41 @@ class _GameMapAreaState extends State<_GameMapArea> {
     });
   }
 
+  void _onTileSelectedForWork(String tileKey) {
+    final sel = _workTargetSelection;
+    if (sel == null) return;
+    final target = sel.workTarget;
+    String targetTileKey = tileKey;
+    if (target == 'explore' || target == 'steal_tech' || target == 'counter_spy') {
+      final parts = tileKey.split('|');
+      if (parts.length >= 2) {
+        targetTileKey = '${parts[0]}|${parts[1]}|0|0';
+      }
+    }
+    final workOrder = ct_models.WorkOrder(
+      unitId: sel.unit.id,
+      target: target,
+      targetTileKey: targetTileKey,
+    );
+    final orders = ref.read(currentOrdersProvider);
+    final list = <ct_models.WorkOrder>[
+      ...(orders.workOrdersByPlayerId[_humanPlayerId] ?? const []),
+      workOrder,
+    ];
+    ref.read(currentOrdersProvider.notifier).state = orders.copyWith(
+      workOrdersByPlayerId: {...orders.workOrdersByPlayerId, _humanPlayerId: list},
+    );
+    setState(() => _workTargetSelection = null);
+  }
+
+  void _cancelUnitWork(String unitId) {
+    final game = ref.read(currentGameProvider);
+    if (game == null) return;
+    final newGame = clearUnitCurrentWork(game, unitId);
+    ref.read(currentGameProvider.notifier).state = newGame;
+    ref.read(gameServiceProvider).saveGame(newGame);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
@@ -191,12 +250,29 @@ class _GameMapAreaState extends State<_GameMapArea> {
               const SizedBox(width: 16),
               TextButton.icon(
                 onPressed: () {
+                  final orders = ref.read(currentOrdersProvider);
                   showModalBottomSheet<void>(
                     context: context,
                     builder: (ctx) => CivilianUnitsPanel(
-                      game: widget.game,
+                      game: ref.read(currentGameProvider) ?? widget.game,
                       humanPlayerId: _humanPlayerId,
+                      currentOrders: orders,
                       onLocateUnit: _onLocateCivilianUnit,
+                      onRemoveWorkOrder: (playerId, index) {
+                        final o = ref.read(currentOrdersProvider);
+                        final list = List<ct_models.WorkOrder>.from(
+                          o.workOrdersByPlayerId[playerId] ?? [],
+                        )..removeAt(index);
+                        ref.read(currentOrdersProvider.notifier).state =
+                            o.copyWith(
+                          workOrdersByPlayerId: {...o.workOrdersByPlayerId, playerId: list},
+                        );
+                      },
+                      onCancelUnitWork: _cancelUnitWork,
+                      onStartWorkTargetSelection: (unit, workTarget) {
+                        Navigator.of(ctx).pop();
+                        setState(() => _workTargetSelection = (unit: unit, workTarget: workTarget));
+                      },
                     ),
                   );
                 },
@@ -233,6 +309,11 @@ class _GameMapAreaState extends State<_GameMapArea> {
                   onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   highlightedTileKey: _highlightedTileKey,
                   centerOnTileKey: _centerOnTileKey,
+                  validTileKeys: _validTileKeysForSelection,
+                  onTileSelected: _workTargetSelection != null ? _onTileSelectedForWork : null,
+                  onWorkTargetSelectionCancelled: _workTargetSelection != null
+                      ? () => setState(() => _workTargetSelection = null)
+                      : null,
                 ),
               ),
               if (!isNarrow && _selectedDetailId != null)
