@@ -44,6 +44,8 @@ export 'src/orders/order_merge.dart';
 export 'src/orders/projected_effects.dart';
 export 'src/orders/order_projections.dart';
 export 'src/orders/order_suggestion.dart';
+export 'src/orders/order_suggestion.dart'
+    show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'src/orders/order_suggestion_api_impl.dart';
 export 'src/orders/order_visibility.dart';
 export 'src/orders/orders_application.dart';

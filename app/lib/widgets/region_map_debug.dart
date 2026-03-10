@@ -41,8 +41,10 @@ class CtRegionMapDebug extends StatefulWidget {
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
+
   /// When set, overlay can show tile details. Called with tile key (regionId|provinceId|x|y) or null on exit.
   final void Function(String? tileKey)? onTileHovered;
+
   /// When set, shows a secondary highlight over the tile (e.g. from overlay coordinate hover).
   /// Format: regionId|provinceId|x|y. Only used when regionId matches and x,y are in bounds.
   final String? highlightedTileKey;
@@ -56,6 +58,7 @@ class CtRegionMapDebug extends StatefulWidget {
 
   /// When set (with [validTileKeys]), tap on a valid tile invokes with that tile key; tap elsewhere invokes [onWorkTargetSelectionCancelled] if set.
   final void Function(String tileKey)? onTileSelected;
+
   /// When in work-target mode and user taps a tile not in [validTileKeys], invoked so caller can cancel selection mode.
   final VoidCallback? onWorkTargetSelectionCancelled;
 
@@ -118,7 +121,9 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
   }
 
   void _startHoverAnimationIfNeeded() {
-    if (_hoveredTileX != null && _hoveredTileY != null) {
+    final shouldAnimate = _hoveredTileX != null && _hoveredTileY != null ||
+        (widget.validTileKeys != null && widget.validTileKeys!.isNotEmpty);
+    if (shouldAnimate) {
       if (!_hoverAnimationController.isAnimating) {
         _hoverAnimationController.repeat(reverse: true);
       }
@@ -147,7 +152,8 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
     final x = int.tryParse(parts[2]);
     final y = int.tryParse(parts[3]);
     if (x == null || y == null) return;
-    if (x < 0 || x >= widget.region.width || y < 0 || y >= widget.region.height) return;
+    if (x < 0 || x >= widget.region.width || y < 0 || y >= widget.region.height)
+      return;
     if (_viewportWidth <= 0 || _viewportHeight <= 0) return;
     final cellSizePx = widget.cellSizePx;
     final sceneX = x * cellSizePx + cellSizePx / 2;
@@ -284,8 +290,9 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
       final y = (local.dy / cellSizePx).floor();
       if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
         final cell = region.cellAt(x, y);
-        final isUnrevealed = widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            cell.visibility == TileVisibility.unrevealed;
+        final isUnrevealed =
+            widget.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+                cell.visibility == TileVisibility.unrevealed;
         if (!isUnrevealed) {
           nx = x;
           ny = y;
@@ -476,9 +483,8 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
   }) {
     final thumbLength = (trackHeight * (trackHeight / contentHeight))
         .clamp(_scrollbarMinLength, trackHeight);
-    final thumbOffset = extent > 0
-        ? (position / extent) * (trackHeight - thumbLength)
-        : 0.0;
+    final thumbOffset =
+        extent > 0 ? (position / extent) * (trackHeight - thumbLength) : 0.0;
     return Container(
       width: _scrollbarThickness,
       height: trackHeight,
@@ -514,9 +520,8 @@ class _CtRegionMapDebugState extends State<CtRegionMapDebug>
   }) {
     final thumbLength = (trackWidth * (trackWidth / contentWidth))
         .clamp(_scrollbarMinLength, trackWidth);
-    final thumbOffset = extent > 0
-        ? (position / extent) * (trackWidth - thumbLength)
-        : 0.0;
+    final thumbOffset =
+        extent > 0 ? (position / extent) * (trackWidth - thumbLength) : 0.0;
     return Container(
       width: trackWidth,
       height: _scrollbarThickness,
@@ -611,9 +616,10 @@ class _RegionMapDebugPainter extends CustomPainter {
 
   void _paintValidTilesGlow(Canvas canvas) {
     final keys = validTileKeys!;
+    final pulseOpacity = 0.3 + (hoverAnimationT * 0.4);
     final paint = Paint()
       ..style = PaintingStyle.fill
-      ..color = _validTileGlowColor;
+      ..color = _validTileGlowColor.withValues(alpha: pulseOpacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -698,7 +704,7 @@ class _RegionMapDebugPainter extends CustomPainter {
     final double fontSize = math.max(10.0, cellSize * 0.35);
     for (final cell in region.cells) {
       if (cell.isSea) continue;
-       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
           cell.visibility == TileVisibility.unrevealed) {
         continue;
       }
@@ -772,7 +778,8 @@ class _RegionMapDebugPainter extends CustomPainter {
   void _paintSelector(Canvas canvas) {
     final x = hoveredTileX!;
     final y = hoveredTileY!;
-    final bounce = 1.0 + _bounceScaleAmplitude * math.sin(hoverAnimationT * 2 * math.pi);
+    final bounce =
+        1.0 + _bounceScaleAmplitude * math.sin(hoverAnimationT * 2 * math.pi);
     final cx = x * cellSize + cellSize / 2;
     final cy = y * cellSize + cellSize / 2;
     final half = (cellSize / 2 - _selectorInset) * bounce;
@@ -833,7 +840,8 @@ class _RegionMapDebugPainter extends CustomPainter {
         final owner = cell.ownerFactionId ?? '';
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
-          if (!right.isSea && (region.cellAt(x + 1, y).ownerFactionId ?? '') != owner) {
+          if (!right.isSea &&
+              (region.cellAt(x + 1, y).ownerFactionId ?? '') != owner) {
             final xEdge = (x + 1) * cellSize;
             canvas.drawLine(
               Offset(xEdge, y * cellSize),

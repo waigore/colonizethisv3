@@ -57,7 +57,8 @@ List<Unit> _civilianUnitsInRegion(
   Map<String, String> provinceNames,
 ) {
   final list = units
-      .where((u) => u.ownerId == humanPlayerId && u.tileKey != null && _isCivilianUnit(u))
+      .where((u) =>
+          u.ownerId == humanPlayerId && u.tileKey != null && _isCivilianUnit(u))
       .toList();
   list.sort((a, b) {
     final provA = Unit.provinceIdFromTileKey(a.tileKey);
@@ -93,13 +94,16 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   final Game game;
   final String humanPlayerId;
+
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
   final Orders currentOrders;
+
   /// Called when the user taps a unit row; [unit] has non-null [Unit.tileKey].
   final void Function(Unit unit)? onLocateUnit;
   final void Function(WorkOrder order)? onAddWorkOrder;
   final void Function(String playerId, int index)? onRemoveWorkOrder;
   final void Function(String unitId)? onCancelUnitWork;
+
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
@@ -158,7 +162,8 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 onAddWorkOrder: onAddWorkOrder,
                                 onRemoveWorkOrder: onRemoveWorkOrder,
                                 onCancelUnitWork: onCancelUnitWork,
-                                onStartWorkTargetSelection: onStartWorkTargetSelection,
+                                onStartWorkTargetSelection:
+                                    onStartWorkTargetSelection,
                               )),
                         ],
                         if (nw.isNotEmpty) ...[
@@ -174,7 +179,8 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 onAddWorkOrder: onAddWorkOrder,
                                 onRemoveWorkOrder: onRemoveWorkOrder,
                                 onCancelUnitWork: onCancelUnitWork,
-                                onStartWorkTargetSelection: onStartWorkTargetSelection,
+                                onStartWorkTargetSelection:
+                                    onStartWorkTargetSelection,
                               )),
                         ],
                       ],
@@ -184,9 +190,12 @@ class CivilianUnitsPanel extends StatelessWidget {
                       child: Center(
                         child: Text(
                           'No civilian units',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ),
                     ),
@@ -255,7 +264,9 @@ class _UnitRow extends StatelessWidget {
   }
 
   bool get _isIdleNoPending =>
-      unit.status == UnitStatus.idle && unit.currentWork == null && !_hasPending;
+      unit.status == UnitStatus.idle &&
+      unit.currentWork == null &&
+      !_hasPending;
 
   bool get _hasWork => unit.currentWork != null || _hasPending;
 
@@ -270,6 +281,23 @@ class _UnitRow extends StatelessWidget {
   }
 
   String _assignedToLabel() {
+    // Check for pending work orders first
+    final pendingOrders = _pendingForPlayer;
+    for (final order in pendingOrders) {
+      if (order.unitId == unit.id) {
+        final workLabel = _workTargetLabels[order.target] ?? order.target;
+        final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
+        final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
+        String location = '';
+        if (regionId != null && provinceId != null) {
+          final name =
+              provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+          location = ' (${_regionLabel(regionId)} — $name)';
+        }
+        return '$workLabel$location (pending)';
+      }
+    }
+    // Then check for in-progress work
     if (unit.status != UnitStatus.working || unit.currentWork == null) {
       return '—';
     }
@@ -279,18 +307,20 @@ class _UnitRow extends StatelessWidget {
     final provinceId = Unit.provinceIdFromTileKey(cw.tileKey);
     String location = '';
     if (regionId != null && provinceId != null) {
-      final name = provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+      final name =
+          provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
       location = ' (${_regionLabel(regionId)} — $name)';
     }
-    final progress = cw.totalTurns > 0
-        ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
-        : '';
+    final progress =
+        cw.totalTurns > 0 ? ' ${cw.remainingTurns}/${cw.totalTurns} turns' : '';
     return '$workLabel$location$progress';
   }
 
   void _showOrderMenu(BuildContext context) {
     final allowed = workOrderTargetsByUnitType[unit.type];
-    if (allowed == null || allowed.isEmpty || onStartWorkTargetSelection == null) return;
+    if (allowed == null ||
+        allowed.isEmpty ||
+        onStartWorkTargetSelection == null) return;
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -374,7 +404,8 @@ class _UnitRow extends StatelessWidget {
               onPressed: () => _showOrderMenu(context),
               child: const Text('Assign'),
             ),
-          if (_hasWork && (onRemoveWorkOrder != null || onCancelUnitWork != null))
+          if (_hasWork &&
+              (onRemoveWorkOrder != null || onCancelUnitWork != null))
             TextButton(
               onPressed: () => _confirmCancel(context),
               child: const Text('Cancel'),
