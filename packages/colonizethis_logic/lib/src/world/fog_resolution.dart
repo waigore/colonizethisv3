@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'player_view.dart';
+import 'unit_lookup.dart';
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
@@ -67,7 +68,7 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
   };
 
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
-  for (final u in game.worldState.oldWorld.units) {
+  for (final u in allUnitsFromWorld(game.worldState)) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})
@@ -80,13 +81,6 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
     final provinces = entry.value.keys;
     if (provinces.isEmpty) continue;
     provincesWithSpyTimerByPlayer[playerId] = provinces.toSet();
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (explorerTypes.contains(u.type.toLowerCase())) {
-      provincesWithExplorerByPlayer
-          .putIfAbsent(u.ownerId, () => <String>{})
-          .add(u.locationProvinceId);
-    }
   }
 
   final result = <String, Map<String, String>>{};

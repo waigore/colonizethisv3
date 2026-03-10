@@ -10,6 +10,7 @@ import 'order_engine.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_visibility.dart';
 import '../world/player_view.dart';
+import '../world/unit_lookup.dart';
 
 export 'order_suggestion_helpers.dart';
 
@@ -449,11 +450,9 @@ Set<String> getValidWorkOrderTileKeys(
   String workTarget,
   Orders currentOrders,
 ) {
-  final units = [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ];
-  final unit = units.where((u) => u.id == unitId).firstOrNull;
+  final unit = allUnitsFromWorld(game.worldState)
+      .where((u) => u.id == unitId)
+      .firstOrNull;
   if (unit == null || unit.ownerId != playerId) return {};
   if (unit.currentWork != null) return {};
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};

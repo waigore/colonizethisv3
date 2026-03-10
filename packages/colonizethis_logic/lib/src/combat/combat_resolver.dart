@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/fog_resolution.dart';
+import '../world/unit_lookup.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
@@ -46,7 +47,7 @@ Game resolveBattleContext(
     region = game.worldState.newWorld;
   }
 
-  final unitsById = {for (final u in region.units) u.id: u};
+  final unitsById = unitsByIdFromRegion(region);
   var defenderUnitIds = ctx.defenderUnitIds.toList();
   var defenderFactionId = ctx.defenderFactionId;
   var provinceOwnerId = ctx.defenderFactionId;
