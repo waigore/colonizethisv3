@@ -18,7 +18,7 @@ Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overture
 
 ## Extraction
 
-(1) **Connectivity:** Recompute per-player connectivity (see [extraction-pipeline.md](extraction-pipeline.md)). (2) **Extract:** Per-tile effective extraction: min(improvement, tech cap), then min(..., transport level); minerals only from prospected tiles per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); sum by commodity; separate same-region vs overseas. (3) **Land:** Add same-region totals to stockpile. (4) **Sea:** Allocate overseas totals by priority, capped by cargo holds derived from the player's home fleet at the capital port (see [auto-transport.md](auto-transport.md)); add only the transported portion to stockpile. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-pipeline.md](extraction-pipeline.md).
+(1) **Connectivity:** Recompute per-player connectivity (see [extraction-pipeline.md](extraction-pipeline.md)). (2) **Extract:** Per-tile effective extraction: min(improvement, tech cap), then min(..., transport level); minerals only from prospected tiles per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); sum by commodity; separate same-region vs overseas. (3) **Land:** Add same-region totals to stockpile. (4) **Sea:** Allocate overseas totals by priority, capped by cargo holds derived from the player's home fleet (in port at capital; see [auto-transport.md](auto-transport.md)); add only the transported portion to stockpile. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-pipeline.md](extraction-pipeline.md).
 
 ---
 
@@ -48,7 +48,7 @@ Military regiments consume food upkeep **before** workers and navy. Per player: 
 
 ## Movement
 
-Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship reveal on fleet enter sea zone per [naval-movement-resolution.md](naval-movement-resolution.md)); set unit/fleet location and active missions.
+Apply validated land MoveOrders; naval MoveOrders (dock only at owned provinces; undock into adjacent sea zone) and mission assignments (ship reveal on fleet enter sea zone per [naval-movement-resolution.md](naval-movement-resolution.md)); set unit/fleet location and active missions.
 
 ---
 
@@ -66,7 +66,7 @@ Apply validated land MoveOrders; naval MoveOrders and mission assignments (ship 
 
 ## Build / work
 
-BuildUnitOrder: by unit type category — civilian: deduct cash from treasury and paper from stockpile per [civilian-units.md](../game/civilian-units.md), add unit; military: deduct cost, consume worker, add unit; naval: deduct cost, add ship to home fleet. WorkOrder: exploration/prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
+BuildUnitOrder: by unit type category — civilian: deduct cash from treasury and paper from stockpile per [civilian-units.md](../game/civilian-units.md), add unit; military: deduct cost, consume worker, add unit; naval: deduct cost, add ship to home fleet (in port at capital). WorkOrder: exploration/prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
 
 ---
 

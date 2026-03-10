@@ -287,25 +287,54 @@ class MoveOrder {
   int get hashCode => Object.hash(unitId, destinationProvinceId);
 }
 
-/// Move a fleet to an adjacent sea zone. Phase 5. SPEC/program/naval-movement-resolution.md.
+/// Move a fleet to an adjacent sea zone or dock at a port. Phase 5. SPEC/program/naval-movement-resolution.md.
+///
+/// Exactly one of [destinationSeaZoneId] (move to sea) or [destinationPortProvinceId] (dock)
+/// must be set. Backward compat: fromJson accepts legacy payloads with only destinationSeaZoneId.
 class NavalMoveOrder {
+  /// Exactly one of [destinationSeaZoneId] or [destinationPortProvinceId] must be set (enforced in [fromJson] and validation).
   const NavalMoveOrder({
     required this.fleetId,
-    required this.destinationSeaZoneId,
+    this.destinationSeaZoneId,
+    this.destinationPortProvinceId,
   });
 
   final String fleetId;
-  final String destinationSeaZoneId;
+  /// Non-null for "move to sea zone". Null when [destinationPortProvinceId] is set (dock).
+  final String? destinationSeaZoneId;
+  /// Non-null for "dock at province". Null when [destinationSeaZoneId] is set.
+  final String? destinationPortProvinceId;
+
+  /// True when this order is a dock (destination is a port province).
+  bool get isDock =>
+      destinationPortProvinceId != null && destinationPortProvinceId!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'fleetId': fleetId,
-        'destinationSeaZoneId': destinationSeaZoneId,
+        if (destinationSeaZoneId != null) 'destinationSeaZoneId': destinationSeaZoneId,
+        if (destinationPortProvinceId != null) 'destinationPortProvinceId': destinationPortProvinceId,
       };
 
   static NavalMoveOrder fromJson(Map<String, dynamic> json) {
+    final portId = json['destinationPortProvinceId'] as String?;
+    final seaId = json['destinationSeaZoneId'] as String?;
+    final isDock = portId != null && portId.isNotEmpty;
+    final String? destSea;
+    final String? destPort;
+    if (isDock) {
+      destSea = null;
+      destPort = portId;
+    } else {
+      if (seaId == null || seaId.isEmpty) {
+        throw ArgumentError('destinationSeaZoneId required for move to sea');
+      }
+      destSea = seaId;
+      destPort = null;
+    }
     return NavalMoveOrder(
       fleetId: json['fleetId'] as String,
-      destinationSeaZoneId: json['destinationSeaZoneId'] as String,
+      destinationSeaZoneId: destSea,
+      destinationPortProvinceId: destPort,
     );
   }
 
@@ -315,10 +344,11 @@ class NavalMoveOrder {
       other is NavalMoveOrder &&
           runtimeType == other.runtimeType &&
           fleetId == other.fleetId &&
-          destinationSeaZoneId == other.destinationSeaZoneId;
+          destinationSeaZoneId == other.destinationSeaZoneId &&
+          destinationPortProvinceId == other.destinationPortProvinceId;
 
   @override
-  int get hashCode => Object.hash(fleetId, destinationSeaZoneId);
+  int get hashCode => Object.hash(fleetId, destinationSeaZoneId, destinationPortProvinceId);
 }
 
 /// Assign a mission to a fleet (patrol, blockade, beachhead, defend). SPEC/program/naval-movement-resolution.md.

@@ -126,6 +126,7 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
   var sum = 0;
   var hasBlockade = false;
   for (final f in fleets) {
+    if (!f.isAtSea) continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
     if (!enemyIds.contains(f.ownerId)) continue;
     if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) continue;
     if (f.mission == FleetMission.blockade) hasBlockade = true;

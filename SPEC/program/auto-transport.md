@@ -24,7 +24,7 @@ All **same-region** extracted goods are added to the player's stockpile. Extract
 
 ## Sea Transport (Overseas Only)
 
-**Cargo-hold limit (per Imp2):** Each cargo hold carries **1 unit of any commodity per turn**. Total cargo holds for a turn are defined as the sum of cargo-hold values for all ships that are members of the **home fleet** at the capital port (see [ships-and-naval.md](../game/ships-and-naval.md) § Home Fleet and [naval-movement-resolution.md](naval-movement-resolution.md)). For a ship type `t` with cargoHold `H(t)` and home-fleet count `count_home(t)`, total cargo holds for a player are:
+**Cargo-hold limit (per Imp2):** Each cargo hold carries **1 unit of any commodity per turn**. Total cargo holds for a turn are defined as the sum of cargo-hold values for all ships that are members of the **home fleet** (in port at the capital province; see [ships-and-naval.md](../game/ships-and-naval.md) § Home Fleet and [naval-movement-resolution.md](naval-movement-resolution.md)). For a ship type `t` with cargoHold `H(t)` and home-fleet count `count_home(t)`, total cargo holds for a player are:
 
 \\[
 \text{cargoHolds} = \sum_t H(t) \times \text{count\\_home}(t)
@@ -67,7 +67,7 @@ Player stockpile updated with land totals (all) and overseas totals (up to cargo
   When auto-transport runs for that player  
   Then all same-region extracted quantities are added to the player’s central stockpile, without creating any per-province commodity storage and without iterating raw tiles.
 
-- **Sea transport and cargo cap:** Given per-player overseas extraction totals, a derived cargo-hold capacity from the player’s home fleet at the capital port (or a configured stub value when allowed by ruleset), and a current stockpile  
+- **Sea transport and cargo cap:** Given per-player overseas extraction totals, a derived cargo-hold capacity from the player’s home fleet (in port at the capital; or a configured stub value when allowed by ruleset), and a current stockpile  
   When auto-transport runs  
   Then it allocates overseas quantities to the central stockpile by category priority (food, raw materials, riches, manufactured/advanced per `CommodityCategory`), does not exceed the effective cargo-hold capacity, and leaves any undelivered overseas quantities outside the central stockpile for that turn.
 
