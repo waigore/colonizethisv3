@@ -45,8 +45,19 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 | **onProvinceSelected** | Invoked when the user taps/clicks a province (e.g. with prefixed province id). Province details (what to show, where) are defined by the parent/screen; the map widget only reports selection. |
 | **onRegionViewChanged** | Optional: viewport or zoom level changed (e.g. for syncing with sidebar or URL). |
 | **onProvinceHovered** | Optional: invoked when hover enters or leaves a province (prefixed province id, or null when leaving). Enables e.g. tooltips. |
+| **onTileSelected** | Optional. When the map is in **work target selection mode** (see below), invoked when the user taps/clicks a tile with the tile key `regionId|provinceId|x|y`. Used by the Civilian Units panel assign flow. |
+| **validTileKeys** | Optional. When non-null and non-empty, the map is in work target selection mode: tiles whose key is in this set are drawn with a **subtle glow** (e.g. soft overlay or outline) so the user sees which tiles are valid targets. Tap on a valid tile invokes **onTileSelected** with that tile key; tap on an invalid tile or empty area does not invoke onTileSelected (parent may treat as cancel/back-out). |
 
 Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget only supports selection via these callbacks.
+
+---
+
+## Work target selection mode
+
+- **When** the parent supplies **validTileKeys** (set or list of tile keys in format `regionId|provinceId|x|y`) and **onTileSelected**, the map is in **work target selection mode**.
+- **Valid-tiles overlay:** Every tile whose key is in **validTileKeys** (and belongs to the currently displayed region) is rendered with a **subtle glow** (e.g. semi-transparent tint or soft outline). The effect should be visible but not overpowering (prefer subtle glow first; spec does not mandate a specific technique).
+- **Selection:** Tap/click on a tile in **validTileKeys** invokes **onTileSelected** with that tile's key. Tap/click on a tile not in **validTileKeys** or on empty area does **not** invoke onTileSelected; the parent (e.g. in-game shell) may interpret this as "cancel assignment" and clear selection mode.
+- **Region:** Valid tile keys may reference the other region; only tiles in the **currently displayed region** are highlighted. When the user switches region tab, the overlay shows valid tiles for that region. See [civilian-units-panel.md](civilian-units-panel.md).
 
 ---
 
@@ -122,6 +133,8 @@ Hover, selection, and overlay behavior:
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `visible`, **then** the tile is drawn identically to the current base behavior (full terrain color and overlays).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `fogged`, **then** the tile is drawn with the same terrain and overlays as `visible` tiles but with a consistent gray/opacity effect applied so the tile appears muted.
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource/improvement/road letters are shown, and hover/selection callbacks are not fired for that tile.
+
+- **Given** the map widget is in work target selection mode (non-null **validTileKeys** and **onTileSelected** provided), **when** the widget renders a tile whose key is in **validTileKeys** and in the current region, **then** that tile is drawn with a subtle glow (overlay or outline). When the user taps a tile in **validTileKeys**, **then** the widget invokes **onTileSelected** with that tile key; when the user taps a tile not in **validTileKeys** or empty area, **then** the widget does not invoke **onTileSelected**.
 
 ---
 

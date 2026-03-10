@@ -83,13 +83,25 @@ class CivilianUnitsPanel extends StatelessWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.currentOrders = const Orders(),
     this.onLocateUnit,
+    this.onAddWorkOrder,
+    this.onRemoveWorkOrder,
+    this.onCancelUnitWork,
+    this.onStartWorkTargetSelection,
   });
 
   final Game game;
   final String humanPlayerId;
+  /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
+  final Orders currentOrders;
   /// Called when the user taps a unit row; [unit] has non-null [Unit.tileKey].
   final void Function(Unit unit)? onLocateUnit;
+  final void Function(WorkOrder order)? onAddWorkOrder;
+  final void Function(String playerId, int index)? onRemoveWorkOrder;
+  final void Function(String unitId)? onCancelUnitWork;
+  /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
+  final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -138,9 +150,15 @@ class CivilianUnitsPanel extends StatelessWidget {
                           ...ow.map((u) => _UnitRow(
                                 unit: u,
                                 provinceNames: provinceNames,
+                                currentOrders: currentOrders,
+                                humanPlayerId: humanPlayerId,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
                                     : null,
+                                onAddWorkOrder: onAddWorkOrder,
+                                onRemoveWorkOrder: onRemoveWorkOrder,
+                                onCancelUnitWork: onCancelUnitWork,
+                                onStartWorkTargetSelection: onStartWorkTargetSelection,
                               )),
                         ],
                         if (nw.isNotEmpty) ...[
@@ -148,9 +166,15 @@ class CivilianUnitsPanel extends StatelessWidget {
                           ...nw.map((u) => _UnitRow(
                                 unit: u,
                                 provinceNames: provinceNames,
+                                currentOrders: currentOrders,
+                                humanPlayerId: humanPlayerId,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
                                     : null,
+                                onAddWorkOrder: onAddWorkOrder,
+                                onRemoveWorkOrder: onRemoveWorkOrder,
+                                onCancelUnitWork: onCancelUnitWork,
+                                onStartWorkTargetSelection: onStartWorkTargetSelection,
                               )),
                         ],
                       ],
@@ -198,12 +222,42 @@ class _UnitRow extends StatelessWidget {
   const _UnitRow({
     required this.unit,
     required this.provinceNames,
+    required this.currentOrders,
+    required this.humanPlayerId,
     this.onTap,
+    this.onAddWorkOrder,
+    this.onRemoveWorkOrder,
+    this.onCancelUnitWork,
+    this.onStartWorkTargetSelection,
   });
 
   final Unit unit;
   final Map<String, String> provinceNames;
+  final Orders currentOrders;
+  final String humanPlayerId;
   final VoidCallback? onTap;
+  final void Function(WorkOrder order)? onAddWorkOrder;
+  final void Function(String playerId, int index)? onRemoveWorkOrder;
+  final void Function(String unitId)? onCancelUnitWork;
+  final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
+
+  List<WorkOrder> get _pendingForPlayer =>
+      currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
+
+  bool get _hasPending => _pendingForPlayer.any((o) => o.unitId == unit.id);
+
+  int? get _pendingIndex {
+    final list = _pendingForPlayer;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].unitId == unit.id) return i;
+    }
+    return null;
+  }
+
+  bool get _isIdleNoPending =>
+      unit.status == UnitStatus.idle && unit.currentWork == null && !_hasPending;
+
+  bool get _hasWork => unit.currentWork != null || _hasPending;
 
   String _locationLabel() {
     final regionId = Unit.regionIdFromTileKey(unit.tileKey);
@@ -234,6 +288,64 @@ class _UnitRow extends StatelessWidget {
     return '$workLabel$location$progress';
   }
 
+  void _showOrderMenu(BuildContext context) {
+    final allowed = workOrderTargetsByUnitType[unit.type];
+    if (allowed == null || allowed.isEmpty || onStartWorkTargetSelection == null) return;
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                'Assign work: ${unit.type}',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            ...allowed.map((target) => ListTile(
+                  title: Text(_workTargetLabels[target] ?? target),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    onStartWorkTargetSelection!(unit, target);
+                  },
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmCancel(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel work order?'),
+        content: const Text(
+          'This will cancel the current or pending work for this unit. Materials are not refunded.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final idx = _pendingIndex;
+    if (idx != null && onRemoveWorkOrder != null) {
+      onRemoveWorkOrder!(humanPlayerId, idx);
+    } else if (unit.currentWork != null && onCancelUnitWork != null) {
+      onCancelUnitWork!(unit.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusLabel = switch (unit.status) {
@@ -254,6 +366,21 @@ class _UnitRow extends StatelessWidget {
       ),
       dense: true,
       onTap: onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_isIdleNoPending && onStartWorkTargetSelection != null)
+            TextButton(
+              onPressed: () => _showOrderMenu(context),
+              child: const Text('Assign'),
+            ),
+          if (_hasWork && (onRemoveWorkOrder != null || onCancelUnitWork != null))
+            TextButton(
+              onPressed: () => _confirmCancel(context),
+              child: const Text('Cancel'),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -647,5 +647,67 @@ void main() {
       expect(filtered.first.destinationProvinceId, 'oldWorld|p2');
     });
   });
+
+  group('getValidWorkOrderTileKeys', () {
+    test('returns empty for unknown unit id', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [], units: []),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {ow: {'$ow|p1': ['oldWorld|p1|0|0']}},
+        ),
+        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+      );
+      final topology = const MapTopology(nodes: [], edges: []);
+      final valid = getValidWorkOrderTileKeys(
+        game,
+        topology,
+        playerId,
+        'no-such-unit',
+        'explore',
+        const Orders(),
+      );
+      expect(valid, isEmpty);
+    });
+
+    test('returns empty when workTarget not allowed for unit type', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: playerId,
+        provinceId: '$ow|p1',
+        tileKey: 'oldWorld|p1|0|0',
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {ow: {'$ow|p1': ['oldWorld|p1|0|0']}},
+        ),
+        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+      );
+      final topology = const MapTopology(nodes: [], edges: []);
+      final valid = getValidWorkOrderTileKeys(
+        game,
+        topology,
+        playerId,
+        'u1',
+        'build_improvement',
+        const Orders(),
+      );
+      expect(valid, isEmpty);
+    });
+  });
 }
 

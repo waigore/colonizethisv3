@@ -57,6 +57,13 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 ---
 
+### Player-initiated cancel of in-progress work
+
+- The player may request to **cancel** a civilian unit's **in-progress** work (unit has `status == working` and `currentWork != null`). On confirm, the system produces a game state in which that unit has `currentWork` cleared and `status = idle`. **Materials are not refunded.**
+- **Implementation:** Either (a) a **cancel-work order** (e.g. unit id) applied at the **start** of the Build/Work phase (before processing work and new WorkOrders), or (b) a **direct game-state update** (e.g. game service method that returns an updated `Game` with that unit's work cleared). TDD and [order-engine.md](order-engine.md) / [orders.md](orders.md) specify which. Pending work orders for the same unit are cancelled by removing them from the current turn's orders (order engine `removeWorkOrder`); no separate spec for that.
+
+---
+
 ### Shared Use in Main Game and sim_game
 
 - The **same TurnResolver and development resolution logic** must be used in:
@@ -74,6 +81,7 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 - **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
 - **build_improvement validation:** The order engine rejects build_improvement when the target tile has no resource, when the tile's improvement level is already 4, or when the player's tech-allowed extraction cap is less than (current improvement level + 1).
 - **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
+- **Player-initiated cancel:** When the player confirms cancel for a unit with in-progress work, the system clears that unit's `currentWork` and sets `status = idle`; materials are not refunded. Pending work orders for that unit are removed from the current turn's orders. Implementation may use a cancel-work order applied at the start of Build/Work phase or a direct game-state update per TDD.
 - **build_port:** Completion requires topology to be defined. If topology is `null`, the build_port completion has no effect—no port is registered in `portsByProvinceSeaboard` and the transport level is not set on the tile. Therefore, build_port must only be offered/completed when topology is available. Port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
 - **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
 

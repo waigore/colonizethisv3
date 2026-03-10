@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:widgetbook/widgetbook.dart';
@@ -438,6 +439,7 @@ class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
 }
 
 /// Civilian Units Panel + map in tandem. SPEC/ui/civilian-units-panel.md.
+/// Demonstrates assign (order menu → valid tiles glow → tile click) and cancel with real game/map.
 class _CivilianPanelWithMapStory extends StatefulWidget {
   const _CivilianPanelWithMapStory();
 
@@ -447,9 +449,37 @@ class _CivilianPanelWithMapStory extends StatefulWidget {
 }
 
 class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> {
+  late Game _game;
+  Orders _orders = const Orders();
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
+  ({Unit unit, String workTarget})? _workTargetSelection;
+
+  @override
+  void initState() {
+    super.initState();
+    _game = getDebugInitGameResult().game;
+  }
+
+  String get _humanPlayerId =>
+      _game.players.isNotEmpty ? _game.players.first.id : 'gp1';
+
+  String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
+
+  Set<String>? get _validTileKeys {
+    if (_workTargetSelection == null) return null;
+    final result = getDebugInitGameResult();
+    final valid = getValidWorkOrderTileKeys(
+      _game,
+      result.combinedTopology,
+      _humanPlayerId,
+      _workTargetSelection!.unit.id,
+      _workTargetSelection!.workTarget,
+      _orders,
+    );
+    return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+  }
 
   void _onLocateUnit(Unit unit) {
     final tileKey = unit.tileKey;
@@ -469,14 +499,35 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
     });
   }
 
+  void _onTileSelectedForWork(String tileKey) {
+    final sel = _workTargetSelection;
+    if (sel == null) return;
+    final target = sel.workTarget;
+    String targetTileKey = tileKey;
+    if (target == 'explore' || target == 'steal_tech' || target == 'counter_spy') {
+      final parts = tileKey.split('|');
+      if (parts.length >= 2) {
+        targetTileKey = '${parts[0]}|${parts[1]}|0|0';
+      }
+    }
+    final workOrder = WorkOrder(
+      unitId: sel.unit.id,
+      target: target,
+      targetTileKey: targetTileKey,
+    );
+    setState(() {
+      final list = [...(_orders.workOrdersByPlayerId[_humanPlayerId] ?? []), workOrder];
+      _orders = _orders.copyWith(
+        workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, _humanPlayerId: list},
+      );
+      _workTargetSelection = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final result = getDebugInitGameResult();
-    final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
     final region = _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
     return SizedBox(
       width: 900,
@@ -513,6 +564,11 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                     onProvinceSelected: (_) {},
                     highlightedTileKey: _highlightedTileKey,
                     centerOnTileKey: _centerOnTileKey,
+                    validTileKeys: _validTileKeys,
+                    onTileSelected: _workTargetSelection != null ? _onTileSelectedForWork : null,
+                    onWorkTargetSelectionCancelled: _workTargetSelection != null
+                        ? () => setState(() => _workTargetSelection = null)
+                        : null,
                   ),
                 ),
               ],
@@ -521,9 +577,26 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
           SizedBox(
             width: 360,
             child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
+              game: _game,
+              humanPlayerId: _humanPlayerId,
+              currentOrders: _orders,
               onLocateUnit: _onLocateUnit,
+              onRemoveWorkOrder: (playerId, index) {
+                setState(() {
+                  final list = List<WorkOrder>.from(
+                    _orders.workOrdersByPlayerId[playerId] ?? [],
+                  )..removeAt(index);
+                  _orders = _orders.copyWith(
+                    workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: list},
+                  );
+                });
+              },
+              onCancelUnitWork: (unitId) {
+                setState(() => _game = clearUnitCurrentWork(_game, unitId));
+              },
+              onStartWorkTargetSelection: (unit, workTarget) {
+                setState(() => _workTargetSelection = (unit: unit, workTarget: workTarget));
+              },
             ),
           ),
         ],
