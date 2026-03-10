@@ -16,6 +16,7 @@ import 'widgets/debug_init_game.dart';
 import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
+import 'widgets/ct_region_map.dart';
 import 'widgets/region_map_debug.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
@@ -618,9 +619,8 @@ class _CivilianPanelWithMapStoryState
       targetTileKey: targetTileKey,
     );
     setState(() {
-      final existingOrders =
-          _orders.workOrdersByPlayerId[_humanPlayerId] ?? <WorkOrder>[];
-      final list = [...existingOrders, workOrder];
+      final existing = _orders.workOrdersByPlayerId[_humanPlayerId] ?? const <WorkOrder>[];
+      final list = <WorkOrder>[...existing, workOrder];
       _orders = _orders.copyWith(
         workOrdersByPlayerId: {
           ..._orders.workOrdersByPlayerId,
@@ -681,7 +681,7 @@ class _CivilianPanelWithMapStoryState
                   ),
                 ),
                 Expanded(
-                  child: CtRegionMapDebug(
+                  child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
                     visibilityMode: _visibilityMode,
@@ -803,7 +803,7 @@ class _MilitaryPanelWithMapStoryState
                   ),
                 ),
                 Expanded(
-                  child: CtRegionMapDebug(
+                  child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
                     onProvinceSelected: (_) {},
@@ -915,7 +915,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: CtRegionMapDebug(
+                  child: CtRegionMap(
                     region: region,
                     cellSizePx: 28,
                     visibilityMode: _visibilityMode,

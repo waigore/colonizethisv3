@@ -30,8 +30,8 @@ Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData`
 
 - **Viewport:** Exactly the size of the map widget in the layout. No intrinsic minimum; parent constrains the widget.
 - **Scale:** Fixed scale at any time (e.g. 1 tile = N logical pixels). **Fixed zoom levels:** Only discrete zoom levels are allowed; no free-form scale.
-- **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in.
-- **Zoom:** Smooth zooming between fixed zoom levels (e.g. pinch or buttons). Transition is smooth; final scale snaps to a zoom level.
+- **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in; **dragging** on the map surface pans the camera.
+- **Zoom:** Smooth zooming between fixed zoom levels (e.g. pinch or buttons or scroll wheel). Transition is smooth; final scale snaps to a zoom level. **Pinch gestures** (on touch devices) and **scroll wheel** input (on pointer devices) both change zoom level.
 - **Full map:** The component always has the full region map in memory/logic; viewport is a window over it.
 
 ---
@@ -140,6 +140,6 @@ Hover, selection, and overlay behavior:
 
 ## Integration
 
-- **Data:** Uses shared view models and game state (e.g. `RegionMapViewData`, Game, topology, tile maps). See [map-visualization.md](../program/map-visualization.md), [player-view.md](../program/player-view.md) for visibility when needed.
-- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks.
+- **Data:** Uses shared view models and game state (e.g. `RegionMapViewData`, Game, topology, tile maps). See [map-visualization.md](../program/map-visualization.md), [player-view.md](../program/player-view.md) for visibility when needed. `RegionMapViewData` / `CellViewData` are the source of truth for what is rendered; the map widget does not perform its own world simulation.
+- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks. The reusable map widget is exposed to Flutter as a `CtRegionMap`-style wrapper that embeds a Flame `GameWidget` and internal Flame game/component tree.
 - **Catalog:** Once implemented, register in app widget catalog (e.g. CtRegionMap or similar; category: game/map, Flame component).

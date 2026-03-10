@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
-import '../../../../widgets/region_map_debug.dart';
+import '../../../../widgets/ct_region_map.dart';
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_panel.dart';
 import '../widgets/military_units_panel.dart';
@@ -351,7 +351,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
           child: Row(
             children: [
               Expanded(
-                child: CtRegionMapDebug(
+                child: CtRegionMap(
                   region: _currentRegion,
                   cellSizePx: 24,
                   onProvinceSelected: _onProvinceSelected,
