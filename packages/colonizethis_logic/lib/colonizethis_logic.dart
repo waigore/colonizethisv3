@@ -63,6 +63,7 @@ export 'src/ai/simple_ai_heuristics.dart';
 
 // World
 export 'src/world/connectivity_resolver.dart';
+export 'src/world/unit_lookup.dart';
 export 'src/world/minor_military_parity.dart';
 export 'src/world/movement.dart';
 export 'src/world/naval.dart';

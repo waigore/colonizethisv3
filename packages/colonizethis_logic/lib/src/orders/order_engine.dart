@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import '../economy/economy_production.dart';
 import 'order_projections.dart';
 import '../world/player_view.dart';
+import '../world/unit_lookup.dart';
 import '../constants.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
@@ -315,8 +316,7 @@ class OrderEngine {
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
     var rejected = false;
 
-    final unitsById = {for (final u in game.worldState.oldWorld.units) u.id: u}
-      ..addAll({for (final u in game.worldState.newWorld.units) u.id: u});
+    final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
 
     bool _isDevExclusiveUnitType(String type) =>
         type == 'Builder' || type == 'Engineer' || type == 'Merchant';
@@ -325,16 +325,7 @@ class OrderEngine {
     // track tiles already reserved by this player's Builder/Engineer/Merchant work
     // (existing multi-turn currentWork and newly accepted work orders in this validation pass).
     final devExclusiveTiles = <String>{};
-    for (final u in game.worldState.oldWorld.units) {
-      final w = u.currentWork;
-      if (u.ownerId == playerId &&
-          _isDevExclusiveUnitType(u.type) &&
-          w != null &&
-          w.tileKey.isNotEmpty) {
-        devExclusiveTiles.add(w.tileKey);
-      }
-    }
-    for (final u in game.worldState.newWorld.units) {
+    for (final u in allUnitsFromWorld(game.worldState)) {
       final w = u.currentWork;
       if (u.ownerId == playerId &&
           _isDevExclusiveUnitType(u.type) &&

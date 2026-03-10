@@ -27,6 +27,7 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 import '../world/capital_and_gp_fall.dart';
 import 'combat_phase_helpers.dart';
 import 'end_of_turn_resolver.dart';
@@ -395,6 +396,35 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
   );
 }
 
+/// Filters [orders] by validation [results] (consuming via [idxBox]).
+/// Accepted orders are added via [addAccepted]; rejected emit [OrderRejectedEvent] when [onGameEvent] is set.
+void _filterOrderList<T>(
+  String playerId,
+  List<T> orders,
+  List<OrderValidationResult> results,
+  List<int> idxBox,
+  void Function(String playerId, T order) addAccepted,
+  String Function(T order) orderSummary,
+  void Function(GameEvent)? onGameEvent,
+) {
+  for (final order in orders) {
+    final r = idxBox[0] >= results.length
+        ? const OrderValidationResult(
+            status: OrderValidationStatus.accepted,
+          )
+        : results[idxBox[0]++];
+    if (r.isAccepted) {
+      addAccepted(playerId, order);
+    } else if (onGameEvent != null && r.reason != null) {
+      onGameEvent(OrderRejectedEvent(
+        playerId: playerId,
+        orderSummary: orderSummary(order),
+        reasonCode: r.reason!,
+      ));
+    }
+  }
+}
+
 Orders _filterAcceptedOrdersForAllPlayers({
   required OrderEngine engine,
   required Game game,
@@ -427,57 +457,39 @@ Orders _filterAcceptedOrdersForAllPlayers({
 
     final results =
         engine.validatePlayerOrdersWithContext(game, topology, playerId);
-    var idx = 0;
+    final idxBox = [0];
 
-    OrderValidationResult _next() {
-      if (idx >= results.length) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.accepted,
-        );
-      }
-      final r = results[idx];
-      idx++;
-      return r;
-    }
+    _filterOrderList<MoveOrder>(
+      playerId,
+      moves,
+      results,
+      idxBox,
+      (pid, m) =>
+          moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
+      (m) => 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+      onGameEvent,
+    );
+    _filterOrderList<BuildUnitOrder>(
+      playerId,
+      builds,
+      results,
+      idxBox,
+      (pid, b) =>
+          buildByPlayer.putIfAbsent(pid, () => <BuildUnitOrder>[]).add(b),
+      (b) => 'Build unit: ${b.unitType}',
+      onGameEvent,
+    );
+    _filterOrderList<WorkOrder>(
+      playerId,
+      works,
+      results,
+      idxBox,
+      (pid, w) =>
+          workByPlayer.putIfAbsent(pid, () => <WorkOrder>[]).add(w),
+      (w) => 'Work order: ${w.target}',
+      onGameEvent,
+    );
 
-    for (final m in moves) {
-      final r = _next();
-      if (r.isAccepted) {
-        moveByPlayer.putIfAbsent(playerId, () => <MoveOrder>[]).add(m);
-      } else if (onGameEvent != null && r.reason != null) {
-        onGameEvent(OrderRejectedEvent(
-          playerId: playerId,
-          orderSummary: 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
-          reasonCode: r.reason!,
-        ));
-      }
-    }
-    for (final b in builds) {
-      final r = _next();
-      if (r.isAccepted) {
-        buildByPlayer.putIfAbsent(playerId, () => <BuildUnitOrder>[]).add(b);
-      } else if (onGameEvent != null && r.reason != null) {
-        onGameEvent(OrderRejectedEvent(
-          playerId: playerId,
-          orderSummary: 'Build unit: ${b.unitType}',
-          reasonCode: r.reason!,
-        ));
-      }
-    }
-    for (final w in works) {
-      final r = _next();
-      if (r.isAccepted) {
-        workByPlayer.putIfAbsent(playerId, () => <WorkOrder>[]).add(w);
-      } else if (onGameEvent != null && r.reason != null) {
-        onGameEvent(OrderRejectedEvent(
-          playerId: playerId,
-          orderSummary: 'Work order: ${w.target}',
-          reasonCode: r.reason!,
-        ));
-      }
-    }
-
-    // Diplomacy orders are not yet validated contextually; include all.
     if (diplo.isNotEmpty) {
       diploByPlayer[playerId] = List<DiplomaticOrder>.from(diplo);
     }
@@ -784,10 +796,7 @@ Game _runMovementPhase(
     for (final u in oldUnits) u.id: kRegionOldWorld,
     for (final u in newUnits) u.id: kRegionNewWorld,
   };
-  final unitsById = <String, Unit>{
-    for (final u in oldUnits) u.id: u,
-    for (final u in newUnits) u.id: u,
-  };
+  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
 
   String? _firstTileFor(String regionId, String fullProvinceId) {
     final byProvince = tileKeysByRegionAndProvince[regionId];

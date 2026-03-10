@@ -4,6 +4,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/unit_lookup.dart';
+
 /// Military strength aggregation for display (e.g., Game Overview tab).
 /// SPEC/program/military-strength.md.
 ///
@@ -56,13 +58,9 @@ int effectiveEraForFaction(Game game, String factionId) {
 ///
 /// Spec: SPEC/program/military-strength.md
 double aggregateMilitaryStrengthForPlayer(Game game, String playerId) {
-  final owUnits = game.worldState.oldWorld.units
-      .where((u) => u.ownerId == playerId)
-      .toList();
-  final nwUnits = game.worldState.newWorld.units
+  final units = allUnitsFromWorld(game.worldState)
       .where((u) => u.ownerId == playerId)
       .toList();
   final effectiveEra = effectiveEraForFaction(game, playerId);
-  return aggregateStrength(owUnits, effectiveEra) +
-      aggregateStrength(nwUnits, effectiveEra);
+  return aggregateStrength(units, effectiveEra);
 }
