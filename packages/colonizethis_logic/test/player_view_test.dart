@@ -99,6 +99,22 @@ void main() {
       expect(rel, isNotNull);
       expect(rel!.factionId1 == 'gp1' || rel.factionId2 == 'gp1', isTrue);
 
+      // relationWith when player is factionId2 (other is factionId1)
+      final viewGp2 = buildPlayerView(game, topology, 'gp2');
+      final relGp2 = viewGp2.relationWith('gp1');
+      expect(relGp2, isNotNull);
+      expect(relGp2!.factionId1, 'gp1');
+      expect(relGp2.factionId2, 'gp2');
+
+      // provinceByRegionAndId with prefixed id
+      expect(
+        view.provinceByRegionAndId('oldWorld', 'oldWorld|p1')?.displayName,
+        'P1',
+      );
+
+      // unitsInProvince with local id
+      expect(view.unitsInProvince('oldWorld', 'p1').map((u) => u.id).toList(), ['u1']);
+
       // Visibility and prospection: values are propagated from WorldState.
       expect(
         view.visibilityForTile('oldWorld|p1|0|0'),

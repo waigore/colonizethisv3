@@ -684,6 +684,32 @@ void main() {
       expect(map['oldWorld|p2'], 'gp2');
     });
 
+    test('getProvinceOwnerMap includes newWorld provinces', () {
+      const nw = 'newWorld';
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'newWorld|n1', regionId: nw, ownerId: 'gp1'),
+            Province(id: 'newWorld|n2', regionId: nw, ownerId: 'gp2'),
+          ],
+          units: [],
+        ),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: world,
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+      );
+      final map = getProvinceOwnerMap(game);
+      expect(map['newWorld|n1'], 'gp1');
+      expect(map['newWorld|n2'], 'gp2');
+    });
+
     test('filterMoveOrdersByDiplomacy drops move to at-peace faction', () {
       const ow = 'oldWorld';
       final game = Game(

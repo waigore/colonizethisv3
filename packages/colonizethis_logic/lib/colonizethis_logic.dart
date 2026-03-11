@@ -30,6 +30,7 @@ export 'src/combat/quick_battle_input_builder.dart';
 export 'src/combat/quick_battle_resolver.dart';
 
 // Economy
+export 'src/economy/build_cost.dart';
 export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
