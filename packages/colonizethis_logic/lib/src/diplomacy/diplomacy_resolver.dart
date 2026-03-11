@@ -17,12 +17,12 @@ export 'diplomacy_relation_lookup.dart';
 
 final Logger _diploLog = Logger();
 
-bool _isMinorOrTribe(Game game, String factionId) {
+bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
 }
 
-bool _isGreatPower(Game game, String factionId) {
+bool isGreatPower(Game game, String factionId) {
   return game.players.any((p) => p.id == factionId);
 }
 
@@ -155,8 +155,8 @@ _OverturePaymentsResult _processOverturePayments(
       if (stage == null || stage == OvertureStage.none) continue;
 
       final targetId = order.targetFactionId;
-      final targetIsMinorOrTribe = _isMinorOrTribe(state, targetId);
-      final targetIsGp = _isGreatPower(state, targetId);
+      final targetIsMinorOrTribe = isMinorOrTribe(state, targetId);
+      final targetIsGp = isGreatPower(state, targetId);
       if (!targetIsMinorOrTribe && !targetIsGp) continue;
 
       // SPEC/game/diplomacy.md: While relationState is AT_WAR, no new overtures.
@@ -271,7 +271,7 @@ Game _resolveJoinEmpireColony(
       if (stage != OvertureStage.joinEmpire) continue;
 
       final targetId = order.targetFactionId;
-      if (!_isMinorOrTribe(game, targetId)) continue;
+      if (!isMinorOrTribe(game, targetId)) continue;
 
       final player = game.playerById(gpId);
       if (player == null) continue;
@@ -396,7 +396,7 @@ Game _processAlliances(
       if (order.type != DiplomaticOrderType.alliance) continue;
 
       final targetId = order.targetFactionId;
-      if (!_isGreatPower(game, targetId)) continue;
+      if (!isGreatPower(game, targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
       final relations = upsertRelation(
@@ -442,7 +442,7 @@ Game _processWarAndPeace(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.offerPeace) continue;
       final targetId = order.targetFactionId;
-      if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId))
+      if (!isGreatPower(game, gpId) || !isGreatPower(game, targetId))
         continue;
       final key = pairKey(gpId, targetId);
       final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
@@ -502,7 +502,7 @@ Game _processWarAndPeace(
         final rel = getRelation(game, gpId, targetId);
         final key = pairKey(gpId, targetId);
         final bothGreatPowers =
-            _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
+            isGreatPower(game, gpId) && isGreatPower(game, targetId);
         final hasMutualOffer = bothGreatPowers
             ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2
             : true;
@@ -511,8 +511,8 @@ Game _processWarAndPeace(
           // - GP–GP peace: both sides must agree (both offer peace in this phase).
           // - Minors never refuse peace offers.
           var bothSidesAgreed = true;
-          final isGpTarget = _isGreatPower(game, targetId);
-          if (isGpTarget && _isGreatPower(game, gpId)) {
+          final isGpTarget = isGreatPower(game, targetId);
+          if (isGpTarget && isGreatPower(game, gpId)) {
             final key = pairKey(gpId, targetId);
             final offerers = peaceOffersByPairKey[key] ?? const <String>{};
             bothSidesAgreed =
@@ -724,7 +724,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
     final boost = ((amount ~/ 500) * 2).clamp(0, 8);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
-    if (_isMinorOrTribe(game, targetId)) {
+    if (isMinorOrTribe(game, targetId)) {
       relations = applySubsidyBoost(
         relations: relations,
         payerId: payerId,
@@ -805,8 +805,8 @@ bool _gpHasPurchasedLandInFactionProvinces(
 /// choice is needed before combat.
 String? needsInterventionChoice(Game game, BattleContext ctx) {
   final defenderId = ctx.defenderFactionId;
-  final isMinorOrTribe = _isMinorOrTribe(game, defenderId);
-  if (!isMinorOrTribe) return null;
+  final defenderIsMinorOrTribe = isMinorOrTribe(game, defenderId);
+  if (!defenderIsMinorOrTribe) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
   final attackerIsGp =
@@ -843,7 +843,7 @@ Game applyInterventionChoice(
 
   for (final a in ctx.attackers) {
     final attackerId = a.factionId;
-    if (!_isGreatPower(game, attackerId)) continue;
+    if (!isGreatPower(game, attackerId)) continue;
 
     if (choice == InterventionChoice.intervene) {
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);

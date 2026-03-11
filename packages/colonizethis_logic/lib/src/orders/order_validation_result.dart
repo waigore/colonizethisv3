@@ -15,3 +15,10 @@ class OrderValidationResult {
 
   bool get isAccepted => status == OrderValidationStatus.accepted;
 }
+
+/// Shared constant result used when a previous order in the sequence
+/// has already been rejected and all subsequent orders must be rejected.
+const OrderValidationResult previousInvalidOrderResult = OrderValidationResult(
+  status: OrderValidationStatus.rejected,
+  reason: 'Previous invalid',
+);
