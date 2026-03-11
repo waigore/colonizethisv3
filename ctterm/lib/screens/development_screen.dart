@@ -784,12 +784,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       final regionId = parts[0];
       final provinceId = parts[1];
 
-      // Get province owner - only allow player's own provinces.
-      final provinces = regionId == 'oldWorld'
-          ? world.oldWorld.provinces
-          : world.newWorld.provinces;
-      final province = provinces.where((p) => p.id == provinceId).firstOrNull;
-      if (province?.ownerId != playerId) {
+      // Only allow tiles that are under the player's control (owned province or
+      // purchased tile), matching core logic's isTileControlledByPlayer rule.
+      if (!isTileControlledByPlayer(game, playerId, tileKey)) {
         continue;
       }
 

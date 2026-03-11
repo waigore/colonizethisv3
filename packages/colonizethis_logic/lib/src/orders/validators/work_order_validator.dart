@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
+import '../../world/tile_control.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import 'work_order_cost_calculator.dart';
@@ -210,6 +211,14 @@ class WorkOrderValidator {
         );
       }
     } else if (o.target == 'build_improvement') {
+      final controlled =
+          isTileControlledByPlayer(_game, _playerId, o.targetTileKey);
+      if (!controlled) {
+        return const OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: 'Cannot build improvement in foreign or uncontrolled province',
+        );
+      }
       final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
       if (resourceId == null || resourceId.isEmpty) {
         return const OrderValidationResult(
@@ -235,7 +244,9 @@ class WorkOrderValidator {
         );
       }
     } else if (!isExplorerUnit(type)) {
-      if (ownerId != null && ownerId != _playerId) {
+      final controlled =
+          isTileControlledByPlayer(_game, _playerId, o.targetTileKey);
+      if (!controlled) {
         return const OrderValidationResult(
           status: OrderValidationStatus.rejected,
           reason: 'Cannot work in foreign province',

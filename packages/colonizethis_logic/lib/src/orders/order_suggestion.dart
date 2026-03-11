@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
 import '../world/province_lookup.dart';
+import '../world/tile_control.dart';
 import 'order_engine.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_visibility.dart';
@@ -228,8 +229,14 @@ List<WorkOrder> suggestWorkOrders(
       continue;
     }
 
-    // Civilian workers: only work in owned provinces.
-    if (ownerId != null && ownerId != playerId) {
+    // Civilian workers: only work on tiles under player control (owned province
+    // or purchased tile).
+    final provinceControlled = ownerId == null ||
+        ownerId == playerId ||
+        tilesInProvince.any(
+          (tk) => game.worldState.purchasedTilesByTileKey[tk] == playerId,
+        );
+    if (!provinceControlled) {
       continue;
     }
 
@@ -240,7 +247,13 @@ List<WorkOrder> suggestWorkOrders(
           final existing = existingTargetsByUnit[unit.id];
           if (existing != null && existing.contains(target)) continue;
 
-          final targetTileKey = tilesInProvince.first;
+          final targetTileKey = tilesInProvince.firstWhere(
+            (tk) => isTileControlledByPlayer(game, playerId, tk),
+            orElse: () => '',
+          );
+          if (targetTileKey.isEmpty) {
+            continue;
+          }
           final candidate = WorkOrder(
               unitId: unit.id, target: target, targetTileKey: targetTileKey);
           if (_isWorkOrderAccepted(
