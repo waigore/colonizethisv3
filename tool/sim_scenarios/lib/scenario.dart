@@ -63,6 +63,7 @@ class ScenarioSetup {
     this.initialTech,
     this.initialTreasury,
     this.defaultCombatMode,
+    this.purchasedTilesByTileKey,
   });
 
   final List<UnitPlacement>? units;
@@ -91,6 +92,9 @@ class ScenarioSetup {
 
   /// "quickBattle" or "autoResolve". Overrides Game.defaultCombatMode. SPEC/game/quick-battle.md.
   final String? defaultCombatMode;
+
+  /// Tile key → player id. Overrides WorldState.purchasedTilesByTileKey for build_improvement on purchased foreign tiles. SPEC/game/civilian-units.md, SPEC/program/orders.md.
+  final Map<String, String>? purchasedTilesByTileKey;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -511,7 +515,18 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialTech: _parseInitialTech(json['initialTech']),
     initialTreasury: _parseInitialTreasury(json['initialTreasury']),
     defaultCombatMode: json['defaultCombatMode'] as String?,
+    purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(json['purchasedTilesByTileKey']),
   );
+}
+
+Map<String, String>? _parsePurchasedTilesByTileKey(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  final out = <String, String>{};
+  for (final e in raw.entries) {
+    final v = e.value;
+    if (v != null && v.toString().isNotEmpty) out[e.key] = v.toString();
+  }
+  return out.isEmpty ? null : out;
 }
 
 Map<String, int>? _parseInitialTreasury(dynamic value) {
