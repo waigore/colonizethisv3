@@ -108,7 +108,14 @@ jobs:
         run: |
           set -e
           if [ -d app ]; then
-            (cd app && flutter analyze --no-fatal-warnings)
+            cd app
+            output=$(flutter analyze 2>&1)
+            echo "$output"
+            error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
+            if [ "$error_count" -gt 0 ]; then
+              echo "Errors found: $error_count"
+              exit 1
+            fi
           fi
 
       - name: App coverage gate (lib/widgets/ >= 80%)
