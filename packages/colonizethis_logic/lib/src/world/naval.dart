@@ -3,6 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
+/// Home fleet id convention for a Great Power. SPEC/game/ships-and-naval.md.
+String homeFleetIdFor(String playerId) => 'fleet_$playerId';
+
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
 bool isAdjacentSeaZone(
   MapTopology topology,

@@ -126,7 +126,7 @@ void _runBuildPhase(_BuildWorkState state) {
         if (seaZoneAtCap == null) continue;
 
         var fleets = List<Fleet>.from(state.game.worldState.fleets);
-        final homeFleetId = 'fleet_${player.id}';
+        final homeFleetId = homeFleetIdFor(player.id);
         final existing = fleets
             .indexWhere((f) => f.id == homeFleetId && f.ownerId == player.id);
         if (existing >= 0) {

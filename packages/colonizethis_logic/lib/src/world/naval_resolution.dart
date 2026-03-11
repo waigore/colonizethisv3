@@ -23,7 +23,7 @@ Game applyNavalMissionOrders(
     for (final order in entry.value) {
       final fleet = fleetById[order.fleetId];
       if (fleet == null || fleet.ownerId != playerId) continue;
-      final homeFleetId = 'fleet_$playerId';
+      final homeFleetId = homeFleetIdFor(playerId);
 
       if (order.mission == 'join_home_fleet') {
         final homeFleet = fleetById[homeFleetId];
@@ -66,9 +66,8 @@ Game applyNavalMissionOrders(
             ? tryGetProvince(game.worldState, targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
-        final atWar = ownerId != null &&
-            ownerId != playerId &&
-            getRelation(game, playerId, ownerId)?.atWar == true;
+        final atWar =
+            ownerId != null && ownerId != playerId && factionsAtWar(game, playerId, ownerId);
         if (!atWar) {
           final cleared = fleet.copyWith(
             mission: FleetMission.none,
@@ -106,9 +105,8 @@ Game applyNavalMissionOrders(
         ? tryGetProvince(game.worldState, targetProvinceId)
         : null;
     final ownerId = province?.ownerId;
-    final atWar = ownerId != null &&
-        ownerId != f.ownerId &&
-        getRelation(game, f.ownerId, ownerId)?.atWar == true;
+    final atWar =
+        ownerId != null && ownerId != f.ownerId && factionsAtWar(game, f.ownerId, ownerId);
     if (!atWar) {
       fleets = List<Fleet>.from(fleets)
         ..[i] = f.copyWith(
@@ -140,7 +138,7 @@ Game applyNavalMovesAndShipReveal(
     for (final order in entry.value) {
       final fleet = fleetById[order.fleetId];
       if (fleet == null || fleet.ownerId != playerId) continue;
-      final homeFleetId = 'fleet_$playerId';
+      final homeFleetId = homeFleetIdFor(playerId);
 
       if (fleet.id == homeFleetId) continue;
 
