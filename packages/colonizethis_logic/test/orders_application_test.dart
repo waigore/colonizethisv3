@@ -1582,6 +1582,97 @@ void main() {
     });
 
     test(
+        'purchase_land same tile by two GPs: first wins, second does not deduct or overwrite',
+        () {
+      const minorProvinceId = 'oldWorld|M1';
+      const tileKeyMinor = 'oldWorld|M1|0|0';
+      const cost = 15 * 10; // grain base price 10
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [
+              Unit(
+                  id: 'merchant1',
+                  type: 'Merchant',
+                  ownerId: 'p1',
+                  provinceId: minorProvinceId,
+                  tileKey: tileKeyMinor),
+              Unit(
+                  id: 'merchant2',
+                  type: 'Merchant',
+                  ownerId: 'p2',
+                  provinceId: minorProvinceId,
+                  tileKey: tileKeyMinor),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileKeyMinor: 'grain'},
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [tileKey],
+              minorProvinceId: [tileKeyMinor],
+            }
+          },
+        ),
+        players: [
+          Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              treasury: cost + 100,
+              capitalProvinceId: provinceId),
+          Player(
+              id: 'p2',
+              displayName: 'P2',
+              isHuman: false,
+              treasury: cost + 100,
+              capitalProvinceId: provinceId),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        overtureStates: const [
+          OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0),
+          OvertureState(
+              gpId: 'p2',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0),
+        ],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+                unitId: 'merchant1',
+                target: 'purchase_land',
+                targetTileKey: tileKeyMinor),
+          ],
+          'p2': [
+            const WorkOrder(
+                unitId: 'merchant2',
+                target: 'purchase_land',
+                targetTileKey: tileKeyMinor),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders);
+      expect(next.worldState.purchasedTilesByTileKey[tileKeyMinor], 'p1');
+      final p1After = next.players.firstWhere((p) => p.id == 'p1');
+      final p2After = next.players.firstWhere((p) => p.id == 'p2');
+      expect(p1After.treasury, game.players.firstWhere((p) => p.id == 'p1').treasury - cost);
+      expect(p2After.treasury, game.players.firstWhere((p) => p.id == 'p2').treasury);
+    });
+
+    test(
         'build_road with insufficient materials does not set currentWork or deduct stockpile',
         () {
       final unit = Unit(

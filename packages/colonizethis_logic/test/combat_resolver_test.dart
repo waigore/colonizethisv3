@@ -514,6 +514,78 @@ void main() {
       );
     });
 
+    test('combat conquest clears purchased land for conquered province', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [
+              Unit(
+                id: 'att1',
+                type: 'grenadiers',
+                ownerId: 'gp2',
+                provinceId: provinceId,
+              ),
+              Unit(
+                id: 'def1',
+                type: 'peasant_levies',
+                ownerId: 'minor1',
+                provinceId: provinceId,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          purchasedTilesByTileKey: const {
+            tileKey: 'gp1',
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Investor', isHuman: true),
+          Player(id: 'gp2', displayName: 'Aggressor', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
+
+      const ctx = BattleContext(
+        provinceId: provinceId,
+        regionId: ow,
+        defenderFactionId: 'minor1',
+        defenderUnitIds: ['def1'],
+        attackers: [
+          AttackingSide(
+            factionId: 'gp2',
+            unitIds: ['att1'],
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final after = resolveBattleContext(game, ctx);
+      final province = after.worldState.oldWorld.provinces
+          .where((p) => p.id == provinceId)
+          .first;
+      expect(province.ownerId, 'gp2');
+      expect(
+        after.worldState.purchasedTilesByTileKey.containsKey(tileKey),
+        isFalse,
+      );
+    });
+
     test('general medals provide morale aura bonus (5% per medal, max 20%)',
         () {
       expect(moraleMultiplierForGeneralMedals(0), 1.0);

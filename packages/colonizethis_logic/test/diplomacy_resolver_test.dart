@@ -1236,6 +1236,182 @@ void main() {
       final gpId = needsInterventionChoice(game, ctx);
       expect(gpId, isNull);
     });
+
+    test(
+        'declare war on minor with another GP invested: sets war state (scenario anchor)',
+        () {
+      const ow = 'oldWorld';
+      const minorProvId = '$ow|M1';
+      const tileKey = '$ow|M1|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.orders,
+            turnNumber: 3,
+          ),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: minorProvId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          purchasedTilesByTileKey: const {
+            tileKey: 'gp1', // gp1 has purchased land in minor1 province
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
+          Player(id: 'gp2', displayName: 'Aggressor GP', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp2',
+            factionId2: 'minor1',
+            state: RelationState.atPeace,
+          ),
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: const {
+          'gp2': [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+        },
+      );
+
+      final result = resolveDiplomacyPhase(game, orders);
+      final after = result.game;
+
+      // For now, this scenario anchors the state after DoW is applied.
+      // When intervention-at-declaration is wired, extend this to assert
+      // pending intervention choice for gp1 as appropriate.
+      final relGp2Minor = getRelation(after, 'gp2', 'minor1');
+      expect(relGp2Minor, isNotNull);
+      expect(relGp2Minor!.atWar, isTrue);
+    });
+
+    test(
+        'needsInterventionChoice returns gp id when human GP has purchased land in attacked minor',
+        () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          purchasedTilesByTileKey: const {
+            tileKey: 'gp1',
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
+
+      const ctx = BattleContext(
+        provinceId: provinceId,
+        regionId: ow,
+        defenderFactionId: 'minor1',
+        defenderUnitIds: [],
+        attackers: [
+          AttackingSide(
+            factionId: 'gp2',
+            unitIds: [],
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final gpId = needsInterventionChoice(game, ctx);
+      expect(gpId, 'gp1');
+    });
+
+    test(
+        'needsInterventionChoice returns gp id when human GP has purchased land in attacked tribe',
+        () {
+      const nw = 'newWorld';
+      const provinceId = '$nw|T1';
+      const tileKey = '$nw|T1|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: nw, ownerId: 'tribe1'),
+            ],
+            units: const [],
+          ),
+          purchasedTilesByTileKey: const {
+            tileKey: 'gp1',
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human GP', isHuman: true),
+          Player(id: 'gp2', displayName: 'Attacker GP', isHuman: false),
+        ],
+        tribes: const [
+          Tribe(id: 'tribe1', displayName: 'Tribe 1'),
+        ],
+      );
+
+      const ctx = BattleContext(
+        provinceId: provinceId,
+        regionId: nw,
+        defenderFactionId: 'tribe1',
+        defenderUnitIds: [],
+        attackers: [
+          AttackingSide(
+            factionId: 'gp2',
+            unitIds: [],
+            generalMedals: 0,
+          ),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final gpId = needsInterventionChoice(game, ctx);
+      expect(gpId, 'gp1');
+    });
   });
 }
 

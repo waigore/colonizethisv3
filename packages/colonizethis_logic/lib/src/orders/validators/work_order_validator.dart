@@ -199,6 +199,16 @@ class WorkOrderValidator {
           reason: 'Insufficient treasury for purchase_land (need $cost)',
         );
       }
+      final existingBuyer =
+          _game.worldState.purchasedTilesByTileKey[o.targetTileKey];
+      if (existingBuyer != null) {
+        return OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: existingBuyer == _playerId
+              ? 'You already own this tile'
+              : 'Tile already purchased by another power',
+        );
+      }
     } else if (o.target == 'build_improvement') {
       final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
       if (resourceId == null || resourceId.isEmpty) {
