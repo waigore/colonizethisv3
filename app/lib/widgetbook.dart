@@ -12,6 +12,8 @@ import 'features/game/widgets/production_panel.dart';
 import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
+import 'features/game/widgets/tech_tree_widget.dart';
+import 'features/game/widgets/technology_screen.dart';
 import 'widgets/debug_init_game.dart';
 import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
@@ -54,6 +56,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...civilianUnitsPanelDirectories,
         ...militaryUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
+        ...techTreeDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -313,6 +316,81 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
   ),
 ];
 
+/// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
+List<WidgetbookNode> get techTreeDirectories => [
+  WidgetbookFolder(
+    name: 'Tech Tree',
+    children: [
+      WidgetbookUseCase(
+        name: 'Mid-game (half researched)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          if (game.players.isEmpty) {
+            return const Center(child: Text('No players'));
+          }
+          final basePlayer = game.players.first;
+          // Unlock roughly half of all techs (first 22 from catalog order).
+          final allIds = techCatalog.keys.toList()..sort();
+          final half = (allIds.length / 2).floor();
+          final unlockedIds = allIds.take(half).toList();
+          final techUnlocked = Map<String, bool>.fromEntries(
+            unlockedIds.map((id) => MapEntry(id, true)),
+          );
+          // One tech in progress (first not-yet-unlocked tech at 60 RP).
+          final inProgressId = allIds.length > half ? allIds[half] : null;
+          final researchProgressByTechId = inProgressId != null
+              ? <String, int>{inProgressId: 60}
+              : <String, int>{};
+          final midGamePlayer = basePlayer.copyWith(
+            techUnlocked: techUnlocked,
+            researchProgressByTechId: researchProgressByTechId,
+          );
+          final midGame = game.copyWith(
+            players: [midGamePlayer, ...game.players.skip(1)],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              body: TechnologyScreen(
+                game: midGame,
+                player: midGamePlayer,
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Tech tree only (mid-game)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          if (game.players.isEmpty) {
+            return const Center(child: Text('No players'));
+          }
+          final basePlayer = game.players.first;
+          final allIds = techCatalog.keys.toList()..sort();
+          final half = (allIds.length / 2).floor();
+          final techUnlocked = Map<String, bool>.fromEntries(
+            allIds.take(half).map((id) => MapEntry(id, true)),
+          );
+          final midGamePlayer = basePlayer.copyWith(techUnlocked: techUnlocked);
+          final midGame = game.copyWith(
+            players: [midGamePlayer, ...game.players.skip(1)],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              appBar: AppBar(title: const Text('Tech Tree')),
+              body: TechTreeWidget(game: midGame, player: midGamePlayer),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
 /// Military Units Panel stories. SPEC/ui/military-units-panel.md.
 List<WidgetbookNode> get militaryUnitsPanelDirectories => [
   WidgetbookFolder(
@@ -343,8 +421,8 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
   ),
 ];
 
-/// Production Panel stories. SPEC/ui/production-panel.md.
-List<WidgetbookNode> get productionPanelDirectories => [
+/// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
+List<WidgetbookNode> get diplomacyPanelDirectories => [
       WidgetbookFolder(
         name: 'Production Panel',
         children: [

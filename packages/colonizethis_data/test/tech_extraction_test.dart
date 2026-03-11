@@ -70,4 +70,38 @@ void main() {
       expect(unlockingTechByShipId['carrack'], isNull);
     });
   });
+
+  group('techDisplayName', () {
+    test('humanizes snake_case id with each word capitalized', () {
+      expect(techDisplayName('road_construction'), 'Road Construction');
+      expect(techDisplayName('gathering_1'), 'Gathering 1');
+    });
+    test('empty returns empty', () {
+      expect(techDisplayName(''), '');
+    });
+  });
+
+  group('researchableTechIds', () {
+    test('empty unlocked returns all root techs', () {
+      final r = researchableTechIds({});
+      expect(r, isNotEmpty);
+      for (final id in r) {
+        final tech = techById(id);
+        expect(tech, isNotNull);
+        expect(tech!.prerequisiteIds, isEmpty);
+      }
+    });
+    test('all unlocked returns empty', () {
+      final unlocked = {for (final id in techCatalog.keys) id: true};
+      expect(researchableTechIds(unlocked), isEmpty);
+    });
+    test('gathering_1 unlocked adds gathering_2 to researchable', () {
+      final r = researchableTechIds({'gathering_1': true});
+      expect(r.contains('gathering_2'), isTrue);
+      expect(r.contains('gathering_1'), isFalse);
+    });
+    test('null unlocked same as empty', () {
+      expect(researchableTechIds(null), researchableTechIds({}));
+    });
+  });
 }

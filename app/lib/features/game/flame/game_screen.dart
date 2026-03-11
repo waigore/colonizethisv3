@@ -15,6 +15,7 @@ import '../widgets/diplomacy_panel.dart';
 import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_panel.dart';
+import '../widgets/technology_screen.dart';
 import 'game_canvas.dart';
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
@@ -63,11 +64,12 @@ class GameScreen extends ConsumerWidget {
                           ? game.players.first
                           : null;
                       if (player != null) {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          builder: (ctx) => TechnologyPanel(
-                            game: game,
-                            player: player,
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (ctx) => TechnologyScreen(
+                              game: game,
+                              player: player,
+                            ),
                           ),
                         );
                       }
