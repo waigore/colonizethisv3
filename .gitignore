@@ -10,6 +10,12 @@ doc/api/
 .pub/
 .pub-cache/
 
+# Per-app build/tooling (widgetbook_host)
+/widgetbook_host/build/
+/widgetbook_host/.dart_tool/
+/widgetbook_host/.flutter-plugins
+/widgetbook_host/.flutter-plugins-dependencies
+
 # Environment
 .env
 .envrc
