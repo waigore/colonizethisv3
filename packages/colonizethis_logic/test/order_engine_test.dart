@@ -1435,6 +1435,7 @@ void main() {
         List<DiplomacyRelation>? diplomacyRelations,
         Map<String, String>? resourceByTileKey,
         Map<String, Set<String>>? playerProspectedTiles,
+        Map<String, String>? purchasedTilesByTileKey,
       }) {
         return Game(
           id: 'g1',
@@ -1466,6 +1467,7 @@ void main() {
               }
             },
             playerProspectedTiles: playerProspectedTiles ?? const {},
+            purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
           ),
           players: [
             Player(
@@ -1751,6 +1753,58 @@ void main() {
         final results =
             engine.validatePlayerOrdersWithContext(game, topology, 'p1');
         expect(results.single.status, OrderValidationStatus.accepted);
+      });
+
+      test('rejects purchase_land when tile already purchased by another GP',
+          () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+                gpId: 'p1',
+                targetId: 'minor1',
+                stage: OvertureStage.embassy,
+                sinceTurn: 0)
+          ],
+          purchasedTilesByTileKey: {tileKey: 'p2'},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'merchant1',
+                target: 'purchase_land',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason,
+            contains('Tile already purchased by another power'));
+      });
+
+      test('rejects purchase_land when tile already owned by same player', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+                gpId: 'p1',
+                targetId: 'minor1',
+                stage: OvertureStage.embassy,
+                sinceTurn: 0)
+          ],
+          purchasedTilesByTileKey: {tileKey: 'p1'},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'merchant1',
+                target: 'purchase_land',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('You already own this tile'));
       });
     });
 

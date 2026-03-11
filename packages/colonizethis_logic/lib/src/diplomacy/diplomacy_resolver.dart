@@ -9,6 +9,7 @@ import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
+import '../world/province_lookup.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 
@@ -780,12 +781,32 @@ int tradeSlotsForGp(Game game, String gpId, String targetFactionId) {
   return o != null && o.hasEmbassy ? 1 : 0;
 }
 
-/// Returns gpId of a human GP with Embassy for the Minor defender, or null.
-/// Used to determine if intervention choice is needed before combat.
+bool _gpHasPurchasedLandInFactionProvinces(
+  Game game,
+  String gpId,
+  String factionId,
+) {
+  if (game.worldState.purchasedTilesByTileKey.isEmpty) return false;
+  final worldState = game.worldState;
+  for (final entry in worldState.purchasedTilesByTileKey.entries) {
+    if (entry.value != gpId) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(worldState, provinceId);
+    if (province != null && province.ownerId == factionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Returns gpId of a human GP with Embassy or purchased land for the
+/// Minor/Tribe defender, or null. Used to determine if an intervention
+/// choice is needed before combat.
 String? needsInterventionChoice(Game game, BattleContext ctx) {
   final defenderId = ctx.defenderFactionId;
-  final isMinor = game.minorNations.any((m) => m.id == defenderId);
-  if (!isMinor) return null;
+  final isMinorOrTribe = _isMinorOrTribe(game, defenderId);
+  if (!isMinorOrTribe) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
   final attackerIsGp =
@@ -794,8 +815,13 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
 
   for (final p in game.players) {
     if (!p.isHuman) continue;
+    if (attackerIds.contains(p.id)) continue;
+
     final o = getOverture(game, p.id, defenderId);
-    if (o != null && o.hasEmbassy) return p.id;
+    final hasEmbassy = o != null && o.hasEmbassy;
+    final hasInvestment =
+        _gpHasPurchasedLandInFactionProvinces(game, p.id, defenderId);
+    if (hasEmbassy || hasInvestment) return p.id;
   }
   return null;
 }

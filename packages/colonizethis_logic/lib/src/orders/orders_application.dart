@@ -718,8 +718,11 @@ void _runWorkPhase(
 
           final cost = purchaseLandCost(resourceId);
           if (treasury >= cost) {
-            treasury -= cost;
-            purchasedTilesByTileKey[targetTileKey] = player.id;
+            // First purchaser wins; tile can only be owned by one GP. SPEC/civilian-units.md.
+            if (!purchasedTilesByTileKey.containsKey(targetTileKey)) {
+              treasury -= cost;
+              purchasedTilesByTileKey[targetTileKey] = player.id;
+            }
           }
         }
         continue;

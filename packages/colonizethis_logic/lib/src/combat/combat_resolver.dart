@@ -195,7 +195,12 @@ Game resolveBattleContext(
       survivingAttackerFactionId,
       ctx.provinceId,
     );
-    newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
+    final updatedPurchased =
+        _clearPurchasedTilesForProvince(newWorldState, ctx.provinceId);
+    newWorldState = newWorldState.copyWith(
+      spyRevealTurnsByPlayer: timers,
+      purchasedTilesByTileKey: updatedPurchased,
+    );
   }
 
   return game.copyWith(worldState: newWorldState);
@@ -257,6 +262,29 @@ Game resolveBattleContext(
     units: finalUnits,
   );
   return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
+}
+
+/// Clears purchased-land records for a conquered province.
+///
+/// Per SPEC/program/combat-resolution.md: when a province changes hands,
+/// any entries in `purchasedTilesByTileKey` whose tile belongs to that
+/// province are removed so that special purchased-land rights do not
+/// survive conquest.
+Map<String, String> _clearPurchasedTilesForProvince(
+  WorldState worldState,
+  String conqueredProvinceId,
+) {
+  final existing = worldState.purchasedTilesByTileKey;
+  if (existing.isEmpty) return existing;
+
+  final filtered = <String, String>{};
+  existing.forEach((tileKey, buyerId) {
+    final provinceId = Unit.provinceIdFromTileKey(tileKey);
+    if (provinceId != conqueredProvinceId) {
+      filtered[tileKey] = buyerId;
+    }
+  });
+  return filtered;
 }
 
 void _sortAttackersByInitiative(

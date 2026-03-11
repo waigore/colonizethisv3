@@ -200,6 +200,16 @@ class WorkOrderValidator {
           reason: 'Insufficient treasury for purchase_land (need $cost)',
         );
       }
+      final existingBuyer =
+          _game.worldState.purchasedTilesByTileKey[o.targetTileKey];
+      if (existingBuyer != null) {
+        return OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: existingBuyer == _playerId
+              ? 'You already own this tile'
+              : 'Tile already purchased by another power',
+        );
+      }
     } else if (o.target == 'build_improvement') {
       final controlled =
           isTileControlledByPlayer(_game, _playerId, o.targetTileKey);
