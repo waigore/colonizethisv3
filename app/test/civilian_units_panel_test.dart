@@ -72,7 +72,8 @@ void main() {
       expect(find.byType(ListTile), findsNothing);
     });
 
-    testWidgets('AC: When player has civilians, list shows units with status, location, assigned-to',
+    testWidgets(
+        'AC: When player has civilians, list shows units with status, location, assigned-to',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
         game: game,
@@ -180,7 +181,8 @@ void main() {
       expect(find.byType(ListView), findsOneWidget);
     });
 
-    testWidgets('Assign button shown for idle unit when onStartWorkTargetSelection provided',
+    testWidgets(
+        'Assign button shown for idle unit when onStartWorkTargetSelection provided',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
         game: game,
@@ -207,7 +209,8 @@ void main() {
       expect(find.byType(CivilianUnitsPanel), findsOneWidget);
     });
 
-    testWidgets('tap Assign opens order menu; tap order invokes onStartWorkTargetSelection',
+    testWidgets(
+        'tap Assign opens order menu; tap order invokes onStartWorkTargetSelection',
         (WidgetTester tester) async {
       Unit? selectedUnit;
       String? selectedTarget;
@@ -225,14 +228,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Assign work'), findsOneWidget);
-      final listTiles = find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.byType(ListTile),
-      ).evaluate().toList();
+      final listTiles = find
+          .descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(ListTile),
+          )
+          .evaluate()
+          .toList();
       expect(listTiles, isNotEmpty);
       final firstTile = listTiles.first;
       final box = firstTile.renderObject! as RenderBox;
-      final center = box.localToGlobal(Offset(box.size.width / 2, box.size.height / 2));
+      final center =
+          box.localToGlobal(Offset(box.size.width / 2, box.size.height / 2));
       await tester.tapAt(center);
       await tester.pumpAndSettle();
 
@@ -241,7 +248,8 @@ void main() {
       expect(selectedUnit!.ownerId, humanPlayerIdWithUnits);
     });
 
-    testWidgets('tap Cancel shows confirm dialog; tap Yes invokes onRemoveWorkOrder when unit has pending work',
+    testWidgets(
+        'tap Cancel shows confirm dialog; tap Yes invokes onRemoveWorkOrder when unit has pending work',
         (WidgetTester tester) async {
       final units = [
         ...game.worldState.oldWorld.units,
@@ -260,7 +268,8 @@ void main() {
       final pendingOrder = WorkOrder(
         unitId: idleCivilian.id,
         target: 'explore',
-        targetTileKey: '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
+        targetTileKey:
+            '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
       );
       final ordersWithOne = Orders(
         workOrdersByPlayerId: {
@@ -307,10 +316,13 @@ void main() {
       final pendingOrder = WorkOrder(
         unitId: idleCivilian.id,
         target: 'explore',
-        targetTileKey: '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
+        targetTileKey:
+            '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
       );
       final ordersWithOne = Orders(
-        workOrdersByPlayerId: {humanPlayerIdWithUnits: [pendingOrder]},
+        workOrdersByPlayerId: {
+          humanPlayerIdWithUnits: [pendingOrder]
+        },
       );
       await tester.pumpWidget(buildPanel(
         game: game,
@@ -326,6 +338,42 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(cancelCalled, isFalse);
+    });
+
+    testWidgets(
+        'AC: pending work order shows in Assigned to field with (pending)',
+        (WidgetTester tester) async {
+      final units = [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ];
+      final idleCivilians = units.where((u) =>
+          u.ownerId == humanPlayerIdWithUnits &&
+          u.tileKey != null &&
+          _isCivilian(u) &&
+          u.currentWork == null);
+      if (idleCivilians.isEmpty) return;
+      final idleCivilian = idleCivilians.first;
+
+      final pendingOrder = WorkOrder(
+        unitId: idleCivilian.id,
+        target: 'build_improvement',
+        targetTileKey: idleCivilian.tileKey!,
+      );
+      final ordersWithOne = Orders(
+        workOrdersByPlayerId: {
+          humanPlayerIdWithUnits: [pendingOrder]
+        },
+      );
+      await tester.pumpWidget(buildPanel(
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        currentOrders: ordersWithOne,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Assigned to:'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('(pending)'), findsAtLeastNWidgets(1));
     });
   });
 }

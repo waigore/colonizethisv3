@@ -29,6 +29,26 @@ void main() {
       expect(isValidLandMoveInRegion(topology, 'newWorld', 'p1', 'p2'), isTrue);
       expect(isValidLandMove(topology, 'p1', 'p2'), isFalse); // ambiguous: two nodes p1
     });
+
+    test('prefixed node ids: local id resolves via ProvinceId.full', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'oldWorld|p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'oldWorld|p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+        ],
+      );
+      expect(
+        neighborProvinceIdsInRegion(topology, 'oldWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(
+        neighborProvinceIdsInRegion(topology, 'oldWorld', 'p2').toList(),
+        ['p1'],
+      );
+    });
   });
 
   group('isValidLandMove', () {

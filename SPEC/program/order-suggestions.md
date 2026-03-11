@@ -50,3 +50,41 @@ For every suggested order `o`, appending it to the current list and validating v
 ## Integration
 
 Lives in colonizethis_logic alongside the order engine. AI and tooling consume it to generate orders.
+
+---
+
+## Helper: Valid Work Order Tile Keys
+
+### `getValidWorkOrderTileKeysWithVisibility`
+
+**Purpose:** Returns the set of tile keys that are valid targets for a work order, filtering by visibility **before** calling the order engine for efficiency.
+
+**Signature:**
+```dart
+Set<String> getValidWorkOrderTileKeysWithVisibility({
+  required Game game,
+  required MapTopology topology,
+  required PlayerView view,
+  required String unitId,
+  required String workTarget,
+  required Orders currentOrders,
+});
+```
+
+**Behavior:**
+1. Filters candidate tiles to only those with `VisibilityLevel.fullyVisible` or `VisibilityLevel.fogged` (visible or previously explored) from the given `PlayerView`.
+2. For remaining visible tiles, validates via the order engine (same as `getValidWorkOrderTileKeys`).
+3. Returns only tiles that pass both visibility and validation checks.
+
+**Why separate from `getValidWorkOrderTileKeys`:**
+- `getValidWorkOrderTileKeys` is agnostic to player view (used by AI that operates on full game state).
+- UI tooling (app, ctterm) needs visibility-aware filtering to avoid expensive order-engine calls for invisible tiles.
+- Filtering by visibility **first** dramatically reduces the number of order-engine validations needed.
+
+**Consumers:**
+- App UI (civilian units panel for work assignment).
+- ctterm (TUI work order assignment).
+
+**Notes:**
+- When `view` is `null` or visibility data is unavailable, falls back to full map iteration (same as `getValidWorkOrderTileKeys`).
+- Tile keys use the standard format: `{regionId}|{provinceId}|{x}|{y}`.

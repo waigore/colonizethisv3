@@ -107,6 +107,31 @@ void main() {
       }
     });
 
+    test('seed=0 uses time-based effective seed', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        seed: 0,
+      );
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      expect(result.game, isNotNull);
+      expect(result.game.globalGameSeed, isNonZero);
+    });
+
+    test('renderPng=true returns non-empty map PNG bytes', () {
+      final config = GameSetupConfig.defaultConfig;
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: true),
+      );
+      expect(result.mapPngBytes, isA<Uint8List>());
+      expect(result.mapPngBytes.length, greaterThan(0));
+    });
+
     test('throws ArgumentError when OW provinces fewer than Great Powers', () {
       // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws.
       final config = GameSetupConfig(

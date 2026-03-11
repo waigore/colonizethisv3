@@ -110,6 +110,89 @@ void main() {
       expect(result.reason, contains('declare war'));
     });
 
+    test('civilian cannot move into Minor/Tribe territory', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'Builder', ownerId: 'p1', provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'revealed',
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+      );
+      final unitsById = {for (final u in game.worldState.oldWorld.units) u.id: u};
+      final view = buildPlayerView(game, topology, 'p1');
+      const validator = MoveValidator();
+      final result = validator.validate(
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        game,
+        'p1',
+        unitsById,
+        [],
+        view,
+        topology,
+      );
+      expect(result.status, OrderValidationStatus.rejected);
+      expect(result.reason, contains('Civilian cannot enter Minor'));
+    });
+
+    test('military cannot move into Minor province without war', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'pikemen', ownerId: 'p1', provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|P2|0|0': 'revealed',
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+        diplomacyRelations: const [],
+      );
+      final unitsById = {for (final u in game.worldState.oldWorld.units) u.id: u};
+      final view = buildPlayerView(game, topology, 'p1');
+      const validator = MoveValidator();
+      final result = validator.validate(
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        game,
+        'p1',
+        unitsById,
+        [],
+        view,
+        topology,
+      );
+      expect(result.status, OrderValidationStatus.rejected);
+      expect(result.reason, contains('declare war'));
+    });
+
     test('military may move into other GP province with same-turn declareWar', () {
       final game = Game(
         id: 'g1',

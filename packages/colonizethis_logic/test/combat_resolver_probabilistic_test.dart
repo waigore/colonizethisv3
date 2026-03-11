@@ -147,5 +147,61 @@ void main() {
         expect(round.probabilityDefenderHits, inInclusiveRange(0.15, 0.85));
       }
     });
+
+    test('can produce mutualAnnihilation when both sides eliminated', () {
+      final attackerUnits = [
+        Unit(id: 'a1', type: 'pikemen', ownerId: 'att', provinceId: 'p', medals: 0),
+        Unit(id: 'a2', type: 'pikemen', ownerId: 'att', provinceId: 'p', medals: 0),
+      ];
+      final defenderUnits = [
+        Unit(id: 'd1', type: 'pikemen', ownerId: 'def', provinceId: 'p', medals: 0),
+        Unit(id: 'd2', type: 'pikemen', ownerId: 'def', provinceId: 'p', medals: 0),
+      ];
+      EngagementResult? mutualAnnihilationResult;
+      for (var s = 0; s < 500; s++) {
+        final outcome = resolveEngagementProbabilistic(
+          attackerUnits: attackerUnits,
+          defenderUnits: defenderUnits,
+          fortLevel: 0,
+          terrain: 'plains',
+          seed: s,
+        );
+        if (outcome.result == EngagementResult.mutualAnnihilation) {
+          mutualAnnihilationResult = outcome.result;
+          break;
+        }
+      }
+      expect(mutualAnnihilationResult, EngagementResult.mutualAnnihilation,
+          reason: 'some seed should produce mutual annihilation');
+    });
+
+    test('can produce stalemate when rounds end with both sides remaining', () {
+      final attackerUnits = [
+        Unit(id: 'a1', type: 'pikemen', ownerId: 'att', provinceId: 'p', medals: 0),
+        Unit(id: 'a2', type: 'pikemen', ownerId: 'att', provinceId: 'p', medals: 0),
+        Unit(id: 'a3', type: 'pikemen', ownerId: 'att', provinceId: 'p', medals: 0),
+      ];
+      final defenderUnits = [
+        Unit(id: 'd1', type: 'pikemen', ownerId: 'def', provinceId: 'p', medals: 0),
+        Unit(id: 'd2', type: 'pikemen', ownerId: 'def', provinceId: 'p', medals: 0),
+        Unit(id: 'd3', type: 'pikemen', ownerId: 'def', provinceId: 'p', medals: 0),
+      ];
+      EngagementResult? stalemateResult;
+      for (var s = 0; s < 1000; s++) {
+        final outcome = resolveEngagementProbabilistic(
+          attackerUnits: attackerUnits,
+          defenderUnits: defenderUnits,
+          fortLevel: 0,
+          terrain: 'plains',
+          seed: s,
+        );
+        if (outcome.result == EngagementResult.stalemate) {
+          stalemateResult = outcome.result;
+          break;
+        }
+      }
+      expect(stalemateResult, EngagementResult.stalemate,
+          reason: 'some seed should produce stalemate after max rounds');
+    });
   });
 }

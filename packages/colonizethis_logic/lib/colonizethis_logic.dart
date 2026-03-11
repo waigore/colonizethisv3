@@ -30,6 +30,7 @@ export 'src/combat/quick_battle_input_builder.dart';
 export 'src/combat/quick_battle_resolver.dart';
 
 // Economy
+export 'src/economy/build_cost.dart';
 export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
@@ -44,6 +45,8 @@ export 'src/orders/order_merge.dart';
 export 'src/orders/projected_effects.dart';
 export 'src/orders/order_projections.dart';
 export 'src/orders/order_suggestion.dart';
+export 'src/orders/order_suggestion.dart'
+    show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'src/orders/order_suggestion_api_impl.dart';
 export 'src/orders/order_visibility.dart';
 export 'src/orders/orders_application.dart';

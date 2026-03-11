@@ -4,6 +4,7 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -36,10 +37,8 @@ void main() {
 
     test('has both sea and land cells with provinces', () {
       final region = getDebugInitGameResult().mapViewData.oldWorld;
-      final seaCount =
-          region.cells.where((c) => c.isSea).length;
-      final landCount =
-          region.cells.where((c) => !c.isSea).length;
+      final seaCount = region.cells.where((c) => c.isSea).length;
+      final landCount = region.cells.where((c) => !c.isSea).length;
       expect(seaCount, greaterThan(0));
       expect(landCount, greaterThan(0));
       final landCell = region.cells.firstWhere((c) => !c.isSea);
@@ -64,6 +63,9 @@ void main() {
       void Function(String?)? onTileHovered,
       String? highlightedTileKey,
       String? centerOnTileKey,
+      Set<String>? validTileKeys,
+      void Function(String)? onTileSelected,
+      VoidCallback? onWorkTargetSelectionCancelled,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -80,6 +82,9 @@ void main() {
               onTileHovered: onTileHovered,
               highlightedTileKey: highlightedTileKey,
               centerOnTileKey: centerOnTileKey,
+              validTileKeys: validTileKeys,
+              onTileSelected: onTileSelected,
+              onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
             ),
           ),
         ),
@@ -109,7 +114,8 @@ void main() {
       );
     });
 
-    testWidgets('tap on map invokes onProvinceSelected with prefixed province id',
+    testWidgets(
+        'tap on map invokes onProvinceSelected with prefixed province id',
         (WidgetTester tester) async {
       final region = getDebugInitGameResult().mapViewData.oldWorld;
       String? selectedId;
@@ -121,10 +127,12 @@ void main() {
 
       final mapFinder = find.byType(CtRegionMapDebug);
       expect(mapFinder, findsOneWidget);
-      final element = tester.element(find.descendant(
-        of: mapFinder,
-        matching: find.byType(SizedBox),
-      ).first);
+      final element = tester.element(find
+          .descendant(
+            of: mapFinder,
+            matching: find.byType(SizedBox),
+          )
+          .first);
       final box = element.renderObject! as RenderBox;
       final center = box.localToGlobal(box.size.center(Offset.zero));
       await tester.tapAt(center);
@@ -135,7 +143,8 @@ void main() {
       expect(selectedId!.split('|').length, 2);
     });
 
-    testWidgets('builds with showPoliticalOverlay false', (WidgetTester tester) async {
+    testWidgets('builds with showPoliticalOverlay false',
+        (WidgetTester tester) async {
       final region = getDebugInitGameResult().mapViewData.oldWorld;
       await tester.pumpWidget(buildMap(
         region: region,
@@ -165,10 +174,12 @@ void main() {
       await tester.pumpAndSettle();
 
       final mapFinder = find.byType(CtRegionMapDebug);
-      final element = tester.element(find.descendant(
-        of: mapFinder,
-        matching: find.byType(SizedBox),
-      ).first);
+      final element = tester.element(find
+          .descendant(
+            of: mapFinder,
+            matching: find.byType(SizedBox),
+          )
+          .first);
       final box = element.renderObject! as RenderBox;
       final center = box.localToGlobal(box.size.center(Offset.zero));
       await tester.tapAt(center);
@@ -190,7 +201,8 @@ void main() {
       );
     });
 
-    testWidgets('builds with onProvinceHovered callback', (WidgetTester tester) async {
+    testWidgets('builds with onProvinceHovered callback',
+        (WidgetTester tester) async {
       final region = getDebugInitGameResult().mapViewData.oldWorld;
       String? lastHoveredId;
       await tester.pumpWidget(buildMap(
@@ -279,7 +291,8 @@ void main() {
       expect(find.byType(CtRegionMapDebug), findsOneWidget);
     });
 
-    testWidgets('centerOnTileKey change triggers didUpdateWidget and applyCenterOnTileKey',
+    testWidgets(
+        'centerOnTileKey change triggers didUpdateWidget and applyCenterOnTileKey',
         (WidgetTester tester) async {
       final region = getDebugInitGameResult().mapViewData.oldWorld;
       final landCell = region.cells.firstWhere((c) => !c.isSea);
@@ -292,6 +305,38 @@ void main() {
       await tester.pumpWidget(buildMap(
         region: region,
         centerOnTileKey: tileKey,
+      ));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+    });
+
+    testWidgets('builds with validTileKeys and onTileSelected callback',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      final validTileKey =
+          '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
+      await tester.pumpWidget(buildMap(
+        region: region,
+        validTileKeys: {validTileKey},
+        onTileSelected: (tileKey) {},
+      ));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(CtRegionMapDebug), findsOneWidget);
+    });
+
+    testWidgets(
+        'builds with validTileKeys and onWorkTargetSelectionCancelled callback',
+        (WidgetTester tester) async {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      await tester.pumpWidget(buildMap(
+        region: region,
+        validTileKeys: {'oldWorld|p1|0|0'},
+        onWorkTargetSelectionCancelled: () {},
       ));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 100));
