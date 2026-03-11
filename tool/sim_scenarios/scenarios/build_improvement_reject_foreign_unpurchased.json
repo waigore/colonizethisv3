@@ -12,17 +12,17 @@
       "tribeCount": 0
     },
     "oldWorld": {
-      "grid": [["p1", "p2", "sea1"]],
+      "grid": [["p1", "sea1"], ["p2", "sea1"]],
       "nodes": [
         {"id": "p1", "regionId": "oldWorld", "type": "province"},
         {"id": "p2", "regionId": "oldWorld", "type": "province"},
         {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
       ],
       "edges": [
-        {"id1": "p1", "id2": "p2"},
+        {"id1": "p1", "id2": "sea1"},
         {"id1": "p2", "id2": "sea1"}
       ],
-      "resourceGrid": [["grain", "grain", null]]
+      "resourceGrid": [["grain", null], ["grain", null]]
     }
   },
   "setup": {
@@ -30,7 +30,7 @@
     "initialStockpile": {"gp1": {"lumber": 2, "castIron": 2}},
     "initialTileState": {
       "oldWorld|p1|0|0": {"improvementLevel": 0, "roadLevel": 1},
-      "oldWorld|p2|1|0": {"improvementLevel": 0, "roadLevel": 1}
+      "oldWorld|p2|0|1": {"improvementLevel": 0, "roadLevel": 1}
     }
   },
   "turns": [
@@ -42,7 +42,7 @@
           "type": "work",
           "unit": "gp1_builder_0",
           "workType": "build_improvement",
-          "targetTileKey": "oldWorld|p2|1|0"
+          "targetTileKey": "oldWorld|p2|0|1"
         }
       ]
     }
@@ -50,7 +50,7 @@
   "assertions": [
     {
       "turn": 1,
-      "tileKey": "oldWorld|p2|1|0",
+      "tileKey": "oldWorld|p2|0|1",
       "tileImprovementLevel": 0
     }
   ]
