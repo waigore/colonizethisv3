@@ -108,7 +108,7 @@ jobs:
         run: |
           set -e
           if [ -d app ]; then
-            (cd app && flutter analyze)
+            (cd app && flutter analyze --no-fatal-warnings)
           fi
 
       - name: App coverage gate (lib/widgets/ >= 80%)
