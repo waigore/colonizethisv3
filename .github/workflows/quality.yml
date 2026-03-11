@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - 'build/**'
 
 jobs:
   quality:
@@ -15,6 +16,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Enforce dev to build/widgetbook PRs only
+        if: ${{ github.base_ref == 'build/widgetbook' }}
+        run: |
+          echo "Base ref: ${{ github.base_ref }}, head ref: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "Only PRs from dev are allowed into build/widgetbook."
+            exit 1
+          fi
 
       # CI quality scope: packages, app (Flutter widget tests), tool packages. Full scope via tool/run_quality_gate_tests.sh locally.
       - name: Detect source changes

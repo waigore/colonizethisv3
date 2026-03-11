@@ -3,7 +3,10 @@ name: Enable PR auto-merge
 on:
   pull_request:
     types: [opened, reopened]
-    branches: [main, dev]
+    branches:
+      - main
+      - dev
+      - 'build/**'
 
 permissions:
   pull-requests: write
