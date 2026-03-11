@@ -1927,7 +1927,7 @@ void main() {
                 foreignProvinceId: [foreignTileKey],
               },
             },
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {
                 tileKey: 'fullyVisible',
                 foreignTileKey: 'fullyVisible',
@@ -2005,7 +2005,7 @@ void main() {
                 foreignProvinceId: [foreignTileKey],
               },
             },
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {
                 tileKey: 'fullyVisible',
                 foreignTileKey: 'fullyVisible',
