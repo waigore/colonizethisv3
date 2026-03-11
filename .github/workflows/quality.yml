@@ -103,6 +103,22 @@ jobs:
             (cd app && flutter test --coverage --reporter=compact)
           fi
 
+      - name: Compile app entrypoints (Flutter analyze)
+        if: steps.changes.outputs.tests == 'true'
+        run: |
+          if [ -d app ]; then
+            cd app
+            # Run analyze but don't fail the step purely on its exit code.
+            # We explicitly scan the output for "error" lines and gate on that.
+            output=$(flutter analyze 2>&1 || true)
+            echo "$output"
+            error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
+            if [ "$error_count" -gt 0 ]; then
+              echo "Errors found: $error_count"
+              exit 1
+            fi
+          fi
+
       - name: App coverage gate (lib/widgets/ >= 80%)
         if: steps.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 app

@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - app
+  - widgetbook_host
   - ctdev
   - ctterm
   - packages/colonizethis_models
