@@ -287,8 +287,8 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       ),
     ];
 
-/// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
-List<WidgetbookNode> get diplomacyPanelDirectories => [
+/// Production Panel stories. SPEC/ui/production-panel.md.
+List<WidgetbookNode> get productionPanelDirectories => [
       WidgetbookFolder(
         name: 'Diplomacy Panel',
         children: [
