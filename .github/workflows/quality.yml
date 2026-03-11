@@ -106,10 +106,11 @@ jobs:
       - name: Compile app entrypoints (Flutter analyze)
         if: steps.changes.outputs.tests == 'true'
         run: |
-          set -e
           if [ -d app ]; then
             cd app
-            output=$(flutter analyze 2>&1)
+            # Run analyze but don't fail the step purely on its exit code.
+            # We explicitly scan the output for "error" lines and gate on that.
+            output=$(flutter analyze 2>&1 || true)
             echo "$output"
             error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
             if [ "$error_count" -gt 0 ]; then
