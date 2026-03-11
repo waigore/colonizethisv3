@@ -874,7 +874,7 @@ Game _addStartingMilitaryAndNaval({
     if (shipCount > 0 && regionId == kRegionOldWorld) {
       final fullProvinceId = '$regionId|$localProvinceId';
 
-      final homeFleetId = 'fleet_${player.id}';
+      final homeFleetId = homeFleetIdFor(player.id);
       final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
       final existingFleet =
           existingIndex >= 0 ? fleets[existingIndex] : null;

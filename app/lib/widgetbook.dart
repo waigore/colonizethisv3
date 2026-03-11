@@ -953,79 +953,88 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
     final game = initResult.game;
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
-    return SizedBox(
-      width: 800,
-      height: 500,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ChoiceChip(
-                  label: const Text('Full visibility'),
-                  selected: _visibilityMode == CtMapVisibilityMode.full,
-                  onSelected: (_) {
-                    setState(() {
-                      _visibilityMode = CtMapVisibilityMode.full;
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Player-constrained'),
-                  selected:
-                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
-                  onSelected: (_) {
-                    setState(() {
-                      _visibilityMode = CtMapVisibilityMode.playerConstrained;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: 28,
-                    visibilityMode: _visibilityMode,
-                    onProvinceSelected: (id) => setState(
-                        () => _selectedId = _selectedId == id ? '' : id),
-                    onProvinceHovered: (id) =>
-                        setState(() => _hoveredDetailId = id),
-                    onTileHovered: (key) =>
-                        setState(() => _hoveredTileKey = key),
-                    highlightedTileKey: _highlightedTileKey,
-                  ),
-                ),
-                if (!isNarrow && _selectedId.isNotEmpty)
-                  SizedBox(
-                    width: 320,
-                    child: ProvinceSeaZoneDetailOverlay(
-                      game: game,
-                      region: region,
-                      selectedId: _selectedId,
-                      displayId: _displayId,
-                      humanPlayerId: 'gp1',
-                      hoveredTileKey: _hoveredTileKey,
-                      onHighlightTile: (k) =>
-                          setState(() => _highlightedTileKey = k),
-                      onClose: () => setState(() => _selectedId = ''),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : 500.0;
+        final overlayHeight = totalHeight / 2;
+        return SizedBox(
+          width: 800,
+          height: totalHeight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Full visibility'),
+                      selected: _visibilityMode == CtMapVisibilityMode.full,
+                      onSelected: (_) {
+                        setState(() {
+                          _visibilityMode = CtMapVisibilityMode.full;
+                        });
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Player-constrained'),
+                      selected: _visibilityMode ==
+                          CtMapVisibilityMode.playerConstrained,
+                      onSelected: (_) {
+                        setState(() {
+                          _visibilityMode =
+                              CtMapVisibilityMode.playerConstrained;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CtRegionMap(
+                        region: region,
+                        cellSizePx: 28,
+                        visibilityMode: _visibilityMode,
+                        onProvinceSelected: (id) => setState(
+                            () => _selectedId = _selectedId == id ? '' : id),
+                        onProvinceHovered: (id) =>
+                            setState(() => _hoveredDetailId = id),
+                        onTileHovered: (key) =>
+                            setState(() => _hoveredTileKey = key),
+                        highlightedTileKey: _highlightedTileKey,
+                      ),
+                    ),
+                    if (_selectedId.isNotEmpty)
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SizedBox(
+                          height: overlayHeight,
+                          width: double.infinity,
+                          child: ProvinceSeaZoneDetailOverlay(
+                            game: game,
+                            region: region,
+                            selectedId: _selectedId,
+                            displayId: _displayId,
+                            humanPlayerId: 'gp1',
+                            hoveredTileKey: _hoveredTileKey,
+                            onHighlightTile: (k) =>
+                                setState(() => _highlightedTileKey = k),
+                            onClose: () => setState(() => _selectedId = ''),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

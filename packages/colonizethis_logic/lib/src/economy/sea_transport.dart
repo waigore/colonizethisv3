@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/naval.dart';
+
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
 ///
@@ -58,7 +60,7 @@ Map<CommodityId, int> allocateOverseasToStockpile(
 /// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
 /// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
 int cargoHoldsForHomeFleet(Game game, String playerId) {
-  final homeFleetId = 'fleet_$playerId';
+  final homeFleetId = homeFleetIdFor(playerId);
   final fleets = game.worldState.fleets;
   final homeFleet = fleets
       .where((f) => f.id == homeFleetId && f.ownerId == playerId)
