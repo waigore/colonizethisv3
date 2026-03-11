@@ -90,6 +90,12 @@ void main() {
         throwsStateError,
       );
     });
+    test('getProvinceByRegion throws for unknown region', () {
+      expect(
+        () => getProvinceByRegion(world, 'unknownRegion', 'p1'),
+        throwsStateError,
+      );
+    });
     test('tryGetProvinceByRegion returns null for missing in region', () {
       expect(tryGetProvinceByRegion(world, 'oldWorld', 'missing'), isNull);
       expect(tryGetProvinceByRegion(world, 'unknownRegion', 'p1'), isNull);

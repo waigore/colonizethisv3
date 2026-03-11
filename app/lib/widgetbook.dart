@@ -259,62 +259,62 @@ List<WidgetbookNode> get mapWidgetDirectories => [
 
 /// Civilian Units Panel stories. SPEC/ui/civilian-units-panel.md.
 List<WidgetbookNode> get civilianUnitsPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Civilian Units Panel',
-    children: [
-      WidgetbookUseCase(
-        name: 'Standalone',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-          );
-        },
+      WidgetbookFolder(
+        name: 'Civilian Units Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'Standalone',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
+                child: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'With map',
+            builder: (context) => const _CivilianPanelWithMapStory(),
+          ),
+        ],
       ),
-      WidgetbookUseCase(
-        name: 'With map',
-        builder: (context) => const _CivilianPanelWithMapStory(),
-      ),
-    ],
-  ),
-];
+    ];
 
 /// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
 List<WidgetbookNode> get diplomacyPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Diplomacy Panel',
-    children: [
-      WidgetbookUseCase(
-        name: 'With real game',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
-            child: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              topology: result.combinedTopology,
-              currentOrders: const Orders(),
-              onOrdersChanged: (_) {},
-            ),
-          );
-        },
+      WidgetbookFolder(
+        name: 'Diplomacy Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'With real game',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 800, maxHeight: 600),
+                child: DiplomacyPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  topology: result.combinedTopology,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              );
+            },
+          ),
+        ],
       ),
-    ],
-  ),
-];
+    ];
 
 /// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
 List<WidgetbookNode> get techTreeDirectories => [
@@ -393,33 +393,33 @@ List<WidgetbookNode> get techTreeDirectories => [
 
 /// Military Units Panel stories. SPEC/ui/military-units-panel.md.
 List<WidgetbookNode> get militaryUnitsPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Military Units Panel',
-    children: [
-      WidgetbookUseCase(
-        name: 'Standalone',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: MilitaryUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-          );
-        },
+      WidgetbookFolder(
+        name: 'Military Units Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'Standalone',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
+                child: MilitaryUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'With map',
+            builder: (context) => const _MilitaryPanelWithMapStory(),
+          ),
+        ],
       ),
-      WidgetbookUseCase(
-        name: 'With map',
-        builder: (context) => const _MilitaryPanelWithMapStory(),
-      ),
-    ],
-  ),
-];
+    ];
 
 /// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
 List<WidgetbookNode> get diplomacyPanelDirectories => [
@@ -550,6 +550,7 @@ class _ProductionPanelStory extends StatefulWidget {
 
   /// When set, used instead of the full/partial demo player.
   final Player? playerOverride;
+
   /// When true, use full-availability demo player; when false, partial.
   final bool useFullAvailability;
 
@@ -590,13 +591,17 @@ class _CivilianPanelWithMapStory extends StatefulWidget {
       _CivilianPanelWithMapStoryState();
 }
 
-class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> {
+class _CivilianPanelWithMapStoryState
+    extends State<_CivilianPanelWithMapStory> {
   late Game _game;
   Orders _orders = const Orders();
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({Unit unit, String workTarget})? _workTargetSelection;
+  CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  Set<String>? _cachedValidTileKeys;
+  String? _cachedWorkTargetSelection;
 
   @override
   void initState() {
@@ -609,18 +614,48 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
 
+  String? get _validTileKeysCacheKey {
+    if (_workTargetSelection == null) return null;
+    return '${_workTargetSelection!.unit.id}|${_workTargetSelection!.workTarget}|$_visibilityMode';
+  }
+
   Set<String>? get _validTileKeys {
     if (_workTargetSelection == null) return null;
+    final cacheKey = _validTileKeysCacheKey;
+    if (_cachedWorkTargetSelection == cacheKey &&
+        _cachedValidTileKeys != null) {
+      return _cachedValidTileKeys;
+    }
     final result = getDebugInitGameResult();
-    final valid = getValidWorkOrderTileKeys(
-      _game,
-      result.combinedTopology,
-      _humanPlayerId,
-      _workTargetSelection!.unit.id,
-      _workTargetSelection!.workTarget,
-      _orders,
-    );
-    return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+
+    Set<String> valid;
+    if (_visibilityMode == CtMapVisibilityMode.playerConstrained) {
+      final view =
+          buildPlayerView(_game, result.combinedTopology, _humanPlayerId);
+      valid = getValidWorkOrderTileKeysWithVisibility(
+        game: _game,
+        topology: result.combinedTopology,
+        view: view,
+        unitId: _workTargetSelection!.unit.id,
+        workTarget: _workTargetSelection!.workTarget,
+        currentOrders: _orders,
+      );
+    } else {
+      valid = getValidWorkOrderTileKeys(
+        _game,
+        result.combinedTopology,
+        _humanPlayerId,
+        _workTargetSelection!.unit.id,
+        _workTargetSelection!.workTarget,
+        _orders,
+      );
+    }
+
+    final filtered =
+        valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+    _cachedValidTileKeys = filtered;
+    _cachedWorkTargetSelection = cacheKey;
+    return filtered;
   }
 
   void _onLocateUnit(Unit unit) {
@@ -643,10 +678,14 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
-    if (sel == null) return;
+    if (sel == null) {
+      return;
+    }
     final target = sel.workTarget;
     String targetTileKey = tileKey;
-    if (target == 'explore' || target == 'steal_tech' || target == 'counter_spy') {
+    if (target == 'explore' ||
+        target == 'steal_tech' ||
+        target == 'counter_spy') {
       final parts = tileKey.split('|');
       if (parts.length >= 2) {
         targetTileKey = '${parts[0]}|${parts[1]}|0|0';
@@ -661,7 +700,10 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
       final existing = _orders.workOrdersByPlayerId[_humanPlayerId] ?? const <WorkOrder>[];
       final list = <WorkOrder>[...existing, workOrder];
       _orders = _orders.copyWith(
-        workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, _humanPlayerId: list},
+        workOrdersByPlayerId: {
+          ..._orders.workOrdersByPlayerId,
+          _humanPlayerId: list
+        },
       );
       _workTargetSelection = null;
     });
@@ -669,9 +711,12 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   @override
   Widget build(BuildContext context) {
-    final result = getDebugInitGameResult();
-    final mapViewData = result.mapViewData;
-    final region = _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    final baseResult = getDebugInitGameResult();
+    final mapViewData = _visibilityMode == CtMapVisibilityMode.playerConstrained
+        ? debugMapViewDataWithVisibilityForFirstPlayer()
+        : baseResult.mapViewData;
+    final region =
+        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
     return SizedBox(
       width: 900,
       height: 550,
@@ -683,19 +728,32 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       ChoiceChip(
                         label: const Text('Old World'),
                         selected: _regionIndex == 0,
                         onSelected: (_) => setState(() => _regionIndex = 0),
                       ),
-                      const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('New World'),
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Full visibility'),
+                        selected: _visibilityMode == CtMapVisibilityMode.full,
+                        onSelected: (_) => setState(
+                            () => _visibilityMode = CtMapVisibilityMode.full),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Player-constrained'),
+                        selected: _visibilityMode ==
+                            CtMapVisibilityMode.playerConstrained,
+                        onSelected: (_) => setState(() => _visibilityMode =
+                            CtMapVisibilityMode.playerConstrained),
                       ),
                     ],
                   ),
@@ -704,11 +762,14 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                   child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
+                    visibilityMode: _visibilityMode,
                     onProvinceSelected: (_) {},
                     highlightedTileKey: _highlightedTileKey,
                     centerOnTileKey: _centerOnTileKey,
                     validTileKeys: _validTileKeys,
-                    onTileSelected: _workTargetSelection != null ? _onTileSelectedForWork : null,
+                    onTileSelected: _workTargetSelection != null
+                        ? _onTileSelectedForWork
+                        : null,
                     onWorkTargetSelectionCancelled: _workTargetSelection != null
                         ? () => setState(() => _workTargetSelection = null)
                         : null,
@@ -730,7 +791,10 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                     _orders.workOrdersByPlayerId[playerId] ?? [],
                   )..removeAt(index);
                   _orders = _orders.copyWith(
-                    workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: list},
+                    workOrdersByPlayerId: {
+                      ..._orders.workOrdersByPlayerId,
+                      playerId: list
+                    },
                   );
                 });
               },
@@ -738,7 +802,8 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                 setState(() => _game = clearUnitCurrentWork(_game, unitId));
               },
               onStartWorkTargetSelection: (unit, workTarget) {
-                setState(() => _workTargetSelection = (unit: unit, workTarget: workTarget));
+                setState(() => _workTargetSelection =
+                    (unit: unit, workTarget: workTarget));
               },
             ),
           ),
@@ -757,7 +822,8 @@ class _MilitaryPanelWithMapStory extends StatefulWidget {
       _MilitaryPanelWithMapStoryState();
 }
 
-class _MilitaryPanelWithMapStoryState extends State<_MilitaryPanelWithMapStory> {
+class _MilitaryPanelWithMapStoryState
+    extends State<_MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
@@ -782,12 +848,10 @@ class _MilitaryPanelWithMapStoryState extends State<_MilitaryPanelWithMapStory> 
     final result = getDebugInitGameResult();
     final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
-    final region = _regionIndex == 0
-        ? mapViewData.oldWorld
-        : mapViewData.newWorld;
+    final humanPlayerId =
+        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    final region =
+        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
     return SizedBox(
       width: 900,
       height: 550,
@@ -933,8 +997,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                     region: region,
                     cellSizePx: 28,
                     visibilityMode: _visibilityMode,
-                    onProvinceSelected: (id) =>
-                        setState(() => _selectedId = _selectedId == id ? '' : id),
+                    onProvinceSelected: (id) => setState(
+                        () => _selectedId = _selectedId == id ? '' : id),
                     onProvinceHovered: (id) =>
                         setState(() => _hoveredDetailId = id),
                     onTileHovered: (key) =>

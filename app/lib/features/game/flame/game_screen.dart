@@ -51,7 +51,8 @@ class GameScreen extends ConsumerWidget {
                       final orders = ref.read(currentOrdersProvider);
                       final newGame = service.nextTurn(game, orders: orders);
                       ref.read(currentGameProvider.notifier).state = newGame;
-                      ref.read(currentOrdersProvider.notifier).state = const ct_models.Orders();
+                      ref.read(currentOrdersProvider.notifier).state =
+                          const ct_models.Orders();
                     },
                     child: Text(
                       'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
@@ -60,9 +61,8 @@ class GameScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   TextButton.icon(
                     onPressed: () {
-                      final player = game.players.isNotEmpty
-                          ? game.players.first
-                          : null;
+                      final player =
+                          game.players.isNotEmpty ? game.players.first : null;
                       if (player != null) {
                         Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
@@ -116,11 +116,15 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
 
   String get _humanPlayerId =>
-      widget.game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
+      widget.game.players
+          .where((p) => p.isHuman)
+          .map((p) => p.id)
+          .firstOrNull ??
       widget.game.players.first.id;
 
-  RegionMapViewData get _currentRegion =>
-      _regionIndex == 0 ? widget.mapViewData.oldWorld : widget.mapViewData.newWorld;
+  RegionMapViewData get _currentRegion => _regionIndex == 0
+      ? widget.mapViewData.oldWorld
+      : widget.mapViewData.newWorld;
 
   String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
 
@@ -131,13 +135,14 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
-    final valid = getValidWorkOrderTileKeys(
-      game,
-      topology,
-      _humanPlayerId,
-      _workTargetSelection!.unit.id,
-      _workTargetSelection!.workTarget,
-      orders,
+    final view = buildPlayerView(game, topology, _humanPlayerId);
+    final valid = getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: view,
+      unitId: _workTargetSelection!.unit.id,
+      workTarget: _workTargetSelection!.workTarget,
+      currentOrders: orders,
     );
     return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
   }
@@ -199,7 +204,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     if (sel == null) return;
     final target = sel.workTarget;
     String targetTileKey = tileKey;
-    if (target == 'explore' || target == 'steal_tech' || target == 'counter_spy') {
+    if (target == 'explore' ||
+        target == 'steal_tech' ||
+        target == 'counter_spy') {
       final parts = tileKey.split('|');
       if (parts.length >= 2) {
         targetTileKey = '${parts[0]}|${parts[1]}|0|0';
@@ -216,7 +223,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
       workOrder,
     ];
     ref.read(currentOrdersProvider.notifier).state = orders.copyWith(
-      workOrdersByPlayerId: {...orders.workOrdersByPlayerId, _humanPlayerId: list},
+      workOrdersByPlayerId: {
+        ...orders.workOrdersByPlayerId,
+        _humanPlayerId: list
+      },
     );
     setState(() => _workTargetSelection = null);
   }
@@ -268,13 +278,17 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                         )..removeAt(index);
                         ref.read(currentOrdersProvider.notifier).state =
                             o.copyWith(
-                          workOrdersByPlayerId: {...o.workOrdersByPlayerId, playerId: list},
+                          workOrdersByPlayerId: {
+                            ...o.workOrdersByPlayerId,
+                            playerId: list
+                          },
                         );
                       },
                       onCancelUnitWork: _cancelUnitWork,
                       onStartWorkTargetSelection: (unit, workTarget) {
                         Navigator.of(ctx).pop();
-                        setState(() => _workTargetSelection = (unit: unit, workTarget: workTarget));
+                        setState(() => _workTargetSelection =
+                            (unit: unit, workTarget: workTarget));
                       },
                     ),
                   );
@@ -301,8 +315,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               TextButton.icon(
                 onPressed: () {
                   final orders = ref.read(currentOrdersProvider);
-                  final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-                  final topology = mapData?.combinedTopology ?? const MapTopology();
+                  final mapData =
+                      ref.read(gameServiceProvider).getMapData(widget.game.id);
+                  final topology =
+                      mapData?.combinedTopology ?? const MapTopology();
                   Navigator.of(context).push<void>(
                     MaterialPageRoute<void>(
                       builder: (ctx) => Scaffold(
@@ -319,7 +335,8 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                           topology: topology,
                           currentOrders: orders,
                           onOrdersChanged: (newOrders) {
-                            ref.read(currentOrdersProvider.notifier).state = newOrders;
+                            ref.read(currentOrdersProvider.notifier).state =
+                                newOrders;
                           },
                         ),
                       ),
@@ -340,12 +357,15 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                   region: _currentRegion,
                   cellSizePx: 24,
                   onProvinceSelected: _onProvinceSelected,
-                  onProvinceHovered: (id) => setState(() => _hoveredDetailId = id),
+                  onProvinceHovered: (id) =>
+                      setState(() => _hoveredDetailId = id),
                   onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   highlightedTileKey: _highlightedTileKey,
                   centerOnTileKey: _centerOnTileKey,
                   validTileKeys: _validTileKeysForSelection,
-                  onTileSelected: _workTargetSelection != null ? _onTileSelectedForWork : null,
+                  onTileSelected: _workTargetSelection != null
+                      ? _onTileSelectedForWork
+                      : null,
                   onWorkTargetSelectionCancelled: _workTargetSelection != null
                       ? () => setState(() => _workTargetSelection = null)
                       : null,
@@ -361,7 +381,8 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     displayId: _displayId,
                     humanPlayerId: _humanPlayerId,
                     hoveredTileKey: _hoveredTileKey,
-                    onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
+                    onHighlightTile: (k) =>
+                        setState(() => _highlightedTileKey = k),
                     onClose: () => setState(() => _selectedDetailId = null),
                   ),
                 ),

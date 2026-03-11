@@ -4,6 +4,23 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('upsertRelation', () {
+    test('provinceCountOwnedBy includes newWorld provinces', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'minor1'),
+          ]),
+          newWorld: RegionData(provinces: [
+            Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'minor1'),
+            Province(id: 'newWorld|n2', regionId: 'newWorld', ownerId: 'minor1'),
+          ]),
+        ),
+        players: const [],
+      );
+      expect(provinceCountOwnedBy(game, 'minor1'), 3);
+    });
     test('inserts new relation when pair absent', () {
       final relations = <DiplomacyRelation>[];
       final result = upsertRelation(relations, 'gp1', 'gp2', (existing) {

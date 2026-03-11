@@ -251,6 +251,38 @@ void main() {
       expect(events.first.variables['otherNation'], 'gp1');
       expect(events.first.variables['province'], 'ow|P2');
     });
+
+    test('resolves owner from newWorld when fort built in newWorld', () {
+      const nw = 'newWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'N1', regionId: nw, type: TopologyNodeType.province),
+          TopologyNode(id: 'N2', regionId: nw, type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'N1', id2: 'N2')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [
+            Province(id: 'newWorld|N1', regionId: nw, ownerId: 'gp1'),
+            Province(id: 'newWorld|N2', regionId: nw, ownerId: 'gp2'),
+          ]),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+      );
+      final events = dialogueEventsForReactiveFortsOnBorder(
+        game, topology, 'gp1', 'newWorld|N1', 0,
+      );
+      expect(events.length, 1);
+      expect(events.first.leaderId, 'gp2');
+      expect(events.first.variables['province'], 'newWorld|N1');
+    });
   });
 
   group('dialogueEventForNegotiation', () {
