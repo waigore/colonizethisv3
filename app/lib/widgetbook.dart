@@ -955,7 +955,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
     final region = mapViewData.oldWorld;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final totalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : 500;
+        final totalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : 500.0;
         final overlayHeight = totalHeight / 2;
         return SizedBox(
           width: 800,
