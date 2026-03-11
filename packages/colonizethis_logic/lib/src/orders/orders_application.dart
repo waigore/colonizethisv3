@@ -11,6 +11,7 @@ import 'orders_application_helpers.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/tile_control.dart';
 import '../world/unit_lookup.dart';
 
 final Logger _log = Logger();
@@ -394,21 +395,15 @@ Game applyBuildAndWorkOrders(
             'logic: work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}');
         continue;
       }
-      // Cancel work if province containing target tile is no longer owned (conquest). SPEC #376.
-      // Skip for counter_spy and steal_tech: those work targets are in enemy/other territory by design.
+      // Cancel work if tile no longer under player control (conquest or purchase reverted). SPEC #376.
+      // Use same rule as validation: owned province or purchased tile; skip for counter_spy/steal_tech.
       if (cw.workTarget != 'counter_spy' && cw.workTarget != 'steal_tech') {
-        final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
-        if (targetProvinceId != null) {
-          final provinces = getProvinces();
-          final targetProvince =
-              provinces.where((p) => p.id == targetProvinceId).firstOrNull;
-          if (targetProvince != null && targetProvince.ownerId != u.ownerId) {
-            unitsById[entry.key] =
-                u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
-            _log.d(
-                'logic: work cancelled unit=${u.id} reason=province conquered provinceId=$targetProvinceId tileKey=${cw.tileKey}');
-            continue;
-          }
+        if (!isTileControlledByPlayer(s.game, u.ownerId, cw.tileKey)) {
+          unitsById[entry.key] =
+              u.copyWith(status: UnitStatus.idle, clearCurrentWork: true);
+          _log.d(
+              'logic: work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}');
+          continue;
         }
       }
       if (cw.workTarget == 'counter_spy') {

@@ -397,6 +397,15 @@ class ScenarioRunner {
       }
       game = game.copyWith(players: updatedPlayers);
     }
+    if (setup.purchasedTilesByTileKey != null &&
+        setup.purchasedTilesByTileKey!.isNotEmpty) {
+      final purchased = Map<String, String>.from(
+        game.worldState.purchasedTilesByTileKey,
+      )..addAll(setup.purchasedTilesByTileKey!);
+      game = game.copyWith(
+        worldState: game.worldState.copyWith(purchasedTilesByTileKey: purchased),
+      );
+    }
     return game;
   }
 
