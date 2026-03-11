@@ -5,6 +5,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../diplomacy/diplomacy_relation_lookup.dart';
+
 final _log = Logger();
 
 /// Human Great Power ids (observers for whom we store evidence).
@@ -20,34 +22,18 @@ List<String> _humanObserverIds(Game game) {
 bool isAiControlledForEvidence(Game game, String playerId) {
   final explicit = game.aiControlByGpId[playerId];
   if (explicit != null) return explicit;
-  final p = _getPlayer(game, playerId);
+  final p = getPlayer(game, playerId);
   return p != null && !p.isHuman;
-}
-
-Player? _getPlayer(Game game, String playerId) {
-  for (final p in game.players) {
-    if (p.id == playerId) return p;
-  }
-  return null;
 }
 
 /// Returns true if [targetId] is a weaker GP than [actorId] by military level (for warmonger evidence).
 bool _isWeakerGp(Game game, String actorId, String targetId) {
-  final actor = _getPlayer(game, actorId);
-  final target = _getPlayer(game, targetId);
+  final actor = getPlayer(game, actorId);
+  final target = getPlayer(game, targetId);
   if (actor == null || target == null) return false;
   final aLevel = actor.militaryLevel ?? 0;
   final tLevel = target.militaryLevel ?? 0;
   return tLevel < aLevel;
-}
-
-DiplomacyRelation? _getRelation(Game game, String factionId1, String factionId2) {
-  final key = factionId1.compareTo(factionId2) <= 0 ? '$factionId1|$factionId2' : '$factionId2|$factionId1';
-  for (final r in game.diplomacyRelations) {
-    final rKey = r.factionId1.compareTo(r.factionId2) <= 0 ? '${r.factionId1}|${r.factionId2}' : '${r.factionId2}|${r.factionId1}';
-    if (rKey == key) return r;
-  }
-  return null;
 }
 
 /// Evidence entries for "AI declared war". Warmonger if target is weaker GP; backstabber if was allied.
@@ -61,9 +47,9 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
-  final rel = _getRelation(game, actorGpId, targetFactionId);
+  final rel = getRelation(game, actorGpId, targetFactionId);
   final wasAllied = rel != null && rel.level == RelationLevel.allied;
-  final targetIsGp = _getPlayer(game, targetFactionId) != null;
+  final targetIsGp = getPlayer(game, targetFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, actorGpId, targetFactionId);
 
   final entries = <DossierEvidenceEntry>[];
@@ -133,7 +119,7 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
-  final targetIsGp = _getPlayer(game, defenderFactionId) != null;
+  final targetIsGp = getPlayer(game, defenderFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, victorGpId, defenderFactionId);
   final scoreDelta = weaker ? 2 : 1;
 

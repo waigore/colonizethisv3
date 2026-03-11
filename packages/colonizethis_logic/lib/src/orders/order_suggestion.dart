@@ -653,7 +653,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     }
   }
 
-  final homeFleetId = 'fleet_$playerId';
+  final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
     final String? currentZone;

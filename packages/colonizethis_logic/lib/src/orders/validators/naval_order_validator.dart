@@ -32,7 +32,7 @@ class NavalOrderValidator {
       return previousInvalidOrderResult;
     }
     final fleet = _fleetById[o.fleetId];
-    final homeFleetId = 'fleet_$_playerId';
+    final homeFleetId = homeFleetIdFor(_playerId);
     if (fleet == null || fleet.ownerId != _playerId || fleet.id == homeFleetId) {
       return OrderValidationResult(
         status: OrderValidationStatus.rejected,
@@ -107,7 +107,7 @@ class NavalOrderValidator {
       return previousInvalidOrderResult;
     }
     final fleet = _fleetById[o.fleetId];
-    final homeFleetId = 'fleet_$_playerId';
+    final homeFleetId = homeFleetIdFor(_playerId);
     var valid = fleet != null &&
         fleet.ownerId == _playerId &&
         (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
