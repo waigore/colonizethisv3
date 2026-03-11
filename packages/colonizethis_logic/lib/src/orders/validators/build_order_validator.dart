@@ -32,10 +32,7 @@ class BuildOrderValidator {
     required bool previousRejected,
   }) {
     if (previousRejected) {
-      return const OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: 'Previous invalid',
-      );
+      return previousInvalidOrderResult;
     }
 
     if (_player.capitalProvinceId == null) {

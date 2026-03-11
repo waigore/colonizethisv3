@@ -316,10 +316,8 @@ class OrderEngine {
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
     var rejected = false;
 
-    final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
-
-    bool _isDevExclusiveUnitType(String type) =>
-        type == 'Builder' || type == 'Engineer' || type == 'Merchant';
+    final unitsById =
+        Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
 
     // Per-player tile exclusivity (SPEC/game/civilian-units.md, SPEC/program/orders.md):
     // track tiles already reserved by this player's Builder/Engineer/Merchant work
@@ -327,8 +325,8 @@ class OrderEngine {
     final devExclusiveTiles = <String>{};
     for (final u in allUnitsFromWorld(game.worldState)) {
       final w = u.currentWork;
-      if (u.ownerId == playerId &&
-          _isDevExclusiveUnitType(u.type) &&
+          if (u.ownerId == playerId &&
+          isDevExclusiveUnitType(u.type) &&
           w != null &&
           w.tileKey.isNotEmpty) {
         devExclusiveTiles.add(w.tileKey);
@@ -345,9 +343,7 @@ class OrderEngine {
 
     for (final o in moves) {
       if (rejected) {
-        results.add(const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'Previous invalid'));
+        results.add(previousInvalidOrderResult);
         continue;
       }
       final r = validateMove(o);

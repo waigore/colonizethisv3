@@ -8,6 +8,9 @@ import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import 'work_order_cost_calculator.dart';
 
+bool isDevExclusiveUnitType(String type) =>
+    type == 'Builder' || type == 'Engineer' || type == 'Merchant';
+
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
 /// when an order is accepted. SPEC/program/orders.md § Work orders.
@@ -43,9 +46,6 @@ class WorkOrderValidator {
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
 
-  static bool _isDevExclusiveUnitType(String type) =>
-      type == 'Builder' || type == 'Engineer' || type == 'Merchant';
-
   static bool _isDevExclusiveTarget(String target) =>
       target == 'build_improvement' ||
       target == 'upgrade_town' ||
@@ -62,10 +62,7 @@ class WorkOrderValidator {
     required bool previousRejected,
   }) {
     if (previousRejected) {
-      return const OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: 'Previous invalid',
-      );
+      return previousInvalidOrderResult;
     }
 
     final unit = _unitsById[o.unitId];
@@ -254,7 +251,7 @@ class WorkOrderValidator {
       }
     }
 
-    if (_isDevExclusiveUnitType(type) &&
+    if (isDevExclusiveUnitType(type) &&
         _isDevExclusiveTarget(o.target) &&
         _devExclusiveTiles.contains(o.targetTileKey)) {
       return const OrderValidationResult(
@@ -324,7 +321,7 @@ class WorkOrderValidator {
       );
     }
 
-    if (_isDevExclusiveUnitType(type) && _isDevExclusiveTarget(o.target)) {
+    if (isDevExclusiveUnitType(type) && _isDevExclusiveTarget(o.target)) {
       _devExclusiveTiles.add(o.targetTileKey);
     }
 

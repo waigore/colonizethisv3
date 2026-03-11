@@ -25,13 +25,6 @@ class DiplomaticOrderValidator {
 
   int get treasury => _treasury;
 
-  bool _factionIsGreatPower(String id) =>
-      _game.players.any((p) => p.id == id);
-
-  bool _factionIsMinorOrTribe(String id) =>
-      _game.minorNations.any((m) => m.id == id) ||
-      _game.tribes.any((t) => t.id == id);
-
   /// Validate a single [DiplomaticOrder], given whether a previous order
   /// for this player in this turn has already been rejected.
   ///
@@ -45,10 +38,7 @@ class DiplomaticOrderValidator {
   }) {
     if (previousRejected) {
       return (
-        result: const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Previous invalid',
-        ),
+        result: previousInvalidOrderResult,
         treasury: _treasury,
       );
     }
@@ -66,7 +56,7 @@ class DiplomaticOrderValidator {
     }
 
     final targetExists =
-        _factionIsGreatPower(targetId) || _factionIsMinorOrTribe(targetId);
+        isGreatPower(_game, targetId) || isMinorOrTribe(_game, targetId);
     if (!targetExists) {
       return (
         result: const OrderValidationResult(
@@ -117,7 +107,7 @@ class DiplomaticOrderValidator {
         );
 
       case DiplomaticOrderType.alliance:
-        if (!_factionIsGreatPower(targetId)) {
+        if (!isGreatPower(_game, targetId)) {
           return (
             result: const OrderValidationResult(
               status: OrderValidationStatus.rejected,
@@ -153,8 +143,8 @@ class DiplomaticOrderValidator {
             treasury: _treasury,
           );
         }
-        if (!_factionIsMinorOrTribe(targetId) &&
-            !_factionIsGreatPower(targetId)) {
+        if (!isMinorOrTribe(_game, targetId) &&
+            !isGreatPower(_game, targetId)) {
           return (
             result: const OrderValidationResult(
               status: OrderValidationStatus.rejected,

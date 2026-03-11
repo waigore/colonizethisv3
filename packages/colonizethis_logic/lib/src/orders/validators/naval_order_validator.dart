@@ -29,10 +29,7 @@ class NavalOrderValidator {
     required bool previousRejected,
   }) {
     if (previousRejected) {
-      return const OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: 'Previous invalid',
-      );
+      return previousInvalidOrderResult;
     }
     final fleet = _fleetById[o.fleetId];
     final homeFleetId = 'fleet_$_playerId';
@@ -107,10 +104,7 @@ class NavalOrderValidator {
     required bool previousRejected,
   }) {
     if (previousRejected) {
-      return const OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: 'Previous invalid',
-      );
+      return previousInvalidOrderResult;
     }
     final fleet = _fleetById[o.fleetId];
     final homeFleetId = 'fleet_$_playerId';
