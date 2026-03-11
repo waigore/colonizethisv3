@@ -50,6 +50,30 @@ void main() {
             NavalStatsCatalog.fluyte.cargoHold,
       );
     });
+
+    test('returns 0 when home fleet has only non-cargo ship types', () {
+      final fleet = Fleet(
+        id: 'fleet_p1',
+        ownerId: 'p1',
+        seaZoneId: 'sea1',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['galleon'],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [fleet],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+      final holds = cargoHoldsForHomeFleet(game, 'p1');
+      expect(holds, 0);
+    });
   });
 
   group('SeaTransport', () {

@@ -165,5 +165,42 @@ void main() {
       expect(input.attackerLeaderMultiplier, 1.0);
       expect(input.defenderLeaderMultiplier, 1.0);
     });
+
+    test('builds input from newWorld BattleContext', () {
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: 'newWorld|N1', regionId: nw, ownerId: 'def'),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', provinceId: 'newWorld|N1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'newWorld|N1'),
+            ],
+          ),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Attacker', isHuman: true),
+          Player(id: 'def', displayName: 'Defender', isHuman: true),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'newWorld|N1',
+        regionId: nw,
+        defenderFactionId: 'def',
+        defenderUnitIds: ['u2'],
+        attackers: [AttackingSide(factionId: 'att', unitIds: ['u1'])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final input = buildQuickBattleInput(game, ctx);
+      expect(input.regionId, nw);
+      expect(input.defenderDeployment.groups.first.unitIds, ['u2']);
+      expect(input.attackerDeployment.groups.first.unitIds, ['u1']);
+    });
   });
 }

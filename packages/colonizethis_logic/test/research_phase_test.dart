@@ -52,6 +52,48 @@ void main() {
       expect(result.players.single.researchProgressByTechId ?? const {}, isEmpty);
     });
 
+    test('resolveResearchPhase skips player when that player has no research orders', () {
+      final p1 = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        treasury: 2000,
+        researchSlots: 1,
+      );
+      final p2 = Player(
+        id: 'p2',
+        displayName: 'P2',
+        isHuman: true,
+        treasury: 500,
+        researchSlots: 1,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [p1, p2],
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'gathering_1',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+        },
+      );
+      final result = resolveResearchPhase(game, orders);
+      expect(result.players.length, 2);
+      final rp2 = result.players.where((p) => p.id == 'p2').single;
+      expect(rp2.treasury, 500);
+      expect(rp2.researchProgressByTechId ?? const {}, isEmpty);
+    });
+
     test('accumulates research progress and unlocks tech when cost reached',
         () {
       final tech = techById('gathering_1')!;

@@ -126,6 +126,30 @@ void main() {
       );
     });
 
+    test('buildPlayerView maps unknown visibility level name to unknown', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: {
+            'gp1': {
+              'tileA': 'fullyVisible',
+              'tileB': 'NotARealLevelName',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'P', isHuman: true),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      expect(view.visibilityByTile['tileA'], VisibilityLevel.fullyVisible);
+      expect(view.visibilityByTile['tileB'], VisibilityLevel.unknown);
+    });
+
     test('buildPlayerView throws when playerId not in game', () {
       final game = Game(
         id: 'g1',
