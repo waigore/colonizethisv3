@@ -68,7 +68,7 @@ jobs:
           set -e
           for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
             [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
+            (cd "$dir" && dart test --coverage=coverage -j 2 --reporter=compact)
             (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
           done
 
@@ -79,8 +79,7 @@ jobs:
         run: |
           set -e
           if [ -d ctterm/test ]; then
-            (cd ctterm && dart test --coverage=coverage -j 4 --reporter=compact)
-            (cd ctterm && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+            (cd ctterm && dart test -j 2 --reporter=compact)
           fi
 
       - name: Test tool packages (Dart)
@@ -91,8 +90,7 @@ jobs:
           set -e
           for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
             [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
-            (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+            (cd "$dir" && dart test -j 2 --reporter=compact)
           done
 
       - name: Test app (Flutter)
