@@ -22,10 +22,10 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 
 ## Layout and Responsiveness
 
-- **Max height:** Overlay never occupies more than one-third of the screen height.
-- **Desktop / larger screens:** Overlay appears as a side panel (e.g. right side). Content scrolls if needed.
-- **Mobile / narrow viewports:** Overlay appears as a bottom sheet. Content is organized in **tabs** (Political, Economic, Military, Civilian, Naval) so each tab fits within the one-third height constraint.
-- **Tabs:** Political | Economic | Military | Civilian | Naval. On desktop, tabs may be shown as sections in a single scrollable panel if space allows.
+- **Max height:** Overlay never occupies more than one-third of the screen height in the main game shell; Widgetbook map+overlay mock may use a fixed fraction (e.g. bottom half of the story area) to clearly demonstrate the interaction.
+- **Desktop / larger screens:** In the main game shell, overlay appears as a side panel (e.g. right side). Content scrolls if needed.
+- **Mobile / narrow viewports:** Overlay appears as a bottom sheet on top of the map. Content is organized in **tabs** (Political, Economic, Military, Civilian, Naval) so each tab fits within the one-third height constraint.
+- **Tabs:** Political | Economic | Military | Civilian | Naval. On desktop, tabs may be shown as sections in a single scrollable panel if space allows; in Widgetbook, the "With map" story uses a simple bottom overlay to showcase interaction rather than full tab chrome.
 
 ---
 
@@ -101,7 +101,7 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 
 - **Given** the Province Overlay Widgetbook story "Standalone — province", **when** the story renders, **then** the overlay displays province content (Political, Economic, Military, Civilian, Naval) with demo data.
 - **Given** the Province Overlay Widgetbook story "Standalone — sea zone", **when** the story renders, **then** the overlay displays sea zone content (Political, Naval).
-- **Given** the Province Overlay Widgetbook story "With map — province selected", **when** the story renders, **then** the map and overlay appear side by side; the overlay shows the selected province; tapping the map toggles or updates selection.
+- **Given** the Province Overlay Widgetbook story "With map — province selected", **when** the story renders, **then** the map fills the story area and, when a province is selected, a province detail overlay appears as a bottom sheet covering roughly the lower half of the map; tapping the same province again or the close button hides the overlay; tapping a different province updates the overlay content.
 - **Given** the Province Overlay Widgetbook story "Standalone (mobile)", **when** the story renders, **then** the overlay uses tabs and does not exceed one-third of viewport height.
 
 ---
