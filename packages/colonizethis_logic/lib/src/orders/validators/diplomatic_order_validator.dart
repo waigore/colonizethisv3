@@ -245,13 +245,13 @@ class DiplomaticOrderValidator {
               treasury: _treasury,
             );
           }
-          final score = rel?.score ?? 50;
-          if (score < 51) {
+          final score = rel?.score ?? relationScoreNeutral;
+          if (score < relationScoreMinFriendly) {
             return (
-              result: const OrderValidationResult(
+              result: OrderValidationResult(
                 status: OrderValidationStatus.rejected,
                 reason:
-                    'Join Empire requires at least Friendly relations (score >= 51)',
+                    'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
               ),
               treasury: _treasury,
             );

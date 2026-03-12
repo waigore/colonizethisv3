@@ -56,21 +56,52 @@ int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
   return joinEmpireBaseCost + n * joinEmpirePerProvinceCost;
 }
 
+// --- Relation score bounds and thresholds. SPEC/game/diplomacy.md. ---
+
+/// Relation score range: min and max (inclusive).
+const int relationScoreMin = 0;
+const int relationScoreMax = 100;
+
+/// Neutral relation score; convergence target and default for new relations.
+const int relationScoreNeutral = 50;
+
+/// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
+const int relationScoreLevelHostileMax = 25;
+const int relationScoreLevelNeutralMax = 50;
+const int relationScoreLevelFriendlyMax = 75;
+
+/// Minimum score for Friendly (and Allied). Join Empire and similar require >= this.
+const int relationScoreMinFriendly = 51;
+
+/// Alliance score band: when forming alliance, score is set/clamped to this range.
+const int relationScoreMinAllied = 76;
+
+/// Display label thresholds (inclusive max): Hostile ]0,29], Unfriendly ]29,49], Cordial ]49,69], Friendly ]69,100].
+const int relationScoreDisplayHostileMax = 29;
+const int relationScoreDisplayUnfriendlyMax = 49;
+const int relationScoreDisplayCordialMax = 69;
+
+/// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
+const int relationScoreWarDelta = 10;
+
+/// Suggested grant/subsidy amount for AI order suggestion when GP has embassy/consulate.
+const int suggestedGrantOrSubsidyAmount = 100;
+
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
 RelationLevel scoreToLevel(int score) {
-  if (score <= 25) return RelationLevel.hostile;
-  if (score <= 50) return RelationLevel.neutral;
-  if (score <= 75) return RelationLevel.friendly;
+  if (score <= relationScoreLevelHostileMax) return RelationLevel.hostile;
+  if (score <= relationScoreLevelNeutralMax) return RelationLevel.neutral;
+  if (score <= relationScoreLevelFriendlyMax) return RelationLevel.friendly;
   return RelationLevel.allied;
 }
 
 /// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
 /// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
 String relationScoreToDisplayLabel(int score) {
-  final clamped = score.clamp(0, 100);
-  if (clamped <= 29) return 'Hostile';
-  if (clamped <= 49) return 'Unfriendly';
-  if (clamped <= 69) return 'Cordial';
+  final clamped = score.clamp(relationScoreMin, relationScoreMax);
+  if (clamped <= relationScoreDisplayHostileMax) return 'Hostile';
+  if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';
+  if (clamped <= relationScoreDisplayCordialMax) return 'Cordial';
   return 'Friendly';
 }
 
