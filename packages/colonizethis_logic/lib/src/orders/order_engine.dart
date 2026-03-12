@@ -23,6 +23,18 @@ final Logger _log = Logger();
 
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. No world state mutation.
+class _OrderSlot<T> {
+  const _OrderSlot({
+    required this.getter,
+    required this.updater,
+    required this.label,
+  });
+
+  final Map<String, List<T>> Function(Orders) getter;
+  final Orders Function(Orders, Map<String, List<T>>) updater;
+  final String label;
+}
+
 class OrderEngine {
   OrderEngine({
     Orders initialOrders = const Orders(),
@@ -165,41 +177,105 @@ class OrderEngine {
 
   // -- Public add/remove methods --
 
-  OrderValidationResult addMoveOrder(String playerId, MoveOrder order) {
-    _appendOrder(playerId, order, _moveOrders, _withMoveOrders);
+  static const _OrderSlot<MoveOrder> _moveSlot = _OrderSlot<MoveOrder>(
+    getter: _moveOrders,
+    updater: _withMoveOrders,
+    label: 'move',
+  );
+
+  static const _OrderSlot<BuildUnitOrder> _buildSlot =
+      _OrderSlot<BuildUnitOrder>(
+    getter: _buildOrders,
+    updater: _withBuildOrders,
+    label: 'build',
+  );
+
+  static const _OrderSlot<WorkOrder> _workSlot = _OrderSlot<WorkOrder>(
+    getter: _workOrders,
+    updater: _withWorkOrders,
+    label: 'work',
+  );
+
+  static const _OrderSlot<DiplomaticOrder> _diplomaticSlot =
+      _OrderSlot<DiplomaticOrder>(
+    getter: _diplomaticOrders,
+    updater: _withDiplomaticOrders,
+    label: 'diplomatic',
+  );
+
+  static const _OrderSlot<NavalMoveOrder> _navalMoveSlot =
+      _OrderSlot<NavalMoveOrder>(
+    getter: _navalMoveOrders,
+    updater: _withNavalMoveOrders,
+    label: 'naval move',
+  );
+
+  static const _OrderSlot<NavalMissionOrder> _navalMissionSlot =
+      _OrderSlot<NavalMissionOrder>(
+    getter: _navalMissionOrders,
+    updater: _withNavalMissionOrders,
+    label: 'naval mission',
+  );
+
+  OrderValidationResult _addOrder<T>(
+    String playerId,
+    T order,
+    _OrderSlot<T> slot,
+  ) {
+    _appendOrder(playerId, order, slot.getter, slot.updater);
     return const OrderValidationResult(status: OrderValidationStatus.accepted);
   }
+
+  OrderValidationResult _addOrderWithContextSlot<T>(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    T order,
+    _OrderSlot<T> slot,
+  ) {
+    return _addOrderWithContext(
+      game,
+      topology,
+      playerId,
+      order,
+      slot.getter,
+      slot.updater,
+      slot.label,
+    );
+  }
+
+  void _removeOrderAtSlot<T>(
+    String playerId,
+    int index,
+    _OrderSlot<T> slot,
+  ) {
+    _removeOrderAt(playerId, index, slot.getter, slot.updater);
+  }
+
+  OrderValidationResult addMoveOrder(String playerId, MoveOrder order) =>
+      _addOrder(playerId, order, _moveSlot);
 
   OrderValidationResult addMoveOrderWithContext(
           Game game, MapTopology topology, String playerId, MoveOrder order) =>
-      _addOrderWithContext(game, topology, playerId, order, _moveOrders,
-          _withMoveOrders, 'move');
+      _addOrderWithContextSlot(game, topology, playerId, order, _moveSlot);
 
-  OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) {
-    _appendOrder(playerId, order, _buildOrders, _withBuildOrders);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
+  OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) =>
+      _addOrder(playerId, order, _buildSlot);
 
   OrderValidationResult addBuildOrderWithContext(Game game,
           MapTopology topology, String playerId, BuildUnitOrder order) =>
-      _addOrderWithContext(game, topology, playerId, order, _buildOrders,
-          _withBuildOrders, 'build');
+      _addOrderWithContextSlot(game, topology, playerId, order, _buildSlot);
 
-  OrderValidationResult addWorkOrder(String playerId, WorkOrder order) {
-    _appendOrder(playerId, order, _workOrders, _withWorkOrders);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
+  OrderValidationResult addWorkOrder(String playerId, WorkOrder order) =>
+      _addOrder(playerId, order, _workSlot);
 
   OrderValidationResult addWorkOrderWithContext(
           Game game, MapTopology topology, String playerId, WorkOrder order) =>
-      _addOrderWithContext(game, topology, playerId, order, _workOrders,
-          _withWorkOrders, 'work');
+      _addOrderWithContextSlot(game, topology, playerId, order, _workSlot);
 
   OrderValidationResult addDiplomaticOrder(
-      String playerId, DiplomaticOrder order) {
-    _appendOrder(playerId, order, _diplomaticOrders, _withDiplomaticOrders);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
+          String playerId, DiplomaticOrder order) =>
+      _addOrder(playerId, order, _diplomaticSlot);
 
   OrderValidationResult addDiplomaticOrderWithContext(
     Game game,
@@ -207,46 +283,50 @@ class OrderEngine {
     String playerId,
     DiplomaticOrder order,
   ) =>
-      _addOrderWithContext(
+      _addOrderWithContextSlot(
         game,
         topology,
         playerId,
         order,
-        _diplomaticOrders,
-        _withDiplomaticOrders,
-        'diplomatic',
+        _diplomaticSlot,
       );
 
   OrderValidationResult addNavalMoveOrder(
-      String playerId, NavalMoveOrder order) {
-    _appendOrder(playerId, order, _navalMoveOrders, _withNavalMoveOrders);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
+          String playerId, NavalMoveOrder order) =>
+      _addOrder(playerId, order, _navalMoveSlot);
 
   OrderValidationResult addNavalMoveOrderWithContext(Game game,
           MapTopology topology, String playerId, NavalMoveOrder order) =>
-      _addOrderWithContext(game, topology, playerId, order, _navalMoveOrders,
-          _withNavalMoveOrders, 'naval move');
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _navalMoveSlot,
+      );
 
   OrderValidationResult addNavalMissionOrder(
-      String playerId, NavalMissionOrder order) {
-    _appendOrder(playerId, order, _navalMissionOrders, _withNavalMissionOrders);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
+          String playerId, NavalMissionOrder order) =>
+      _addOrder(playerId, order, _navalMissionSlot);
 
   OrderValidationResult addNavalMissionOrderWithContext(Game game,
           MapTopology topology, String playerId, NavalMissionOrder order) =>
-      _addOrderWithContext(game, topology, playerId, order, _navalMissionOrders,
-          _withNavalMissionOrders, 'naval mission');
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _navalMissionSlot,
+      );
 
   void removeMoveOrder(String playerId, int index) =>
-      _removeOrderAt(playerId, index, _moveOrders, _withMoveOrders);
+      _removeOrderAtSlot(playerId, index, _moveSlot);
 
   void removeBuildOrder(String playerId, int index) =>
-      _removeOrderAt(playerId, index, _buildOrders, _withBuildOrders);
+      _removeOrderAtSlot(playerId, index, _buildSlot);
 
   void removeWorkOrder(String playerId, int index) =>
-      _removeOrderAt(playerId, index, _workOrders, _withWorkOrders);
+      _removeOrderAtSlot(playerId, index, _workSlot);
 
   /// Validates with full context. Call this when Game and topology available.
   List<OrderValidationResult> validatePlayerOrdersWithContext(
