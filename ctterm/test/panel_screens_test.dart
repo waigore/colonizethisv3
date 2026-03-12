@@ -205,6 +205,12 @@ void main() {
   });
 
   group('DiplomacyScreen (SPEC/tui/screens/diplomacy.md)', () {
+    test('display mapping aligned with SPEC (relationScoreToDisplayLabel bands)', () {
+      expect(relationScoreToDisplayLabel(0), 'Hostile');
+      expect(relationScoreToDisplayLabel(50), 'Cordial');
+      expect(relationScoreToDisplayLabel(70), 'Friendly');
+    });
+
     test('can be constructed with required parameters', () {
       final screen = DiplomacyScreen(
         onNavigate: (route) {},

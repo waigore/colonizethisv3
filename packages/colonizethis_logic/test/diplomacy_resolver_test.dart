@@ -51,6 +51,23 @@ void main() {
     });
   });
 
+  group('relationScoreToDisplayLabel', () {
+    test('maps score to display label per SPEC/game/diplomacy.md § Player-facing relation display', () {
+      expect(relationScoreToDisplayLabel(0), 'Hostile');
+      expect(relationScoreToDisplayLabel(29), 'Hostile');
+      expect(relationScoreToDisplayLabel(30), 'Unfriendly');
+      expect(relationScoreToDisplayLabel(49), 'Unfriendly');
+      expect(relationScoreToDisplayLabel(50), 'Cordial');
+      expect(relationScoreToDisplayLabel(69), 'Cordial');
+      expect(relationScoreToDisplayLabel(70), 'Friendly');
+      expect(relationScoreToDisplayLabel(100), 'Friendly');
+    });
+    test('clamps out-of-range score to 0-100', () {
+      expect(relationScoreToDisplayLabel(-1), 'Hostile');
+      expect(relationScoreToDisplayLabel(101), 'Friendly');
+    });
+  });
+
   group('resolveDiplomacyPhase', () {
     Game _baseGame() {
       return Game(

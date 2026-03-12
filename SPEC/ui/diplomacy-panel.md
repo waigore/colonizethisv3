@@ -29,7 +29,7 @@ A faction is **discovered** iff the player has a **diplomatic relation** with th
 
 ## Per-faction row
 
-- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), relation level (Hostile / Neutral / Friendly / Allied), relation score (0–100). For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any.
+- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** the **power score** per [diplomacy.md](../game/diplomacy.md) § Great Power power score is shown; if the GP’s score is higher than the player’s, the score is shown in **red**, otherwise in **green**.
 - **Right:** **Available diplomatic actions** for the player toward that faction. Actions are those explicitly in SPEC/game/diplomacy.md and SPEC/program/orders.md: Declare War, Offer Peace, Alliance (GP only), Establish Overture (stage), Grant Aid, Set Subsidy. Only show actions that are **valid** per the diplomatic order validator (same rules as order submission).
 
 ---
@@ -59,6 +59,6 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 
 - Given the user is in-game and taps the dove icon in the toolbar, the UI opens the Diplomacy panel as a full-page screen.
 - Given the Diplomacy panel is open, it lists only discovered factions, grouped as Great Powers, Minor Nations, Tribes; GPs sorted by military power then province count.
-- Given a faction row, the panel shows current relation state and level and, for Minor/Tribe, overture stage; to the right it shows only valid diplomatic actions for that faction.
+- Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power score** (SPEC/game/diplomacy.md § Great Power power score) in **red** when the GP’s score is higher than the player’s, otherwise in **green**. To the right it shows only valid diplomatic actions for that faction.
 - Given the user taps an action that requires no parameters, the UI submits that diplomatic order for the current turn.
 - Given the user taps an action that requires parameters (amount or overture stage), the UI shows a dialog; on confirm, the UI submits the order with the chosen parameters.

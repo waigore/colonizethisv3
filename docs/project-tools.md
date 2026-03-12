@@ -275,6 +275,20 @@ melos run check_gdd_coverage
 
 ---
 
+## test_app (Melos)
+
+Runs Flutter widget tests for the **app** package. Use this (or `cd app && flutter test`) when running app tests. Do **not** run app tests with `dart test app/test/...` from the repo root — that uses the Dart test runner and fails with Flutter binding errors (Size/Rect/invalid-type). See .cursor/rules/colonizethis-testing.mdc.
+
+**Invocation**
+
+```bash
+melos run test_app
+```
+
+Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_test.dart`
+
+---
+
 ## run_quality_gate_tests.sh (CI verification)
 
 Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
