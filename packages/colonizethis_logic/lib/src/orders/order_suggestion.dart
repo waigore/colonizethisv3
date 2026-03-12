@@ -864,8 +864,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
     if (next == OvertureStage.joinEmpire) {
       final rel = getRelation(game, playerId, targetId);
-      final score = rel?.score ?? 50;
-      if (score < 51) continue;
+      final score = rel?.score ?? relationScoreNeutral;
+      if (score < relationScoreMinFriendly) continue;
       final cost = joinEmpireCostForMinorOrTribe(game, targetId);
       if (treasury < cost) continue;
     }
@@ -880,18 +880,18 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   for (final o in overtureStates) {
     if (o.gpId != playerId) continue;
     final targetId = o.targetId;
-    if (o.hasEmbassy && treasury >= 100) {
+    if (o.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
       suggestions.add(DiplomaticOrder(
         type: DiplomaticOrderType.grantAid,
         targetFactionId: targetId,
-        amount: 100,
+        amount: suggestedGrantOrSubsidyAmount,
       ));
     }
-    if (o.hasConsulate && treasury >= 100) {
+    if (o.hasConsulate && treasury >= suggestedGrantOrSubsidyAmount) {
       suggestions.add(DiplomaticOrder(
         type: DiplomaticOrderType.setSubsidy,
         targetFactionId: targetId,
-        amount: 100,
+        amount: suggestedGrantOrSubsidyAmount,
       ));
     }
   }

@@ -16,6 +16,11 @@ import '../world/unit_lookup.dart';
 
 final Logger _log = Logger();
 
+/// Counter-spy: per-turn kill chance = (friendlySpies * [counterSpyKillChancePercentPerSpy])%,
+/// capped at [counterSpyKillChanceCapPercent]%. SPEC: work order resolution.
+const int counterSpyKillChancePercentPerSpy = 5;
+const int counterSpyKillChanceCapPercent = 30;
+
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
 
@@ -407,7 +412,7 @@ Game applyBuildAndWorkOrders(
         }
       }
       if (cw.workTarget == 'counter_spy') {
-        // Per-turn: 5% per friendly spy (cap 30%) to kill one enemy spy in province
+        // Per-turn: N% per friendly spy (cap M%) to kill one enemy spy in province
         final provinceId = u.locationProvinceId;
         final friendlySpies = unitsById.values
             .where((x) =>
@@ -416,7 +421,9 @@ Game applyBuildAndWorkOrders(
                 x.currentWork?.workTarget == 'counter_spy' &&
                 x.locationProvinceId == provinceId)
             .length;
-        final killChance = (friendlySpies * 5).clamp(0, 30) / 100.0;
+        final killChance = (friendlySpies * counterSpyKillChancePercentPerSpy)
+            .clamp(0, counterSpyKillChanceCapPercent) /
+            100.0;
         final enemySpies = unitsById.entries.where((e) {
           final x = e.value;
           return x.ownerId != u.ownerId &&
