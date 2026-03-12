@@ -266,31 +266,41 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                   final orders = ref.read(currentOrdersProvider);
                   showModalBottomSheet<void>(
                     context: context,
-                    builder: (ctx) => CivilianUnitsPanel(
-                      game: ref.read(currentGameProvider) ?? widget.game,
-                      humanPlayerId: _humanPlayerId,
-                      currentOrders: orders,
-                      onLocateUnit: _onLocateCivilianUnit,
-                      onRemoveWorkOrder: (playerId, index) {
-                        final o = ref.read(currentOrdersProvider);
-                        final list = List<ct_models.WorkOrder>.from(
-                          o.workOrdersByPlayerId[playerId] ?? [],
-                        )..removeAt(index);
-                        ref.read(currentOrdersProvider.notifier).state =
-                            o.copyWith(
-                          workOrdersByPlayerId: {
-                            ...o.workOrdersByPlayerId,
-                            playerId: list
+                    isScrollControlled: true,
+                    builder: (ctx) {
+                      final isNarrow =
+                          MediaQuery.sizeOf(ctx).width < 600;
+                      final maxHeight = MediaQuery.sizeOf(ctx).height *
+                          (isNarrow ? 0.33 : 0.5);
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: maxHeight),
+                        child: CivilianUnitsPanel(
+                          game: ref.read(currentGameProvider) ?? widget.game,
+                          humanPlayerId: _humanPlayerId,
+                          currentOrders: orders,
+                          onLocateUnit: _onLocateCivilianUnit,
+                          onRemoveWorkOrder: (playerId, index) {
+                            final o = ref.read(currentOrdersProvider);
+                            final list = List<ct_models.WorkOrder>.from(
+                              o.workOrdersByPlayerId[playerId] ?? [],
+                            )..removeAt(index);
+                            ref.read(currentOrdersProvider.notifier).state =
+                                o.copyWith(
+                              workOrdersByPlayerId: {
+                                ...o.workOrdersByPlayerId,
+                                playerId: list
+                              },
+                            );
                           },
-                        );
-                      },
-                      onCancelUnitWork: _cancelUnitWork,
-                      onStartWorkTargetSelection: (unit, workTarget) {
-                        Navigator.of(ctx).pop();
-                        setState(() => _workTargetSelection =
-                            (unit: unit, workTarget: workTarget));
-                      },
-                    ),
+                          onCancelUnitWork: _cancelUnitWork,
+                          onStartWorkTargetSelection: (unit, workTarget) {
+                            Navigator.of(ctx).pop();
+                            setState(() => _workTargetSelection =
+                                (unit: unit, workTarget: workTarget));
+                          },
+                        ),
+                      );
+                    },
                   );
                 },
                 icon: const Icon(Icons.people_outline, size: 20),

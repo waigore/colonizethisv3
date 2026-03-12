@@ -283,6 +283,10 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
             name: 'With map',
             builder: (context) => const _CivilianPanelWithMapStory(),
           ),
+          WidgetbookUseCase(
+            name: 'As bottom sheet',
+            builder: (context) => const _CivilianPanelAsBottomSheetStory(),
+          ),
         ],
       ),
     ];
@@ -717,69 +721,65 @@ class _CivilianPanelWithMapStoryState
         : baseResult.mapViewData;
     final region =
         _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    // Panel at bottom, like province overlay "With map" story. SPEC/ui/civilian-units-panel.md.
+    const panelHeight = 220.0;
     return SizedBox(
       width: 900,
       height: 550,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Old World'),
-                        selected: _regionIndex == 0,
-                        onSelected: (_) => setState(() => _regionIndex = 0),
-                      ),
-                      ChoiceChip(
-                        label: const Text('New World'),
-                        selected: _regionIndex == 1,
-                        onSelected: (_) => setState(() => _regionIndex = 1),
-                      ),
-                      ChoiceChip(
-                        label: const Text('Full visibility'),
-                        selected: _visibilityMode == CtMapVisibilityMode.full,
-                        onSelected: (_) => setState(
-                            () => _visibilityMode = CtMapVisibilityMode.full),
-                      ),
-                      ChoiceChip(
-                        label: const Text('Player-constrained'),
-                        selected: _visibilityMode ==
-                            CtMapVisibilityMode.playerConstrained,
-                        onSelected: (_) => setState(() => _visibilityMode =
-                            CtMapVisibilityMode.playerConstrained),
-                      ),
-                    ],
-                  ),
+                ChoiceChip(
+                  label: const Text('Old World'),
+                  selected: _regionIndex == 0,
+                  onSelected: (_) => setState(() => _regionIndex = 0),
                 ),
-                Expanded(
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: 24,
-                    visibilityMode: _visibilityMode,
-                    onProvinceSelected: (_) {},
-                    highlightedTileKey: _highlightedTileKey,
-                    centerOnTileKey: _centerOnTileKey,
-                    validTileKeys: _validTileKeys,
-                    onTileSelected: _workTargetSelection != null
-                        ? _onTileSelectedForWork
-                        : null,
-                    onWorkTargetSelectionCancelled: _workTargetSelection != null
-                        ? () => setState(() => _workTargetSelection = null)
-                        : null,
-                  ),
+                ChoiceChip(
+                  label: const Text('New World'),
+                  selected: _regionIndex == 1,
+                  onSelected: (_) => setState(() => _regionIndex = 1),
+                ),
+                ChoiceChip(
+                  label: const Text('Full visibility'),
+                  selected: _visibilityMode == CtMapVisibilityMode.full,
+                  onSelected: (_) => setState(
+                      () => _visibilityMode = CtMapVisibilityMode.full),
+                ),
+                ChoiceChip(
+                  label: const Text('Player-constrained'),
+                  selected: _visibilityMode ==
+                      CtMapVisibilityMode.playerConstrained,
+                  onSelected: (_) => setState(() => _visibilityMode =
+                      CtMapVisibilityMode.playerConstrained),
                 ),
               ],
             ),
           ),
+          Expanded(
+            child: CtRegionMap(
+              region: region,
+              cellSizePx: 24,
+              visibilityMode: _visibilityMode,
+              onProvinceSelected: (_) {},
+              highlightedTileKey: _highlightedTileKey,
+              centerOnTileKey: _centerOnTileKey,
+              validTileKeys: _validTileKeys,
+              onTileSelected: _workTargetSelection != null
+                  ? _onTileSelectedForWork
+                  : null,
+              onWorkTargetSelectionCancelled: _workTargetSelection != null
+                  ? () => setState(() => _workTargetSelection = null)
+                  : null,
+            ),
+          ),
           SizedBox(
-            width: 360,
+            height: panelHeight,
             child: CivilianUnitsPanel(
               game: _game,
               humanPlayerId: _humanPlayerId,
@@ -805,6 +805,63 @@ class _CivilianPanelWithMapStoryState
                 setState(() => _workTargetSelection =
                     (unit: unit, workTarget: workTarget));
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Civilian Units Panel opened as bottom sheet (slide up from bottom). SPEC/ui/civilian-units-panel.md.
+class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
+  const _CivilianPanelAsBottomSheetStory();
+
+  @override
+  Widget build(BuildContext context) {
+    final result = getDebugInitGameResult();
+    final game = result.game;
+    final humanPlayerId =
+        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    return SizedBox(
+      width: 600,
+      height: 400,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextButton.icon(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (ctx) {
+                    final maxHeight =
+                        MediaQuery.sizeOf(ctx).height * 0.5;
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxHeight),
+                      child: CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerId,
+                      ),
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.people_outline, size: 20),
+              label: const Text('Civilian Units'),
+            ),
+          ),
+          const Expanded(
+            child: ColoredBox(
+              color: Color(0xFFE0E0E0),
+              child: Center(
+                child: Text(
+                  'Tap button to open panel from bottom',
+                  style: TextStyle(color: Color(0xFF616161)),
+                ),
+              ),
             ),
           ),
         ],
