@@ -126,11 +126,11 @@ bool _minorOrTribeAcceptsByRule(OvertureStage stage) {
       stage == OvertureStage.nap;
 }
 
-/// AI GP target: accept if relation score >= 50 (Neutral or better). MVP rule.
+/// AI GP target: accept if relation score >= neutral (Neutral or better). MVP rule.
 bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   final rel = getRelation(game, offererGpId, targetGpId);
-  final score = rel?.score ?? 50;
-  return score >= 50;
+  final score = rel?.score ?? relationScoreNeutral;
+  return score >= relationScoreNeutral;
 }
 
 _OverturePaymentsResult _processOverturePayments(
@@ -280,8 +280,8 @@ Game _resolveJoinEmpireColony(
       if (existing == null || existing.stage != OvertureStage.nap) continue;
 
       final rel = getRelation(game, gpId, targetId);
-      final score = rel?.score ?? 50;
-      if (score < 51) continue; // Must be Friendly or Allied
+      final score = rel?.score ?? relationScoreNeutral;
+      if (score < relationScoreMinFriendly) continue; // Must be Friendly or Allied
 
       final cost = joinEmpireCostForMinorOrTribe(game, targetId);
       if (player.treasury < cost) continue;
@@ -407,7 +407,7 @@ Game _processAlliances(
             ? DiplomacyRelation(
                 factionId1: ids.id1,
                 factionId2: ids.id2,
-                score: 76,
+                score: relationScoreMinAllied,
                 level: RelationLevel.allied,
                 state: RelationState.atPeace,
                 sinceTurn: turn,
@@ -415,7 +415,7 @@ Game _processAlliances(
               )
             : existing.copyWith(
                 level: RelationLevel.allied,
-                score: existing.score.clamp(76, 100),
+                score: existing.score.clamp(relationScoreMinAllied, relationScoreMax),
                 lastInteractionTurn: turn,
               ),
       );
@@ -720,8 +720,9 @@ Game _processOngoingSubsidies(Game game, int turn) {
           .copyWith(treasury: players[payerIdx].treasury - amount);
     }
 
-    // Calculate relation boost: +2 per 500 ducats, max +8
-    final boost = ((amount ~/ 500) * 2).clamp(0, 8);
+    // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
+    final boost = ((amount ~/ subsidyBoostDucatsPerStep) * subsidyBoostRelationPerStep)
+        .clamp(0, subsidyBoostMax);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
     if (isMinorOrTribe(game, targetId)) {
@@ -747,7 +748,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
   return game.copyWith(players: players, diplomacyRelations: relations, subsidyStates: subsidyStates);
 }
 
-/// Apply relation convergence: all non-war relations move +/-1 toward 50 (neutral).
+/// Apply relation convergence: all non-war relations move +/-1 toward neutral.
 /// Per SPEC/game/diplomacy.md.
 Game _applyRelationConvergence(Game game, int turn) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
@@ -757,14 +758,14 @@ Game _applyRelationConvergence(Game game, int turn) {
     // Skip war relations - they don't converge and scores stay fixed at war declaration
     if (rel.atWar) continue;
 
-    // Converge toward 50 (neutral)
+    // Converge toward neutral
     int newScore;
-    if (rel.score < 50) {
-      newScore = (rel.score + 1).clamp(0, 100);
-    } else if (rel.score > 50) {
-      newScore = (rel.score - 1).clamp(0, 100);
+    if (rel.score < relationScoreNeutral) {
+      newScore = (rel.score + 1).clamp(relationScoreMin, relationScoreMax);
+    } else if (rel.score > relationScoreNeutral) {
+      newScore = (rel.score - 1).clamp(relationScoreMin, relationScoreMax);
     } else {
-      continue; // Already at 50
+      continue; // Already at neutral
     }
 
     final newLevel = scoreToLevel(newScore);
@@ -861,7 +862,7 @@ Game applyInterventionChoice(
           );
         }
         if (!existing.atPeace) return existing;
-        final newScore = (existing.score - 10).clamp(0, 100);
+        final newScore = (existing.score - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
         return existing.copyWith(
           state: RelationState.atWar,
           sinceTurn: turn,
@@ -874,7 +875,7 @@ Game applyInterventionChoice(
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
       relations =
           upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
-        final newScore = ((existing?.score ?? 50) - 10).clamp(0, 100);
+        final newScore = ((existing?.score ?? relationScoreNeutral) - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
         final newLevel = scoreToLevel(newScore);
         if (existing == null) {
           return DiplomacyRelation(

@@ -75,7 +75,7 @@ List<DiplomacyRelation> applyGrantAidModifier({
     gpId,
     targetId,
     (existing) {
-      final newScore = ((existing?.score ?? 50) + 5).clamp(0, 100);
+      final newScore = ((existing?.score ?? relationScoreNeutral) + 5).clamp(relationScoreMin, relationScoreMax);
       final newLevel = scoreToLevel(newScore);
       if (existing == null) {
         return DiplomacyRelation(
@@ -108,7 +108,7 @@ List<DiplomacyRelation> applySubsidyBoost({
     payerId,
     targetId,
     (existing) {
-      final newScore = ((existing?.score ?? 50) + boost).clamp(0, 100);
+      final newScore = ((existing?.score ?? relationScoreNeutral) + boost).clamp(relationScoreMin, relationScoreMax);
       final newLevel = scoreToLevel(newScore);
       if (existing == null) {
         return DiplomacyRelation(

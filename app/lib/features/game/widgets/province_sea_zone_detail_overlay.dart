@@ -148,6 +148,68 @@ _OverlayContent _provinceContent({
   String? hoveredTileKey,
   void Function(String?)? onHighlightTile,
 }) {
+  final parts = provinceId.split('|');
+  final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
+  final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
+  final isFullyUnrevealed = region.regionId == regionId &&
+      !region.cells.any(
+        (c) =>
+            c.regionCellId == localProvinceId &&
+            c.visibility != TileVisibility.unrevealed,
+      );
+  if (isFullyUnrevealed) {
+    final placeholder = _buildSection(
+      'Tile',
+      const Text('???'),
+    );
+    final sections = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        Text('Political', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Economic', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Military', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Civilian', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Naval', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+      ],
+    );
+    final tabs = const [
+      Tab(text: 'Tile'),
+      Tab(text: 'Political'),
+      Tab(text: 'Economic'),
+      Tab(text: 'Military'),
+      Tab(text: 'Civilian'),
+      Tab(text: 'Naval'),
+    ];
+    final tabViews = [
+      placeholder,
+      const _ObfuscatedSection(),
+      const _ObfuscatedSection(),
+      const _ObfuscatedSection(),
+      const _ObfuscatedSection(),
+      const _ObfuscatedSection(),
+    ];
+    return _OverlayContent(
+      tabCount: 6,
+      tabs: tabs,
+      tabViews: tabViews,
+      sections: sections,
+    );
+  }
   final province = _findProvince(game, provinceId);
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
@@ -267,6 +329,24 @@ Widget _buildTileSection({
     return _buildSection('Tile', const Text('—'));
   }
   final cell = region.cellAt(x, y);
+   if (cell.visibility == TileVisibility.unrevealed) {
+    return _buildSection(
+      'Tile',
+      const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Coordinates: ???'),
+          Text('Terrain: ???'),
+          Text('Resource: ???'),
+          Text('Prospected: ???'),
+          Text('Improvement: ???'),
+          Text('Road / railroad: ???'),
+          Text('Civilian units (province): ???'),
+        ],
+      ),
+    );
+  }
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -520,4 +600,16 @@ Widget _buildSection(String title, Widget child) {
       ],
     ),
   );
+}
+
+class _ObfuscatedSection extends StatelessWidget {
+  const _ObfuscatedSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildSection(
+      '',
+      const Text('???'),
+    );
+  }
 }

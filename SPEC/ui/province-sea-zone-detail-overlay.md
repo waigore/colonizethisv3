@@ -43,6 +43,18 @@ When the user hovers a tile on the map (with overlay open), this section shows t
 - **Road / railroad:** Road level (none, primitive, improved, port or railroad).
 - **Civilian units (province):** Count of civilian units in the tile’s province.
 
+#### Visibility and obfuscation (player-constrained views)
+
+When the map widget is in **player-constrained visibility mode** and the overlay is driven by a tile or province that the human player has never seen, the overlay must obfuscate details rather than leaking information:
+
+- **Per-tile (Tile section):**
+  - For tiles whose `CellViewData.visibility` is `visible` or `fogged`, the Tile section shows full details as listed above.
+  - For tiles whose `CellViewData.visibility` is `unrevealed`, the Tile section still shows the heading "Tile" but replaces all data fields (coordinates, terrain, resource, prospected, improvement, road/railroad, civilian units in province) with the literal placeholder text `???`.
+- **Per-province (all sections):**
+  - A province is treated as **fully unrevealed** when every tile in that province (all cells where `regionCellId` equals the province’s local id) has `visibility == TileVisibility.unrevealed` in the current `RegionMapViewData`.
+  - When a fully unrevealed province is selected, the overlay may still open (taps are allowed), but all content sections (Tile, Political, Economic, Military, Civilian, Naval) must replace data values with the literal placeholder text `???` while still indicating that a province is selected.
+  - Provinces that contain at least one tile with visibility `visible` or `fogged` are treated as **known**; the overlay shows full data for those provinces.
+
 ### Political
 
 - Province name (or prefixed id fallback)
@@ -96,6 +108,12 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 - **Given** the overlay lists tile coordinates, **when** the user hovers over a coordinate, **then** a secondary highlight appears on the map over that tile.
 - **Given** a mobile viewport, **when** the overlay is shown, **then** it appears as a bottom sheet with tabs and does not exceed one-third of screen height.
 - **Given** a desktop viewport, **when** the overlay is shown, **then** it appears as a side panel.
+
+- **Given** the map widget is in player-constrained visibility mode and the user hovers a tile whose `CellViewData.visibility` is `unrevealed`, **when** the overlay’s Tile section is rendered, **then** the UI layer shows the heading "Tile" and replaces all Tile data fields (coordinates, terrain, resource, prospected, improvement, road/railroad, civilian units in province) with the literal text `???`.
+
+- **Given** the map widget is in player-constrained visibility mode and the user taps a province where every tile in that province has `CellViewData.visibility == TileVisibility.unrevealed`, **when** the overlay is shown for that province, **then** the UI layer displays all content sections (Tile, Political, Economic, Military, Civilian, Naval) with data values obfuscated as `???` while still indicating that a province is selected.
+
+- **Given** the map widget is in player-constrained visibility mode and the user taps a province that contains at least one tile with `CellViewData.visibility` equal to `visible` or `fogged`, **when** the overlay is shown for that province, **then** the UI layer displays full province content (Political, Economic, Military, Civilian, Naval) without replacing values with `???`.
 
 ### Widgetbook
 

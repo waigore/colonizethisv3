@@ -24,7 +24,8 @@ Diplomacy screen for managing relations with other Great Powers, Minor Nations, 
 - **Then** display all factions showing:
   - Faction name and type (Great Power / Minor Nation / Tribe)
   - Relation state (AT_PEACE / AT_WAR) with the player
-  - Relation level (Hostile / Neutral / Friendly / Allied)
+  - **One-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden relation score per SPEC/game/diplomacy.md § Player-facing relation display. The numeric relation score is **not** shown.
+  - **For Great Powers:** **power score** per SPEC/game/diplomacy.md § Great Power power score; if the GP’s score is higher than the player’s, shown in **red**, otherwise in **green**.
   - Overture stage (for Minors/Tribes: none, Consulate, Embassy, NAP, Join Empire/Colony)
 
 ### Great Power Relations
@@ -32,8 +33,9 @@ Diplomacy screen for managing relations with other Great Powers, Minor Nations, 
 - **Given** the user selects a Great Power
 - **When** viewing the relation details
 - **Then** show:
-  - Current relation state and score (0-100)
-  - Relation level derived from score
+  - Current relation state (AT_PEACE / AT_WAR)
+  - **One-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden relation score per SPEC/game/diplomacy.md § Player-facing relation display. Do **not** show the numeric score or internal relation level.
+  - **Power score** per SPEC/game/diplomacy.md § Great Power power score; if the GP’s score is higher than the player’s, shown in **red**, otherwise in **green**.
   - SinceTurn (when current state began)
   - LastInteractionTurn
 
@@ -127,7 +129,7 @@ Diplomacy screen for managing relations with other Great Powers, Minor Nations, 
 - [ ] Diplomacy screen displays title
 - [ ] All factions are listed with type, name, relation state
 - [ ] User can select a faction via keyboard
-- [ ] Selected faction shows relation details (score, level, sinceTurn, overture)
+- [ ] Selected faction shows relation details (one-word relation state, sinceTurn, overture); numeric score is not shown.
 - [ ] User can issue Declare War order to GP at AT_PEACE
 - [ ] User can issue Offer Peace order to GP at AT_WAR
 - [ ] User can propose/accept Alliance with GP at Allied level

@@ -3,19 +3,31 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 const int defaultResearchSlots = 3;
 
+// --- Research points (RP) per turn and treasury cost per turn. SPEC/game/tech-tree.md, research-resolution. ---
+
+const int researchPointsLow = 100;
+const int researchPointsMedium = 300;
+const int researchPointsHigh = 800;
+/// Maximum funding has 2.5x efficiency bonus.
+const int researchPointsMaximum = 2500;
+
+const int researchTreasuryCostLow = 50;
+const int researchTreasuryCostMedium = 150;
+const int researchTreasuryCostHigh = 400;
+const int researchTreasuryCostMaximum = 1000;
+
 int pointsForFunding(ResearchFundingLevel level) {
   switch (level) {
     case ResearchFundingLevel.none:
       return 0;
     case ResearchFundingLevel.low:
-      return 100;
+      return researchPointsLow;
     case ResearchFundingLevel.medium:
-      return 300;
+      return researchPointsMedium;
     case ResearchFundingLevel.high:
-      return 800;
+      return researchPointsHigh;
     case ResearchFundingLevel.maximum:
-      // Maximum funding has 2.5x efficiency bonus
-      return 2500;
+      return researchPointsMaximum;
   }
 }
 
@@ -24,13 +36,13 @@ int treasuryCostForFunding(ResearchFundingLevel level) {
     case ResearchFundingLevel.none:
       return 0;
     case ResearchFundingLevel.low:
-      return 50;
+      return researchTreasuryCostLow;
     case ResearchFundingLevel.medium:
-      return 150;
+      return researchTreasuryCostMedium;
     case ResearchFundingLevel.high:
-      return 400;
+      return researchTreasuryCostHigh;
     case ResearchFundingLevel.maximum:
-      return 1000;
+      return researchTreasuryCostMaximum;
   }
 }
 

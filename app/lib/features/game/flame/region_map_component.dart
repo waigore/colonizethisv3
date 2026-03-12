@@ -89,16 +89,14 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   /// Handles a tap at the given world-space position.
+  /// Reports province selection and the tapped tile (so overlay can show tile
+  /// details on mobile where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
   void handleTapAtWorld(Vector2 worldPosition) {
     final local = worldPosition - absoluteTopLeftPosition;
     final x = (local.x / cellSize).floor();
     final y = (local.y / cellSize).floor();
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
     final cell = region.cellAt(x, y);
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed) {
-      return;
-    }
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       if (validTileKeys!.contains(tileKey)) {
@@ -112,6 +110,8 @@ class CtRegionMapComponent extends PositionComponent {
     }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onProvinceSelected?.call(provinceId);
+    // So overlay Tile section shows tapped tile on mobile (no hover).
+    onTileHovered?.call(tileKey);
   }
 
   @override
@@ -202,7 +202,7 @@ class CtRegionMapComponent extends PositionComponent {
           case TileVisibility.visible:
             break;
           case TileVisibility.fogged:
-            finalColor = Color.lerp(baseColor, Colors.grey.shade700, 0.5)!;
+            finalColor = Color.lerp(baseColor, Colors.black, 0.7)!;
             break;
           case TileVisibility.unrevealed:
             finalColor = Colors.black;

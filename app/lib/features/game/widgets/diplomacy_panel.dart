@@ -19,6 +19,8 @@ class DiplomacyRowData {
     required this.relation,
     this.overture,
     required this.actions,
+    this.powerScore,
+    this.playerPowerScore,
   });
 
   final String factionId;
@@ -27,6 +29,10 @@ class DiplomacyRowData {
   final DiplomacyRelation? relation;
   final OvertureState? overture;
   final List<DiplomaticOrder> actions;
+  /// Great Power power score (SPEC/game/diplomacy.md). Only set for GP rows.
+  final int? powerScore;
+  /// Human player's power score for comparison (red if GP score > this). Only set for GP rows.
+  final int? playerPowerScore;
 }
 
 /// Builds list of discovered factions and their available actions.
@@ -83,6 +89,7 @@ List<DiplomacyRowData> buildDiplomacyRows(
   }
 
   List<DiplomacyRowData> rows = [];
+  final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
     rows.add(DiplomacyRowData(
       factionId: id,
@@ -91,6 +98,8 @@ List<DiplomacyRowData> buildDiplomacyRows(
       relation: view.diplomacyByOtherId[id],
       overture: getOverture(game, humanPlayerId, id),
       actions: actionsByTarget[id] ?? [],
+      powerScore: greatPowerPowerScore(game, id),
+      playerPowerScore: playerPower,
     ));
   }
   minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
@@ -102,6 +111,8 @@ List<DiplomacyRowData> buildDiplomacyRows(
       relation: view.diplomacyByOtherId[id],
       overture: getOverture(game, humanPlayerId, id),
       actions: actionsByTarget[id] ?? [],
+      powerScore: null,
+      playerPowerScore: null,
     ));
   }
   tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
@@ -113,6 +124,8 @@ List<DiplomacyRowData> buildDiplomacyRows(
       relation: view.diplomacyByOtherId[id],
       overture: getOverture(game, humanPlayerId, id),
       actions: actionsByTarget[id] ?? [],
+      powerScore: null,
+      playerPowerScore: null,
     ));
   }
   return rows;
@@ -257,8 +270,8 @@ class _DiplomacyRow extends StatelessWidget {
         : rel.atWar
             ? 'War'
             : 'Peace';
-    final levelLabel = rel == null ? '' : _relationLevelLabel(rel.level);
-    final scoreLabel = rel == null ? '' : ' (${rel.score})';
+    // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
+    final relationStateLabel = rel == null ? '' : relationScoreToDisplayLabel(rel.score);
     final overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
@@ -285,11 +298,26 @@ class _DiplomacyRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       _kindChip(context, data.kind),
+                      if (data.powerScore != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'Power: ${data.powerScore}',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: data.playerPowerScore != null &&
+                                        data.powerScore! > data.playerPowerScore!
+                                    ? Colors.red
+                                    : Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$stateLabel$levelLabel$scoreLabel$overtureLabel',
+                    relationStateLabel.isEmpty
+                        ? '$stateLabel$overtureLabel'
+                        : '$stateLabel · $relationStateLabel$overtureLabel',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -331,15 +359,6 @@ class _DiplomacyRow extends StatelessWidget {
             ),
       ),
     );
-  }
-
-  String _relationLevelLabel(RelationLevel level) {
-    return switch (level) {
-      RelationLevel.hostile => 'Hostile',
-      RelationLevel.neutral => 'Neutral',
-      RelationLevel.friendly => 'Friendly',
-      RelationLevel.allied => 'Allied',
-    };
   }
 
   String _overtureStageLabel(OvertureStage stage) {

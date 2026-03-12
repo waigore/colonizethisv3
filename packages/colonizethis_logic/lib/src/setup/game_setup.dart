@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 
 import 'capital_choice.dart';
 import '../constants.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
@@ -186,7 +187,7 @@ GameSetupResult createGameFromGeneratedMaps({
         DiplomacyRelation(
           factionId1: allOldWorldIds[i],
           factionId2: allOldWorldIds[j],
-          score: 50,
+          score: relationScoreNeutral,
           level: RelationLevel.neutral,
           state: RelationState.atPeace,
           sinceTurn: 0,
@@ -198,7 +199,7 @@ GameSetupResult createGameFromGeneratedMaps({
         DiplomacyRelation(
           factionId1: allNewWorldIds[i],
           factionId2: allNewWorldIds[j],
-          score: 50,
+          score: relationScoreNeutral,
           level: RelationLevel.neutral,
           state: RelationState.atPeace,
           sinceTurn: 0,
