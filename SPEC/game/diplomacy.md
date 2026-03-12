@@ -167,6 +167,14 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
+- Given the user views the diplomacy panel (app or TUI) for a discovered faction with a diplomatic relation  
+  When the panel displays the current relation  
+  Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
+
+- Given the user views the diplomacy panel and the list includes at least one other Great Power  
+  When the panel displays each Great Power row  
+  Then the system shows that GP’s **power score** per the Great Power power score formula (province count, regiment strength, ship count with default weights). If that GP’s score is **greater** than the human player’s power score, the value is shown in **red**; otherwise in **green**.
+
 ## Configurable Values
 
 | Parameter | Default | Notes |
@@ -180,6 +188,30 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Embassy cost | £1000 | |
 | Join Empire base cost | £5000 | One-time cost when enacting Join Empire. |
 | Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
+
+### Player-facing relation display
+
+The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI (app or TUI). Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
+
+The diplomacy panel (app and ctterm) shows instead a **one-word relation state** derived from the score:
+
+| Score range | Display label |
+|-------------|---------------|
+| 0–29 | Hostile |
+| 30–49 | Unfriendly |
+| 50–69 | Cordial |
+| 70–100 | Friendly |
+
+Same mapping for both Flutter app and TUI. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+
+### Great Power power score
+
+An **absolute power score** is computed for each Great Power for display on the diplomacy panel. It reflects territorial, land, and naval strength.
+
+- **Formula:** `powerScore = provinceCount × W_province + round(regimentStrength) × W_regiment + shipCount × W_ship`
+- **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
+- **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
+- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**. Same formula and display rule for app and TUI where applicable.
 
 ### Where defined (MVP)
 

@@ -4,6 +4,7 @@ import 'package:logger/logger.dart' as log_pkg;
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = log_pkg.Logger();
@@ -21,6 +22,10 @@ class FactionDisplayInfo {
   final int? relationScore;
   final OvertureStage? overtureStage;
   final int? relationLastInteractionTurn;
+  /// Great Power power score. Only set for GP rows. SPEC/game/diplomacy.md § Great Power power score.
+  final int? powerScore;
+  /// Human player's power score for red/green comparison. Only set for GP rows.
+  final int? playerPowerScore;
 
   const FactionDisplayInfo({
     required this.id,
@@ -31,6 +36,8 @@ class FactionDisplayInfo {
     this.relationScore,
     this.overtureStage,
     this.relationLastInteractionTurn,
+    this.powerScore,
+    this.playerPowerScore,
   });
 }
 
@@ -81,6 +88,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
   void _loadFactions() {
     final factions = <FactionDisplayInfo>[];
     final humanId = _humanPlayerId;
+    final playerPower = greatPowerPowerScore(component.game, humanId);
 
     // Add Great Powers (exclude human player from list, show others)
     for (final player in component.game.players) {
@@ -95,6 +103,8 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
         relationLevel: relation?.level,
         relationScore: relation?.score,
         relationLastInteractionTurn: relation?.lastInteractionTurn,
+        powerScore: greatPowerPowerScore(component.game, player.id),
+        playerPowerScore: playerPower,
       ));
     }
 
@@ -796,6 +806,18 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
                               ),
                               const SizedBox(width: 1),
                               _buildRelationIndicator(faction),
+                              if (faction.powerScore != null) ...[
+                                const SizedBox(width: 1),
+                                Text(
+                                  'P:${faction.powerScore}',
+                                  style: TextStyle(
+                                    color: faction.playerPowerScore != null &&
+                                            faction.powerScore! > faction.playerPowerScore!
+                                        ? Colors.red
+                                        : Colors.green,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -842,15 +864,20 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       }
     }
     
+    // SPEC/game/diplomacy.md § Player-facing relation display: one-word state from score.
+    final displayLabel = faction.relationScore != null
+        ? relationScoreToDisplayLabel(faction.relationScore!)
+        : null;
+    
     Color color;
     if (faction.relationState == RelationState.atWar) {
       color = Colors.red;
-    } else if (faction.relationLevel == RelationLevel.allied) {
-      color = Colors.cyan;
-    } else if (faction.relationLevel == RelationLevel.friendly) {
+    } else if (displayLabel == 'Friendly') {
       color = Colors.green;
-    } else if (faction.relationLevel == RelationLevel.hostile) {
+    } else if (displayLabel == 'Hostile') {
       color = Colors.red;
+    } else if (displayLabel == 'Cordial') {
+      color = Colors.cyan;
     } else {
       color = Colors.gray;
     }
@@ -877,12 +904,19 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
           const SizedBox(height: 1),
           if (faction.type == FactionType.greatPower) ...[
             Text('Relation: ${faction.relationState?.name ?? "unknown"}'),
-            Text('Score: ${faction.relationScore ?? 50}'),
-            Text('Level: ${faction.relationLevel?.name ?? "neutral"}'),
+            Text('State: ${faction.relationScore != null ? relationScoreToDisplayLabel(faction.relationScore!) : "unknown"}'),
+            Text(
+              'Power: ${faction.powerScore ?? "—"}',
+              style: TextStyle(
+                color: faction.powerScore != null && faction.playerPowerScore != null &&
+                        faction.powerScore! > faction.playerPowerScore!
+                    ? Colors.red
+                    : Colors.green,
+              ),
+            ),
           ] else ...[
             Text('Relation: ${faction.relationState?.name ?? "unknown"}'),
-            Text('Score: ${faction.relationScore ?? "unknown"}'),
-            Text('Level: ${faction.relationLevel?.name ?? "neutral"}'),
+            Text('State: ${faction.relationScore != null ? relationScoreToDisplayLabel(faction.relationScore!) : "unknown"}'),
             Text('Overture: ${_formatOvertureStage(faction.overtureStage)}'),
           ],
           const SizedBox(height: 1),
