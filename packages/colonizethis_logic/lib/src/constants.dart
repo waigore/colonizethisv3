@@ -6,6 +6,7 @@ const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
 /// Resource ids that count as minerals for work/purchase rules.
+/// Shared across extraction, work orders, and order application helpers.
 const Set<String> kMineralResourceIds = {
   'iron',
   'copper',

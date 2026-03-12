@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../constants.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
-import '../../constants.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import 'work_order_cost_calculator.dart';
