@@ -24,6 +24,8 @@ void main() {
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
     String? centerOnTileKey,
     void Function(String)? onProvinceSelected,
+    void Function(String?)? onProvinceHovered,
+    void Function(String?)? onTileHovered,
     VoidCallback? onRegionViewChanged,
   }) {
     return MaterialApp(
@@ -39,6 +41,8 @@ void main() {
               visibilityMode: visibilityMode,
               centerOnTileKey: centerOnTileKey,
               onProvinceSelected: onProvinceSelected,
+              onProvinceHovered: onProvinceHovered,
+              onTileHovered: onTileHovered,
               onRegionViewChanged: onRegionViewChanged,
             ),
           ),
@@ -344,6 +348,63 @@ void main() {
         await tester.pump();
 
         expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tap on map invokes onProvinceSelected with prefixed province id (mobile/touch)',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        String? selectedId;
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onProvinceSelected: (id) => selectedId = id,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedId, isNotNull);
+        expect(selectedId!, startsWith('${region.regionId}|'));
+        expect(selectedId!.split('|').length, 2);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tap invokes onTileHovered with tapped tile key so overlay shows tile on mobile',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        String? selectedId;
+        String? hoveredTileKey;
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onProvinceSelected: (id) => selectedId = id,
+            onTileHovered: (key) => hoveredTileKey = key,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedId, isNotNull);
+        expect(hoveredTileKey, isNotNull);
+        final parts = hoveredTileKey!.split('|');
+        expect(parts.length, 4);
+        expect(parts[0], region.regionId);
+        expect(parts[1], selectedId!.split('|').last);
+        expect(int.tryParse(parts[2]), isNotNull);
+        expect(int.tryParse(parts[3]), isNotNull);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

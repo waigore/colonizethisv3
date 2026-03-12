@@ -21,6 +21,48 @@ void main() {
       );
       expect(provinceCountOwnedBy(game, 'minor1'), 3);
     });
+
+    test('shipCountForFaction sums shipTypeIds length over owned fleets', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(id: 'f1', ownerId: 'gp1', regionId: 'oldWorld', shipTypeIds: ['carrack', 'carrack', 'fluyte']),
+            Fleet(id: 'f2', ownerId: 'gp2', regionId: 'oldWorld', shipTypeIds: ['carrack']),
+          ],
+        ),
+        players: const [],
+      );
+      expect(shipCountForFaction(game, 'gp1'), 3);
+      expect(shipCountForFaction(game, 'gp2'), 1);
+      expect(shipCountForFaction(game, 'gp3'), 0);
+    });
+
+    test('greatPowerPowerScore uses provinces, regiment strength, ships per SPEC', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(id: 'f1', ownerId: 'gp1', regionId: 'oldWorld', shipTypeIds: ['carrack']),
+          ],
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+      );
+      // 2 provinces * 10 + 0 regiment + 1 ship * 5 = 25
+      expect(greatPowerPowerScore(game, 'gp1'), 25);
+    });
     test('inserts new relation when pair absent', () {
       final relations = <DiplomacyRelation>[];
       final result = upsertRelation(relations, 'gp1', 'gp2', (existing) {

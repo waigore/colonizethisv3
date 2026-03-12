@@ -38,7 +38,7 @@ Apply these when working in the indicated areas (by path or topic).
 2. **Code style:** Strict Dart, logger (no `print`), thin screens, single responsibility. Province lookup: always `(regionId, provinceId)` or prefixed id.
 3. **When touching UI:** Wireframes in spec; Widgetbook + catalog; pixel art per UXD (exact prompts in spec; check assets first, don’t regenerate if suitable asset exists); Flame for canvas, Flutter for shell/overlays/menus.
 4. **When adding a tool:** Thin facade in `tool/<name>`; logic in packages; Melos script and `docs/project-tools.md` updated.
-5. **When writing tests:** 90% per package; unit/widget/game-component layers; cover combat, economy, save/load, ruleset loading.
+5. **When writing tests:** 90% per package; unit/widget/game-component layers; cover combat, economy, save/load, ruleset loading. **App/ctdev widget tests:** run with `flutter test` from app/ (or `melos run test_app`); do not use `dart test app/...`.
 6. **When file logging:** Use **basic_logger_file** (BasicLogger + FileOutputLogger); do not implement custom file logging.
 7. **When reviewing/generating code:** Use the code-review checklist (lengths, types, spec, logging, reuse, tests).
 
