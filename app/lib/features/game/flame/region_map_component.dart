@@ -97,10 +97,6 @@ class CtRegionMapComponent extends PositionComponent {
     final y = (local.y / cellSize).floor();
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
     final cell = region.cellAt(x, y);
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed) {
-      return;
-    }
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       if (validTileKeys!.contains(tileKey)) {
@@ -206,7 +202,7 @@ class CtRegionMapComponent extends PositionComponent {
           case TileVisibility.visible:
             break;
           case TileVisibility.fogged:
-            finalColor = Color.lerp(baseColor, Colors.grey.shade700, 0.5)!;
+            finalColor = Color.lerp(baseColor, Colors.black, 0.7)!;
             break;
           case TileVisibility.unrevealed:
             finalColor = Colors.black;
