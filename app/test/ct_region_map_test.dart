@@ -5,12 +5,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgets/region_map_debug.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
+
+  group('debug init Old World region', () {
+    test('returns region with correct dimensions and cell count', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.regionId, 'oldWorld');
+      expect(region.width, greaterThanOrEqualTo(8));
+      expect(region.height, greaterThanOrEqualTo(8));
+      expect(region.cells.length, region.width * region.height);
+      expect(region.cellSize, 24);
+    });
+
+    test('has terrain and faction colors', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.terrainColors.length, greaterThanOrEqualTo(1));
+      expect(region.factionColors.length, greaterThanOrEqualTo(2));
+    });
+
+    test('has at least one capital marker', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.capitalMarkers.length, greaterThanOrEqualTo(1));
+    });
+
+    test('has both sea and land cells with provinces', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      final seaCount = region.cells.where((c) => c.isSea).length;
+      final landCount = region.cells.where((c) => !c.isSea).length;
+      expect(seaCount, greaterThan(0));
+      expect(landCount, greaterThan(0));
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      expect(landCell.regionCellId, startsWith('p'));
+      expect(landCell.terrainType, isNotNull);
+    });
+
+    test('land cells may have improvement and road levels', () {
+      final region = getDebugInitGameResult().mapViewData.oldWorld;
+      expect(region.cells.any((c) => !c.isSea), isTrue);
+    });
+  });
 
   RegionMapViewData _oldWorldRegion() =>
       getDebugInitGameResult().mapViewData.oldWorld;
@@ -405,6 +442,32 @@ void main() {
         expect(parts[1], selectedId!.split('|').last);
         expect(int.tryParse(parts[2]), isNotNull);
         expect(int.tryParse(parts[3]), isNotNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tap also drives hover selector on mobile (no crash path)',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        String? hoveredTileKey;
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onTileHovered: (key) => hoveredTileKey = key,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        // The game wrapper translates tap into a world-position tap; as long as
+        // we get a hovered tile key back, the Flame component has updated its
+        // internal hover state for the tapped tile (selector + glow).
+        expect(hoveredTileKey, isNotNull);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

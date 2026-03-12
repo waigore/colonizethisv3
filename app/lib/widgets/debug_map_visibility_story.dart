@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'ct_region_map.dart';
 import 'debug_init_game.dart';
-import 'region_map_debug.dart';
 
 /// Builds InitGameMapViewData for the debug init game result, enriching it with
 /// per-tile visibility derived from the first player's PlayerView. Used by map
