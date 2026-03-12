@@ -408,6 +408,62 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
+
+    testWidgets(
+      'tap still selects province when all tiles are unrevealed in player-constrained mode',
+      (WidgetTester tester) async {
+        final base = _oldWorldRegion();
+        final unrevealedCells = base.cells
+            .map(
+              (c) => CellViewData(
+                x: c.x,
+                y: c.y,
+                regionCellId: c.regionCellId,
+                isSea: c.isSea,
+                terrainTypeId: c.terrainTypeId,
+                terrainType: c.terrainType,
+                resourceId: c.resourceId,
+                ownerFactionId: c.ownerFactionId,
+                provinceDisplayName: c.provinceDisplayName,
+                improvementLevel: c.improvementLevel,
+                roadLevel: c.roadLevel,
+                visibility: TileVisibility.unrevealed,
+              ),
+            )
+            .toList();
+        final region = RegionMapViewData(
+          regionId: base.regionId,
+          width: base.width,
+          height: base.height,
+          cellSize: base.cellSize,
+          cells: unrevealedCells,
+          capitalMarkers: base.capitalMarkers,
+          portMarkers: base.portMarkers,
+          factionColors: base.factionColors,
+          terrainColors: base.terrainColors,
+          unitMarkers: base.unitMarkers,
+        );
+
+        String? selectedId;
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            onProvinceSelected: (id) => selectedId = id,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedId, isNotNull);
+        expect(selectedId!, startsWith('${region.regionId}|'));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
   });
 }
 
