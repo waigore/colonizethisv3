@@ -720,8 +720,9 @@ Game _processOngoingSubsidies(Game game, int turn) {
           .copyWith(treasury: players[payerIdx].treasury - amount);
     }
 
-    // Calculate relation boost: +2 per 500 ducats, max +8
-    final boost = ((amount ~/ 500) * 2).clamp(0, 8);
+    // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
+    final boost = ((amount ~/ subsidyBoostDucatsPerStep) * subsidyBoostRelationPerStep)
+        .clamp(0, subsidyBoostMax);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
     if (isMinorOrTribe(game, targetId)) {

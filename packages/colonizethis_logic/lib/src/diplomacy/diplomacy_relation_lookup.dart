@@ -87,6 +87,11 @@ const int relationScoreWarDelta = 10;
 /// Suggested grant/subsidy amount for AI order suggestion when GP has embassy/consulate.
 const int suggestedGrantOrSubsidyAmount = 100;
 
+/// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].
+const int subsidyBoostDucatsPerStep = 500;
+const int subsidyBoostRelationPerStep = 2;
+const int subsidyBoostMax = 8;
+
 /// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
 RelationLevel scoreToLevel(int score) {
   if (score <= relationScoreLevelHostileMax) return RelationLevel.hostile;
