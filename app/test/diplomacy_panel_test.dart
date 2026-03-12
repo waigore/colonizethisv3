@@ -94,6 +94,28 @@ void main() {
       );
     });
 
+    testWidgets('AC: One-word relation state shown (Hostile/Unfriendly/Cordial/Friendly), score hidden',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        game: gameWithFactions,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+      ));
+      await tester.pumpAndSettle();
+
+      // SPEC/game/diplomacy.md § Player-facing relation display: panel shows one-word state.
+      final displayLabels = ['Hostile', 'Unfriendly', 'Cordial', 'Friendly'];
+      final hasDisplayLabel = displayLabels.any(
+        (label) => find.textContaining(label).evaluate().isNotEmpty,
+      );
+      expect(hasDisplayLabel, isTrue, reason: 'Panel must show one of $displayLabels');
+
+      // Numeric relation score must not be shown (hidden variable). Old UI showed " (50)" for score.
+      expect(find.textContaining(' (50)'), findsNothing);
+      // Old level labels (internal) must not appear as relation label.
+      expect(find.text('Neutral'), findsNothing);
+    });
+
     testWidgets('AC: Action buttons present for factions',
         (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
@@ -165,6 +187,17 @@ void main() {
   });
 
   group('buildDiplomacyRows', () {
+    test('display mapping aligned with SPEC (relationScoreToDisplayLabel bands)', () {
+      expect(relationScoreToDisplayLabel(0), 'Hostile');
+      expect(relationScoreToDisplayLabel(29), 'Hostile');
+      expect(relationScoreToDisplayLabel(30), 'Unfriendly');
+      expect(relationScoreToDisplayLabel(49), 'Unfriendly');
+      expect(relationScoreToDisplayLabel(50), 'Cordial');
+      expect(relationScoreToDisplayLabel(69), 'Cordial');
+      expect(relationScoreToDisplayLabel(70), 'Friendly');
+      expect(relationScoreToDisplayLabel(100), 'Friendly');
+    });
+
     test('returns empty list when player has no relations', () {
       final rows = buildDiplomacyRows(
         gameWithNoDiscovered,
@@ -190,6 +223,25 @@ void main() {
         final strB = aggregateMilitaryStrengthForPlayer(
             gameWithFactions, gpRows[i + 1].factionId);
         expect(strA >= strB, isTrue);
+      }
+    });
+
+    test('GP rows have power score and player power score set', () {
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final gpRows = rows.where((r) => r.kind == FactionKind.greatPower).toList();
+      for (final r in gpRows) {
+        expect(r.powerScore, isNotNull, reason: 'GP row ${r.displayName}');
+        expect(r.playerPowerScore, isNotNull, reason: 'GP row ${r.displayName}');
+      }
+      final nonGp = rows.where((r) => r.kind != FactionKind.greatPower);
+      for (final r in nonGp) {
+        expect(r.powerScore, isNull);
+        expect(r.playerPowerScore, isNull);
       }
     });
   });

@@ -3,6 +3,8 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../combat/military_strength.dart';
+
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
 const int overtureEmbassyCost = 1000;
@@ -23,6 +25,31 @@ int provinceCountOwnedBy(Game game, String factionId) {
   return count;
 }
 
+/// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
+const int powerScoreProvinceWeight = 10;
+const int powerScoreRegimentWeight = 1;
+const int powerScoreShipWeight = 5;
+
+/// Total number of ships (sum of shipTypeIds.length) over all fleets owned by [factionId].
+int shipCountForFaction(Game game, String factionId) {
+  var count = 0;
+  for (final f in game.worldState.fleets) {
+    if (f.ownerId == factionId) count += f.shipTypeIds.length;
+  }
+  return count;
+}
+
+/// Absolute power score for a Great Power. SPEC/game/diplomacy.md § Great Power power score.
+/// Formula: provinceCount×W_province + round(regimentStrength)×W_regiment + shipCount×W_ship.
+int greatPowerPowerScore(Game game, String factionId) {
+  final provinces = provinceCountOwnedBy(game, factionId);
+  final regimentStrength = aggregateMilitaryStrengthForPlayer(game, factionId);
+  final ships = shipCountForFaction(game, factionId);
+  return provinces * powerScoreProvinceWeight +
+      regimentStrength.round() * powerScoreRegimentWeight +
+      ships * powerScoreShipWeight;
+}
+
 /// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
 int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
   final n = provinceCountOwnedBy(game, targetId);
@@ -35,6 +62,16 @@ RelationLevel scoreToLevel(int score) {
   if (score <= 50) return RelationLevel.neutral;
   if (score <= 75) return RelationLevel.friendly;
   return RelationLevel.allied;
+}
+
+/// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
+/// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
+String relationScoreToDisplayLabel(int score) {
+  final clamped = score.clamp(0, 100);
+  if (clamped <= 29) return 'Hostile';
+  if (clamped <= 49) return 'Unfriendly';
+  if (clamped <= 69) return 'Cordial';
+  return 'Friendly';
 }
 
 /// Normalizes faction pair for lookup (consistent ordering).
