@@ -21,8 +21,9 @@ The civilian units panel gives the player a single place to see every civilian u
 ## Panel placement and opening
 
 - **Access:** The panel is opened from the in-game shell **toolbar**, in the same way as the Production panel (e.g. a toolbar button such as "Civilian Units" or "Units" that opens the panel).
-- **Desktop / wide viewport:** Panel appears as a side panel (e.g. right side) or bottom sheet so the map remains visible. Max height or scroll so content fits.
-- **Mobile / narrow viewport:** Panel appears as a bottom sheet or full-width overlay so it is usable on small screens. See [mobile-adaptation.md](mobile-adaptation.md) for touch targets.
+- **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
+- **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
+- **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
 
 ---
 
@@ -88,7 +89,7 @@ For each civilian unit, the panel shows:
 
 - **Given** the panel is displayed, **when** there are civilian units in more than one region, **then** the UI layer groups units by region with a region heading for each group and lists units within each group in a stable order (e.g. by province name, then unit type, then unit id).
 
-- **Given** the user opens the Civilian Units panel on a narrow viewport (e.g. width < 600 dp), **when** the panel is displayed, **then** the UI layer presents the panel in a layout appropriate for mobile (e.g. bottom sheet or full-width overlay) per [mobile-adaptation.md](mobile-adaptation.md).
+- **Given** the user opens the Civilian Units panel, **when** the panel is displayed, **then** the UI layer presents it as a **bottom sheet** that appears from the bottom edge (slides up), so the map remains visible above; on narrow viewports layout and touch targets follow [mobile-adaptation.md](mobile-adaptation.md).
 
 - **Given** the Civilian Units panel is open and a unit has `Unit.status == idle` and no pending work order for the human player this turn, **when** the user views that unit's row, **then** the UI layer shows an **Assign** button (or equivalent control).
 
@@ -116,7 +117,9 @@ For each civilian unit, the panel shows:
 ## Widgetbook
 
 - **Standalone story:** A Widgetbook use case shows the Civilian Units panel **standalone** (panel only, no map). Uses demo data (e.g. a game with a subset of civilian units) so the list, grouping, status, location (province name + region), and assigned-to content can be reviewed in isolation.
-- **With map story:** A Widgetbook use case shows the Civilian Units panel **in tandem with the map** using a **real generated map and initialized game** (e.g. `getDebugInitGameResult()`). The story demonstrates: opening the panel; listing units grouped by region with province name and region; clicking a unit to highlight and pan/center the map and switch region tab; **Assign** for an idle unit (order menu → select order → map shows valid tiles with subtle glow → click valid tile to assign or click elsewhere to cancel); **Cancel** for a unit with work (confirm dialog → confirm to cancel pending or in-progress work).
+- **With map story:** A Widgetbook use case shows the Civilian Units panel **in tandem with the map** with the panel **at the bottom** (same placement as province overlay "With map"): map above, panel below in a column, using a real generated map and initialized game (e.g. `getDebugInitGameResult()`). The story demonstrates: listing units grouped by region with province name and region; clicking a unit to highlight and pan/center the map and switch region tab; **Assign** and **Cancel** flows.
+- **As bottom sheet story:** A Widgetbook use case shows a toolbar button that opens the Civilian Units panel as a **modal bottom sheet** (slide up from the bottom), matching in-game shell behaviour.
 - **Acceptance criteria (Widgetbook):**
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "Standalone" use case, **then** the UI layer displays only the Civilian Units panel (no map) with demo data, so that layout and row content (status, location as province name + region, assigned-to) can be verified.
-  - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the panel alongside a map built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work (order menu → valid tiles glow → tile click to assign or click elsewhere to cancel), and cancel work (confirm dialog) so that the full assign/cancel flow is demonstrable with a real game and map.
+  - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the map above and the Civilian Units panel **at the bottom** (bottom placement like province overlay), built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work, and cancel work so that the full flow is demonstrable.
+  - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "As bottom sheet" use case and taps the button, **then** the panel opens as a bottom sheet that slides up from the bottom edge.
