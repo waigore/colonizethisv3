@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+
 /// Helpers for order application. SPEC/program/orders.md, development-resolution.
 /// Used by orders_application for work and build phases.
 
@@ -38,15 +40,5 @@ bool isMineralEligibleTile(
   if (resourceId == null || resourceId.isEmpty) {
     return false;
   }
-  const mineralIds = {
-    'iron',
-    'copper',
-    'tin',
-    'coal',
-    'silver',
-    'gold',
-    'gems',
-    'diamonds',
-  };
-  return mineralIds.contains(resourceId);
+  return kMineralResourceIds.contains(resourceId);
 }

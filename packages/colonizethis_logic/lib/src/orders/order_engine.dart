@@ -132,84 +132,36 @@ class OrderEngine {
   static Map<String, List<MoveOrder>> _moveOrders(Orders o) =>
       o.moveOrdersByPlayerId;
   static Orders _withMoveOrders(Orders o, Map<String, List<MoveOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: m,
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: o.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId,
-      );
+      o.copyWith(moveOrdersByPlayerId: m);
 
   static Map<String, List<BuildUnitOrder>> _buildOrders(Orders o) =>
       o.buildUnitOrdersByPlayerId;
   static Orders _withBuildOrders(
           Orders o, Map<String, List<BuildUnitOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId: m,
-        workOrdersByPlayerId: o.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId,
-      );
+      o.copyWith(buildUnitOrdersByPlayerId: m);
 
   static Map<String, List<WorkOrder>> _workOrders(Orders o) =>
       o.workOrdersByPlayerId;
   static Orders _withWorkOrders(Orders o, Map<String, List<WorkOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: m,
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId,
-      );
+      o.copyWith(workOrdersByPlayerId: m);
 
   static Map<String, List<DiplomaticOrder>> _diplomaticOrders(Orders o) =>
       o.diplomaticOrdersByPlayerId;
   static Orders _withDiplomaticOrders(
           Orders o, Map<String, List<DiplomaticOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: o.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId: m,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId,
-      );
+      o.copyWith(diplomaticOrdersByPlayerId: m);
 
   static Map<String, List<NavalMoveOrder>> _navalMoveOrders(Orders o) =>
       o.navalMoveOrdersByPlayerId;
   static Orders _withNavalMoveOrders(
           Orders o, Map<String, List<NavalMoveOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: o.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: m,
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId,
-      );
+      o.copyWith(navalMoveOrdersByPlayerId: m);
 
   static Map<String, List<NavalMissionOrder>> _navalMissionOrders(Orders o) =>
       o.navalMissionOrdersByPlayerId;
   static Orders _withNavalMissionOrders(
           Orders o, Map<String, List<NavalMissionOrder>> m) =>
-      Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: o.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId: m,
-      );
+      o.copyWith(navalMissionOrdersByPlayerId: m);
 
   // -- Public add/remove methods --
 
