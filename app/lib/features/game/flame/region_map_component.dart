@@ -89,6 +89,8 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   /// Handles a tap at the given world-space position.
+  /// Reports province selection and the tapped tile (so overlay can show tile
+  /// details on mobile where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
   void handleTapAtWorld(Vector2 worldPosition) {
     final local = worldPosition - absoluteTopLeftPosition;
     final x = (local.x / cellSize).floor();
@@ -112,6 +114,8 @@ class CtRegionMapComponent extends PositionComponent {
     }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onProvinceSelected?.call(provinceId);
+    // So overlay Tile section shows tapped tile on mobile (no hover).
+    onTileHovered?.call(tileKey);
   }
 
   @override

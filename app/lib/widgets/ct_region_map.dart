@@ -227,7 +227,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
 
   @override
   void onTapUp(TapUpInfo info) {
-    final world = info.eventPosition.global;
+    // Use same widget→world conversion as hover so tap works with camera zoom/pan
+    // and on mobile (where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
+    final widgetPos = info.eventPosition.widget;
+    final halfView = size / 2;
+    final world = camera.viewfinder.position + (widgetPos - halfView) / _zoom;
     _mapComponent.handleTapAtWorld(world);
     onRegionViewChanged?.call();
   }
