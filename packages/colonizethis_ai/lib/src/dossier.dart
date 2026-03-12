@@ -5,13 +5,27 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Suspicion band for display. Never exposes true agenda.
+/// Bands defined by [dossierScoreUnknownMax], [dossierScorePossibleMax], etc. SPEC/ai/ai-dossier.md.
 enum SuspicionBand {
-  unknown,   // 0–2
-  possible, // 3–5
-  likely,   // 6–8
-  almostCertain, // 9–10
-  confirmed, // 10+
+  unknown,   // 0–dossierScoreUnknownMax
+  possible, // dossierScoreUnknownMax+1 – dossierScorePossibleMax
+  likely,   // dossierScorePossibleMax+1 – dossierScoreLikelyMax
+  almostCertain, // dossierScoreLikelyMax+1 – dossierScoreAlmostCertainMax
+  confirmed, // dossierScoreAlmostCertainMax+1+
 }
+
+/// Score band thresholds for suspicion (inclusive max per band). SPEC/ai/ai-dossier.md.
+const int dossierScoreUnknownMax = 2;
+const int dossierScorePossibleMax = 5;
+const int dossierScoreLikelyMax = 8;
+const int dossierScoreAlmostCertainMax = 10;
+
+/// Confidence percent for display per band (unknown→0, possible→25, likely→60, almostCertain→85, confirmed→100).
+const int dossierConfidenceUnknown = 0;
+const int dossierConfidencePossible = 25;
+const int dossierConfidenceLikely = 60;
+const int dossierConfidenceAlmostCertain = 85;
+const int dossierConfidenceConfirmed = 100;
 
 /// Relative strength for basic intel (observer vs subject).
 enum RelativeStrength {
@@ -70,22 +84,22 @@ class DossierView {
   final List<String> timeline;
 }
 
-/// Returns suspicion band for a raw score (0–2 unknown, 3–5 possible, etc.).
+/// Returns suspicion band for a raw score (0–2 unknown, 3–5 possible, etc.). SPEC/ai/ai-dossier.md.
 SuspicionBand suspicionBandFromScore(int score) {
-  if (score <= 2) return SuspicionBand.unknown;
-  if (score <= 5) return SuspicionBand.possible;
-  if (score <= 8) return SuspicionBand.likely;
-  if (score <= 10) return SuspicionBand.almostCertain;
+  if (score <= dossierScoreUnknownMax) return SuspicionBand.unknown;
+  if (score <= dossierScorePossibleMax) return SuspicionBand.possible;
+  if (score <= dossierScoreLikelyMax) return SuspicionBand.likely;
+  if (score <= dossierScoreAlmostCertainMax) return SuspicionBand.almostCertain;
   return SuspicionBand.confirmed;
 }
 
 /// Confidence % for display from raw suspicion score. SPEC/ai/ai-dossier.md bands.
 int confidencePercentFromScore(int score) {
-  if (score <= 2) return 0;
-  if (score <= 5) return 25;
-  if (score <= 8) return 60;
-  if (score <= 10) return 85;
-  return 100;
+  if (score <= dossierScoreUnknownMax) return dossierConfidenceUnknown;
+  if (score <= dossierScorePossibleMax) return dossierConfidencePossible;
+  if (score <= dossierScoreLikelyMax) return dossierConfidenceLikely;
+  if (score <= dossierScoreAlmostCertainMax) return dossierConfidenceAlmostCertain;
+  return dossierConfidenceConfirmed;
 }
 
 Player? _player(Game game, String playerId) {

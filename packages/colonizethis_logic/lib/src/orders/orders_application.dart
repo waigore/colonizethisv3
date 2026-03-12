@@ -21,6 +21,9 @@ final Logger _log = Logger();
 const int counterSpyKillChancePercentPerSpy = 5;
 const int counterSpyKillChanceCapPercent = 30;
 
+/// Per-turn chance (0–1) that a spy on steal_tech work successfully steals one tech from target.
+const double spyTechStealChance = 0.08;
+
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
 
@@ -456,7 +459,7 @@ Game applyBuildAndWorkOrders(
                 .where((e) => e.value == true && ourTech[e.key] != true)
                 .map((e) => e.key)
                 .toList();
-            if (missing.isNotEmpty && rand.nextDouble() < 0.08) {
+            if (missing.isNotEmpty && rand.nextDouble() < spyTechStealChance) {
               final granted = missing[rand.nextInt(missing.length)];
               final player = s.game.players
                   .where((p) => p.id == u.ownerId)
