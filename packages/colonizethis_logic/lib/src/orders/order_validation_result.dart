@@ -22,3 +22,16 @@ const OrderValidationResult previousInvalidOrderResult = OrderValidationResult(
   status: OrderValidationStatus.rejected,
   reason: 'Previous invalid',
 );
+
+/// Helper for validators that use a [previousRejected] flag.
+/// If [previousRejected] is true, returns [previousInvalidOrderResult] and skips [body].
+/// Otherwise runs [body] and returns its [OrderValidationResult].
+OrderValidationResult shortCircuitIfPreviousRejected({
+  required bool previousRejected,
+  required OrderValidationResult Function() body,
+}) {
+  if (previousRejected) {
+    return previousInvalidOrderResult;
+  }
+  return body();
+}

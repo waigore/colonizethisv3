@@ -5,8 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
-/// Shared set of mineral resource ids used across extraction, work orders,
-/// and order application helpers. SPEC/game/resources-and-economy.md.
+/// Resource ids that count as minerals for work/purchase rules.
+/// Shared across extraction, work orders, and order application helpers.
 const Set<String> kMineralResourceIds = {
   'iron',
   'copper',
