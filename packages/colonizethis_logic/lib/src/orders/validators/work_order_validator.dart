@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../constants.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
@@ -176,11 +177,7 @@ class WorkOrderValidator {
           reason: 'Tile has no resource',
         );
       }
-      const mineralIds = {
-        'iron', 'copper', 'tin', 'coal',
-        'silver', 'gold', 'gems', 'diamonds',
-      };
-      if (mineralIds.contains(resourceId)) {
+      if (kMineralResourceIds.contains(resourceId)) {
         final prospected =
             _game.worldState.playerProspectedTiles[_playerId] ?? const <String>{};
         if (!prospected.contains(o.targetTileKey)) {
