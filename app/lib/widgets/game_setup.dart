@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+
+import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the Game Setup screen. SPEC/ui/game-setup.md; UXD 03b.
 enum GameSetupVariant {
@@ -26,8 +27,6 @@ const int _kNumSlots = 6;
 /// Viewport width below which slot rows use stacked layout. SPEC/ui/mobile-adaptation.md.
 const double _kNarrowBreakpoint = 500;
 
-/// Asset path for pixel-art variant (reuse main menu). SPEC/ui/game-setup.md.
-const String _kAssetButton = 'assets/images/ui_main_menu_button.png';
 
 /// Game Setup screen. Six player slots; slot 0 = human, 1–5 = AI.
 /// Per slot: nation (GP) dropdown, then leader dropdown for that nation.
@@ -357,10 +356,13 @@ class _GameSetupMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (variant == GameSetupVariant.pixelArt) {
-      return _GameSetupPixelArtButton(
-        label: label,
-        enabled: enabled,
-        onPressed: onPressed,
+      return SizedBox(
+        width: double.infinity,
+        child: CtNinePatchButton(
+          onPressed: onPressed,
+          enabled: enabled && onPressed != null,
+          child: Text(label),
+        ),
       );
     }
     return SizedBox(
@@ -368,55 +370,6 @@ class _GameSetupMenuButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         child: Text(label),
-      ),
-    );
-  }
-}
-
-class _GameSetupPixelArtButton extends StatelessWidget {
-  const _GameSetupPixelArtButton({
-    required this.label,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onPressed : null,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                _kAssetButton,
-                centerSlice: const Rect.fromLTWH(24, 18, 75, 21),
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  Logger().w('ctdev: game_setup button asset not found, using fallback');
-                  return Container(color: const Color(0xFF5D3A1A));
-                },
-              ),
-              Center(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: enabled ? const Color(0xFFF5F5DC) : Colors.grey,
-                      ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
