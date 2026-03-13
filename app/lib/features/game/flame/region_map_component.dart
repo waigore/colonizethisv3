@@ -5,10 +5,17 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import '../../../widgets/region_map_debug.dart';
+/// Visibility mode for the region map. SPEC/ui/map-widget.md.
+enum CtMapVisibilityMode {
+  /// Full visibility: ignore per-tile visibility and render all tiles as visible.
+  full,
 
-/// Flame-based region map component that mirrors CtRegionMapDebug rendering.
-/// Renders one RegionMapViewData and exposes hover/selection state via callbacks.
+  /// Player-constrained visibility: honor [CellViewData.visibility] for each tile.
+  playerConstrained,
+}
+
+/// Flame-based region map component. Renders one RegionMapViewData and exposes
+/// hover/selection state via callbacks. SPEC/ui/map-widget.md.
 class CtRegionMapComponent extends PositionComponent {
   CtRegionMapComponent({
     required this.region,
@@ -57,6 +64,10 @@ class CtRegionMapComponent extends PositionComponent {
     final local = worldPosition - absoluteTopLeftPosition;
     final x = (local.x / cellSize).floor();
     final y = (local.y / cellSize).floor();
+    _setHoverFromCell(x, y);
+  }
+
+  void _setHoverFromCell(int x, int y) {
     int? nx;
     int? ny;
     if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
@@ -110,8 +121,10 @@ class CtRegionMapComponent extends PositionComponent {
     }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onProvinceSelected?.call(provinceId);
-    // So overlay Tile section shows tapped tile on mobile (no hover).
-    onTileHovered?.call(tileKey);
+
+    // On touch/mobile, treat tap as hover so the selector and province glow
+    // move to the tapped tile (for non-unrevealed tiles). SPEC/ui/map-widget.md.
+    _setHoverFromCell(x, y);
   }
 
   @override

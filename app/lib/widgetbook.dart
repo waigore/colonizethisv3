@@ -19,7 +19,6 @@ import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
 import 'widgets/ct_region_map.dart';
-import 'widgets/region_map_debug.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
 void main() {
@@ -1057,8 +1056,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         region: region,
                         cellSizePx: 28,
                         visibilityMode: _visibilityMode,
-                        onProvinceSelected: (id) => setState(
-                            () => _selectedId = _selectedId == id ? '' : id),
+                        onProvinceSelected: (id) =>
+                            setState(() => _selectedId = id),
                         onProvinceHovered: (id) =>
                             setState(() => _hoveredDetailId = id),
                         onTileHovered: (key) =>

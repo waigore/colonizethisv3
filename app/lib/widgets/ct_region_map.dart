@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../features/game/flame/region_map_component.dart';
-import 'region_map_debug.dart';
+
+export '../features/game/flame/region_map_component.dart' show CtMapVisibilityMode;
 
 /// FlameGame host for the region map, with basic tap/drag/pinch wiring.
 class _CtRegionMapGame extends FlameGame with TapDetector {
@@ -276,8 +277,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   }
 }
 
-/// Flutter wrapper widget that exposes the same contract as CtRegionMapDebug
-/// but renders via Flame.
+/// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.
 class CtRegionMap extends StatefulWidget {
   const CtRegionMap({
     super.key,
@@ -411,4 +411,3 @@ class _CtRegionMapState extends State<CtRegionMap> {
     );
   }
 }
-

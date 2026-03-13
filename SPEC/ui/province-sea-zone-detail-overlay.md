@@ -12,10 +12,13 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 
 ## Interaction
 
-- **Open:** User taps/clicks a province or sea zone on the map. The overlay appears and stays open.
-- **Close:** User taps the close button, or taps the same province/sea zone again to toggle the overlay closed.
-- **Switch:** Tapping a different province/sea zone updates the overlay content to the new selection.
-- **Hover:** When the overlay is open, hovering over the map immediately updates the overlay to show the hovered province and, in the Tile section, the hovered tile’s details (coordinates, terrain, resources, prospected, improvements, roads/railroads, civilian units in province).
+- **Open:** User taps/clicks a province or sea zone on the map. The overlay appears.
+- **Close (desktop and mobile):** User taps/clicks the close button (or an explicit dismiss control provided by the shell). **Tapping the same province/sea zone again does not close the overlay;** it remains visible until explicitly dismissed.
+- **Switch:** Tapping/clicking a different province/sea zone updates the overlay content to the new selection while keeping the overlay visible.
+- **Hover (pointer devices):** When the overlay is open, hovering over the map immediately updates the overlay to show the hovered province and, in the Tile section, the hovered tile’s details (coordinates, terrain, resources, prospected, improvements, roads/railroads, civilian units in province).
+- **Tap-as-hover (touch/mobile):** On touch-only/mobile viewports where pointer hover is not available, tapping a tile acts as “hover” for the purposes of the Tile section and province display:
+  - The map widget drives `onTileHovered` / `onProvinceHovered` for the tapped tile/province.
+  - The overlay treats the last tapped tile as the current “hovered” tile, so the Tile section and province header update accordingly while the overlay stays open.
 - **Data context:** All data is from the human player's view (visibility, prospecting, etc.).
 
 ---
@@ -102,12 +105,14 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 ## Acceptance Criteria
 
 - **Given** the user taps a province on the map, **when** the overlay is not shown, **then** the overlay appears with province content (Political, Economic, Military, Civilian, Naval).
-- **Given** the overlay is shown for a province, **when** the user taps the same province again or the close button, **then** the overlay closes.
-- **Given** the overlay is shown, **when** the user taps a different province, **then** the overlay content updates to the new province.
+- **Given** the overlay is shown for a province, **when** the user taps the same province again, **then** the overlay **remains visible** and continues to show that province until the user explicitly dismisses it (e.g. via the close button).
+- **Given** the overlay is shown for a province, **when** the user taps the close button, **then** the overlay closes.
+- **Given** the overlay is shown, **when** the user taps a different province, **then** the overlay content updates to the new province and remains visible.
 - **Given** the user taps a sea zone, **when** the overlay is not shown, **then** the overlay appears with sea zone content (Political, Naval).
 - **Given** the overlay lists tile coordinates, **when** the user hovers over a coordinate, **then** a secondary highlight appears on the map over that tile.
 - **Given** a mobile viewport, **when** the overlay is shown, **then** it appears as a bottom sheet with tabs and does not exceed one-third of screen height.
 - **Given** a desktop viewport, **when** the overlay is shown, **then** it appears as a side panel.
+- **Given** a touch/mobile viewport where pointer hover is not available and the overlay is open, **when** the user taps a non-`unrevealed` tile on the map, **then** the overlay’s Tile section and province header update to show that tile’s province and tile information while the overlay remains visible.
 
 - **Given** the map widget is in player-constrained visibility mode and the user hovers a tile whose `CellViewData.visibility` is `unrevealed`, **when** the overlay’s Tile section is rendered, **then** the UI layer shows the heading "Tile" and replaces all Tile data fields (coordinates, terrain, resource, prospected, improvement, road/railroad, civilian units in province) with the literal text `???`.
 
@@ -120,6 +125,7 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 - **Given** the Province Overlay Widgetbook story "Standalone — province", **when** the story renders, **then** the overlay displays province content (Political, Economic, Military, Civilian, Naval) with demo data.
 - **Given** the Province Overlay Widgetbook story "Standalone — sea zone", **when** the story renders, **then** the overlay displays sea zone content (Political, Naval).
 - **Given** the Province Overlay Widgetbook story "With map — province selected", **when** the story renders, **then** the map fills the story area and, when a province is selected, a province detail overlay appears as a bottom sheet covering roughly the lower half of the map; tapping the same province again or the close button hides the overlay; tapping a different province updates the overlay content.
+- **Given** the Province Overlay Widgetbook story "With map — province selected", **when** a province is selected, **then** the overlay remains visible until the story’s close control is used; subsequent taps on the same province do not close the overlay, and taps on other provinces switch the overlay content to the new selection.
 - **Given** the Province Overlay Widgetbook story "Standalone (mobile)", **when** the story renders, **then** the overlay uses tabs and does not exceed one-third of viewport height.
 
 ---

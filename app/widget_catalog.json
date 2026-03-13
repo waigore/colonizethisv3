@@ -18,13 +18,13 @@
     "widgetbook_story_path": "Game Setup"
   },
   {
-    "id": "ct_region_map_debug",
-    "name": "CtRegionMapDebug",
-    "dart_file_path": "lib/widgets/region_map_debug.dart",
-    "constructor_props": "region: RegionMapViewData, showPoliticalOverlay: bool, cellSizePx: double, onProvinceSelected: void Function(String)?, onRegionViewChanged: VoidCallback?, onProvinceHovered: void Function(String?)?",
+    "id": "ct_region_map",
+    "name": "CtRegionMap",
+    "dart_file_path": "lib/widgets/ct_region_map.dart",
+    "constructor_props": "region: RegionMapViewData, showPoliticalOverlay: bool, cellSizePx: double, visibilityMode: CtMapVisibilityMode, onProvinceSelected: void Function(String)?, onRegionViewChanged: VoidCallback?, onProvinceHovered: void Function(String?)?, onTileHovered: void Function(String?)?, highlightedTileKey: String?, centerOnTileKey: String?, validTileKeys: Set<String>?, onTileSelected: void Function(String)?, onWorkTargetSelectionCancelled: VoidCallback?",
     "category": "game/map",
     "source": "pipeline",
-    "widgetbook_story_path": "Map Widget / Debug mode"
+    "widgetbook_story_path": "Map Widget"
   },
   {
     "id": "ct_province_sea_zone_detail_overlay",
