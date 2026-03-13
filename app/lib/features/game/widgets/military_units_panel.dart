@@ -184,6 +184,7 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
             f.ownerId == humanPlayerId &&
             f.regionId == regionId &&
             f.shipTypeIds.isNotEmpty &&
+            f.isAtSea &&
             f.seaZoneId != null)
         .toList();
     final bySeaZone = <String, List<Fleet>>{};

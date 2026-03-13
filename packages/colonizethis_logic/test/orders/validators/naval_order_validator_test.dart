@@ -239,7 +239,8 @@ void main() {
       expect(result.reason, 'Invalid naval move');
     });
 
-    test('validateNavalMove dock accept when at sea adjacent owned province', () {
+    test(
+        'validateNavalMove dock accept when at sea adjacent owned province', () {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
