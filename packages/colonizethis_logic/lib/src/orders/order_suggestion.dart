@@ -643,26 +643,17 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
-<<<<<<< HEAD
-  for (final o in currentOrders.navalMoveOrdersByPlayerId[playerId] ?? const []) {
-    final key = o.isDock ? 'port:${o.destinationPortProvinceId}' : (o.destinationSeaZoneId ?? '');
-=======
   for (final o
       in currentOrders.navalMoveOrdersByPlayerId[playerId] ?? const []) {
     final key = o.isDock
         ? 'port:${o.destinationPortProvinceId}'
         : (o.destinationSeaZoneId ?? '');
->>>>>>> dev
     if (key.isNotEmpty) {
       existingByFleet.putIfAbsent(o.fleetId, () => <String>{}).add(key);
     }
   }
 
-<<<<<<< HEAD
-  final homeFleetId = 'fleet_$playerId';
-=======
   final homeFleetId = homeFleetIdFor(playerId);
->>>>>>> dev
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
     final String? currentZone;
@@ -673,12 +664,8 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       if (inPortProvinceId == null) continue;
       final parts = inPortProvinceId.split('|');
       final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
-<<<<<<< HEAD
-      final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
-=======
       final localId =
           parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
->>>>>>> dev
       currentZone = seaZoneIdForProvince(topology, localId, regionId: regionId);
     }
     if (currentZone == null) continue;
@@ -702,13 +689,6 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       final zoneRegionId = regionIdForSeaZone(topology, currentZone);
       if (zoneRegionId != null) {
         final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
-<<<<<<< HEAD
-          topology, currentZone, regionId: zoneRegionId,
-        );
-        for (final localId in adjacentLocalIds) {
-          final fullProvinceId = ProvinceId.full(zoneRegionId, localId);
-          if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ?? false) continue;
-=======
           topology,
           currentZone,
           regionId: zoneRegionId,
@@ -717,19 +697,14 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
           final fullProvinceId = ProvinceId.full(zoneRegionId, localId);
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
               false) continue;
->>>>>>> dev
           final province = tryGetProvince(game.worldState, fullProvinceId);
           if (province?.ownerId != playerId) continue;
           final candidate = NavalMoveOrder(
             fleetId: fleet.id,
             destinationPortProvinceId: fullProvinceId,
           );
-<<<<<<< HEAD
-          if (_isNavalMoveOrderAccepted(game, topology, playerId, currentOrders, candidate)) {
-=======
           if (_isNavalMoveOrderAccepted(
               game, topology, playerId, currentOrders, candidate)) {
->>>>>>> dev
             suggestions.add(candidate);
           }
         }
@@ -740,17 +715,12 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   suggestions.sort((a, b) {
     final c = a.fleetId.compareTo(b.fleetId);
     if (c != 0) return c;
-<<<<<<< HEAD
-    final keyA = a.isDock ? 'port:${a.destinationPortProvinceId}' : (a.destinationSeaZoneId ?? '');
-    final keyB = b.isDock ? 'port:${b.destinationPortProvinceId}' : (b.destinationSeaZoneId ?? '');
-=======
     final keyA = a.isDock
         ? 'port:${a.destinationPortProvinceId}'
         : (a.destinationSeaZoneId ?? '');
     final keyB = b.isDock
         ? 'port:${b.destinationPortProvinceId}'
         : (b.destinationSeaZoneId ?? '');
->>>>>>> dev
     return keyA.compareTo(keyB);
   });
   _log.d(
