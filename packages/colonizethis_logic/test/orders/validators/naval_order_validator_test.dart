@@ -285,6 +285,55 @@ void main() {
       expect(result.reason, isNull);
     });
 
+<<<<<<< HEAD
+=======
+    test('validateNavalMove dock accept when port province id is local (unprefixed)', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final validator = NavalOrderValidator(
+        game: game,
+        topology: topology,
+        playerId: 'p1',
+      );
+      final result = validator.validateNavalMove(
+        NavalMoveOrder(
+          fleetId: 'f1',
+          destinationPortProvinceId: 'P1',
+        ),
+        previousRejected: false,
+      );
+      expect(result.status, OrderValidationStatus.accepted);
+      expect(result.reason, isNull);
+    });
+
+>>>>>>> dev
     test('validateNavalMove dock reject when fleet in port', () {
       final topology = MapTopology(
         nodes: const [

@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - app
+  - widgetbook_host
   - ctdev
   - ctterm
   - packages/colonizethis_models
@@ -29,6 +30,9 @@ dev_dependencies:
 
 melos:
   scripts:
+    test_app:
+      description: Run Flutter widget tests for the app (use this, not dart test app/...).
+      run: bash -c "cd app && flutter test"
     generate_map:
       description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
       run: dart run generate_map

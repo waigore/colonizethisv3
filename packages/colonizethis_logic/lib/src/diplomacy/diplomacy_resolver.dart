@@ -9,6 +9,7 @@ import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
+import '../world/province_lookup.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 
@@ -16,12 +17,12 @@ export 'diplomacy_relation_lookup.dart';
 
 final Logger _diploLog = Logger();
 
-bool _isMinorOrTribe(Game game, String factionId) {
+bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
 }
 
-bool _isGreatPower(Game game, String factionId) {
+bool isGreatPower(Game game, String factionId) {
   return game.players.any((p) => p.id == factionId);
 }
 
@@ -125,11 +126,11 @@ bool _minorOrTribeAcceptsByRule(OvertureStage stage) {
       stage == OvertureStage.nap;
 }
 
-/// AI GP target: accept if relation score >= 50 (Neutral or better). MVP rule.
+/// AI GP target: accept if relation score >= neutral (Neutral or better). MVP rule.
 bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   final rel = getRelation(game, offererGpId, targetGpId);
-  final score = rel?.score ?? 50;
-  return score >= 50;
+  final score = rel?.score ?? relationScoreNeutral;
+  return score >= relationScoreNeutral;
 }
 
 _OverturePaymentsResult _processOverturePayments(
@@ -154,8 +155,8 @@ _OverturePaymentsResult _processOverturePayments(
       if (stage == null || stage == OvertureStage.none) continue;
 
       final targetId = order.targetFactionId;
-      final targetIsMinorOrTribe = _isMinorOrTribe(state, targetId);
-      final targetIsGp = _isGreatPower(state, targetId);
+      final targetIsMinorOrTribe = isMinorOrTribe(state, targetId);
+      final targetIsGp = isGreatPower(state, targetId);
       if (!targetIsMinorOrTribe && !targetIsGp) continue;
 
       // SPEC/game/diplomacy.md: While relationState is AT_WAR, no new overtures.
@@ -270,7 +271,7 @@ Game _resolveJoinEmpireColony(
       if (stage != OvertureStage.joinEmpire) continue;
 
       final targetId = order.targetFactionId;
-      if (!_isMinorOrTribe(game, targetId)) continue;
+      if (!isMinorOrTribe(game, targetId)) continue;
 
       final player = game.playerById(gpId);
       if (player == null) continue;
@@ -279,8 +280,8 @@ Game _resolveJoinEmpireColony(
       if (existing == null || existing.stage != OvertureStage.nap) continue;
 
       final rel = getRelation(game, gpId, targetId);
-      final score = rel?.score ?? 50;
-      if (score < 51) continue; // Must be Friendly or Allied
+      final score = rel?.score ?? relationScoreNeutral;
+      if (score < relationScoreMinFriendly) continue; // Must be Friendly or Allied
 
       final cost = joinEmpireCostForMinorOrTribe(game, targetId);
       if (player.treasury < cost) continue;
@@ -395,7 +396,7 @@ Game _processAlliances(
       if (order.type != DiplomaticOrderType.alliance) continue;
 
       final targetId = order.targetFactionId;
-      if (!_isGreatPower(game, targetId)) continue;
+      if (!isGreatPower(game, targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
       final relations = upsertRelation(
@@ -406,7 +407,7 @@ Game _processAlliances(
             ? DiplomacyRelation(
                 factionId1: ids.id1,
                 factionId2: ids.id2,
-                score: 76,
+                score: relationScoreMinAllied,
                 level: RelationLevel.allied,
                 state: RelationState.atPeace,
                 sinceTurn: turn,
@@ -414,7 +415,7 @@ Game _processAlliances(
               )
             : existing.copyWith(
                 level: RelationLevel.allied,
-                score: existing.score.clamp(76, 100),
+                score: existing.score.clamp(relationScoreMinAllied, relationScoreMax),
                 lastInteractionTurn: turn,
               ),
       );
@@ -441,7 +442,7 @@ Game _processWarAndPeace(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.offerPeace) continue;
       final targetId = order.targetFactionId;
-      if (!_isGreatPower(game, gpId) || !_isGreatPower(game, targetId))
+      if (!isGreatPower(game, gpId) || !isGreatPower(game, targetId))
         continue;
       final key = pairKey(gpId, targetId);
       final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
@@ -501,7 +502,7 @@ Game _processWarAndPeace(
         final rel = getRelation(game, gpId, targetId);
         final key = pairKey(gpId, targetId);
         final bothGreatPowers =
-            _isGreatPower(game, gpId) && _isGreatPower(game, targetId);
+            isGreatPower(game, gpId) && isGreatPower(game, targetId);
         final hasMutualOffer = bothGreatPowers
             ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2
             : true;
@@ -510,8 +511,8 @@ Game _processWarAndPeace(
           // - GP–GP peace: both sides must agree (both offer peace in this phase).
           // - Minors never refuse peace offers.
           var bothSidesAgreed = true;
-          final isGpTarget = _isGreatPower(game, targetId);
-          if (isGpTarget && _isGreatPower(game, gpId)) {
+          final isGpTarget = isGreatPower(game, targetId);
+          if (isGpTarget && isGreatPower(game, gpId)) {
             final key = pairKey(gpId, targetId);
             final offerers = peaceOffersByPairKey[key] ?? const <String>{};
             bothSidesAgreed =
@@ -719,11 +720,12 @@ Game _processOngoingSubsidies(Game game, int turn) {
           .copyWith(treasury: players[payerIdx].treasury - amount);
     }
 
-    // Calculate relation boost: +2 per 500 ducats, max +8
-    final boost = ((amount ~/ 500) * 2).clamp(0, 8);
+    // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
+    final boost = ((amount ~/ subsidyBoostDucatsPerStep) * subsidyBoostRelationPerStep)
+        .clamp(0, subsidyBoostMax);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
-    if (_isMinorOrTribe(game, targetId)) {
+    if (isMinorOrTribe(game, targetId)) {
       relations = applySubsidyBoost(
         relations: relations,
         payerId: payerId,
@@ -746,7 +748,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
   return game.copyWith(players: players, diplomacyRelations: relations, subsidyStates: subsidyStates);
 }
 
-/// Apply relation convergence: all non-war relations move +/-1 toward 50 (neutral).
+/// Apply relation convergence: all non-war relations move +/-1 toward neutral.
 /// Per SPEC/game/diplomacy.md.
 Game _applyRelationConvergence(Game game, int turn) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
@@ -756,14 +758,14 @@ Game _applyRelationConvergence(Game game, int turn) {
     // Skip war relations - they don't converge and scores stay fixed at war declaration
     if (rel.atWar) continue;
 
-    // Converge toward 50 (neutral)
+    // Converge toward neutral
     int newScore;
-    if (rel.score < 50) {
-      newScore = (rel.score + 1).clamp(0, 100);
-    } else if (rel.score > 50) {
-      newScore = (rel.score - 1).clamp(0, 100);
+    if (rel.score < relationScoreNeutral) {
+      newScore = (rel.score + 1).clamp(relationScoreMin, relationScoreMax);
+    } else if (rel.score > relationScoreNeutral) {
+      newScore = (rel.score - 1).clamp(relationScoreMin, relationScoreMax);
     } else {
-      continue; // Already at 50
+      continue; // Already at neutral
     }
 
     final newLevel = scoreToLevel(newScore);
@@ -780,12 +782,32 @@ int tradeSlotsForGp(Game game, String gpId, String targetFactionId) {
   return o != null && o.hasEmbassy ? 1 : 0;
 }
 
-/// Returns gpId of a human GP with Embassy for the Minor defender, or null.
-/// Used to determine if intervention choice is needed before combat.
+bool _gpHasPurchasedLandInFactionProvinces(
+  Game game,
+  String gpId,
+  String factionId,
+) {
+  if (game.worldState.purchasedTilesByTileKey.isEmpty) return false;
+  final worldState = game.worldState;
+  for (final entry in worldState.purchasedTilesByTileKey.entries) {
+    if (entry.value != gpId) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceId == null) continue;
+    final province = tryGetProvince(worldState, provinceId);
+    if (province != null && province.ownerId == factionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Returns gpId of a human GP with Embassy or purchased land for the
+/// Minor/Tribe defender, or null. Used to determine if an intervention
+/// choice is needed before combat.
 String? needsInterventionChoice(Game game, BattleContext ctx) {
   final defenderId = ctx.defenderFactionId;
-  final isMinor = game.minorNations.any((m) => m.id == defenderId);
-  if (!isMinor) return null;
+  final defenderIsMinorOrTribe = isMinorOrTribe(game, defenderId);
+  if (!defenderIsMinorOrTribe) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
   final attackerIsGp =
@@ -794,8 +816,13 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
 
   for (final p in game.players) {
     if (!p.isHuman) continue;
+    if (attackerIds.contains(p.id)) continue;
+
     final o = getOverture(game, p.id, defenderId);
-    if (o != null && o.hasEmbassy) return p.id;
+    final hasEmbassy = o != null && o.hasEmbassy;
+    final hasInvestment =
+        _gpHasPurchasedLandInFactionProvinces(game, p.id, defenderId);
+    if (hasEmbassy || hasInvestment) return p.id;
   }
   return null;
 }
@@ -817,7 +844,7 @@ Game applyInterventionChoice(
 
   for (final a in ctx.attackers) {
     final attackerId = a.factionId;
-    if (!_isGreatPower(game, attackerId)) continue;
+    if (!isGreatPower(game, attackerId)) continue;
 
     if (choice == InterventionChoice.intervene) {
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
@@ -835,7 +862,7 @@ Game applyInterventionChoice(
           );
         }
         if (!existing.atPeace) return existing;
-        final newScore = (existing.score - 10).clamp(0, 100);
+        final newScore = (existing.score - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
         return existing.copyWith(
           state: RelationState.atWar,
           sinceTurn: turn,
@@ -848,7 +875,7 @@ Game applyInterventionChoice(
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
       relations =
           upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
-        final newScore = ((existing?.score ?? 50) - 10).clamp(0, 100);
+        final newScore = ((existing?.score ?? relationScoreNeutral) - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
         final newLevel = scoreToLevel(newScore);
         if (existing == null) {
           return DiplomacyRelation(

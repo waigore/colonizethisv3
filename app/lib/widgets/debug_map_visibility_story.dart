@@ -2,8 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
+import 'ct_region_map.dart';
 import 'debug_init_game.dart';
-import 'region_map_debug.dart';
 
 /// Builds InitGameMapViewData for the debug init game result, enriching it with
 /// per-tile visibility derived from the first player's PlayerView. Used by map
@@ -108,7 +108,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
             ),
           ),
           Expanded(
-            child: CtRegionMapDebug(
+            child: CtRegionMap(
               region: region,
               showPoliticalOverlay: widget.showPoliticalOverlay,
               cellSizePx: 28,

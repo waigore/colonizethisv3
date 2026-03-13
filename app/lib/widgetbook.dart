@@ -6,16 +6,20 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'config/themes.dart';
 import 'features/game/widgets/civilian_units_panel.dart';
+import 'features/game/widgets/diplomacy_panel.dart';
 import 'features/game/widgets/military_units_panel.dart';
 import 'features/game/widgets/production_panel.dart';
 import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
+import 'features/game/widgets/tech_tree_widget.dart';
+import 'features/game/widgets/technology_screen.dart';
 import 'widgets/debug_init_game.dart';
 import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
-import 'widgets/region_map_debug.dart';
+import 'widgets/ct_nine_patch_button.dart';
+import 'widgets/ct_region_map.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
 void main() {
@@ -44,6 +48,7 @@ class CtWidgetbookApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Widgetbook.material(
       directories: [
+        ...buttonDirectories,
         ...mainMenuDirectories,
         ...gameSetupDirectories,
         ...mapWidgetDirectories,
@@ -51,12 +56,56 @@ class CtWidgetbookApp extends StatelessWidget {
         ...productionPanelDirectories,
         ...civilianUnitsPanelDirectories,
         ...militaryUnitsPanelDirectories,
+        ...diplomacyPanelDirectories,
+        ...techTreeDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
     );
   }
 }
+
+/// Nine-patch button stories. SPEC/ui/buttons-nine-patch.md; catalog: CtNinePatchButton.
+List<WidgetbookNode> get buttonDirectories => [
+  WidgetbookFolder(
+    name: 'Buttons',
+    children: [
+      WidgetbookUseCase(
+        name: 'CtNinePatchButton',
+        builder: (context) => Theme(
+          data: AppThemes.colonial,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CtNinePatchButton(
+                  onPressed: () {},
+                  child: const Text('Primary action'),
+                ),
+                const SizedBox(height: 12),
+                CtNinePatchButton(
+                  onPressed: null,
+                  enabled: false,
+                  child: const Text('Disabled'),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 200,
+                  child: CtNinePatchButton(
+                    onPressed: () {},
+                    child: const Text('Fixed width'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// Main Menu stories (plain and pixel). Register in widget_catalog.json.
 List<WidgetbookNode> get mainMenuDirectories => [
@@ -253,29 +302,137 @@ List<WidgetbookNode> get mapWidgetDirectories => [
 
 /// Civilian Units Panel stories. SPEC/ui/civilian-units-panel.md.
 List<WidgetbookNode> get civilianUnitsPanelDirectories => [
+      WidgetbookFolder(
+        name: 'Civilian Units Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'Standalone',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
+                child: CivilianUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'With map',
+            builder: (context) => const _CivilianPanelWithMapStory(),
+          ),
+          WidgetbookUseCase(
+            name: 'As bottom sheet',
+            builder: (context) => const _CivilianPanelAsBottomSheetStory(),
+          ),
+        ],
+      ),
+    ];
+
+/// Production Panel stories. SPEC/ui/production-panel.md.
+List<WidgetbookNode> get productionPanelDirectories => [
+      WidgetbookFolder(
+        name: 'Diplomacy Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'With real game',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 800, maxHeight: 600),
+                child: DiplomacyPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  topology: result.combinedTopology,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    ];
+
+/// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
+List<WidgetbookNode> get techTreeDirectories => [
   WidgetbookFolder(
-    name: 'Civilian Units Panel',
+    name: 'Tech Tree',
     children: [
       WidgetbookUseCase(
-        name: 'Standalone',
+        name: 'Mid-game (half researched)',
         builder: (context) {
           final result = getDebugInitGameResult();
           final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          if (game.players.isEmpty) {
+            return const Center(child: Text('No players'));
+          }
+          final basePlayer = game.players.first;
+          // Unlock roughly half of all techs (first 22 from catalog order).
+          final allIds = techCatalog.keys.toList()..sort();
+          final half = (allIds.length / 2).floor();
+          final unlockedIds = allIds.take(half).toList();
+          final techUnlocked = Map<String, bool>.fromEntries(
+            unlockedIds.map((id) => MapEntry(id, true)),
+          );
+          // One tech in progress (first not-yet-unlocked tech at 60 RP).
+          final inProgressId = allIds.length > half ? allIds[half] : null;
+          final researchProgressByTechId = inProgressId != null
+              ? <String, int>{inProgressId: 60}
+              : <String, int>{};
+          final midGamePlayer = basePlayer.copyWith(
+            techUnlocked: techUnlocked,
+            researchProgressByTechId: researchProgressByTechId,
+          );
+          final midGame = game.copyWith(
+            players: [midGamePlayer, ...game.players.skip(1)],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              body: TechnologyScreen(
+                game: midGame,
+                player: midGamePlayer,
+              ),
             ),
           );
         },
       ),
       WidgetbookUseCase(
-        name: 'With map',
-        builder: (context) => const _CivilianPanelWithMapStory(),
+        name: 'Tech tree only (mid-game)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          if (game.players.isEmpty) {
+            return const Center(child: Text('No players'));
+          }
+          final basePlayer = game.players.first;
+          final allIds = techCatalog.keys.toList()..sort();
+          final half = (allIds.length / 2).floor();
+          final techUnlocked = Map<String, bool>.fromEntries(
+            allIds.take(half).map((id) => MapEntry(id, true)),
+          );
+          final midGamePlayer = basePlayer.copyWith(techUnlocked: techUnlocked);
+          final midGame = game.copyWith(
+            players: [midGamePlayer, ...game.players.skip(1)],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              appBar: AppBar(title: const Text('Tech Tree')),
+              body: TechTreeWidget(game: midGame, player: midGamePlayer),
+            ),
+          );
+        },
       ),
     ],
   ),
@@ -283,36 +440,36 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
 
 /// Military Units Panel stories. SPEC/ui/military-units-panel.md.
 List<WidgetbookNode> get militaryUnitsPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Military Units Panel',
-    children: [
-      WidgetbookUseCase(
-        name: 'Standalone',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: MilitaryUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-          );
-        },
+      WidgetbookFolder(
+        name: 'Military Units Panel',
+        children: [
+          WidgetbookUseCase(
+            name: 'Standalone',
+            builder: (context) {
+              final result = getDebugInitGameResult();
+              final game = result.game;
+              final humanPlayerId =
+                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
+                child: MilitaryUnitsPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                ),
+              );
+            },
+          ),
+          WidgetbookUseCase(
+            name: 'With map',
+            builder: (context) => const _MilitaryPanelWithMapStory(),
+          ),
+        ],
       ),
-      WidgetbookUseCase(
-        name: 'With map',
-        builder: (context) => const _MilitaryPanelWithMapStory(),
-      ),
-    ],
-  ),
-];
+    ];
 
-/// Production Panel stories. SPEC/ui/production-panel.md.
-List<WidgetbookNode> get productionPanelDirectories => [
+/// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
+List<WidgetbookNode> get diplomacyPanelDirectories => [
       WidgetbookFolder(
         name: 'Production Panel',
         children: [
@@ -440,6 +597,7 @@ class _ProductionPanelStory extends StatefulWidget {
 
   /// When set, used instead of the full/partial demo player.
   final Player? playerOverride;
+
   /// When true, use full-availability demo player; when false, partial.
   final bool useFullAvailability;
 
@@ -480,13 +638,17 @@ class _CivilianPanelWithMapStory extends StatefulWidget {
       _CivilianPanelWithMapStoryState();
 }
 
-class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> {
+class _CivilianPanelWithMapStoryState
+    extends State<_CivilianPanelWithMapStory> {
   late Game _game;
   Orders _orders = const Orders();
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({Unit unit, String workTarget})? _workTargetSelection;
+  CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  Set<String>? _cachedValidTileKeys;
+  String? _cachedWorkTargetSelection;
 
   @override
   void initState() {
@@ -499,18 +661,48 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
 
+  String? get _validTileKeysCacheKey {
+    if (_workTargetSelection == null) return null;
+    return '${_workTargetSelection!.unit.id}|${_workTargetSelection!.workTarget}|$_visibilityMode';
+  }
+
   Set<String>? get _validTileKeys {
     if (_workTargetSelection == null) return null;
+    final cacheKey = _validTileKeysCacheKey;
+    if (_cachedWorkTargetSelection == cacheKey &&
+        _cachedValidTileKeys != null) {
+      return _cachedValidTileKeys;
+    }
     final result = getDebugInitGameResult();
-    final valid = getValidWorkOrderTileKeys(
-      _game,
-      result.combinedTopology,
-      _humanPlayerId,
-      _workTargetSelection!.unit.id,
-      _workTargetSelection!.workTarget,
-      _orders,
-    );
-    return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+
+    Set<String> valid;
+    if (_visibilityMode == CtMapVisibilityMode.playerConstrained) {
+      final view =
+          buildPlayerView(_game, result.combinedTopology, _humanPlayerId);
+      valid = getValidWorkOrderTileKeysWithVisibility(
+        game: _game,
+        topology: result.combinedTopology,
+        view: view,
+        unitId: _workTargetSelection!.unit.id,
+        workTarget: _workTargetSelection!.workTarget,
+        currentOrders: _orders,
+      );
+    } else {
+      valid = getValidWorkOrderTileKeys(
+        _game,
+        result.combinedTopology,
+        _humanPlayerId,
+        _workTargetSelection!.unit.id,
+        _workTargetSelection!.workTarget,
+        _orders,
+      );
+    }
+
+    final filtered =
+        valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+    _cachedValidTileKeys = filtered;
+    _cachedWorkTargetSelection = cacheKey;
+    return filtered;
   }
 
   void _onLocateUnit(Unit unit) {
@@ -533,10 +725,14 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
-    if (sel == null) return;
+    if (sel == null) {
+      return;
+    }
     final target = sel.workTarget;
     String targetTileKey = tileKey;
-    if (target == 'explore' || target == 'steal_tech' || target == 'counter_spy') {
+    if (target == 'explore' ||
+        target == 'steal_tech' ||
+        target == 'counter_spy') {
       final parts = tileKey.split('|');
       if (parts.length >= 2) {
         targetTileKey = '${parts[0]}|${parts[1]}|0|0';
@@ -548,9 +744,13 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
       targetTileKey: targetTileKey,
     );
     setState(() {
-      final list = [...(_orders.workOrdersByPlayerId[_humanPlayerId] ?? []), workOrder];
+      final existing = _orders.workOrdersByPlayerId[_humanPlayerId] ?? const <WorkOrder>[];
+      final list = <WorkOrder>[...existing, workOrder];
       _orders = _orders.copyWith(
-        workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, _humanPlayerId: list},
+        workOrdersByPlayerId: {
+          ..._orders.workOrdersByPlayerId,
+          _humanPlayerId: list
+        },
       );
       _workTargetSelection = null;
     });
@@ -558,56 +758,71 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
 
   @override
   Widget build(BuildContext context) {
-    final result = getDebugInitGameResult();
-    final mapViewData = result.mapViewData;
-    final region = _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    final baseResult = getDebugInitGameResult();
+    final mapViewData = _visibilityMode == CtMapVisibilityMode.playerConstrained
+        ? debugMapViewDataWithVisibilityForFirstPlayer()
+        : baseResult.mapViewData;
+    final region =
+        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    // Panel at bottom, like province overlay "With map" story. SPEC/ui/civilian-units-panel.md.
+    const panelHeight = 220.0;
     return SizedBox(
       width: 900,
       height: 550,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Old World'),
-                        selected: _regionIndex == 0,
-                        onSelected: (_) => setState(() => _regionIndex = 0),
-                      ),
-                      const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: const Text('New World'),
-                        selected: _regionIndex == 1,
-                        onSelected: (_) => setState(() => _regionIndex = 1),
-                      ),
-                    ],
-                  ),
+                ChoiceChip(
+                  label: const Text('Old World'),
+                  selected: _regionIndex == 0,
+                  onSelected: (_) => setState(() => _regionIndex = 0),
                 ),
-                Expanded(
-                  child: CtRegionMapDebug(
-                    region: region,
-                    cellSizePx: 24,
-                    onProvinceSelected: (_) {},
-                    highlightedTileKey: _highlightedTileKey,
-                    centerOnTileKey: _centerOnTileKey,
-                    validTileKeys: _validTileKeys,
-                    onTileSelected: _workTargetSelection != null ? _onTileSelectedForWork : null,
-                    onWorkTargetSelectionCancelled: _workTargetSelection != null
-                        ? () => setState(() => _workTargetSelection = null)
-                        : null,
-                  ),
+                ChoiceChip(
+                  label: const Text('New World'),
+                  selected: _regionIndex == 1,
+                  onSelected: (_) => setState(() => _regionIndex = 1),
+                ),
+                ChoiceChip(
+                  label: const Text('Full visibility'),
+                  selected: _visibilityMode == CtMapVisibilityMode.full,
+                  onSelected: (_) => setState(
+                      () => _visibilityMode = CtMapVisibilityMode.full),
+                ),
+                ChoiceChip(
+                  label: const Text('Player-constrained'),
+                  selected: _visibilityMode ==
+                      CtMapVisibilityMode.playerConstrained,
+                  onSelected: (_) => setState(() => _visibilityMode =
+                      CtMapVisibilityMode.playerConstrained),
                 ),
               ],
             ),
           ),
+          Expanded(
+            child: CtRegionMap(
+              region: region,
+              cellSizePx: 24,
+              visibilityMode: _visibilityMode,
+              onProvinceSelected: (_) {},
+              highlightedTileKey: _highlightedTileKey,
+              centerOnTileKey: _centerOnTileKey,
+              validTileKeys: _validTileKeys,
+              onTileSelected: _workTargetSelection != null
+                  ? _onTileSelectedForWork
+                  : null,
+              onWorkTargetSelectionCancelled: _workTargetSelection != null
+                  ? () => setState(() => _workTargetSelection = null)
+                  : null,
+            ),
+          ),
           SizedBox(
-            width: 360,
+            height: panelHeight,
             child: CivilianUnitsPanel(
               game: _game,
               humanPlayerId: _humanPlayerId,
@@ -619,7 +834,10 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                     _orders.workOrdersByPlayerId[playerId] ?? [],
                   )..removeAt(index);
                   _orders = _orders.copyWith(
-                    workOrdersByPlayerId: {..._orders.workOrdersByPlayerId, playerId: list},
+                    workOrdersByPlayerId: {
+                      ..._orders.workOrdersByPlayerId,
+                      playerId: list
+                    },
                   );
                 });
               },
@@ -627,8 +845,66 @@ class _CivilianPanelWithMapStoryState extends State<_CivilianPanelWithMapStory> 
                 setState(() => _game = clearUnitCurrentWork(_game, unitId));
               },
               onStartWorkTargetSelection: (unit, workTarget) {
-                setState(() => _workTargetSelection = (unit: unit, workTarget: workTarget));
+                setState(() => _workTargetSelection =
+                    (unit: unit, workTarget: workTarget));
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Civilian Units Panel opened as bottom sheet (slide up from bottom). SPEC/ui/civilian-units-panel.md.
+class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
+  const _CivilianPanelAsBottomSheetStory();
+
+  @override
+  Widget build(BuildContext context) {
+    final result = getDebugInitGameResult();
+    final game = result.game;
+    final humanPlayerId =
+        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    return SizedBox(
+      width: 600,
+      height: 400,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextButton.icon(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (ctx) {
+                    final maxHeight =
+                        MediaQuery.sizeOf(ctx).height * 0.5;
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxHeight),
+                      child: CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerId,
+                      ),
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.people_outline, size: 20),
+              label: const Text('Civilian Units'),
+            ),
+          ),
+          const Expanded(
+            child: ColoredBox(
+              color: Color(0xFFE0E0E0),
+              child: Center(
+                child: Text(
+                  'Tap button to open panel from bottom',
+                  style: TextStyle(color: Color(0xFF616161)),
+                ),
+              ),
             ),
           ),
         ],
@@ -646,7 +922,8 @@ class _MilitaryPanelWithMapStory extends StatefulWidget {
       _MilitaryPanelWithMapStoryState();
 }
 
-class _MilitaryPanelWithMapStoryState extends State<_MilitaryPanelWithMapStory> {
+class _MilitaryPanelWithMapStoryState
+    extends State<_MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
@@ -671,12 +948,10 @@ class _MilitaryPanelWithMapStoryState extends State<_MilitaryPanelWithMapStory> 
     final result = getDebugInitGameResult();
     final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId = game.players.isNotEmpty
-        ? game.players.first.id
-        : 'gp1';
-    final region = _regionIndex == 0
-        ? mapViewData.oldWorld
-        : mapViewData.newWorld;
+    final humanPlayerId =
+        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    final region =
+        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
     return SizedBox(
       width: 900,
       height: 550,
@@ -706,7 +981,7 @@ class _MilitaryPanelWithMapStoryState extends State<_MilitaryPanelWithMapStory> 
                   ),
                 ),
                 Expanded(
-                  child: CtRegionMapDebug(
+                  child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
                     onProvinceSelected: (_) {},
@@ -778,79 +1053,88 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
     final game = initResult.game;
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
-    return SizedBox(
-      width: 800,
-      height: 500,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ChoiceChip(
-                  label: const Text('Full visibility'),
-                  selected: _visibilityMode == CtMapVisibilityMode.full,
-                  onSelected: (_) {
-                    setState(() {
-                      _visibilityMode = CtMapVisibilityMode.full;
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Player-constrained'),
-                  selected:
-                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
-                  onSelected: (_) {
-                    setState(() {
-                      _visibilityMode = CtMapVisibilityMode.playerConstrained;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: CtRegionMapDebug(
-                    region: region,
-                    cellSizePx: 28,
-                    visibilityMode: _visibilityMode,
-                    onProvinceSelected: (id) =>
-                        setState(() => _selectedId = _selectedId == id ? '' : id),
-                    onProvinceHovered: (id) =>
-                        setState(() => _hoveredDetailId = id),
-                    onTileHovered: (key) =>
-                        setState(() => _hoveredTileKey = key),
-                    highlightedTileKey: _highlightedTileKey,
-                  ),
-                ),
-                if (!isNarrow && _selectedId.isNotEmpty)
-                  SizedBox(
-                    width: 320,
-                    child: ProvinceSeaZoneDetailOverlay(
-                      game: game,
-                      region: region,
-                      selectedId: _selectedId,
-                      displayId: _displayId,
-                      humanPlayerId: 'gp1',
-                      hoveredTileKey: _hoveredTileKey,
-                      onHighlightTile: (k) =>
-                          setState(() => _highlightedTileKey = k),
-                      onClose: () => setState(() => _selectedId = ''),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : 500.0;
+        final overlayHeight = totalHeight / 2;
+        return SizedBox(
+          width: 800,
+          height: totalHeight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Full visibility'),
+                      selected: _visibilityMode == CtMapVisibilityMode.full,
+                      onSelected: (_) {
+                        setState(() {
+                          _visibilityMode = CtMapVisibilityMode.full;
+                        });
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Player-constrained'),
+                      selected: _visibilityMode ==
+                          CtMapVisibilityMode.playerConstrained,
+                      onSelected: (_) {
+                        setState(() {
+                          _visibilityMode =
+                              CtMapVisibilityMode.playerConstrained;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CtRegionMap(
+                        region: region,
+                        cellSizePx: 28,
+                        visibilityMode: _visibilityMode,
+                        onProvinceSelected: (id) =>
+                            setState(() => _selectedId = id),
+                        onProvinceHovered: (id) =>
+                            setState(() => _hoveredDetailId = id),
+                        onTileHovered: (key) =>
+                            setState(() => _hoveredTileKey = key),
+                        highlightedTileKey: _highlightedTileKey,
+                      ),
+                    ),
+                    if (_selectedId.isNotEmpty)
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SizedBox(
+                          height: overlayHeight,
+                          width: double.infinity,
+                          child: ProvinceSeaZoneDetailOverlay(
+                            game: game,
+                            region: region,
+                            selectedId: _selectedId,
+                            displayId: _displayId,
+                            humanPlayerId: 'gp1',
+                            hoveredTileKey: _hoveredTileKey,
+                            onHighlightTile: (k) =>
+                                setState(() => _highlightedTileKey = k),
+                            onClose: () => setState(() => _selectedId = ''),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

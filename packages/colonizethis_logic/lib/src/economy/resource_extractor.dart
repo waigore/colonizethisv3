@@ -65,14 +65,7 @@ Map<String, ExtractionTotals> computeExtraction({
       if (resource == null) continue;
 
       final commodityId = _resourceToCommodityId(resource);
-      final isMineral = commodityId == 'iron' ||
-          commodityId == 'copper' ||
-          commodityId == 'tin' ||
-          commodityId == 'coal' ||
-          commodityId == 'silver' ||
-          commodityId == 'gold' ||
-          commodityId == 'gems' ||
-          commodityId == 'diamonds';
+      final isMineral = kMineralResourceIds.contains(commodityId);
 
       // Minerals only from prospected tiles. SPEC/program/fog-and-exploration-resolution.md.
       if (isMineral && !prospected.contains(tileKey)) {

@@ -4,6 +4,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
+  group('effectiveLabourForWorkers', () {
+    test('masters with luxury capped by furHats', () {
+      const workers = WorkerPool(peasants: 2, masters: 3);
+      final stockpile = const Stockpile().applyDelta(CommodityCatalog.furHats.id, 1);
+      final labour = effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
+      expect(labour, 2 * 1 + 1 * 8);
+    });
+  });
+
   group('applyExtractionToStockpile', () {
     test('adds extracted quantities', () {
       const stockpile = Stockpile();

@@ -270,6 +270,39 @@ void main() {
       expect(battles[0].attackers[0].factionId, 'p1');
     });
 
+    test('unowned province: defender is lexicographically first when all moved in', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+          'p2': [MoveOrder(unitId: 'u2', destinationProvinceId: '$ow|P1')],
+        },
+      );
+      final battles = detectConflicts(game, orders);
+      expect(battles.length, 1);
+      expect(battles[0].defenderFactionId, 'p1');
+    });
+
     test('returns no battles when oldWorld has no units', () {
       const nw = 'newWorld';
       final game = Game(

@@ -61,47 +61,67 @@ class ShellScreen extends StatefulComponent {
   });
 
   final CttermRoute route;
+
   /// When non-null, Settings Back navigates here (e.g. Pause when opened from Pause). SPEC/tui/screens/pause-options.md §7.
   final CttermRoute? settingsReturnRoute;
   final String? dataDirOverride;
+
   /// Current game state. Set when loading or starting a game.
   final Game? game;
+
   /// Current orders for the human player.
   final Orders? orders;
+
   /// Topology and tile maps for turn resolution (set after new game creation).
   final MapTopology? combinedTopology;
   final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(CttermRoute) onNavigate;
   final void Function() onExit;
+
   /// Called with setup data before navigating to Generating World. When set, Game Setup uses it.
-  final void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId)? onPrepareNewGame;
+  final void Function(List<String> orderedGpIdsForSlots,
+      Map<String, String> leaderVariantByGpId)? onPrepareNewGame;
+
   /// When set, Generating World screen runs this instead of simulated progress (runs real init then navigates).
   final void Function()? runGeneration;
+
   /// Callback when turn is processed, receives updated game state.
   final void Function(Game)? onTurnProcessed;
+
   /// Callback when orders are changed in a panel.
   final void Function(Orders)? onOrdersChanged;
+
   /// Callback to cancel a unit's in-progress work (Development screen). SPEC/tui/screens/development.md.
   final void Function(String unitId)? onCancelUnitWork;
+
   /// Game events to display to the user (from turn processing).
   final List<GameEvent>? gameEvents;
+
   /// Callback to receive game events (combat, diplomacy, research, victory, etc.).
   final void Function(GameEvent)? onGameEvent;
+
   /// Callback when game state is updated (e.g., orders changed in a panel).
   final void Function(Game)? onGameUpdated;
+
   /// Callback to clear game state (e.g., when returning to main menu).
   final void Function()? onClearGame;
+
   /// Callback to load a game by ID.
   final Future<void> Function(String gameId)? onLoadGame;
+
   /// Initial terminal theme for settings screen.
   final TerminalTheme? initialTheme;
+
   /// Callback when theme is changed in settings.
   final void Function(TerminalTheme)? onThemeChanged;
 
   /// When non-null, turn resolution is suspended awaiting human overture decisions. SPEC/program/turn-resolution-phases.md.
   final List<OvertureOffer>? pendingOvertures;
+
   /// Called when resolve returns pending; app should navigate to pendingOvertures and show prompt.
-  final void Function(Game game, List<OvertureOffer> pending)? onTurnResolutionPending;
+  final void Function(Game game, List<OvertureOffer> pending)?
+      onTurnResolutionPending;
+
   /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
   final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
 
@@ -208,7 +228,8 @@ class _ShellScreenState extends State<ShellScreen> {
         return GameSetupScreen(
           onStartGame: (orderedGpIdsForSlots, leaderVariantByGpId) {
             _log.d('tui:nav: Game Setup complete -> generating world');
-            component.onPrepareNewGame?.call(orderedGpIdsForSlots, leaderVariantByGpId);
+            component.onPrepareNewGame
+                ?.call(orderedGpIdsForSlots, leaderVariantByGpId);
             // App's onPrepareNewGame sets route to generatingWorld; no separate navigate needed.
           },
           onBack: () => component.onNavigate(CttermRoute.mainMenu),
@@ -236,7 +257,8 @@ class _ShellScreenState extends State<ShellScreen> {
         );
       case CttermRoute.settings:
         return SettingsScreen(
-          onBack: () => component.onNavigate(component.settingsReturnRoute ?? CttermRoute.mainMenu),
+          onBack: () => component.onNavigate(
+              component.settingsReturnRoute ?? CttermRoute.mainMenu),
           initialTheme: component.initialTheme,
           onThemeChanged: component.onThemeChanged,
         );
@@ -254,8 +276,9 @@ class _ShellScreenState extends State<ShellScreen> {
               _log.w('tui:game: no game to process turn');
               return;
             }
-            _log.d('tui:game: processing turn ${game.worldState.turnState.turnNumber}');
-            
+            _log.d(
+                'tui:game: processing turn ${game.worldState.turnState.turnNumber}');
+
             final currentOrders = component.orders ?? const Orders();
             final topology = component.combinedTopology ?? const MapTopology();
             final tileMapByRegion = component.tileMapByRegion;
@@ -267,13 +290,16 @@ class _ShellScreenState extends State<ShellScreen> {
               onGameEvent: component.onGameEvent,
             );
             if (result is TurnResolutionPendingOvertures) {
-              _log.d('tui:game: turn resolution pending ${result.pendingOvertures.length} overture(s)');
-              component.onTurnResolutionPending?.call(result.game, result.pendingOvertures);
+              _log.d(
+                  'tui:game: turn resolution pending ${result.pendingOvertures.length} overture(s)');
+              component.onTurnResolutionPending
+                  ?.call(result.game, result.pendingOvertures);
               return;
             }
             final nextGame = requireTurnResolutionComplete(result);
             component.onTurnProcessed?.call(nextGame);
-            _log.i('tui:game: turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
+            _log.i(
+                'tui:game: turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
           },
           onVictory: _triggerVictory,
           onDefeat: _triggerDefeat,
@@ -303,6 +329,7 @@ class _ShellScreenState extends State<ShellScreen> {
           game: component.game!,
           orders: component.orders ?? const Orders(),
           tileMapByRegion: component.tileMapByRegion,
+          combinedTopology: component.combinedTopology,
           onNavigate: component.onNavigate,
           onOrdersChanged: (Orders orders) {
             component.onOrdersChanged?.call(orders);
@@ -400,9 +427,14 @@ class _ShellScreenState extends State<ShellScreen> {
         final game = component.game;
         final pending = component.pendingOvertures;
         final onDecisions = component.onOvertureDecisions;
-        if (game == null || pending == null || pending.isEmpty || onDecisions == null) {
-          _log.w('tui:nav: pendingOvertures route with missing game/pending/onDecisions');
-          return const Padding(padding: EdgeInsets.all(1), child: Text('No pending overtures.'));
+        if (game == null ||
+            pending == null ||
+            pending.isEmpty ||
+            onDecisions == null) {
+          _log.w(
+              'tui:nav: pendingOvertures route with missing game/pending/onDecisions');
+          return const Padding(
+              padding: EdgeInsets.all(1), child: Text('No pending overtures.'));
         }
         return PendingOverturesScreen(
           game: game,
@@ -416,30 +448,30 @@ class _ShellScreenState extends State<ShellScreen> {
   /// Returns list of GP name -> province count, sorted by count descending.
   List<MapEntry<String, int>> _buildStandings(Game game) {
     final countsByOwner = <String, int>{};
-    
+
     // Count Old World provinces per player
     for (final province in game.worldState.oldWorld.provinces) {
       final ownerId = province.ownerId;
       if (ownerId == null || ownerId.isEmpty) continue;
       countsByOwner.update(ownerId, (v) => v + 1, ifAbsent: () => 1);
     }
-    
+
     // Get player names
     final playerNames = <String, String>{};
     for (final player in game.players) {
       playerNames[player.id] = player.displayName;
     }
-    
+
     // Build standings list
     final standings = <MapEntry<String, int>>[];
     for (final entry in countsByOwner.entries) {
       final name = playerNames[entry.key] ?? entry.key;
       standings.add(MapEntry(name, entry.value));
     }
-    
+
     // Sort by province count descending
     standings.sort((a, b) => b.value.compareTo(a.value));
-    
+
     return standings;
   }
 }

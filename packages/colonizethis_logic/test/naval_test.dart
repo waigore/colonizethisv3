@@ -44,6 +44,40 @@ void main() {
       });
     });
 
+    group('firstAdjacentSeaZone', () {
+      test('returns id2 when id1 matches seaZoneId', () {
+        final seaOnly = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          ],
+          edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
+        );
+        expect(firstAdjacentSeaZone(seaOnly, 'sea1'), 'sea2');
+      });
+
+      test('returns id1 when id2 matches seaZoneId', () {
+        final seaOnly = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          ],
+          edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
+        );
+        expect(firstAdjacentSeaZone(seaOnly, 'sea2'), 'sea1');
+      });
+
+      test('returns null when sea zone has no edges', () {
+        final noEdgeTopology = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'sea0', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          ],
+          edges: const [],
+        );
+        expect(firstAdjacentSeaZone(noEdgeTopology, 'sea0'), isNull);
+      });
+    });
+
     group('seaZoneIdForProvince', () {
       test('returns adjacent sea zone for coastal province', () {
         expect(seaZoneIdForProvince(topology, 'p1'), 'sea1');

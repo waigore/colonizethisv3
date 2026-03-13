@@ -1435,6 +1435,7 @@ void main() {
         List<DiplomacyRelation>? diplomacyRelations,
         Map<String, String>? resourceByTileKey,
         Map<String, Set<String>>? playerProspectedTiles,
+        Map<String, String>? purchasedTilesByTileKey,
       }) {
         return Game(
           id: 'g1',
@@ -1466,6 +1467,7 @@ void main() {
               }
             },
             playerProspectedTiles: playerProspectedTiles ?? const {},
+            purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
           ),
           players: [
             Player(
@@ -1752,6 +1754,58 @@ void main() {
             engine.validatePlayerOrdersWithContext(game, topology, 'p1');
         expect(results.single.status, OrderValidationStatus.accepted);
       });
+
+      test('rejects purchase_land when tile already purchased by another GP',
+          () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+                gpId: 'p1',
+                targetId: 'minor1',
+                stage: OvertureStage.embassy,
+                sinceTurn: 0)
+          ],
+          purchasedTilesByTileKey: {tileKey: 'p2'},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'merchant1',
+                target: 'purchase_land',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason,
+            contains('Tile already purchased by another power'));
+      });
+
+      test('rejects purchase_land when tile already owned by same player', () {
+        final game = _baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+                gpId: 'p1',
+                targetId: 'minor1',
+                stage: OvertureStage.embassy,
+                sinceTurn: 0)
+          ],
+          purchasedTilesByTileKey: {tileKey: 'p1'},
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+                unitId: 'merchant1',
+                target: 'purchase_land',
+                targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('You already own this tile'));
+      });
     });
 
     group('validateWork (build_improvement)', () {
@@ -1887,6 +1941,159 @@ void main() {
                 unitId: 'builder1',
                 target: 'build_improvement',
                 targetTileKey: tileKey));
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.accepted);
+      });
+
+      test('rejects build_improvement in foreign, unpurchased province', () {
+        final foreignProvinceId = '$ow|P2';
+        final foreignTileKey = '$foreignProvinceId|0|0';
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+                Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
+                  id: 'builder1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  provinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: {
+              tileKey: 'grain',
+              foreignTileKey: 'grain',
+            },
+            tileState: const TileMapState(),
+            tileKeysByRegionAndProvince: {
+              ow: {
+                provinceId: [tileKey],
+                foreignProvinceId: [foreignTileKey],
+              },
+            },
+            playerVisibilityByTile: {
+              'p1': {
+                tileKey: 'fullyVisible',
+                foreignTileKey: 'fullyVisible',
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              stockpile: Stockpile()
+                  .applyDelta(CommodityCatalog.lumber.id, 2)
+                  .applyDelta(CommodityCatalog.castIron.id, 2),
+              techUnlocked: const {'gathering_3': true},
+            ),
+            const Player(
+              id: 'p2',
+              displayName: 'P2',
+              isHuman: false,
+            ),
+          ],
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+          'p1',
+          WorkOrder(
+            unitId: 'builder1',
+            target: 'build_improvement',
+            targetTileKey: foreignTileKey,
+          ),
+        );
+        final results =
+            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(
+          results.single.reason,
+          contains('foreign or uncontrolled province'),
+        );
+      });
+
+      test('accepts build_improvement on purchased tile in foreign province', () {
+        final foreignProvinceId = '$ow|P2';
+        final foreignTileKey = '$foreignProvinceId|0|0';
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+                Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
+                  id: 'builder1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  provinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: {
+              tileKey: 'grain',
+              foreignTileKey: 'grain',
+            },
+            tileState: const TileMapState(),
+            tileKeysByRegionAndProvince: {
+              ow: {
+                provinceId: [tileKey],
+                foreignProvinceId: [foreignTileKey],
+              },
+            },
+            playerVisibilityByTile: {
+              'p1': {
+                tileKey: 'fullyVisible',
+                foreignTileKey: 'fullyVisible',
+              },
+            },
+            purchasedTilesByTileKey: {foreignTileKey: 'p1'},
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              stockpile: Stockpile()
+                  .applyDelta(CommodityCatalog.lumber.id, 2)
+                  .applyDelta(CommodityCatalog.castIron.id, 2),
+              techUnlocked: const {'gathering_3': true},
+            ),
+            const Player(
+              id: 'p2',
+              displayName: 'P2',
+              isHuman: false,
+            ),
+          ],
+        );
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+          'p1',
+          WorkOrder(
+            unitId: 'builder1',
+            target: 'build_improvement',
+            targetTileKey: foreignTileKey,
+          ),
+        );
         final results =
             engine.validatePlayerOrdersWithContext(game, topology, 'p1');
         expect(results.single.status, OrderValidationStatus.accepted);

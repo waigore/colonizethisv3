@@ -56,12 +56,12 @@ class MoveValidator {
     if (!isMilitaryUnit(unit.type) &&
         destOwnerId != null &&
         destOwnerId != playerId) {
-      if (_ownerIsGreatPower(game, destOwnerId) && !isSpyUnit(unit.type)) {
+      if (isGreatPower(game, destOwnerId) && !isSpyUnit(unit.type)) {
         return const OrderValidationResult(
             status: OrderValidationStatus.rejected,
             reason: 'Civilian cannot enter other Great Power territory');
       }
-      if (_ownerIsMinorOrTribe(game, destOwnerId) &&
+      if (isMinorOrTribe(game, destOwnerId) &&
           !isExplorerUnit(unit.type) &&
           !isMerchantUnit(unit.type) &&
           !isSpyUnit(unit.type)) {
@@ -74,7 +74,7 @@ class MoveValidator {
     // Attack validation: GP province requires war or same-turn declareWar.
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        _ownerIsGreatPower(game, destOwnerId)) {
+        isGreatPower(game, destOwnerId)) {
       final rel = getRelation(game, playerId, destOwnerId);
       final atWar = rel?.atWar ?? false;
       final declaringWarThisTurn = diplomaticOrders.any((o) =>
@@ -91,7 +91,7 @@ class MoveValidator {
     // Attack validation: Minor/Tribe province requires war for military units.
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        _ownerIsMinorOrTribe(game, destOwnerId) &&
+        isMinorOrTribe(game, destOwnerId) &&
         isMilitaryUnit(unit.type)) {
       final rel = getRelation(game, playerId, destOwnerId);
       final atWar = rel?.atWar ?? false;
@@ -115,14 +115,5 @@ class MoveValidator {
           reason: 'Source or destination not visible');
     }
     return const OrderValidationResult(status: OrderValidationStatus.accepted);
-  }
-
-  bool _ownerIsGreatPower(Game game, String ownerId) {
-    return game.players.any((p) => p.id == ownerId);
-  }
-
-  bool _ownerIsMinorOrTribe(Game game, String ownerId) {
-    return game.minorNations.any((m) => m.id == ownerId) ||
-        game.tribes.any((t) => t.id == ownerId);
   }
 }

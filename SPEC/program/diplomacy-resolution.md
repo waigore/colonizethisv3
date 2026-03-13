@@ -42,7 +42,7 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 
 **Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
 
-**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver. Intervention choices for Minors with Embassies are evaluated during combat resolution, and may change relationState to `AT_WAR` between additional faction pairs (e.g., an intervening GP and each attacking GP) immediately before battle odds are computed.
+**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver. Intervention choices for Minors with Embassies or GP **investment** (purchased land in that Minor’s provinces) and for Tribes with GP investment are evaluated during combat resolution, and may change relationState to `AT_WAR` between additional faction pairs (e.g., an intervening GP and each attacking GP) immediately before battle odds are computed.
 
 **AI:** Diplomatic actions feed into AI evidence and dialogue event pipelines for hidden-agenda discovery. See [ai-events-and-dossier.md](ai-events-and-dossier.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
 

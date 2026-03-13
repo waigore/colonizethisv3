@@ -23,6 +23,18 @@ RegimentStats? downgradeToEra(RegimentStats stats, int era) {
   return sameCategory.isNotEmpty ? sameCategory.first : null;
 }
 
+/// Computes strength for a single unit using the shared formula.
+/// Public so both deterministic and probabilistic resolvers stay in sync.
+double unitStrength(Unit u, int effectiveEra) {
+  var stats = regimentStatsById(u.type);
+  if (stats == null) return 0.0;
+  if (stats.era > effectiveEra) {
+    stats = downgradeToEra(stats, effectiveEra) ?? stats;
+  }
+  final mult = medalMultiplierFor(u.medals.clamp(0, 4));
+  return (stats.fpn + stats.fpm) * mult;
+}
+
 /// Aggregates military strength for a list of units using the given effective
 /// era. Uses the same formula as auto-resolve: sum of (FPN+FPM)*medalMultiplier
 /// per unit, with era downgrade when unit era exceeds effective era.
@@ -30,13 +42,7 @@ RegimentStats? downgradeToEra(RegimentStats stats, int era) {
 double aggregateStrength(List<Unit> units, int effectiveEra) {
   var total = 0.0;
   for (final u in units) {
-    var stats = regimentStatsById(u.type);
-    if (stats == null) continue;
-    if (stats.era > effectiveEra) {
-      stats = downgradeToEra(stats, effectiveEra) ?? stats;
-    }
-    final mult = medalMultiplierFor(u.medals.clamp(0, 4));
-    total += (stats.fpn + stats.fpm) * mult;
+    total += unitStrength(u, effectiveEra);
   }
   return total;
 }

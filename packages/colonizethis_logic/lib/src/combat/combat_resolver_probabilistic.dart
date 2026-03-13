@@ -232,7 +232,7 @@ List<String> _selectCasualtiesWeighted(
 
   final weights = <double>[];
   for (final u in units) {
-    final s = _unitStrength(u, effectiveEra);
+    final s = unitStrength(u, effectiveEra);
     weights.add(1.0 / (s + 0.1));
   }
   final ids = units.map((u) => u.id).toList();
@@ -255,22 +255,11 @@ List<String> _selectCasualtiesWeighted(
   return chosen;
 }
 
-/// Computes strength for a single unit (used in probabilistic combat).
-double _unitStrength(Unit u, int effectiveEra) {
-  var stats = regimentStatsById(u.type);
-  if (stats == null) return 0.0;
-  if (stats.era > effectiveEra) {
-    stats = downgradeToEra(stats, effectiveEra) ?? stats;
-  }
-  final mult = medalMultiplierFor(u.medals.clamp(0, 4));
-  return (stats.fpn + stats.fpm) * mult;
-}
-
 /// Aggregates strength for a list of units (probabilistic version with helper).
 double _aggregateStrength(List<Unit> units, int effectiveEra) {
   var total = 0.0;
   for (final u in units) {
-    total += _unitStrength(u, effectiveEra);
+    total += unitStrength(u, effectiveEra);
   }
   return total;
 }

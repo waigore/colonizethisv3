@@ -305,6 +305,29 @@ const Map<String, TechDefinition> techCatalog = {
 
 TechDefinition? techById(String id) => techCatalog[id];
 
+/// Humanized display name for a tech id (e.g. road_construction → "Road construction").
+/// SPEC/ui/tech-tree-widget.md.
+String techDisplayName(String id) {
+  if (id.isEmpty) return id;
+  return id
+      .split('_')
+      .map((s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}')
+      .join(' ');
+}
+
+/// Tech ids that the player can research next (all prerequisites in [techUnlocked], tech not yet unlocked).
+/// Derived per SPEC/game/research-state.md; does not consider slots or treasury.
+Set<String> researchableTechIds(Map<String, bool>? techUnlocked) {
+  final unlocked = techUnlocked ?? const {};
+  final result = <String>{};
+  for (final tech in techCatalog.values) {
+    if (unlocked[tech.id] == true) continue;
+    final allPrereqsMet = tech.prerequisiteIds.every((p) => unlocked[p] == true);
+    if (allPrereqsMet) result.add(tech.id);
+  }
+  return result;
+}
+
 /// Simple extraction-cap mapping for the Phase 5 MVP. In the full model the
 /// cap is per resource; here we keep a single scalar cap derived from
 /// "gathering" techs:

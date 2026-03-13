@@ -30,8 +30,8 @@ Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData`
 
 - **Viewport:** Exactly the size of the map widget in the layout. No intrinsic minimum; parent constrains the widget.
 - **Scale:** Fixed scale at any time (e.g. 1 tile = N logical pixels). **Fixed zoom levels:** Only discrete zoom levels are allowed; no free-form scale.
-- **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in.
-- **Zoom:** Smooth zooming between fixed zoom levels (e.g. pinch or buttons). Transition is smooth; final scale snaps to a zoom level.
+- **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in; **dragging** on the map surface pans the camera.
+- **Zoom:** Smooth zooming between fixed zoom levels (e.g. pinch or buttons or scroll wheel). Transition is smooth; final scale snaps to a zoom level. **Pinch gestures** (on touch devices) and **scroll wheel** input (on pointer devices) both change zoom level.
 - **Full map:** The component always has the full region map in memory/logic; viewport is a window over it.
 
 ---
@@ -66,6 +66,9 @@ Details of what “province details” shows are **not** defined in this spec; t
 - **Selector:** When the pointer hovers over a tile, the widget shows a selector on that tile (e.g. a simple square outline). The selector has a **subtle bouncing animation** (e.g. scale or position) so it is clearly visible and responsive.
 - **Province border highlight:** The province (or sea zone) that contains the hovered tile is highlighted: its borders **glow** and use a **subtle animation** (e.g. opacity or stroke pulse). This applies to both land provinces and sea zones.
 - **Optional callback:** The widget may expose **onProvinceHovered**(prefixed province id, or null when hover leaves) so the parent can show tooltips or other feedback.
+- **Tap-as-hover on touch:** On touch-only/mobile viewports where pointer hover is not available, **tapping a tile** must drive the same hover visuals and tile/province callbacks as pointer hover:
+  - The hover selector and province-border glow move to the tapped tile (subject to visibility rules below) and remain there until another tile is hovered/tapped or the map loses focus.
+  - The map widget invokes **onTileHovered** and **onProvinceHovered** for the tapped tile/province in the same way it would for a hover event, so overlays such as the Province/Sea Zone Detail overlay can treat the tapped tile as the “current hovered tile” on mobile.
 
 ---
 
@@ -75,7 +78,7 @@ The map widget supports two visibility modes that determine how each tile is ren
 
 - **Full visibility mode:**
   - Ignores per-tile visibility and renders all tiles as fully visible.
-  - Equivalent to the current behavior of the debug map widget.
+  - Renders all tiles as fully visible (no per-tile visibility masking).
 - **Player-constrained visibility mode:**
   - Uses per-tile visibility from the **player view** (see [player-view.md](../program/player-view.md)) to decide how each tile is drawn.
   - Visibility is specified per tile key `regionId|provinceId|x|y` and carried via `CellViewData.visibility` (see [map-visualization.md](../program/map-visualization.md)).
@@ -85,11 +88,11 @@ The map widget supports two visibility modes that determine how each tile is ren
 
 When the widget is in **full visibility mode**, it renders the base layer exactly as today (terrain, resources, improvements, roads, capitals, borders) and does not consider visibility.
 
-When the widget is in **player-constrained visibility mode**, it maps `CellViewData.visibility` to rendering as follows:
+When the widget is in **player-constrained visibility mode**, it maps `CellViewData.visibility` to rendering and interaction as follows:
 
 - **`visible`:** The tile is rendered unmodified (full terrain color, resource/improvement/road letters, and borders).
 - **`fogged`:** The tile is rendered with the same content as `visible` but visually muted:
-  - The base terrain color is blended towards gray or covered with a semi-transparent gray overlay.
+  - The base terrain color is blended towards a **darker gray or black** with a consistent opacity factor (e.g. at least 60% of the way towards black) so fogged tiles are noticeably darker than fully visible tiles.
   - Resource/improvement/road letters remain readable but appear on the muted background.
 - **`unrevealed`:** The tile is rendered as a solid black square:
   - No terrain color or letters are shown.
@@ -98,7 +101,8 @@ When the widget is in **player-constrained visibility mode**, it maps `CellViewD
 Hover, selection, and overlay behavior:
 
 - Hover selector and province-border glow only apply to tiles that are not `unrevealed`.
-- Province selection callbacks (`onProvinceSelected`, `onProvinceHovered`) are not invoked for `unrevealed` tiles.
+- Province selection callbacks (`onProvinceSelected`, `onProvinceHovered`) **are invoked** for taps/clicks on tiles whose visibility is `visible`, `fogged`, or `unrevealed`; it is the responsibility of the overlay (see `SPEC/ui/province-sea-zone-detail-overlay.md`) to obfuscate data for fully unrevealed provinces/tiles.
+- On touch devices, tapping a tile that is not `unrevealed` also updates the **hover selector** and hover callbacks as described in the Hover section so that the visual cursor and overlay stay in sync even without pointer hover.
 
 ---
 
@@ -127,12 +131,13 @@ Hover, selection, and overlay behavior:
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation; when hover leaves, the highlight is removed.
+- **Given** a touch/mobile viewport where pointer hover is not available, **when** the user taps a non-`unrevealed` tile, **then** the widget both invokes province/tile selection callbacks and updates the hover selector and province-border glow as if the tile were hovered.
 - **Given** the component is implemented with Flame, **then** it is possible to drive per-tile or per-asset animations from external events or timers.
 - **Given** the Widgetbook map widget story is configured with an initialized game whose `Game.players` list is non-empty, **when** the user enables player-constrained visibility mode in the story controls, **then** the widget builds its map view using the first player's (`game.players.first`) player view and applies per-tile visibility from that view.
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **full**, **when** the widget renders tiles, **then** tiles whose visibility is `visible`, `fogged`, or `unrevealed` are all drawn as fully visible (no gray or black masking is applied based on visibility).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `visible`, **then** the tile is drawn identically to the current base behavior (full terrain color and overlays).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `fogged`, **then** the tile is drawn with the same terrain and overlays as `visible` tiles but with a consistent gray/opacity effect applied so the tile appears muted.
-- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource/improvement/road letters are shown, and hover/selection callbacks are not fired for that tile.
+- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource/improvement/road letters are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
 
 - **Given** the map widget is in work target selection mode (non-null **validTileKeys** and **onTileSelected** provided), **when** the widget renders a tile whose key is in **validTileKeys** and in the current region, **then** that tile is drawn with a subtle glow (overlay or outline). When the user taps a tile in **validTileKeys**, **then** the widget invokes **onTileSelected** with that tile key; when the user taps a tile not in **validTileKeys** or empty area, **then** the widget does not invoke **onTileSelected**.
 
@@ -140,6 +145,6 @@ Hover, selection, and overlay behavior:
 
 ## Integration
 
-- **Data:** Uses shared view models and game state (e.g. `RegionMapViewData`, Game, topology, tile maps). See [map-visualization.md](../program/map-visualization.md), [player-view.md](../program/player-view.md) for visibility when needed.
-- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks.
+- **Data:** Uses shared view models and game state (e.g. `RegionMapViewData`, Game, topology, tile maps). See [map-visualization.md](../program/map-visualization.md), [player-view.md](../program/player-view.md) for visibility when needed. `RegionMapViewData` / `CellViewData` are the source of truth for what is rendered; the map widget does not perform its own world simulation.
+- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks. The reusable map widget is exposed to Flutter as a `CtRegionMap`-style wrapper that embeds a Flame `GameWidget` and internal Flame game/component tree.
 - **Catalog:** Once implemented, register in app widget catalog (e.g. CtRegionMap or similar; category: game/map, Flame component).

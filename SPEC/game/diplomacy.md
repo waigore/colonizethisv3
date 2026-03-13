@@ -40,18 +40,22 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. **Overtures are two-way:** one player offers; the **target** faction must accept or reject. When the target is a Minor or Tribe, the accept/reject decision is applied at turn resolution by rule (e.g. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and cost). When the target is a Great Power, that GP's controller decides: if the target is **AI**, the decision is made during the Diplomacy phase; if the target is **human**, turn resolution **blocks** until the human responds (see [turn-resolution-phases.md](../program/turn-resolution-phases.md) § Blocking human input). Only when the target accepts are cost deducted and overture stage advanced. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** Preset grant amounts; deducts treasury; improves relation score.
-- **Intervention (human and AI):**
-  - Trigger: When a Minor with at least one GP Embassy is attacked by a Great Power during combat resolution, each GP with an Embassy may be offered or may internally evaluate an **Intervention** choice.
-  - Human GP with Embassy: The player chooses **Intervene**, **Do Nothing**, or **Diplomatic Protest**.
-    - **Intervene (human):** The intervening GP immediately enters a war state with each attacking Great Power; the battle proceeds with this new war state in effect. The Minor remains an independent faction for province ownership purposes in MVP.
-    - **Do Nothing (human):** The intervening GP does not change relation score or war state with any attacker in that battle, but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared).
-    - **Diplomatic Protest (human):** The intervening GP remains at peace but applies a relation penalty with each attacking Great Power; the Minor’s diplomatic state is unchanged.
-  - AI GP with Embassy: Before combat resolution, each AI-controlled GP that has an Embassy with the attacked Minor independently evaluates whether to intervene on the Minor’s side:
+- **Intervention (human and AI, at war declaration):**
+  - Trigger (embassy or investment protection): When a Great Power **declares war** on a Minor that currently has **at least one GP Embassy** **or** at least one GP with **purchased land** recorded in its provinces (`purchasedTilesByTileKey` entries where the tile’s province ownerId is that Minor), each such GP evaluates or is offered a **one-time Intervention choice** against the aggressor **during the Diplomacy phase**, as part of resolving that `Declare War` order.
+  - Human GP with Embassy or purchased land: For each valid GP–Minor war declaration, each human GP that:
+    - is **not** the declaring GP, and
+    - has an **Embassy** with the Minor **or** has **purchased land** in any province owned by that Minor  
+    is presented an Intervention choice **once, at war declaration time**:
+    - **Intervene (human):** The intervening GP immediately enters a war state (`AT_WAR`) with the declaring Great Power; this war state is in effect for all subsequent Movement and Combat in that turn and beyond. The Minor remains an independent faction for province ownership purposes in MVP.
+    - **Do Nothing (human):** The intervening GP does not change relation score or war state with the declaring Great Power at that moment, but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared). Any existing **purchased land** in that Minor’s provinces remains recorded until normal province conquest rules apply (see province conquest rules).
+    - **Diplomatic Protest (human):** The intervening GP remains at peace but applies a relation penalty with the declaring Great Power; the Minor’s diplomatic state is unchanged. Purchased land and Embassy state remain unchanged.
+  - AI GP with Embassy or purchased land: For each GP–Minor war declaration:
+    - Every AI-controlled GP that has an Embassy with the attacked Minor, or has any purchased land in that Minor’s provinces, independently evaluates whether to intervene against the declaring Great Power.
     - The **probability to intervene** is a monotonic function of the GP–Minor relation score; default values for MVP are: relation score 0–25 → 0% chance, 26–50 → 25% chance, 51–75 → 50% chance, 76–100 → 80% chance.
-    - On **AI Intervene**, the AI GP immediately enters a war state with each attacking Great Power, and the battle resolves with that GP treated as a belligerent against the attackers.
-    - On **AI Do Nothing**, the AI GP does not change relation or war state with the attackers but **also loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared), matching the human Do Nothing outcome.
+    - On **AI Intervene**, the AI GP immediately enters a war state with the declaring Great Power; this war state is used for all Movement and Combat validation in that turn and subsequent turns. Embassy and overture state with the Minor remain unchanged.
+    - On **AI Do Nothing**, the AI GP does not change relation or war state with the declaring Great Power but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared), matching the human Do Nothing outcome. Purchased land remains recorded until province conquest rules apply.
     - MVP does not implement an AI **Protest** choice; AI either intervenes or does nothing.
-  - Turn timing: Because interventions are evaluated during combat resolution, a GP (including the human player) may have war declared on them **after** the Diplomacy phase has completed, but **before** movement/combat for that battle is finalized.
+  - Turn timing and scope: Intervention is evaluated **once per war declaration** during the Diplomacy phase, before Movement and Combat. There are **no additional intervention prompts tied to later battles** in that war; once the war state has been updated (or not) based on Intervention choices, subsequent combats proceed with that fixed war/peace state.
 - **Peace:** Minors never refuse peace offers.
  - **War and overtures:** When a GP declares war on a Minor (relationState becomes `AT_WAR`), any existing overture state between that GP and that Minor (Trade Consulate, Embassy, NAP, or Join Empire) is **cleared to `none`**. While `AT_WAR`, the GP cannot establish any new overtures with that Minor; after peace, the overture chain must be rebuilt from `none` if the player wants renewed consulate/embassy status.
 
@@ -61,6 +65,7 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
 - Tribes react to nearby conquest (relation/trade effects).
+ - **Investment intervention:** When a Tribe that currently owns any province with **purchased land** belonging to a GP (entries in `purchasedTilesByTileKey` whose tile’s province ownerId is that Tribe) is attacked by a Great Power during combat resolution, that GP is treated as having an **investment-based intervention trigger**, analogous to an Embassy-based trigger for Minors. Human GPs with such purchased land may be offered an Intervention choice; AI GPs may evaluate intervention probabilistically using the same rules as for Minors.
  - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
 
 ### Diplomatic Order Types
@@ -162,6 +167,14 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
+- Given the user views the diplomacy panel (app or TUI) for a discovered faction with a diplomatic relation  
+  When the panel displays the current relation  
+  Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
+
+- Given the user views the diplomacy panel and the list includes at least one other Great Power  
+  When the panel displays each Great Power row  
+  Then the system shows that GP’s **power score** per the Great Power power score formula (province count, regiment strength, ship count with default weights). If that GP’s score is **greater** than the human player’s power score, the value is shown in **red**; otherwise in **green**.
+
 ## Configurable Values
 
 | Parameter | Default | Notes |
@@ -175,6 +188,30 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Embassy cost | £1000 | |
 | Join Empire base cost | £5000 | One-time cost when enacting Join Empire. |
 | Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
+
+### Player-facing relation display
+
+The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI (app or TUI). Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
+
+The diplomacy panel (app and ctterm) shows instead a **one-word relation state** derived from the score:
+
+| Score range | Display label |
+|-------------|---------------|
+| 0–29 | Hostile |
+| 30–49 | Unfriendly |
+| 50–69 | Cordial |
+| 70–100 | Friendly |
+
+Same mapping for both Flutter app and TUI. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+
+### Great Power power score
+
+An **absolute power score** is computed for each Great Power for display on the diplomacy panel. It reflects territorial, land, and naval strength.
+
+- **Formula:** `powerScore = provinceCount × W_province + round(regimentStrength) × W_regiment + shipCount × W_ship`
+- **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
+- **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
+- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**. Same formula and display rule for app and TUI where applicable.
 
 ### Where defined (MVP)
 

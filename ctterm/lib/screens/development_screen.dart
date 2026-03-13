@@ -7,6 +7,7 @@ import 'package:ctterm/ctterm_routes.dart';
 import 'package:ctterm/widgets/map_grid_widget.dart';
 import 'package:ctterm/map_tui_mapping.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
@@ -54,6 +55,7 @@ class DevelopmentScreen extends StatefulComponent {
     required this.game,
     required this.orders,
     this.tileMapByRegion,
+    this.combinedTopology,
     required this.onNavigate,
     required this.onOrdersChanged,
     this.onCancelUnitWork,
@@ -61,13 +63,20 @@ class DevelopmentScreen extends StatefulComponent {
 
   /// Current game state (required for unit data).
   final Game game;
+
   /// Current orders for the human player.
   final Orders orders;
+
   /// Tile maps by region for map context (mini-map).
   final Map<String, TileMapResult>? tileMapByRegion;
+
+  /// Combined topology for order validation.
+  final MapTopology? combinedTopology;
   final void Function(CttermRoute) onNavigate;
+
   /// Callback when orders are changed (to propagate to game).
   final void Function(Orders) onOrdersChanged;
+
   /// Callback to clear a unit's in-progress work (currentWork). SPEC/tui/screens/development.md § Cancel Work Order.
   final void Function(String unitId)? onCancelUnitWork;
 
@@ -130,7 +139,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   List<Unit> get _playerCivilianUnits {
     final humanPlayerId = _getHumanPlayerId();
     if (humanPlayerId == null) return [];
-    
+
     // Civilian units are Builders and Engineers
     final allUnits = <Unit>[];
     allUnits.addAll(component.game.worldState.oldWorld.units
@@ -146,7 +155,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       if (!entry.value) return entry.key;
     }
     // Fallback: first player
-    return component.game.players.isNotEmpty ? component.game.players.first.id : null;
+    return component.game.players.isNotEmpty
+        ? component.game.players.first.id
+        : null;
   }
 
   String _provinceLabel(String fullProvinceId) {
@@ -200,7 +211,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final rawChar = event.character;
     final c = rawChar?.toLowerCase();
     final units = _playerCivilianUnits;
-    
+
     if (units.isEmpty) {
       if (c == 'escape') {
         component.onNavigate(CttermRoute.inGameShell);
@@ -215,7 +226,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         // Step back to province selection.
         setState(() {
           _inputMode = _DevelopmentInputMode.selectingProvince;
-          _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+          _feedbackMessage =
+              'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
           _feedbackColor = Colors.cyan;
         });
         return true;
@@ -251,18 +263,92 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     // Navigation: arrow keys / j/k to navigate unit list
     if (key == LogicalKey.arrowUp || c == 'k') {
-      setState(() => _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1));
+      setState(() =>
+          _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1));
       return true;
     }
     if (key == LogicalKey.arrowDown || c == 'j') {
-      setState(() => _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1));
+      setState(() =>
+          _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1));
       return true;
     }
 
+    if (_handleIdleActionKey(c, rawChar, units)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  bool _handleEscapeKey(LogicalKey key) {
+    // Escape: back to shell or cancel input mode
+    if (key != LogicalKey.escape) {
+      return false;
+    }
+
+    if (_inputMode == _DevelopmentInputMode.selectingTile) {
+      // Step back to province selection.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.selectingProvince;
+        _feedbackMessage =
+            'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+        _feedbackColor = Colors.cyan;
+      });
+      return true;
+    }
+    if (_inputMode == _DevelopmentInputMode.selectingProvince) {
+      // Step back to idle navigation.
+      setState(() {
+        _inputMode = _DevelopmentInputMode.idle;
+        _pendingWorkTarget = null;
+        _candidateProvinces = const [];
+        _candidateTilesByProvince = const {};
+        _selectedProvinceIndex = 0;
+        _selectedTileIndexWithinProvince = 0;
+        _provinceWindowStart = 0;
+        _tileWindowStart = 0;
+        _feedbackMessage = '';
+      });
+      _log.d('tui:nav: cancelled development input mode');
+      return true;
+    }
+    // Idle: leave Development screen back to in-game shell.
+    component.onNavigate(CttermRoute.inGameShell);
+    return true;
+  }
+
+  bool _handleUnitNavigationKey(
+    LogicalKey key,
+    String? c,
+    int unitCount,
+  ) {
+    // Navigation: arrow keys / j/k to navigate unit list
+    if (key == LogicalKey.arrowUp || c == 'k') {
+      setState(
+        () => _selectedIndex = (_selectedIndex - 1).clamp(0, unitCount - 1),
+      );
+      return true;
+    }
+    if (key == LogicalKey.arrowDown || c == 'j') {
+      setState(
+        () => _selectedIndex = (_selectedIndex + 1).clamp(0, unitCount - 1),
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  bool _handleIdleActionKey(
+    String? c,
+    String? rawChar,
+    List<Unit> units,
+  ) {
     // Enter/Space: soft hint only; actual work-type choice is via hotkeys
     // tied to Available Work. Do not change mode here.
-    if (key == LogicalKey.enter || key == LogicalKey.space) {
-      return true;
+    if (_inputMode == _DevelopmentInputMode.idle &&
+        (c == null && (rawChar == null))) {
+      return false;
     }
 
     // x: cancel work order for selected unit (from idle mode only, when unit has work)
@@ -286,6 +372,13 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       }
     }
 
+    // Enter/Space: handled last so they remain a soft hint when idle.
+    if (_inputMode == _DevelopmentInputMode.idle &&
+        (c == null || c.isEmpty) &&
+        (rawChar == null || rawChar.isEmpty)) {
+      return false;
+    }
+
     return false;
   }
 
@@ -300,10 +393,12 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         _candidateTilesByProvince = const {};
         _selectedProvinceIndex = 0;
         _selectedTileIndexWithinProvince = 0;
-        _feedbackMessage = 'No eligible tiles for ${_getWorkTargetName(target)}';
+        _feedbackMessage =
+            'No eligible tiles for ${_getWorkTargetName(target)}';
         _feedbackColor = Colors.yellow;
       });
-      _log.d('tui:development: no eligible tiles for $target and unit ${unit.id}');
+      _log.d(
+          'tui:development: no eligible tiles for $target and unit ${unit.id}');
       return;
     }
 
@@ -330,7 +425,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
       _feedbackColor = Colors.cyan;
     });
-    _log.d('tui:development: selecting province/tile for $target and unit ${unit.id}');
+    _log.d(
+        'tui:development: selecting province/tile for $target and unit ${unit.id}');
   }
 
   /// Ensure the province sliding window keeps the selected province visible.
@@ -469,7 +565,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       // No tiles in this province: treat as province selection again.
       setState(() {
         _inputMode = _DevelopmentInputMode.selectingProvince;
-        _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
+        _feedbackMessage =
+            'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
         _feedbackColor = Colors.cyan;
       });
       return true;
@@ -521,9 +618,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     );
 
     // Add to existing orders
-    final existingOrders = component.orders.workOrdersByPlayerId[playerId] ?? [];
+    final existingOrders =
+        component.orders.workOrdersByPlayerId[playerId] ?? [];
     final updatedOrders = [...existingOrders, order];
-    
+
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
       buildUnitOrdersByPlayerId: component.orders.buildUnitOrdersByPlayerId,
@@ -534,11 +632,12 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       diplomaticOrdersByPlayerId: component.orders.diplomaticOrdersByPlayerId,
       researchOrdersByPlayerId: component.orders.researchOrdersByPlayerId,
       navalMoveOrdersByPlayerId: component.orders.navalMoveOrdersByPlayerId,
-      navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
+      navalMissionOrdersByPlayerId:
+          component.orders.navalMissionOrdersByPlayerId,
     );
 
     component.onOrdersChanged(newOrders);
-    
+
     setState(() {
       _inputMode = _DevelopmentInputMode.idle;
       _pendingWorkTarget = null;
@@ -553,7 +652,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackMessage = 'Work order assigned: $label at $tileLabel';
       _feedbackColor = Colors.green;
     });
-    
+
     _log.d('tui:development: assigned $target to unit ${unit.id}');
   }
 
@@ -563,8 +662,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return;
 
-    final existingOrders = component.orders.workOrdersByPlayerId[playerId] ?? [];
-    final updatedOrders = existingOrders.where((o) => o.unitId != unitId).toList();
+    final existingOrders =
+        component.orders.workOrdersByPlayerId[playerId] ?? [];
+    final updatedOrders =
+        existingOrders.where((o) => o.unitId != unitId).toList();
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
       buildUnitOrdersByPlayerId: component.orders.buildUnitOrdersByPlayerId,
@@ -575,19 +676,20 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       diplomaticOrdersByPlayerId: component.orders.diplomaticOrdersByPlayerId,
       researchOrdersByPlayerId: component.orders.researchOrdersByPlayerId,
       navalMoveOrdersByPlayerId: component.orders.navalMoveOrdersByPlayerId,
-      navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
+      navalMissionOrdersByPlayerId:
+          component.orders.navalMissionOrdersByPlayerId,
     );
     component.onOrdersChanged(newOrders);
 
     if (unit.currentWork != null) {
       component.onCancelUnitWork?.call(unitId);
     }
-    
+
     setState(() {
       _feedbackMessage = 'Work order cancelled (no refund)';
       _feedbackColor = Colors.yellow;
     });
-    
+
     _log.d('tui:development: cancelled work order for unit $unitId');
   }
 
@@ -598,9 +700,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
   /// Compute candidate tiles grouped by province for a unit and work target.
   ///
-  /// Tiles are restricted to fully-visible tiles in provinces owned by the
-  /// human player; target-specific eligibility is enforced later by the
-  /// core order/development logic.
+  /// Uses the logic package's getValidWorkOrderTileKeysWithVisibility for
+  /// visibility-aware tile filtering, then applies UI-specific filters
+  /// (reserved tiles, resources).
   Map<String, List<String>> _candidateTilesByProvinceFor(
     Unit unit,
     String target,
@@ -612,8 +714,17 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return const {};
     }
 
-    final visibilityByPlayer = world.playerVisibilityByTile[playerId];
-    final tileKeysByRegionAndProv = world.tileKeysByRegionAndProvince;
+    final topology = component.combinedTopology ?? const MapTopology();
+    final view = buildPlayerView(game, topology, playerId);
+
+    final validTileKeys = getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: view,
+      unitId: unit.id,
+      workTarget: target,
+      currentOrders: component.orders,
+    );
 
     final byProvince = <String, List<String>>{};
 
@@ -662,51 +773,39 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       }
     }
 
-    void addProvinceTiles(List<Province> provinces) {
-      for (final prov in provinces) {
-        if (prov.ownerId != playerId) {
-          continue;
-        }
-        final regionId = ProvinceId.regionIdFrom(prov.id);
-        final byProv = tileKeysByRegionAndProv[regionId];
-        final provTiles = byProv?[prov.id];
-        if (provTiles == null) {
-          continue;
-        }
+    // Group valid tiles by province, applying UI-specific filters.
+    for (final tileKey in validTileKeys) {
+      if (reservedTiles.contains(tileKey)) {
+        continue;
+      }
+
+      final parts = tileKey.split('|');
+      if (parts.length < 2) continue;
+      final regionId = parts[0];
+      final provinceId = parts[1];
+
+      // Only allow tiles that are under the player's control (owned province or
+      // purchased tile), matching core logic's isTileControlledByPlayer rule.
+      if (!isTileControlledByPlayer(game, playerId, tileKey)) {
+        continue;
+      }
+
+      // For build_improvement, restrict to tiles that actually have a resource,
+      // so Builders do not offer improvement work on empty tiles.
+      if (target == 'build_improvement') {
         final tileMap = component.tileMapByRegion?[regionId];
-        final list = <String>[];
-        for (final tk in provTiles) {
-          if (reservedTiles.contains(tk)) {
+        if (tileMap != null && parts.length >= 4) {
+          final x = int.tryParse(parts[2]) ?? 0;
+          final y = int.tryParse(parts[3]) ?? 0;
+          final resource = tileMap.resourceAt(x, y);
+          if (resource == null) {
             continue;
           }
-          // Only fully-visible tiles.
-          final vis = visibilityByPlayer?[tk];
-          if (vis != 'fullyVisible') {
-            continue;
-          }
-          // For build_improvement, restrict to tiles that actually have a resource,
-          // so Builders do not offer improvement work on empty tiles.
-          if (target == 'build_improvement' && tileMap != null) {
-            final parts = tk.split('|');
-            if (parts.length >= 4) {
-              final x = int.tryParse(parts[2]) ?? 0;
-              final y = int.tryParse(parts[3]) ?? 0;
-              final resource = tileMap.resourceAt(x, y);
-              if (resource == null) {
-                continue;
-              }
-            }
-          }
-          list.add(tk);
-        }
-        if (list.isNotEmpty) {
-          byProvince[prov.id] = list;
         }
       }
-    }
 
-    addProvinceTiles(world.oldWorld.provinces);
-    addProvinceTiles(world.newWorld.provinces);
+      byProvince.putIfAbsent(provinceId, () => []).add(tileKey);
+    }
 
     return byProvince;
   }
@@ -845,7 +944,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   Component build(BuildContext context) {
     final units = _playerCivilianUnits;
     final selectedUnit = units.isNotEmpty ? units[_selectedIndex] : null;
-    final workOrder = selectedUnit != null ? _getWorkOrderForUnit(selectedUnit.id) : null;
+    final workOrder =
+        selectedUnit != null ? _getWorkOrderForUnit(selectedUnit.id) : null;
 
     return Focusable(
       focused: true,
@@ -866,7 +966,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Text(' | Civilian Units | ', style: TextStyle(color: Colors.gray)),
+                const Text(' | Civilian Units | ',
+                    style: TextStyle(color: Colors.gray)),
                 _buildHelpText(),
               ],
             ),
@@ -945,7 +1046,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
             color: const Color(0xFF1a1a2e),
             child: const Text(
               ' UNIT ',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -958,16 +1060,19 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                 final workOrder = _getWorkOrderForUnit(unit.id);
                 final workTargetName = workOrder != null
                     ? _getWorkTargetName(workOrder.target)
-                    : (unit.currentWork != null ? _getWorkTargetName(unit.currentWork!.workTarget) : null);
-                
+                    : (unit.currentWork != null
+                        ? _getWorkTargetName(unit.currentWork!.workTarget)
+                        : null);
+
                 final status = workTargetName ?? 'idle';
-                
+
                 final bg = isSelected ? const Color(0xFF2a2a4e) : null;
                 final fg = isSelected ? Colors.white : Colors.gray;
-                
+
                 return Container(
                   color: bg,
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
                   child: Row(
                     children: [
                       if (isSelected)
@@ -981,7 +1086,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                         ),
                       ),
                       Text(
-                        hasWork ? '[${status.substring(0, status.length.clamp(0, 8))}]' : '[idle]',
+                        hasWork
+                            ? '[${status.substring(0, status.length.clamp(0, 8))}]'
+                            : '[idle]',
                         style: TextStyle(
                           color: hasWork ? Colors.cyan : Colors.gray,
                         ),
@@ -1038,12 +1145,23 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           const SizedBox(height: 1),
           _buildDetailRow('Unit ID', unit.id),
           _buildDetailRow('Location', _getProvinceName(unit)),
-          _buildDetailRow('Type', _isCivilianUnit(unit) ? 'Civilian' : 'Military'),
-          _buildDetailRow('Status', (workOrder != null || unit.currentWork != null) ? 'Working' : 'Idle'),
+          _buildDetailRow(
+              'Type', _isCivilianUnit(unit) ? 'Civilian' : 'Military'),
+          _buildDetailRow(
+              'Status',
+              (workOrder != null || unit.currentWork != null)
+                  ? 'Working'
+                  : 'Idle'),
           if (workOrder != null || unit.currentWork != null) ...[
             const SizedBox(height: 1),
-            _buildDetailRow('Work Target', _getWorkTargetName(workOrder?.target ?? unit.currentWork!.workTarget)),
-            _buildDetailRow('Target Tile', _formatTileLabel(workOrder?.targetTileKey ?? unit.currentWork!.tileKey)),
+            _buildDetailRow(
+                'Work Target',
+                _getWorkTargetName(
+                    workOrder?.target ?? unit.currentWork!.workTarget)),
+            _buildDetailRow(
+                'Target Tile',
+                _formatTileLabel(
+                    workOrder?.targetTileKey ?? unit.currentWork!.tileKey)),
           ],
           const SizedBox(height: 1),
           // Lower area: split horizontally between text lists (available work
@@ -1086,10 +1204,11 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                           ...() {
                             final total = _candidateProvinces.length;
                             final windowSize = _maxProvincesVisible;
-                            final maxStart =
-                                (total - windowSize) < 0 ? 0 : (total - windowSize);
-                            final start = _provinceWindowStart
-                                .clamp(0, maxStart);
+                            final maxStart = (total - windowSize) < 0
+                                ? 0
+                                : (total - windowSize);
+                            final start =
+                                _provinceWindowStart.clamp(0, maxStart);
                             final end = (start + windowSize) > total
                                 ? total
                                 : (start + windowSize);
@@ -1155,18 +1274,16 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                               if (tiles.isEmpty) return <Component>[];
                               final totalTiles = tiles.length;
                               final windowSize = _maxTilesVisible;
-                              final maxStart =
-                                  (totalTiles - windowSize) < 0
-                                      ? 0
-                                      : (totalTiles - windowSize);
-                              final start = _tileWindowStart
-                                  .clamp(0, maxStart);
+                              final maxStart = (totalTiles - windowSize) < 0
+                                  ? 0
+                                  : (totalTiles - windowSize);
+                              final start = _tileWindowStart.clamp(0, maxStart);
                               final end = (start + windowSize) > totalTiles
                                   ? totalTiles
                                   : (start + windowSize);
                               final selectedTileIndex =
-                                  _selectedTileIndexWithinProvince
-                                      .clamp(0, totalTiles - 1);
+                                  _selectedTileIndexWithinProvince.clamp(
+                                      0, totalTiles - 1);
 
                               final components = <Component>[];
 
