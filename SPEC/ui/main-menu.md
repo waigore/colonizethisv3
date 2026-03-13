@@ -124,7 +124,7 @@ Use a **serif font** for title and button labels in the pixel-art variant (basic
 | Optional panel / frame | **PixelLab Bitforge** | Same style reference. |
 | Palette extraction | **pixel-mcp `analyze_reference`** | Optional; refine Bitforge prompts. |
 | Resize / composite | **Imagesorcery** | Only if needed. |
-| Button contrast/wood (post-process) | **pytool** | [pytool-image-tools.md](pytool-image-tools.md): `button_contrast_wood_pil.py` for PNG; `button_contrast_wood.py` for pixel JSON. Run with `.venv_pixel` activated. |
+| Button contrast/wood (post-process) | **pytool** | [pytool-image-tools.md](pytool-image-tools.md): `button_contrast_wood_pil.py` for PNG; `button_contrast_wood.py` for pixel JSON. Run with `pytool/.venv` (or uv in pytool) activated. |
 | Button animation spritesheet (glint) | **PixelLab `animate_with_text`** | Glint/shimmer only; button as reference; n_frames 4–6. |
 | Button playback, hover bobbing/tint | **Flutter** | Idle: play glint spritesheet. Hover: bobbing + darker tint. |
 | Font (colonial theme) | **None (asset / Google Fonts)** | Serif (e.g. Cinzel, Merriweather). Pixel font deferred. |

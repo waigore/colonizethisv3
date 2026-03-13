@@ -14,8 +14,8 @@ import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_panel.dart';
 import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
-import '../widgets/technology_panel.dart';
 import '../widgets/technology_screen.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
 import 'game_canvas.dart';
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
@@ -45,7 +45,7 @@ class GameScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton(
+                  CtNinePatchButton(
                     onPressed: () {
                       final service = ref.read(gameServiceProvider);
                       final orders = ref.read(currentOrdersProvider);
@@ -59,7 +59,7 @@ class GameScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextButton.icon(
+                  CtNinePatchButton(
                     onPressed: () {
                       final player =
                           game.players.isNotEmpty ? game.players.first : null;
@@ -74,8 +74,14 @@ class GameScreen extends ConsumerWidget {
                         );
                       }
                     },
-                    icon: const Icon(Icons.science, size: 20),
-                    label: const Text('Technology'),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.science, size: 20),
+                        SizedBox(width: 8),
+                        Text('Technology'),
+                      ],
+                    ),
                   ),
                 ],
               ),
