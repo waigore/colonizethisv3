@@ -13,10 +13,14 @@ class TechnologyScreen extends StatelessWidget {
     super.key,
     required this.game,
     required this.player,
+    this.currentOrders = const Orders(),
+    this.onOrdersChanged,
   });
 
   final Game game;
   final Player player;
+  final Orders currentOrders;
+  final void Function(Orders orders)? onOrdersChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,12 @@ class TechnologyScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _SlotsTab(game: game, player: player),
+            _SlotsTab(
+              game: game,
+              player: player,
+              currentOrders: currentOrders,
+              onOrdersChanged: onOrdersChanged,
+            ),
             _TreeTab(game: game, player: player),
           ],
         ),
@@ -44,16 +53,28 @@ class TechnologyScreen extends StatelessWidget {
 }
 
 class _SlotsTab extends StatelessWidget {
-  const _SlotsTab({required this.game, required this.player});
+  const _SlotsTab({
+    required this.game,
+    required this.player,
+    this.currentOrders = const Orders(),
+    this.onOrdersChanged,
+  });
 
   final Game game;
   final Player player;
+  final Orders currentOrders;
+  final void Function(Orders orders)? onOrdersChanged;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: TechnologyPanel(game: game, player: player),
+      child: TechnologyPanel(
+        game: game,
+        player: player,
+        currentOrders: currentOrders,
+        onOrdersChanged: onOrdersChanged,
+      ),
     );
   }
 }

@@ -64,11 +64,18 @@ class GameScreen extends ConsumerWidget {
                       final player =
                           game.players.isNotEmpty ? game.players.first : null;
                       if (player != null) {
+                        final orders = ref.read(currentOrdersProvider);
                         Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
                             builder: (ctx) => TechnologyScreen(
                               game: game,
                               player: player,
+                              currentOrders: orders,
+                              onOrdersChanged: (newOrders) {
+                                ref
+                                    .read(currentOrdersProvider.notifier)
+                                    .state = newOrders;
+                              },
                             ),
                           ),
                         );

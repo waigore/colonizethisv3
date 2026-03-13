@@ -253,17 +253,57 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Fort level 2');
         break;
       case 'national_bureaucracy':
-        list.add('Builder upgrade_town');
+        list.add('Builders can upgrade provincial towns');
+        list.add('Helps increase general cap');
         break;
       case 'merchant_companies':
-        list.add('Merchant unit');
+        list.add('Unlocks Merchant civilian unit');
+        list.add('Allows purchasing land in Minor Nations (with embassy)');
+        break;
+      case 'printing_press':
+        list.add('Enables Trained Journeymen and advanced tactics');
+        break;
+      case 'money_lending':
+        list.add('Improves borrowing: more credit at lower interest');
+        list.add('Prerequisite for National Bureaucracy');
+        break;
+      case 'apprentice_workers':
+        list.add('Unlocks Apprentice Workers (4× labour; consume refined sugar)');
+        break;
+      case 'trained_journeymen':
+        list.add('Unlocks Trained Journeymen (6× labour; consume cigars)');
+        break;
+      case 'master_artisans':
+        list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
+        break;
+      case 'trade_fairs':
+        list.add('Can bid on 6 commodities instead of 3');
+        break;
+      case 'banking':
+        list.add('Enables advanced banking: lower interest and larger negative spending');
+        break;
+      case 'diplomatic_expertise':
+        list.add('Unlocks embassies with Minor Nations');
+        list.add('Civilian units may work in Minors with an embassy');
+        break;
+      case 'propaganda':
+        list.add('Decreases diplomatic penalties for declaring war');
+        break;
+      case 'nationalism':
+        list.add('Increases battle deployment limit to 12 regiments');
+        list.add('Helps raise general cap');
+        break;
+      case 'empire_building':
+        list.add('Allows asking Great Powers to join your empire peacefully');
         break;
       case 'land_enclosure':
       case 'hat_production':
-        list.add('Labour / economy');
+        list.add('Improves labour and economy output');
         break;
       default:
-        if (list.isEmpty) list.add('See GDD');
+        if (list.isEmpty) {
+          list.add('Improves ${_categoryLabel(tech.category)} capabilities');
+        }
     }
     return list;
   }
