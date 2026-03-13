@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -69,7 +71,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.byType(Card), findsAtLeastNWidgets(1));
+      expect(find.byType(CtPanel), findsAtLeastNWidgets(1));
       final firstGp = gameWithFactions.players
           .where((p) => p.id != humanPlayerId)
           .map((p) => p.displayName)
@@ -125,7 +127,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.byType(FilledButton), findsAtLeastNWidgets(1));
+      expect(find.byType(CtNinePatchButton), findsAtLeastNWidgets(1));
       expect(
         find.text('Declare War').evaluate().isNotEmpty ||
             find.text('Offer Peace').evaluate().isNotEmpty ||

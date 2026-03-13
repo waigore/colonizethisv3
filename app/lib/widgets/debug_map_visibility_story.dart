@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
+import 'ct_choice_chip.dart';
 import 'ct_region_map.dart';
 import 'debug_init_game.dart';
 
@@ -84,7 +85,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('Full visibility'),
                   selected: _visibilityMode == CtMapVisibilityMode.full,
                   onSelected: (_) {
@@ -94,7 +95,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
                   },
                 ),
                 const SizedBox(width: 8),
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('Player-constrained'),
                   selected:
                       _visibilityMode == CtMapVisibilityMode.playerConstrained,

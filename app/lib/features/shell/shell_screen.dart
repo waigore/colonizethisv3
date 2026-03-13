@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/routes.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
+import '../../widgets/ct_dialog_shell.dart';
+import '../../widgets/ct_dropdown.dart';
+import '../../widgets/ct_nine_patch_button.dart';
+import '../../widgets/ct_screen_shell.dart';
 
 /// App shell. New game creates game, sets current, navigates to game. Phase 1: wired to resolve and persist.
 class ShellScreen extends ConsumerWidget {
@@ -12,31 +16,36 @@ class ShellScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Colonize This')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton(
-              onPressed: () => _showNewGameFlow(context, ref),
-              child: const Text('New game'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () async {
-                final service = ref.read(gameServiceProvider);
-                final ids = service.listGameIds();
-                if (ids.isEmpty || !context.mounted) return;
-                final game = service.loadGame(ids.first);
-                if (game != null && context.mounted) {
-                  ref.read(currentGameProvider.notifier).state = game;
-                  if (context.mounted) Navigator.pushNamed(context, Routes.game);
-                }
-              },
-              child: const Text('Load last saved'),
-            ),
-          ],
+    return CtScreenShell(
+      title: 'Colonize This',
+      child: Center(
+        child: SizedBox(
+          width: 260,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CtNinePatchButton(
+                onPressed: () => _showNewGameFlow(context, ref),
+                child: const Text('New game'),
+              ),
+              const SizedBox(height: 8),
+              CtNinePatchButton(
+                onPressed: () async {
+                  final service = ref.read(gameServiceProvider);
+                  final ids = service.listGameIds();
+                  if (ids.isEmpty || !context.mounted) return;
+                  final game = service.loadGame(ids.first);
+                  if (game != null && context.mounted) {
+                    ref.read(currentGameProvider.notifier).state = game;
+                    if (context.mounted) {
+                      Navigator.pushNamed(context, Routes.game);
+                    }
+                  }
+                },
+                child: const Text('Load last saved'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -141,16 +150,13 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: DropdownButton<String>(
+                child: CtDropdown<String>(
                   value: currentVariantId,
-                  isExpanded: true,
-                  items: [
-                    for (final v in gp.leaderVariants)
-                      DropdownMenuItem(
-                        value: v.id,
-                        child: Text(v.name, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
+                  items: gp.leaderVariants.map((v) => v.id).toList(),
+                  hint: 'Select leader',
+                  itemLabel: (id) => gp.leaderVariants
+                      .firstWhere((v) => v.id == id)
+                      .name,
                   onChanged: (value) {
                     if (value != null) {
                       setState(() => _leaderByGpId[gpId] = value);
@@ -169,12 +175,12 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          TextButton(
+          CtNinePatchButton(
             onPressed: widget.onCancel,
             child: const Text('Cancel'),
           ),
           const SizedBox(width: 8),
-          FilledButton(
+          CtNinePatchButton(
             onPressed: () => widget.onStart(_leaderByGpId),
             child: const Text('Start'),
           ),
@@ -182,14 +188,28 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
       ),
     ]);
 
-    return AlertDialog(
-      title: const Text('New game — Leaders'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
+    return CtDialogShell(
+      maxWidth: 480,
+      maxHeight: 560,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'New game — Leaders',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

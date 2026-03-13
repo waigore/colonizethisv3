@@ -10,7 +10,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `variant` | `plain` \| `pixelArt` | **plain:** standard Flutter/colonial theme. **pixelArt:** reuses main menu button asset per UXD 02. |
+| `variant` | `plain` \| `pixelArt` | Both variants use the **same pixel-art component catalog** (CtNinePatchButton, CtDropdown, CtScreenShell). **plain:** colonial colour theme only (no background illustration). **pixelArt:** reuses main menu pixel-art background and button assets per UXD 02/03a. |
 | `state` | `default` \| `loading` | **default:** Start Game and dropdowns enabled. **loading:** Start disabled, optional loading indicator; Back remains enabled. |
 | `naming` | `ResolvedNamingConfig` | All GP country names and leader variants (colonizethis_data). Used to populate nation and leader dropdowns. |
 | `initialOrderedGpIds` | `List<String>` | Length 6. Initial nation (gpId) per slot; **empty string denotes unselected**. When the screen loads with all entries empty (e.g. `["", "", "", "", "", ""]`), all nation/leader choices are unselected; the shell should pass this for a fresh setup. |
@@ -26,7 +26,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 **Acceptance criteria (Given–When–Then).**
 
-- **Visibility:** Given the user navigated from Main Menu via New Game, the UI layer shows the Game Setup screen with title, six player-slot rows, Start Game button, and Back button. Slot 1 is labeled as the human player (e.g. "Player 1 (You)"); slots 2–6 are labeled as AI (e.g. "Player 2 (AI)" … "Player 6 (AI)"). Each row has a nation dropdown and a leader dropdown.
+- **Visibility:** Given the user navigated from Main Menu via New Game, the UI layer shows the Game Setup screen with title, six player-slot rows, Start Game button, and Back button. Slot 1 is labeled as the human player (e.g. "Player 1 (You)"); slots 2–6 are labeled as AI (e.g. "Player 2 (AI)" … "Player 6 (AI)"). Each row has a nation dropdown and a leader dropdown rendered with pixel-art compatible components (CtDropdown, CtNinePatchButton); **no Material buttons or dropdowns are used.**
 - **Initial state unselected:** Given the screen is loaded with all nation/leader choices unselected (e.g. `initialOrderedGpIds` is six empty strings and `initialLeaderVariantByGpId` is empty), the UI layer shows each slot with no nation and no leader selected (e.g. nation dropdown shows "Select nation", leader dropdown shows "Select leader" or is disabled). Start Game is disabled.
 - **Start disabled until complete:** Given state is default, when one or more slots have no nation selected or no leader selected (or leader not yet chosen for a selected nation), the UI layer keeps Start Game disabled. When the user has selected a nation and a leader for all six slots, the UI layer enables Start Game.
 - **No duplicate nations:** Given the current slot selections, when the user opens the nation dropdown for any slot, the dropdown lists only nations not already selected in another slot. Selecting a nation in one slot removes it from the nation options in every other slot.

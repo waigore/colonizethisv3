@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import 'ct_dropdown.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the Game Setup screen. SPEC/ui/game-setup.md; UXD 03b.
@@ -204,21 +205,17 @@ class _CtGameSetupState extends State<CtGameSetup> {
           ),
     );
 
-    final Widget nationDropdown = DropdownButton<String>(
-      value: availableGpIds.contains(gpId) ? gpId : (availableGpIds.isNotEmpty ? availableGpIds.first : null),
-      isExpanded: true,
-      items: [
-        for (final id in availableGpIds)
-          DropdownMenuItem(
-            value: id,
-            child: Text(
-              id.isEmpty ? 'Select nation' : (widget.naming.gpById(id)?.countryName ?? id),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-      ],
+    final Widget nationDropdown = CtDropdown<String>(
+      value: availableGpIds.contains(gpId)
+          ? gpId
+          : (availableGpIds.isNotEmpty ? availableGpIds.first : null),
+      items: availableGpIds,
+      hint: 'Select nation',
+      itemLabel: (id) => id.isEmpty
+          ? 'Select nation'
+          : (widget.naming.gpById(id)?.countryName ?? id),
       onChanged: _isLoading
-          ? null
+          ? (_) {}
           : (value) {
               if (value != null) {
                 if (value.isEmpty) {
@@ -231,7 +228,8 @@ class _CtGameSetupState extends State<CtGameSetup> {
                 if (newGp != null) {
                   setState(() {
                     _orderedGpIdsBySlot[slotIndex] = value;
-                    _leaderVariantByGpId[value] = newGp.defaultLeaderVariantId;
+                    _leaderVariantByGpId[value] =
+                        newGp.defaultLeaderVariantId;
                   });
                 }
               }
@@ -239,26 +237,23 @@ class _CtGameSetupState extends State<CtGameSetup> {
     );
 
     final Widget leaderDropdown = gpId.isEmpty
-        ? DropdownButton<String>(
+        ? CtDropdown<String>(
             value: '',
-            isExpanded: true,
-            items: const [
-              DropdownMenuItem(value: '', child: Text('Select leader')),
-            ],
-            onChanged: null,
+            items: const [''],
+            hint: 'Select leader',
+            itemLabel: (_) => 'Select leader',
+            onChanged: (_) {},
           )
-        : DropdownButton<String>(
-            value: variants.any((v) => v.id == currentVariantId) ? currentVariantId : (variants.isNotEmpty ? variants.first.id : null),
-            isExpanded: true,
-            items: [
-              for (final v in variants)
-                DropdownMenuItem(
-                  value: v.id,
-                  child: Text(v.name, overflow: TextOverflow.ellipsis),
-                ),
-            ],
+        : CtDropdown<String>(
+            value: variants.any((v) => v.id == currentVariantId)
+                ? currentVariantId
+                : (variants.isNotEmpty ? variants.first.id : null),
+            items: variants.map((v) => v.id).toList(),
+            hint: 'Select leader',
+            itemLabel: (id) =>
+                variants.firstWhere((v) => v.id == id).name,
             onChanged: _isLoading
-                ? null
+                ? (_) {}
                 : (value) {
                     if (value != null) {
                       setState(() => _leaderVariantByGpId[gpId] = value);
@@ -355,20 +350,11 @@ class _GameSetupMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (variant == GameSetupVariant.pixelArt) {
-      return SizedBox(
-        width: double.infinity,
-        child: CtNinePatchButton(
-          onPressed: onPressed,
-          enabled: enabled && onPressed != null,
-          child: Text(label),
-        ),
-      );
-    }
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: CtNinePatchButton(
         onPressed: onPressed,
+        enabled: enabled && onPressed != null,
         child: Text(label),
       ),
     );

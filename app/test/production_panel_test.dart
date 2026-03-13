@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 
@@ -76,7 +77,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Allocation'), findsOneWidget);
-      expect(find.byType(Slider),
+      expect(find.byType(CtSlider),
           findsNWidgets(ProductionRecipesCatalog.all.length));
       expect(find.textContaining('Lumber'), findsWidgets);
       expect(find.textContaining('Fabric'), findsWidgets);
@@ -109,7 +110,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      final sliders = find.byType(Slider);
+      final sliders = find.byType(CtSlider);
       expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
       await tester.drag(sliders.first, const Offset(80, 0));
       await tester.pumpAndSettle();
@@ -172,7 +173,7 @@ void main() {
       await tester.pumpWidget(buildPanel(player: partialPlayer));
       await tester.pumpAndSettle();
 
-      expect(find.byType(Slider),
+      expect(find.byType(CtSlider),
           findsNWidgets(ProductionRecipesCatalog.all.length));
       expect(find.text('Available'), findsOneWidget);
       expect(find.textContaining('Effective labour: 2'), findsOneWidget);

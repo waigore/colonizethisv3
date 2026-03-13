@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_screen.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -101,10 +102,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CtDialogShell), findsNothing);
     await tester.tap(find.text('Gathering 1'));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(CtDialogShell), findsOneWidget);
     expect(find.text('Gathering 1'), findsWidgets); // title and node
   });
 
@@ -124,6 +125,7 @@ void main() {
     await tester.tap(find.text('Gathering 1'));
     await tester.pumpAndSettle();
     // SPEC: display name, era, category, RP cost, effect summary; no prerequisites.
+    expect(find.byType(CtDialogShell), findsOneWidget);
     expect(find.text('Gathering 1'), findsWidgets);
     expect(find.textContaining('Era'), findsOneWidget);
     expect(find.textContaining('Gathering'), findsWidgets);
@@ -148,10 +150,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Gathering 1'));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(CtDialogShell), findsOneWidget);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CtDialogShell), findsNothing);
     expect(find.byType(TechTreeWidget), findsOneWidget);
   });
 
@@ -211,13 +213,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CtDialogShell), findsNothing);
     // Gathering 2 has prerequisite gathering_1; with no techs unlocked it is locked.
     final gathering2Find = find.text('Gathering 2');
     await tester.ensureVisible(gathering2Find.first);
     await tester.tap(gathering2Find.first);
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CtDialogShell), findsNothing);
   });
 }
 

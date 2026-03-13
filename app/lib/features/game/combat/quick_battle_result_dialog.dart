@@ -1,6 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
+
 /// Displays Quick Battle result. SPEC/program/quick-battle-resolution.
 class QuickBattleResultDialog extends StatelessWidget {
   const QuickBattleResultDialog({
@@ -37,25 +40,38 @@ class QuickBattleResultDialog extends StatelessWidget {
       QuickBattleWinner.defender => '$defenderName holds',
       QuickBattleWinner.mutualExhaustion => 'Mutual exhaustion',
     };
-    return AlertDialog(
-      title: Text('Battle Result: $winnerText'),
-      content: Column(
+    return CtDialogShell(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (result.provinceFlips)
-            const Text('Province captured.', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            'Battle Result: $winnerText',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
-          Text('$attackerName casualties: ${result.attackerCasualties.length}'),
-          Text('$defenderName casualties: ${result.defenderCasualties.length}'),
+          if (result.provinceFlips)
+            const Text(
+              'Province captured.',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            '$attackerName casualties: ${result.attackerCasualties.length}',
+          ),
+          Text(
+            '$defenderName casualties: ${result.defenderCasualties.length}',
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('OK'),
-        ),
-      ],
     );
   }
 }
