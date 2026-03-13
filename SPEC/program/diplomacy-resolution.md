@@ -12,6 +12,16 @@ Resolves diplomatic orders, manages overture state machine, updates relation sco
 
 **Overture state** (per Minor/Tribe per GP): current stage (none, TradeConsulate, Embassy, NAP, JoinEmpire/Colony). Costs and turn delays per game rules. Stored in world state; serialized in save/load.
 
+**Diplomatic history event** (per Great-Power-centric world log): structured record of notable diplomatic actions and state changes involving at least one Great Power. Stored in world state on `Game` as a **flat, append-only list** and serialized in save/load. Each event includes:
+
+- **turn** (int, same domain as `worldState.turnState.turnNumber`).
+- **intraTurnIndex** (int, monotonically increasing for events created in the same turn, to preserve resolution order).
+- **participants**: set of faction ids involved in the event (always includes at least one Great Power id).
+- **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`).
+- **details**: structured payload fields specific to the primaryType (e.g. `fromFactionId`, `toFactionId`, `overtureStage`, `amount`, `reason`, `wasAiInitiator`).
+
+Rendering of human-readable strings (including year labels derived from turn) is delegated to UI/TUI layers based on this structured event model.
+
 ---
 
 ## Algorithm / Flow
@@ -25,6 +35,16 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn.
 6. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
 7. **Update relation scores** — Recompute from modifiers; clamp 0–100; derive level.
+
+At the same hook points where relation state, overtures, or economic diplomacy are mutated, the resolver **appends one or more Diplomatic history events** to the flat world log:
+
+- When an overture is **accepted or rejected** and reaches a new stage (including Join Empire/Colony), an event with primaryType `overtureAccepted` or `overtureRejected` is appended.
+- When **war** is successfully declared (relationState flips to AT_WAR), an event with primaryType `declareWar` is appended, and any overture/subsidy cancellations caused by that war append `agreementsClearedOnWar` / `subsidyCancelled` events.
+- When **peace** takes effect between a pair (GP–GP mutual offer, or GP–Minor/Tribe), an event with primaryType `peace` is appended.
+- When an **alliance** is formed or broken, events with primaryType `allianceFormed` / `allianceBroken` are appended.
+- When **GrantAid** is applied, an event with primaryType `grantAidApplied` is appended.
+- When a **subsidy** is created, updated, or cancelled (including automatic cancellation on war or insufficient funds), events with primaryType `subsidySet`, `subsidyUpdated`, or `subsidyCancelled` are appended.
+- When an **Intervention** decision is applied (Intervene, Do Nothing, Protest), events with primaryType `interventionIntervene`, `interventionDoNothing`, or `interventionProtest` are appended.
 
 **Order validation:** Each diplomatic order type (see game/diplomacy.md § Diplomatic Order Types) is validated by the order engine — preconditions (AT_PEACE/AT_WAR, overture stage, treasury) checked at submission and again at resolution. Establish Overture may target Minor, Tribe, or Great Power. At most one Establish Overture per (player, target faction) per turn; a second such order for the same target is rejected at validation (see game/diplomacy.md, program/orders.md).
 
@@ -73,6 +93,13 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 - **Order validation:** Preconditions for each diplomatic order type (AT_PEACE/AT_WAR, overture stage, treasury, etc.) are checked at order submission by the order engine and again at resolution; invalid orders are rejected and not applied. In particular, when relationState between a GP and a Minor/Tribe is `AT_WAR`, `Establish Overture` orders targeting that faction are invalid and must not create or advance overture state or deduct overture costs. See game/diplomacy.md § Diplomatic Order Types.
 - **Save/load:** Relation records (per faction-pair) and overture state (per Minor/Tribe per GP) are serialized in the game save and restored on load so that relation scores, levels, sinceTurn, lastInteractionTurn, relationState, and overture stages are preserved.
 - **Logging:** Phase start and end at debug with `logic:` prefix; key outcomes at info (overture applied, join empire, alliance formed, war declared, peace offered, agreements terminated, GrantAid/SetSubsidy applied). Rejections and validation failures are logged by the order engine only.
+
+- **Diplomatic history events — creation:** Given the Diplomacy phase resolves an action that changes diplomatic state or applies economic diplomacy (war/peace, alliance formed/broken, overture accepted/rejected including Join Empire/Colony, GrantAid applied, subsidy set/updated/cancelled, intervention decisions, overtures cleared on war), when that change is applied to `Game`, then the resolver appends at least one `DiplomaticEvent` to the flat diplomatic history list on `Game` with:
+  - `turn` equal to the current turn index;
+  - `participants` including all factions directly affected by the change (at least one Great Power);
+  - `primaryType` matching the kind of change (e.g. `declareWar` when relationState flips to AT_WAR).
+- **Diplomatic history events — ordering:** Given the resolver appends multiple diplomatic history events during a single turn, when the turn completes and the game is saved, then all `DiplomaticEvent` entries for that turn have strictly increasing `intraTurnIndex` values that preserve the order in which the underlying changes were applied.
+- **Diplomatic history events — save/load:** Given a Game whose diplomatic history list contains one or more `DiplomaticEvent` entries, when the system saves and reloads that Game, then the reloaded Game contains the same diplomatic history entries with identical `turn`, `intraTurnIndex`, `participants`, `primaryType`, and `details` values.
 
 ---
 

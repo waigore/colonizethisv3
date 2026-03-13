@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'diplomacy_dialogs.dart';
+import 'diplomacy_detail_screen.dart';
 
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
@@ -165,6 +166,7 @@ class DiplomacyPanel extends StatelessWidget {
           ...gps.map((r) => _DiplomacyRow(
                 data: r,
                 onAction: (order) => _submitOrDialog(context, order),
+                onTap: () => _openDetail(context, r),
               )),
         ],
         if (minors.isNotEmpty) ...[
@@ -172,6 +174,7 @@ class DiplomacyPanel extends StatelessWidget {
           ...minors.map((r) => _DiplomacyRow(
                 data: r,
                 onAction: (order) => _submitOrDialog(context, order),
+                onTap: () => _openDetail(context, r),
               )),
         ],
         if (tribes.isNotEmpty) ...[
@@ -179,6 +182,7 @@ class DiplomacyPanel extends StatelessWidget {
           ...tribes.map((r) => _DiplomacyRow(
                 data: r,
                 onAction: (order) => _submitOrDialog(context, order),
+                onTap: () => _openDetail(context, r),
               )),
         ],
         if (rows.isEmpty)
@@ -240,6 +244,21 @@ class DiplomacyPanel extends StatelessWidget {
     }
   }
 
+  void _openDetail(BuildContext context, DiplomacyRowData row) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: row.factionId,
+          factionDisplayName: row.displayName,
+          kind: row.kind,
+          relation: row.relation,
+        ),
+      ),
+    );
+  }
+
   void _appendOrder(DiplomaticOrder order) {
     final list = List<DiplomaticOrder>.from(
       currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
@@ -257,10 +276,12 @@ class _DiplomacyRow extends StatelessWidget {
   const _DiplomacyRow({
     required this.data,
     required this.onAction,
+    this.onTap,
   });
 
   final DiplomacyRowData data;
   final void Function(DiplomaticOrder) onAction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -276,15 +297,11 @@ class _DiplomacyRow extends StatelessWidget {
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -323,17 +340,27 @@ class _DiplomacyRow extends StatelessWidget {
                 ],
               ),
             ),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: data.actions.map((order) {
-                return _ActionButton(
-                  order: order,
-                  onPressed: () => onAction(order),
-                );
-              }).toList(),
-            ),
-          ],
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: data.actions.map((order) {
+            return _ActionButton(
+              order: order,
+              onPressed: () => onAction(order),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: content,
         ),
       ),
     );
