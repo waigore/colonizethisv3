@@ -180,6 +180,45 @@ void main() {
     expect(find.byType(TechTreeWidget), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsWidgets);
   });
+
+  testWidgets('TechTreeWidget shows legend with category and state labels', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TechTreeWidget(game: game, player: player),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Technology tree legend'), findsOneWidget);
+    expect(find.text('Gathering'), findsAtLeastNWidgets(1));
+    expect(find.text('Researched'), findsOneWidget);
+    expect(find.text('In progress'), findsOneWidget);
+    expect(find.text('Available'), findsOneWidget);
+    expect(find.text('Locked'), findsOneWidget);
+  });
+
+  testWidgets('Tapping locked tech node does not open dialog', (WidgetTester tester) async {
+    final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+    final gameWithEmptyPlayer = game.copyWith(
+      players: [emptyPlayer, ...game.players.skip(1)],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TechTreeWidget(game: gameWithEmptyPlayer, player: emptyPlayer),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    // Gathering 2 has prerequisite gathering_1; with no techs unlocked it is locked.
+    final gathering2Find = find.text('Gathering 2');
+    await tester.ensureVisible(gathering2Find.first);
+    await tester.tap(gathering2Find.first);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+  });
 }
 
 Player _dummyPlayer() {

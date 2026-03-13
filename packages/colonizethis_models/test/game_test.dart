@@ -178,5 +178,36 @@ void main() {
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.richesCashMultiplier, 1.0);
     });
+    test('diplomaticHistoryEvents round-trip and backward compat', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
+        diplomaticHistoryEvents: [
+          DiplomaticEvent(
+            turn: 1,
+            intraTurnIndex: 0,
+            type: DiplomaticEventType.declareWar,
+            participants: {'gp1', 'gp2'},
+            fromFactionId: 'gp1',
+            toFactionId: 'gp2',
+          ),
+        ],
+      );
+      final round = Game.fromJson(game.toJson());
+      expect(round.diplomaticHistoryEvents.length, 1);
+      expect(round.diplomaticHistoryEvents.first.type, DiplomaticEventType.declareWar);
+      expect(round.diplomaticHistoryEvents.first.participants, contains('gp1'));
+      expect(round.diplomaticHistoryEvents.first.turn, 1);
+      // Backward compat: missing key => empty list
+      final json = game.toJson();
+      final legacy = Map<String, dynamic>.from(json)..remove('diplomaticHistoryEvents');
+      final fromLegacy = Game.fromJson(legacy);
+      expect(fromLegacy.diplomaticHistoryEvents, isEmpty);
+    });
   });
 }

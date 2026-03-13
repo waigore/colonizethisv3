@@ -62,45 +62,57 @@ class TechTreeWidget extends StatelessWidget {
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
     final researchable = researchableTechIds(unlocked);
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: Stack(
-            children: [
-              CustomPaint(
-                size: Size(width, height),
-                painter: _TechTreeEdgePainter(
-                  positions: positions,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: _TechTreeLegend(),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: Stack(
+                  children: [
+                    CustomPaint(
+                      size: Size(width, height),
+                      painter: _TechTreeEdgePainter(
+                        positions: positions,
+                      ),
+                    ),
+                    ...positions.map((pos) {
+                      final tech = techById(pos.techId);
+                      if (tech == null) return const SizedBox.shrink();
+                      final state = _TechNodeState(
+                        researched: unlocked[pos.techId] == true,
+                        inProgress: inProgress.contains(pos.techId),
+                        available: researchable.contains(pos.techId),
+                      );
+                      return Positioned(
+                        left: pos.x,
+                        top: pos.y,
+                        width: _nodeWidth,
+                        height: _nodeHeight,
+                        child: _TechNode(
+                          tech: tech,
+                          state: state,
+                          onTap: () => _showTechDialog(context, tech),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
-              ...positions.map((pos) {
-                final tech = techById(pos.techId);
-                if (tech == null) return const SizedBox.shrink();
-                final state = _TechNodeState(
-                  researched: unlocked[pos.techId] == true,
-                  inProgress: inProgress.contains(pos.techId),
-                  available: researchable.contains(pos.techId),
-                );
-                return Positioned(
-                  left: pos.x,
-                  top: pos.y,
-                  width: _nodeWidth,
-                  height: _nodeHeight,
-                  child: _TechNode(
-                    tech: tech,
-                    state: state,
-                    onTap: () => _showTechDialog(context, tech),
-                  ),
-                );
-              }),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -241,17 +253,57 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Fort level 2');
         break;
       case 'national_bureaucracy':
-        list.add('Builder upgrade_town');
+        list.add('Builders can upgrade provincial towns');
+        list.add('Helps increase general cap');
         break;
       case 'merchant_companies':
-        list.add('Merchant unit');
+        list.add('Unlocks Merchant civilian unit');
+        list.add('Allows purchasing land in Minor Nations (with embassy)');
+        break;
+      case 'printing_press':
+        list.add('Enables Trained Journeymen and advanced tactics');
+        break;
+      case 'money_lending':
+        list.add('Improves borrowing: more credit at lower interest');
+        list.add('Prerequisite for National Bureaucracy');
+        break;
+      case 'apprentice_workers':
+        list.add('Unlocks Apprentice Workers (4× labour; consume refined sugar)');
+        break;
+      case 'trained_journeymen':
+        list.add('Unlocks Trained Journeymen (6× labour; consume cigars)');
+        break;
+      case 'master_artisans':
+        list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
+        break;
+      case 'trade_fairs':
+        list.add('Can bid on 6 commodities instead of 3');
+        break;
+      case 'banking':
+        list.add('Enables advanced banking: lower interest and larger negative spending');
+        break;
+      case 'diplomatic_expertise':
+        list.add('Unlocks embassies with Minor Nations');
+        list.add('Civilian units may work in Minors with an embassy');
+        break;
+      case 'propaganda':
+        list.add('Decreases diplomatic penalties for declaring war');
+        break;
+      case 'nationalism':
+        list.add('Increases battle deployment limit to 12 regiments');
+        list.add('Helps raise general cap');
+        break;
+      case 'empire_building':
+        list.add('Allows asking Great Powers to join your empire peacefully');
         break;
       case 'land_enclosure':
       case 'hat_production':
-        list.add('Labour / economy');
+        list.add('Improves labour and economy output');
         break;
       default:
-        if (list.isEmpty) list.add('See GDD');
+        if (list.isEmpty) {
+          list.add('Improves ${_categoryLabel(tech.category)} capabilities');
+        }
     }
     return list;
   }
@@ -295,14 +347,24 @@ class _TechTreeEdgePainter extends CustomPainter {
     for (final tech in techCatalog.values) {
       final toPos = posByTech[tech.id];
       if (toPos == null) continue;
-      final toCenterX = toPos.x + _centerX;
+      final toLeftX = toPos.x;
       final toCenterY = toPos.y + _centerY;
       for (final prereqId in tech.prerequisiteIds) {
         final fromPos = posByTech[prereqId];
         if (fromPos == null) continue;
-        final fromCenterX = fromPos.x + _centerX;
+        final fromRightX = fromPos.x + _nodeWidth;
         final fromCenterY = fromPos.y + _centerY;
-        canvas.drawLine(Offset(fromCenterX, fromCenterY), Offset(toCenterX, toCenterY), paint);
+
+        // Orthogonal (right-angled) path: out from right edge, over horizontally, then into left edge.
+        final midX = (fromRightX + toLeftX) / 2;
+
+        final path = Path()
+          ..moveTo(fromRightX, fromCenterY)
+          ..lineTo(midX, fromCenterY)
+          ..lineTo(midX, toCenterY)
+          ..lineTo(toLeftX, toCenterY);
+
+        canvas.drawPath(path, paint);
       }
     }
   }
@@ -378,6 +440,118 @@ class _TechNode extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TechTreeLegend extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Technology tree legend',
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: _categoryColors.entries
+              .map(
+                (e) => _LegendChip(
+                  color: e.value,
+                  label: TechTreeWidget._categoryLabel(e.key),
+                ),
+              )
+              .toList(),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: const [
+            _StateLegendSample(
+              label: 'Researched',
+              state: _TechNodeState(researched: true, inProgress: false, available: false),
+            ),
+            _StateLegendSample(
+              label: 'In progress',
+              state: _TechNodeState(researched: false, inProgress: true, available: false),
+            ),
+            _StateLegendSample(
+              label: 'Available',
+              state: _TechNodeState(researched: false, inProgress: false, available: true),
+            ),
+            _StateLegendSample(
+              label: 'Locked',
+              state: _TechNodeState(researched: false, inProgress: false, available: false),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  const _LegendChip({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(label),
+      backgroundColor: color.withValues(alpha: 0.2),
+      side: BorderSide(color: color, width: 1.5),
+      labelStyle: Theme.of(context).textTheme.bodySmall,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
+class _StateLegendSample extends StatelessWidget {
+  const _StateLegendSample({required this.label, required this.state});
+
+  final String label;
+  final _TechNodeState state;
+
+  @override
+  Widget build(BuildContext context) {
+    // Use a dummy tech with neutral category just to render the style.
+    const dummyTech = TechDefinition(
+      id: 'legend_dummy',
+      era: 1,
+      category: 'gathering',
+      cost: 0,
+      prerequisiteIds: <String>[],
+      regimentUnlockIds: <String>[],
+      shipUnlockIds: <String>[],
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 72,
+          height: 24,
+          child: _TechNode(
+            tech: dummyTech,
+            state: state,
+            onTap: () {},
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }
