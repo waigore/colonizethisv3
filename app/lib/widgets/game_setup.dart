@@ -355,11 +355,20 @@ class _GameSetupMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (variant == GameSetupVariant.pixelArt) {
+      return SizedBox(
+        width: double.infinity,
+        child: CtNinePatchButton(
+          onPressed: onPressed,
+          enabled: enabled && onPressed != null,
+          child: Text(label),
+        ),
+      );
+    }
     return SizedBox(
       width: double.infinity,
-      child: CtNinePatchButton(
+      child: ElevatedButton(
         onPressed: onPressed,
-        enabled: enabled && onPressed != null,
         child: Text(label),
       ),
     );

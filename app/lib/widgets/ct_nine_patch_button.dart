@@ -36,7 +36,7 @@ class CtNinePatchButton extends StatelessWidget {
   /// Minimum height; respects 44 dp touch target.
   final double minHeight;
 
-  static const String _kAssetPath = 'assets/images/ui_button_nine_patch.png';
+  static const String _kAssetPath = 'ui_button_nine_patch.png';
   static const double _tileSize = 16;
 
   @override
@@ -71,7 +71,9 @@ class CtNinePatchButton extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Center(
                   child: DefaultTextStyle(
-                    style: (theme.textTheme.titleSmall ?? theme.textTheme.bodyLarge ?? const TextStyle())
+                    style: (theme.textTheme.titleSmall ??
+                            theme.textTheme.bodyLarge ??
+                            const TextStyle())
                         .copyWith(color: foregroundColor),
                     child: IconTheme(
                       data: IconThemeData(
@@ -81,6 +83,15 @@ class CtNinePatchButton extends StatelessWidget {
                       child: child,
                     ),
                   ),
+                ),
+                loadingBuilder: (_) => _FallbackButton(
+                  color: fallbackColor,
+                  padding: padding ??
+                      const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                  child: child,
                 ),
                 errorBuilder: (_) {
                   Logger().w(
