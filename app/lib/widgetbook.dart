@@ -18,6 +18,7 @@ import 'widgets/debug_init_game.dart';
 import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
+import 'widgets/ct_nine_patch_button.dart';
 import 'widgets/ct_region_map.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
@@ -47,6 +48,7 @@ class CtWidgetbookApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Widgetbook.material(
       directories: [
+        ...buttonDirectories,
         ...mainMenuDirectories,
         ...gameSetupDirectories,
         ...mapWidgetDirectories,
@@ -62,6 +64,48 @@ class CtWidgetbookApp extends StatelessWidget {
     );
   }
 }
+
+/// Nine-patch button stories. SPEC/ui/buttons-nine-patch.md; catalog: CtNinePatchButton.
+List<WidgetbookNode> get buttonDirectories => [
+  WidgetbookFolder(
+    name: 'Buttons',
+    children: [
+      WidgetbookUseCase(
+        name: 'CtNinePatchButton',
+        builder: (context) => Theme(
+          data: AppThemes.colonial,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CtNinePatchButton(
+                  onPressed: () {},
+                  child: const Text('Primary action'),
+                ),
+                const SizedBox(height: 12),
+                CtNinePatchButton(
+                  onPressed: null,
+                  enabled: false,
+                  child: const Text('Disabled'),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 200,
+                  child: CtNinePatchButton(
+                    onPressed: () {},
+                    child: const Text('Fixed width'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// Main Menu stories (plain and pixel). Register in widget_catalog.json.
 List<WidgetbookNode> get mainMenuDirectories => [

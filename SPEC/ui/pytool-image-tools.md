@@ -7,8 +7,8 @@
 ## Location and environment
 
 - **Path:** `pytool/` at repo root (sibling to `tool/`, `app/`).
-- **Venv:** The project uses a dedicated Python venv for pixel/image tools: **`.venv_pixel`** at repo root. Activate it before running any script, e.g. `source .venv_pixel/bin/activate`. Then install deps once: `pip install -r pytool/requirements.txt` (from repo root). Run scripts as below.
-- **Tileset pipeline (uv):** For the Wang tileset pipeline (Layer 1–4), use **uv** for dependency management: from repo root run `cd pytool && uv sync`, then `uv run pytool/tileset_terrain.py ...` (or from pytool: `uv run python tileset_terrain.py ...`). Layer 1–3 require **PIXELLAB_API_KEY**; Layer 4 (pack) does not. See [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
+- **Venv:** Use a venv **inside pytool**: create with `cd pytool && python -m venv .venv`, then `source .venv/bin/activate` and `pip install -r requirements.txt`. Run scripts from repo root or from `pytool/` (adjust paths accordingly). Alternatively use **uv**: from repo root run `cd pytool && uv sync`, then `uv run python script.py ...` (from within `pytool/`) or `uv run pytool/script.py ...` (from root). No `.venv_pixel` at repo root is required.
+- **Tileset pipeline (uv):** For the Wang tileset pipeline (Layer 1–4), use **uv** as above. Layer 1–3 require **PIXELLAB_API_KEY**; Layer 4 (pack) does not. See [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
 
 ---
 
@@ -33,6 +33,34 @@ python pytool/button_contrast_wood_pil.py app/assets/images/ui_main_menu_button.
 ```
 
 **Behaviour:** Pixel-based: darkens border pixels, lightens centre wood and adds ±12 RGB noise, leaves gold accents unchanged; uses fixed RNG seed (42) for reproducibility.
+
+---
+
+### button_nine_patch_slice.py
+
+**Purpose:** Build a 48×48 (or 3×tile_size) nine-patch PNG from a wide button PNG for Flame’s `NineTileBoxWidget`. Slices the source into left/middle/right columns and top/middle/bottom rows and assembles a 3×3 grid. See [buttons-nine-patch.md](buttons-nine-patch.md).
+
+**Dependencies:** Pillow (see `pytool/requirements.txt`).
+
+**Usage:**
+
+```bash
+python pytool/button_nine_patch_slice.py <input.png> <output.png> [tile_size]
+```
+
+**Example (from repo root):**
+
+```bash
+python pytool/button_nine_patch_slice.py app/assets/images/ui_main_menu_button.png app/assets/images/ui_button_nine_patch.png 16
+```
+
+**Example (from pytool dir):**
+
+```bash
+python button_nine_patch_slice.py ../app/assets/images/ui_main_menu_button.png ../app/assets/images/ui_button_nine_patch.png 16
+```
+
+**Behaviour:** Default `tile_size` is 16 (output 48×48). Source must be at least 3×tile_size wide and tile_size tall. Left/middle/right columns and top/middle/bottom rows are cropped and pasted into the output grid; middle column is taken from the horizontal center of the source.
 
 ---
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 import '../config/themes.dart';
+import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {
@@ -14,7 +14,6 @@ enum MainMenuVariant {
 
 /// Asset paths for pixel-art variant. SPEC/ui/main-menu.md.
 const String _kAssetLogo = 'assets/images/ui_main_menu_logo.png';
-const String _kAssetButton = 'assets/images/ui_main_menu_button.png';
 const String _kAssetBackground = 'assets/images/ui_main_menu_background.png';
 
 /// Content state of the main menu. SPEC/ui/main-menu.md; UXD 03a.
@@ -186,7 +185,7 @@ class _MenuButton extends StatelessWidget {
     }
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: CtNinePatchButton(
         onPressed: onPressed,
         child: Text(label),
       ),
@@ -266,47 +265,18 @@ class _PixelArtButtonState extends State<_PixelArtButton>
               child: child,
             );
           },
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.enabled ? widget.onPressed : null,
-              child: ColorFiltered(
-                colorFilter: _hovered && widget.enabled
-                    ? ColorFilter.mode(
-                        Colors.black.withValues(alpha: 0.15),
-                        BlendMode.darken,
-                      )
-                    : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      _kAssetButton,
-                      centerSlice: const Rect.fromLTWH(24, 18, 75, 21),
-                      fit: BoxFit.fill,
-                      filterQuality: FilterQuality.none,
-                      errorBuilder: (_, __, ___) {
-                        Logger().w(
-                          'logic: main_menu button asset not found, using fallback',
-                        );
-                        return Container(
-                          color: const Color(0xFF5D3A1A),
-                        );
-                      },
-                    ),
-                    Center(
-                      child: Text(
-                        widget.label,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: widget.enabled
-                                  ? const Color(0xFFF5F5DC)
-                                  : Colors.grey,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          child: ColorFiltered(
+            colorFilter: _hovered && widget.enabled
+                ? ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.15),
+                    BlendMode.darken,
+                  )
+                : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+            child: CtNinePatchButton(
+              onPressed: widget.enabled ? widget.onPressed : null,
+              enabled: widget.enabled,
+              minHeight: 48,
+              child: Text(widget.label),
             ),
           ),
         ),
@@ -342,8 +312,9 @@ class _LoadGameButton extends StatelessWidget {
       message: enabled ? '' : 'No saved games. Start a new game first.',
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
+        child: CtNinePatchButton(
           onPressed: enabled ? onPressed : null,
+          enabled: enabled,
           child: const Text('Load Game'),
         ),
       ),
