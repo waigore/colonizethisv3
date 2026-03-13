@@ -166,3 +166,22 @@ Player? getPlayer(Game game, String playerId) {
   }
   return null;
 }
+
+/// Diplomatic history events involving both [factionA] and [factionB], newest first.
+/// SPEC/ui/diplomacy-panel.md § Diplomacy Detail — history contents.
+List<DiplomaticEvent> diplomaticHistoryForPair(
+  Game game,
+  String factionA,
+  String factionB,
+) {
+  final list = game.diplomaticHistoryEvents
+      .where((e) =>
+          e.participants.contains(factionA) && e.participants.contains(factionB))
+      .toList();
+  list.sort((a, b) {
+    final turnCmp = b.turn.compareTo(a.turn);
+    if (turnCmp != 0) return turnCmp;
+    return b.intraTurnIndex.compareTo(a.intraTurnIndex);
+  });
+  return list;
+}

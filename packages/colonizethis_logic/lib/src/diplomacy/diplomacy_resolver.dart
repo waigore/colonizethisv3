@@ -17,6 +17,38 @@ export 'diplomacy_relation_lookup.dart';
 
 final Logger _diploLog = Logger();
 
+/// Appends one diplomatic history event. intraTurnIndex = count of events already in this turn.
+Game _appendDiplomaticEvent(
+  Game game,
+  int turn,
+  DiplomaticEventType type,
+  Set<String> participants, {
+  String? fromFactionId,
+  String? toFactionId,
+  OvertureStage? overtureStage,
+  int? amount,
+  String? reason,
+  bool wasAiInitiator = false,
+}) {
+  final events = game.diplomaticHistoryEvents;
+  final intraTurnIndex = events.where((e) => e.turn == turn).length;
+  final event = DiplomaticEvent(
+    turn: turn,
+    intraTurnIndex: intraTurnIndex,
+    type: type,
+    participants: participants,
+    fromFactionId: fromFactionId,
+    toFactionId: toFactionId,
+    overtureStage: overtureStage,
+    amount: amount,
+    reason: reason,
+    wasAiInitiator: wasAiInitiator,
+  );
+  return game.copyWith(
+    diplomaticHistoryEvents: [...events, event],
+  );
+}
+
 bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
@@ -208,7 +240,21 @@ _OverturePaymentsResult _processOverturePayments(
         }
       }
 
-      if (!accepted) continue;
+      if (!accepted) {
+        if (targetIsGp) {
+          state = _appendDiplomaticEvent(
+            state,
+            turn,
+            DiplomaticEventType.overtureRejected,
+            {gpId, targetId},
+            fromFactionId: gpId,
+            toFactionId: targetId,
+            overtureStage: stage,
+            wasAiInitiator: isAiControlledForEvidence(state, gpId),
+          );
+        }
+        continue;
+      }
 
       if (cost > 0) {
         player = player.copyWith(treasury: player.treasury - cost);
@@ -228,6 +274,17 @@ _OverturePaymentsResult _processOverturePayments(
               gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)
         ];
       }
+      state = state.copyWith(players: players, overtureStates: overtures);
+      state = _appendDiplomaticEvent(
+        state,
+        turn,
+        DiplomaticEventType.overtureAccepted,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        overtureStage: stage,
+        wasAiInitiator: isAiControlledForEvidence(state, gpId),
+      );
       _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage (accepted)');
     }
   }
@@ -288,6 +345,17 @@ Game _resolveJoinEmpireColony(
 
       // Absorb Minor/Tribe: transfer provinces, units, fleets to GP; remove faction.
       game = _absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.joinEmpireResolved,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        overtureStage: OvertureStage.joinEmpire,
+        amount: cost,
+        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+      );
       _diploLog.i('logic: diplomacy join empire $gpId $targetId cost=$cost');
     }
   }
@@ -420,6 +488,15 @@ Game _processAlliances(
               ),
       );
       game = game.copyWith(diplomacyRelations: relations);
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.allianceFormed,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+      );
       _diploLog.i('logic: diplomacy alliance $gpId-$targetId');
     }
   }
@@ -478,15 +555,19 @@ Game _processWarAndPeace(
           
           // Cancel any active subsidies between these factions
           var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
-          final beforeCount = subsidyStates.length;
+          final cancelledSubsidies = subsidyStates
+              .where((s) =>
+                  (s.payerId == gpId && s.targetId == targetId) ||
+                  (s.payerId == targetId && s.targetId == gpId))
+              .toList();
           subsidyStates = subsidyStates
               .where((s) => !((s.payerId == gpId && s.targetId == targetId) ||
                   (s.payerId == targetId && s.targetId == gpId)))
               .toList();
-          if (subsidyStates.length < beforeCount) {
+          if (cancelledSubsidies.isNotEmpty) {
             _diploLog.i('logic: diplomacy subsidies cancelled due to war $gpId vs $targetId');
           }
-          
+
           game = game.copyWith(
             diplomacyRelations: relations,
             subsidyStates: subsidyStates,
@@ -495,6 +576,27 @@ Game _processWarAndPeace(
               ...evidence
             ],
           );
+          game = _appendDiplomaticEvent(
+            game,
+            turn,
+            DiplomaticEventType.declareWar,
+            {gpId, targetId},
+            fromFactionId: gpId,
+            toFactionId: targetId,
+            wasAiInitiator: isAiControlledForEvidence(game, gpId),
+          );
+          for (final s in cancelledSubsidies) {
+            game = _appendDiplomaticEvent(
+              game,
+              turn,
+              DiplomaticEventType.subsidyCancelled,
+              {s.payerId, s.targetId},
+              fromFactionId: s.payerId,
+              toFactionId: s.targetId,
+              reason: 'war',
+              wasAiInitiator: isAiControlledForEvidence(game, s.payerId),
+            );
+          }
           _diploLog.i('logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)');
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
@@ -546,6 +648,15 @@ Game _processWarAndPeace(
                 ...evidence,
               ],
             );
+            game = _appendDiplomaticEvent(
+              game,
+              turn,
+              DiplomaticEventType.peace,
+              {gpId, targetId},
+              fromFactionId: gpId,
+              toFactionId: targetId,
+              wasAiInitiator: isAiControlledForEvidence(game, gpId),
+            );
             _diploLog.i('logic: diplomacy peace $gpId-$targetId');
           } else {
             game = game.copyWith(
@@ -563,6 +674,7 @@ Game _processWarAndPeace(
 }
 
 Game _terminateAgreementsOnWar(Game game) {
+  final turn = game.worldState.turnState.turnNumber;
   var overtures = game.overtureStates;
   for (final rel in game.diplomacyRelations) {
     if (!rel.atWar) continue;
@@ -574,7 +686,23 @@ Game _terminateAgreementsOnWar(Game game) {
         .toList();
   }
   if (overtures.length != game.overtureStates.length) {
+    final removed = game.overtureStates
+        .where((o) =>
+            !overtures.any((n) =>
+                n.gpId == o.gpId && n.targetId == o.targetId))
+        .toList();
     game = game.copyWith(overtureStates: overtures);
+    for (final o in removed) {
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.agreementsClearedOnWar,
+        {o.gpId, o.targetId},
+        fromFactionId: o.gpId,
+        toFactionId: o.targetId,
+        reason: 'war',
+      );
+    }
     _diploLog.i('logic: diplomacy agreements terminated (war)');
   }
   return game;
@@ -617,6 +745,16 @@ Game _applyRelationModifiersAndUpdateScores(
         turn: turn,
       );
       game = game.copyWith(players: players, diplomacyRelations: relations);
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.grantAidApplied,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        amount: amount,
+        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+      );
       _diploLog
           .i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
     }
@@ -649,12 +787,11 @@ Game _applyRelationModifiersAndUpdateScores(
       // Store/update ongoing subsidy state
       final existingSubsidyIdx = subsidyStates.indexWhere(
           (s) => s.payerId == gpId && s.targetId == targetId);
-      if (existingSubsidyIdx >= 0) {
-        // Update existing subsidy
+      final isUpdate = existingSubsidyIdx >= 0;
+      if (isUpdate) {
         subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
             .copyWith(amountPerTurn: amount);
       } else {
-        // Create new subsidy
         subsidyStates.add(SubsidyState(
           payerId: gpId,
           targetId: targetId,
@@ -662,6 +799,17 @@ Game _applyRelationModifiersAndUpdateScores(
         ));
       }
 
+      game = game.copyWith(players: players, subsidyStates: subsidyStates);
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        isUpdate ? DiplomaticEventType.subsidyUpdated : DiplomaticEventType.subsidySet,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        amount: amount,
+        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+      );
       final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
         _diploLog.i(
@@ -670,7 +818,6 @@ Game _applyRelationModifiersAndUpdateScores(
         _diploLog.i(
             'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)');
       }
-      game = game.copyWith(players: players, subsidyStates: subsidyStates);
     }
   }
 
@@ -693,7 +840,16 @@ Game _processOngoingSubsidies(Game game, int turn) {
     // Check if payer can afford subsidy
     final payer = game.playerById(payerId);
     if (payer == null || payer.treasury < amount) {
-      // Cancel subsidy if payer can't afford it
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.subsidyCancelled,
+        {payerId, targetId},
+        fromFactionId: payerId,
+        toFactionId: targetId,
+        reason: 'insufficient funds',
+        wasAiInitiator: isAiControlledForEvidence(game, payerId),
+      );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
@@ -704,7 +860,16 @@ Game _processOngoingSubsidies(Game game, int turn) {
     // Check if still at peace (subsidies cancel on war)
     final rel = getRelation(game, payerId, targetId);
     if (rel != null && rel.atWar) {
-      // Cancel subsidy when war declared
+      game = _appendDiplomaticEvent(
+        game,
+        turn,
+        DiplomaticEventType.subsidyCancelled,
+        {payerId, targetId},
+        fromFactionId: payerId,
+        toFactionId: targetId,
+        reason: 'war declared',
+        wasAiInitiator: isAiControlledForEvidence(game, payerId),
+      );
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
@@ -837,9 +1002,24 @@ Game applyInterventionChoice(
   String gpIdWithEmbassy,
   InterventionChoice choice,
 ) {
-  if (choice == InterventionChoice.doNothing) return game;
-
   final turn = game.worldState.turnState.turnNumber;
+  if (choice == InterventionChoice.doNothing) {
+    var g = game;
+    for (final a in ctx.attackers) {
+      final attackerId = a.factionId;
+      if (!isGreatPower(game, attackerId)) continue;
+      g = _appendDiplomaticEvent(
+        g,
+        turn,
+        DiplomaticEventType.interventionDoNothing,
+        {gpIdWithEmbassy, attackerId},
+        fromFactionId: gpIdWithEmbassy,
+        toFactionId: attackerId,
+      );
+    }
+    return g;
+  }
+
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
   for (final a in ctx.attackers) {
@@ -891,5 +1071,21 @@ Game applyInterventionChoice(
       });
     }
   }
-  return game.copyWith(diplomacyRelations: relations);
+  game = game.copyWith(diplomacyRelations: relations);
+  final eventType = choice == InterventionChoice.intervene
+      ? DiplomaticEventType.interventionIntervene
+      : DiplomaticEventType.interventionProtest;
+  for (final a in ctx.attackers) {
+    final attackerId = a.factionId;
+    if (!isGreatPower(game, attackerId)) continue;
+    game = _appendDiplomaticEvent(
+      game,
+      turn,
+      eventType,
+      {gpIdWithEmbassy, attackerId},
+      fromFactionId: gpIdWithEmbassy,
+      toFactionId: attackerId,
+    );
+  }
+  return game;
 }
