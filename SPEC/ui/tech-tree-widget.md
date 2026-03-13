@@ -10,9 +10,14 @@
 ## Layout
 
 - **Graph:** All techs from the global catalog in a single graph. **Left to right:** starting techs (no prerequisites) at the left; end-game techs at the right. Nodes are arranged in **topological layers** (by distance from roots); within a layer, nodes may be grouped or spaced to reduce edge crossings.
-- **Edges:** **Explicit lines** (e.g. arrows or segments) from each prerequisite tech to the tech that requires it. Edges do not obscure node labels.
+- **Edges:** **Explicit right‑angled lines** (orthogonal segments) from each prerequisite tech to the tech that requires it. Edges run horizontally out from the source node, then vertically, then horizontally into the target node, and are drawn **behind nodes** so they do not obscure node labels or node bodies.
 - **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for MVP.
 - **Categories:** One graph shows **all** techs. Each node is **color-coded by category** (gathering, transport, labour, civilian, diplomacy, naval, military; new-world if present). Category colours are distinct and consistent (e.g. gathering = green, transport = blue, labour = amber, etc.; exact palette in theme or widget).
+
+### Legend
+
+- **Category legend:** The tree screen shows a compact legend explaining the colour for each tech category (e.g. gathering = green, transport = blue, etc.), using the same palette as the nodes.
+- **State legend:** The legend also explains node state visuals for the current player (Researched, In progress, Available, Locked), matching the styles in the Node states section below.
 
 ## Node states (current player only)
 
