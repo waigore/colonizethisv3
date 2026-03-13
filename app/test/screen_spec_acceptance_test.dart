@@ -2,6 +2,7 @@
 // Screens match Widgetbook mockups (CtMainMenu, CtGameSetup). SPEC/ui/main-menu.md, SPEC/ui/game-setup.md.
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';

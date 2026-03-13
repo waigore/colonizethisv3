@@ -133,80 +133,87 @@ class CivilianUnitsPanel extends StatelessWidget {
         child: CtPanel(
           padding: EdgeInsets.zero,
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Civilian Units',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: hasAny
-                  ? ListView(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                      children: [
-                        if (ow.isNotEmpty) ...[
-                          _RegionHeader(label: _regionLabel('oldWorld')),
-                          ...ow.map((u) => _UnitRow(
-                                unit: u,
-                                provinceNames: provinceNames,
-                                currentOrders: currentOrders,
-                                humanPlayerId: humanPlayerId,
-                                onTap: onLocateUnit != null && u.tileKey != null
-                                    ? () => onLocateUnit!(u)
-                                    : null,
-                                onAddWorkOrder: onAddWorkOrder,
-                                onRemoveWorkOrder: onRemoveWorkOrder,
-                                onCancelUnitWork: onCancelUnitWork,
-                                onStartWorkTargetSelection:
-                                    onStartWorkTargetSelection,
-                              )),
-                        ],
-                        if (nw.isNotEmpty) ...[
-                          _RegionHeader(label: _regionLabel('newWorld')),
-                          ...nw.map((u) => _UnitRow(
-                                unit: u,
-                                provinceNames: provinceNames,
-                                currentOrders: currentOrders,
-                                humanPlayerId: humanPlayerId,
-                                onTap: onLocateUnit != null && u.tileKey != null
-                                    ? () => onLocateUnit!(u)
-                                    : null,
-                                onAddWorkOrder: onAddWorkOrder,
-                                onRemoveWorkOrder: onRemoveWorkOrder,
-                                onCancelUnitWork: onCancelUnitWork,
-                                onStartWorkTargetSelection:
-                                    onStartWorkTargetSelection,
-                              )),
-                        ],
-                      ],
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'No civilian units',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Civilian Units',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-            ),
-          ],
+                  ],
+                ),
+              ),
+              Flexible(
+                child: hasAny
+                    ? ListView(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                        children: [
+                          if (ow.isNotEmpty) ...[
+                            _RegionHeader(label: _regionLabel('oldWorld')),
+                            ...ow.map(
+                              (u) => _UnitRow(
+                                unit: u,
+                                provinceNames: provinceNames,
+                                currentOrders: currentOrders,
+                                humanPlayerId: humanPlayerId,
+                                onTap: onLocateUnit != null && u.tileKey != null
+                                    ? () => onLocateUnit!(u)
+                                    : null,
+                                onAddWorkOrder: onAddWorkOrder,
+                                onRemoveWorkOrder: onRemoveWorkOrder,
+                                onCancelUnitWork: onCancelUnitWork,
+                                onStartWorkTargetSelection:
+                                    onStartWorkTargetSelection,
+                              ),
+                            ),
+                          ],
+                          if (nw.isNotEmpty) ...[
+                            _RegionHeader(label: _regionLabel('newWorld')),
+                            ...nw.map(
+                              (u) => _UnitRow(
+                                unit: u,
+                                provinceNames: provinceNames,
+                                currentOrders: currentOrders,
+                                humanPlayerId: humanPlayerId,
+                                onTap: onLocateUnit != null && u.tileKey != null
+                                    ? () => onLocateUnit!(u)
+                                    : null,
+                                onAddWorkOrder: onAddWorkOrder,
+                                onRemoveWorkOrder: onRemoveWorkOrder,
+                                onCancelUnitWork: onCancelUnitWork,
+                                onStartWorkTargetSelection:
+                                    onStartWorkTargetSelection,
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'No civilian units',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

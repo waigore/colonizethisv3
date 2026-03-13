@@ -3,7 +3,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../widgets/ct_screen_shell.dart';
+import '../../../widgets/ct_screen_shell.dart';
 import 'technology_panel.dart';
 import 'tech_tree_widget.dart';
 

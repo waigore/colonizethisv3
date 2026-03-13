@@ -314,72 +314,84 @@ class MilitaryUnitsPanel extends StatelessWidget {
         child: CtPanel(
           padding: EdgeInsets.zero,
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Military Units',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: hasAny
-                  ? ListView(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                      children: [
-                        for (final group in tree) ...[
-                          _RegionHeader(
-                              label: _regionLabel(group.regionId)),
-                          for (final loc in group.locations) ...[
-                            _LocationHeader(
-                                label: loc.displayLabel,
-                                regionLabel: _regionLabel(loc.regionId)),
-                            if (loc is _ProvinceLocationNode)
-                              for (final row in loc.rows)
-                                _RegimentRow(
-                                  row: row,
-                                  onTap: row.tileKey != null &&
-                                          onLocateTile != null
-                                      ? () => onLocateTile!(
-                                          row.tileKey!, row.regionId)
-                                      : null,
-                                ),
-                            if (loc is _SeaZoneLocationNode)
-                              for (final row in loc.rows)
-                                _ShipRow(
-                                  row: row,
-                                  onTap: row.tileKey != null &&
-                                          onLocateTile != null
-                                      ? () => onLocateTile!(
-                                          row.tileKey!, row.regionId)
-                                      : null,
-                                ),
-                          ],
-                        ],
-                      ],
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'No military units',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme.onSurfaceVariant),
-                        ),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Military Units',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-            ),
-          ],
+                  ],
+                ),
+              ),
+              Flexible(
+                child: hasAny
+                    ? ListView(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                        children: [
+                          for (final group in tree) ...[
+                            _RegionHeader(
+                              label: _regionLabel(group.regionId),
+                            ),
+                            for (final loc in group.locations) ...[
+                              _LocationHeader(
+                                label: loc.displayLabel,
+                                regionLabel: _regionLabel(loc.regionId),
+                              ),
+                              if (loc is _ProvinceLocationNode)
+                                for (final row in loc.rows)
+                                  _RegimentRow(
+                                    row: row,
+                                    onTap: row.tileKey != null &&
+                                            onLocateTile != null
+                                        ? () => onLocateTile!(
+                                              row.tileKey!,
+                                              row.regionId,
+                                            )
+                                        : null,
+                                  ),
+                              if (loc is _SeaZoneLocationNode)
+                                for (final row in loc.rows)
+                                  _ShipRow(
+                                    row: row,
+                                    onTap: row.tileKey != null &&
+                                            onLocateTile != null
+                                        ? () => onLocateTile!(
+                                              row.tileKey!,
+                                              row.regionId,
+                                            )
+                                        : null,
+                                  ),
+                            ],
+                          ],
+                        ],
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'No military units',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -241,6 +241,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
             value: '',
             items: const [''],
             hint: 'Select leader',
+            itemLabel: (_) => 'Select leader',
             onChanged: (_) {},
           )
         : CtDropdown<String>(
