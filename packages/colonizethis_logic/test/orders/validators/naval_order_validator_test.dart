@@ -239,7 +239,8 @@ void main() {
       expect(result.reason, 'Invalid naval move');
     });
 
-    test('validateNavalMove dock accept when at sea adjacent owned province', () {
+    test(
+        'validateNavalMove dock accept when at sea adjacent owned province', () {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
@@ -285,8 +286,6 @@ void main() {
       expect(result.reason, isNull);
     });
 
-<<<<<<< HEAD
-=======
     test('validateNavalMove dock accept when port province id is local (unprefixed)', () {
       final topology = MapTopology(
         nodes: const [
@@ -333,7 +332,6 @@ void main() {
       expect(result.reason, isNull);
     });
 
->>>>>>> dev
     test('validateNavalMove dock reject when fleet in port', () {
       final topology = MapTopology(
         nodes: const [
