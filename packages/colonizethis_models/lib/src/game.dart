@@ -82,6 +82,7 @@ class Game {
     this.aiSeedByGpId = const {},
     this.hiddenAgendaByGpId = const {},
     this.dossierEvidenceEntries = const [],
+    this.diplomaticHistoryEvents = const [],
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
@@ -128,6 +129,9 @@ class Game {
   /// Evidence entries for dossier (observer, subject, agenda, turn, description). Phase 6.
   final List<DossierEvidenceEntry> dossierEvidenceEntries;
 
+  /// Flat, append-only list of diplomatic history events. Phase 6.
+  final List<DiplomaticEvent> diplomaticHistoryEvents;
+
   /// Global game seed for AI determinism. Phase 4.
   final int? globalGameSeed;
 
@@ -168,6 +172,9 @@ class Game {
         if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
         if (dossierEvidenceEntries.isNotEmpty)
           'dossierEvidenceEntries': dossierEvidenceEntries.map((e) => e.toJson()).toList(),
+        if (diplomaticHistoryEvents.isNotEmpty)
+          'diplomaticHistoryEvents':
+              diplomaticHistoryEvents.map((e) => e.toJson()).toList(),
         if (globalGameSeed != null) 'globalGameSeed': globalGameSeed,
         if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
           'greatPowerColorOverride': greatPowerColorOverride!.map((k, v) => MapEntry(k, v)),
@@ -219,6 +226,10 @@ class Game {
     final dossierEvidenceEntries = evidenceList
         .map((e) => DossierEvidenceEntry.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
+    final diploHistoryList = json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
+    final diplomaticHistoryEvents = diploHistoryList
+        .map((e) => DiplomaticEvent.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
     final globalGameSeed = json['globalGameSeed'] as int?;
     final greatPowerColorOverrideRaw = json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
     final greatPowerColorOverride = greatPowerColorOverrideRaw?.map(
@@ -267,6 +278,7 @@ class Game {
       aiSeedByGpId: aiSeedByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId,
       dossierEvidenceEntries: dossierEvidenceEntries,
+      diplomaticHistoryEvents: diplomaticHistoryEvents,
       globalGameSeed: globalGameSeed,
       greatPowerColorOverride: greatPowerColorOverride,
       victory: json['victory'] is Map<String, dynamic>
@@ -296,6 +308,7 @@ class Game {
     Map<String, int>? aiSeedByGpId,
     Map<String, String>? hiddenAgendaByGpId,
     List<DossierEvidenceEntry>? dossierEvidenceEntries,
+    List<DiplomaticEvent>? diplomaticHistoryEvents,
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
@@ -319,6 +332,8 @@ class Game {
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
       dossierEvidenceEntries: dossierEvidenceEntries ?? this.dossierEvidenceEntries,
+      diplomaticHistoryEvents:
+          diplomaticHistoryEvents ?? this.diplomaticHistoryEvents,
       globalGameSeed: globalGameSeed ?? this.globalGameSeed,
       greatPowerColorOverride: greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
@@ -349,6 +364,7 @@ class Game {
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
           _mapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
           _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
+          _listEquals(diplomaticHistoryEvents, other.diplomaticHistoryEvents) &&
           globalGameSeed == other.globalGameSeed &&
           _mapListEquals(greatPowerColorOverride, other.greatPowerColorOverride) &&
           victory == other.victory &&
@@ -372,7 +388,7 @@ class Game {
         Object.hashAll(aiControlByGpId.entries),
         Object.hashAll(aiSeedByGpId.entries),
         Object.hashAll(hiddenAgendaByGpId.entries),
-        Object.hashAll(dossierEvidenceEntries),
+        Object.hash(Object.hashAll(dossierEvidenceEntries), Object.hashAll(diplomaticHistoryEvents)),
         globalGameSeed,
         greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
         victory,

@@ -225,3 +225,31 @@ Default values for the parameters above are given in this table; the table is th
 - Turn sequence: see program/turn-resolution-phases.md
 - Combat validation: [combat.md](combat.md)
 - Province identity (prefixed ids, region-scoped lookup in state and orders): [world-model-identity.md](world-model-identity.md)
+
+---
+
+## Diplomatic History
+
+The game maintains a **diplomatic history log** for each Great Power, consisting of **structured events** involving that GP and any other faction (GP, Minor, or Tribe). Events are stored in game state as data and rendered as **human-readable** entries by the UI.
+
+- **Scope (who logs what):**
+  - Only **Great Powers** initiate diplomatic actions, but the history log records all events where any Great Power is a **party**: GP–GP, GP–Minor, GP–Tribe.
+  - For a given Great Power `A`, the **per-faction history view** in the diplomacy panel shows only events where `A` and the selected faction `B` are both parties.
+- **Event types (what is recorded):**
+  - **State changes:** Declarations of war, transitions to peace, alliances formed or broken, Join Empire/Colony resolutions (including removal of a Minor/Tribe), intervention outcomes (Intervene, Do Nothing, Protest).
+  - **Overtures and treaties:** Consulate established, Embassy established, NAP signed, Join Empire/Colony overture accepted. Failed overtures (rejected by human/AI GP, or rejected for validation reasons) are recorded as **attempted but not applied** if they reach diplomacy resolution.
+  - **War side-effects:** Overtures cleared due to war, subsidies cancelled due to war.
+  - **Economic diplomacy:** GrantAid applications and SetSubsidy creations, updates, and cancellations that successfully apply.
+  - **AI vs human symmetry:** Events are recorded for both **human** and **AI-controlled** Great Powers; the history is a world-level log, not per-controller.
+- **Time and ordering:**
+  - Each event stores the **turn number** when it occurred (integer, same as `worldState.turnState.turnNumber`).
+  - Events are **ordered** by (turn, within-turn index) in a way that preserves resolution order; the history is effectively append-only.
+  - UI displays events grouped and sorted by **newest first**, using a **year label** derived from turn via the game calendar mapping (e.g. `Year 1505 (Turn 12)`), per the program-level time mapping spec.
+- **Visibility and “unknown faction”:**
+  - The underlying history is a **global** world log (all Great Power events), but **PlayerView-safe** projections for a given human player **substitute undiscovered factions** with `Unknown faction`:
+    - If a faction in an event is not yet discovered by the viewing player (no relation and outside visibility rules), the UI renders that party as `Unknown faction` while keeping the rest of the event text intact.
+    - When the same event involves the viewing player’s GP directly, the viewing player is always allowed to see their **own** identity; only other, still-undiscovered factions are substituted.
+  - All human players see the **same underlying event list**, but with party names filtered/substituted per their own discovery state.
+- **Retention:**
+  - Diplomatic history is **unbounded** within a campaign: there is no cap on the number of events persisted in a save.
+  - Old saves created before this feature may have an empty or partial history; the game shows **whatever history exists** in the saved Game state without backfilling from current relations.
