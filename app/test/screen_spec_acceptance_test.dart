@@ -2,10 +2,11 @@
 // Screens match Widgetbook mockups (CtMainMenu, CtGameSetup). SPEC/ui/main-menu.md, SPEC/ui/game-setup.md.
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/widgets/ct_dropdown.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/game_setup.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
@@ -275,14 +276,12 @@ void main() {
 
       expect(find.text('Select nation'), findsNWidgets(6));
       expect(find.text('Select leader'), findsNWidgets(6));
-      final startFinder = find.byWidgetPredicate(
-        (Widget w) =>
-            w is ElevatedButton &&
-            w.child is Text &&
-            (w.child as Text).data == 'Start Game',
-      );
+      final startFinder = find.widgetWithText(CtNinePatchButton, 'Start Game');
       expect(startFinder, findsOneWidget);
-      expect(tester.widget<ElevatedButton>(startFinder).onPressed, isNull);
+      expect(
+        tester.widget<CtNinePatchButton>(startFinder).enabled,
+        isFalse,
+      );
     });
 
     testWidgets('AC Start disabled until complete: all six slots filled enables Start',
@@ -302,14 +301,12 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      final startFinder = find.byWidgetPredicate(
-        (Widget w) =>
-            w is ElevatedButton &&
-            w.child is Text &&
-            (w.child as Text).data == 'Start Game',
-      );
+      final startFinder = find.widgetWithText(CtNinePatchButton, 'Start Game');
       expect(startFinder, findsOneWidget);
-      expect(tester.widget<ElevatedButton>(startFinder).onPressed, isNotNull);
+      expect(
+        tester.widget<CtNinePatchButton>(startFinder).enabled,
+        isTrue,
+      );
     });
 
     testWidgets('AC No duplicate nations: selecting nation in slot 0 removes it from slot 1',
@@ -333,7 +330,7 @@ void main() {
       await tester.pumpWidget(buildGameSetup());
       await tester.pumpAndSettle();
 
-      final nationDropdowns = find.byType(DropdownButton<String>);
+      final nationDropdowns = find.byType(CtDropdown<String>);
       await tester.tap(nationDropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('England').last);
@@ -396,13 +393,11 @@ void main() {
       await tester.pump();
 
       expect(find.text('Starting…'), findsOneWidget);
-      final startFinder = find.byWidgetPredicate(
-        (Widget w) =>
-            w is ElevatedButton &&
-            w.child is Text &&
-            (w.child as Text).data == 'Start Game',
+      final startFinder = find.widgetWithText(CtNinePatchButton, 'Start Game');
+      expect(
+        tester.widget<CtNinePatchButton>(startFinder).enabled,
+        isFalse,
       );
-      expect(tester.widget<ElevatedButton>(startFinder).onPressed, isNull);
       await tester.tap(find.text('Back'));
       await tester.pump();
       expect(backCalled, isTrue);
@@ -472,13 +467,11 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      final startFinder = find.byWidgetPredicate(
-        (Widget w) =>
-            w is ElevatedButton &&
-            w.child is Text &&
-            (w.child as Text).data == 'Start Game',
+      final startFinder = find.widgetWithText(CtNinePatchButton, 'Start Game');
+      expect(
+        tester.widget<CtNinePatchButton>(startFinder).enabled,
+        isTrue,
       );
-      expect(tester.widget<ElevatedButton>(startFinder).onPressed, isNotNull);
     });
 
     testWidgets('Coverage: clear nation in slot hits empty value branch',
@@ -491,7 +484,7 @@ void main() {
       await tester.tap(find.text('England').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButton<String>).first);
+      await tester.tap(find.byType(CtDropdown<String>).first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Select nation').first);
       await tester.tap(find.text('Select nation').first, warnIfMissed: false);
@@ -503,12 +496,12 @@ void main() {
       await tester.pumpWidget(buildGameSetup());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButton<String>).first);
+      await tester.tap(find.byType(CtDropdown<String>).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('England').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButton<String>).at(1));
+      await tester.tap(find.byType(CtDropdown<String>).at(1));
       await tester.pumpAndSettle();
       final leaderOptions = find.text('Queen Victoria');
       if (leaderOptions.evaluate().length > 1) {

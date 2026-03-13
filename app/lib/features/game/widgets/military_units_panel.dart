@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_panel.dart';
+
 /// Region id to display label. SPEC/ui/military-units-panel.md.
 String _regionLabel(String regionId) {
   switch (regionId) {
@@ -307,9 +309,11 @@ class MilitaryUnitsPanel extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-      child: Card(
-        margin: const EdgeInsets.all(8),
-        child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: CtPanel(
+          padding: EdgeInsets.zero,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

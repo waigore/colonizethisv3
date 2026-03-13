@@ -1,0 +1,117 @@
+import 'package:flame/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+
+/// Pixel-art dialog shell using a nine-patch frame. SPEC/ui/buttons-nine-patch.md (reuse canon).
+///
+/// Wraps arbitrary [child] content inside a constrained, centered dialog with
+/// a transparent backdrop and nine-patch chrome. Use this instead of
+/// [AlertDialog] or [Dialog] for all app dialogs.
+class CtDialogShell extends StatelessWidget {
+  const CtDialogShell({
+    super.key,
+    required this.child,
+    this.maxWidth = 480,
+    this.maxHeight = 600,
+    this.destTileSize = 16,
+    this.padding =
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  });
+
+  /// Dialog body content (title, text, actions column/rows).
+  final Widget child;
+
+  /// Maximum width of the dialog content area.
+  final double maxWidth;
+
+  /// Maximum height of the dialog content area.
+  final double maxHeight;
+
+  /// Rendered size of each tile edge (Flame destTileSize).
+  final double destTileSize;
+
+  /// Inner padding between nine-patch frame and [child].
+  final EdgeInsetsGeometry padding;
+
+  static const String _kAssetPath = 'ui_button_nine_patch.png';
+  static const double _tileSize = 16;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color fallbackColor = theme.colorScheme.surface;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              final double height = constraints.maxHeight;
+              return NineTileBoxWidget.asset(
+                path: _kAssetPath,
+                tileSize: _tileSize,
+                destTileSize: destTileSize,
+                width: width,
+                height: height,
+                padding: padding,
+                child: DefaultTextStyle(
+                  style: theme.textTheme.bodyMedium ??
+                      const TextStyle(color: Colors.white),
+                  child: child,
+                ),
+                loadingBuilder: (_) => _FallbackDialogFrame(
+                  color: fallbackColor,
+                  padding: padding,
+                  child: child,
+                ),
+                errorBuilder: (_) {
+                  Logger().w(
+                    'ui: dialog nine-patch asset not found, using fallback frame',
+                  );
+                  return _FallbackDialogFrame(
+                    color: fallbackColor,
+                    padding: padding,
+                    child: child,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FallbackDialogFrame extends StatelessWidget {
+  const _FallbackDialogFrame({
+    required this.color,
+    required this.padding,
+    required this.child,
+  });
+
+  final Color color;
+  final EdgeInsetsGeometry padding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: color,
+        border: Border.all(color: Colors.black87, width: 2),
+      ),
+      child: child,
+    );
+  }
+}
+

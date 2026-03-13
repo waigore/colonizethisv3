@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_panel.dart';
 import 'diplomacy_dialogs.dart';
 import 'diplomacy_detail_screen.dart';
 
@@ -353,12 +355,11 @@ class _DiplomacyRow extends StatelessWidget {
       ],
     );
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: CtPanel(
           padding: const EdgeInsets.all(12),
           child: content,
         ),
@@ -411,14 +412,13 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = _actionLabel(order);
-    return FilledButton.tonal(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return SizedBox(
+      height: 32,
+      child: CtNinePatchButton(
+        onPressed: onPressed,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 12)),
     );
   }
 

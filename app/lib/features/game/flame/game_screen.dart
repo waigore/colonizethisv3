@@ -15,7 +15,10 @@ import '../widgets/diplomacy_panel.dart';
 import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
+import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_screen_shell.dart';
 import 'game_canvas.dart';
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
@@ -27,8 +30,9 @@ class GameScreen extends ConsumerWidget {
     final game = ref.watch(currentGameProvider);
     final mapViewData = ref.watch(mapViewDataProvider);
     final victory = game?.victory;
-    return Scaffold(
-      body: Stack(
+    return CtScreenShell(
+      title: 'Game',
+      child: Stack(
         children: [
           if (mapViewData != null && game != null)
             _GameMapArea(
@@ -264,19 +268,19 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ChoiceChip(
+              CtChoiceChip(
                 label: const Text('Old World'),
                 selected: _regionIndex == 0,
                 onSelected: (_) => setState(() => _regionIndex = 0),
               ),
               const SizedBox(width: 8),
-              ChoiceChip(
+              CtChoiceChip(
                 label: const Text('New World'),
                 selected: _regionIndex == 1,
                 onSelected: (_) => setState(() => _regionIndex = 1),
               ),
               const SizedBox(width: 16),
-              TextButton.icon(
+              CtNinePatchButton(
                 onPressed: () {
                   final orders = ref.read(currentOrdersProvider);
                   showModalBottomSheet<void>(
@@ -318,11 +322,17 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     },
                   );
                 },
-                icon: const Icon(Icons.people_outline, size: 20),
-                label: const Text('Civilian Units'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.people_outline, size: 20),
+                    SizedBox(width: 8),
+                    Text('Civilian Units'),
+                  ],
+                ),
               ),
               const SizedBox(width: 8),
-              TextButton.icon(
+              CtNinePatchButton(
                 onPressed: () {
                   showModalBottomSheet<void>(
                     context: context,
@@ -333,11 +343,17 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.military_tech_outlined, size: 20),
-                label: const Text('Military Units'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.military_tech_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('Military Units'),
+                  ],
+                ),
               ),
               const SizedBox(width: 8),
-              TextButton.icon(
+              CtNinePatchButton(
                 onPressed: () {
                   final orders = ref.read(currentOrdersProvider);
                   final mapData =
@@ -368,8 +384,14 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.handshake_outlined, size: 20),
-                label: const Text('Diplomacy'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.handshake_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('Diplomacy'),
+                  ],
+                ),
               ),
             ],
           ),
@@ -489,9 +511,9 @@ class _VictoryPanel extends StatelessWidget {
       ct_models.VictoryType.military => 'Military victory',
     };
 
-    return Card(
-      margin: const EdgeInsets.all(24),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: CtPanel(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -510,14 +532,14 @@ class _VictoryPanel extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
+                CtNinePatchButton(
                   onPressed: () {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   child: const Text('Return to main menu'),
                 ),
                 const SizedBox(width: 12),
-                TextButton(
+                CtNinePatchButton(
                   onPressed: () {
                     onViewFinalState?.call();
                   },

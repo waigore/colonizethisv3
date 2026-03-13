@@ -4,6 +4,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_panel.dart';
+
 /// Human-readable label for work target ids. SPEC/ui/civilian-units-panel.md.
 const Map<String, String> _workTargetLabels = {
   'explore': 'Explore',
@@ -124,9 +128,11 @@ class CivilianUnitsPanel extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-      child: Card(
-        margin: const EdgeInsets.all(8),
-        child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: CtPanel(
+          padding: EdgeInsets.zero,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -350,21 +356,36 @@ class _UnitRow extends StatelessWidget {
   Future<void> _confirmCancel(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel work order?'),
-        content: const Text(
-          'This will cancel the current or pending work for this unit. Materials are not refunded.',
+      builder: (ctx) => CtDialogShell(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cancel work order?',
+              style: Theme.of(ctx).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This will cancel the current or pending work for this unit. Materials are not refunded.',
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('No'),
+                ),
+                const SizedBox(width: 8),
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Yes'),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes'),
-          ),
-        ],
       ),
     );
     if (ok != true || !context.mounted) return;
@@ -400,13 +421,13 @@ class _UnitRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_isIdleNoPending && onStartWorkTargetSelection != null)
-            TextButton(
+            CtNinePatchButton(
               onPressed: () => _showOrderMenu(context),
               child: const Text('Assign'),
             ),
           if (_hasWork &&
               (onRemoveWorkOrder != null || onCancelUnitWork != null))
-            TextButton(
+            CtNinePatchButton(
               onPressed: () => _confirmCancel(context),
               child: const Text('Cancel'),
             ),

@@ -10,7 +10,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `variant` | `plain` \| `pixelArt` | **plain:** standard Flutter/colonial theme (no pixel-art assets). **pixelArt:** pixel-art assets per table below. |
+| `variant` | `plain` \| `pixelArt` | Both variants use the **pixel-art component catalog** (CtNinePatchButton, CtScreenShell). **plain:** colonial colour theme only (no background illustration). **pixelArt:** pixel-art assets per table below. |
 | `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled when saves exist. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** Load Game disabled with explanatory tooltip/helper text. |
 | `version` | string | Version text shown in footer (e.g. `v1.0.0`). |
 | `onNewGame` | callback | Invoked when user taps New Game. |
@@ -58,7 +58,7 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 
 **Regions (UXD 07–style):** canvas full-screen; logo_region (top, title + optional subtitle); buttons_region (column: New Game, Load Game, Settings); footer_region (version text, Quit button).
 
-**Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code).
+**Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code). All buttons use `CtNinePatchButton`; **Material buttons (ElevatedButton, TextButton, etc.) are not permitted for this screen.**
 
 **Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The main menu scrolls when the viewport is short (wrap content in `SingleChildScrollView`). No breakpoint layout change; vertical list suits narrow width. Safe area and 44 dp touch targets apply.
 

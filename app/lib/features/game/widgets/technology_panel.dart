@@ -2,6 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_panel.dart';
+
 /// Technology panel (UXD 03k). Shows researched techs and research slots for a player.
 class TechnologyPanel extends StatelessWidget {
   const TechnologyPanel({
@@ -40,9 +43,9 @@ class TechnologyPanel extends StatelessWidget {
         currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
             const <ResearchOrder>[];
 
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: CtPanel(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -93,7 +96,7 @@ class TechnologyPanel extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (hasTech)
-                              TextButton(
+                              CtNinePatchButton(
                                 onPressed: () {
                                   _cancelSlot(
                                     context: context,
@@ -106,7 +109,7 @@ class TechnologyPanel extends StatelessWidget {
                                 child: const Text('Cancel'),
                               ),
                             const SizedBox(width: 4),
-                            FilledButton.tonal(
+                            CtNinePatchButton(
                               onPressed: () {
                                 _showAssignDialog(
                                   context: context,
