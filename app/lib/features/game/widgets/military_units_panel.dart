@@ -183,13 +183,15 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
         .where((f) =>
             f.ownerId == humanPlayerId &&
             f.regionId == regionId &&
-            f.shipTypeIds.isNotEmpty)
+            f.shipTypeIds.isNotEmpty &&
+            f.isAtSea)
         .toList();
     final bySeaZone = <String, List<Fleet>>{};
     for (final f in fleetsInRegion) {
-      final zoneKey = f.seaZoneId.contains('|')
-          ? f.seaZoneId
-          : '$regionId|${f.seaZoneId}';
+      final seaZoneId = f.seaZoneId!;
+      final zoneKey = seaZoneId.contains('|')
+          ? seaZoneId
+          : '$regionId|${seaZoneId}';
       bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
     }
 
