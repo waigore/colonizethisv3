@@ -159,8 +159,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   }
 
   void _onProvinceSelected(String provinceId) {
+    // Province tap always selects/shows the overlay; it stays visible until
+    // explicitly dismissed via the overlay close button. SPEC/ui/province-sea-zone-detail-overlay.md.
     setState(() {
-      _selectedDetailId = _selectedDetailId == provinceId ? null : provinceId;
+      _selectedDetailId = provinceId;
     });
   }
 

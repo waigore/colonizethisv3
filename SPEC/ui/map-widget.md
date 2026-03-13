@@ -66,6 +66,9 @@ Details of what “province details” shows are **not** defined in this spec; t
 - **Selector:** When the pointer hovers over a tile, the widget shows a selector on that tile (e.g. a simple square outline). The selector has a **subtle bouncing animation** (e.g. scale or position) so it is clearly visible and responsive.
 - **Province border highlight:** The province (or sea zone) that contains the hovered tile is highlighted: its borders **glow** and use a **subtle animation** (e.g. opacity or stroke pulse). This applies to both land provinces and sea zones.
 - **Optional callback:** The widget may expose **onProvinceHovered**(prefixed province id, or null when hover leaves) so the parent can show tooltips or other feedback.
+- **Tap-as-hover on touch:** On touch-only/mobile viewports where pointer hover is not available, **tapping a tile** must drive the same hover visuals and tile/province callbacks as pointer hover:
+  - The hover selector and province-border glow move to the tapped tile (subject to visibility rules below) and remain there until another tile is hovered/tapped or the map loses focus.
+  - The map widget invokes **onTileHovered** and **onProvinceHovered** for the tapped tile/province in the same way it would for a hover event, so overlays such as the Province/Sea Zone Detail overlay can treat the tapped tile as the “current hovered tile” on mobile.
 
 ---
 
@@ -75,7 +78,7 @@ The map widget supports two visibility modes that determine how each tile is ren
 
 - **Full visibility mode:**
   - Ignores per-tile visibility and renders all tiles as fully visible.
-  - Equivalent to the current behavior of the debug map widget.
+  - Renders all tiles as fully visible (no per-tile visibility masking).
 - **Player-constrained visibility mode:**
   - Uses per-tile visibility from the **player view** (see [player-view.md](../program/player-view.md)) to decide how each tile is drawn.
   - Visibility is specified per tile key `regionId|provinceId|x|y` and carried via `CellViewData.visibility` (see [map-visualization.md](../program/map-visualization.md)).
@@ -99,6 +102,7 @@ Hover, selection, and overlay behavior:
 
 - Hover selector and province-border glow only apply to tiles that are not `unrevealed`.
 - Province selection callbacks (`onProvinceSelected`, `onProvinceHovered`) **are invoked** for taps/clicks on tiles whose visibility is `visible`, `fogged`, or `unrevealed`; it is the responsibility of the overlay (see `SPEC/ui/province-sea-zone-detail-overlay.md`) to obfuscate data for fully unrevealed provinces/tiles.
+- On touch devices, tapping a tile that is not `unrevealed` also updates the **hover selector** and hover callbacks as described in the Hover section so that the visual cursor and overlay stay in sync even without pointer hover.
 
 ---
 
@@ -127,6 +131,7 @@ Hover, selection, and overlay behavior:
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation; when hover leaves, the highlight is removed.
+- **Given** a touch/mobile viewport where pointer hover is not available, **when** the user taps a non-`unrevealed` tile, **then** the widget both invokes province/tile selection callbacks and updates the hover selector and province-border glow as if the tile were hovered.
 - **Given** the component is implemented with Flame, **then** it is possible to drive per-tile or per-asset animations from external events or timers.
 - **Given** the Widgetbook map widget story is configured with an initialized game whose `Game.players` list is non-empty, **when** the user enables player-constrained visibility mode in the story controls, **then** the widget builds its map view using the first player's (`game.players.first`) player view and applies per-tile visibility from that view.
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **full**, **when** the widget renders tiles, **then** tiles whose visibility is `visible`, `fogged`, or `unrevealed` are all drawn as fully visible (no gray or black masking is applied based on visibility).

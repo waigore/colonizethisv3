@@ -54,7 +54,7 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Tile visibility model (player view)
 
-Tile visibility for running-game tools (e.g. debug map widget, Widgetbook stories) is derived from **player view** and applied at the **tile key** level.
+Tile visibility for the map widget and running-game tools (e.g. Widgetbook stories) is derived from **player view** and applied at the **tile key** level.
 
 - **Enum:** `TileVisibility` with values:
   - `visible`: the tile is currently visible to the player this turn.
