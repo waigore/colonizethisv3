@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
-/// Node position for layout.
-class _TechNodePosition {
-  const _TechNodePosition({
+/// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
+class TechNodePosition {
+  const TechNodePosition({
     required this.techId,
     required this.x,
     required this.y,
@@ -56,7 +56,7 @@ class TechTreeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final positions = _computeLayout();
+    final positions = TechTreeWidget.computeLayout(techCatalog);
     if (positions.isEmpty) {
       return const Center(child: Text('No techs in catalog'));
     }
@@ -123,8 +123,9 @@ class TechTreeWidget extends StatelessWidget {
     );
   }
 
-  List<_TechNodePosition> _computeLayout() {
-    final catalog = techCatalog;
+  /// Computes topological layout: each tech in a column strictly right of all its prerequisites.
+  /// Used by the widget and by tests (column rule: A→B→C and A→C ⇒ B occupies column between A and C).
+  static List<TechNodePosition> computeLayout(Map<String, TechDefinition> catalog) {
     if (catalog.isEmpty) return [];
 
     // Layer: 0 = roots, 1 = one step from root, etc.
@@ -159,11 +160,11 @@ class TechTreeWidget extends StatelessWidget {
       list.sort((a, b) => a.compareTo(b));
     }
 
-    final positions = <_TechNodePosition>[];
+    final positions = <TechNodePosition>[];
     for (var layer = 0; layer <= maxLayer; layer++) {
       final ids = byLayer[layer] ?? [];
       for (var i = 0; i < ids.length; i++) {
-        positions.add(_TechNodePosition(
+        positions.add(TechNodePosition(
           techId: ids[i],
           x: 24 + layer * _layerGap,
           y: 24 + i * _rowGap,
@@ -351,7 +352,7 @@ class _TechNodeState {
 class _TechTreeEdgePainter extends CustomPainter {
   _TechTreeEdgePainter({required this.positions});
 
-  final List<_TechNodePosition> positions;
+  final List<TechNodePosition> positions;
 
   static double get _centerY => _nodeHeight / 2;
 
@@ -374,15 +375,10 @@ class _TechTreeEdgePainter extends CustomPainter {
         final fromRightX = fromPos.x + _nodeWidth;
         final fromCenterY = fromPos.y + _centerY;
 
-        // Orthogonal (right-angled) path: out from right edge, over horizontally, then into left edge.
-        final midX = (fromRightX + toLeftX) / 2;
-
+        // Direct line from source right edge to target left edge (no vertical segments).
         final path = Path()
           ..moveTo(fromRightX, fromCenterY)
-          ..lineTo(midX, fromCenterY)
-          ..lineTo(midX, toCenterY)
           ..lineTo(toLeftX, toCenterY);
-
         canvas.drawPath(path, paint);
       }
     }
