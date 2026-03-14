@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/screens/shell_screen.dart';
 import 'package:ctterm/screens/in_game_shell_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('ShellScreen (SPEC/tui/ctterm.md)', () {

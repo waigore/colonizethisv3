@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -113,6 +114,7 @@ class TechnologyPanel extends StatelessWidget {
                               onPressed: () {
                                 _showAssignDialog(
                                   context: context,
+                                  game: game,
                                   slotIndex: index,
                                   humanPlayerId: humanPlayerId,
                                   currentOrders: currentOrders,
@@ -177,6 +179,7 @@ class TechnologyPanel extends StatelessWidget {
 
 void _showAssignDialog({
   required BuildContext context,
+  required Game game,
   required int slotIndex,
   required String humanPlayerId,
   required Orders currentOrders,
@@ -192,11 +195,18 @@ void _showAssignDialog({
       .map((o) => o.techId)
       .toSet();
 
-  final availableTechs = techCatalog.values.where((tech) {
-    if (techUnlocked[tech.id] == true) return false;
-    if (currentlyAssignedIds.contains(tech.id)) return false;
-    return true;
-  }).toList()
+  final researchableIds = researchableTechIds(
+    techUnlocked,
+    hasDiscoveredResource: (r) =>
+        hasRevealedResourceForPlayer(game, player.id, r),
+  );
+  final choosableIds = researchableIds
+      .where((id) => !currentlyAssignedIds.contains(id))
+      .toList();
+  final availableTechs = choosableIds
+      .map((id) => techById(id))
+      .whereType<TechDefinition>()
+      .toList()
     ..sort((a, b) {
       final eraCmp = a.era.compareTo(b.era);
       if (eraCmp != 0) return eraCmp;
@@ -222,24 +232,6 @@ void _showAssignDialog({
               'Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)} · ${tech.cost} RP',
             ),
             onTap: () {
-              final unlocked = techUnlocked;
-              final missing = <String>[];
-              for (final prereqId in tech.prerequisiteIds) {
-                if (unlocked[prereqId] != true) {
-                  missing.add(techDisplayName(prereqId));
-                }
-              }
-              if (missing.isNotEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Prerequisites not met: ${missing.join(', ')}',
-                    ),
-                  ),
-                );
-                return;
-              }
-
               final updatedOrders = _assignTechToSlot(
                 currentOrders: currentOrders,
                 humanPlayerId: humanPlayerId,

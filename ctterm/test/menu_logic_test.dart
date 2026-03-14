@@ -1,7 +1,7 @@
 // Tests for main menu Load Game enabled logic. SPEC/tui/ctterm.md.
 
 import 'package:ctterm/menu_logic.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('isLoadGameEnabled', () {

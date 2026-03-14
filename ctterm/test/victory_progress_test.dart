@@ -2,7 +2,7 @@
 
 import 'package:ctterm/screens/victory_progress_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('VictoryProgressScreen (SPEC/tui/screens/victory-progress.md)', () {

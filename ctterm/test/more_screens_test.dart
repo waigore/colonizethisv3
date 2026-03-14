@@ -4,7 +4,7 @@ import 'package:ctterm/screens/stub_screen.dart';
 import 'package:ctterm/screens/generating_world_screen.dart';
 import 'package:ctterm/screens/game_setup_screen.dart';
 import 'package:ctterm/screens/load_game_screen.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('StubScreen (SPEC/tui/ctterm.md)', () {

@@ -3,7 +3,7 @@
 import 'package:ctterm/save_service.dart';
 import 'package:ctterm/screens/lock_prompt_screen.dart';
 import 'package:ctterm/startup_check.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('runStartupSaveCheck', () {

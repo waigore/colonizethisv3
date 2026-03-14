@@ -3,7 +3,7 @@
 import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/screens/defeat_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('VictoryScreen (SPEC/tui/ctterm.md)', () {

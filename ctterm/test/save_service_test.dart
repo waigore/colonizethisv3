@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'package:ctterm/save_service.dart';
 import 'package:path/path.dart' as path;
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('getCttermDataDir', () {

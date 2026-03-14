@@ -12,7 +12,7 @@ import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/map_context_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   late Game testGame;

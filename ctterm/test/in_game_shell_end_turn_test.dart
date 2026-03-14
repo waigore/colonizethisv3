@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/screens/in_game_shell_screen.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 String _humanPlayerId(Game game) {
   for (final entry in game.aiControlByGpId.entries) {
