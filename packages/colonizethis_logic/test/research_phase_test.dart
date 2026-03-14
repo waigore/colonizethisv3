@@ -41,7 +41,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'crop_rotation',
               funding: ResearchFundingLevel.maximum,
             ),
           ],
@@ -81,7 +81,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'crop_rotation',
               funding: ResearchFundingLevel.maximum,
             ),
           ],
@@ -96,7 +96,7 @@ void main() {
 
     test('accumulates research progress and unlocks tech when cost reached',
         () {
-      final tech = techById('gathering_1')!;
+      final tech = techById('crop_rotation')!;
       // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
       final game = _baseGame(
         treasury: 2000,
@@ -108,7 +108,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'crop_rotation',
               funding: ResearchFundingLevel.maximum,
             ),
           ],
@@ -130,12 +130,12 @@ void main() {
 
       if (progress.isNotEmpty) {
         // Research not yet complete; progress should be less than cost and tech not unlocked.
-        expect(progress['gathering_1'], isNotNull);
-        expect(progress['gathering_1'], lessThan(tech.cost));
-        expect(unlocked['gathering_1'], isNot(true));
+        expect(progress['crop_rotation'], isNotNull);
+        expect(progress['crop_rotation'], lessThan(tech.cost));
+        expect(unlocked['crop_rotation'], isNot(true));
       } else {
         // If cost is small, research may complete in a single turn.
-        expect(unlocked['gathering_1'], isTrue);
+        expect(unlocked['crop_rotation'], isTrue);
       }
     });
 
@@ -143,7 +143,7 @@ void main() {
       // No spend when prereq not met; use enough treasury in case logic ever applied
       final game = _baseGame(
         treasury: 2000,
-        techUnlocked: const {}, // gathering_1 not researched
+        techUnlocked: const {}, // saw_mill not researched
       );
 
       final orders = Orders(
@@ -151,7 +151,7 @@ void main() {
           'p1': [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_2',
+              techId: 'wind_saw_mill',
               funding: ResearchFundingLevel.maximum,
             ),
           ],
@@ -168,7 +168,7 @@ void main() {
       // Treasury unchanged and no progress recorded because prerequisite not met.
       expect(player.treasury, game.players.single.treasury);
       expect(player.researchProgressByTechId, isNull);
-      expect(player.techUnlocked?['gathering_2'], isNot(true));
+      expect(player.techUnlocked?['wind_saw_mill'], isNot(true));
     });
 
     test('research with funding none does not spend treasury or add progress',
@@ -179,7 +179,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'crop_rotation',
               funding: ResearchFundingLevel.none,
             ),
           ],
@@ -195,15 +195,15 @@ void main() {
     });
 
     test('research with low funding deducts treasury and adds progress', () {
-      // Use gathering_2 (cost 120) with prereq so 100 RP does not complete in one turn.
+      // Use wind_saw_mill (cost 160) with prereq so 100 RP does not complete in one turn.
       final game =
-          _baseGame(treasury: 100, techUnlocked: const {'gathering_1': true});
+          _baseGame(treasury: 100, techUnlocked: const {'saw_mill': true});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_2',
+              techId: 'wind_saw_mill',
               funding: ResearchFundingLevel.low,
             ),
           ],
@@ -218,7 +218,7 @@ void main() {
       expect(next.players.single.treasury, 50);
       expect(
           (next.players.single.researchProgressByTechId ??
-              const {})['gathering_2'],
+              const {})['wind_saw_mill'],
           100);
     });
 
@@ -229,7 +229,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'gathering_1',
+              techId: 'crop_rotation',
               funding: ResearchFundingLevel.maximum,
             ),
           ],
@@ -241,23 +241,23 @@ void main() {
         orders: orders,
       ));
       // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
-      // gathering_1 cost is 80, so tech unlocks and progress is cleared.
+      // crop_rotation cost is 120, so tech unlocks and progress is cleared.
       expect(next.players.single.treasury, 1000);
-      expect(next.players.single.techUnlocked!['gathering_1'], isTrue);
+      expect(next.players.single.techUnlocked!['crop_rotation'], isTrue);
     });
 
     test('all funding levels match spec values via game behavior', () {
-      // Use gathering_2 (cost 120) with prereq met so low funding does not complete in one turn.
-      const prereqMet = {'gathering_1': true};
+      // Use wind_saw_mill (cost 160) with prereq met so low funding does not complete in one turn.
+      const prereqMet = {'saw_mill': true};
 
-      // Low: 50 gold, 100 RP (no unlock; 100 < 120)
+      // Low: 50 gold, 100 RP (no unlock; 100 < 160)
       var game = _baseGame(treasury: 100, techUnlocked: prereqMet);
       var orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_2',
+                techId: 'wind_saw_mill',
                 funding: ResearchFundingLevel.low),
           ],
         },
@@ -267,17 +267,17 @@ void main() {
       expect(next.players.single.treasury, 50);
       expect(
           (next.players.single.researchProgressByTechId ??
-              const {})['gathering_2'],
+              const {})['wind_saw_mill'],
           100);
 
-      // Medium: 150 gold, 300 RP (unlocks gathering_2)
+      // Medium: 150 gold, 300 RP (unlocks wind_saw_mill)
       game = _baseGame(treasury: 200, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_2',
+                techId: 'wind_saw_mill',
                 funding: ResearchFundingLevel.medium),
           ],
         },
@@ -285,7 +285,7 @@ void main() {
       next = requireTurnResolutionComplete(resolveTurnForGame(
           game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 50);
-      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
+      expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
       // High: 400 gold, 800 RP (unlocks)
       game = _baseGame(treasury: 500, techUnlocked: prereqMet);
@@ -294,7 +294,7 @@ void main() {
           'p1': const [
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_2',
+                techId: 'wind_saw_mill',
                 funding: ResearchFundingLevel.high),
           ],
         },
@@ -302,7 +302,7 @@ void main() {
       next = requireTurnResolutionComplete(resolveTurnForGame(
           game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 100);
-      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
+      expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
       // Maximum: 1000 gold, 2500 RP (2.5x efficiency, unlocks)
       game = _baseGame(treasury: 1500, techUnlocked: prereqMet);
@@ -311,7 +311,7 @@ void main() {
           'p1': const [
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_2',
+                techId: 'wind_saw_mill',
                 funding: ResearchFundingLevel.maximum),
           ],
         },
@@ -319,7 +319,7 @@ void main() {
       next = requireTurnResolutionComplete(resolveTurnForGame(
           game: game, topology: const MapTopology(), orders: orders));
       expect(next.players.single.treasury, 500);
-      expect(next.players.single.techUnlocked!['gathering_2'], isTrue);
+      expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
     });
 
     test('completing University sets researchSlots to 4', () {
@@ -364,11 +364,11 @@ void main() {
           'p1': const [
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_1',
+                techId: 'crop_rotation',
                 funding: ResearchFundingLevel.low),
             ResearchOrder(
                 slotIndex: 0,
-                techId: 'gathering_1',
+                techId: 'crop_rotation',
                 funding: ResearchFundingLevel.maximum),
           ],
         },
@@ -379,9 +379,9 @@ void main() {
         orders: orders,
       ));
       final player = next.players.single;
-      // Last wins => maximum only: 1000 spent, 2500 RP => gathering_1 (cost 80) unlocks.
+      // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation (cost 120) unlocks.
       expect(player.treasury, 1000);
-      expect(player.techUnlocked!['gathering_1'], isTrue);
+      expect(player.techUnlocked!['crop_rotation'], isTrue);
       // If both were applied we would have 1050 spent and dual progress; so no double spend.
     });
   });

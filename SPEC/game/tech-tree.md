@@ -31,7 +31,7 @@ The tree is a **DAG**. Each tech lists zero or more **prerequisite tech ids**. P
 
 ## Catalog (Category Sub-Docs)
 
-Each tech has: **id** (slug), **display name**, **era**, **category**, **prerequisite ids**, **effects**. Full tables per category:
+Each tech has: **id** (slug), **display name**, **era**, **category**, **prerequisite ids**, **effects**. The **name** column in each category table is the user-facing display name for UI and tools. Full tables per category:
 
 | Category | Doc |
 |----------|-----|
@@ -44,6 +44,12 @@ Each tech has: **id** (slug), **display name**, **era**, **category**, **prerequ
 | New World Resources | [tech-tree-new-world.md](tech-tree-new-world.md) |
 
 **Regiment buildability:** A regiment is buildable iff the unlocking tech is in `techUnlocked`. **Ship buildability:** A ship type is buildable iff it has no unlocking tech or that tech is in `techUnlocked`. See [tech-tree-naval.md](tech-tree-naval.md), [ships-and-naval.md](ships-and-naval.md). **Extraction cap** per resource = max level from any researched tech (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)).
+
+The global tech catalog must contain exactly **113** technologies, matching the Imperialism II 08-technology Technology Chart (all categories). Every tech in the catalog must be **reachable** from the set of techs with no prerequisites (the "starting" techs): there must exist a path in the prerequisite DAG from some root to every node.
+
+### Discovery prerequisites
+
+Techs whose prerequisite is "(Explorer finds X)" (see [tech-tree-new-world.md](tech-tree-new-world.md)) are available for research only when the player has revealed at least one tile containing the corresponding resource(s). "Revealed" means the tile is visible to that player (visibility fully visible or fogged); for prospect-required resources (gold, silver, gems, diamonds), that tile must also have been prospected by the player. See [fog-and-exploration.md](fog-and-exploration.md).
 
 ---
 
@@ -83,7 +89,11 @@ Techs grant **effects** when researched (no separate "apply" step):
 
 - Given a global tech catalog constructed from this doc and its category sub-docs, where each tech has an id, category, era, prerequisites list, and effect set  
   When the System validates the catalog at startup  
-  Then the System ensures that every tech id is unique, that every prerequisite id refers to a tech present in the catalog, and that the directed graph formed by prerequisite edges is acyclic (a DAG), rejecting the catalog if any of these conditions fail.
+  Then the System ensures that the catalog contains exactly 113 technologies (matching the Imperialism II 08-technology Technology Chart), that every tech id is unique, that every prerequisite id refers to a tech present in the catalog, that the directed graph formed by prerequisite edges is acyclic (a DAG), and that every tech is reachable from the set of techs with no prerequisites; the System rejects the catalog if any of these conditions fail.
+
+- Given a discovery tech with prerequisite "(Explorer finds X)" per [tech-tree-new-world.md](tech-tree-new-world.md)  
+  When the System computes researchable techs for a player  
+  Then the System includes that tech only if the player has at least one tile that (a) has visibility fully visible or fogged for that player, (b) contains a resource that satisfies X (per the discovery-resource mapping in that doc), and (c) if that resource is prospect-required, the tile has been prospected by that player.
 
 - Given a player has a `techUnlocked` set on the Player object as described in [research-state.md](research-state.md) and a current research slot assigned to a tech id whose prerequisites are all present in `techUnlocked`  
   When the System completes research on that tech in the Research phase  

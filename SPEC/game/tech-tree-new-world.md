@@ -39,9 +39,12 @@
 
 ---
 
+## Discovery prerequisite (Explorer finds X)
+
+A tech whose prerequisite is "(Explorer finds X)" is researchable **only if** the player has **revealed at least one tile that contains resource X**. "Revealed" means the tile is visible to that player (visibility fully visible or fogged) so the tile's resource is known; for **prospect-required** resources (gold, silver, gems, diamonds per [fog-and-exploration.md](fog-and-exploration.md)), the tile must also have been **prospected** by that player. Resource ids match [resource-terrain-region-rules.md](resource-terrain-region-rules.md). The catalog must set `discoveryResourceIds` for each discovery tech as follows: `discovery_of_sugar` → `['sugarCane']`; `discovery_of_tobacco` → `['tobacco']`; `discovery_of_cotton` → `['cotton']`; `discovery_of_furs` → `['furs']`; `discovery_of_spices` → `['spices']`; `discovery_of_gold_or_silver` → `['gold', 'silver']`; `discovery_of_gems_or_diamonds` → `['gems', 'diamonds']`. The tech is researchable when the player has revealed (and if prospect-required, prospected) at least one tile containing **at least one** of the listed resource ids.
+
 ## Notes
 
-- Discovery techs may be gated by game events (Explorer finds resource in a province); implementation may treat them as no-prereq until discovery condition is met.
 - Labour techs (Trained Journeymen, Master Artisans) depend on cigar_production and hat_production from this category.
 
 ---
@@ -51,6 +54,10 @@
 - Given the New World tech table in this doc and a global tech catalog that includes all categories  
   When the System validates the catalog at startup  
   Then the System ensures that each New World tech id is unique, that its prerequisites (including discovery techs and cross-category techs such as `seed_drill`, `trained_journeymen`, and `early_steam_engine`) are present in the catalog, and that the effects in this table (resource levels, luxury unlocks) are consistent with [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and [workers-and-population.md](workers-and-population.md).
+
+- Given a discovery tech with prerequisite "(Explorer finds X)" as listed in this table  
+  When the System computes researchable techs for a player  
+  Then the System includes that tech only if the player has at least one tile that (a) has visibility fully visible or fogged for that player, (b) contains a resource that satisfies X (per the discoveryResourceIds mapping above), and (c) if that resource is prospect-required, the tile has been prospected by that player.
 
 - Given a player has unlocked a New World extraction tech such as `sugar_planting`, `large_tobacco_plantations`, `cotton_gin`, `riverboats`, or `excessive_fur_harvesting`  
   When the System computes extraction caps and effective yields for the corresponding resources in New World provinces per [tech-and-extraction-cap.md](tech-and-extraction-cap.md) and [extraction-and-improvements.md](extraction-and-improvements.md)  

@@ -133,7 +133,8 @@ void main() {
     });
 
     test('throws ArgumentError when OW provinces fewer than Great Powers', () {
-      // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws.
+      // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
+      // (either "provinces" or "sea-bound provinces" check). Accept either message.
       final config = GameSetupConfig(
         selectedGreatPowerIds: GameSetupConfig.defaultConfig.selectedGreatPowerIds,
         numProvincesOldWorld: 2,
@@ -144,11 +145,12 @@ void main() {
           config: config,
           options: const InitGameOptions(cellSize: 8, renderPng: false),
         ),
-        throwsA(isA<ArgumentError>().having(
-          (e) => e.message,
-          'message',
-          contains('Great Powers need at least one each'),
-        )),
+        throwsA(predicate<ArgumentError>((e) {
+          final msg = e.message ?? '';
+          return msg.contains('Great Powers') &&
+              (msg.contains('need at least one each') ||
+                  msg.contains('need one each'));
+        })),
       );
     });
   });
