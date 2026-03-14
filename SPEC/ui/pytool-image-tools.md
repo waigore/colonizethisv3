@@ -36,31 +36,38 @@ python pytool/button_contrast_wood_pil.py app/assets/images/ui_main_menu_button.
 
 ---
 
-### button_nine_patch_slice.py
+### button_nine_patch_proper.py
 
-**Purpose:** Build a 48×48 (or 3×tile_size) nine-patch PNG from a wide button PNG for Flame’s `NineTileBoxWidget`. Slices the source into left/middle/right columns and top/middle/bottom rows and assembles a 3×3 grid. See [buttons-nine-patch.md](buttons-nine-patch.md).
+**Purpose:** Build a proper 48×48 (or 3×tile_size) nine-patch PNG from a wide button PNG for Flame’s `NineTileBoxWidget`. Creates a nine-patch where corners keep detailed artwork, but edges and center use solid colors that stretch cleanly without deformation. See [buttons-nine-patch.md](buttons-nine-patch.md).
 
 **Dependencies:** Pillow (see `pytool/requirements.txt`).
 
 **Usage:**
 
 ```bash
-python pytool/button_nine_patch_slice.py <input.png> <output.png> [tile_size]
+python pytool/button_nine_patch_proper.py <input.png> <output.png> [tile_size]
 ```
 
 **Example (from repo root):**
 
 ```bash
-python pytool/button_nine_patch_slice.py app/assets/images/ui_main_menu_button.png app/assets/images/ui_button_nine_patch.png 16
+python pytool/button_nine_patch_proper.py app/assets/images/ui_main_menu_button.png app/assets/images/ui_button_nine_patch.png 16
 ```
 
 **Example (from pytool dir):**
 
 ```bash
-python button_nine_patch_slice.py ../app/assets/images/ui_main_menu_button.png ../app/assets/images/ui_button_nine_patch.png 16
+python button_nine_patch_proper.py ../app/assets/images/ui_main_menu_button.png ../app/assets/images/ui_button_nine_patch.png 16
 ```
 
-**Behaviour:** Default `tile_size` is 16 (output 48×48). Source must be at least 3×tile_size wide and tile_size tall. Left/middle/right columns and top/middle/bottom rows are cropped and pasted into the output grid; middle column is taken from the horizontal center of the source.
+**Behaviour:** Default `tile_size` is 16 (output 48×48). Source must be at least 3×tile_size wide and tile_size tall.
+
+- **Corners (4 tiles):** Keep detailed artwork from source (don't stretch)
+- **Horizontal edges (2 tiles):** Solid color extracted from edge region (stretches horizontally)
+- **Vertical edges (2 tiles):** Solid color extracted from edge region (stretches vertically)
+- **Center (1 tile):** Solid color extracted from center region (stretches in both directions)
+
+This avoids deformation when buttons are scaled to different sizes.
 
 ---
 

@@ -24,9 +24,11 @@
 - **API:** `onPressed`, `child` (label/icon), optional `enabled`, optional `padding`, optional `destTileSize` (default matches theme min height). Sizing: width/height from constraints or child; minimum touch target 44 dp per UXD.
 - **Fallback:** If the nine-patch asset is missing, show a solid background (theme primary colour) so the app remains usable.
 
-## Theme integration
+## Theme and framework integration
 
-Button theme (e.g. `ElevatedButtonThemeData`) continues to define colors and typography. Screens that want nine-patch visuals use `CtNinePatchButton` explicitly or a wrapper that supplies the same semantics (e.g. `ButtonStyle` is not used for the background; the nine-patch widget is the background).
+- **Material shell only:** Material and Cupertino widgets are **not used for user-facing chrome** (no `ElevatedButton`, `TextButton`, `FilledButton`, `AlertDialog`, `Card`, `ChoiceChip`, `Slider`, `DropdownButton`, etc.). They may be used only as invisible plumbing (e.g. `MaterialApp`, `DefaultTabController`) where required by Flutter.
+- **Button catalog:** All tappable controls (primary, secondary, toolbar, dialog actions) are built from `CtNinePatchButton` or components that wrap it (e.g. `CtDropdown`, `CtSlider`, `CtChoiceChip`, `CtScreenShell` headers). No new button-like components may be introduced without reusing this nine-patch canon.
+- **Pixel-art first:** Every interactive component must either (a) use nine-patch assets for its frame/chrome or (b) be explicitly specified in SPEC/ui as a pixel-art friendly primitive (e.g. 1-px borders, hard-edged fills) with no Material elevation, ripples, or rounded-corner cards.
 
 ## References
 

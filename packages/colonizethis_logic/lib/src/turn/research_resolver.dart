@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/player_view.dart';
 import 'research_rules.dart';
 
 /// Research phase resolution. SPEC/program/research-resolution.md.
@@ -73,6 +74,19 @@ Game resolveResearchPhase(Game game, Orders orders) {
       }
       if (!prereqsOk) {
         continue;
+      }
+
+      // Discovery techs: researchable only if player has revealed (and if prospect-required, prospected) a tile with the resource. SPEC/game/tech-tree.md.
+      final discoveryIds = tech.discoveryResourceIds;
+      if (discoveryIds != null && discoveryIds.isNotEmpty) {
+        var discoveryOk = false;
+        for (final r in discoveryIds) {
+          if (hasRevealedResourceForPlayer(game, player.id, r)) {
+            discoveryOk = true;
+            break;
+          }
+        }
+        if (!discoveryOk) continue;
       }
 
       final spend = treasuryCostForFunding(order.funding);

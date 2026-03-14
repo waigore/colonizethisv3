@@ -3,6 +3,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
+
 /// Shows a dialog to enter amount for Grant Aid or Set Subsidy, then calls [onSubmitted].
 void showGrantOrSubsidyDialog({
   required BuildContext context,
@@ -29,27 +32,42 @@ void showGrantOrSubsidyDialog({
 
   showDialog<void>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: TextField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: 'Amount',
-          hintText: hint,
-        ),
-        onSubmitted: (_) => doSubmit(ctx),
+    builder: (ctx) => CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(ctx).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Amount',
+              hintText: hint,
+            ),
+            onSubmitted: (_) => doSubmit(ctx),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              CtNinePatchButton(
+                onPressed: () => doSubmit(ctx),
+                child: const Text('Submit'),
+              ),
+            ],
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => doSubmit(ctx),
-          child: const Text('Submit'),
-        ),
-      ],
     ),
   );
 }

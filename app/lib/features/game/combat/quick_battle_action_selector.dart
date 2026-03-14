@@ -1,6 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_nine_patch_button.dart';
+
 /// CP-based action selector for Quick Battle. SPEC/game/quick-battle.md.
 class QuickBattleActionSelector extends StatelessWidget {
   const QuickBattleActionSelector({
@@ -42,7 +44,7 @@ class QuickBattleActionSelector extends StatelessWidget {
     String label,
   ) {
     final enabled = cpRemaining >= cost;
-    return FilledButton.tonal(
+    return CtNinePatchButton(
       onPressed: enabled ? () => onActionSelected(action) : null,
       child: Text('$label ($cost CP)'),
     );

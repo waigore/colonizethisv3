@@ -3,6 +3,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_screen_shell.dart';
 import 'technology_panel.dart';
 import 'tech_tree_widget.dart';
 
@@ -26,25 +27,31 @@ class TechnologyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Technology'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Slots', icon: Icon(Icons.list_alt)),
-              Tab(text: 'Tree', icon: Icon(Icons.account_tree)),
-            ],
-          ),
-        ),
-        body: TabBarView(
+      child: CtScreenShell(
+        title: 'Technology',
+        child: Column(
           children: [
-            _SlotsTab(
-              game: game,
-              player: player,
-              currentOrders: currentOrders,
-              onOrdersChanged: onOrdersChanged,
+            const TabBar(
+              tabs: [
+                Tab(text: 'Slots'),
+                Tab(text: 'Tree'),
+              ],
             ),
-            _TreeTab(game: game, player: player),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _SlotsTab(
+                    game: game,
+                    player: player,
+                    currentOrders: currentOrders,
+                    onOrdersChanged: onOrdersChanged,
+                  ),
+                  _TreeTab(game: game, player: player),
+                ],
+              ),
+            ),
           ],
         ),
       ),

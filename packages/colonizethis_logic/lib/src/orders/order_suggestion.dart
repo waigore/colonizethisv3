@@ -8,7 +8,6 @@ import '../world/naval.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
 import 'order_engine.dart';
-import 'order_suggestion_helpers.dart';
 import 'order_visibility.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -426,19 +425,15 @@ List<ResearchOrder> suggestResearchOrders(
     existingBySlot[o.slotIndex] = o;
   }
 
+  // Include discovery gate: only techs researchable with current visibility/prospection. SPEC/game/tech-tree.md.
+  final researchableIds = researchableTechIds(
+    unlocked,
+    hasDiscoveredResource: (r) => hasRevealedResourceForPlayer(game, playerId, r),
+  );
   final candidates = <TechDefinition>[];
-  for (final entry in techCatalog.entries) {
-    final tech = entry.value;
-    if (unlocked[tech.id] == true) continue;
-    var prereqsOk = true;
-    for (final pre in tech.prerequisiteIds) {
-      if (unlocked[pre] != true) {
-        prereqsOk = false;
-        break;
-      }
-    }
-    if (!prereqsOk) continue;
-    candidates.add(tech);
+  for (final id in researchableIds) {
+    final tech = techCatalog[id];
+    if (tech != null) candidates.add(tech);
   }
 
   if (candidates.isEmpty) return suggestions;

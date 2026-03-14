@@ -1,6 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_panel.dart';
+
 /// Displays Quick Battle deployment (units per lane/line).
 /// SPEC/game/quick-battle.md: LEFT/CENTER/RIGHT/RESERVE, FRONT/SUPPORT.
 class QuickBattleDeploymentView extends StatelessWidget {
@@ -35,25 +37,20 @@ class QuickBattleDeploymentView extends StatelessWidget {
   }
 
   Widget _buildSideDeployment(BuildContext context, QuickBattleDeployment d) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: d.groups.map((g) {
-            final label = '${_laneLabel(g.lane)} ${_lineLabel(g.line)}';
-            return Chip(
-              label: Text('$label: ${g.unitIds.length} units'),
-              avatar: g.cohesion > 0
-                  ? CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text('${g.cohesion}', style: const TextStyle(fontSize: 12)),
-                    )
-                  : null,
-            );
-          }).toList(),
-        ),
+    return CtPanel(
+      padding: const EdgeInsets.all(12),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: d.groups.map((g) {
+          final label = '${_laneLabel(g.lane)} ${_lineLabel(g.line)}';
+          final text =
+              '$label: ${g.unitIds.length} units${g.cohesion > 0 ? ' (Cohesion ${g.cohesion})' : ''}';
+          return Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall,
+          );
+        }).toList(),
       ),
     );
   }

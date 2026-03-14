@@ -3,6 +3,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_slider.dart';
+
 /// Production panel: available resources/workers and allocation sliders per recipe.
 /// SPEC/ui/production-panel.md.
 class ProductionPanel extends StatelessWidget {
@@ -146,9 +150,9 @@ class _AvailableSubpanel extends StatelessWidget {
         .where((c) => c.category == CommodityCategory.food)
         .toList();
 
-    return Card(
+    return CtPanel(
+      padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,9 +336,9 @@ class _AllocationSubpanel extends StatelessWidget {
     );
     final labourInsufficient = totalRequiredLabour > effectiveLabour;
 
-    return Card(
+    return CtPanel(
+      padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,7 +352,7 @@ class _AllocationSubpanel extends StatelessWidget {
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
-                TextButton(
+                CtNinePatchButton(
                   onPressed: () => onDesiredOutputChanged({}),
                   child: const Text('Reset'),
                 ),
@@ -384,7 +388,7 @@ class _AllocationSubpanel extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Slider(
+                          child: CtSlider(
                             value: desired.clamp(0, maxAchievable).toDouble(),
                             min: 0,
                             max: sliderMax,
@@ -392,7 +396,6 @@ class _AllocationSubpanel extends StatelessWidget {
                                 ? 1
                                 : maxAchievable.clamp(
                                     1, _absoluteMaxSliderOutput),
-                            label: '$desired',
                             onChanged: (v) {
                               final next =
                                   Map<String, int>.from(desiredOutputByRecipe);

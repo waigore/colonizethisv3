@@ -3,8 +3,12 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
 
 /// Node position for layout.
 class _TechNodePosition {
@@ -60,7 +64,10 @@ class TechTreeWidget extends StatelessWidget {
     final height = positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
     final unlocked = player.techUnlocked ?? {};
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
-    final researchable = researchableTechIds(unlocked);
+    final researchable = researchableTechIds(
+      unlocked,
+      hasDiscoveredResource: (r) => hasRevealedResourceForPlayer(game, player.id, r),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,33 +179,55 @@ class TechTreeWidget extends StatelessWidget {
     final theme = Theme.of(context);
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(techDisplayName(tech.id)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)}', style: theme.textTheme.bodySmall),
-              const SizedBox(height: 4),
-              Text('${tech.cost} RP', style: theme.textTheme.bodyMedium),
-              if (effects.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Effects', style: theme.textTheme.labelLarge),
-                ...effects.map((e) => Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text('• $e', style: theme.textTheme.bodySmall),
-                    )),
-              ],
-            ],
-          ),
+      builder: (ctx) => CtDialogShell(
+        maxWidth: 420,
+        maxHeight: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              techDisplayName(tech.id),
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${tech.cost} RP', style: theme.textTheme.bodyMedium),
+                    if (effects.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text('Effects', style: theme.textTheme.labelLarge),
+                      ...effects.map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child:
+                              Text('• $e', style: theme.textTheme.bodySmall),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }
@@ -239,15 +268,6 @@ class TechTreeWidget extends StatelessWidget {
         break;
       case 'early_steam_engine':
         list.add('Railroads');
-        break;
-      case 'gathering_1':
-        list.add('Extraction cap 2');
-        break;
-      case 'gathering_2':
-        list.add('Extraction cap 3');
-        break;
-      case 'gathering_3':
-        list.add('Extraction cap 4');
         break;
       case 'mine_engineering':
         list.add('Fort level 2');
@@ -333,7 +353,6 @@ class _TechTreeEdgePainter extends CustomPainter {
 
   final List<_TechNodePosition> positions;
 
-  static double get _centerX => _nodeWidth / 2;
   static double get _centerY => _nodeHeight / 2;
 
   @override

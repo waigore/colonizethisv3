@@ -8,6 +8,7 @@ export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
 export 'src/naming_rules.dart';
 export 'src/map_topology.dart';
+export 'src/tech_definition.dart';
 export 'src/tech_extraction.dart';
 export 'src/riches_prices.dart';
 export 'src/production_recipes.dart';

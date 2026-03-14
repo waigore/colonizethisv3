@@ -15,6 +15,7 @@ import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'features/game/widgets/tech_tree_widget.dart';
 import 'features/game/widgets/technology_screen.dart';
 import 'widgets/debug_init_game.dart';
+import 'widgets/ct_choice_chip.dart';
 import 'widgets/debug_map_visibility_story.dart';
 import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
@@ -778,23 +779,23 @@ class _CivilianPanelWithMapStoryState
               spacing: 8,
               runSpacing: 4,
               children: [
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('Old World'),
                   selected: _regionIndex == 0,
                   onSelected: (_) => setState(() => _regionIndex = 0),
                 ),
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('New World'),
                   selected: _regionIndex == 1,
                   onSelected: (_) => setState(() => _regionIndex = 1),
                 ),
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('Full visibility'),
                   selected: _visibilityMode == CtMapVisibilityMode.full,
                   onSelected: (_) => setState(
                       () => _visibilityMode = CtMapVisibilityMode.full),
                 ),
-                ChoiceChip(
+                CtChoiceChip(
                   label: const Text('Player-constrained'),
                   selected: _visibilityMode ==
                       CtMapVisibilityMode.playerConstrained,
@@ -874,7 +875,7 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
-            child: TextButton.icon(
+            child: CtNinePatchButton(
               onPressed: () {
                 showModalBottomSheet<void>(
                   context: context,
@@ -892,8 +893,14 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
                   },
                 );
               },
-              icon: const Icon(Icons.people_outline, size: 20),
-              label: const Text('Civilian Units'),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.people_outline, size: 20),
+                  SizedBox(width: 8),
+                  Text('Civilian Units'),
+                ],
+              ),
             ),
           ),
           const Expanded(

@@ -156,3 +156,30 @@ PlayerView buildPlayerView(
   );
 }
 
+/// Resources that require prospecting before the player "knows" them.
+/// SPEC/game/fog-and-exploration.md: iron, copper, tin, coal, silver, gold, gems, diamonds.
+const Set<String> _prospectRequiredResourceIds = {
+  'iron', 'copper', 'tin', 'coal', 'silver', 'gold', 'gems', 'diamonds',
+};
+
+/// True if [playerId] has at least one revealed tile containing [resourceId].
+/// Revealed = visibility fully visible, fogged, or revealed. For prospect-required
+/// resources (gold, silver, gems, diamonds, etc.), the tile must also be
+/// prospected by that player. SPEC/game/tech-tree.md Discovery prerequisites.
+bool hasRevealedResourceForPlayer(Game game, String playerId, String resourceId) {
+  final ws = game.worldState;
+  final visibility = ws.playerVisibilityByTile[playerId] ?? const {};
+  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
+  final needProspect = _prospectRequiredResourceIds.contains(resourceId);
+
+  for (final e in ws.resourceByTileKey.entries) {
+    if (e.value != resourceId) continue;
+    final tileKey = e.key;
+    final levelName = visibility[tileKey];
+    if (levelName == null || levelName == 'unknown') continue;
+    if (needProspect && !prospected.contains(tileKey)) continue;
+    return true;
+  }
+  return false;
+}
+

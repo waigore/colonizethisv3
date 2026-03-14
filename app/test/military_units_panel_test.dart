@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -115,14 +116,14 @@ void main() {
       expect(find.textContaining(' — '), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('panel is wrapped in Card', (WidgetTester tester) async {
+    testWidgets('panel is wrapped in CtPanel', (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(
         game: game,
         humanPlayerId: humanPlayerIdWithUnits,
       ));
       await tester.pumpAndSettle();
 
-      expect(find.byType(Card), findsOneWidget);
+      expect(find.byType(CtPanel), findsOneWidget);
     });
 
     testWidgets('AC: Tapping a row invokes onLocateTile with tileKey and regionId',

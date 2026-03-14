@@ -102,6 +102,18 @@ void main() {
 
       expect(hasCycle, isFalse, reason: 'Tech tree must not contain cyclic paths');
     });
+
+    test('catalog has exactly 113 techs and techIds matches', () {
+      expect(techCatalog.length, equals(113), reason: 'Imperialism II 08-technology chart defines 113 technologies');
+      expect(techIds.length, equals(113));
+      expect(techIds.toSet().length, equals(113), reason: 'techIds must have unique entries');
+      for (final id in techIds) {
+        expect(techCatalog.containsKey(id), isTrue, reason: 'techIds must be subset of catalog keys');
+      }
+      for (final id in techCatalog.keys) {
+        expect(techIds.contains(id), isTrue, reason: 'catalog keys must be in techIds');
+      }
+    });
   });
 }
 

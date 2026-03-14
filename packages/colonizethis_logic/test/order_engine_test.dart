@@ -1862,7 +1862,7 @@ void main() {
               stockpile: stockpile ??
                   Stockpile().applyDelta(CommodityCatalog.lumber.id, 2).applyDelta(
                       CommodityCatalog.castIron.id, 2),
-              techUnlocked: techUnlocked ?? const {'gathering_3': true},
+              techUnlocked: techUnlocked ?? const {'circular_saw': true},
             ),
           ],
         );
@@ -1905,9 +1905,9 @@ void main() {
       });
 
       test('rejects build_improvement when tech cap would be exceeded', () {
-        // gathering_1 gives cap 2; tile at level 2 → next would be 3 > 2
+        // saw_mill gives cap 2; tile at level 2 → next would be 3 > 2
         final game = _baseGame(
-          techUnlocked: const {'gathering_1': true},
+          techUnlocked: const {'saw_mill': true},
           tileState: const TileMapState(
               improvementByTile: {'oldWorld|P1|0|0': 2}),
           stockpile: Stockpile()
@@ -1932,7 +1932,7 @@ void main() {
         final game = _baseGame(
           resourceByTileKey: {tileKey: 'grain'},
           tileState: const TileMapState(),
-          techUnlocked: const {'gathering_3': true},
+          techUnlocked: const {'circular_saw': true},
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
@@ -1997,7 +1997,7 @@ void main() {
               stockpile: Stockpile()
                   .applyDelta(CommodityCatalog.lumber.id, 2)
                   .applyDelta(CommodityCatalog.castIron.id, 2),
-              techUnlocked: const {'gathering_3': true},
+              techUnlocked: const {'circular_saw': true},
             ),
             const Player(
               id: 'p2',
@@ -2076,7 +2076,7 @@ void main() {
               stockpile: Stockpile()
                   .applyDelta(CommodityCatalog.lumber.id, 2)
                   .applyDelta(CommodityCatalog.castIron.id, 2),
-              techUnlocked: const {'gathering_3': true},
+              techUnlocked: const {'circular_saw': true},
             ),
             const Player(
               id: 'p2',
