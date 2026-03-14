@@ -60,17 +60,65 @@ jobs:
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
-      - name: Test packages (Dart)
+      - name: Test colonizethis_models (Dart)
         if: steps.changes.outputs.tests == 'true'
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
         run: |
-          set -e
-          for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
-            [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          done
+          if [ -d packages/colonizethis_models/test ]; then
+            (cd packages/colonizethis_models && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_models && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test colonizethis_data (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          if [ -d packages/colonizethis_data/test ]; then
+            (cd packages/colonizethis_data && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_data && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test colonizethis_save (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          if [ -d packages/colonizethis_save/test ]; then
+            (cd packages/colonizethis_save && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_save && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test colonizethis_logic (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          if [ -d packages/colonizethis_logic/test ]; then
+            (cd packages/colonizethis_logic && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_logic && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test colonizethis_ai (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          if [ -d packages/colonizethis_ai/test ]; then
+            (cd packages/colonizethis_ai && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_ai && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
+
+      - name: Test colonizethis_map (Dart)
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+        run: |
+          if [ -d packages/colonizethis_map/test ]; then
+            (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
+            (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+          fi
 
       - name: Test ctterm (Dart)
         if: steps.changes.outputs.tests == 'true'
