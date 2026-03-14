@@ -26,26 +26,26 @@ void main() {
       );
     });
 
-    test('gathering_1 gives cap 2', () {
+    test('saw_mill gives cap 2', () {
       expect(
-        extractionCapForUnlocked({'gathering_1': true}),
+        extractionCapForUnlocked({'saw_mill': true}),
         equals(2),
       );
     });
 
-    test('gathering_2 gives cap 3', () {
+    test('seed_drill gives cap 3', () {
       expect(
-        extractionCapForUnlocked({'gathering_1': true, 'gathering_2': true}),
+        extractionCapForUnlocked({'saw_mill': true, 'seed_drill': true}),
         equals(3),
       );
     });
 
-    test('gathering_3 gives cap 4', () {
+    test('circular_saw gives cap 4', () {
       expect(
         extractionCapForUnlocked({
-          'gathering_1': true,
-          'gathering_2': true,
-          'gathering_3': true,
+          'saw_mill': true,
+          'seed_drill': true,
+          'circular_saw': true,
         }),
         equals(4),
       );
@@ -54,7 +54,7 @@ void main() {
     test('gathering with other techs still uses gathering level', () {
       expect(
         extractionCapForUnlocked({
-          'gathering_1': true,
+          'saw_mill': true,
           'organised_regiments': true,
         }),
         equals(2),
@@ -72,9 +72,9 @@ void main() {
   });
 
   group('techDisplayName', () {
-    test('humanizes snake_case id with each word capitalized', () {
+    test('uses catalog displayName when set', () {
       expect(techDisplayName('road_construction'), 'Road Construction');
-      expect(techDisplayName('gathering_1'), 'Gathering 1');
+      expect(techDisplayName('crop_rotation'), 'Crop Rotation');
     });
     test('empty returns empty', () {
       expect(techDisplayName(''), '');
@@ -82,7 +82,7 @@ void main() {
   });
 
   group('researchableTechIds', () {
-    test('empty unlocked returns all root techs', () {
+    test('empty unlocked returns all root techs (no tech prereqs; discovery techs included when callback null)', () {
       final r = researchableTechIds({});
       expect(r, isNotEmpty);
       for (final id in r) {
@@ -95,13 +95,28 @@ void main() {
       final unlocked = {for (final id in techCatalog.keys) id: true};
       expect(researchableTechIds(unlocked), isEmpty);
     });
-    test('gathering_1 unlocked adds gathering_2 to researchable', () {
-      final r = researchableTechIds({'gathering_1': true});
-      expect(r.contains('gathering_2'), isTrue);
-      expect(r.contains('gathering_1'), isFalse);
+    test('saw_mill unlocked adds wind_saw_mill to researchable', () {
+      final r = researchableTechIds({'saw_mill': true});
+      expect(r.contains('wind_saw_mill'), isTrue);
+      expect(r.contains('saw_mill'), isFalse);
     });
     test('null unlocked same as empty', () {
       expect(researchableTechIds(null), researchableTechIds({}));
+    });
+
+    test('discovery tech with null callback is researchable when prereqs met', () {
+      final r = researchableTechIds({});
+      expect(r.contains('discovery_of_sugar'), isTrue, reason: 'Discovery techs are researchable when hasDiscoveredResource is null');
+    });
+
+    test('discovery tech with hasDiscoveredResource always false is not researchable', () {
+      final r = researchableTechIds({}, hasDiscoveredResource: (_) => false);
+      expect(r.contains('discovery_of_sugar'), isFalse);
+    });
+
+    test('discovery tech with hasDiscoveredResource true for sugarCane is researchable', () {
+      final r = researchableTechIds({}, hasDiscoveredResource: (rid) => rid == 'sugarCane');
+      expect(r.contains('discovery_of_sugar'), isTrue);
     });
   });
 }

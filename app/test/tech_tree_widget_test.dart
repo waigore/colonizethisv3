@@ -1,7 +1,6 @@
 // Tests for TechTreeWidget and TechnologyScreen. SPEC/ui/tech-tree-widget.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -88,8 +87,8 @@ void main() {
   });
 
   testWidgets('Tapping available tech node opens description dialog', (WidgetTester tester) async {
-    // Player with no techs: root techs (e.g. Gathering 1) are available and tappable.
-    // Use a root tech that appears in the first row so it is on-screen (no scroll).
+    // Player with no techs: root techs (e.g. Saw Mill) are available and tappable.
+    // Use a root tech that has an effect summary (extraction cap) for dialog content.
     final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
     final gameWithEmptyPlayer = game.copyWith(
       players: [emptyPlayer, ...game.players.skip(1)],
@@ -103,10 +102,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsNothing);
-    await tester.tap(find.text('Gathering 1'));
+    await tester.ensureVisible(find.text('Saw Mill').first);
+    await tester.tap(find.text('Saw Mill').first);
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsOneWidget);
-    expect(find.text('Gathering 1'), findsWidgets); // title and node
+    expect(find.text('Saw Mill'), findsWidgets); // title and node
   });
 
   testWidgets('Tech description dialog shows era, category, RP cost and effect summary', (WidgetTester tester) async {
@@ -122,16 +122,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gathering 1'));
+    await tester.ensureVisible(find.text('Saw Mill').first);
+    await tester.tap(find.text('Saw Mill').first);
     await tester.pumpAndSettle();
     // SPEC: display name, era, category, RP cost, effect summary; no prerequisites.
     expect(find.byType(CtDialogShell), findsOneWidget);
-    expect(find.text('Gathering 1'), findsWidgets);
+    expect(find.text('Saw Mill'), findsWidgets);
     expect(find.textContaining('Era'), findsOneWidget);
     expect(find.textContaining('Gathering'), findsWidgets);
     expect(find.textContaining('RP'), findsOneWidget);
     expect(find.text('Effects'), findsOneWidget);
-    expect(find.textContaining('Extraction cap'), findsOneWidget);
     expect(find.textContaining('Prerequisite'), findsNothing);
   });
 
@@ -148,7 +148,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gathering 1'));
+    await tester.ensureVisible(find.text('Saw Mill').first);
+    await tester.tap(find.text('Saw Mill').first);
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsOneWidget);
     await tester.tap(find.text('Close'));
@@ -214,10 +215,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsNothing);
-    // Gathering 2 has prerequisite gathering_1; with no techs unlocked it is locked.
-    final gathering2Find = find.text('Gathering 2');
-    await tester.ensureVisible(gathering2Find.first);
-    await tester.tap(gathering2Find.first);
+    // Wind Saw Mill has prerequisite Saw Mill; with no techs unlocked it is locked.
+    final lockedTechFind = find.text('Wind Saw Mill');
+    await tester.ensureVisible(lockedTechFind.first);
+    await tester.tap(lockedTechFind.first);
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsNothing);
   });

@@ -5,6 +5,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = log_pkg.Logger();
@@ -103,17 +104,25 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
     return null;
   }
 
-  // Get filtered available techs
+  // Get filtered available techs (researchable = prereqs + discovery when applicable). SPEC/game/tech-tree.md.
   List<TechDefinition> get _availableTechs {
     final techs = <TechDefinition>[];
     final unlocked = _techUnlocked;
     final currentResearch = _researchOrders.map((o) => o.techId).toSet();
+    final researchableIds = researchableTechIds(
+      unlocked,
+      hasDiscoveredResource: (r) =>
+          hasRevealedResourceForPlayer(component.game, _humanPlayerId, r),
+    );
 
     for (final tech in techCatalog.values) {
       // Skip if category doesn't match
       if (_categoryFilter != 'all' && tech.category != _categoryFilter) {
         continue;
       }
+
+      // Skip if not researchable (prereqs or discovery)
+      if (!researchableIds.contains(tech.id)) continue;
 
       // Skip if already unlocked
       if (unlocked[tech.id] == true) continue;

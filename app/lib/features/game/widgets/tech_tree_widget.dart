@@ -3,6 +3,7 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -63,7 +64,10 @@ class TechTreeWidget extends StatelessWidget {
     final height = positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
     final unlocked = player.techUnlocked ?? {};
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
-    final researchable = researchableTechIds(unlocked);
+    final researchable = researchableTechIds(
+      unlocked,
+      hasDiscoveredResource: (r) => hasRevealedResourceForPlayer(game, player.id, r),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,15 +269,6 @@ class TechTreeWidget extends StatelessWidget {
       case 'early_steam_engine':
         list.add('Railroads');
         break;
-      case 'gathering_1':
-        list.add('Extraction cap 2');
-        break;
-      case 'gathering_2':
-        list.add('Extraction cap 3');
-        break;
-      case 'gathering_3':
-        list.add('Extraction cap 4');
-        break;
       case 'mine_engineering':
         list.add('Fort level 2');
         break;
@@ -358,7 +353,6 @@ class _TechTreeEdgePainter extends CustomPainter {
 
   final List<_TechNodePosition> positions;
 
-  static double get _centerX => _nodeWidth / 2;
   static double get _centerY => _nodeHeight / 2;
 
   @override
