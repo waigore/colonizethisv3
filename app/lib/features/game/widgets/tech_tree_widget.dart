@@ -353,7 +353,6 @@ class _TechTreeEdgePainter extends CustomPainter {
 
   final List<_TechNodePosition> positions;
 
-  static double get _centerX => _nodeWidth / 2;
   static double get _centerY => _nodeHeight / 2;
 
   @override

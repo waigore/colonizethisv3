@@ -8,7 +8,6 @@ import '../world/naval.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
 import 'order_engine.dart';
-import 'order_suggestion_helpers.dart';
 import 'order_visibility.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
