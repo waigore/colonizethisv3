@@ -222,6 +222,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsNothing);
   });
+
+  test('Column rule: A→B→C and A→C places B between A and C (gap between A and C)', () {
+    // SPEC/ui/tech-tree-widget.md: when there is both a chain (A→B→C) and a direct edge (A→C),
+    // there must be a gap between A and C because B occupies the column in between.
+    const a = TechDefinition(
+      id: 'a',
+      era: 1,
+      category: 'gathering',
+      cost: 1,
+      prerequisiteIds: [],
+      regimentUnlockIds: [],
+      shipUnlockIds: [],
+    );
+    const b = TechDefinition(
+      id: 'b',
+      era: 1,
+      category: 'gathering',
+      cost: 1,
+      prerequisiteIds: ['a'],
+      regimentUnlockIds: [],
+      shipUnlockIds: [],
+    );
+    const c = TechDefinition(
+      id: 'c',
+      era: 1,
+      category: 'gathering',
+      cost: 1,
+      prerequisiteIds: ['a', 'b'],
+      regimentUnlockIds: [],
+      shipUnlockIds: [],
+    );
+    final catalog = <String, TechDefinition>{'a': a, 'b': b, 'c': c};
+    final positions = TechTreeWidget.computeLayout(catalog);
+    expect(positions.length, 3);
+    final posA = positions.firstWhere((p) => p.techId == 'a');
+    final posB = positions.firstWhere((p) => p.techId == 'b');
+    final posC = positions.firstWhere((p) => p.techId == 'c');
+    expect(posA.x, lessThan(posB.x), reason: 'A must be left of B');
+    expect(posB.x, lessThan(posC.x), reason: 'B must be left of C so B occupies column between A and C');
+  });
 }
 
 Player _dummyPlayer() {

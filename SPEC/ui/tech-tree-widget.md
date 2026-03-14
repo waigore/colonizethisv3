@@ -10,7 +10,8 @@
 ## Layout
 
 - **Graph:** All techs from the global catalog in a single graph. **Left to right:** starting techs (no prerequisites) at the left; end-game techs at the right. Nodes are arranged in **topological layers** (by distance from roots); within a layer, nodes may be grouped or spaced to reduce edge crossings.
-- **Edges:** **Explicit right‑angled lines** (orthogonal segments) from each prerequisite tech to the tech that requires it. Edges run horizontally out from the source node, then vertically, then horizontally into the target node, and are drawn **behind nodes** so they do not obscure node labels or node bodies.
+- **Column rule:** If tech A has a prerequisite tech B, then A must be in a column strictly to the right of B. Thus when there is both a chain (A→B→C) and a direct edge (A→C), there is necessarily a gap between A and C, because B occupies the column in between.
+- **Edges:** **Direct lines** from each prerequisite tech to the tech that requires it. No vertical segments: edges run in a straight line from the source node’s right edge to the target node’s left edge (diagonal when source and target are in different rows). Edges are drawn **behind nodes** so they do not obscure node labels or node bodies.
 - **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for MVP.
 - **Categories:** One graph shows **all** techs. Each node is **color-coded by category** (gathering, transport, labour, civilian, diplomacy, naval, military; new-world if present). Category colours are distinct and consistent (e.g. gathering = green, transport = blue, labour = amber, etc.; exact palette in theme or widget).
 
@@ -58,6 +59,8 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 - **Given** the description dialog is open, **when** the user dismisses it (e.g. tap outside or Close), **then** the dialog closes and the tree remains visible with no state change.
 
 - **Given** the Technology flow is opened from the in-game shell, **when** the user selects the Tech Tree tab, **then** the tree tab is full-screen (or fills the Technology view) and does not offer research slot assignment; assignment is only in the slots tab.
+
+- **Given** the tech tree contains a chain A→B→C and a direct edge A→C (e.g. Apprentice Workers→University→Master Artisans with Master Artisans also requiring Apprentice Workers), **when** the tech tree is displayed, **then** A is in a column to the left of B, and B is in a column to the left of C, so that there is a gap between A and C with B occupying the column in between.
 
 ## Integration
 
