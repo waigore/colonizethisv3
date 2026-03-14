@@ -1,7 +1,7 @@
 // Tests for ctterm routes. SPEC/tui/ctterm.md § Screen IDs.
 
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('CttermRoute screen IDs (SPEC/tui/ctterm.md § Screen IDs)', () {

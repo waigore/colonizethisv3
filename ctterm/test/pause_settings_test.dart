@@ -3,7 +3,7 @@
 import 'package:ctterm/screens/pause_options_screen.dart';
 import 'package:ctterm/screens/settings_screen.dart';
 import 'package:ctterm/ctterm_routes.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('PauseOptionsScreen (SPEC/tui/screens/pause-options.md)', () {

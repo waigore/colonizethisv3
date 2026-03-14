@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:nocterm/nocterm.dart';
 import 'package:ctterm/map_tui_mapping.dart';
 import 'package:ctterm/widgets/map_grid_widget.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('MapGridWidget', () {

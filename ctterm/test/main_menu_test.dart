@@ -1,7 +1,7 @@
 // Tests for MainMenuScreen. SPEC/tui/ctterm.md, SPEC/ui/main-menu.md.
 
 import 'package:ctterm/screens/main_menu_screen.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('MainMenuScreen (SPEC/tui/ctterm.md)', () {

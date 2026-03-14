@@ -1,7 +1,7 @@
 // Tests for ctterm logging. SPEC/tui/ctterm.md.
 
 import 'package:ctterm/ctterm_log.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('ctterm_log', () {
