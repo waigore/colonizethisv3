@@ -3,6 +3,23 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 
 import '../constants.dart';
 
+RegionData? _regionForId(WorldState world, String regionId) {
+  return regionId == kRegionOldWorld
+      ? world.oldWorld
+      : (regionId == kRegionNewWorld ? world.newWorld : null);
+}
+
+Province? _findProvinceInRegion(
+    RegionData region, String regionId, String localId) {
+  final fullId = ProvinceId.full(regionId, localId);
+  final idx = region.provinces.indexWhere((p) =>
+      p.id == fullId ||
+      (p.regionId == regionId &&
+          (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
+  if (idx < 0) return null;
+  return region.provinces[idx];
+}
+
 /// Central province lookup. Lookup is by **full disambiguated id** (`regionId|localId`)
 /// and is **region-scoped**: resolution happens only within the given region.
 /// SPEC/game/world-model-identity.md.
@@ -23,23 +40,6 @@ String resolveToFullProvinceId(WorldState world, String provinceId) {
 /// Use when keying or looking up by an id that may be local or full (e.g. player view).
 String toFullProvinceId(String regionId, String provinceId) {
   return ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
-}
-
-RegionData? _regionForId(WorldState world, String regionId) {
-  return regionId == kRegionOldWorld
-      ? world.oldWorld
-      : (regionId == kRegionNewWorld ? world.newWorld : null);
-}
-
-Province? _findProvinceInRegion(
-    RegionData region, String regionId, String localId) {
-  final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) =>
-      p.id == fullId ||
-      (p.regionId == regionId &&
-          (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
-  if (idx < 0) return null;
-  return region.provinces[idx];
 }
 
 /// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.

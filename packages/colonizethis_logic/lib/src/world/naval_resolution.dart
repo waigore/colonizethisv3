@@ -146,9 +146,7 @@ Game applyNavalMovesAndShipReveal(
         // Dock: fleet at sea moves to in port at owned province. SPEC/game/ships-and-naval.md.
         final portProvinceId = order.destinationPortProvinceId!;
         if (!fleet.isAtSea || fleet.seaZoneId == null) continue;
-        final fullProvinceId = ProvinceId.isPrefixed(portProvinceId)
-            ? portProvinceId
-            : ProvinceId.full(fleet.regionId, portProvinceId);
+        final fullProvinceId = toFullProvinceId(fleet.regionId, portProvinceId);
         final province = tryGetProvince(game.worldState, fullProvinceId);
         if (province == null || province.ownerId != playerId) continue;
         final adjacentSeaZones = seaZoneIdsAdjacentToProvince(topology, fullProvinceId);
