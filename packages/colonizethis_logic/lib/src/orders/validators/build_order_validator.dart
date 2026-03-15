@@ -31,43 +31,44 @@ class BuildOrderValidator {
     BuildUnitOrder o, {
     required bool previousRejected,
   }) {
-    if (previousRejected) {
-      return previousInvalidOrderResult;
-    }
+    return shortCircuitIfPreviousRejected(
+      previousRejected: previousRejected,
+      body: () {
+        if (_player.capitalProvinceId == null) {
+          return const OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason: 'No capital to spawn unit',
+          );
+        }
 
-    if (_player.capitalProvinceId == null) {
-      return const OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: 'No capital to spawn unit',
-      );
-    }
+        final check = canAffordBuild(
+          _player,
+          o,
+          _workers,
+          _stockpile,
+          _treasury,
+        );
+        if (!check.canAfford) {
+          return OrderValidationResult(
+            status: OrderValidationStatus.rejected,
+            reason: check.reason ?? 'Insufficient resources',
+          );
+        }
 
-    final check = canAffordBuild(
-      _player,
-      o,
-      _workers,
-      _stockpile,
-      _treasury,
-    );
-    if (!check.canAfford) {
-      return OrderValidationResult(
-        status: OrderValidationStatus.rejected,
-        reason: check.reason ?? 'Insufficient resources',
-      );
-    }
-
-    final after = applyBuildCostDeduction(
-      _player,
-      o,
-      _workers,
-      _stockpile,
-      _treasury,
-    );
-    _workers = after.workers;
-    _stockpile = after.stockpile;
-    _treasury = after.treasury;
-    return const OrderValidationResult(
-      status: OrderValidationStatus.accepted,
+        final after = applyBuildCostDeduction(
+          _player,
+          o,
+          _workers,
+          _stockpile,
+          _treasury,
+        );
+        _workers = after.workers;
+        _stockpile = after.stockpile;
+        _treasury = after.treasury;
+        return const OrderValidationResult(
+          status: OrderValidationStatus.accepted,
+        );
+      },
     );
   }
 }

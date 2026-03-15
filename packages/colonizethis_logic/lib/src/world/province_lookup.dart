@@ -18,6 +18,12 @@ String resolveToFullProvinceId(WorldState world, String provinceId) {
       'Province id must be prefixed (regionId|localId); short id not allowed: $provinceId');
 }
 
+/// Returns [provinceId] if already prefixed, otherwise [ProvinceId.full](regionId, provinceId).
+/// Use when keying or looking up by an id that may be local or full (e.g. player view).
+String toFullProvinceId(String regionId, String provinceId) {
+  return ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
+}
+
 /// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
 /// Throws [StateError] if the region is unknown or the province is not found.
 Province getProvinceByRegion(WorldState world, String regionId, String localId) {

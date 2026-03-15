@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../diplomacy/diplomacy_relation_lookup.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/movement.dart';
 import '../../world/player_view.dart';
@@ -74,37 +75,25 @@ class MoveValidator {
     // Attack validation: GP province requires war or same-turn declareWar.
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isGreatPower(game, destOwnerId)) {
-      final rel = getRelation(game, playerId, destOwnerId);
-      final atWar = rel?.atWar ?? false;
-      final declaringWarThisTurn = diplomaticOrders.any((o) =>
-          o.type == DiplomaticOrderType.declareWar &&
-          o.targetFactionId == destOwnerId);
-      if (!atWar && !declaringWarThisTurn) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Must declare war before attacking Great Power province',
-        );
-      }
+        isGreatPower(game, destOwnerId) &&
+        !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplomaticOrders)) {
+      return const OrderValidationResult(
+        status: OrderValidationStatus.rejected,
+        reason: 'Must declare war before attacking Great Power province',
+      );
     }
 
     // Attack validation: Minor/Tribe province requires war for military units.
     if (destOwnerId != null &&
         destOwnerId != playerId &&
         isMinorOrTribe(game, destOwnerId) &&
-        isMilitaryUnit(unit.type)) {
-      final rel = getRelation(game, playerId, destOwnerId);
-      final atWar = rel?.atWar ?? false;
-      final declaringWarThisTurn = diplomaticOrders.any((o) =>
-          o.type == DiplomaticOrderType.declareWar &&
-          o.targetFactionId == destOwnerId);
-      if (!atWar && !declaringWarThisTurn) {
-        return const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason:
-              'Must declare war before attacking Minor Nation or Tribe province',
-        );
-      }
+        isMilitaryUnit(unit.type) &&
+        !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplomaticOrders)) {
+      return const OrderValidationResult(
+        status: OrderValidationStatus.rejected,
+        reason:
+            'Must declare war before attacking Minor Nation or Tribe province',
+      );
     }
 
     if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
