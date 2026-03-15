@@ -84,14 +84,12 @@ void main() {
 
       // Province naming: mandatory; GP capital gets capital city name, others from pool.
       expect(result.game.players.first.displayName, 'England');
-      final owProvinces = result.game.worldState.oldWorld.provinces;
-      final nwProvinces = result.game.worldState.newWorld.provinces;
       for (final p in allProvinces(result.game.worldState)) {
         expect(p.displayName, isNotNull, reason: 'province ${p.id} must have displayName');
       }
-      final p1 = owProvinces.firstWhere((p) => p.id == 'oldWorld|p1');
+      final p1 = result.game.worldState.oldWorld.provinces.firstWhere((p) => p.id == 'oldWorld|p1');
       expect(p1.displayName, 'London');
-      final nw1 = nwProvinces.firstWhere((p) => p.id == 'newWorld|nw1');
+      final nw1 = result.game.worldState.newWorld.provinces.firstWhere((p) => p.id == 'newWorld|nw1');
       expect(nw1.displayName, 'Mexica');
       expect(result.game.tribes.first.displayName, 'Aztec');
 
