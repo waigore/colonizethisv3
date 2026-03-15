@@ -1666,10 +1666,10 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       expect(next.worldState.purchasedTilesByTileKey[tileKeyMinor], 'p1');
-      final p1After = next.players.firstWhere((p) => p.id == 'p1');
-      final p2After = next.players.firstWhere((p) => p.id == 'p2');
-      expect(p1After.treasury, game.players.firstWhere((p) => p.id == 'p1').treasury - cost);
-      expect(p2After.treasury, game.players.firstWhere((p) => p.id == 'p2').treasury);
+      final p1After = next.playerById('p1')!;
+      final p2After = next.playerById('p2')!;
+      expect(p1After.treasury, game.playerById('p1')!.treasury - cost);
+      expect(p2After.treasury, game.playerById('p2')!.treasury);
     });
 
     test(
