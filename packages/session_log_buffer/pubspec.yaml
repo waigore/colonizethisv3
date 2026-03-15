@@ -11,4 +11,5 @@ dependencies:
   logger: ^2.0.2
 
 dev_dependencies:
+  colonizethis_test:
   test: ^1.24.0

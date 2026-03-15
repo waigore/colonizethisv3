@@ -1,8 +1,8 @@
 // Unit tests for session log buffer. SPEC/program/debug-log-viewer.md.
 
+import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('SessionLogBuffer', () {
