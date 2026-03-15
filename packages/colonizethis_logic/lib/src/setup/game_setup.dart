@@ -13,7 +13,6 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
 import '../world/naval.dart';
-import '../world/player_view.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 
@@ -1136,58 +1135,6 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   }
 
   return owners;
-}
-
-/// Selects GP seeds: one sea-bound province per GP, spreading across landmasses.
-Map<String, String> _selectGpSeeds({
-  required List<String> gpIds,
-  required List<String> seaBoundProvinceIds,
-  required Map<String, int> landmassIds,
-}) {
-  final gpCount = gpIds.length;
-  final seaBoundByLandmass = <int, List<String>>{};
-  for (final pid in seaBoundProvinceIds) {
-    final lm = landmassIds[pid]!;
-    seaBoundByLandmass.putIfAbsent(lm, () => <String>[]).add(pid);
-  }
-
-  final gpSeeds = <String, String>{};
-  final usedSeaBound = <String>{};
-
-  var lmEntries = seaBoundByLandmass.entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
-  var gpIndex = 0;
-  for (final entry in lmEntries) {
-    if (gpIndex >= gpCount) break;
-    final lmSeaBound = entry.value..sort();
-    if (lmSeaBound.isEmpty) continue;
-    final seedProv = lmSeaBound.removeAt(0);
-    gpSeeds[seedProv] = gpIds[gpIndex];
-    usedSeaBound.add(seedProv);
-    gpIndex++;
-  }
-
-  if (gpIndex < gpCount) {
-    final remainingSeaBound =
-        seaBoundProvinceIds.where((p) => !usedSeaBound.contains(p)).toList()
-          ..sort();
-    var i = 0;
-    while (gpIndex < gpCount && i < remainingSeaBound.length) {
-      final seedProv = remainingSeaBound[i++];
-      gpSeeds[seedProv] = gpIds[gpIndex];
-      usedSeaBound.add(seedProv);
-      gpIndex++;
-    }
-  }
-
-  if (gpSeeds.length < gpCount) {
-    throw ArgumentError(
-      'Not enough sea-bound provinces to seed all Great Powers contiguously: '
-      'have ${gpSeeds.length}, need $gpCount',
-    );
-  }
-
-  return gpSeeds;
 }
 
 /// Selects GP seeds: one sea-bound province per GP, from their assigned landmass.

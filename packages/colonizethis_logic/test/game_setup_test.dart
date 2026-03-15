@@ -713,10 +713,10 @@ void main() {
       // Landmass A: p1 (sea-bound), p2, p3
       // Landmass B: p4 (sea-bound), p5, p6
       // With 2 GPs, each should get one landmass
-      // Each province needs coastal access via sea zones
-      // Grid layout: p1 adjacent to sea1, p4 adjacent to sea2
+      // Each province needs coastal access via sea zones.
+      // Grid: p1 adjacent to sea1, p4 adjacent to sea2 (p1 and sea1 must be adjacent in grid).
       final owGrid = [
-        ['p1', 'p2', 'sea1'],
+        ['p1', 'sea1', 'p2'],
         ['p3', 'p4', 'sea2'],
         ['p5', 'p6', 'sea3'],
       ];
@@ -746,14 +746,7 @@ void main() {
           TopologyEdge(id1: 'p6', id2: 'sea3'),
         ],
       );
-      // Fix: p1 must be adjacent to sea1 in grid (currently at (0,0) and (0,2) - not adjacent!)
-      // Use simpler grid where p1 is next to sea1, p4 is next to sea2
-      final owGridFixed = [
-        ['p1', 'sea1', 'p2'],
-        ['p3', 'p4', 'sea2'],
-        ['p5', 'p6', 'sea3'],
-      ];
-      final owTileMap = TileMapResult(width: 3, height: 3, grid: owGridFixed);
+      final owTileMap = TileMapResult(width: 3, height: 3, grid: owGrid);
 
       // NW: 1 province
       final nwGrid = [
