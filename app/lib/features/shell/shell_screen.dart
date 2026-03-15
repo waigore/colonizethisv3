@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../config/routes.dart';
 import '../../providers/game_service_provider.dart';
@@ -8,46 +9,35 @@ import '../../providers/games_provider.dart';
 import '../../widgets/ct_dialog_shell.dart';
 import '../../widgets/ct_dropdown.dart';
 import '../../widgets/ct_nine_patch_button.dart';
-import '../../widgets/ct_screen_shell.dart';
+import '../../widgets/main_menu.dart';
 
-/// App shell. New game creates game, sets current, navigates to game. Phase 1: wired to resolve and persist.
+/// App shell. Shows CtMainMenu per SPEC/ui/main-menu.md. Phase 1: wired to resolve and persist.
 class ShellScreen extends ConsumerWidget {
   const ShellScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return CtScreenShell(
-      title: 'Colonize This',
-      child: Center(
-        child: SizedBox(
-          width: 260,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CtNinePatchButton(
-                onPressed: () => _showNewGameFlow(context, ref),
-                child: const Text('New game'),
-              ),
-              const SizedBox(height: 8),
-              CtNinePatchButton(
-                onPressed: () async {
-                  final service = ref.read(gameServiceProvider);
-                  final ids = service.listGameIds();
-                  if (ids.isEmpty || !context.mounted) return;
-                  final game = service.loadGame(ids.first);
-                  if (game != null && context.mounted) {
-                    ref.read(currentGameProvider.notifier).state = game;
-                    if (context.mounted) {
-                      Navigator.pushNamed(context, Routes.game);
-                    }
-                  }
-                },
-                child: const Text('Load last saved'),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return CtMainMenu(
+      variant: MainMenuVariant.plain,
+      state: MainMenuState.default_,
+      version: 'v0.0.1',
+      onNewGame: () => _showNewGameFlow(context, ref),
+      onLoadGame: () async {
+        final service = ref.read(gameServiceProvider);
+        final ids = service.listGameIds();
+        if (ids.isEmpty || !context.mounted) return;
+        final game = service.loadGame(ids.first);
+        if (game != null && context.mounted) {
+          ref.read(currentGameProvider.notifier).state = game;
+          if (context.mounted) {
+            Navigator.pushNamed(context, Routes.game);
+          }
+        }
+      },
+      onSettings: () {},
+      onQuit: () {
+        SystemNavigator.pop();
+      },
     );
   }
 
@@ -154,9 +144,8 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
                   value: currentVariantId,
                   items: gp.leaderVariants.map((v) => v.id).toList(),
                   hint: 'Select leader',
-                  itemLabel: (id) => gp.leaderVariants
-                      .firstWhere((v) => v.id == id)
-                      .name,
+                  itemLabel: (id) =>
+                      gp.leaderVariants.firstWhere((v) => v.id == id).name,
                   onChanged: (value) {
                     if (value != null) {
                       setState(() => _leaderByGpId[gpId] = value);

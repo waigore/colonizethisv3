@@ -52,7 +52,8 @@ class GameService {
     MapTopology combinedTopology,
     Map<String, TileMapResult> tileMapByRegion,
     Map<String, MapTopology> topologyByRegion,
-  })? getMapData(String gameId) {
+  })?
+  getMapData(String gameId) {
     final cached = _mapCache[gameId];
     if (cached != null) {
       return (
@@ -122,7 +123,10 @@ class GameService {
       seed: cfg.seed,
       seaFraction: 0.6,
     );
-    final sizeOW = computeGridSizeFromParams(cfg.numProvincesOldWorld, mapGenParams);
+    final sizeOW = computeGridSizeFromParams(
+      cfg.numProvincesOldWorld,
+      mapGenParams,
+    );
     final paramsOW = TileMapParams(
       width: sizeOW.width,
       height: sizeOW.height,
@@ -133,9 +137,13 @@ class GameService {
       numProvinces: cfg.numProvincesOldWorld,
       numContinents: cfg.continentCount,
       regionId: 'oldWorld',
+      resourceRules: ResourceRules.defaultRules,
     );
 
-    final sizeNW = computeGridSizeFromParams(cfg.numProvincesNewWorld, mapGenParams);
+    final sizeNW = computeGridSizeFromParams(
+      cfg.numProvincesNewWorld,
+      mapGenParams,
+    );
     final paramsNW = TileMapParams(
       width: sizeNW.width,
       height: sizeNW.height,
@@ -146,6 +154,7 @@ class GameService {
       numProvinces: cfg.numProvincesNewWorld,
       numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
       regionId: 'newWorld',
+      resourceRules: ResourceRules.defaultRules,
     );
 
     final result = createGameFromGeneratedMaps(

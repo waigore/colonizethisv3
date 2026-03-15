@@ -13,6 +13,6 @@ void main() {
   testWidgets('App shell smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: App()));
     await tester.pumpAndSettle();
-    expect(find.text('Colonize This'), findsOneWidget);
+    expect(find.text('ColonizeThis V3'), findsOneWidget);
   });
 }
