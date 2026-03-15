@@ -23,6 +23,7 @@ import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/pause_options_screen.dart';
 import 'package:ctterm/screens/pending_overtures_screen.dart';
+import 'package:ctterm/screens/debug_log_viewer_screen.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -55,6 +56,7 @@ class ShellScreen extends StatefulComponent {
     this.initialTheme,
     this.onThemeChanged,
     this.settingsReturnRoute,
+    this.debugLogViewerReturnRoute,
     this.pendingOvertures,
     this.onTurnResolutionPending,
     this.onOvertureDecisions,
@@ -64,6 +66,9 @@ class ShellScreen extends StatefulComponent {
 
   /// When non-null, Settings Back navigates here (e.g. Pause when opened from Pause). SPEC/tui/screens/pause-options.md §7.
   final CttermRoute? settingsReturnRoute;
+
+  /// When non-null, Debug log viewer Back navigates here (e.g. Pause when opened from Pause). SPEC/program/debug-log-viewer.md.
+  final CttermRoute? debugLogViewerReturnRoute;
   final String? dataDirOverride;
 
   /// Current game state. Set when loading or starting a game.
@@ -165,6 +170,12 @@ class _ShellScreenState extends State<ShellScreen> {
             return true;
           }
           // In-game panels: Esc -> back to in-game shell (so Escape works even if panel does not receive key)
+          if (component.route == CttermRoute.debugLogViewer) {
+            _log.d('tui:nav: Esc -> from debug log viewer');
+            component.onNavigate(
+                component.debugLogViewerReturnRoute ?? CttermRoute.mainMenu);
+            return true;
+          }
           if (component.route == CttermRoute.mapContext ||
               component.route == CttermRoute.units ||
               component.route == CttermRoute.development ||
@@ -222,6 +233,7 @@ class _ShellScreenState extends State<ShellScreen> {
           onNewGame: () => component.onNavigate(CttermRoute.gameSetup),
           onLoadGame: () => component.onNavigate(CttermRoute.loadGame),
           onSettings: () => component.onNavigate(CttermRoute.settings),
+          onDebugLog: () => component.onNavigate(CttermRoute.debugLogViewer),
           onQuit: component.onExit,
         );
       case CttermRoute.gameSetup:
@@ -422,6 +434,11 @@ class _ShellScreenState extends State<ShellScreen> {
             component.onClearGame?.call();
             component.onNavigate(CttermRoute.mainMenu);
           },
+        );
+      case CttermRoute.debugLogViewer:
+        return DebugLogViewerScreen(
+          onBack: () => component.onNavigate(
+              component.debugLogViewerReturnRoute ?? CttermRoute.mainMenu),
         );
       case CttermRoute.pendingOvertures:
         final game = component.game;

@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/routes.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
@@ -20,6 +21,33 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import 'game_canvas.dart';
+
+/// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
+void _showPauseMenu(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.bug_report),
+            title: const Text('Debug log'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pushNamed(Routes.debugLog);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('Resume'),
+            onTap: () => Navigator.of(ctx).pop(),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
@@ -39,6 +67,15 @@ class GameScreen extends ConsumerWidget {
           else
             GameWidget(game: ColonizeThisGame()),
           if (game != null && victory == null) ...[
+            Positioned(
+              left: 16,
+              top: 16,
+              child: IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => _showPauseMenu(context),
+                tooltip: 'Pause menu',
+              ),
+            ),
             Positioned(
               right: 16,
               top: 16,
