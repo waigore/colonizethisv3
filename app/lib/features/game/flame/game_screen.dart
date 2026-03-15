@@ -10,10 +10,12 @@ import '../../../../config/routes.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
+import '../../../../providers/production_allocation_provider.dart';
 import '../../../../widgets/ct_region_map.dart';
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
+import '../widgets/production_screen.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
 import '../../../widgets/ct_choice_chip.dart';
@@ -66,76 +68,35 @@ class GameScreen extends ConsumerWidget {
             _GameMapArea(game: game, mapViewData: mapViewData)
           else
             GameWidget(game: ColonizeThisGame()),
-          if (game != null && victory == null) ...[
-            Positioned(
-              left: 16,
-              top: 16,
-              child: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _showPauseMenu(context),
-                tooltip: 'Pause menu',
+          if (game != null && victory == null)
+            ...[
+              Positioned(
+                left: 16,
+                top: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => _showPauseMenu(context),
+                  tooltip: 'Pause menu',
+                ),
               ),
-            ),
-            Positioned(
-              right: 16,
-              top: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CtNinePatchButton(
-                    onPressed: () {
-                      final service = ref.read(gameServiceProvider);
-                      final orders = ref.read(currentOrdersProvider);
-                      final newGame = service.nextTurn(game, orders: orders);
-                      ref.read(currentGameProvider.notifier).state = newGame;
-                      ref.read(currentOrdersProvider.notifier).state =
-                          const ct_models.Orders();
-                    },
-                    child: Text(
-                      'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
-                    ),
+              Positioned(
+                right: 16,
+                top: 16,
+                child: CtNinePatchButton(
+                  onPressed: () {
+                    final service = ref.read(gameServiceProvider);
+                    final orders = ref.read(currentOrdersProvider);
+                    final newGame = service.nextTurn(game, orders: orders);
+                    ref.read(currentGameProvider.notifier).state = newGame;
+                    ref.read(currentOrdersProvider.notifier).state =
+                        const ct_models.Orders();
+                  },
+                  child: Text(
+                    'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
                   ),
-                  const SizedBox(height: 8),
-                  CtNinePatchButton(
-                    onPressed: () {
-                      final player = game.players.isNotEmpty
-                          ? game.players.first
-                          : null;
-                      if (player != null) {
-                        final orders = ref.read(currentOrdersProvider);
-                        Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (ctx) => TechnologyScreen(
-                              game: game,
-                              player: player,
-                              currentOrders: orders,
-                              onOrdersChanged: (newOrders) {
-                                ref.read(currentOrdersProvider.notifier).state =
-                                    newOrders;
-                              },
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          'assets/images/ui_icon_technology.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('Technology'),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
           if (game != null && victory != null)
             _VictoryOverlay(game: game, victory: victory),
         ],
@@ -314,6 +275,44 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               const SizedBox(width: 16),
               CtNinePatchButton(
                 onPressed: () {
+                  final player =
+                      widget.game.players.where((p) => p.isHuman).firstOrNull ??
+                      widget.game.players.first;
+                  final desired = ref.read(productionDesiredOutputProvider);
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (ctx) => ProductionScreen(
+                        game: widget.game,
+                        player: player,
+                        desiredOutputByRecipe: desired,
+                        onDesiredOutputChanged: (newMap) {
+                          ref
+                                  .read(
+                                    productionDesiredOutputProvider.notifier,
+                                  )
+                                  .state =
+                              newMap;
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/ui_icon_production.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Production'),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              CtNinePatchButton(
+                onPressed: () {
                   final orders = ref.read(currentOrdersProvider);
                   showModalBottomSheet<void>(
                     context: context,
@@ -430,6 +429,40 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     ),
                     const SizedBox(width: 8),
                     const Text('Diplomacy'),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              CtNinePatchButton(
+                onPressed: () {
+                  final orders = ref.read(currentOrdersProvider);
+                  final player =
+                      widget.game.players.where((p) => p.isHuman).firstOrNull ??
+                      widget.game.players.first;
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (ctx) => TechnologyScreen(
+                        game: widget.game,
+                        player: player,
+                        currentOrders: orders,
+                        onOrdersChanged: (newOrders) {
+                          ref.read(currentOrdersProvider.notifier).state =
+                              newOrders;
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/ui_icon_technology.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Technology'),
                   ],
                 ),
               ),

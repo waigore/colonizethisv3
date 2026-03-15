@@ -14,10 +14,11 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 
 | Icon ID | Button | Description | Size |
 |---------|--------|-------------|------|
+| `production` | Production | Tools/gear icon for resource production | 32×32 |
 | `civilian_units` | Civilian Units | Worker/people icon, colonial era style | 32×32 |
 | `military_units` | Military Units | Sword/shield or soldier icon | 32×32 |
-| `technology` | Technology | Book/scroll or beaker icon | 32×32 |
 | `diplomacy` | Diplomacy | Dove with olive branch | 32×32 |
+| `technology` | Technology | Book/scroll or beaker icon | 32×32 |
 
 **File naming:** `ui_icon_<icon_id>.png` in `app/assets/images/`. Example: `ui_icon_diplomacy.png`.
 
@@ -96,11 +97,11 @@ Expected output: `PNG image data, 32 x 32, 8-bit/color RGBA, non-interlaced`
 
 Record exact prompts for reproducibility.
 
-### ui_icon_diplomacy.png (32×32)
+### ui_icon_production.png (32×32)
 
 ```
 pixellab_create_map_object(
-  description='pixel art dove bird icon for diplomacy button, colonial era style, white dove with olive branch, top-down game UI icon, simple clean design',
+  description='pixel art tools gear icon for production button, colonial era style, crossed hammer and pickaxe or anvil with hammer, top-down game UI icon, simple clean design',
   width=32,
   height=32,
   view='high top-down',
@@ -110,7 +111,7 @@ pixellab_create_map_object(
 )
 ```
 
-**Prompt:** `pixel art dove bird icon for diplomacy button, colonial era style, white dove with olive branch, top-down game UI icon, simple clean design`
+**Prompt:** `pixel art tools gear icon for production button, colonial era style, crossed hammer and pickaxe or anvil with hammer, top-down game UI icon, simple clean design`
 
 ### ui_icon_civilian_units.png (32×32)
 
@@ -240,9 +241,10 @@ To regenerate an icon:
 
 | Asset ID | Filename | Status | Generated |
 |----------|----------|--------|-----------|
-| diplomacy | ui_icon_diplomacy.png | ✅ Generated | 2026-03-15 |
+| production | ui_icon_production.png | ✅ Generated | 2026-03-15 |
 | civilian_units | ui_icon_civilian_units.png | ✅ Generated | 2026-03-15 |
 | military_units | ui_icon_military_units.png | ✅ Generated | 2026-03-15 |
+| diplomacy | ui_icon_diplomacy.png | ✅ Generated | 2026-03-15 |
 | technology | ui_icon_technology.png | ✅ Generated | 2026-03-15 |
 
 All icons verified: 32×32 PNG with RGBA transparency.
