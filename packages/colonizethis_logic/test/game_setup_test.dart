@@ -76,11 +76,8 @@ void main() {
 
       // SPEC capital-and-connectivity § Town per province: every province has townTileKey set.
       final gp = result.game.players.first;
-      for (final p in result.game.worldState.oldWorld.provinces) {
-        expect(p.townTileKey, isNotNull, reason: 'OW province ${p.id} must have townTileKey');
-      }
-      for (final p in result.game.worldState.newWorld.provinces) {
-        expect(p.townTileKey, isNotNull, reason: 'NW province ${p.id} must have townTileKey');
+      for (final p in allProvinces(result.game.worldState)) {
+        expect(p.townTileKey, isNotNull, reason: 'province ${p.id} must have townTileKey');
       }
       final capitalProvince = result.game.worldState.oldWorld.provinces.firstWhere((p) => p.id == gp.capitalProvinceId);
       expect(capitalProvince.townTileKey, gp.capitalTile?.toTileKey(), reason: 'Capital province townTileKey must equal capital tile key');
@@ -88,15 +85,12 @@ void main() {
       // Province naming: mandatory; GP capital gets capital city name, others from pool.
       expect(result.game.players.first.displayName, 'England');
       final owProvinces = result.game.worldState.oldWorld.provinces;
-      for (final p in owProvinces) {
-        expect(p.displayName, isNotNull, reason: 'OW province ${p.id} must have displayName');
+      final nwProvinces = result.game.worldState.newWorld.provinces;
+      for (final p in allProvinces(result.game.worldState)) {
+        expect(p.displayName, isNotNull, reason: 'province ${p.id} must have displayName');
       }
       final p1 = owProvinces.firstWhere((p) => p.id == 'oldWorld|p1');
       expect(p1.displayName, 'London');
-      final nwProvinces = result.game.worldState.newWorld.provinces;
-      for (final p in nwProvinces) {
-        expect(p.displayName, isNotNull, reason: 'NW province ${p.id} must have displayName');
-      }
       final nw1 = nwProvinces.firstWhere((p) => p.id == 'newWorld|nw1');
       expect(nw1.displayName, 'Mexica');
       expect(result.game.tribes.first.displayName, 'Aztec');
@@ -623,15 +617,11 @@ void main() {
         gameId: 'fallback-test',
       );
 
-      for (final p in result.game.worldState.oldWorld.provinces) {
-        expect(p.displayName, isNotNull, reason: 'OW ${p.id}');
-        expect(p.displayName!.isNotEmpty, isTrue, reason: 'OW ${p.id}');
+      for (final p in allProvinces(result.game.worldState)) {
+        expect(p.displayName, isNotNull, reason: '${p.id}');
+        expect(p.displayName!.isNotEmpty, isTrue, reason: '${p.id}');
       }
       final nwProvinces = result.game.worldState.newWorld.provinces;
-      for (final p in nwProvinces) {
-        expect(p.displayName, isNotNull, reason: 'NW ${p.id}');
-        expect(p.displayName!.isNotEmpty, isTrue, reason: 'NW ${p.id}');
-      }
       expect(result.game.tribes.length, 11);
       final tribe11 = result.game.tribes.firstWhere((t) => t.id == 'tribe11');
       final tribe11Provinces = nwProvinces.where((p) => p.ownerId == tribe11.id).toList();
