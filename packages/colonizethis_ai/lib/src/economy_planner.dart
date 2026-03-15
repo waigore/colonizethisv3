@@ -10,6 +10,8 @@ import 'seed_bundle.dart';
 
 final Logger _log = Logger();
 
+const String _kEconomyLogPrefix = 'ai/economy_planner';
+
 /// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
 enum CargoPreference {
   none,
@@ -54,7 +56,7 @@ EconomyPlan runEconomyPlanner({
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
-    _log.w('ai: economy planner no player for ${view.playerId}');
+    _log.w('$_kEconomyLogPrefix: no player for ${view.playerId}');
     return const EconomyPlan(
       productionAssignments: [],
       cargoPreference: CargoPreference.none,
@@ -83,9 +85,14 @@ EconomyPlan runEconomyPlanner({
     seeds: seeds,
   );
 
+  final cargoPref = _cargoPreference(game, view.playerId, config);
+  _log.i(
+    '$_kEconomyLogPrefix: economy plan playerId=${view.playerId} '
+    'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length}',
+  );
   return EconomyPlan(
     productionAssignments: assignments,
-    cargoPreference: _cargoPreference(game, view.playerId, config),
+    cargoPreference: cargoPref,
   );
 }
 
@@ -94,16 +101,26 @@ CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
   final agendaId = config.hiddenAgendaId;
   // Trade-oriented agendas/personalities favour cargo.
   final economyWeight = domainWeights.economy;
-  if (economyWeight < 30) return CargoPreference.none;
+  if (economyWeight < 30) {
+    _log.d('$_kEconomyLogPrefix: cargoPreference none economyWeight=$economyWeight');
+    return CargoPreference.none;
+  }
   // Strong when economy is high and agenda is trade-related.
   final tradeBias = agendaId == 'industrial_trader' || agendaId == 'merchant'
       ? 20
       : agendaId == 'navigator'
           ? 15
           : 0;
-  if (economyWeight >= 70 + tradeBias) return CargoPreference.strongCargo;
-  if (economyWeight >= 50 + tradeBias) return CargoPreference.preferCargo;
-  return CargoPreference.none;
+  final pref = economyWeight >= 70 + tradeBias
+      ? CargoPreference.strongCargo
+      : economyWeight >= 50 + tradeBias
+          ? CargoPreference.preferCargo
+          : CargoPreference.none;
+  _log.d(
+    '$_kEconomyLogPrefix: cargoPreference eval playerId=$playerId '
+    'economyWeight=$economyWeight agendaId=$agendaId tradeBias=$tradeBias result=$pref',
+  );
+  return pref;
 }
 
 List<AssignedRecipe> _allocateLabour({
@@ -149,6 +166,11 @@ List<AssignedRecipe> _allocateLabour({
 
   if (candidates.isEmpty) return result;
 
+  _log.d(
+    '$_kEconomyLogPrefix: recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
+    'candidates=${candidates.map((c) => "${c.recipe.id}:${c.score.toStringAsFixed(2)}").toList()}',
+  );
+
   // Sort by score descending; use seed for tie-break.
   candidates.sort((a, b) {
     final c = b.score.compareTo(a.score);
@@ -191,7 +213,8 @@ List<AssignedRecipe> _allocateLabour({
   }
 
   _log.d(
-    'ai: economy planner effectiveLabour=$effectiveLabour assignments=${result.length}',
+    '$_kEconomyLogPrefix: allocation effectiveLabour=$effectiveLabour '
+    'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;
 }

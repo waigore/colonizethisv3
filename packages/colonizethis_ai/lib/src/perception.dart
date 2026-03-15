@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:logger/logger.dart';
 
 // Perception: PlayerView → AIWorldSnapshot. SPEC/ai/ai-architecture.md.
 // All data derived from PlayerView only; no hidden state.
@@ -70,13 +71,27 @@ class AIWorldSnapshot {
     final threats = _buildThreatSummary(view, topology);
     final opportunities = _buildOpportunitySummary(view, topology);
     final economy = _buildEconomySummary(view);
-    return AIWorldSnapshot(
+    final snapshot = AIWorldSnapshot(
       playerId: view.playerId,
       threats: threats,
       opportunities: opportunities,
       economy: economy,
       relations: Map<String, DiplomacyRelation>.from(view.diplomacyByOtherId),
     );
+    Logger().d(
+      'ai/perception: snapshot playerId=${snapshot.playerId} '
+      'atWarWith=${snapshot.threats.atWarWith} '
+      'neighborProvincesHostile=${snapshot.threats.neighborProvincesHostile} '
+      'capitalThreatened=${snapshot.threats.capitalThreatened} '
+      'weakNeighbors=${snapshot.opportunities.weakNeighbors} '
+      'richUnexploitedProvinces=${snapshot.opportunities.richUnexploitedProvinces} '
+      'unclaimedProvinces=${snapshot.opportunities.unclaimedProvinces} '
+      'workerCount=${snapshot.economy.workerCount} '
+      'treasury=${snapshot.economy.treasury} '
+      'ownProvinceCount=${snapshot.economy.ownProvinceCount} '
+      'relationsKeys=${snapshot.relations.keys.toList()}',
+    );
+    return snapshot;
   }
 
   static ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {

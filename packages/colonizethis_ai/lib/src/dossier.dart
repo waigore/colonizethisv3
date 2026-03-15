@@ -3,6 +3,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
+
+const String _kDossierLogPrefix = 'ai/dossier';
 
 /// Suspicion band for display. Never exposes true agenda.
 /// Bands defined by [dossierScoreUnknownMax], [dossierScorePossibleMax], etc. SPEC/ai/ai-dossier.md.
@@ -208,13 +211,25 @@ DossierView getDossierForSubject(
   final timeline = cappedEntries
       .map((e) => 'Turn ${e.turnNumber}: ${e.description}')
       .toList();
+  final basicIntel = _buildBasicIntel(game, observerId, subjectId);
+  final bestGuess = _buildBestGuessAgenda(scoreByAgenda);
+  final behavioralNotes = _buildBehavioralNotes(cappedEntries);
+
+  Logger().d(
+    '$_kDossierLogPrefix: getDossierForSubject observerId=$observerId subjectId=$subjectId '
+    'scoreByAgenda=$scoreByAgenda suspicionByAgendaType=${suspicionByAgendaType.map((k, v) => MapEntry(k, v.name))} '
+    'bestGuessAgenda=${bestGuess?.agendaType} confidencePercent=${bestGuess?.confidencePercent} '
+    'evidenceCount=${evidenceList.length} behavioralNotes=$behavioralNotes '
+    'basicIntel.relationLevel=${basicIntel?.relationLevel} personalityArchetype=${basicIntel?.personalityArchetype}',
+  );
+
   return DossierView(
     subjectId: subjectId,
     suspicionByAgendaType: suspicionByAgendaType,
     evidenceList: evidenceList,
-    basicIntel: _buildBasicIntel(game, observerId, subjectId),
-    bestGuessAgenda: _buildBestGuessAgenda(scoreByAgenda),
-    behavioralNotes: _buildBehavioralNotes(cappedEntries),
+    basicIntel: basicIntel,
+    bestGuessAgenda: bestGuess,
+    behavioralNotes: behavioralNotes,
     timeline: timeline,
   );
 }
