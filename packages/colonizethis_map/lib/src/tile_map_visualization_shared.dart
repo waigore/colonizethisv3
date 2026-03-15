@@ -41,49 +41,99 @@ const Map<TerrainType, (int r, int g, int b)> terrainColorRgb = {
   TerrainType.desert: (210, 190, 140),
 };
 
+/// Single-letter legend glyph for a resource (e.g. grain → 'g').
+/// Matches SPEC/program/map-visualization.md legend; see SPEC/game/resource-terrain-region-rules.md.
+String resourceToLegendLetter(Resource r) {
+  switch (r) {
+    case Resource.grain:
+      return 'g';
+    case Resource.meat:
+      return 'm';
+    case Resource.wool:
+      return 'w';
+    case Resource.horses:
+      return 'h';
+    case Resource.timber:
+      return 't';
+    case Resource.iron:
+      return 'i';
+    case Resource.copper:
+      return 'c';
+    case Resource.tin:
+      return 'n';
+    case Resource.coal:
+      return 'k';
+    case Resource.sugarCane:
+      return 's';
+    case Resource.tobacco:
+      return 'b';
+    case Resource.cotton:
+      return 'u';
+    case Resource.furs:
+      return 'f';
+    case Resource.spices:
+      return 'p';
+    case Resource.silver:
+      return 'v';
+    case Resource.gold:
+      return 'a';
+    case Resource.gems:
+      return 'e';
+    case Resource.diamonds:
+      return 'd';
+  }
+}
+
+/// Display label for a resource in the legend (e.g. grain → 'Grain').
+String resourceToLegendLabel(Resource r) {
+  switch (r) {
+    case Resource.grain:
+      return 'Grain';
+    case Resource.meat:
+      return 'Meat';
+    case Resource.wool:
+      return 'Wool';
+    case Resource.horses:
+      return 'Horses';
+    case Resource.timber:
+      return 'Timber';
+    case Resource.iron:
+      return 'Iron';
+    case Resource.copper:
+      return 'Copper';
+    case Resource.tin:
+      return 'Tin';
+    case Resource.coal:
+      return 'Coal';
+    case Resource.sugarCane:
+      return 'Sugar Cane';
+    case Resource.tobacco:
+      return 'Tobacco';
+    case Resource.cotton:
+      return 'Cotton';
+    case Resource.furs:
+      return 'Furs';
+    case Resource.spices:
+      return 'Spices';
+    case Resource.silver:
+      return 'Silver';
+    case Resource.gold:
+      return 'Gold';
+    case Resource.gems:
+      return 'Gems';
+    case Resource.diamonds:
+      return 'Diamonds';
+  }
+}
+
 /// Returns the single-letter legend glyph for a resource id (e.g. grain → 'g'), or null if unknown.
 /// Matches SPEC/program/map-visualization.md legend; see SPEC/game/resource-terrain-region-rules.md.
 String? resourceIdToLegendLetter(String? resourceId) {
   if (resourceId == null || resourceId.isEmpty) return null;
-  switch (resourceId) {
-    case 'grain':
-      return 'g';
-    case 'meat':
-      return 'm';
-    case 'wool':
-      return 'w';
-    case 'horses':
-      return 'h';
-    case 'timber':
-      return 't';
-    case 'iron':
-      return 'i';
-    case 'copper':
-      return 'c';
-    case 'tin':
-      return 'n';
-    case 'coal':
-      return 'k';
-    case 'sugarCane':
-      return 's';
-    case 'tobacco':
-      return 'b';
-    case 'cotton':
-      return 'u';
-    case 'furs':
-      return 'f';
-    case 'spices':
-      return 'p';
-    case 'silver':
-      return 'v';
-    case 'gold':
-      return 'a';
-    case 'gems':
-      return 'e';
-    case 'diamonds':
-      return 'd';
-    default:
-      return null;
+  try {
+    return resourceToLegendLetter(Resource.values.byName(resourceId));
+  } catch (_) {
+    return null;
   }
 }
 

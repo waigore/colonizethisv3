@@ -29,6 +29,15 @@ Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId)
   );
 }
 
+/// Merges a per-player order list into an aggregate map when non-null and non-empty.
+void _addOrdersIfNonEmpty<T>(
+  Map<String, List<T>> aggregate,
+  String playerId,
+  List<T>? list,
+) {
+  if (list != null && list.isNotEmpty) aggregate[playerId] = list;
+}
+
 /// Generates orders for all AI-controlled GPs. Deterministic given game state and seeds.
 /// Respects diplomacy: no attacks against factions at peace.
 Orders generateOrdersForGame(Game game, MapTopology topology) {
@@ -40,23 +49,10 @@ Orders generateOrdersForGame(Game game, MapTopology topology) {
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
     final ordersForPlayer = generateOrdersForPlayer(game, topology, player.id);
-    final moves = ordersForPlayer.moveOrdersByPlayerId[player.id];
-    final builds = ordersForPlayer.buildUnitOrdersByPlayerId[player.id];
-    final works = ordersForPlayer.workOrdersByPlayerId[player.id];
-    final research = ordersForPlayer.researchOrdersByPlayerId[player.id];
-
-    if (moves != null && moves.isNotEmpty) {
-      moveByPlayer[player.id] = moves;
-    }
-    if (builds != null && builds.isNotEmpty) {
-      buildByPlayer[player.id] = builds;
-    }
-    if (works != null && works.isNotEmpty) {
-      workByPlayer[player.id] = works;
-    }
-    if (research != null && research.isNotEmpty) {
-      researchByPlayer[player.id] = research;
-    }
+    _addOrdersIfNonEmpty(moveByPlayer, player.id, ordersForPlayer.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(buildByPlayer, player.id, ordersForPlayer.buildUnitOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(workByPlayer, player.id, ordersForPlayer.workOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(researchByPlayer, player.id, ordersForPlayer.researchOrdersByPlayerId[player.id]);
   }
 
   return Orders(
@@ -152,16 +148,13 @@ FullAIResult generateOrdersForGameFullAI(
       onMood: onMood,
     );
     economyPlansByPlayerId[player.id] = result.economyPlan;
-    void add<T>(Map<String, List<T>> map, String pid, List<T>? list) {
-      if (list != null && list.isNotEmpty) map[pid] = list;
-    }
-    add(moveByPlayer, player.id, result.orders.moveOrdersByPlayerId[player.id]);
-    add(buildByPlayer, player.id, result.orders.buildUnitOrdersByPlayerId[player.id]);
-    add(workByPlayer, player.id, result.orders.workOrdersByPlayerId[player.id]);
-    add(researchByPlayer, player.id, result.orders.researchOrdersByPlayerId[player.id]);
-    add(diploByPlayer, player.id, result.orders.diplomaticOrdersByPlayerId[player.id]);
-    add(navalByPlayer, player.id, result.orders.navalMoveOrdersByPlayerId[player.id]);
-    add(missionByPlayer, player.id, result.orders.navalMissionOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(moveByPlayer, player.id, result.orders.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(buildByPlayer, player.id, result.orders.buildUnitOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(workByPlayer, player.id, result.orders.workOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(researchByPlayer, player.id, result.orders.researchOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(diploByPlayer, player.id, result.orders.diplomaticOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(navalByPlayer, player.id, result.orders.navalMoveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(missionByPlayer, player.id, result.orders.navalMissionOrdersByPlayerId[player.id]);
   }
 
   return FullAIResult(
