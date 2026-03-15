@@ -1,0 +1,18 @@
+name: Enforce dev source for build/app/android
+
+on:
+  pull_request:
+    branches:
+      - build/app/android
+
+jobs:
+  enforce-dev-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if PR is not from dev
+        run: |
+          echo "Base ref: ${{ github.base_ref }}, head ref: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "Only PRs from dev are allowed into build/app/android."
+            exit 1
+          fi
