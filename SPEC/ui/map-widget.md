@@ -122,6 +122,77 @@ Hover, selection, and overlay behavior:
 
 ---
 
+## Terrain Tileset Rendering
+
+The map widget renders terrain using **Wang tilesets** for seamless terrain transitions. Each tileset is a 4×4 grid (16 tiles) that covers all corner combinations for transitions between two terrain types.
+
+### Tileset Structure
+
+- **Format:** Each tileset is a 128×128 PNG (4×4 grid of 32×32 tiles)
+- **Metadata:** JSON file with corner mappings (NW, NE, SW, SE → "upper" or "lower" terrain)
+- **Tile Size:** 32×32 pixels per tile (configurable via `cellSize` in view data)
+
+### Terrain Priority (Layer Order)
+
+Terrains are assigned priority values for corner determination:
+
+| Priority | Terrain Type | Notes |
+|----------|--------------|-------|
+| 0 | Sea | Base layer (ocean) |
+| 1 | Plains | Default land terrain |
+| 2 | Forest | Transitional layer |
+| 2 | Hills | Transitional layer |
+| 2 | Mountain | Transitional layer |
+| 2 | Swamp | Transitional layer |
+| 2 | Desert | New World only |
+
+### Wang Tiling Algorithm
+
+For each map cell (x, y):
+
+1. **Build terrain vertex grid:** Create (width+1)×(height+1) grid of terrain priorities
+2. **Sample 4 corners:** For cell (x, y), sample vertices at (x, y), (x+1, y), (x, y+1), (x+1, y+1)
+3. **Determine corner values:** Each corner = max terrain priority among 4adjacent cells
+4. **Select tileset:** Based on highest and second-highest terrain priorities in corners
+5. **Find matching tile:** Look up tile by corner configuration (16 possible combinations)
+6. **Draw tile:** Extract from tileset PNG using bounding box from metadata
+
+### Tileset Chain
+
+Tilesets are chained for visual consistency. All land terrain tilesets use the same "plains" base tile:
+
+1. **Sea → Beach:** Coastline transitions
+2. **Beach → Plains:** Coastal grass transitions
+3. **Plains → Forest:** Forest edges
+4. **Plains → Hills:** Hill transitions
+5. **Plains → Mountain:** Mountain edges
+6. **Plains → Swamp:** Swamp transitions
+7. **Plains → Desert:** Desert edges (New World only)
+
+### Asset Files
+
+Tilesets are stored in `assets/images/terrain/`:
+- `tileset_sea_beach.png` / `.json`
+- `tileset_beach_plains.png` / `.json`
+- `tileset_plains_forest.png` / `.json`
+- `tileset_plains_hills.png` / `.json`
+- `tileset_plains_mountain.png` / `.json`
+- `tileset_plains_swamp.png` / `.json`
+- `tileset_plains_desert.png` / `.json`
+
+### Visibility Integration
+
+When rendering in **player-constrained visibility mode**:
+- **visible tiles:** Render full tileset tiles
+- **fogged tiles:** Apply 70% black overlay to tile
+- **unrevealed tiles:** Render solid black (no tile)
+
+### Fallback Behavior
+
+If a tileset fails to load, the widget falls back to solid color rendering using `RegionMapViewData.terrainColors` for backward compatibility.
+
+---
+
 ## Acceptance criteria
 
 - **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
