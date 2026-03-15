@@ -111,8 +111,8 @@ void main() {
       expect(movedUnit!.provinceId, '$ow|P2');
 
       // Extraction applied (grain added to stockpile, then consumption deducted)
-      final p1 = next.players.firstWhere((p) => p.id == 'p1');
-      final p2 = next.players.firstWhere((p) => p.id == 'p2');
+      final p1 = next.playerById('p1')!;
+      final p2 = next.playerById('p2')!;
       // p1 started with 10 grain, extracted 3 = 13, then consumption deducted
       expect(p1.stockpile.quantityOf('grain'), lessThanOrEqualTo(13));
       // p2 started with 5 grain, extracted 1 = 6, then consumption deducted
