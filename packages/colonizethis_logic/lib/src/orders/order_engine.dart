@@ -42,6 +42,26 @@ bool _appendValidationResults<T>(
   return r;
 }
 
+/// Like [_appendValidationResults] for validators that also return updated state (e.g. treasury).
+/// Appends each result to [results], propagates [rejected], and returns (rejected, finalState).
+({bool rejected, S state}) _appendValidationResultsWithState<T, S>(
+  List<OrderValidationResult> results,
+  List<T> orders,
+  bool rejected,
+  S initialState,
+  ({OrderValidationResult result, S state}) Function(T order, bool previousRejected) validate,
+) {
+  var r = rejected;
+  var s = initialState;
+  for (final o in orders) {
+    final res = validate(o, r);
+    results.add(res.result);
+    if (!res.result.isAccepted) r = true;
+    s = res.state;
+  }
+  return (rejected: r, state: s);
+}
+
 /// Deep-copy of order maps: new map and new list per player. Used by constructor and _copyOrders.
 Map<String, List<T>> _copyMapOfOrderLists<T>(
   Map<String, List<T>> map,
@@ -427,15 +447,18 @@ class OrderEngine {
       playerId: playerId,
       initialTreasury: treasury,
     );
-    for (final o in diplomatic) {
-      final r = diplomaticValidator.validate(
-        o,
-        previousRejected: rejected,
-      );
-      results.add(r.result);
-      treasury = r.treasury;
-      if (!r.result.isAccepted) rejected = true;
-    }
+    final afterDiplomatic = _appendValidationResultsWithState<DiplomaticOrder, int>(
+      results,
+      diplomatic,
+      rejected,
+      treasury,
+      (o, prev) {
+        final r = diplomaticValidator.validate(o, previousRejected: prev);
+        return (result: r.result, state: r.treasury);
+      },
+    );
+    rejected = afterDiplomatic.rejected;
+    treasury = afterDiplomatic.state;
 
     final navalValidator = NavalOrderValidator(
       game: game,
