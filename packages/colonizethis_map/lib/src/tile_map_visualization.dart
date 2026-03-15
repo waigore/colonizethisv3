@@ -6,7 +6,12 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import 'tile_map_visualization_shared.dart';
+import 'tile_map_visualization_shared.dart'
+    show colorMapFromIds, continentSeedMarkerRgb, drawBorders,
+        drawLegendContinentSeedMarker, drawLegendLandSeedMarker,
+        drawLegendSwatch, landSeedMarkerRgb, legendLineHeight, legendPadding,
+        regionPalette, resourceToLegendLabel, resourceToLegendLetter,
+        seaColorRgb, seaZoneBorderRgb, swatchGap, swatchSize, terrainColorRgb;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
@@ -18,6 +23,87 @@ const (int, int, int) seaZoneBorderRgb = (173, 216, 230);
 const (int, int, int) regionIdLabelRgb = (220, 0, 0);
 
 const int _titleLines = 2;
+
+/// Draws optional legend sections (continent seeds, land seeds, resources). Returns updated row.
+int _drawOptionalLegendSections(
+  img.Image image,
+  int legendY0,
+  int row, {
+  required bool showContinentSeeds,
+  required bool showLandSeeds,
+  required bool useLandSeedByContinent,
+  List<int>? landSeedContinentIndices,
+  required bool hasResourceGrid,
+}) {
+  final black = image.getColor(0, 0, 0);
+  if (showContinentSeeds) {
+    final y = legendY0 + row * legendLineHeight;
+    drawLegendContinentSeedMarker(image, y);
+    img.drawString(
+      image,
+      'Continent seeds (one per continent)',
+      font: img.arial14,
+      x: legendPadding + swatchSize + swatchGap,
+      y: y,
+      color: black,
+    );
+    row++;
+  }
+  if (showLandSeeds) {
+    if (useLandSeedByContinent && landSeedContinentIndices != null) {
+      final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
+      for (var c = 0; c <= maxContinent; c++) {
+        final y = legendY0 + row * legendLineHeight;
+        final (r, g, b) = regionPalette[c % regionPalette.length];
+        drawLegendSwatch(image, y, r, g, b);
+        img.drawString(
+          image,
+          'Continent $c',
+          font: img.arial14,
+          x: legendPadding + swatchSize + swatchGap,
+          y: y,
+          color: black,
+        );
+        row++;
+      }
+    } else {
+      final y = legendY0 + row * legendLineHeight;
+      drawLegendLandSeedMarker(image, y);
+      img.drawString(
+        image,
+        'Land seeds (cluster per continent)',
+        font: img.arial14,
+        x: legendPadding + swatchSize + swatchGap,
+        y: y,
+        color: black,
+      );
+      row++;
+    }
+  }
+  if (hasResourceGrid) {
+    for (final r in Resource.values) {
+      final y = legendY0 + row * legendLineHeight;
+      img.drawString(
+        image,
+        resourceToLegendLetter(r),
+        font: img.arial14,
+        x: legendPadding,
+        y: y,
+        color: black,
+      );
+      img.drawString(
+        image,
+        '  ${resourceToLegendLabel(r)}',
+        font: img.arial14,
+        x: legendPadding + swatchSize + swatchGap,
+        y: y,
+        color: black,
+      );
+      row++;
+    }
+  }
+  return row;
+}
 
 Iterable<String> _regionIdsFromResult(TileMapResult result) sync* {
   for (var y = 0; y < result.height; y++) {
@@ -175,7 +261,7 @@ Uint8List renderTileMapToPng(
       for (var x = 0; x < result.width; x++) {
         final r = result.resourceAt(x, y);
         if (r == null) continue;
-        final letter = _resourceLetter(r);
+        final letter = resourceToLegendLetter(r);
         final cx = x * cellSize + cellSize ~/ 2;
         final cy = y * cellSize + cellSize ~/ 2;
         final px = cx - letterOffsetX;
@@ -208,44 +294,23 @@ Uint8List renderTileMapToPng(
     drawLegendSwatch(image, legendY0 + row * legendLineHeight, seaColorRgb.$1, seaColorRgb.$2, seaColorRgb.$3);
     img.drawString(image, 'Sea', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: legendY0 + row * legendLineHeight, color: black);
     row++;
-    for (final t in TerrainType.values) {
+      for (final t in TerrainType.values) {
       final (r, g, b) = terrainColorRgb[t]!;
       drawLegendSwatch(image, legendY0 + row * legendLineHeight, r, g, b);
       final label = _terrainLabel(t);
       img.drawString(image, label, font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: legendY0 + row * legendLineHeight, color: black);
       row++;
     }
-    if (showContinentSeeds) {
-      final y = legendY0 + row * legendLineHeight;
-      drawLegendContinentSeedMarker(image, y);
-      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-      row++;
-    }
-    if (showLandSeeds) {
-      if (useLandSeedByContinent) {
-        final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
-        for (var c = 0; c <= maxContinent; c++) {
-          final y = legendY0 + row * legendLineHeight;
-          final (r, g, b) = regionPalette[c % regionPalette.length];
-          drawLegendSwatch(image, y, r, g, b);
-          img.drawString(image, 'Continent $c', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-          row++;
-        }
-      } else {
-        final y = legendY0 + row * legendLineHeight;
-        drawLegendLandSeedMarker(image, y);
-        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-        row++;
-      }
-    }
-    if (result.resourceGrid != null) {
-      for (final r in Resource.values) {
-        final y = legendY0 + row * legendLineHeight;
-        img.drawString(image, _resourceLetter(r), font: img.arial14, x: legendPadding, y: y, color: black);
-        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-        row++;
-      }
-    }
+    row = _drawOptionalLegendSections(
+      image,
+      legendY0,
+      row,
+      showContinentSeeds: showContinentSeeds,
+      showLandSeeds: showLandSeeds,
+      useLandSeedByContinent: useLandSeedByContinent,
+      landSeedContinentIndices: landSeedContinentIndices,
+      hasResourceGrid: result.resourceGrid != null,
+    );
   } else {
     img.drawString(
       image,
@@ -275,37 +340,16 @@ Uint8List renderTileMapToPng(
       img.drawString(image, label, font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
       row++;
     }
-    if (showContinentSeeds) {
-      final y = legendY0 + row * legendLineHeight;
-      drawLegendContinentSeedMarker(image, y);
-      img.drawString(image, 'Continent seeds (one per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-      row++;
-    }
-    if (showLandSeeds) {
-      if (useLandSeedByContinent) {
-        final maxContinent = landSeedContinentIndices.reduce((a, b) => a > b ? a : b);
-        for (var c = 0; c <= maxContinent; c++) {
-          final y = legendY0 + row * legendLineHeight;
-          final (r, g, b) = regionPalette[c % regionPalette.length];
-          drawLegendSwatch(image, y, r, g, b);
-          img.drawString(image, 'Continent $c', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-          row++;
-        }
-      } else {
-        final y = legendY0 + row * legendLineHeight;
-        drawLegendLandSeedMarker(image, y);
-        img.drawString(image, 'Land seeds (cluster per continent)', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-        row++;
-      }
-    }
-    if (result.resourceGrid != null) {
-      for (final r in Resource.values) {
-        final y = legendY0 + row * legendLineHeight;
-        img.drawString(image, _resourceLetter(r), font: img.arial14, x: legendPadding, y: y, color: black);
-        img.drawString(image, '  ${_resourceLabel(r)}', font: img.arial14, x: legendPadding + swatchSize + swatchGap, y: y, color: black);
-        row++;
-      }
-    }
+    row = _drawOptionalLegendSections(
+      image,
+      legendY0,
+      row,
+      showContinentSeeds: showContinentSeeds,
+      showLandSeeds: showLandSeeds,
+      useLandSeedByContinent: useLandSeedByContinent,
+      landSeedContinentIndices: landSeedContinentIndices,
+      hasResourceGrid: result.resourceGrid != null,
+    );
   }
 
   return img.encodePng(image);
@@ -325,88 +369,6 @@ String _terrainLabel(TerrainType t) {
       return 'Swamp';
     case TerrainType.desert:
       return 'Desert';
-  }
-}
-
-String _resourceLetter(Resource r) {
-  switch (r) {
-    case Resource.grain:
-      return 'g';
-    case Resource.meat:
-      return 'm';
-    case Resource.wool:
-      return 'w';
-    case Resource.horses:
-      return 'h';
-    case Resource.timber:
-      return 't';
-    case Resource.iron:
-      return 'i';
-    case Resource.copper:
-      return 'c';
-    case Resource.tin:
-      return 'n';
-    case Resource.coal:
-      return 'k';
-    case Resource.sugarCane:
-      return 's';
-    case Resource.tobacco:
-      return 'b';
-    case Resource.cotton:
-      return 'u';
-    case Resource.furs:
-      return 'f';
-    case Resource.spices:
-      return 'p';
-    case Resource.silver:
-      return 'v';
-    case Resource.gold:
-      return 'a';
-    case Resource.gems:
-      return 'e';
-    case Resource.diamonds:
-      return 'd';
-  }
-}
-
-String _resourceLabel(Resource r) {
-  switch (r) {
-    case Resource.grain:
-      return 'Grain';
-    case Resource.meat:
-      return 'Meat';
-    case Resource.wool:
-      return 'Wool';
-    case Resource.horses:
-      return 'Horses';
-    case Resource.timber:
-      return 'Timber';
-    case Resource.iron:
-      return 'Iron';
-    case Resource.copper:
-      return 'Copper';
-    case Resource.tin:
-      return 'Tin';
-    case Resource.coal:
-      return 'Coal';
-    case Resource.sugarCane:
-      return 'Sugar Cane';
-    case Resource.tobacco:
-      return 'Tobacco';
-    case Resource.cotton:
-      return 'Cotton';
-    case Resource.furs:
-      return 'Furs';
-    case Resource.spices:
-      return 'Spices';
-    case Resource.silver:
-      return 'Silver';
-    case Resource.gold:
-      return 'Gold';
-    case Resource.gems:
-      return 'Gems';
-    case Resource.diamonds:
-      return 'Diamonds';
   }
 }
 
