@@ -381,19 +381,8 @@ class OrderEngine {
     final unitsById =
         Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
 
-    // Per-player tile exclusivity (SPEC/game/civilian-units.md, SPEC/program/orders.md):
-    // track tiles already reserved by this player's Builder/Engineer/Merchant work
-    // (existing multi-turn currentWork and newly accepted work orders in this validation pass).
-    final devExclusiveTiles = <String>{};
-    for (final u in allUnitsFromWorld(game.worldState)) {
-      final w = u.currentWork;
-          if (u.ownerId == playerId &&
-          isDevExclusiveUnitType(u.type) &&
-          w != null &&
-          w.tileKey.isNotEmpty) {
-        devExclusiveTiles.add(w.tileKey);
-      }
-    }
+    final devExclusiveTiles =
+        devExclusiveTilesFromWorld(game.worldState, playerId);
 
     const _moveValidator = MoveValidator();
 
