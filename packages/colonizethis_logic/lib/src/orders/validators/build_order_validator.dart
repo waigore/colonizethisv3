@@ -35,10 +35,7 @@ class BuildOrderValidator {
       previousRejected: previousRejected,
       body: () {
         if (_player.capitalProvinceId == null) {
-          return const OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: 'No capital to spawn unit',
-          );
+          return OrderValidationResult.rejected('No capital to spawn unit');
         }
 
         final check = canAffordBuild(
@@ -49,9 +46,8 @@ class BuildOrderValidator {
           _treasury,
         );
         if (!check.canAfford) {
-          return OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: check.reason ?? 'Insufficient resources',
+          return OrderValidationResult.rejected(
+            check.reason ?? 'Insufficient resources',
           );
         }
 
@@ -65,9 +61,7 @@ class BuildOrderValidator {
         _workers = after.workers;
         _stockpile = after.stockpile;
         _treasury = after.treasury;
-        return const OrderValidationResult(
-          status: OrderValidationStatus.accepted,
-        );
+        return OrderValidationResult.accepted();
       },
     );
   }

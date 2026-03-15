@@ -5,6 +5,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
 final _log = Logger();
@@ -22,14 +23,14 @@ List<String> _humanObserverIds(Game game) {
 bool isAiControlledForEvidence(Game game, String playerId) {
   final explicit = game.aiControlByGpId[playerId];
   if (explicit != null) return explicit;
-  final p = getPlayer(game, playerId);
+  final p = game.playerById(playerId);
   return p != null && !p.isHuman;
 }
 
 /// Returns true if [targetId] is a weaker GP than [actorId] by military level (for warmonger evidence).
 bool _isWeakerGp(Game game, String actorId, String targetId) {
-  final actor = getPlayer(game, actorId);
-  final target = getPlayer(game, targetId);
+  final actor = game.playerById(actorId);
+  final target = game.playerById(targetId);
   if (actor == null || target == null) return false;
   final aLevel = actor.militaryLevel ?? 0;
   final tLevel = target.militaryLevel ?? 0;
@@ -49,7 +50,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
 
   final rel = getRelation(game, actorGpId, targetFactionId);
   final wasAllied = rel != null && rel.level == RelationLevel.allied;
-  final targetIsGp = getPlayer(game, targetFactionId) != null;
+  final targetIsGp = game.playerById(targetFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, actorGpId, targetFactionId);
 
   final entries = <DossierEvidenceEntry>[];
@@ -119,7 +120,7 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
   final observers = _humanObserverIds(game);
   if (observers.isEmpty) return [];
 
-  final targetIsGp = getPlayer(game, defenderFactionId) != null;
+  final targetIsGp = game.playerById(defenderFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, victorGpId, defenderFactionId);
   final scoreDelta = weaker ? 2 : 1;
 

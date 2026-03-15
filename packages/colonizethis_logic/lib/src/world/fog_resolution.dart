@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'player_view.dart';
+import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
@@ -19,8 +20,7 @@ import 'unit_lookup.dart';
 
   // Province ownership lookup so we can ensure timers only affect other-faction provinces.
   final ownerByProvinceId = <String, String?>{
-    for (final p in world.oldWorld.provinces) p.id: p.ownerId,
-    for (final p in world.newWorld.provinces) p.id: p.ownerId,
+    for (final p in allProvinces(world)) p.id: p.ownerId,
   };
 
   final nextSpyTimers = <String, Map<String, int>>{};
@@ -60,11 +60,8 @@ import 'unit_lookup.dart';
 /// SPEC/program/fog-and-exploration-resolution.md.
 Map<String, Map<String, String>> applyFogDecay(Game game) {
   const explorerTypes = {'explorer', 'spy'};
-  final owOwnerByProvince = {
-    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
-  };
-  final nwOwnerByProvince = {
-    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
+  final ownerByProvince = <String, String?>{
+    for (final p in allProvinces(game.worldState)) p.id: p.ownerId,
   };
 
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
@@ -94,8 +91,7 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
       final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
-      final ownerId =
-          owOwnerByProvince[fullProvinceId] ?? nwOwnerByProvince[fullProvinceId];
+      final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
       if (!hasExplorerIn.contains(fullProvinceId) &&
           !hasSpyTimerIn.contains(fullProvinceId)) {

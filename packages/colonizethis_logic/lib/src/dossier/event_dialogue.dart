@@ -7,6 +7,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/movement.dart';
+import '../world/province_lookup.dart';
 import 'evidence_rules.dart';
 
 /// Era names for dialogue (SPEC/ai/dialogue-and-mood.md: discovery | earlyModern | imperial | industrial).
@@ -118,10 +119,7 @@ List<String> neighborProvinceLocalIds(MapTopology topology, String regionId, Str
 }
 
 String? _ownerOfProvince(Game game, String fullProvinceId) {
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.id == fullProvinceId) return p.ownerId;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in allProvinces(game.worldState)) {
     if (p.id == fullProvinceId) return p.ownerId;
   }
   return null;

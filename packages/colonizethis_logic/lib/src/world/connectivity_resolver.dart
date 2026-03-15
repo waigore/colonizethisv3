@@ -182,10 +182,7 @@ bool _isCapitalTileOnSeaboard(
 
 Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
   final owned = <String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId == playerId) owned.add(p.id);
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in allProvinces(game.worldState)) {
     if (p.ownerId == playerId) owned.add(p.id);
   }
   return owned;

@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
 
 /// Applies initial visibility and tile metadata to [game] using [tileMapByRegion].
 /// Own provinces: fullyVisible (OW) or unknown (NW). Others: fogged (OW).
@@ -18,11 +19,9 @@ Game applyInitialVisibility({
   final nwMap = tileMapByRegion[kRegionNewWorld];
   if (owMap == null || nwMap == null) return game;
 
-  final owOwnerById = <String, String?>{
-    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
-  };
-  final nwOwnerById = <String, String?>{
-    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
+  final ownerById = <String, String?>{
+    for (final p in allProvinces(game.worldState))
+      ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id)): p.ownerId,
   };
 
   final playerVisibilityByTile = <String, Map<String, String>>{};
@@ -37,7 +36,7 @@ Game applyInitialVisibility({
     for (var x = 0; x < owMap.width; x++) {
       final localId = owMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final ownerId = owOwnerById[fullId];
+      final ownerId = ownerById[fullId];
       if (ownerId == null) continue;
       final tileKey = '$kRegionOldWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionOldWorld]!
@@ -51,7 +50,7 @@ Game applyInitialVisibility({
     for (var x = 0; x < nwMap.width; x++) {
       final localId = nwMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionNewWorld, localId);
-      final ownerId = nwOwnerById[fullId];
+      final ownerId = ownerById[fullId];
       if (ownerId == null) continue;
       final tileKey = '$kRegionNewWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionNewWorld]!
@@ -70,7 +69,7 @@ Game applyInitialVisibility({
       for (var x = 0; x < owMap.width; x++) {
         final localId = owMap.cell(x, y);
         final fullId = ProvinceId.full(kRegionOldWorld, localId);
-        final ownerId = owOwnerById[fullId];
+        final ownerId = ownerById[fullId];
         if (ownerId == null) continue;
         final tileKey = '$kRegionOldWorld|$localId|$x|$y';
         visibility[tileKey] =

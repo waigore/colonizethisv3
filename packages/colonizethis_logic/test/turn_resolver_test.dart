@@ -2682,7 +2682,7 @@ void main() {
       expect(overture, isNotNull);
       expect(overture!.hasConsulate, isTrue);
       // Treasury should be reduced by consulate cost.
-      final player = getPlayer(next, 'p1')!;
+      final player = next.playerById('p1')!;
       expect(player.treasury, lessThan(2000));
     });
 

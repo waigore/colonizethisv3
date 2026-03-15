@@ -84,10 +84,7 @@ PlayerView buildPlayerView(
 
   // Provinces: key by full id (p.id is regionId|localId).
   final provincesById = <String, Province>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    provincesById[toFullProvinceId(p.regionId, p.id)] = p;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in allProvinces(game.worldState)) {
     provincesById[toFullProvinceId(p.regionId, p.id)] = p;
   }
 

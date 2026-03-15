@@ -25,6 +25,13 @@ Province? _findProvinceInRegion(
 RegionData? regionDataForId(WorldState world, String regionId) =>
     _regionForId(world, regionId);
 
+/// All provinces in both regions (old world first, then new world).
+/// Use when iterating over every province without needing region separation.
+Iterable<Province> allProvinces(WorldState world) sync* {
+  yield* world.oldWorld.provinces;
+  yield* world.newWorld.provinces;
+}
+
 /// Central province lookup. Lookup is by **full disambiguated id** (`regionId|localId`)
 /// and is **region-scoped**: resolution happens only within the given region.
 /// SPEC/game/world-model-identity.md.

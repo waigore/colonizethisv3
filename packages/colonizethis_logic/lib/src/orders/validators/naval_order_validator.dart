@@ -34,9 +34,8 @@ class NavalOrderValidator {
         final fleet = _fleetById[o.fleetId];
         final homeFleetId = homeFleetIdFor(_playerId);
         if (fleet == null || fleet.ownerId != _playerId || fleet.id == homeFleetId) {
-          return OrderValidationResult(
-            status: OrderValidationStatus.rejected,
-            reason: fleet == null ? 'Fleet not found' : 'Invalid naval move',
+          return OrderValidationResult.rejected(
+            fleet == null ? 'Fleet not found' : 'Invalid naval move',
           );
         }
 
@@ -44,32 +43,26 @@ class NavalOrderValidator {
           // Dock: fleet must be at sea; current sea zone adjacent to province; province owned by player. SPEC/game/ships-and-naval.md.
           final portProvinceId = o.destinationPortProvinceId!;
           if (!fleet.isAtSea || fleet.seaZoneId == null) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Dock only allowed when fleet is at sea',
+            return OrderValidationResult.rejected(
+              'Dock only allowed when fleet is at sea',
             );
           }
           final fullProvinceId =
               toFullProvinceId(fleet.regionId, portProvinceId);
           final province = tryGetProvince(_game.worldState, fullProvinceId);
           if (province == null) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Port province not found',
-            );
+            return OrderValidationResult.rejected('Port province not found');
           }
           if (province.ownerId != _playerId) {
-            return const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Can only dock at own province',
+            return OrderValidationResult.rejected(
+              'Can only dock at own province',
             );
           }
           final adjacentSeaZones = seaZoneIdsAdjacentToProvince(_topology, fullProvinceId);
           final valid = adjacentSeaZones.contains(fleet.seaZoneId);
-          return OrderValidationResult(
-            status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
-            reason: valid ? null : 'Invalid naval move',
-          );
+          return valid
+              ? OrderValidationResult.accepted()
+              : OrderValidationResult.rejected('Invalid naval move');
         }
 
         // Move to sea zone: destination must be adjacent.
@@ -79,8 +72,7 @@ class NavalOrderValidator {
         } else {
           final inPortProvinceId = fleet.inPortAtProvinceId;
           if (inPortProvinceId == null) {
-            return const OrderValidationResult(
-                status: OrderValidationStatus.rejected, reason: 'Invalid naval move');
+            return OrderValidationResult.rejected('Invalid naval move');
           }
           final parts = inPortProvinceId.split('|');
           final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
@@ -92,10 +84,9 @@ class NavalOrderValidator {
             destZone != null &&
             destZone.isNotEmpty &&
             (currentZone == destZone || isAdjacentSeaZone(_topology, currentZone, destZone));
-        return OrderValidationResult(
-          status: valid ? OrderValidationStatus.accepted : OrderValidationStatus.rejected,
-          reason: valid ? null : 'Invalid naval move',
-        );
+        return valid
+            ? OrderValidationResult.accepted()
+            : OrderValidationResult.rejected('Invalid naval move');
       },
     );
   }
@@ -143,12 +134,9 @@ class NavalOrderValidator {
           }
         }
 
-        return OrderValidationResult(
-          status: valid
-              ? OrderValidationStatus.accepted
-              : OrderValidationStatus.rejected,
-          reason: rejectReason,
-        );
+        return valid
+            ? OrderValidationResult.accepted()
+            : OrderValidationResult.rejected(rejectReason ?? 'Invalid naval mission');
       },
     );
   }

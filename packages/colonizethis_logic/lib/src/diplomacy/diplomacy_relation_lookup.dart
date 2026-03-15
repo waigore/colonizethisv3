@@ -4,6 +4,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/military_strength.dart';
+import '../world/province_lookup.dart';
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
 const int overtureConsulateCost = 500;
@@ -15,11 +16,8 @@ const int joinEmpirePerProvinceCost = 2000;
 
 /// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
 int provinceCountOwnedBy(Game game, String factionId) {
-  int count = 0;
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId == factionId) count++;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  var count = 0;
+  for (final p in allProvinces(game.worldState)) {
     if (p.ownerId == factionId) count++;
   }
   return count;
@@ -173,14 +171,6 @@ bool canAttackWithWarOrDeclaring(
       o.type == DiplomaticOrderType.declareWar &&
       o.targetFactionId == targetOwnerId);
   return atWar || declaringWarThisTurn;
-}
-
-/// Returns player by id, or null.
-Player? getPlayer(Game game, String playerId) {
-  for (final p in game.players) {
-    if (p.id == playerId) return p;
-  }
-  return null;
 }
 
 /// Diplomatic history events involving both [factionA] and [factionB], newest first.
