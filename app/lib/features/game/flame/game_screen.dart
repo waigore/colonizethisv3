@@ -69,32 +69,34 @@ class GameScreen extends ConsumerWidget {
           else
             GameWidget(game: ColonizeThisGame()),
           if (game != null && victory == null)
-            Positioned(
-              left: 16,
-              top: 16,
-              child: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _showPauseMenu(context),
-                tooltip: 'Pause menu',
-              ),
-            ),
-            Positioned(
-              right: 16,
-              top: 16,
-              child: CtNinePatchButton(
-                onPressed: () {
-                  final service = ref.read(gameServiceProvider);
-                  final orders = ref.read(currentOrdersProvider);
-                  final newGame = service.nextTurn(game, orders: orders);
-                  ref.read(currentGameProvider.notifier).state = newGame;
-                  ref.read(currentOrdersProvider.notifier).state =
-                      const ct_models.Orders();
-                },
-                child: Text(
-                  'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+            ...[
+              Positioned(
+                left: 16,
+                top: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => _showPauseMenu(context),
+                  tooltip: 'Pause menu',
                 ),
               ),
-            ),
+              Positioned(
+                right: 16,
+                top: 16,
+                child: CtNinePatchButton(
+                  onPressed: () {
+                    final service = ref.read(gameServiceProvider);
+                    final orders = ref.read(currentOrdersProvider);
+                    final newGame = service.nextTurn(game, orders: orders);
+                    ref.read(currentGameProvider.notifier).state = newGame;
+                    ref.read(currentOrdersProvider.notifier).state =
+                        const ct_models.Orders();
+                  },
+                  child: Text(
+                    'Next turn (${game.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+                  ),
+                ),
+              ),
+            ],
           if (game != null && victory != null)
             _VictoryOverlay(game: game, victory: victory),
         ],
