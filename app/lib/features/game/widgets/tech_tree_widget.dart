@@ -41,6 +41,8 @@ const double _nodeHeight = 44;
 const double _layerGap = 140;
 const double _rowGap = 52;
 const double _edgeStrokeWidth = 2;
+/// Offset from source right edge for the vertical segment so it stays in the inter-column gap (never through nodes).
+const double _edgeBendOffset = (_layerGap - _nodeWidth) / 2;
 
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.
@@ -124,6 +126,8 @@ class TechTreeWidget extends StatelessWidget {
   }
 
   /// Computes topological layout: each tech in a column strictly right of all its prerequisites.
+  /// For edges that span multiple columns, reserves a row slot in each intermediate column for the
+  /// connector (so the horizontal segment does not pass through nodes); other techs are shifted down.
   /// Used by the widget and by tests (column rule: A→B→C and A→C ⇒ B occupies column between A and C).
   static List<TechNodePosition> computeLayout(Map<String, TechDefinition> catalog) {
     if (catalog.isEmpty) return [];
@@ -160,17 +164,59 @@ class TechTreeWidget extends StatelessWidget {
       list.sort((a, b) => a.compareTo(b));
     }
 
+    // Place layers from right to left so we know target rows when reserving connector slots.
+    final positionsByLayer = <int, List<TechNodePosition>>{};
+    for (var layer = maxLayer; layer >= 0; layer--) {
+      final ids = byLayer[layer] ?? [];
+      final x = 24.0 + layer * _layerGap;
+      final list = <TechNodePosition>[];
+
+      if (layer == maxLayer) {
+        for (var i = 0; i < ids.length; i++) {
+          list.add(TechNodePosition(
+            techId: ids[i],
+            x: x,
+            y: 24 + i * _rowGap,
+            layer: layer,
+          ));
+        }
+      } else {
+        // Reserved row indices: rows that must be left free for connectors from left layers to right layers.
+        final reserved = <int>{};
+        for (var rightLayer = layer + 1; rightLayer <= maxLayer; rightLayer++) {
+          for (final pos in positionsByLayer[rightLayer]!) {
+            final tech = catalog[pos.techId];
+            if (tech == null) continue;
+            final hasPrereqLeft = tech.prerequisiteIds.any((pr) => (layerByTech[pr] ?? -1) < layer);
+            if (hasPrereqLeft) {
+              final rowIndex = ((pos.y - 24) / _rowGap).round();
+              reserved.add(rowIndex);
+            }
+          }
+        }
+        final totalRows = reserved.isEmpty
+            ? ids.length
+            : math.max(ids.length + reserved.length, reserved.reduce(math.max) + 1);
+        final nonReserved = List<int>.generate(totalRows, (i) => i)
+            .where((i) => !reserved.contains(i))
+            .toList()
+          ..sort();
+        for (var i = 0; i < ids.length; i++) {
+          final rowIndex = nonReserved[i];
+          list.add(TechNodePosition(
+            techId: ids[i],
+            x: x,
+            y: 24 + rowIndex * _rowGap,
+            layer: layer,
+          ));
+        }
+      }
+      positionsByLayer[layer] = list;
+    }
+
     final positions = <TechNodePosition>[];
     for (var layer = 0; layer <= maxLayer; layer++) {
-      final ids = byLayer[layer] ?? [];
-      for (var i = 0; i < ids.length; i++) {
-        positions.add(TechNodePosition(
-          techId: ids[i],
-          x: 24 + layer * _layerGap,
-          y: 24 + i * _rowGap,
-          layer: layer,
-        ));
-      }
+      positions.addAll(positionsByLayer[layer]!);
     }
     return positions;
   }
@@ -204,6 +250,19 @@ class TechTreeWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text('${tech.cost} RP', style: theme.textTheme.bodyMedium),
+                    if (tech.prerequisiteIds.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text('Prerequisites', style: theme.textTheme.labelLarge),
+                      ...tech.prerequisiteIds.map(
+                        (id) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '• ${techDisplayName(id)}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (effects.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text('Effects', style: theme.textTheme.labelLarge),
@@ -375,9 +434,13 @@ class _TechTreeEdgePainter extends CustomPainter {
         final fromRightX = fromPos.x + _nodeWidth;
         final fromCenterY = fromPos.y + _centerY;
 
-        // Direct line from source right edge to target left edge (no vertical segments).
+        // Right-angled connector: horizontal into gap, vertical to target row, horizontal to target.
+        // Layout reserves a row slot in intermediate columns so this segment does not pass through nodes.
+        final bendX = fromRightX + _edgeBendOffset;
         final path = Path()
           ..moveTo(fromRightX, fromCenterY)
+          ..lineTo(bendX, fromCenterY)
+          ..lineTo(bendX, toCenterY)
           ..lineTo(toLeftX, toCenterY);
         canvas.drawPath(path, paint);
       }
@@ -428,7 +491,7 @@ class _TechNode extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: locked ? null : onTap,
+        onTap: onTap,
         child: Container(
           width: _nodeWidth,
           height: _nodeHeight,

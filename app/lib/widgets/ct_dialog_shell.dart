@@ -33,6 +33,7 @@ class CtDialogShell extends StatelessWidget {
   /// Inner padding between nine-patch frame and [child].
   final EdgeInsetsGeometry padding;
 
+  /// Filename only; Flame.images uses prefix 'assets/images/' so full key is assets/images/ui_button_nine_patch.png.
   static const String _kAssetPath = 'ui_button_nine_patch.png';
   static const double _tileSize = 16;
 
