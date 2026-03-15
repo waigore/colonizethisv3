@@ -362,6 +362,19 @@ Game _resolveJoinEmpireColony(
   return game;
 }
 
+List<Province> _transferProvinceOwnership(
+    List<Province> provinces, String fromId, String toId) {
+  return provinces
+      .map((p) => p.ownerId == fromId ? p.copyWith(ownerId: toId) : p)
+      .toList();
+}
+
+List<Unit> _transferUnitOwnership(List<Unit> units, String fromId, String toId) {
+  return units
+      .map((u) => u.ownerId == fromId ? u.copyWith(ownerId: toId) : u)
+      .toList();
+}
+
 /// Transfers all provinces, units, and fleets owned by [targetId] to [gpId],
 /// deducts Join Empire cost from GP treasury, removes the Minor/Tribe and
 /// cleans overtures/relations. SPEC/game/diplomacy.md.
@@ -375,20 +388,16 @@ Game _absorbMinorOrTribeIntoGp(Game game, String gpId, String targetId, int turn
   }
 
   // Transfer provinces: ownerId targetId -> gpId
-  final owProvinces = game.worldState.oldWorld.provinces
-      .map((p) => p.ownerId == targetId ? p.copyWith(ownerId: gpId) : p)
-      .toList();
-  final nwProvinces = game.worldState.newWorld.provinces
-      .map((p) => p.ownerId == targetId ? p.copyWith(ownerId: gpId) : p)
-      .toList();
+  final owProvinces =
+      _transferProvinceOwnership(game.worldState.oldWorld.provinces, targetId, gpId);
+  final nwProvinces =
+      _transferProvinceOwnership(game.worldState.newWorld.provinces, targetId, gpId);
 
   // Transfer units: ownerId targetId -> gpId
-  final owUnits = game.worldState.oldWorld.units
-      .map((u) => u.ownerId == targetId ? u.copyWith(ownerId: gpId) : u)
-      .toList();
-  final nwUnits = game.worldState.newWorld.units
-      .map((u) => u.ownerId == targetId ? u.copyWith(ownerId: gpId) : u)
-      .toList();
+  final owUnits =
+      _transferUnitOwnership(game.worldState.oldWorld.units, targetId, gpId);
+  final nwUnits =
+      _transferUnitOwnership(game.worldState.newWorld.units, targetId, gpId);
 
   // Transfer fleets
   final fleets = game.worldState.fleets
