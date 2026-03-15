@@ -1,10 +1,14 @@
 import 'dart:ui';
 
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+
 void main() {
+  suppressLogsForTests();
+
   group('terrainPriority', () {
     test('returns 1 for plains', () {
       expect(terrainPriority(TerrainType.plains), 1);
