@@ -49,7 +49,8 @@ class NavalOrderValidator {
               reason: 'Dock only allowed when fleet is at sea',
             );
           }
-          final fullProvinceId = toFullProvinceId(fleet.regionId, portProvinceId);
+          final fullProvinceId =
+              toFullProvinceId(fleet.regionId, portProvinceId);
           final province = tryGetProvince(_game.worldState, fullProvinceId);
           if (province == null) {
             return const OrderValidationResult(

@@ -34,9 +34,7 @@ class DiplomaticOrderValidator {
       );
 
   ({OrderValidationResult result, int treasury}) _accept() => (
-        result: const OrderValidationResult(
-          status: OrderValidationStatus.accepted,
-        ),
+        result: const OrderValidationResult(status: OrderValidationStatus.accepted),
         treasury: _treasury,
       );
 
@@ -84,7 +82,8 @@ class DiplomaticOrderValidator {
       case DiplomaticOrderType.offerPeace:
         if (!atWar) {
           return _reject(
-              'Cannot offer peace when not at war with that faction');
+            'Cannot offer peace when not at war with that faction',
+          );
         }
         return _accept();
 
@@ -94,29 +93,35 @@ class DiplomaticOrderValidator {
         }
         if (atWar) {
           return _reject(
-              'Cannot form alliance while at war with that faction');
+            'Cannot form alliance while at war with that faction',
+          );
         }
         return _accept();
 
       case DiplomaticOrderType.establishOverture:
         final stage = order.overtureStage;
         if (stage == null || stage == OvertureStage.none) {
-          return _reject('Overture stage is required for establishOverture');
+          return _reject(
+            'Overture stage is required for establishOverture',
+          );
         }
         if (!isMinorOrTribe(_game, targetId) &&
             !isGreatPower(_game, targetId)) {
           return _reject(
-              'Overtures are only valid toward Minor Nations, Tribes, or Great Powers');
+            'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
+          );
         }
         if (atWar) {
           return _reject(
-              'Cannot establish overture while at war with that faction');
+            'Cannot establish overture while at war with that faction',
+          );
         }
 
         // Enforce at most one Establish Overture per (player, target) per turn.
         if (_overtureTargetsThisTurn.contains(targetId)) {
           return _reject(
-              'Already have an Establish Overture order for this faction this turn');
+            'Already have an Establish Overture order for this faction this turn',
+          );
         }
 
         final overture = getOverture(_game, _playerId, targetId);
@@ -128,38 +133,45 @@ class DiplomaticOrderValidator {
           }
           if (_treasury < overtureConsulateCost) {
             return _reject(
-                'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)');
+              'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
+            );
           }
           _treasury -= overtureConsulateCost;
         } else if (stage == OvertureStage.embassy) {
           if (currentStage != OvertureStage.tradeConsulate) {
             return _reject(
-                'Embassy requires existing Trade Consulate with that faction');
+              'Embassy requires existing Trade Consulate with that faction',
+            );
           }
           if (_treasury < overtureEmbassyCost) {
             return _reject(
-                'Insufficient treasury for Embassy (need $overtureEmbassyCost)');
+              'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
+            );
           }
           _treasury -= overtureEmbassyCost;
         } else if (stage == OvertureStage.nap) {
           if (currentStage != OvertureStage.embassy) {
             return _reject(
-                'Non-Aggression Pact requires existing Embassy with that faction');
+              'Non-Aggression Pact requires existing Embassy with that faction',
+            );
           }
         } else if (stage == OvertureStage.joinEmpire) {
           if (currentStage != OvertureStage.nap) {
             return _reject(
-                'Join Empire requires existing Non-Aggression Pact with that faction');
+              'Join Empire requires existing Non-Aggression Pact with that faction',
+            );
           }
           final score = rel?.score ?? relationScoreNeutral;
           if (score < relationScoreMinFriendly) {
             return _reject(
-                'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)');
+              'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
+            );
           }
           final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
           if (_treasury < cost) {
             return _reject(
-                'Join Empire requires £$cost (scales with target size); treasury is $_treasury');
+              'Join Empire requires £$cost (scales with target size); treasury is $_treasury',
+            );
           }
         }
 
@@ -192,7 +204,8 @@ class DiplomaticOrderValidator {
         }
         if (_treasury < amount) {
           return _reject(
-              'Insufficient treasury for SetSubsidy (need $amount)');
+            'Insufficient treasury for SetSubsidy (need $amount)',
+          );
         }
         _treasury -= amount;
         return _accept();
