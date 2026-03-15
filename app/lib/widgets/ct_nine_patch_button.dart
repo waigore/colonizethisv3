@@ -36,6 +36,7 @@ class CtNinePatchButton extends StatelessWidget {
   /// Minimum height; respects 44 dp touch target.
   final double minHeight;
 
+  /// Filename only; Flame.images uses prefix 'assets/images/' so full key is assets/images/ui_button_nine_patch.png.
   static const String _kAssetPath = 'ui_button_nine_patch.png';
   static const double _tileSize = 16;
 

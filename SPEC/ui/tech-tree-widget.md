@@ -11,7 +11,7 @@
 
 - **Graph:** All techs from the global catalog in a single graph. **Left to right:** starting techs (no prerequisites) at the left; end-game techs at the right. Nodes are arranged in **topological layers** (by distance from roots); within a layer, nodes may be grouped or spaced to reduce edge crossings.
 - **Column rule:** If tech A has a prerequisite tech B, then A must be in a column strictly to the right of B. Thus when there is both a chain (A→B→C) and a direct edge (A→C), there is necessarily a gap between A and C, because B occupies the column in between.
-- **Edges:** **Direct lines** from each prerequisite tech to the tech that requires it. No vertical segments: edges run in a straight line from the source node’s right edge to the target node’s left edge (diagonal when source and target are in different rows). Edges are drawn **behind nodes** so they do not obscure node labels or node bodies.
+- **Edges:** **Right-angled connectors** from each prerequisite tech to the tech that requires it. Each edge is drawn as three segments: horizontal from the source node’s right edge into the inter-column gap; vertical at that X to the target row; horizontal to the target node’s left edge. The bend X is placed just to the right of the source column (e.g. source right + half the layer gap minus node width) so the vertical segment never passes through other columns’ nodes. Edges are drawn **behind nodes** so they do not obscure node labels or node bodies. For edges that span multiple columns, the layout reserves a row slot in each intermediate column for the connector (as if a tech occupied that slot); other techs in those columns are shifted down so connectors never pass through nodes.
 - **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for MVP.
 - **Categories:** One graph shows **all** techs. Each node is **color-coded by category** (gathering, transport, labour, civilian, diplomacy, naval, military; new-world if present). Category colours are distinct and consistent (e.g. gathering = green, transport = blue, labour = amber, etc.; exact palette in theme or widget).
 
@@ -35,8 +35,8 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 
 ## Description dialog
 
-- **Trigger:** Tap/click on a tech node opens a **dialog** (or bottom sheet on narrow viewports) with a brief description.
-- **Content (no prerequisite list):** Display name, era (I–IV), category label, RP cost, and **effect summary** (e.g. “Unlocks Halberdiers”, “Extraction cap +1 for Ore”, “Road level 2”, “Fourth research slot”). Prerequisites are **not** listed in the dialog; the tree layout and edges make them obvious.
+- **Trigger:** Tap/click on any tech node (including locked) opens a **dialog** (or bottom sheet on narrow viewports) with a brief description, so players can see benefits and effects for locked techs too.
+- **Content:** Display name, era (I–IV), category label, RP cost, **prerequisites** (list of prerequisite tech display names), and **effect summary** (e.g. “Unlocks Halberdiers”, “Extraction cap +1 for Ore”, “Road level 2”, “Fourth research slot”). Prerequisites are listed clearly in the dialog.
 - **Interaction:** Dialog is read-only. No “Assign to slot” from the dialog; assignment stays in the slots tab.
 
 ## Data
@@ -52,7 +52,7 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 
 - **Given** the current player has some techs researched, **when** the tech tree is displayed, **then** each tech node shows the correct state: researched (filled/bright), in progress (e.g. progress indicator), available (all prereqs met, not unlocked), or locked (prereqs missing), with distinct visuals for each.
 
-- **Given** the tech tree is displayed, **when** the user taps or clicks a tech node, **then** a dialog (or bottom sheet on narrow) opens showing that tech’s display name, era, category, RP cost, and effect summary; the dialog does **not** list prerequisites.
+- **Given** the tech tree is displayed, **when** the user taps or clicks a tech node (including a locked one), **then** a dialog opens showing that tech’s display name, era, category, RP cost, prerequisites list (when any), and effect summary.
 
 - **Given** the tech tree is displayed, **when** the user views any node, **then** the node is color-coded by its category (gathering, transport, labour, civilian, diplomacy, naval, military, or new-world) with consistent colours across the tree.
 
