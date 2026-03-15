@@ -15,6 +15,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  session_log_buffer:
   colonizethis_map:
   colonizethis_models:
   colonizethis_data:

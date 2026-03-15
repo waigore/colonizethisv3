@@ -22,6 +22,8 @@ enum CttermRoute {
   pauseOptions,
   /// Shown when turn resolution blocks on human accept/reject of diplomatic overtures. SPEC/program/turn-resolution-phases.md.
   pendingOvertures,
+  /// Debug log viewer. SPEC/program/debug-log-viewer.md.
+  debugLogViewer,
 }
 
 /// Unique 6-digit screen ID for each route. Displayed at top of each screen for identification.
@@ -67,6 +69,8 @@ extension CttermRouteScreenId on CttermRoute {
         return '100018';
       case CttermRoute.pendingOvertures:
         return '100019';
+      case CttermRoute.debugLogViewer:
+        return '100020';
     }
   }
 }

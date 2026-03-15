@@ -8,7 +8,7 @@ import 'package:ctterm/save_service.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
-/// Main menu: New Game, Load Game (L always navigates; list empty when no saves), Settings, Quit.
+/// Main menu: New Game, Load Game (L always navigates; list empty when no saves), Settings, Debug log, Quit.
 class MainMenuScreen extends StatefulComponent {
   const MainMenuScreen({
     super.key,
@@ -16,6 +16,7 @@ class MainMenuScreen extends StatefulComponent {
     required this.onLoadGame,
     required this.onSettings,
     required this.onQuit,
+    this.onDebugLog,
     this.dataDirOverride,
   });
 
@@ -23,6 +24,7 @@ class MainMenuScreen extends StatefulComponent {
   final void Function() onLoadGame;
   final void Function() onSettings;
   final void Function() onQuit;
+  final void Function()? onDebugLog;
   final String? dataDirOverride;
 
   @override
@@ -88,6 +90,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           component.onQuit();
           return true;
         }
+        if (c == 'd' && component.onDebugLog != null) {
+          component.onDebugLog!();
+          return true;
+        }
         return false;
       },
       child: Center(
@@ -115,6 +121,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 ),
               ),
             _menuRow('S', 'Settings', true, component.onSettings),
+            if (component.onDebugLog != null)
+              _menuRow('D', 'Debug log', true, component.onDebugLog!),
             _menuRow('Q', 'Quit', true, component.onQuit),
             const SizedBox(height: 2),
             Text('v0.1.0', style: TextStyle(color: Colors.gray)),

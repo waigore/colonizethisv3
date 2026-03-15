@@ -23,12 +23,16 @@ class PauseOptionsScreen extends StatefulComponent {
 }
 
 class _PauseOptionsScreenState extends State<PauseOptionsScreen> {
-  // Selected menu item (0 = Exit to Main Menu, 1 = Settings)
+  // Selected menu item (0 = Exit to Main Menu, 1 = Settings, 2 = Debug log)
   int _selectedIndex = 0;
   // Show exit confirmation
   bool _showExitConfirm = false;
 
-  static const _menuItems = ['Exit to Main Menu', 'Settings'];
+  static const _menuItems = [
+    'Exit to Main Menu',
+    'Settings',
+    'Debug log',
+  ];
 
   @override
   Component build(BuildContext context) {
@@ -136,6 +140,10 @@ class _PauseOptionsScreenState extends State<PauseOptionsScreen> {
       } else if (_selectedIndex == 1) {
         // Settings (navigate to settings screen)
         component.onNavigate(CttermRoute.settings);
+        return true;
+      } else if (_selectedIndex == 2) {
+        // Debug log (navigate to debug log viewer)
+        component.onNavigate(CttermRoute.debugLogViewer);
         return true;
       }
     }

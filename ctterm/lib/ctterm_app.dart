@@ -353,6 +353,10 @@ class _CttermAppState extends State<CttermApp> {
         settingsReturnRoute: _route == CttermRoute.settings && _previousRoute == CttermRoute.pauseOptions
             ? CttermRoute.pauseOptions
             : null,
+        /// When in Debug log viewer, Back goes to Pause or Main Menu. SPEC/program/debug-log-viewer.md.
+        debugLogViewerReturnRoute: _route == CttermRoute.debugLogViewer
+            ? _previousRoute
+            : null,
       ),
     );
   }
