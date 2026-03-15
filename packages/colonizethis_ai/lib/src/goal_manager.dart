@@ -1,12 +1,15 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:logger/logger.dart';
 
 import 'ai_config.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
 // Goal selection (behavior tree). SPEC/ai/ai-architecture.md, ai-personalities.md.
+
+const String _kGoalLogPrefix = 'ai/goal_manager';
 
 /// Top-level strategy goals for the AI.
 enum StrategicGoal {
@@ -64,13 +67,23 @@ StrategicGoal selectPrimaryGoal(
     StrategicGoal.diplomacy: diplomacy,
   };
 
+  Logger().d(
+    '$_kGoalLogPrefix: eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
+    'weights defend=$defend expand=$expand conquer=$conquer trade=$trade tech=$tech diplomacy=$diplomacy',
+  );
+
   // Weighted random choice using goalSeed.
   final total = candidates.values.fold<int>(0, (a, b) => a + b);
   if (total <= 0) return StrategicGoal.expand;
   var r = math.Random(goalSeed).nextInt(total);
+  StrategicGoal selected = StrategicGoal.expand;
   for (final e in candidates.entries) {
     r -= e.value;
-    if (r < 0) return e.key;
+    if (r < 0) {
+      selected = e.key;
+      break;
+    }
   }
-  return StrategicGoal.expand;
+  Logger().i('$_kGoalLogPrefix: selected primaryGoal=$selected');
+  return selected;
 }
