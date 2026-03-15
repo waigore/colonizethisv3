@@ -6,6 +6,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 import 'package:ctterm/ctterm_app.dart';
 import 'package:ctterm/ctterm_log.dart';
 import 'package:ctterm/save_service.dart';
+import 'package:session_log_buffer/session_log_buffer.dart';
 
 final log_pkg.Logger _log = log_pkg.Logger();
 
@@ -20,6 +21,7 @@ void main(List<String> args) async {
   }
 
   initCttermLogging(dataDirOverride);
+  SessionLogBuffer.init();
   _log.i('tui: ctterm starting');
 
   var initialLockDetected = false;

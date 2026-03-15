@@ -1,0 +1,14 @@
+name: session_log_buffer
+description: In-memory session log buffer for debug log viewer. SPEC/program/debug-log-viewer.md.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  logger: ^2.0.2
+
+dev_dependencies:
+  test: ^1.24.0

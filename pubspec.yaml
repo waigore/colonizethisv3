@@ -9,6 +9,7 @@ workspace:
   - widgetbook_host
   - ctdev
   - ctterm
+  - packages/session_log_buffer
   - packages/colonizethis_models
   - packages/colonizethis_data
   - packages/colonizethis_save

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:session_log_buffer/session_log_buffer.dart';
 
 import 'app.dart';
 import 'config/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SessionLogBuffer.init();
   await Hive.initFlutter();
   try {
     await Hive.openBox(HiveBoxNames.settings);

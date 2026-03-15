@@ -40,6 +40,7 @@
 |---|--------|--------------------------------------|
 | 1 | **Exit to Main Menu** | Show the exit-confirmation prompt (§5). Does not exit immediately. |
 | 2 | **Settings** | Navigate to the Settings screen (100005). When the user leaves Settings (Back), they return to the Pause menu (game still paused). |
+| 3 | **Debug log** | Navigate to the Debug log viewer screen (100020). Per [SPEC/program/debug-log-viewer.md](../../program/debug-log-viewer.md). When the user leaves the viewer (Back), they return to the Pause menu. |
 
 No other menu items are required for MVP. Additional options (e.g. Help) may be added later; see §9.
 
@@ -139,6 +140,16 @@ No other menu items are required for MVP. Additional options (e.g. Help) may be 
 - **Given** the terminal is narrow (e.g. 40 columns)  
 - **When** the Pause menu is open  
 - **Then** the menu renders without horizontal overflow and all items remain selectable.
+
+### Debug log
+
+- **Given** the Pause menu is open  
+- **When** the player selects "Debug log" and presses **Enter**  
+- **Then** the Debug log viewer screen (100020) is shown.
+
+- **Given** the player opened the Debug log viewer from the Pause menu  
+- **When** the player exits the viewer (Back)  
+- **Then** the app returns to the Pause menu (100018) and the game remains paused.
 
 ---
 
