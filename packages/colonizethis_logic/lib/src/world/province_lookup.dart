@@ -20,6 +20,11 @@ Province? _findProvinceInRegion(
   return region.provinces[idx];
 }
 
+/// Returns the region data for [regionId], or null if unknown.
+/// Use when callers need [RegionData] (e.g. to iterate provinces) without full province lookup.
+RegionData? regionDataForId(WorldState world, String regionId) =>
+    _regionForId(world, regionId);
+
 /// Central province lookup. Lookup is by **full disambiguated id** (`regionId|localId`)
 /// and is **region-scoped**: resolution happens only within the given region.
 /// SPEC/game/world-model-identity.md.

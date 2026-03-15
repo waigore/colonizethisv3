@@ -20,9 +20,8 @@ Game applyCapitalReassignmentAfterCombat(
     if (capProvinceId == null || player.capitalTile == null) continue;
     final regionId = ProvinceId.regionIdFrom(capProvinceId);
     final regionTopology = topologyByRegion?[regionId] ?? topology;
-    final region = regionId == kRegionOldWorld
-        ? state.worldState.oldWorld
-        : state.worldState.newWorld;
+    final region = regionDataForId(state.worldState, regionId);
+    if (region == null) continue;
     final province =
         region.provinces.where((p) => p.id == capProvinceId).firstOrNull;
     if (province == null) continue;
