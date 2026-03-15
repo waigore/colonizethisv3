@@ -7,10 +7,8 @@ import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
+import '../unit_type_helpers.dart';
 import 'work_order_cost_calculator.dart';
-
-bool isDevExclusiveUnitType(String type) =>
-    type == 'Builder' || type == 'Engineer' || type == 'Merchant';
 
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]

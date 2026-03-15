@@ -15,6 +15,7 @@ import 'validators/diplomatic_order_validator.dart';
 import 'validators/build_order_validator.dart';
 import 'validators/work_order_validator.dart';
 import 'validators/naval_order_validator.dart';
+import 'unit_type_helpers.dart';
 
 final Logger _log = Logger();
 
@@ -23,6 +24,30 @@ final Logger _log = Logger();
 
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. No world state mutation.
+
+/// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
+/// Returns the new rejected flag (true if any result was rejected).
+bool _appendValidationResults<T>(
+  List<OrderValidationResult> results,
+  List<T> orders,
+  bool rejected,
+  OrderValidationResult Function(T order, bool previousRejected) validate,
+) {
+  var r = rejected;
+  for (final o in orders) {
+    final res = validate(o, r);
+    results.add(res);
+    if (!res.isAccepted) r = true;
+  }
+  return r;
+}
+
+/// Deep-copy of order maps: new map and new list per player. Used by constructor and _copyOrders.
+Map<String, List<T>> _copyMapOfOrderLists<T>(
+  Map<String, List<T>> map,
+) =>
+    Map.from(map)..updateAll((_, v) => List<T>.from(v));
+
 class _OrderSlot<T> {
   const _OrderSlot({
     required this.getter,
@@ -39,25 +64,20 @@ class OrderEngine {
   OrderEngine({
     Orders initialOrders = const Orders(),
   }) : _orders = Orders(
-          moveOrdersByPlayerId: Map.from(initialOrders.moveOrdersByPlayerId)
-            ..updateAll((_, v) => List.from(v)),
+          moveOrdersByPlayerId:
+              _copyMapOfOrderLists(initialOrders.moveOrdersByPlayerId),
           buildUnitOrdersByPlayerId:
-              Map.from(initialOrders.buildUnitOrdersByPlayerId)
-                ..updateAll((_, v) => List.from(v)),
-          workOrdersByPlayerId: Map.from(initialOrders.workOrdersByPlayerId)
-            ..updateAll((_, v) => List.from(v)),
+              _copyMapOfOrderLists(initialOrders.buildUnitOrdersByPlayerId),
+          workOrdersByPlayerId:
+              _copyMapOfOrderLists(initialOrders.workOrdersByPlayerId),
           diplomaticOrdersByPlayerId:
-              Map.from(initialOrders.diplomaticOrdersByPlayerId)
-                ..updateAll((_, v) => List.from(v)),
+              _copyMapOfOrderLists(initialOrders.diplomaticOrdersByPlayerId),
           researchOrdersByPlayerId:
-              Map.from(initialOrders.researchOrdersByPlayerId)
-                ..updateAll((_, v) => List.from(v)),
+              _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
           navalMoveOrdersByPlayerId:
-              Map.from(initialOrders.navalMoveOrdersByPlayerId)
-                ..updateAll((_, v) => List<NavalMoveOrder>.from(v)),
+              _copyMapOfOrderLists(initialOrders.navalMoveOrdersByPlayerId),
           navalMissionOrdersByPlayerId:
-              Map.from(initialOrders.navalMissionOrdersByPlayerId)
-                ..updateAll((_, v) => List<NavalMissionOrder>.from(v)),
+              _copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
         );
 
   Orders _orders;
@@ -65,27 +85,18 @@ class OrderEngine {
   Orders get orders => _copyOrders(_orders);
 
   Orders _copyOrders(Orders o) => Orders(
-        moveOrdersByPlayerId: o.moveOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<MoveOrder>.from(v)),
-        ),
-        buildUnitOrdersByPlayerId: o.buildUnitOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<BuildUnitOrder>.from(v)),
-        ),
-        workOrdersByPlayerId: o.workOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<WorkOrder>.from(v)),
-        ),
-        diplomaticOrdersByPlayerId: o.diplomaticOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<DiplomaticOrder>.from(v)),
-        ),
-        researchOrdersByPlayerId: o.researchOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<ResearchOrder>.from(v)),
-        ),
-        navalMoveOrdersByPlayerId: o.navalMoveOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<NavalMoveOrder>.from(v)),
-        ),
-        navalMissionOrdersByPlayerId: o.navalMissionOrdersByPlayerId.map(
-          (k, v) => MapEntry(k, List<NavalMissionOrder>.from(v)),
-        ),
+        moveOrdersByPlayerId: _copyMapOfOrderLists(o.moveOrdersByPlayerId),
+        buildUnitOrdersByPlayerId:
+            _copyMapOfOrderLists(o.buildUnitOrdersByPlayerId),
+        workOrdersByPlayerId: _copyMapOfOrderLists(o.workOrdersByPlayerId),
+        diplomaticOrdersByPlayerId:
+            _copyMapOfOrderLists(o.diplomaticOrdersByPlayerId),
+        researchOrdersByPlayerId:
+            _copyMapOfOrderLists(o.researchOrdersByPlayerId),
+        navalMoveOrdersByPlayerId:
+            _copyMapOfOrderLists(o.navalMoveOrdersByPlayerId),
+        navalMissionOrdersByPlayerId:
+            _copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
       );
 
   // -- Generic helpers for add/remove --
@@ -372,25 +383,23 @@ class OrderEngine {
       );
     }
 
-    for (final o in moves) {
-      if (rejected) {
-        results.add(previousInvalidOrderResult);
-        continue;
-      }
-      final r = validateMove(o);
-      results.add(r);
-      if (!r.isAccepted) rejected = true;
-    }
+    rejected = _appendValidationResults(
+      results,
+      moves,
+      rejected,
+      (o, prev) => prev ? previousInvalidOrderResult : validateMove(o),
+    );
 
     var stockpile = player.stockpile;
     var treasury = player.treasury;
 
     final buildValidator = BuildOrderValidator(game: game, player: player);
-    for (final o in builds) {
-      final r = buildValidator.validate(o, previousRejected: rejected);
-      results.add(r);
-      if (!r.isAccepted) rejected = true;
-    }
+    rejected = _appendValidationResults(
+      results,
+      builds,
+      rejected,
+      (o, prev) => buildValidator.validate(o, previousRejected: prev),
+    );
     stockpile = buildValidator.stockpile;
     treasury = buildValidator.treasury;
 
@@ -404,11 +413,12 @@ class OrderEngine {
       stockpile: stockpile,
       treasury: treasury,
     );
-    for (final o in works) {
-      final r = workValidator.validate(o, previousRejected: rejected);
-      results.add(r);
-      if (!r.isAccepted) rejected = true;
-    }
+    rejected = _appendValidationResults(
+      results,
+      works,
+      rejected,
+      (o, prev) => workValidator.validate(o, previousRejected: prev),
+    );
     stockpile = workValidator.stockpile;
     treasury = workValidator.treasury;
 
@@ -424,9 +434,7 @@ class OrderEngine {
       );
       results.add(r.result);
       treasury = r.treasury;
-      if (!r.result.isAccepted) {
-        rejected = true;
-      }
+      if (!r.result.isAccepted) rejected = true;
     }
 
     final navalValidator = NavalOrderValidator(
@@ -434,17 +442,19 @@ class OrderEngine {
       topology: topology,
       playerId: playerId,
     );
-    for (final o in navals) {
-      final r = navalValidator.validateNavalMove(o, previousRejected: rejected);
-      results.add(r);
-      if (!r.isAccepted) rejected = true;
-    }
-    for (final o in missions) {
-      final r =
-          navalValidator.validateNavalMission(o, previousRejected: rejected);
-      results.add(r);
-      if (!r.isAccepted) rejected = true;
-    }
+    rejected = _appendValidationResults(
+      results,
+      navals,
+      rejected,
+      (o, prev) => navalValidator.validateNavalMove(o, previousRejected: prev),
+    );
+    rejected = _appendValidationResults(
+      results,
+      missions,
+      rejected,
+      (o, prev) =>
+          navalValidator.validateNavalMission(o, previousRejected: prev),
+    );
     return results;
   }
 
