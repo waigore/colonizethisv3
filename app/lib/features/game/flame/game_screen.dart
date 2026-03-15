@@ -35,10 +35,7 @@ class GameScreen extends ConsumerWidget {
       child: Stack(
         children: [
           if (mapViewData != null && game != null)
-            _GameMapArea(
-              game: game,
-              mapViewData: mapViewData,
-            )
+            _GameMapArea(game: game, mapViewData: mapViewData)
           else
             GameWidget(game: ColonizeThisGame()),
           if (game != null && victory == null) ...[
@@ -65,8 +62,9 @@ class GameScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   CtNinePatchButton(
                     onPressed: () {
-                      final player =
-                          game.players.isNotEmpty ? game.players.first : null;
+                      final player = game.players.isNotEmpty
+                          ? game.players.first
+                          : null;
                       if (player != null) {
                         final orders = ref.read(currentOrdersProvider);
                         Navigator.of(context).push<void>(
@@ -76,9 +74,8 @@ class GameScreen extends ConsumerWidget {
                               player: player,
                               currentOrders: orders,
                               onOrdersChanged: (newOrders) {
-                                ref
-                                    .read(currentOrdersProvider.notifier)
-                                    .state = newOrders;
+                                ref.read(currentOrdersProvider.notifier).state =
+                                    newOrders;
                               },
                             ),
                           ),
@@ -99,10 +96,7 @@ class GameScreen extends ConsumerWidget {
             ),
           ],
           if (game != null && victory != null)
-            _VictoryOverlay(
-              game: game,
-              victory: victory,
-            ),
+            _VictoryOverlay(game: game, victory: victory),
         ],
       ),
     );
@@ -111,10 +105,7 @@ class GameScreen extends ConsumerWidget {
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 class _GameMapArea extends ConsumerStatefulWidget {
-  const _GameMapArea({
-    required this.game,
-    required this.mapViewData,
-  });
+  const _GameMapArea({required this.game, required this.mapViewData});
 
   final ct_models.Game game;
   final InitGameMapViewData mapViewData;
@@ -244,7 +235,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     ref.read(currentOrdersProvider.notifier).state = orders.copyWith(
       workOrdersByPlayerId: {
         ...orders.workOrdersByPlayerId,
-        _humanPlayerId: list
+        _humanPlayerId: list,
       },
     );
     setState(() => _workTargetSelection = null);
@@ -287,9 +278,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     context: context,
                     isScrollControlled: true,
                     builder: (ctx) {
-                      final isNarrow =
-                          MediaQuery.sizeOf(ctx).width < 600;
-                      final maxHeight = MediaQuery.sizeOf(ctx).height *
+                      final isNarrow = MediaQuery.sizeOf(ctx).width < 600;
+                      final maxHeight =
+                          MediaQuery.sizeOf(ctx).height *
                           (isNarrow ? 0.33 : 0.5);
                       return ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxHeight),
@@ -303,19 +294,23 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                             final list = List<ct_models.WorkOrder>.from(
                               o.workOrdersByPlayerId[playerId] ?? [],
                             )..removeAt(index);
-                            ref.read(currentOrdersProvider.notifier).state =
-                                o.copyWith(
-                              workOrdersByPlayerId: {
-                                ...o.workOrdersByPlayerId,
-                                playerId: list
-                              },
-                            );
+                            ref.read(currentOrdersProvider.notifier).state = o
+                                .copyWith(
+                                  workOrdersByPlayerId: {
+                                    ...o.workOrdersByPlayerId,
+                                    playerId: list,
+                                  },
+                                );
                           },
                           onCancelUnitWork: _cancelUnitWork,
                           onStartWorkTargetSelection: (unit, workTarget) {
                             Navigator.of(ctx).pop();
-                            setState(() => _workTargetSelection =
-                                (unit: unit, workTarget: workTarget));
+                            setState(
+                              () => _workTargetSelection = (
+                                unit: unit,
+                                workTarget: workTarget,
+                              ),
+                            );
                           },
                         ),
                       );
@@ -356,8 +351,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               CtNinePatchButton(
                 onPressed: () {
                   final orders = ref.read(currentOrdersProvider);
-                  final mapData =
-                      ref.read(gameServiceProvider).getMapData(widget.game.id);
+                  final mapData = ref
+                      .read(gameServiceProvider)
+                      .getMapData(widget.game.id);
                   final topology =
                       mapData?.combinedTopology ?? const MapTopology();
                   Navigator.of(context).push<void>(
@@ -403,6 +399,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                 child: CtRegionMap(
                   region: _currentRegion,
                   cellSizePx: 24,
+                  visibilityMode: CtMapVisibilityMode.playerConstrained,
                   onProvinceSelected: _onProvinceSelected,
                   onProvinceHovered: (id) =>
                       setState(() => _hoveredDetailId = id),
@@ -457,10 +454,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
 
 /// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
 class _VictoryOverlay extends StatefulWidget {
-  const _VictoryOverlay({
-    required this.game,
-    required this.victory,
-  });
+  const _VictoryOverlay({required this.game, required this.victory});
 
   final ct_models.Game game;
   final ct_models.VictoryState victory;

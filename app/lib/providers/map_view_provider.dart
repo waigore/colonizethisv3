@@ -1,10 +1,12 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-/// Map view data for the current game. Null when no game, no map data (legacy save), or loading.
+/// Map view data for the current game with player-constrained visibility.
+/// Null when no game, no map data (legacy save), or loading.
 final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return null;
@@ -12,11 +14,37 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
   final mapData = service.getMapData(game.id);
   if (mapData == null) return null;
   final colorOverride = greatPowerColorOverrideFromGame(game);
+
+  final humanPlayerId =
+      game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
+      game.players.first.id;
+  final topology = mapData.combinedTopology;
+  final view = buildPlayerView(game, topology, humanPlayerId);
+
+  final visibilityByTile = <String, TileVisibility>{};
+  view.visibilityByTile.forEach((tileKey, level) {
+    late TileVisibility visibility;
+    switch (level) {
+      case VisibilityLevel.fullyVisible:
+        visibility = TileVisibility.visible;
+        break;
+      case VisibilityLevel.fogged:
+      case VisibilityLevel.revealed:
+        visibility = TileVisibility.fogged;
+        break;
+      case VisibilityLevel.unknown:
+        visibility = TileVisibility.unrevealed;
+        break;
+    }
+    visibilityByTile[tileKey] = visibility;
+  });
+
   return buildInitGameMapViewData(
     game: game,
     tileMapByRegion: mapData.tileMapByRegion,
     topologyByRegion: mapData.topologyByRegion,
     cellSize: 24,
     greatPowerColorOverride: colorOverride,
+    visibilityByTile: visibilityByTile,
   );
 });
