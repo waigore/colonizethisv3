@@ -300,3 +300,33 @@ tool/run_quality_gate_tests.sh
 ```
 
 Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).
+
+---
+
+## scripts/nightly_dev_to_android_pr.sh (nightly APK PR)
+
+Creates a PR from `dev` → `build/app/android` for nightly APK builds. Merging that PR triggers the app Android build. The PR **source** is always `dev` (per GitHub workflow rules).
+
+**Invocation**
+
+```bash
+export REPO_DIR=/path/to/colonizethisv3
+./scripts/nightly_dev_to_android_pr.sh
+```
+
+**Environment**
+
+- **REPO_DIR** (required) — path to the repo root.
+- **BASE_BRANCH** (optional) — PR base/target branch (default: `build/app/android`).
+- **HEAD_BRANCH** (optional) — PR head/source branch (default: `dev`).
+- **REMOTE_NAME** (optional) — git remote (default: `origin`).
+
+**Behaviour**
+
+- Fetches and updates local `dev` and `build/app/android`. If there are no commits to merge, exits without creating a PR. If an open PR from `dev` to `build/app/android` already exists, skips creating a duplicate. Otherwise runs `gh pr create` with `--head dev --base build/app/android`. Requires `gh` CLI to be installed and authenticated (e.g. `gh auth login`).
+
+**Cron (e.g. 02:00 daily)**
+
+```cron
+0 2 * * * REPO_DIR=/home/clawd/colonizethisv3 /home/clawd/colonizethisv3/scripts/nightly_dev_to_android_pr.sh >> /home/clawd/nightly_dev_to_android.log 2>&1
+```
