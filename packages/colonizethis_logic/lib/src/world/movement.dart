@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
 
@@ -109,7 +110,7 @@ RegionData applyMoveOrdersToRegion(
       }
       // Normalize to prefixed form when regionId known (SPEC/game/world-model-identity.md).
       final destFullId = regionId != null && !ProvinceId.isPrefixed(destProvinceId)
-          ? ProvinceId.full(regionId, destProvinceId)
+          ? toFullProvinceId(regionId, destProvinceId)
           : destProvinceId;
       // Topology uses local province ids; validate using region-scoped adjacency when region known.
       // Movement within own provinces: no adjacency required. SPEC/program/movement.md.
