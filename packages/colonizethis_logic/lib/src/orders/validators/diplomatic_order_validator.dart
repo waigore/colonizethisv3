@@ -25,6 +25,19 @@ class DiplomaticOrderValidator {
 
   int get treasury => _treasury;
 
+  ({OrderValidationResult result, int treasury}) _reject(String reason) => (
+        result: OrderValidationResult(
+          status: OrderValidationStatus.rejected,
+          reason: reason,
+        ),
+        treasury: _treasury,
+      );
+
+  ({OrderValidationResult result, int treasury}) _accept() => (
+        result: const OrderValidationResult(status: OrderValidationStatus.accepted),
+        treasury: _treasury,
+      );
+
   /// Validate a single [DiplomaticOrder], given whether a previous order
   /// for this player in this turn has already been rejected.
   ///
@@ -46,25 +59,13 @@ class DiplomaticOrderValidator {
     final targetId = order.targetFactionId;
 
     if (targetId == _playerId) {
-      return (
-        result: const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Cannot target own faction with diplomatic order',
-        ),
-        treasury: _treasury,
-      );
+      return _reject('Cannot target own faction with diplomatic order');
     }
 
     final targetExists =
         isGreatPower(_game, targetId) || isMinorOrTribe(_game, targetId);
     if (!targetExists) {
-      return (
-        result: const OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: 'Target faction not found',
-        ),
-        treasury: _treasury,
-      );
+      return _reject('Target faction not found');
     }
 
     final rel = getRelation(_game, _playerId, targetId);
@@ -74,106 +75,52 @@ class DiplomaticOrderValidator {
     switch (order.type) {
       case DiplomaticOrderType.declareWar:
         if (!atPeace) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Already at war with that faction',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('Already at war with that faction');
         }
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
 
       case DiplomaticOrderType.offerPeace:
         if (!atWar) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot offer peace when not at war with that faction',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Cannot offer peace when not at war with that faction',
           );
         }
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
 
       case DiplomaticOrderType.alliance:
         if (!isGreatPower(_game, targetId)) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Alliance target must be a Great Power',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('Alliance target must be a Great Power');
         }
         if (atWar) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Cannot form alliance while at war with that faction',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Cannot form alliance while at war with that faction',
           );
         }
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
 
       case DiplomaticOrderType.establishOverture:
         final stage = order.overtureStage;
         if (stage == null || stage == OvertureStage.none) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Overture stage is required for establishOverture',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Overture stage is required for establishOverture',
           );
         }
         if (!isMinorOrTribe(_game, targetId) &&
             !isGreatPower(_game, targetId)) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
           );
         }
         if (atWar) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Cannot establish overture while at war with that faction',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Cannot establish overture while at war with that faction',
           );
         }
 
         // Enforce at most one Establish Overture per (player, target) per turn.
         if (_overtureTargetsThisTurn.contains(targetId)) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason:
-                  'Already have an Establish Overture order for this faction this turn',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Already have an Establish Overture order for this faction this turn',
           );
         }
 
@@ -182,176 +129,86 @@ class DiplomaticOrderValidator {
 
         if (stage == OvertureStage.tradeConsulate) {
           if (currentStage != OvertureStage.none) {
-            return (
-              result: const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason: 'Trade Consulate requires no existing overture',
-              ),
-              treasury: _treasury,
-            );
+            return _reject('Trade Consulate requires no existing overture');
           }
           if (_treasury < overtureConsulateCost) {
-            return (
-              result: OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
             );
           }
           _treasury -= overtureConsulateCost;
         } else if (stage == OvertureStage.embassy) {
           if (currentStage != OvertureStage.tradeConsulate) {
-            return (
-              result: const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Embassy requires existing Trade Consulate with that faction',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Embassy requires existing Trade Consulate with that faction',
             );
           }
           if (_treasury < overtureEmbassyCost) {
-            return (
-              result: OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
             );
           }
           _treasury -= overtureEmbassyCost;
         } else if (stage == OvertureStage.nap) {
           if (currentStage != OvertureStage.embassy) {
-            return (
-              result: const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Non-Aggression Pact requires existing Embassy with that faction',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Non-Aggression Pact requires existing Embassy with that faction',
             );
           }
         } else if (stage == OvertureStage.joinEmpire) {
           if (currentStage != OvertureStage.nap) {
-            return (
-              result: const OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires existing Non-Aggression Pact with that faction',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Join Empire requires existing Non-Aggression Pact with that faction',
             );
           }
           final score = rel?.score ?? relationScoreNeutral;
           if (score < relationScoreMinFriendly) {
-            return (
-              result: OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
             );
           }
           final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
           if (_treasury < cost) {
-            return (
-              result: OrderValidationResult(
-                status: OrderValidationStatus.rejected,
-                reason:
-                    'Join Empire requires £$cost (scales with target size); treasury is $_treasury',
-              ),
-              treasury: _treasury,
+            return _reject(
+              'Join Empire requires £$cost (scales with target size); treasury is $_treasury',
             );
           }
         }
 
         _overtureTargetsThisTurn.add(targetId);
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
 
       case DiplomaticOrderType.grantAid:
         final amount = order.amount ?? 0;
         if (amount <= 0) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'GrantAid amount must be positive',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('GrantAid amount must be positive');
         }
         final overture = getOverture(_game, _playerId, targetId);
         if (overture == null || !overture.hasEmbassy) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Embassy required for GrantAid',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('Embassy required for GrantAid');
         }
         if (_treasury < amount) {
-          return (
-            result: OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient treasury for GrantAid (need $amount)',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('Insufficient treasury for GrantAid (need $amount)');
         }
         _treasury -= amount;
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
 
       case DiplomaticOrderType.setSubsidy:
         final amount = order.amount ?? 0;
         if (amount <= 0) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'SetSubsidy amount must be positive',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('SetSubsidy amount must be positive');
         }
         final overture = getOverture(_game, _playerId, targetId);
         if (overture == null || !overture.hasConsulate) {
-          return (
-            result: const OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Consulate or Embassy required for SetSubsidy',
-            ),
-            treasury: _treasury,
-          );
+          return _reject('Consulate or Embassy required for SetSubsidy');
         }
         if (_treasury < amount) {
-          return (
-            result: OrderValidationResult(
-              status: OrderValidationStatus.rejected,
-              reason: 'Insufficient treasury for SetSubsidy (need $amount)',
-            ),
-            treasury: _treasury,
+          return _reject(
+            'Insufficient treasury for SetSubsidy (need $amount)',
           );
         }
         _treasury -= amount;
-        return (
-          result: const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          ),
-          treasury: _treasury,
-        );
+        return _accept();
     }
   }
 }

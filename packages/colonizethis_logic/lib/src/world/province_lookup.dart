@@ -1,4 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show Province, ProvinceId, WorldState;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show Province, ProvinceId, RegionData, WorldState;
 
 import '../constants.dart';
 
@@ -24,35 +25,42 @@ String toFullProvinceId(String regionId, String provinceId) {
   return ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
 }
 
+RegionData? _regionForId(WorldState world, String regionId) {
+  return regionId == kRegionOldWorld
+      ? world.oldWorld
+      : (regionId == kRegionNewWorld ? world.newWorld : null);
+}
+
+Province? _findProvinceInRegion(
+    RegionData region, String regionId, String localId) {
+  final fullId = ProvinceId.full(regionId, localId);
+  final idx = region.provinces.indexWhere((p) =>
+      p.id == fullId ||
+      (p.regionId == regionId &&
+          (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
+  if (idx < 0) return null;
+  return region.provinces[idx];
+}
+
 /// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
 /// Throws [StateError] if the region is unknown or the province is not found.
 Province getProvinceByRegion(WorldState world, String regionId, String localId) {
-  final region = regionId == kRegionOldWorld
-      ? world.oldWorld
-      : (regionId == kRegionNewWorld ? world.newWorld : null);
+  final region = _regionForId(world, regionId);
   if (region == null) {
     throw StateError('Unknown region "$regionId" for province $regionId|$localId');
   }
-  final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) =>
-      p.id == fullId || (p.regionId == regionId && (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
-  if (idx < 0) {
+  final p = _findProvinceInRegion(region, regionId, localId);
+  if (p == null) {
     throw StateError('Province not found: $regionId|$localId in region "$regionId"');
   }
-  return region.provinces[idx];
+  return p;
 }
 
 /// Optional region-scoped lookup: province in [regionId] with local id [localId], or null.
 Province? tryGetProvinceByRegion(WorldState world, String regionId, String localId) {
-  final region = regionId == kRegionOldWorld
-      ? world.oldWorld
-      : (regionId == kRegionNewWorld ? world.newWorld : null);
+  final region = _regionForId(world, regionId);
   if (region == null) return null;
-  final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) =>
-      p.id == fullId || (p.regionId == regionId && (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return _findProvinceInRegion(region, regionId, localId);
 }
 
 /// Returns the province for [fullProvinceId]. Requires full disambiguated id (regionId|localId);
