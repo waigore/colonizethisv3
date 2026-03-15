@@ -45,14 +45,6 @@ class WorkOrderValidator {
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
 
-  static bool _isDevExclusiveTarget(String target) =>
-      target == 'build_improvement' ||
-      target == 'upgrade_town' ||
-      target == 'build_road' ||
-      target == 'build_port' ||
-      target == 'build_fort' ||
-      target == 'purchase_land';
-
   /// Validates one [WorkOrder]. When accepted, deducts cost from internal
   /// stockpile/treasury and may add to [devExclusiveTiles]. Caller should sync
   /// stockpile/treasury back after the work loop.
@@ -187,7 +179,7 @@ class WorkOrderValidator {
         }
 
         if (isDevExclusiveUnitType(type) &&
-            _isDevExclusiveTarget(o.target) &&
+            isDevExclusiveWorkTarget(o.target) &&
             _devExclusiveTiles.contains(o.targetTileKey)) {
           return OrderValidationResult.rejected(
               'Tile already has development or purchase work for this player');
@@ -240,7 +232,7 @@ class WorkOrderValidator {
           return OrderValidationResult.rejected('Province or tile not visible for this work');
         }
 
-        if (isDevExclusiveUnitType(type) && _isDevExclusiveTarget(o.target)) {
+        if (isDevExclusiveUnitType(type) && isDevExclusiveWorkTarget(o.target)) {
           _devExclusiveTiles.add(o.targetTileKey);
         }
 
