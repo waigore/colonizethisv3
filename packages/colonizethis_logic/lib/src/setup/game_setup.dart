@@ -1043,19 +1043,69 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     );
   }
 
-  // Seed selection for Great Powers: one sea-bound province per GP, spreading across landmasses.
-  final gpSeeds = _selectGpSeeds(
+  // Compute landmass sizes and map landmassId -> list of province IDs
+  final landmassToProvinces = <int, List<String>>{};
+  for (final pid in provinceIds) {
+    final lm = landmassIds[pid]!;
+    landmassToProvinces.putIfAbsent(lm, () => <String>[]).add(pid);
+  }
+  final landmassSizes = landmassToProvinces.map((k, v) => MapEntry(k, v.length));
+  final sortedLandmasses = landmassSizes.keys.toList()..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+
+  // Assign each GP to a specific landmass based on fair distribution
+  // Each GP gets a landmass that can support their target province count
+  final targetPerGp = computeFairTargets(gpIds, availableForGps);
+  final gpLandmassAssignments = <String, int>{};
+  final usedLandmasses = <int>{};
+  
+  // First pass: assign GPs to landmasses that can fully support their target
+  final sortedGpIds = gpIds.toList()..sort((a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!)); // Larger targets first
+  for (final gpId in sortedGpIds) {
+    final target = targetPerGp[gpId]!;
+    int? assignedLandmass;
+    
+    // Try to find a landmass that can support this GP's target
+    for (final lm in sortedLandmasses) {
+      if (usedLandmasses.contains(lm)) continue;
+      final lmSize = landmassSizes[lm]!;
+      // Check if this landmass can support the GP (with some buffer for flexibility)
+      if (lmSize >= target) {
+        assignedLandmass = lm;
+        break;
+      }
+    }
+    
+    // If no landmass can fully support the target, pick the largest available
+    if (assignedLandmass == null) {
+      for (final lm in sortedLandmasses) {
+        if (!usedLandmasses.contains(lm)) {
+          assignedLandmass = lm;
+          break;
+        }
+      }
+    }
+    
+    if (assignedLandmass != null) {
+      gpLandmassAssignments[gpId] = assignedLandmass;
+      usedLandmasses.add(assignedLandmass);
+    }
+  }
+
+  // Seed selection for Great Powers: one sea-bound province per GP, from their assigned landmass
+  final gpSeeds = _selectGpSeedsForLandmass(
     gpIds: gpIds,
     seaBoundProvinceIds: seaBoundProvinceIds,
     landmassIds: landmassIds,
+    gpLandmassAssignments: gpLandmassAssignments,
   );
 
-  final targetPerGp = computeFairTargets(gpIds, availableForGps);
   final gpAvailable = provinceIds.toSet();
 
+  // Pass faction landmass constraints to BFS for strict per-landmass assignment
   final gpOwners = assignTerritoriesByBfsGrowth(
     neighbours: neighbours,
     landmassIds: landmassIds,
+    factionLandmassIds: gpLandmassAssignments,
     factionIds: gpIds,
     seeds: gpSeeds,
     targetPerFaction: targetPerGp,
@@ -1076,6 +1126,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     );
     final minorOwners = assignTerritoriesByBfsGrowth(
       neighbours: neighbours,
+      landmassIds: landmassIds,
       factionIds: minorIds,
       seeds: minorSeeds,
       targetPerFaction: targetPerMinor,
@@ -1126,6 +1177,66 @@ Map<String, String> _selectGpSeeds({
       gpSeeds[seedProv] = gpIds[gpIndex];
       usedSeaBound.add(seedProv);
       gpIndex++;
+    }
+  }
+
+  if (gpSeeds.length < gpCount) {
+    throw ArgumentError(
+      'Not enough sea-bound provinces to seed all Great Powers contiguously: '
+      'have ${gpSeeds.length}, need $gpCount',
+    );
+  }
+
+  return gpSeeds;
+}
+
+/// Selects GP seeds: one sea-bound province per GP, from their assigned landmass.
+Map<String, String> _selectGpSeedsForLandmass({
+  required List<String> gpIds,
+  required List<String> seaBoundProvinceIds,
+  required Map<String, int> landmassIds,
+  required Map<String, int> gpLandmassAssignments,
+}) {
+  final gpCount = gpIds.length;
+  
+  // Group sea-bound provinces by landmass
+  final seaBoundByLandmass = <int, List<String>>{};
+  for (final pid in seaBoundProvinceIds) {
+    final lm = landmassIds[pid]!;
+    seaBoundByLandmass.putIfAbsent(lm, () => <String>[]).add(pid);
+  }
+
+  final gpSeeds = <String, String>{};
+  final usedSeaBound = <String>{};
+
+  // For each GP, find a sea-bound province on their assigned landmass
+  for (final gpId in gpIds) {
+    final assignedLandmass = gpLandmassAssignments[gpId];
+    if (assignedLandmass == null) continue;
+    
+    final seaBoundOnLandmass = seaBoundByLandmass[assignedLandmass];
+    if (seaBoundOnLandmass == null || seaBoundOnLandmass.isEmpty) continue;
+    
+    // Pick the first available sea-bound province on this landmass
+    seaBoundOnLandmass.sort();
+    final seedProv = seaBoundOnLandmass.removeAt(0);
+    gpSeeds[seedProv] = gpId;
+    usedSeaBound.add(seedProv);
+  }
+
+  // If we couldn't find seeds for all GPs from their assigned landmasses,
+  // try to find any remaining sea-bound province
+  if (gpSeeds.length < gpCount) {
+    final remainingSeaBound =
+        seaBoundProvinceIds.where((p) => !usedSeaBound.contains(p)).toList()
+          ..sort();
+    var gpIndex = 0;
+    for (final gpId in gpIds) {
+      if (gpSeeds.containsValue(gpId)) continue;
+      if (gpIndex >= remainingSeaBound.length) break;
+      final seedProv = remainingSeaBound[gpIndex++];
+      gpSeeds[seedProv] = gpId;
+      usedSeaBound.add(seedProv);
     }
   }
 
