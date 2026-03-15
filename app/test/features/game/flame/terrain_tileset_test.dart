@@ -9,73 +9,29 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 void main() {
   suppressLogsForTests();
 
-  group('terrainPriority', () {
-    test('returns 1 for plains', () {
-      expect(terrainPriority(TerrainType.plains), 1);
+  group('TerrainLayer', () {
+    test('plains is layer1LandBase', () {
+      expect(terrainLayer(TerrainType.plains), TerrainLayer.layer1LandBase);
     });
 
-    test('returns 2 for forest', () {
-      expect(terrainPriority(TerrainType.forest), 2);
+    test('desert is layer2Features (features use standalone tiles)', () {
+      expect(terrainLayer(TerrainType.desert), TerrainLayer.layer2Features);
     });
 
-    test('returns 2 for hills', () {
-      expect(terrainPriority(TerrainType.hills), 2);
+    test('forest is layer2Features', () {
+      expect(terrainLayer(TerrainType.forest), TerrainLayer.layer2Features);
     });
 
-    test('returns 2 for mountain', () {
-      expect(terrainPriority(TerrainType.mountain), 2);
+    test('hills is layer2Features', () {
+      expect(terrainLayer(TerrainType.hills), TerrainLayer.layer2Features);
     });
 
-    test('returns 2 for swamp', () {
-      expect(terrainPriority(TerrainType.swamp), 2);
+    test('mountain is layer2Features', () {
+      expect(terrainLayer(TerrainType.mountain), TerrainLayer.layer2Features);
     });
 
-    test('returns 2 for desert', () {
-      expect(terrainPriority(TerrainType.desert), 2);
-    });
-  });
-
-  group('cellPriority', () {
-    test('returns 0 for sea cells', () {
-      expect(cellPriority(true, null), 0);
-      expect(cellPriority(true, TerrainType.plains), 0);
-      expect(cellPriority(true, TerrainType.forest), 0);
-    });
-
-    test('returns 1 for plains terrain', () {
-      expect(cellPriority(false, TerrainType.plains), 1);
-    });
-
-    test('returns 2 for feature terrains', () {
-      expect(cellPriority(false, TerrainType.forest), 2);
-      expect(cellPriority(false, TerrainType.hills), 2);
-      expect(cellPriority(false, TerrainType.mountain), 2);
-      expect(cellPriority(false, TerrainType.swamp), 2);
-      expect(cellPriority(false, TerrainType.desert), 2);
-    });
-
-    test('defaults to plains priority when terrain is null', () {
-      expect(cellPriority(false, null), 1);
-    });
-  });
-
-  group('terrainToId', () {
-    test('returns sea for sea cells', () {
-      expect(terrainToId(true, null), seaTerrainId);
-      expect(terrainToId(true, TerrainType.plains), seaTerrainId);
-    });
-
-    test('returns plains for null terrain on land', () {
-      expect(terrainToId(false, null), TerrainType.plains.name);
-    });
-
-    test('returns terrain name for land terrains', () {
-      expect(terrainToId(false, TerrainType.forest), 'forest');
-      expect(terrainToId(false, TerrainType.hills), 'hills');
-      expect(terrainToId(false, TerrainType.mountain), 'mountain');
-      expect(terrainToId(false, TerrainType.swamp), 'swamp');
-      expect(terrainToId(false, TerrainType.desert), 'desert');
-      expect(terrainToId(false, TerrainType.plains), 'plains');
+    test('swamp is layer2Features', () {
+      expect(terrainLayer(TerrainType.swamp), TerrainLayer.layer2Features);
     });
   });
 
@@ -126,8 +82,8 @@ void main() {
       ];
       final tileset = _MockWangTileset(
         name: 'test',
-        lowerTerrainId: 'plains',
-        upperTerrainId: 'forest',
+        lowerTerrainId: 'sea',
+        upperTerrainId: 'beach',
         tiles: tiles,
       );
 
@@ -146,8 +102,8 @@ void main() {
       ];
       final tileset = _MockWangTileset(
         name: 'test',
-        lowerTerrainId: 'plains',
-        upperTerrainId: 'forest',
+        lowerTerrainId: 'sea',
+        upperTerrainId: 'beach',
         tiles: tiles,
       );
 
@@ -171,8 +127,8 @@ void main() {
       ];
       final tileset = _MockWangTileset(
         name: 'test',
-        lowerTerrainId: 'plains',
-        upperTerrainId: 'forest',
+        lowerTerrainId: 'sea',
+        upperTerrainId: 'beach',
         tiles: tiles,
       );
 
@@ -196,8 +152,8 @@ void main() {
       ];
       final tileset = _MockWangTileset(
         name: 'test',
-        lowerTerrainId: 'plains',
-        upperTerrainId: 'forest',
+        lowerTerrainId: 'sea',
+        upperTerrainId: 'beach',
         tiles: tiles,
       );
 
@@ -212,21 +168,23 @@ void main() {
       expect(cache.isLoaded, false);
     });
 
-    test('getTileset returns null before loading', () {
+    test('getSeaBeachTileset returns null before loading', () {
       final cache = TerrainTilesetCache();
-      expect(cache.getTileset('sea', 'beach'), isNull);
       expect(cache.getSeaBeachTileset(), isNull);
     });
 
-    test('getTilesetForIds returns null for same terrain', () {
+    test('getPlainsInteriorTile returns null before loading', () {
       final cache = TerrainTilesetCache();
-      expect(cache.getTilesetForIds('plains', 'plains'), isNull);
+      expect(cache.getPlainsInteriorTile(), isNull);
     });
 
-    test('getTilesetForIds returns null for unknown terrain combos', () {
+    test('getStandaloneTile returns null before loading', () {
       final cache = TerrainTilesetCache();
-      expect(cache.getTilesetForIds('unknown', 'forest'), isNull);
-      expect(cache.getTilesetForIds('plains', 'unknown'), isNull);
+      expect(cache.getStandaloneTile(TerrainType.forest), isNull);
+      expect(cache.getStandaloneTile(TerrainType.desert), isNull);
+      expect(cache.getStandaloneTile(TerrainType.hills), isNull);
+      expect(cache.getStandaloneTile(TerrainType.mountain), isNull);
+      expect(cache.getStandaloneTile(TerrainType.swamp), isNull);
     });
   });
 }
