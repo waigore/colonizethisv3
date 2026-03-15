@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'ct_panel.dart';
 
-/// Full-screen pixel-art shell: background + framed content area.
+/// Full-screen pixel-art shell: background + framed content area + title bar.
+/// Replaces visible use of Scaffold/AppBar in user-facing screens.
 class CtScreenShell extends StatelessWidget {
   const CtScreenShell({
     super.key,
     required this.title,
     required this.child,
+    this.showBackButton = false,
   });
 
   final String title;
   final Widget child;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -27,15 +30,35 @@ class CtScreenShell extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   color: theme.colorScheme.primary.withValues(alpha: 0.8),
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                    textAlign: TextAlign.center,
+                  child: Row(
+                    children: [
+                      if (showBackButton)
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: theme.colorScheme.onPrimary,
+                            size: 20,
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 20),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -48,4 +71,3 @@ class CtScreenShell extends StatelessWidget {
     );
   }
 }
-

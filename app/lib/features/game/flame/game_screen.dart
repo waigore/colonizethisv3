@@ -11,7 +11,7 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../widgets/ct_region_map.dart';
 import '../widgets/civilian_units_panel.dart';
-import '../widgets/diplomacy_panel.dart';
+import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
@@ -82,12 +82,16 @@ class GameScreen extends ConsumerWidget {
                         );
                       }
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.science, size: 20),
-                        SizedBox(width: 8),
-                        Text('Technology'),
+                        Image.asset(
+                          'assets/images/ui_icon_technology.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Technology'),
                       ],
                     ),
                   ),
@@ -317,12 +321,16 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     },
                   );
                 },
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.people_outline, size: 20),
-                    SizedBox(width: 8),
-                    Text('Civilian Units'),
+                    Image.asset(
+                      'assets/images/ui_icon_civilian_units.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Civilian Units'),
                   ],
                 ),
               ),
@@ -338,12 +346,16 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     ),
                   );
                 },
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.military_tech_outlined, size: 20),
-                    SizedBox(width: 8),
-                    Text('Military Units'),
+                    Image.asset(
+                      'assets/images/ui_icon_military_units.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Military Units'),
                   ],
                 ),
               ),
@@ -358,34 +370,29 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                       mapData?.combinedTopology ?? const MapTopology();
                   Navigator.of(context).push<void>(
                     MaterialPageRoute<void>(
-                      builder: (ctx) => Scaffold(
-                        appBar: AppBar(
-                          title: const Text('Diplomacy'),
-                          leading: IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.of(ctx).pop(),
-                          ),
-                        ),
-                        body: DiplomacyPanel(
-                          game: widget.game,
-                          humanPlayerId: _humanPlayerId,
-                          topology: topology,
-                          currentOrders: orders,
-                          onOrdersChanged: (newOrders) {
-                            ref.read(currentOrdersProvider.notifier).state =
-                                newOrders;
-                          },
-                        ),
+                      builder: (_) => DiplomacyScreen(
+                        game: widget.game,
+                        humanPlayerId: _humanPlayerId,
+                        topology: topology,
+                        currentOrders: orders,
+                        onOrdersChanged: (newOrders) {
+                          ref.read(currentOrdersProvider.notifier).state =
+                              newOrders;
+                        },
                       ),
                     ),
                   );
                 },
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.handshake_outlined, size: 20),
-                    SizedBox(width: 8),
-                    Text('Diplomacy'),
+                    Image.asset(
+                      'assets/images/ui_icon_diplomacy.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Diplomacy'),
                   ],
                 ),
               ),

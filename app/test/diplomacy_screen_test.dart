@@ -1,0 +1,125 @@
+// Tests for DiplomacyScreen widget. SPEC/ui/diplomacy-panel.md.
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
+import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  late Game gameWithFactions;
+  late String humanPlayerId;
+  late MapTopology topology;
+
+  setUpAll(() {
+    final result = getDebugInitGameResult();
+    gameWithFactions = result.game;
+    topology = result.combinedTopology;
+    humanPlayerId = gameWithFactions.players.isNotEmpty
+        ? gameWithFactions.players.first.id
+        : 'gp1';
+  });
+
+  Widget buildScreen({
+    required Game game,
+    required String humanPlayerId,
+    required MapTopology topology,
+    Orders currentOrders = const Orders(),
+    void Function(Orders)? onOrdersChanged,
+  }) {
+    return MaterialApp(
+      home: Navigator(
+        pages: [
+          MaterialPage(
+            child: DiplomacyScreen(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              topology: topology,
+              currentOrders: currentOrders,
+              onOrdersChanged: onOrdersChanged ?? (_) {},
+            ),
+          ),
+        ],
+        onPopPage: (_, __) => false,
+      ),
+    );
+  }
+
+  group('DiplomacyScreen', () {
+    testWidgets('uses CtScreenShell with showBackButton true', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildScreen(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtScreenShell), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    });
+
+    testWidgets('shows title Diplomacy', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildScreen(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Diplomacy'), findsOneWidget);
+    });
+
+    testWidgets('contains DiplomacyPanel content', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildScreen(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Great Powers'), findsOneWidget);
+    });
+
+    testWidgets('back button is tappable', (WidgetTester tester) async {
+      final navigatorKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(navigatorKey: navigatorKey, home: const Text('Home')),
+      );
+
+      navigatorKey.currentState!.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => DiplomacyScreen(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+            onOrdersChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Diplomacy'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Diplomacy'), findsNothing);
+    });
+  });
+}

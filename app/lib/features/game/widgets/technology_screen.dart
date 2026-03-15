@@ -29,6 +29,7 @@ class TechnologyScreen extends StatelessWidget {
       length: 2,
       child: CtScreenShell(
         title: 'Technology',
+        showBackButton: true,
         child: Column(
           children: [
             const TabBar(
