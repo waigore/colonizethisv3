@@ -148,17 +148,11 @@ void main() {
     });
 
     test('naming is applied to all provinces', () {
-      for (final p in result.game.worldState.oldWorld.provinces) {
+      for (final p in allProvinces(result.game.worldState)) {
         expect(p.displayName, isNotNull,
-            reason: 'OW ${p.id} must have name');
+            reason: '${p.id} must have name');
         expect(p.displayName, isNotEmpty,
-            reason: 'OW ${p.id} must have non-empty name');
-      }
-      for (final p in result.game.worldState.newWorld.provinces) {
-        expect(p.displayName, isNotNull,
-            reason: 'NW ${p.id} must have name');
-        expect(p.displayName, isNotEmpty,
-            reason: 'NW ${p.id} must have non-empty name');
+            reason: '${p.id} must have non-empty name');
       }
     });
 
