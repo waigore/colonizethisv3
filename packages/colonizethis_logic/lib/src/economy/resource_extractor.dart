@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
+import '../world/province_lookup.dart';
 
 final Logger _log = Logger();
 
@@ -73,11 +74,7 @@ Map<String, ExtractionTotals> computeExtraction({
       }
       // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
       final provinceId = '$regionId|${parts[1]}';
-      final regionData = regionId == kRegionOldWorld
-          ? game.worldState.oldWorld
-          : regionId == kRegionNewWorld
-              ? game.worldState.newWorld
-              : null;
+      final regionData = regionDataForId(game.worldState, regionId);
       final province = regionData?.provinces.where((p) => p.id == provinceId).firstOrNull;
       final townDevelopmentCap = province?.townDevelopmentLevel ?? 4;
 
