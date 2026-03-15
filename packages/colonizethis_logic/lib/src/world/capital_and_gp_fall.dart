@@ -76,8 +76,7 @@ Game applyGreatPowerFall(
   var game = state;
 
   final provinceOwnerById = <String, String?>{
-    for (final p in game.worldState.oldWorld.provinces) p.id: p.ownerId,
-    for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
+    for (final p in allProvinces(game.worldState)) p.id: p.ownerId,
   };
 
   final portsByProvince = <String, List<String>>{};

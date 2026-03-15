@@ -409,9 +409,7 @@ void _filterOrderList<T>(
 ) {
   for (final order in orders) {
     final r = idxBox[0] >= results.length
-        ? const OrderValidationResult(
-            status: OrderValidationStatus.accepted,
-          )
+        ? OrderValidationResult.accepted()
         : results[idxBox[0]++];
     if (r.isAccepted) {
       addAccepted(playerId, order);
@@ -690,8 +688,7 @@ Game _runMovementPhase(
   if (moveOrders.isNotEmpty) {
     // Province ownership lookup for Spy timers (other-faction only).
     final ownerByProvinceId = <String, String?>{
-      for (final p in state.worldState.oldWorld.provinces) p.id: p.ownerId,
-      for (final p in state.worldState.newWorld.provinces) p.id: p.ownerId,
+      for (final p in allProvinces(state.worldState)) p.id: p.ownerId,
     };
     // Movement within own provinces: no adjacency and no region restriction. SPEC/program/movement.md.
     bool isDestinationOwnedByPlayer(

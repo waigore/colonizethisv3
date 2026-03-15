@@ -312,10 +312,7 @@ List<WorkOrder> suggestWorkOrders(
       if (allowedTargets != null && allowedTargets.contains('purchase_land')) {
         final resourceByTile = game.worldState.resourceByTileKey;
         final playerIds = game.players.map((p) => p.id).toSet();
-        for (final p in [
-          ...game.worldState.oldWorld.provinces,
-          ...game.worldState.newWorld.provinces
-        ]) {
+        for (final p in allProvinces(game.worldState)) {
           if (p.ownerId == null || playerIds.contains(p.ownerId!)) continue;
           final regionId = p.regionId;
           final tiles = tileKeysByRegion[regionId]?[p.id] ?? const [];

@@ -116,8 +116,7 @@ class OrderEngine {
     _log.d('logic: validating orders with context player=$playerId');
     final results = validatePlayerOrdersWithContext(game, topology, playerId);
     if (results.isEmpty) {
-      return const OrderValidationResult(
-          status: OrderValidationStatus.accepted);
+      return OrderValidationResult.accepted();
     }
     final r = results.last;
     if (!r.isAccepted)
@@ -223,7 +222,7 @@ class OrderEngine {
     _OrderSlot<T> slot,
   ) {
     _appendOrder(playerId, order, slot.getter, slot.updater);
-    return const OrderValidationResult(status: OrderValidationStatus.accepted);
+    return OrderValidationResult.accepted();
   }
 
   OrderValidationResult _addOrderWithContextSlot<T>(

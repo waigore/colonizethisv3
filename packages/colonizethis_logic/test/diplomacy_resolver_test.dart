@@ -113,7 +113,7 @@ void main() {
       expect(overture, isNotNull);
       expect(overture!.hasEmbassy, isTrue);
       // Treasury reduced by consulate + embassy cost.
-      final player = getPlayer(after, 'gp1')!;
+      final player = after.playerById('gp1')!;
       expect(player.treasury, lessThan(2000));
     });
 
@@ -298,7 +298,7 @@ void main() {
       expect(p1?.ownerId, 'gp1');
       expect(p2?.ownerId, 'gp1');
       // Cost = 5000 + 2*2000 = 9000
-      expect(getPlayer(after, 'gp1')!.treasury, 15000 - 9000);
+      expect(after.playerById('gp1')!.treasury, 15000 - 9000);
     });
 
     test('join empire clears Spy timers for provinces that become owned by GP', () {
@@ -430,7 +430,7 @@ void main() {
           .where((p) => p.id == '$ow|m1')
           .first
           .ownerId, 'minor1');
-      expect(getPlayer(after, 'gp1')!.treasury, 5000);
+      expect(after.playerById('gp1')!.treasury, 5000);
     });
 
     test('grantAid without embassy does not change relation or treasury', () {
@@ -458,7 +458,7 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, 50);
-      expect(getPlayer(after, 'gp1')!.treasury, 2000);
+      expect(after.playerById('gp1')!.treasury, 2000);
     });
 
     test('setSubsidy to Minor creates ongoing subsidy and deducts initial payment', () {
@@ -493,7 +493,7 @@ void main() {
       );
       final after = resolveDiplomacyPhase(game, orders).game;
       // Initial payment deducted
-      expect(getPlayer(after, 'gp1')!.treasury, 2000 - 500);
+      expect(after.playerById('gp1')!.treasury, 2000 - 500);
       // Ongoing subsidy created
       expect(after.subsidyStates.length, 1);
       expect(after.subsidyStates.first.payerId, 'gp1');
@@ -535,7 +535,7 @@ void main() {
       );
       final after = resolveDiplomacyPhase(game, orders).game;
       // Initial payment deducted from payer
-      expect(getPlayer(after, 'gp1')!.treasury, 800);
+      expect(after.playerById('gp1')!.treasury, 800);
       // Ongoing subsidy created (treasury transfer happens each turn during processing)
       expect(after.subsidyStates.length, 1);
       expect(after.subsidyStates.first.payerId, 'gp1');
@@ -570,7 +570,7 @@ void main() {
       
       // Turn 1: Process ongoing subsidy
       final afterTurn1 = resolveDiplomacyPhase(game, orders).game;
-      expect(getPlayer(afterTurn1, 'gp1')!.treasury, 2000 - 500); // Payment deducted
+      expect(afterTurn1.playerById('gp1')!.treasury, 2000 - 500); // Payment deducted
       final relAfterTurn1 = getRelation(afterTurn1, 'gp1', 'minor1')!;
       expect(relAfterTurn1.score, 51); // +2 subsidy, -1 convergence = +1 net // +2 per 500 ducats
       expect(afterTurn1.subsidyStates.length, 1); // Subsidy still active
@@ -597,7 +597,7 @@ void main() {
       
       final after = resolveDiplomacyPhase(game, orders).game;
       expect(after.subsidyStates, isEmpty); // Subsidy cancelled
-      expect(getPlayer(after, 'gp1')!.treasury, 400); // No deduction
+      expect(after.playerById('gp1')!.treasury, 400); // No deduction
     });
 
     test('ongoing subsidy cancels when war declared', () {
@@ -754,7 +754,7 @@ void main() {
         },
       );
       final after = resolveDiplomacyPhase(game, orders).game;
-      expect(getPlayer(after, 'gp1')!.treasury, 2000);
+      expect(after.playerById('gp1')!.treasury, 2000);
     });
   });
 
@@ -1076,7 +1076,7 @@ void main() {
       expect(result.pendingOvertures!.first.stage, OvertureStage.tradeConsulate);
 
       // Resume with accept: overture should be applied.
-      final gp1Before = getPlayer(game, 'gp1')!;
+      final gp1Before = game.playerById('gp1')!;
       final afterAccept = resolveDiplomacyPhase(
         game,
         orders,
@@ -1093,7 +1093,7 @@ void main() {
       final overture = getOverture(afterAccept.game, 'gp1', 'gp2');
       expect(overture, isNotNull);
       expect(overture!.stage, OvertureStage.tradeConsulate);
-      final gp1After = getPlayer(afterAccept.game, 'gp1')!;
+      final gp1After = afterAccept.game.playerById('gp1')!;
       expect(gp1After.treasury, gp1Before.treasury - overtureConsulateCost);
     });
   });

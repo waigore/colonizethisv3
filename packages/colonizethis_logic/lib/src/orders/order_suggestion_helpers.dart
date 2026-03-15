@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
+import '../world/province_lookup.dart';
 
 /// Shared helpers for order suggestion. SPEC/ai/ai-architecture.md.
 /// Used by order_suggestion and AI planners.
@@ -9,13 +10,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 /// Used by AI to filter move orders by diplomacy.
 Map<String, String> getProvinceOwnerMap(Game game) {
   final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
-      out[key] = p.ownerId!;
-    }
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in allProvinces(game.worldState)) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
       final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
       out[key] = p.ownerId!;

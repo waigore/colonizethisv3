@@ -14,6 +14,16 @@ class OrderValidationResult {
   final String? reason;
 
   bool get isAccepted => status == OrderValidationStatus.accepted;
+
+  /// Factory for rejected result with optional reason.
+  factory OrderValidationResult.rejected(String reason) =>
+      OrderValidationResult(status: OrderValidationStatus.rejected, reason: reason);
+
+  /// Factory for accepted result.
+  factory OrderValidationResult.accepted() => _accepted;
+
+  static const _accepted =
+      OrderValidationResult(status: OrderValidationStatus.accepted);
 }
 
 /// Shared constant result used when a previous order in the sequence

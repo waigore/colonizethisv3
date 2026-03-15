@@ -26,15 +26,12 @@ class DiplomaticOrderValidator {
   int get treasury => _treasury;
 
   ({OrderValidationResult result, int treasury}) _reject(String reason) => (
-        result: OrderValidationResult(
-          status: OrderValidationStatus.rejected,
-          reason: reason,
-        ),
+        result: OrderValidationResult.rejected(reason),
         treasury: _treasury,
       );
 
   ({OrderValidationResult result, int treasury}) _accept() => (
-        result: const OrderValidationResult(status: OrderValidationStatus.accepted),
+        result: OrderValidationResult.accepted(),
         treasury: _treasury,
       );
 
