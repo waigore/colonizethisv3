@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
 /// Visibility level for a tile from a single player's perspective.
@@ -52,10 +53,10 @@ class PlayerView {
 
   /// Lookup province by region and id. [provinceId] may be full (regionId|localId) or local; [regionId] is used when [provinceId] is local.
   Province? provinceByRegionAndId(String regionId, String provinceId) =>
-      provincesById[ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId)];
+      provincesById[toFullProvinceId(regionId, provinceId)];
 
   Iterable<Unit> unitsInProvince(String regionId, String provinceId) {
-    final fullId = ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
+    final fullId = toFullProvinceId(regionId, provinceId);
     return ownUnits.where((u) => u.provinceId == fullId);
   }
 
@@ -84,12 +85,10 @@ PlayerView buildPlayerView(
   // Provinces: key by full id (p.id is regionId|localId).
   final provincesById = <String, Province>{};
   for (final p in game.worldState.oldWorld.provinces) {
-    final key = ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id);
-    provincesById[key] = p;
+    provincesById[toFullProvinceId(p.regionId, p.id)] = p;
   }
   for (final p in game.worldState.newWorld.provinces) {
-    final key = ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id);
-    provincesById[key] = p;
+    provincesById[toFullProvinceId(p.regionId, p.id)] = p;
   }
 
   // Units owned by this player across both regions.

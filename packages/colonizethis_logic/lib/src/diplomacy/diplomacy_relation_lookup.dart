@@ -159,6 +159,22 @@ bool factionsAtWar(Game game, String a, String b) {
   return rel?.atWar ?? false;
 }
 
+/// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
+/// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.
+bool canAttackWithWarOrDeclaring(
+  Game game,
+  String playerId,
+  String targetOwnerId,
+  List<DiplomaticOrder> diplomaticOrders,
+) {
+  final rel = getRelation(game, playerId, targetOwnerId);
+  final atWar = rel?.atWar ?? false;
+  final declaringWarThisTurn = diplomaticOrders.any((o) =>
+      o.type == DiplomaticOrderType.declareWar &&
+      o.targetFactionId == targetOwnerId);
+  return atWar || declaringWarThisTurn;
+}
+
 /// Returns player by id, or null.
 Player? getPlayer(Game game, String playerId) {
   for (final p in game.players) {
