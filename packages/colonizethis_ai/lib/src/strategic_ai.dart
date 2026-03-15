@@ -37,10 +37,10 @@ StrategicOrderResult generateStrategicOrders({
   void Function(PortraitMoodEvent)? onMood,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  Logger().i('ai: generateStrategicOrders nationId=$nationId turn=$turn');
+  Logger().i('ai/strategic_ai: generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
   final primaryGoal = selectPrimaryGoal(snapshot, config, seeds.goalSeed);
-  Logger().d('ai: primaryGoal=$primaryGoal');
+  Logger().d('ai/strategic_ai: primaryGoal=$primaryGoal');
   final economyPlan = runEconomyPlanner(
     game: game,
     view: view,
@@ -63,7 +63,7 @@ StrategicOrderResult generateStrategicOrders({
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
-  Logger().i('ai: generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount');
+  Logger().i('ai/strategic_ai: generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount');
   _emitDialogueAndMood(
     config: config,
     seeds: seeds,

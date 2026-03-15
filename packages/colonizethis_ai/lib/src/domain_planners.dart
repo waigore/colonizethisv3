@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:logger/logger.dart';
 
 import 'ai_config.dart';
 import 'economy_planner.dart';
@@ -12,6 +13,8 @@ import 'perception.dart';
 import 'seed_bundle.dart';
 
 // Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
+
+const String _kDomainLogPrefix = 'ai/domain_planners';
 
 /// Runs economy, military, diplomacy, and research planners; returns combined orders
 /// for [nationId]. Uses [suggestionAPI] and [economyPlan] (cargo preference) to score
@@ -36,6 +39,11 @@ Orders runDomainPlanners({
   final buildCandidates = suggestionAPI.suggestBuildOrders(view, game, topology, orders);
   final hasSpyWork = workCandidates.any((o) => o.target == 'steal_tech' || o.target == 'counter_spy');
   final workThreshold = 40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  Logger().d(
+    '$_kDomainLogPrefix: work eval nationId=$nationId workThreshold=$workThreshold '
+    'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
+    'workCandidates=${workCandidates.map((o) => "${o.unitId}:${o.target}").toList()}',
+  );
   if (workCandidates.isNotEmpty &&
       (primaryGoal == StrategicGoal.expand || domainWeights.economy >= workThreshold)) {
     final agendaId = config.hiddenAgendaId;
@@ -45,9 +53,17 @@ Orders runDomainPlanners({
     final list = pickFrom.isNotEmpty ? pickFrom : workCandidates;
     final rng = math.Random(seeds.economySeed);
     final idx = rng.nextInt(list.length);
-    orders = _appendWorkOrders(orders, nationId, [list[idx]]);
+    final chosen = list[idx];
+    Logger().i('$_kDomainLogPrefix: work chosen nationId=$nationId unitId=${chosen.unitId} target=${chosen.target}');
+    orders = _appendWorkOrders(orders, nationId, [chosen]);
+  } else if (workCandidates.isNotEmpty) {
+    Logger().d('$_kDomainLogPrefix: work skipped nationId=$nationId weight below threshold');
   }
   final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
+  Logger().d(
+    '$_kDomainLogPrefix: build eval nationId=$nationId buildThreshold=$buildThreshold '
+    'buildCandidates=${buildCandidates.map((o) => o.unitType).toList()}',
+  );
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
     final chosen = _pickBuildOrder(
       buildCandidates: buildCandidates,
@@ -55,10 +71,14 @@ Orders runDomainPlanners({
       primaryGoal: primaryGoal,
       config: config,
       seed: seeds.economySeed + 1,
+      nationId: nationId,
     );
     if (chosen != null) {
+      Logger().i('$_kDomainLogPrefix: build chosen nationId=$nationId unitType=${chosen.unitType}');
       orders = _appendBuildOrders(orders, nationId, [chosen]);
     }
+  } else if (buildCandidates.isNotEmpty) {
+    Logger().d('$_kDomainLogPrefix: build skipped nationId=$nationId weight below threshold');
   }
 
   // Movement: suggest moves; weight by military/expand.
@@ -120,6 +140,10 @@ Orders runDomainPlanners({
                   : thresholds.researchExploration;
       return math.max(1, w);
     }).toList();
+    Logger().d(
+      '$_kDomainLogPrefix: research eval nationId=$nationId researchThreshold=$researchThreshold '
+      'candidates=${researchCandidates.map((o) => o.techId).toList()} scores=$scores',
+    );
     final total = scores.reduce((a, b) => a + b);
     final rng = math.Random(seeds.researchSeed);
     var r = rng.nextInt(total);
@@ -128,7 +152,11 @@ Orders runDomainPlanners({
       r -= scores[idx];
     }
     if (idx >= researchCandidates.length) idx = researchCandidates.length - 1;
-    orders = _appendResearchOrders(orders, nationId, [researchCandidates[idx]]);
+    final chosen = researchCandidates[idx];
+    Logger().i('$_kDomainLogPrefix: research chosen nationId=$nationId techId=${chosen.techId} score=${scores[idx]}');
+    orders = _appendResearchOrders(orders, nationId, [chosen]);
+  } else if (researchCandidates.isNotEmpty) {
+    Logger().d('$_kDomainLogPrefix: research skipped nationId=$nationId threshold not met or no candidates');
   }
 
   return orders;
@@ -156,7 +184,15 @@ Orders _runMovePlanner({
       : primaryGoal == StrategicGoal.expand
           ? domainWeights.economy
           : 50;
-  if (weight < 20) return orders;
+  Logger().d(
+    '$_kDomainLogPrefix: move eval nationId=$nationId weight=$weight '
+    'filteredCount=${filtered.length} '
+    'candidates=${filtered.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+  );
+  if (weight < 20) {
+    Logger().d('$_kDomainLogPrefix: move skipped nationId=$nationId weight < 20');
+    return orders;
+  }
   final provinceOwner = getProvinceOwnerMap(game);
   final scores = filtered.map((m) {
     final destOwner = provinceOwner[m.destinationProvinceId];
@@ -165,6 +201,7 @@ Orders _runMovePlanner({
     final atWar = rel != null && rel.atWar;
     return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
   }).toList();
+  Logger().d('$_kDomainLogPrefix: move scores nationId=$nationId scores=$scores');
   final total = scores.reduce((a, b) => a + b);
   if (total <= 0) return orders;
   final rng = math.Random(seeds.militarySeed);
@@ -175,6 +212,10 @@ Orders _runMovePlanner({
   }
   if (idx >= filtered.length) idx = filtered.length - 1;
   final selected = [filtered[idx]];
+  Logger().i(
+    '$_kDomainLogPrefix: move chosen nationId=$nationId '
+    'unitId=${selected.first.unitId} destinationProvinceId=${selected.first.destinationProvinceId}',
+  );
   return _appendMoveOrders(orders, nationId, selected);
 }
 
@@ -200,6 +241,7 @@ BuildUnitOrder? _pickBuildOrder({
   required StrategicGoal primaryGoal,
   required AIConfig config,
   required int seed,
+  required String nationId,
 }) {
   if (buildCandidates.isEmpty) return null;
   final thresholds = getThresholdsForLeader(config.leaderId);
@@ -241,6 +283,12 @@ BuildUnitOrder? _pickBuildOrder({
 
     return 1.0 + cargoBonus + militaryBonus + personalityBonus;
   }).toList();
+
+  Logger().d(
+    '$_kDomainLogPrefix: build scores nationId=$nationId '
+    'candidates=${buildCandidates.map((o) => o.unitType).toList()} '
+    'scores=$scores',
+  );
 
   final total = scores.reduce((a, b) => a + b);
   if (total <= 0) return buildCandidates.first;
@@ -284,26 +332,46 @@ Orders _runNavalPlanner({
       primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
-  if (weight < 25) return orders;
+  if (weight < 25) {
+    Logger().d('$_kDomainLogPrefix: naval skipped nationId=$nationId weight=$weight < 25');
+    return orders;
+  }
 
   var o = orders;
 
   final navalMoveCandidates = suggestionAPI.suggestNavalMoveOrders(view, game, topology, o);
+  Logger().d(
+    '$_kDomainLogPrefix: naval move eval nationId=$nationId '
+    'candidatesCount=${navalMoveCandidates.length}',
+  );
   if (navalMoveCandidates.isNotEmpty) {
     final rng = math.Random(seeds.militarySeed + 1000);
     final cap = (navalMoveCandidates.length.clamp(0, 3));
     final take = cap > 0 ? 1 + rng.nextInt(cap) : 0;
     if (take > 0) {
       final selected = navalMoveCandidates.take(take).toList();
+      Logger().i(
+        '$_kDomainLogPrefix: naval move chosen nationId=$nationId '
+        'take=$take selected=${selected.map((m) => "fleetId=${m.fleetId} destSea=${m.destinationSeaZoneId} destPort=${m.destinationPortProvinceId}").toList()}',
+      );
       o = _appendNavalMoveOrders(o, nationId, selected);
     }
   }
 
   final navalMissionCandidates = suggestionAPI.suggestNavalMissionOrders(view, game, topology, o);
+  Logger().d(
+    '$_kDomainLogPrefix: naval mission eval nationId=$nationId '
+    'candidatesCount=${navalMissionCandidates.length}',
+  );
   if (navalMissionCandidates.isNotEmpty) {
     final rng = math.Random(seeds.militarySeed + 1001);
     final idx = rng.nextInt(navalMissionCandidates.length);
-    o = _appendNavalMissionOrders(o, nationId, [navalMissionCandidates[idx]]);
+    final chosen = navalMissionCandidates[idx];
+    Logger().i(
+      '$_kDomainLogPrefix: naval mission chosen nationId=$nationId '
+      'mission=${chosen.mission} fleetId=${chosen.fleetId}',
+    );
+    o = _appendNavalMissionOrders(o, nationId, [chosen]);
   }
 
   return o;
@@ -341,7 +409,10 @@ Orders _runDiplomacyPlanner({
       primaryGoal == StrategicGoal.trade
       ? domainWeights.diplomacy
       : 40;
-  if (weight < 25) return orders;
+  if (weight < 25) {
+    Logger().d('$_kDomainLogPrefix: diplomacy skipped nationId=$nationId weight=$weight < 25');
+    return orders;
+  }
 
   final diploCandidates = suggestionAPI.suggestDiplomaticOrders(view, game, topology, orders);
   if (diploCandidates.isEmpty) return orders;
@@ -383,6 +454,15 @@ Orders _runDiplomacyPlanner({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
+
+  final candidateDesc = diploCandidates
+      .map((o) => '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}')
+      .toList();
+  Logger().d(
+    '$_kDomainLogPrefix: diplomacy eval nationId=$nationId hiddenAgendaId=$agendaId '
+    'candidates=$candidateDesc scores=$scores',
+  );
+
   final total = scores.reduce((a, b) => a + b);
   if (total <= 0) return orders;
   final rng = math.Random(seeds.diplomacySeed);
@@ -392,7 +472,12 @@ Orders _runDiplomacyPlanner({
     r -= scores[idx];
   }
   if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
-  return _appendDiplomaticOrders(orders, nationId, [diploCandidates[idx]]);
+  final chosen = diploCandidates[idx];
+  Logger().i(
+    '$_kDomainLogPrefix: diplomacy chosen nationId=$nationId '
+    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
+  );
+  return _appendDiplomaticOrders(orders, nationId, [chosen]);
 }
 
 Orders _appendDiplomaticOrders(Orders o, String playerId, List<DiplomaticOrder> list) {
