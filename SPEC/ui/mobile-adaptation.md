@@ -36,6 +36,7 @@ When designing screens for the app, **mobile must be considered from the start.*
 - **Breakpoint:** 500 dp width. Below that, screens may switch to a **narrow layout** (e.g. stacked rows, single-column forms) when the default horizontal layout would be cramped.
 - **Game Setup:** Below the breakpoint, each player-slot row uses a **stacked layout**: slot label on one line, nation dropdown full width on the next, leader dropdown full width below. Above the breakpoint, one row: label | nation | leader.
 - **Main Menu:** No breakpoint change; vertical list of buttons already suits narrow width. Only scroll is required (see §3).
+- **In-game shell:** 600 dp width. Below that, top bar shows only hamburger and turn counter; empire buttons move to a side menu (swipe from left or hamburger). See [in-game-shell-narrow.md](in-game-shell-narrow.md) and [empire-buttons.md](empire-buttons.md).
 
 ### 5. Safe area
 
@@ -50,13 +51,13 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 ## Summary table
 
-| Requirement        | Main Menu | Game Setup |
-|-------------------|-----------|------------|
-| Max width 400 dp  | ✓         | ✓          |
-| Scroll on overflow| ✓         | ✓          |
-| Safe area         | ✓         | ✓          |
-| 44 dp touch       | ✓ (48 dp) | ✓ (48 dp)  |
-| Narrow breakpoint | —         | ✓ stacked  |
+| Requirement        | Main Menu | Game Setup | In-game shell   |
+|-------------------|-----------|------------|-----------------|
+| Max width 400 dp  | ✓         | ✓          | —               |
+| Scroll on overflow| ✓         | ✓          | —               |
+| Safe area         | ✓         | ✓          | ✓               |
+| 44 dp touch       | ✓ (48 dp) | ✓ (48 dp)  | ✓               |
+| Narrow breakpoint | —         | ✓ stacked  | ✓ side menu 600 dp |
 
 ---
 
@@ -64,4 +65,5 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 - Main menu: [main-menu.md](main-menu.md) — layout, scroll.
 - Game Setup: [game-setup.md](game-setup.md) — layout, narrow breakpoint, scroll.
+- In-game shell (narrow): [in-game-shell-narrow.md](in-game-shell-narrow.md) — side menu, top bar; [empire-buttons.md](empire-buttons.md) — empire buttons.
 - UXD 03: acceptance criteria and touch targets.
