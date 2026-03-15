@@ -16,6 +16,7 @@ class CtPanel extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double destTileSize;
 
+  /// Filename only; Flame.images uses prefix 'assets/images/' so full key is assets/images/ui_button_nine_patch.png.
   static const String _kAssetPath = 'ui_button_nine_patch.png';
   static const double _tileSize = 16;
 
