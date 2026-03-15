@@ -24,6 +24,9 @@ import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import 'game_canvas.dart';
 
+/// Breakpoint for in-game narrow layout (side menu, reduced top bar). SPEC/ui/in-game-shell-narrow.md.
+const double kInGameNarrowBreakpoint = 600;
+
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 void _showPauseMenu(BuildContext context) {
   showModalBottomSheet<void>(
@@ -60,6 +63,10 @@ class GameScreen extends ConsumerWidget {
     final game = ref.watch(currentGameProvider);
     final mapViewData = ref.watch(mapViewDataProvider);
     final victory = game?.victory;
+    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final showOverlayButtons = game != null &&
+        victory == null &&
+        (!isNarrow || mapViewData == null);
     return CtScreenShell(
       title: 'Game',
       child: Stack(
@@ -68,7 +75,7 @@ class GameScreen extends ConsumerWidget {
             _GameMapArea(game: game, mapViewData: mapViewData)
           else
             GameWidget(game: ColonizeThisGame()),
-          if (game != null && victory == null)
+          if (showOverlayButtons)
             ...[
               Positioned(
                 left: 16,
@@ -124,6 +131,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
+  bool _sideMenuOpen = false;
 
   String get _humanPlayerId =>
       widget.game.players
@@ -251,11 +259,254 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     ref.read(gameServiceProvider).saveGame(newGame);
   }
 
+  void _onNextTurn() {
+    final game = ref.read(currentGameProvider);
+    if (game == null) return;
+    final service = ref.read(gameServiceProvider);
+    final orders = ref.read(currentOrdersProvider);
+    final newGame = service.nextTurn(game, orders: orders);
+    ref.read(currentGameProvider.notifier).state = newGame;
+    ref.read(currentOrdersProvider.notifier).state = const ct_models.Orders();
+  }
+
+  static const double _kSideMenuWidth = 280;
+
+  Widget _buildSideMenu(BuildContext context) {
+    return TweenAnimationBuilder<Offset>(
+      key: ValueKey(_sideMenuOpen),
+      tween: Tween<Offset>(
+        begin: Offset(_sideMenuOpen ? -1 : 0, 0),
+        end: Offset(_sideMenuOpen ? 0 : -1, 0),
+      ),
+      duration: const Duration(milliseconds: 200),
+      builder: (context, Offset offset, child) {
+        return Positioned(
+          left: offset.dx * _kSideMenuWidth,
+          top: 0,
+          bottom: 0,
+          width: _kSideMenuWidth,
+          child: child!,
+        );
+      },
+      child: GestureDetector(
+        onHorizontalDragUpdate: (details) {
+          if (details.delta.dx < -5) {
+            setState(() => _sideMenuOpen = false);
+          }
+        },
+        child: CtPanel(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CtNinePatchButton(
+                    onPressed: () => setState(() => _sideMenuOpen = false),
+                    child: const Text('×'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ..._buildEmpireMenuButtons(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildEmpireMenuButtons(BuildContext context) {
+    final player =
+        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.first;
+    final orders = ref.read(currentOrdersProvider);
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final topology = mapData?.combinedTopology ?? const MapTopology();
+    final desired = ref.read(productionDesiredOutputProvider);
+    return [
+      _empireButton(
+        context,
+        'assets/images/ui_icon_production.png',
+        'Production',
+        () {
+          setState(() => _sideMenuOpen = false);
+          Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (ctx) => ProductionScreen(
+                game: widget.game,
+                player: player,
+                desiredOutputByRecipe: desired,
+                onDesiredOutputChanged: (newMap) {
+                  ref.read(productionDesiredOutputProvider.notifier).state =
+                      newMap;
+                },
+              ),
+            ),
+          );
+        },
+      ),
+      _empireButton(
+        context,
+        'assets/images/ui_icon_civilian_units.png',
+        'Civilian Units',
+        () {
+          setState(() => _sideMenuOpen = false);
+          showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            builder: (ctx) {
+              final isNarrowCtx =
+                    MediaQuery.sizeOf(ctx).width < kInGameNarrowBreakpoint;
+              final maxHeight =
+                  MediaQuery.sizeOf(ctx).height * (isNarrowCtx ? 0.33 : 0.5);
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: CivilianUnitsPanel(
+                  game: ref.read(currentGameProvider) ?? widget.game,
+                  humanPlayerId: _humanPlayerId,
+                  currentOrders: orders,
+                  onLocateUnit: _onLocateCivilianUnit,
+                  onRemoveWorkOrder: (playerId, index) {
+                    final o = ref.read(currentOrdersProvider);
+                    final list = List<ct_models.WorkOrder>.from(
+                      o.workOrdersByPlayerId[playerId] ?? [],
+                    )..removeAt(index);
+                    ref.read(currentOrdersProvider.notifier).state = o
+                        .copyWith(
+                          workOrdersByPlayerId: {
+                            ...o.workOrdersByPlayerId,
+                            playerId: list,
+                          },
+                        );
+                  },
+                  onCancelUnitWork: _cancelUnitWork,
+                  onStartWorkTargetSelection: (unit, workTarget) {
+                    Navigator.of(ctx).pop();
+                    setState(
+                      () => _workTargetSelection = (
+                        unit: unit,
+                        workTarget: workTarget,
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+      _empireButton(
+        context,
+        'assets/images/ui_icon_military_units.png',
+        'Military Units',
+        () {
+          setState(() => _sideMenuOpen = false);
+          showModalBottomSheet<void>(
+            context: context,
+            builder: (ctx) => MilitaryUnitsPanel(
+              game: widget.game,
+              humanPlayerId: _humanPlayerId,
+              onLocateTile: _onLocateMilitaryTile,
+            ),
+          );
+        },
+      ),
+      _empireButton(
+        context,
+        'assets/images/ui_icon_diplomacy.png',
+        'Diplomacy',
+        () {
+          setState(() => _sideMenuOpen = false);
+          Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (_) => DiplomacyScreen(
+                game: widget.game,
+                humanPlayerId: _humanPlayerId,
+                topology: topology,
+                currentOrders: orders,
+                onOrdersChanged: (newOrders) {
+                  ref.read(currentOrdersProvider.notifier).state = newOrders;
+                },
+              ),
+            ),
+          );
+        },
+      ),
+      _empireButton(
+        context,
+        'assets/images/ui_icon_technology.png',
+        'Technology',
+        () {
+          setState(() => _sideMenuOpen = false);
+          Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (ctx) => TechnologyScreen(
+                game: widget.game,
+                player: player,
+                currentOrders: orders,
+                onOrdersChanged: (newOrders) {
+                  ref.read(currentOrdersProvider.notifier).state = newOrders;
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    ];
+  }
+
+  Widget _empireButton(
+    BuildContext context,
+    String iconAsset,
+    String label,
+    VoidCallback onPressed,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: CtNinePatchButton(
+        onPressed: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(iconAsset, width: 20, height: 20),
+            const SizedBox(width: 8),
+            Text(label),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+    final isNarrow =
+        MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     return Column(
       children: [
+        if (isNarrow)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => setState(() => _sideMenuOpen = true),
+                  tooltip: 'Menu',
+                ),
+                Expanded(
+                  child: CtNinePatchButton(
+                    onPressed: _onNextTurn,
+                    child: Text(
+                      'Next turn (${widget.game.worldState.turnState.turnNumber} / ${turnToYear(widget.game.worldState.turnState.turnNumber, widget.game.turnTimeMapping)})',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
@@ -272,8 +523,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                 selected: _regionIndex == 1,
                 onSelected: (_) => setState(() => _regionIndex = 1),
               ),
-              const SizedBox(width: 16),
-              CtNinePatchButton(
+              if (!isNarrow) ...[
+                const SizedBox(width: 16),
+                CtNinePatchButton(
                 onPressed: () {
                   final player =
                       widget.game.players.where((p) => p.isHuman).firstOrNull ??
@@ -466,11 +718,56 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                   ],
                 ),
               ),
+              ],
             ],
           ),
         ),
         Expanded(
-          child: Row(
+          child: isNarrow
+              ? Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CtRegionMap(
+                        region: _currentRegion,
+                        cellSizePx: 24,
+                        visibilityMode: CtMapVisibilityMode.playerConstrained,
+                        onProvinceSelected: _onProvinceSelected,
+                        onProvinceHovered: (id) =>
+                            setState(() => _hoveredDetailId = id),
+                        onTileHovered: (key) =>
+                            setState(() => _hoveredTileKey = key),
+                        highlightedTileKey: _highlightedTileKey,
+                        centerOnTileKey: _centerOnTileKey,
+                        validTileKeys: _validTileKeysForSelection,
+                        onTileSelected: _workTargetSelection != null
+                            ? _onTileSelectedForWork
+                            : null,
+                        onWorkTargetSelectionCancelled:
+                            _workTargetSelection != null
+                                ? () =>
+                                    setState(() => _workTargetSelection = null)
+                                : null,
+                      ),
+                    ),
+                    if (isNarrow && !_sideMenuOpen)
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 20,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (details) {
+                            if (details.delta.dx > 20) {
+                              setState(() => _sideMenuOpen = true);
+                            }
+                          },
+                        ),
+                      ),
+                    if (_sideMenuOpen) _buildSideMenu(context),
+                  ],
+                )
+              : Row(
             children: [
               Expanded(
                 child: CtRegionMap(

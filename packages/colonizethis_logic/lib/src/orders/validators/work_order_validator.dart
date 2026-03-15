@@ -7,10 +7,8 @@ import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
+import '../unit_type_helpers.dart';
 import 'work_order_cost_calculator.dart';
-
-bool isDevExclusiveUnitType(String type) =>
-    type == 'Builder' || type == 'Engineer' || type == 'Merchant';
 
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
@@ -46,14 +44,6 @@ class WorkOrderValidator {
 
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
-
-  static bool _isDevExclusiveTarget(String target) =>
-      target == 'build_improvement' ||
-      target == 'upgrade_town' ||
-      target == 'build_road' ||
-      target == 'build_port' ||
-      target == 'build_fort' ||
-      target == 'purchase_land';
 
   /// Validates one [WorkOrder]. When accepted, deducts cost from internal
   /// stockpile/treasury and may add to [devExclusiveTiles]. Caller should sync
@@ -189,7 +179,7 @@ class WorkOrderValidator {
         }
 
         if (isDevExclusiveUnitType(type) &&
-            _isDevExclusiveTarget(o.target) &&
+            isDevExclusiveWorkTarget(o.target) &&
             _devExclusiveTiles.contains(o.targetTileKey)) {
           return OrderValidationResult.rejected(
               'Tile already has development or purchase work for this player');
@@ -242,7 +232,7 @@ class WorkOrderValidator {
           return OrderValidationResult.rejected('Province or tile not visible for this work');
         }
 
-        if (isDevExclusiveUnitType(type) && _isDevExclusiveTarget(o.target)) {
+        if (isDevExclusiveUnitType(type) && isDevExclusiveWorkTarget(o.target)) {
           _devExclusiveTiles.add(o.targetTileKey);
         }
 

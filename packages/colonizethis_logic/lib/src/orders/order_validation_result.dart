@@ -45,3 +45,16 @@ OrderValidationResult shortCircuitIfPreviousRejected({
   }
   return body();
 }
+
+/// Like [shortCircuitIfPreviousRejected] for validators that also return updated treasury.
+/// When [previousRejected], returns (previousInvalidOrderResult, currentTreasury); else [body]().
+({OrderValidationResult result, int treasury}) shortCircuitIfPreviousRejectedWithTreasury({
+  required bool previousRejected,
+  required int currentTreasury,
+  required ({OrderValidationResult result, int treasury}) Function() body,
+}) {
+  if (previousRejected) {
+    return (result: previousInvalidOrderResult, treasury: currentTreasury);
+  }
+  return body();
+}

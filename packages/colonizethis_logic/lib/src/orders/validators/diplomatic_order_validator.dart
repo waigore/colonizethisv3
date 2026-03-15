@@ -46,13 +46,16 @@ class DiplomaticOrderValidator {
     DiplomaticOrder order, {
     required bool previousRejected,
   }) {
-    if (previousRejected) {
-      return (
-        result: previousInvalidOrderResult,
-        treasury: _treasury,
-      );
-    }
+    return shortCircuitIfPreviousRejectedWithTreasury(
+      previousRejected: previousRejected,
+      currentTreasury: _treasury,
+      body: () => _validateOne(order),
+    );
+  }
 
+  ({OrderValidationResult result, int treasury}) _validateOne(
+    DiplomaticOrder order,
+  ) {
     final targetId = order.targetFactionId;
 
     if (targetId == _playerId) {
