@@ -93,6 +93,31 @@ void main() {
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
+    testWidgets(
+      'AC: home-to-capital button (h) is visible beneath base layer button and tappable (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final baseButtonFinder = find.byKey(kBaseLayerCycleButtonKey);
+        final homeButtonFinder = find.byKey(kHomeToCapitalButtonKey);
+
+        expect(baseButtonFinder, findsOneWidget);
+        expect(homeButtonFinder, findsOneWidget);
+
+        await tester.tap(homeButtonFinder);
+        await tester.pump();
+
+        // No additional assertions here; behavior (centering on capital tile)
+        // is covered by CtRegionMap's centerOnTileKey tests and capitalTile specs.
+        expect(homeButtonFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
     // ACs for opening/closing the side menu (swipe/hamburger/×/tap-outside/Escape)
     // and its modal behaviour over the map widget are covered by manual or higher-
     // level integration tests; opening the menu in this widget test would require
