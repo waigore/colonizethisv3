@@ -39,6 +39,18 @@ The resolved ruleset includes a **turn-time mapping** section that defines how t
 
 - **MVP default:** When the resolved ruleset does not supply turn-time mapping, game setup uses the default GDD 01 mapping (`TurnTimeMapping.gdd01`) when initializing `Game.turnTimeMapping`. See [turn-time-mapping.md](turn-time-mapping.md) and [game-setup-pipeline.md](../program/game-setup-pipeline.md) step 7e.
 
+### Starting stockpiles
+
+For the MVP ruleset, each Great Power starts the game with a small, symmetric national stockpile defined by the ruleset:
+
+- **Base starting stockpile (per Great Power):**
+  - `grain = initialPeasants × initialGrainTurns` (food bootstrap per [stockpiles-and-production.md](stockpiles-and-production.md) and [workers-and-population.md](workers-and-population.md)).
+  - `lumber = initialImprovementSlots`
+  - `castIron = initialImprovementSlots`
+  - `wool = 4`
+
+The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovementSlots`, and the wool quantity are exposed via the ruleset/config layer (MVP: program-level `StartingResourcesConfig` in `colonizethis_data`; later: Base → Difficulty → Scenario merge per this document). Scenario layers MAY override any of these starting stockpile quantities on a per-commodity basis; when a scenario overrides a commodity, its value fully replaces the base-layer value for that scenario (no implicit addition).
+
 ## Configurable Values
 
 | Parameter | Default | Layer |
@@ -50,6 +62,8 @@ The resolved ruleset includes a **turn-time mapping** section that defines how t
 | Old World provinces | ≈60 | Base, Scenario |
 | New World provinces | ≈80 | Base, Scenario |
 | Continent count | 3–4 | Base, Scenario |
+
+Starting stockpile quantities are part of the economic starting-conditions profile and are configured via the ruleset’s economy/setup sections (MVP: constants in `StartingResourcesConfig` mirrored into the resolved ruleset when a loader is introduced). For the default MVP ruleset, every Great Power’s starting stockpile uses the same values, including `wool = 4` from turn 0.
 
 Turn-time mapping parameters are part of the resolved ruleset but documented in [turn-time-mapping.md](turn-time-mapping.md). Scenarios or future ruleset layers may override the mapping as a whole; when no mapping is present in the resolved ruleset, the System uses the default described there.
 
@@ -69,5 +83,14 @@ Turn-time mapping parameters are part of the resolved ruleset but documented in 
 - **Naming structure:** Given a resolved ruleset with a naming section, when the System uses names for Great Powers, Minor Nations, and Tribes, then it uses the structure defined in this GDD (id, display name, name pools) and applies the fallback per [naming.md](naming.md) when entries or pools are missing.
 
 - **Configurable Values table:** Given the Configurable Values table in this GDD, when the System initializes game parameters, then it uses these as the default source of values; scenario or difficulty layers may override per the overridable parameter contract.
+
+- **Starting stockpile symmetry:** Given a new game is started with the default MVP ruleset and no scenario or difficulty layer overrides for starting stockpile quantities, when the System completes game setup step 7f (Starting resources and units), then for every Great Power player the central stockpile contains:
+  - `grain` equal to `initialPeasants × initialGrainTurns` from the active starting-resources config,
+  - `lumber` equal to `initialImprovementSlots`,
+  - `castIron` equal to `initialImprovementSlots`,
+  - and `wool` equal to 4,
+  and these quantities are identical across all Great Powers.
+
+- **Starting stockpile overrides:** Given a scenario or difficulty layer in the resolved ruleset overrides the starting stockpile quantity for `wool` with a non-negative integer value `W_override`, and a new game is started using that ruleset, when the System completes game setup step 7f, then for every Great Power player the central stockpile contains `wool = W_override` and not the base value 4.
 
 - **Province naming at setup:** Given a game in the setup phase, when the System names provinces owned by each faction, then it uses the resolved naming section from the ruleset. Provinces acquired during play retain their existing display name.

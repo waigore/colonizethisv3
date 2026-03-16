@@ -1,12 +1,12 @@
 # Pending Overtures Screen Specification
 
-**SPEC/tui** — Screen shown when turn resolution blocks on the human player accepting or rejecting diplomatic overtures from other players. Reference: [ctterm.md](../ctterm.md), [SPEC/program/turn-resolution-phases.md](../../program/turn-resolution-phases.md), [SPEC/game/diplomacy.md](../../game/diplomacy.md).
+**SPEC/tui** — Screen shown when turn resolution blocks on the human player accepting or rejecting diplomatic overtures from other players. This screen is the **ctterm presentation** for dialogue points of kind **overture_target_response** per the unified [dialogue system](../../program/dialogue-system.md). Reference: [ctterm.md](../ctterm.md), [dialogue-presentation.md](../dialogue-presentation.md), [SPEC/program/turn-resolution-phases.md](../../program/turn-resolution-phases.md), [SPEC/game/diplomacy.md](../../game/diplomacy.md).
 
 **Screen ID:** 100019
 
 ## Overview
 
-When a player ends the turn and another Great Power has offered a diplomatic overture (Trade Consulate, Embassy, Non-Aggression Pact, or Join Empire) to the human-controlled Great Power, turn resolution suspends and the app shows the **Pending Overtures** screen. The human must accept or reject each offer; then resolution resumes and the turn completes (or suspends again if further overtures are pending).
+When a player ends the turn and another Great Power has offered a diplomatic overture (Trade Consulate, Embassy, Non-Aggression Pact, or Join Empire) to the human-controlled Great Power, turn resolution suspends and the app shows the **Pending Overtures** screen. The human must accept or reject each offer; then resolution resumes and the turn completes (or suspends again if further overtures are pending). Content and behaviour align with [dialogue-management.md](../../ai/dialogue-management.md) and [dialogue-content-and-yarn.md](../../ai/dialogue-content-and-yarn.md) so that dialogue text can be driven by content keys and data assets.
 
 ## Content
 

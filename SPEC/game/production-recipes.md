@@ -26,7 +26,7 @@ The following recipes are defined for MVP:
 | Lumber | lumber (1) | timber ×2 | 2 |
 | Fabric (wool) | fabric (1) | wool ×2 | 2 |
 | Fabric (cotton) | fabric (1) | cotton ×2 | 2 |
-| Cast Iron | castIron (1) | timber ×2, iron ×2, coal ×1 | 5 |
+| Cast Iron | castIron (1) | timber ×2, iron ×2 | 5 |
 | Refined Sugar | refinedSugar (1) | sugarCane ×2 | 2 |
 | Cigars | cigars (1) | tobacco ×3 | 3 |
 | Fur Hats | furHats (1) | furs ×2 | 2 |
@@ -38,7 +38,7 @@ The following recipes are defined for MVP:
 
 ## Examples
 
-- Timber ×2, Iron ×2, Coal ×1 → Cast Iron (labour per unit from constants).
+- Timber ×2, Iron ×2 → Cast Iron (labour per unit from constants).
 - Wool or Cotton ×2 → Fabric.
 - Sugar Cane ×2 → Refined Sugar.
 
