@@ -354,6 +354,47 @@ void main() {
       expect(player.researchSlots, 4);
     });
 
+    test('Money Lending allows limited negative treasury for research', () {
+      // Money Lending: allow research spending to drive treasury down to -500.
+      final tech = techById('crop_rotation')!;
+      expect(tech.cost, lessThan(2500)); // sanity: one turn of max funding can complete
+
+      final game = _baseGame(
+        treasury: 500,
+        techUnlocked: const {
+          'land_enclosure': true,
+          'money_lending': true,
+        },
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'crop_rotation',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+        },
+      );
+
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      ));
+      final player = next.players.single;
+
+      // With Money Lending, treasury may go as low as -500; maximum funding
+      // (1000 cost) from 500 should be allowed and either complete the tech or
+      // at least deduct the cost and add progress.
+      expect(player.treasury, lessThanOrEqualTo(500));
+      expect(player.treasury, greaterThanOrEqualTo(-500));
+      final unlocked = player.techUnlocked ?? const {};
+      final progress = player.researchProgressByTechId ?? const {};
+      expect(unlocked['crop_rotation'] == true || progress['crop_rotation'] != null, isTrue);
+    });
+
     test(
         'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
         () {
