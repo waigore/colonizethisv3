@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/widgets/ct_panel.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:flutter/material.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
@@ -69,56 +71,44 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         final maxHeight = isNarrow
             ? MediaQuery.sizeOf(context).height * 0.33
             : constraints.maxHeight;
-        return ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: Card(
-            margin: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _isSeaZone(displayId) ? 'Sea zone' : 'Province',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: onClose,
-                        tooltip: 'Close',
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: isNarrow
-                      ? DefaultTabController(
-                          length: content.tabCount,
-                          child: Column(
-                            children: [
-                              TabBar(
-                                tabs: content.tabs,
-                                isScrollable: true,
-                              ),
-                              Expanded(
-                                child: TabBarView(
-                                  children: content.tabViews,
-                                ),
-                              ),
-                            ],
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: CtPanel(
+              padding: EdgeInsets.zero,
+              child: Column(
+                mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _isSeaZone(displayId) ? 'Sea zone' : 'Province',
+                            style: _kOverlayTitleStyle,
                           ),
-                        )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: content.sections,
                         ),
-                ),
-              ],
+                        _OverlayCloseButton(onClose: onClose),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: isNarrow
+                        ? CtTabStrip(
+                            tabLabels: content.tabLabels,
+                            tabViews: content.tabViews,
+                            contentPadding: const EdgeInsets.all(12),
+                          )
+                        : SingleChildScrollView(
+                            padding: const EdgeInsets.all(12),
+                            child: content.sections,
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -127,17 +117,45 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   }
 }
 
+/// Pixel-art overlay title text style (non-Material).
+const TextStyle _kOverlayTitleStyle = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.bold,
+);
+
 class _OverlayContent {
   _OverlayContent({
-    required this.tabCount,
-    required this.tabs,
+    required this.tabLabels,
     required this.tabViews,
     required this.sections,
   });
-  final int tabCount;
-  final List<Widget> tabs;
+  final List<String> tabLabels;
   final List<Widget> tabViews;
   final Widget sections;
+}
+
+/// Pixel-art close control (non-Material). Key [kOverlayCloseKey] for tests.
+class _OverlayCloseButton extends StatelessWidget {
+  const _OverlayCloseButton({this.onClose});
+
+  static const Key kOverlayCloseKey = Key('overlay_close');
+
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: kOverlayCloseKey,
+      onTap: onClose,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
+        ),
+        child: const Text('×', style: TextStyle(fontSize: 18)),
+      ),
+    );
+  }
 }
 
 _OverlayContent _provinceContent({
@@ -187,13 +205,13 @@ _OverlayContent _provinceContent({
         Text('???'),
       ],
     );
-    final tabs = const [
-      Tab(text: 'Tile'),
-      Tab(text: 'Political'),
-      Tab(text: 'Economic'),
-      Tab(text: 'Military'),
-      Tab(text: 'Civilian'),
-      Tab(text: 'Naval'),
+    const tabLabels = [
+      'Tile',
+      'Political',
+      'Economic',
+      'Military',
+      'Civilian',
+      'Naval',
     ];
     final tabViews = [
       placeholder,
@@ -204,8 +222,7 @@ _OverlayContent _provinceContent({
       const _ObfuscatedSection(),
     ];
     return _OverlayContent(
-      tabCount: 6,
-      tabs: tabs,
+      tabLabels: tabLabels,
       tabViews: tabViews,
       sections: sections,
     );
@@ -277,13 +294,13 @@ _OverlayContent _provinceContent({
   final civilianSection = _buildCivilianSection(civilian);
   final naval = _buildNavalSection(game, fleetsInPort);
 
-  final tabs = [
-    const Tab(text: 'Tile'),
-    const Tab(text: 'Political'),
-    const Tab(text: 'Economic'),
-    const Tab(text: 'Military'),
-    const Tab(text: 'Civilian'),
-    const Tab(text: 'Naval'),
+  const tabLabels = [
+    'Tile',
+    'Political',
+    'Economic',
+    'Military',
+    'Civilian',
+    'Naval',
   ];
   final tabViews = [
     tileSection,
@@ -305,7 +322,7 @@ _OverlayContent _provinceContent({
       naval,
     ],
   );
-  return _OverlayContent(tabCount: 6, tabs: tabs, tabViews: tabViews, sections: sections);
+  return _OverlayContent(tabLabels: tabLabels, tabViews: tabViews, sections: sections);
 }
 
 Widget _buildTileSection({
@@ -402,14 +419,14 @@ _OverlayContent _seaZoneContent({
   );
   final naval = _buildNavalSection(game, fleets);
 
-  final tabs = [const Tab(text: 'Political'), const Tab(text: 'Naval')];
+  const tabLabels = ['Political', 'Naval'];
   final tabViews = [political, naval];
   final sections = Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [political, naval],
   );
-  return _OverlayContent(tabCount: 2, tabs: tabs, tabViews: tabViews, sections: sections);
+  return _OverlayContent(tabLabels: tabLabels, tabViews: tabViews, sections: sections);
 }
 
 Province? _findProvince(Game game, String provinceId) {
