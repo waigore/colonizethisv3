@@ -4,23 +4,32 @@ import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
+
+final _log = Logger();
 
 /// Sea terrain identifier (not in TerrainType enum).
 const String seaTerrainId = 'sea';
 
-/// Beach/coastline terrain identifier (transition from sea to land).
-const String beachTerrainId = 'beach';
+/// Plains terrain identifier for L1 land base.
+const String plainsTerrainId = 'plains';
+
+/// Desert terrain identifier for L1 land base.
+const String desertTerrainId = 'desert';
 
 /// Terrain layer for the layered rendering architecture.
-/// Simplified: Sea (Wang), Plains (base), Features (standalone tiles).
+/// L0: Sea (Wang tilesets for coastline).
+/// L1: Plains and Desert (Wang tilesets for land transitions).
+/// L2+: Features (standalone overlay tiles).
 enum TerrainLayer { layer0Sea, layer1LandBase, layer2Features }
 
 /// Determines the rendering layer for a terrain type.
+/// Desert is L1 (land base alongside plains), not L2.
 TerrainLayer terrainLayer(TerrainType terrain) {
   switch (terrain) {
     case TerrainType.plains:
-      return TerrainLayer.layer1LandBase;
     case TerrainType.desert:
+      return TerrainLayer.layer1LandBase;
     case TerrainType.forest:
     case TerrainType.hills:
     case TerrainType.mountain:
@@ -60,6 +69,8 @@ class WangTileset {
   final String name;
   final String lowerTerrainId;
   final String upperTerrainId;
+  final String? lowerBaseTileId;
+  final String? upperBaseTileId;
   final ui.Image image;
   final List<WangTile> tiles;
 
@@ -67,6 +78,8 @@ class WangTileset {
     required this.name,
     required this.lowerTerrainId,
     required this.upperTerrainId,
+    this.lowerBaseTileId,
+    this.upperBaseTileId,
     required this.image,
     required this.tiles,
   });
@@ -92,9 +105,16 @@ class WangTileset {
     }
     return null;
   }
+
+  WangTile? findTileById(String id) {
+    for (final tile in tiles) {
+      if (tile.id == id) return tile;
+    }
+    return null;
+  }
 }
 
-/// Standalone tile for terrain features (desert, forest, hills, mountain, swamp).
+/// Standalone tile for terrain features (forest, hills, mountain, swamp).
 class StandaloneTile {
   final String terrainId;
   final ui.Image image;
@@ -103,9 +123,12 @@ class StandaloneTile {
 }
 
 /// Cache for loaded tilesets.
-/// Simplified: only loads sea_beach Wang tileset and standalone feature tiles.
+/// Loads L0/L1 Wang tilesets (sea_plains, sea_desert, plains_desert)
+/// and L2+ standalone feature tiles (forest, hills, mountain, swamp).
 class TerrainTilesetCache {
-  WangTileset? _seaBeachTileset;
+  WangTileset? _seaPlainsTileset;
+  WangTileset? _seaDesertTileset;
+  WangTileset? _plainsDesertTileset;
   final Map<String, StandaloneTile> _standaloneTiles = {};
   bool _isLoading = false;
   bool _isLoaded = false;
@@ -118,19 +141,35 @@ class TerrainTilesetCache {
 
     final loadFutures = <Future<void>>[];
 
-    // Sea coastline tileset
+    // L0/L1 Wang tilesets for coastline and land transitions
     loadFutures.add(
-      _loadWangTileset('sea_beach', seaTerrainId, beachTerrainId),
+      _loadWangTileset(
+        'sea_plains',
+        seaTerrainId,
+        plainsTerrainId,
+        (tileset) => _seaPlainsTileset = tileset,
+      ),
+    );
+    loadFutures.add(
+      _loadWangTileset(
+        'sea_desert',
+        seaTerrainId,
+        desertTerrainId,
+        (tileset) => _seaDesertTileset = tileset,
+      ),
+    );
+    loadFutures.add(
+      _loadWangTileset(
+        'plains_desert',
+        plainsTerrainId,
+        desertTerrainId,
+        (tileset) => _plainsDesertTileset = tileset,
+      ),
     );
 
-    // Plains interior tile (for coastline areas)
-    loadFutures.add(
-      _loadStandaloneTile('plains_interior', TerrainType.plains.name),
-    );
-
-    // Standalone tiles for all features (on top of plains base)
+    // L2+ Standalone tiles for features (forest, hills, mountain, swamp)
+    // Note: Desert is now L1, not a standalone feature
     for (final feature in [
-      TerrainType.desert,
       TerrainType.forest,
       TerrainType.hills,
       TerrainType.mountain,
@@ -151,11 +190,17 @@ class TerrainTilesetCache {
     }
   }
 
-  Future<void> _loadWangTileset(String name, String lower, String upper) async {
-    final pngPath = 'assets/images/terrain/tileset_$name.png';
-    final jsonPath = 'assets/images/terrain/tileset_$name.json';
+  Future<void> _loadWangTileset(
+    String name,
+    String lower,
+    String upper,
+    void Function(WangTileset) setter,
+  ) async {
+    final pngPath = 'assets/images/terrain/tilesets/tileset_$name.png';
+    final jsonPath = 'assets/images/terrain/tilesets/tileset_$name.json';
 
     try {
+      _log.d('Loading Wang tileset: $name from $jsonPath');
       final data = await rootBundle.loadString(jsonPath);
       final json = jsonDecode(data) as Map<String, dynamic>;
 
@@ -171,15 +216,28 @@ class TerrainTilesetCache {
           .map((t) => WangTile.fromJson(t as Map<String, dynamic>))
           .toList();
 
-      _seaBeachTileset = WangTileset(
-        name: name,
-        lowerTerrainId: lower,
-        upperTerrainId: upper,
-        image: image,
-        tiles: tiles,
+      final baseTileIds = json['base_tile_ids'] as Map<String, dynamic>?;
+      final lowerBaseTileId = baseTileIds?['lower'] as String?;
+      final upperBaseTileId = baseTileIds?['upper'] as String?;
+
+      setter(
+        WangTileset(
+          name: name,
+          lowerTerrainId: lower,
+          upperTerrainId: upper,
+          lowerBaseTileId: lowerBaseTileId,
+          upperBaseTileId: upperBaseTileId,
+          image: image,
+          tiles: tiles,
+        ),
       );
-    } catch (e) {
-      // Tileset not available; will fall back to solid color
+      _log.i('Loaded Wang tileset: $name with ${tiles.length} tiles');
+    } catch (e, stackTrace) {
+      _log.e(
+        'Failed to load Wang tileset: $name',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -204,14 +262,15 @@ class TerrainTilesetCache {
     }
   }
 
-  // Sea coastline tileset
-  WangTileset? getSeaBeachTileset() => _seaBeachTileset;
+  // L0/L1 Wang tileset getters
+  WangTileset? getSeaPlainsTileset() => _seaPlainsTileset;
+  WangTileset? getSeaDesertTileset() => _seaDesertTileset;
+  WangTileset? getPlainsDesertTileset() => _plainsDesertTileset;
 
-  // Plains interior tile
-  StandaloneTile? getPlainsInteriorTile() =>
-      _standaloneTiles[TerrainType.plains.name];
+  // Legacy getter for backwards compatibility
+  WangTileset? getSeaBeachTileset() => _seaPlainsTileset;
 
-  // Standalone feature tiles
+  // L2+ Standalone feature tiles
   StandaloneTile? getStandaloneTile(TerrainType terrain) =>
       _standaloneTiles[terrain.name];
 }
