@@ -34,6 +34,12 @@
 - **Default at game start:** When the player enters the in-game shell (after init or load), the base layer display mode is **terrain + resources + improvements** (full letters).
 - **Spec reference:** [map-widget.md](map-widget.md) § Base layer display mode.
 
+### Home-to-capital button (in-game map only)
+
+- **Overlay:** A second toggle button is overlaid at the **top-left** of the map area, directly **beneath** the base-layer cycle button. Icon only: the letter **h**. The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Target:** Always uses the **current human player** (same rule as for visibility and panels). If multiple players are marked `isHuman`, use the first; if none are marked, fall back to the first player in the list.
+- **Behavior:** When tapped, the button **switches the active region** (Old World / New World) if necessary so that the map shows the human player's **capital region**, then **centers the camera** on the human player's **capital tile** and moves the **selection/highlight cursor** onto that tile. Capital identity comes from `Player.capitalTile` (tile key format `regionId|provinceId|x|y` per [world-model-identity.md](../game/world-model-identity.md) and [map-visualization.md](../program/map-visualization.md)).
+
 ---
 
 ## Wireframe (conceptual)
@@ -66,6 +72,9 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is terrain + resources + improvements (full letters visible).
 - **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button (letter r) at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvements → terrain only (repeating).
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the top-left of the map area and displays the letter r (icon-only).
+
+- **Given** the Empire overview map is visible, **then** a second icon-only button with the letter h is visible directly beneath the base-layer cycle button at the top-left of the map area.
+- **Given** the Empire overview map is visible and the human player has a defined capital tile, **when** the user taps the h button, **then** the active region switches (if needed) to the human player's capital region and the map centers on the human player's capital tile with the selection/highlight cursor placed on that tile.
 
 ---
 
