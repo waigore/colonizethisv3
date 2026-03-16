@@ -28,7 +28,8 @@ void main() {
       expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 4);
       expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 1);
+      // Cast iron no longer consumes coal; coal remains unchanged.
+      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5);
     });
 
     test('limits runs by available inputs', () {
