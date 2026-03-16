@@ -57,11 +57,11 @@ const _productionRecipes = [
     labourRequired: 2,
   ),
   ProductionRecipe(
-    id: 'iron_to_cast_iron',
-    name: 'Iron + Coal to Cast Iron',
-    inputs: {'iron': 2, 'coal': 1},
+    id: 'timber_iron_to_cast_iron',
+    name: 'Timber + Iron to Cast Iron',
+    inputs: {'timber': 2, 'iron': 2},
     outputs: {'castIron': 1},
-    labourRequired: 3,
+    labourRequired: 5,
   ),
   ProductionRecipe(
     id: 'wool_to_fabric',
