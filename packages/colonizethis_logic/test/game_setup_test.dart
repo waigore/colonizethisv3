@@ -95,6 +95,18 @@ void main() {
 
       expect(result.tileMapByRegion['oldWorld'], owTileMap);
       expect(result.topologyByRegion['oldWorld'], owTopology);
+
+      // Initial visibility: Old World starts fogged/visible, New World unknown.
+      final visibility = result.game.worldState.playerVisibilityByTile;
+      expect(visibility, isNotEmpty);
+      final gp1Visibility = visibility[result.game.players.first.id] ?? const {};
+      expect(gp1Visibility.keys, isNotEmpty);
+      // All initial visible tiles for the starting GP are in Old World; New
+      // World tiles are unknown (absent from visibility map).
+      expect(
+        gp1Visibility.keys.every((tk) => tk.startsWith('oldWorld|')),
+        isTrue,
+      );
     });
 
     test('each Great Power has enough resources to build 5 improvements (bootstrap)', () {
