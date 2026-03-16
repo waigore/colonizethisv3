@@ -167,10 +167,7 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    return CtScreenShell(
-      title: 'Game',
-      child: content,
-    );
+    return CtScreenShell(title: 'Game', child: content);
   }
 }
 
@@ -244,7 +241,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     });
   }
 
-  /// Base layer cycle button (letter r). SPEC/ui/empire-overview.md § Base layer display cycle.
+  /// Base layer cycle button. SPEC/ui/empire-overview.md § Base layer display cycle.
   Widget _buildBaseLayerCycleButton() {
     return Material(
       key: kBaseLayerCycleButtonKey,
@@ -253,11 +250,12 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         message: 'Base layer: terrain / +resources / +improvements',
         child: InkWell(
           onTap: _cycleBaseLayerDisplayMode,
-          child: const Padding(
-            padding: EdgeInsets.all(10),
-            child: Text(
-              'r',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Image.asset(
+              'assets/images/ui_icon_layer_toggle.png',
+              width: 20,
+              height: 20,
             ),
           ),
         ),
@@ -265,7 +263,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     );
   }
 
-  /// Home-to-capital button (letter h). SPEC/ui/empire-overview.md § Home-to-capital button.
+  /// Home-to-capital button. SPEC/ui/empire-overview.md § Home-to-capital button.
   Widget _buildHomeToCapitalButton() {
     return Material(
       key: kHomeToCapitalButtonKey,
@@ -274,11 +272,12 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         message: 'Center on capital',
         child: InkWell(
           onTap: _centerOnHumanCapital,
-          child: const Padding(
-            padding: EdgeInsets.all(10),
-            child: Text(
-              'h',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Image.asset(
+              'assets/images/ui_icon_home_capital.png',
+              width: 20,
+              height: 20,
             ),
           ),
         ),
@@ -287,7 +286,8 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   }
 
   void _centerOnHumanCapital() {
-    final player = widget.game.players.where((p) => p.isHuman).firstOrNull ??
+    final player =
+        widget.game.players.where((p) => p.isHuman).firstOrNull ??
         widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {

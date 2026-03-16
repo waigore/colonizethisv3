@@ -24,12 +24,8 @@ void main() {
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith(
-          (ref) => debugResult.game,
-        ),
-        mapViewDataProvider.overrideWith(
-          (ref) => debugResult.mapViewData,
-        ),
+        currentGameProvider.overrideWith((ref) => debugResult.game),
+        mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
       ],
       child: MaterialApp(
         theme: AppThemes.colonial,
@@ -72,7 +68,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: base layer cycle button (r) is visible at top-left of map; tap cycles mode (SPEC/ui/empire-overview.md)',
+      'AC: base layer cycle button is visible at top-left of map; tap cycles mode (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
@@ -94,7 +90,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: home-to-capital button (h) is visible beneath base layer button and tappable (SPEC/ui/empire-overview.md)',
+      'AC: home-to-capital button is visible beneath base layer button and tappable (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
