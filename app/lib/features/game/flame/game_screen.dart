@@ -885,8 +885,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                                 hoveredTileKey: _hoveredTileKey,
                                 onHighlightTile: (k) =>
                                     setState(() => _highlightedTileKey = k),
-                                onClose: () =>
-                                    setState(() => _selectedDetailId = null),
+                                onClose: () => setState(() {
+                                  _selectedDetailId = null;
+                                  _highlightedTileKey = null;
+                                }),
                               ),
                             ),
                         ],
@@ -911,7 +913,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               humanPlayerId: _humanPlayerId,
               hoveredTileKey: _hoveredTileKey,
               onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
-              onClose: () => setState(() => _selectedDetailId = null),
+              onClose: () => setState(() {
+                _selectedDetailId = null;
+                _highlightedTileKey = null;
+              }),
             ),
           ),
       ],
