@@ -259,8 +259,23 @@ void main() {
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
+          oldWorld: RegionData(
+            provinces: [
+              // Add a province owned by the minor nation so it's "known" to gp1
+              // through visibility (PR #1115: align suggestions with discovery visibility)
+              Province(id: 'oldWorld|m1', regionId: 'oldWorld', ownerId: 'minor1'),
+            ],
+          ),
           newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {
+              // Visibility for a tile in the minor's province makes it "known"
+              'oldWorld|m1|0|0': 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {'oldWorld|m1': ['oldWorld|m1|0|0']},
+          },
         ),
         players: [
           const Player(id: 'gp1', displayName: 'A', isHuman: false)
