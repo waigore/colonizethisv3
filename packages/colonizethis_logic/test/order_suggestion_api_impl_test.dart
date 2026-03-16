@@ -153,11 +153,45 @@ void main() {
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
         ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.neutral,
+          ),
+        ],
       );
       final view = buildPlayerView(game, topology, 'gp1');
       final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
       final declareWar = list.where((o) => o.type == DiplomaticOrderType.declareWar).toList();
       expect(declareWar.any((o) => o.targetFactionId == 'gp2'), isTrue);
+    });
+
+    test('does not suggest diplomatic orders for completely unknown factions', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list =
+          api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      expect(
+        list.any((o) => o.targetFactionId == 'minor1'),
+        isFalse,
+      );
     });
 
     test('returns offerPeace when at war with another GP', () {

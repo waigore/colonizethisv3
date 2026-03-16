@@ -829,13 +829,43 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final player = view.player;
   final treasury = player.treasury;
 
+  // Determine which factions are actually "known" to this player per SPEC:
+  // - Any faction with an existing DiplomacyRelation to the player.
+  // - Any faction that owns at least one province with a tile visible to the player.
+  // Self is never a diplomatic target.
+  final knownFactionIds = <String>{};
+
+  for (final rel in game.diplomacyRelations) {
+    if (rel.factionId1 == playerId) {
+      knownFactionIds.add(rel.factionId2);
+    } else if (rel.factionId2 == playerId) {
+      knownFactionIds.add(rel.factionId1);
+    }
+  }
+
+  for (final entry in view.visibilityByTile.entries) {
+    if (entry.value == VisibilityLevel.unknown) continue;
+    final parts = entry.key.split('|');
+    if (parts.length != 4) continue;
+    final regionId = parts[0];
+    final provinceLocalId = parts[1];
+    final provinceId = ProvinceId.full(regionId, provinceLocalId);
+    final province = view.provinceByRegionAndId(regionId, provinceId);
+    final ownerId = province?.ownerId;
+    if (ownerId != null && ownerId != playerId) {
+      knownFactionIds.add(ownerId);
+    }
+  }
+
   final otherGps =
       game.players.where((p) => p.id != playerId).map((p) => p.id).toList();
   final minorIds = game.minorNations.map((m) => m.id).toList();
   final tribeIds = game.tribes.map((t) => t.id).toList();
   final allTargets = <String>[...otherGps, ...minorIds, ...tribeIds];
+  final knownTargets =
+      allTargets.where((id) => knownFactionIds.contains(id)).toList();
 
-  for (final targetId in allTargets) {
+  for (final targetId in knownTargets) {
     if (targetId == playerId) continue;
     final rel = getRelation(game, playerId, targetId);
     final atPeace = rel == null || rel.atPeace;
@@ -857,7 +887,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
   }
 
-  for (final targetId in [...minorIds, ...tribeIds]) {
+  for (final targetId in [...minorIds, ...tribeIds].where(knownFactionIds.contains)) {
     final existing = getOverture(game, playerId, targetId);
     final current = existing?.stage ?? OvertureStage.none;
     final next = _nextOvertureStage(current);
