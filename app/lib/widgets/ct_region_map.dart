@@ -8,7 +8,8 @@ import 'package:flutter/services.dart';
 
 import '../features/game/flame/region_map_component.dart';
 
-export '../features/game/flame/region_map_component.dart' show CtMapVisibilityMode;
+export '../features/game/flame/region_map_component.dart'
+    show BaseLayerDisplayMode, CtMapVisibilityMode;
 
 /// FlameGame host for the region map, with basic tap/drag/pinch wiring.
 class _CtRegionMapGame extends FlameGame with TapDetector {
@@ -17,6 +18,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required double cellSizePx,
     required bool showPoliticalOverlay,
     required CtMapVisibilityMode visibilityMode,
+    BaseLayerDisplayMode baseLayerDisplayMode = BaseLayerDisplayMode.terrainResourcesImprovements,
     required void Function(String provinceId)? onProvinceSelected,
     required VoidCallback? onRegionViewChanged,
     required void Function(String? provinceId)? onProvinceHovered,
@@ -29,6 +31,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         cellSizePx = cellSizePx,
         showPoliticalOverlay = showPoliticalOverlay,
         visibilityMode = visibilityMode,
+        baseLayerDisplayMode = baseLayerDisplayMode,
         onProvinceSelected = onProvinceSelected,
         onRegionViewChanged = onRegionViewChanged,
         onProvinceHovered = onProvinceHovered,
@@ -42,6 +45,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   final double cellSizePx;
   bool showPoliticalOverlay;
   CtMapVisibilityMode visibilityMode;
+  BaseLayerDisplayMode baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
@@ -65,6 +69,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       cellSize: cellSizePx,
       showPoliticalOverlay: showPoliticalOverlay,
       visibilityMode: visibilityMode,
+      baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
       onProvinceHovered: onProvinceHovered,
       onTileHovered: (tileKey) {
@@ -96,6 +101,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
     CtMapVisibilityMode? visibilityMode,
+    BaseLayerDisplayMode? baseLayerDisplayMode,
     String? highlightedTileKey,
     Set<String>? validTileKeys,
   }) {
@@ -107,6 +113,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
     if (visibilityMode != null) {
       this.visibilityMode = visibilityMode;
+    }
+    if (baseLayerDisplayMode != null) {
+      this.baseLayerDisplayMode = baseLayerDisplayMode;
     }
     if (highlightedTileKey != null) {
       this.highlightedTileKey = highlightedTileKey;
@@ -121,6 +130,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..cellSize = cellSizePx
         ..showPoliticalOverlay = this.showPoliticalOverlay
         ..visibilityMode = this.visibilityMode
+        ..baseLayerDisplayMode = this.baseLayerDisplayMode
         ..highlightedTileKey = this.highlightedTileKey
         ..validTileKeys = this.validTileKeys;
     }
@@ -285,6 +295,7 @@ class CtRegionMap extends StatefulWidget {
     this.showPoliticalOverlay = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
+    this.baseLayerDisplayMode,
     this.onProvinceSelected,
     this.onRegionViewChanged,
     this.onProvinceHovered,
@@ -300,6 +311,8 @@ class CtRegionMap extends StatefulWidget {
   final bool showPoliticalOverlay;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
+  /// When null, full letters (terrain + resources + improvements) for backward compatibility.
+  final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
@@ -329,12 +342,15 @@ class _CtRegionMapState extends State<CtRegionMap> {
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
         widget.visibilityMode != oldWidget.visibilityMode ||
+        widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
         widget.highlightedTileKey != oldWidget.highlightedTileKey) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
         visibilityMode: widget.visibilityMode,
+        baseLayerDisplayMode: widget.baseLayerDisplayMode ??
+            BaseLayerDisplayMode.terrainResourcesImprovements,
         highlightedTileKey: widget.highlightedTileKey,
         validTileKeys: widget.validTileKeys,
       );
@@ -353,6 +369,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
       visibilityMode: widget.visibilityMode,
+      baseLayerDisplayMode:
+          widget.baseLayerDisplayMode ?? BaseLayerDisplayMode.terrainResourcesImprovements,
       onProvinceSelected: widget.onProvinceSelected,
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgets/ct_region_map.dart';
+import 'package:colonizethis_app/widgets/ct_region_map.dart'
+    show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -59,6 +60,7 @@ void main() {
     double cellSizePx = 24,
     bool showPoliticalOverlay = true,
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
+    BaseLayerDisplayMode? baseLayerDisplayMode,
     String? centerOnTileKey,
     void Function(String)? onProvinceSelected,
     void Function(String?)? onProvinceHovered,
@@ -76,6 +78,7 @@ void main() {
               cellSizePx: cellSizePx,
               showPoliticalOverlay: showPoliticalOverlay,
               visibilityMode: visibilityMode,
+              baseLayerDisplayMode: baseLayerDisplayMode,
               centerOnTileKey: centerOnTileKey,
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
@@ -120,6 +123,28 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'builds with each base layer display mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        for (final mode in BaseLayerDisplayMode.values) {
+          await tester.pumpWidget(
+            _buildCtRegionMap(
+              region: region,
+              baseLayerDisplayMode: mode,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
+        // Omitted baseLayerDisplayMode defaults to full letters
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
 
     testWidgets(
@@ -201,16 +226,18 @@ void main() {
           _buildCtRegionMap(
             region: region,
             visibilityMode: CtMapVisibilityMode.full,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainResourcesImprovements,
           ),
         );
         await tester.pump();
 
-        // Rebuild with changed visibility and political overlay flags.
+        // Rebuild with changed visibility, political overlay, and base layer display mode.
         await tester.pumpWidget(
           _buildCtRegionMap(
             region: region,
             showPoliticalOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
           ),
         );
         await tester.pump();
