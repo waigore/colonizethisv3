@@ -32,6 +32,9 @@ const double kInGameNarrowBreakpoint = 600;
 /// Key for the base layer cycle button (for tests). SPEC/ui/empire-overview.md § Base layer display cycle.
 const Key kBaseLayerCycleButtonKey = Key('base_layer_cycle_button');
 
+/// Key for the home-to-capital button (for tests). SPEC/ui/empire-overview.md § Home-to-capital button.
+const Key kHomeToCapitalButtonKey = Key('home_to_capital_button');
+
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 void _showPauseMenu(BuildContext context) {
   showModalBottomSheet<void>(
@@ -204,6 +207,53 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         ),
       ),
     );
+  }
+
+  /// Home-to-capital button (letter h). SPEC/ui/empire-overview.md § Home-to-capital button.
+  Widget _buildHomeToCapitalButton() {
+    return Material(
+      key: kHomeToCapitalButtonKey,
+      color: Colors.white.withValues(alpha: 0.9),
+      child: Tooltip(
+        message: 'Center on capital',
+        child: InkWell(
+          onTap: _centerOnHumanCapital,
+          child: const Padding(
+            padding: EdgeInsets.all(10),
+            child: Text(
+              'h',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _centerOnHumanCapital() {
+    final player = widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.first;
+    final capital = player.capitalTile;
+    if (capital == null) {
+      return;
+    }
+    final tileKey = capital.toTileKey();
+    final regionId = capital.regionId;
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _centerOnTileKey = null;
+      });
+    });
   }
 
   /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
@@ -812,7 +862,15 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                       Positioned(
                         left: 0,
                         top: 0,
-                        child: _buildBaseLayerCycleButton(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildBaseLayerCycleButton(),
+                            const SizedBox(height: 4),
+                            _buildHomeToCapitalButton(),
+                          ],
+                        ),
                       ),
                       if (isNarrow && !_sideMenuOpen)
                         Positioned(
@@ -895,7 +953,15 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     Positioned(
                       left: 0,
                       top: 0,
-                      child: _buildBaseLayerCycleButton(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildBaseLayerCycleButton(),
+                          const SizedBox(height: 4),
+                          _buildHomeToCapitalButton(),
+                        ],
+                      ),
                     ),
                   ],
                 ),
