@@ -51,7 +51,8 @@ class CtRegionMapComponent extends PositionComponent {
     required this.cellSize,
     required this.showPoliticalOverlay,
     required this.visibilityMode,
-    this.baseLayerDisplayMode = BaseLayerDisplayMode.terrainResourcesImprovements,
+    this.baseLayerDisplayMode =
+        BaseLayerDisplayMode.terrainResourcesImprovements,
     this.onProvinceSelected,
     this.onProvinceHovered,
     this.onTileHovered,
@@ -139,16 +140,17 @@ class CtRegionMapComponent extends PositionComponent {
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
     final cell = region.cellAt(x, y);
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
-    if (validTileKeys != null && validTileKeys!.isNotEmpty) {
-      if (validTileKeys!.contains(tileKey)) {
-        // Work-target mode: widget wrapper will translate to onTileSelected.
+    if (validTileKeys != null) {
+      if (validTileKeys!.isNotEmpty && validTileKeys!.contains(tileKey)) {
+        // Work-target mode with valid tiles: widget wrapper will translate to onTileSelected.
         onTileHovered?.call(tileKey);
       } else {
-        // Non-valid tile: wrapper may treat as cancel.
+        // No valid tiles OR non-valid tile tapped: trigger cancel via wrapper.
         onTileHovered?.call(null);
       }
       return;
     }
+    // Not in work target mode: allow province selection.
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onProvinceSelected?.call(provinceId);
 
@@ -534,9 +536,13 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   void _paintLetters(Canvas canvas) {
-    final showResources = baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
-        baseLayerDisplayMode == BaseLayerDisplayMode.terrainResourcesImprovements;
-    final showImprovements = baseLayerDisplayMode == BaseLayerDisplayMode.terrainResourcesImprovements;
+    final showResources =
+        baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
+        baseLayerDisplayMode ==
+            BaseLayerDisplayMode.terrainResourcesImprovements;
+    final showImprovements =
+        baseLayerDisplayMode ==
+        BaseLayerDisplayMode.terrainResourcesImprovements;
 
     final double fontSize = math.max(10.0, cellSize * 0.35);
     final textPainter = TextPainter(textDirection: TextDirection.ltr);

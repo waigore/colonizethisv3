@@ -18,7 +18,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required double cellSizePx,
     required bool showPoliticalOverlay,
     required CtMapVisibilityMode visibilityMode,
-    BaseLayerDisplayMode baseLayerDisplayMode = BaseLayerDisplayMode.terrainResourcesImprovements,
+    BaseLayerDisplayMode baseLayerDisplayMode =
+        BaseLayerDisplayMode.terrainResourcesImprovements,
     required void Function(String provinceId)? onProvinceSelected,
     required VoidCallback? onRegionViewChanged,
     required void Function(String? provinceId)? onProvinceHovered,
@@ -27,19 +28,19 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required Set<String>? validTileKeys,
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
-  })  : region = region,
-        cellSizePx = cellSizePx,
-        showPoliticalOverlay = showPoliticalOverlay,
-        visibilityMode = visibilityMode,
-        baseLayerDisplayMode = baseLayerDisplayMode,
-        onProvinceSelected = onProvinceSelected,
-        onRegionViewChanged = onRegionViewChanged,
-        onProvinceHovered = onProvinceHovered,
-        onTileHovered = onTileHovered,
-        highlightedTileKey = highlightedTileKey,
-        validTileKeys = validTileKeys,
-        onTileSelected = onTileSelected,
-        onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+  }) : region = region,
+       cellSizePx = cellSizePx,
+       showPoliticalOverlay = showPoliticalOverlay,
+       visibilityMode = visibilityMode,
+       baseLayerDisplayMode = baseLayerDisplayMode,
+       onProvinceSelected = onProvinceSelected,
+       onRegionViewChanged = onRegionViewChanged,
+       onProvinceHovered = onProvinceHovered,
+       onTileHovered = onTileHovered,
+       highlightedTileKey = highlightedTileKey,
+       validTileKeys = validTileKeys,
+       onTileSelected = onTileSelected,
+       onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
 
   RegionMapViewData region;
   final double cellSizePx;
@@ -73,10 +74,16 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       onProvinceSelected: onProvinceSelected,
       onProvinceHovered: onProvinceHovered,
       onTileHovered: (tileKey) {
-        if (onTileSelected != null && validTileKeys != null && validTileKeys!.isNotEmpty) {
-          if (tileKey != null && validTileKeys!.contains(tileKey)) {
-            onTileSelected!.call(tileKey);
+        if (onTileSelected != null && validTileKeys != null) {
+          if (validTileKeys!.isNotEmpty) {
+            // Work target mode with valid tiles: check if tapped tile is valid.
+            if (tileKey != null && validTileKeys!.contains(tileKey)) {
+              onTileSelected!.call(tileKey);
+            } else {
+              onWorkTargetSelectionCancelled?.call();
+            }
           } else {
+            // Work target mode but no valid tiles: allow cancel on any tap.
             onWorkTargetSelectionCancelled?.call();
           }
         } else {
@@ -85,8 +92,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       },
       highlightedTileKey: highlightedTileKey,
       validTileKeys: validTileKeys,
-    )
-      ..position = Vector2.zero();
+    )..position = Vector2.zero();
     await world.add(_mapComponent);
     _mapLoaded = true;
 
@@ -283,7 +289,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     final clampedX = pos.x.clamp(minX, maxX);
     final clampedY = pos.y.clamp(minY, maxY);
 
-    camera.viewfinder.position = Vector2(clampedX.toDouble(), clampedY.toDouble());
+    camera.viewfinder.position = Vector2(
+      clampedX.toDouble(),
+      clampedY.toDouble(),
+    );
   }
 }
 
@@ -311,6 +320,7 @@ class CtRegionMap extends StatefulWidget {
   final bool showPoliticalOverlay;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
+
   /// When null, full letters (terrain + resources + improvements) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
@@ -349,7 +359,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
         visibilityMode: widget.visibilityMode,
-        baseLayerDisplayMode: widget.baseLayerDisplayMode ??
+        baseLayerDisplayMode:
+            widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainResourcesImprovements,
         highlightedTileKey: widget.highlightedTileKey,
         validTileKeys: widget.validTileKeys,
@@ -370,7 +381,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
       showPoliticalOverlay: widget.showPoliticalOverlay,
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:
-          widget.baseLayerDisplayMode ?? BaseLayerDisplayMode.terrainResourcesImprovements,
+          widget.baseLayerDisplayMode ??
+          BaseLayerDisplayMode.terrainResourcesImprovements,
       onProvinceSelected: widget.onProvinceSelected,
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,
@@ -389,12 +401,17 @@ class _CtRegionMapState extends State<CtRegionMap> {
       child: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
           // Zoom in
-          const SingleActivator(LogicalKeyboardKey.equal): () => _game.zoomBy(1.1),
-          const SingleActivator(LogicalKeyboardKey.add): () => _game.zoomBy(1.1),
-          const SingleActivator(LogicalKeyboardKey.numpadAdd): () => _game.zoomBy(1.1),
+          const SingleActivator(LogicalKeyboardKey.equal): () =>
+              _game.zoomBy(1.1),
+          const SingleActivator(LogicalKeyboardKey.add): () =>
+              _game.zoomBy(1.1),
+          const SingleActivator(LogicalKeyboardKey.numpadAdd): () =>
+              _game.zoomBy(1.1),
           // Zoom out
-          const SingleActivator(LogicalKeyboardKey.minus): () => _game.zoomBy(0.9),
-          const SingleActivator(LogicalKeyboardKey.numpadSubtract): () => _game.zoomBy(0.9),
+          const SingleActivator(LogicalKeyboardKey.minus): () =>
+              _game.zoomBy(0.9),
+          const SingleActivator(LogicalKeyboardKey.numpadSubtract): () =>
+              _game.zoomBy(0.9),
         },
         child: Listener(
           onPointerSignal: (event) {
@@ -417,11 +434,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
               onPanUpdate: (details) {
                 _game.panBy(details.delta);
               },
-              child: ClipRect(
-                child: GameWidget(
-                  game: _game,
-                ),
-              ),
+              child: ClipRect(child: GameWidget(game: _game)),
             ),
           ),
         ),
