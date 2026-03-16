@@ -64,7 +64,7 @@ void main() {
 
   group('resolveProduction', () {
     test('consumes inputs and produces outputs', () {
-      // Start with enough timber, iron, and coal.
+      // Start with enough timber and iron; coal is present but not consumed.
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.timber.id, 10)
           .applyDelta(CommodityCatalog.iron.id, 10)
@@ -84,11 +84,12 @@ void main() {
 
       // labourPerOutput = 5, assigned 20, but effective labour from 10 peasants
       // is 10 → max 2 runs.
-      // Inputs per run: 2 timber, 2 iron, 1 coal.
+      // Inputs per run: 2 timber, 2 iron (no coal).
       expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 10 - 2 * 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5 - 1 * 2);
+      // Cast iron recipe no longer consumes coal; coal remains unchanged.
+      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5);
     });
 
     test('effective labour counts only trained workers with luxury', () {
