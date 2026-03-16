@@ -61,8 +61,12 @@ List<Unit> _civilianUnitsInRegion(
   Map<String, String> provinceNames,
 ) {
   final list = units
-      .where((u) =>
-          u.ownerId == humanPlayerId && u.tileKey != null && _isCivilianUnit(u))
+      .where(
+        (u) =>
+            u.ownerId == humanPlayerId &&
+            u.tileKey != null &&
+            _isCivilianUnit(u),
+      )
       .toList();
   list.sort((a, b) {
     final provA = Unit.provinceIdFromTileKey(a.tileKey);
@@ -89,6 +93,7 @@ class CivilianUnitsPanel extends StatelessWidget {
     required this.game,
     required this.humanPlayerId,
     this.currentOrders = const Orders(),
+    this.availableWorkTargets = const {},
     this.onLocateUnit,
     this.onAddWorkOrder,
     this.onRemoveWorkOrder,
@@ -101,6 +106,9 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
   final Orders currentOrders;
+
+  /// Available work targets per unit (computed at turn start). Work targets not in this list are grayed out.
+  final Map<String, List<String>> availableWorkTargets;
 
   /// Called when the user taps a unit row; [unit] has non-null [Unit.tileKey].
   final void Function(Unit unit)? onLocateUnit;
@@ -162,6 +170,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 unit: u,
                                 provinceNames: provinceNames,
                                 currentOrders: currentOrders,
+                                availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
@@ -181,6 +190,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 unit: u,
                                 provinceNames: provinceNames,
                                 currentOrders: currentOrders,
+                                availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
@@ -200,13 +210,11 @@ class CivilianUnitsPanel extends StatelessWidget {
                         child: Center(
                           child: Text(
                             'No civilian units',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ),
@@ -232,9 +240,9 @@ class _RegionHeader extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -245,6 +253,7 @@ class _UnitRow extends StatelessWidget {
     required this.unit,
     required this.provinceNames,
     required this.currentOrders,
+    required this.availableWorkTargets,
     required this.humanPlayerId,
     this.onTap,
     this.onAddWorkOrder,
@@ -256,6 +265,7 @@ class _UnitRow extends StatelessWidget {
   final Unit unit;
   final Map<String, String> provinceNames;
   final Orders currentOrders;
+  final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
   final VoidCallback? onTap;
   final void Function(WorkOrder order)? onAddWorkOrder;
@@ -324,8 +334,9 @@ class _UnitRow extends StatelessWidget {
           provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
       location = ' (${_regionLabel(regionId)} — $name)';
     }
-    final progress =
-        cw.totalTurns > 0 ? ' ${cw.remainingTurns}/${cw.totalTurns} turns' : '';
+    final progress = cw.totalTurns > 0
+        ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
+        : '';
     return '$workLabel$location$progress';
   }
 
@@ -333,7 +344,9 @@ class _UnitRow extends StatelessWidget {
     final allowed = workOrderTargetsByUnitType[unit.type];
     if (allowed == null ||
         allowed.isEmpty ||
-        onStartWorkTargetSelection == null) return;
+        onStartWorkTargetSelection == null)
+      return;
+    final available = availableWorkTargets[unit.id] ?? [];
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -347,13 +360,25 @@ class _UnitRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
-            ...allowed.map((target) => ListTile(
-                  title: Text(_workTargetLabels[target] ?? target),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    onStartWorkTargetSelection!(unit, target);
-                  },
-                )),
+            ...allowed.map(
+              (target) => ListTile(
+                title: Text(
+                  _workTargetLabels[target] ?? target,
+                  style: TextStyle(
+                    color: available.contains(target)
+                        ? null
+                        : Theme.of(context).disabledColor,
+                  ),
+                ),
+                enabled: available.contains(target),
+                onTap: available.contains(target)
+                    ? () {
+                        Navigator.of(ctx).pop();
+                        onStartWorkTargetSelection!(unit, target);
+                      }
+                    : null,
+              ),
+            ),
           ],
         ),
       ),
