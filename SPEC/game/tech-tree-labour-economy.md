@@ -15,7 +15,7 @@
 | money_lending | Money Lending | 1 | land_enclosure | Borrow more; lower interest; leads to bureaucracy |
 | banking | Banking | 3 | master_artisans, trade_fairs | Lower interest; larger negative spending; military funding |
 | trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Bid on 6 commodities (vs 3) |
-| university | University | 3 | money_lending, apprentice_workers, printing_press | Fourth research slot; leads to many advances |
+| university | University | 3 | money_lending, apprentice_workers, printing_press | Increases research slots from 3 to 4 (permanent per player); leads to many advances |
 
 ---
 
