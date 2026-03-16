@@ -43,3 +43,13 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   }
   return byUnitId;
 });
+
+/// Set of game ids for which the game-start intro dialogue has been shown.
+/// SPEC/ai/dialogue-management.md § First dialogue emission point.
+final gameIdsWithIntroShownProvider =
+    StateProvider<Set<String>>((ref) => {});
+
+/// When non-null, turn resolution is suspended; user must accept/reject overtures.
+/// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
+final pendingOverturesProvider =
+    StateProvider<List<OvertureOffer>?>((ref) => null);

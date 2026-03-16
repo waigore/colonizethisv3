@@ -60,6 +60,8 @@ class ShellScreen extends StatefulComponent {
     this.pendingOvertures,
     this.onTurnResolutionPending,
     this.onOvertureDecisions,
+    this.showGameStartIntro = false,
+    this.onIntroDismissed,
   });
 
   final CttermRoute route;
@@ -129,6 +131,12 @@ class ShellScreen extends StatefulComponent {
 
   /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
   final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
+
+  /// When true, in-game shell shows game-start intro overlay until dismissed. SPEC/ai/dialogue-management.md.
+  final bool showGameStartIntro;
+
+  /// Called when user dismisses the game-start intro (e.g. Enter).
+  final void Function()? onIntroDismissed;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -282,6 +290,8 @@ class _ShellScreenState extends State<ShellScreen> {
           gameEvents: component.gameEvents,
           tileMapByRegion: component.tileMapByRegion,
           onNavigate: component.onNavigate,
+          showGameStartIntro: component.showGameStartIntro,
+          onIntroDismissed: component.onIntroDismissed,
           onEndTurn: () async {
             final game = component.game;
             if (game == null) {

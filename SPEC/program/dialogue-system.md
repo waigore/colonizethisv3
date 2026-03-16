@@ -1,0 +1,85 @@
+# Dialogue System — Technical Contract
+
+**SPEC/program** — Data structures, emission points, and resume contract for AI–human dialogue. Game/AI design: [dialogue-management.md](../ai/dialogue-management.md), [dialogue-content-and-yarn.md](../ai/dialogue-content-and-yarn.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Responsibility
+
+Define the **dialogue point** model used by both the Flutter app and ctterm, how resolution (or game loop) produces dialogue points, and how the client submits **outcomes** to resume. Logic lives in colonizethis_logic (or shared); UI/TUI consume the same contract.
+
+---
+
+## Data model
+
+### PendingDialoguePoint
+
+Represents one dialogue that the player must or may respond to. Emitted when conditions in [dialogue-management.md](../ai/dialogue-management.md) are met.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| kind | string | One of: `overture_target_response`, `intervention_choice`, `alliance_offer_response`, `dialogue_flavour`. |
+| blocking | bool | If true, resolution suspends until outcome is submitted. |
+| presentationMode | string | `modal` \| `overlay`; see dialogue-management.md. |
+| contentKey | string | Key for content (Yarn node name or data lookup); e.g. `DialoguePoint/overture_target_response/embassy`. |
+| payload | (kind-specific) | Opaque payload for this kind. Used to build UI and to validate outcome. |
+
+**Payload by kind:**
+
+- **overture_target_response:** List of offers (each: offererGpId, targetFactionId, stage). Same data as existing OvertureOffer in colonizethis_logic; may be a single offer or multiple. Outcome: one OvertureDecision per offer.
+- **intervention_choice:** attackingGpId, defenderFactionId (Minor/Tribe), provinceId (prefixed). Outcome: InterventionChoice enum (intervene, doNothing, protest) applied via existing diplomacy/combat resolver.
+- **alliance_offer_response:** offererGpId, targetGpId. Outcome: AllianceDecision (accept, refuse).
+- **dialogue_flavour:** DialogueEvent fields (leaderId, category, situation, era, mood?, variables). No outcome; dismiss only.
+- **game_start_intro:** No payload (or minimal, e.g. gameId for "already shown" tracking). Emitted by the app/ctterm when entering in-game; blocking at UI level until dismissed. No outcome; dismiss only.
+
+Payloads use ids only; no UI strings. Province ids in payload are **prefixed** per world-model-identity.
+
+### DialogueOutcome (sealed)
+
+The player’s response, to be applied by the resolver.
+
+- **OvertureDecision** — existing type; one per overture offer (offererGpId, targetFactionId, stage, accepted).
+- **InterventionChoice** — existing enum (intervene, doNothing, protest); plus context (e.g. attackingGpId, defenderFactionId) so the resolver knows which battle.
+- **AllianceDecision** — accept \| refuse; plus offererGpId, targetGpId.
+
+Implementation may use a sealed class or tagged union. The **resume API** accepts a list of outcomes; the resolver applies each and continues.
+
+---
+
+## Emission and blocking
+
+- **Overture (blocking):** When the Diplomacy phase encounters an Establish Overture whose target is a human GP, the phase returns DiplomacyPhaseResult with non-null **pendingOvertures**. Turn resolution returns **TurnResolutionPendingOvertures**. This is **equivalent to** emitting one or more PendingDialoguePoint(s) of kind `overture_target_response` with blocking true. The app and ctterm **map** TurnResolutionPendingOvertures to the dialogue model and present accordingly; they call **resumeTurnResolutionWithOvertureDecisions** with the collected OvertureDecision list. Presentation: [dialogue-presentation.md](../ui/dialogue-presentation.md) (app), [dialogue-presentation.md](../tui/dialogue-presentation.md) (ctterm).
+- **Intervention (blocking):** When combat resolution needs a human intervention choice, the resolver (or combat pipeline) emits a PendingDialoguePoint of kind `intervention_choice`. Turn/combat resolution suspends; app/ctterm present the dialogue and call a **resume with InterventionChoice** API; the resolver applies it and continues. (Current code may use a different hook; this spec defines the target contract.)
+- **Alliance (blocking):** When an alliance proposal targets a human GP, resolution emits a PendingDialoguePoint of kind `alliance_offer_response` and suspends; resume with AllianceDecision.
+- **Flavour (non-blocking):** [DialogueEvent](ai-events-and-dossier.md) is emitted during AI order generation or resolution. The app/ctterm may show it as a non-blocking PendingDialoguePoint (presentationMode overlay or modal). No resume; game flow does not wait.
+
+Emission order is deterministic given game state and phase. Same state → same set of dialogue points.
+
+---
+
+## Resume API
+
+- **Overture:** Existing **resumeTurnResolutionWithOvertureDecisions**(game, pendingOvertures, decisions, …). Returns TurnResolutionResult; may be Complete or again PendingOvertures.
+- **Intervention:** **applyInterventionChoice**(game, context, gpId, choice) already exists; the dialogue system collects the choice and invokes it before continuing combat.
+- **Alliance:** To be added when alliance_offer_response is implemented; signature analogous to overture resume.
+
+A **unified** resume API that accepts List<DialogueOutcome> and dispatches by outcome type may be introduced in a later phase so the app/ctterm need not branch on dialogue kind. Until then, each blocking kind has its own resume entry point.
+
+---
+
+## Contract for app and ctterm
+
+- Both clients receive **the same** dialogue point data (kind, blocking, presentationMode, contentKey, payload). For overtures, that data is derived from TurnResolutionPendingOvertures (game, pendingOvertures).
+- Both resolve **contentKey** + payload variables to displayable text and choices (app via Jenny + Yarn; ctterm via data assets).
+- Both call the **same** resume API with the **same** outcome types (OvertureDecision, InterventionChoice, etc.) so that logic sees identical behaviour.
+- Determinism: replay and save/load must reproduce or recompute the same dialogue point set from persisted state; only the player’s choices affect subsequent state.
+
+---
+
+## Acceptance criteria
+
+- **Given** turn resolution returns TurnResolutionPendingOvertures with N offers, **when** the app or ctterm presents the dialogue, **then** the client builds PendingDialoguePoint(s) of kind `overture_target_response` with contentKey derived from offer stage(s), and calls resumeTurnResolutionWithOvertureDecisions with N OvertureDecision(s) matching the user’s choices.
+- **Given** a PendingDialoguePoint of kind `intervention_choice`, **when** the player selects an option, **then** the client calls the intervention resume API (e.g. applyInterventionChoice) with the corresponding InterventionChoice before combat resolution continues.
+- **Given** a non-blocking dialogue point (dialogue_flavour), **when** the client shows it, **then** no resume API is called; game flow is not blocked.
+- **Province identity:** Any payload that carries a province id uses prefixed form per [world-model-identity.md](../game/world-model-identity.md).
+- **Determinism:** Same game state and phase produce the same dialogue point set; only player-supplied outcomes change subsequent state.
