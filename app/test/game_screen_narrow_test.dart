@@ -93,8 +93,9 @@ void main() {
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
-    // ACs for opening side menu (swipe/hamburger) and close (swipe/×) are covered by
-    // manual testing or integration tests; opening the menu in widget test requires
-    // gameServiceProvider which depends on Hive (not available in widget test).
+    // ACs for opening/closing the side menu (swipe/hamburger/×/tap-outside/Escape)
+    // and its modal behaviour over the map widget are covered by manual or higher-
+    // level integration tests; opening the menu in this widget test would require
+    // wiring a Hive-backed gameServiceProvider, which is not available here.
   });
 }

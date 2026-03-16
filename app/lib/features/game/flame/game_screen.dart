@@ -4,6 +4,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
@@ -537,7 +538,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.menu),
-                  onPressed: () => setState(() => _sideMenuOpen = true),
+                  onPressed: () => setState(
+                    () => _sideMenuOpen = !_sideMenuOpen,
+                  ),
                   tooltip: 'Menu',
                 ),
                 Expanded(
@@ -768,54 +771,80 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         ),
         Expanded(
           child: isNarrow
-              ? Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CtRegionMap(
-                        region: _currentRegion,
-                        cellSizePx: 24,
-                        visibilityMode: CtMapVisibilityMode.playerConstrained,
-                        baseLayerDisplayMode: _baseLayerDisplayMode,
-                        onProvinceSelected: _onProvinceSelected,
-                        onProvinceHovered: (id) =>
-                            setState(() => _hoveredDetailId = id),
-                        onTileHovered: (key) =>
-                            setState(() => _hoveredTileKey = key),
-                        highlightedTileKey: _highlightedTileKey,
-                        centerOnTileKey: _centerOnTileKey,
-                        validTileKeys: _validTileKeysForSelection,
-                        onTileSelected: _workTargetSelection != null
-                            ? _onTileSelectedForWork
-                            : null,
-                        onWorkTargetSelectionCancelled:
-                            _workTargetSelection != null
-                                ? () =>
-                                    setState(() => _workTargetSelection = null)
-                                : null,
+              ? Focus(
+                  autofocus: true,
+                  onKeyEvent: (node, event) {
+                    if (_sideMenuOpen &&
+                        event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.escape) {
+                      setState(() => _sideMenuOpen = false);
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CtRegionMap(
+                          region: _currentRegion,
+                          cellSizePx: 24,
+                          visibilityMode:
+                              CtMapVisibilityMode.playerConstrained,
+                          baseLayerDisplayMode: _baseLayerDisplayMode,
+                          onProvinceSelected: _onProvinceSelected,
+                          onProvinceHovered: (id) =>
+                              setState(() => _hoveredDetailId = id),
+                          onTileHovered: (key) =>
+                              setState(() => _hoveredTileKey = key),
+                          highlightedTileKey: _highlightedTileKey,
+                          centerOnTileKey: _centerOnTileKey,
+                          validTileKeys: _validTileKeysForSelection,
+                          onTileSelected: _workTargetSelection != null
+                              ? _onTileSelectedForWork
+                              : null,
+                          onWorkTargetSelectionCancelled:
+                              _workTargetSelection != null
+                                  ? () => setState(
+                                        () => _workTargetSelection = null,
+                                      )
+                                  : null,
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      child: _buildBaseLayerCycleButton(),
-                    ),
-                    if (isNarrow && !_sideMenuOpen)
                       Positioned(
                         left: 0,
                         top: 0,
-                        bottom: 0,
-                        width: 20,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onHorizontalDragUpdate: (details) {
-                            if (details.delta.dx > 20) {
-                              setState(() => _sideMenuOpen = true);
-                            }
-                          },
-                        ),
+                        child: _buildBaseLayerCycleButton(),
                       ),
-                    if (_sideMenuOpen) _buildSideMenu(context),
-                  ],
+                      if (isNarrow && !_sideMenuOpen)
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 20,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onHorizontalDragUpdate: (details) {
+                              if (details.delta.dx > 20) {
+                                setState(() => _sideMenuOpen = true);
+                              }
+                            },
+                          ),
+                        ),
+                      if (_sideMenuOpen) ...[
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () =>
+                                setState(() => _sideMenuOpen = false),
+                            child: Container(
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                        _buildSideMenu(context),
+                      ],
+                    ],
+                  ),
                 )
               : Stack(
             children: [
