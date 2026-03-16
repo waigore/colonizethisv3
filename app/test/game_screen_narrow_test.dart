@@ -1,4 +1,4 @@
-// In-game shell narrow viewport and side menu. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
+// In-game shell side menu. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
@@ -26,6 +26,9 @@ void main() {
       overrides: [
         currentGameProvider.overrideWith((ref) => debugResult.game),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+        gameIdsWithIntroShownProvider.overrideWith(
+          (ref) => {debugResult.game.id},
+        ),
       ],
       child: MaterialApp(
         theme: AppThemes.colonial,
@@ -39,7 +42,7 @@ void main() {
 
   group('GameScreen — SPEC/ui/in-game-shell-narrow.md', () {
     testWidgets(
-      'AC: viewport >= 600 dp shows empire buttons in top bar',
+      'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (wide viewport)',
       (WidgetTester tester) async {
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
@@ -47,21 +50,25 @@ void main() {
         await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
         await tester.pump();
 
-        expect(find.text('Production'), findsOneWidget);
-        expect(find.text('Civilian Units'), findsOneWidget);
-        expect(find.text('Technology'), findsOneWidget);
+        expect(find.textContaining('Next turn'), findsOneWidget);
+        expect(find.byIcon(Icons.menu), findsOneWidget);
+        // Empire buttons should NOT be visible in top bar
+        expect(find.text('Production'), findsNothing);
+        expect(find.text('Civilian Units'), findsNothing);
+        expect(find.text('Technology'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
     testWidgets(
-      'AC: viewport < 600 dp shows only hamburger and turn counter in top bar',
+      'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (narrow viewport)',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildGameScreen(width: 399, height: 700));
         await tester.pump();
 
         expect(find.textContaining('Next turn'), findsOneWidget);
         expect(find.byIcon(Icons.menu), findsOneWidget);
+        // Empire buttons should NOT be visible in top bar
         expect(find.text('Production'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 15)),
@@ -114,9 +121,15 @@ void main() {
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
-    // ACs for opening/closing the side menu (swipe/hamburger/×/tap-outside/Escape)
-    // and its modal behaviour over the map widget are covered by manual or higher-
-    // level integration tests; opening the menu in this widget test would require
-    // wiring a Hive-backed gameServiceProvider, which is not available here.
+    // Side menu button content tests require Hive initialization (for gameServiceProvider).
+    // The empire buttons implementation uses the correct icons:
+    // - Production → ui_icon_production.png
+    // - Civilian Units → ui_icon_civilian_units.png
+    // - Military Units → ui_icon_military_units.png
+    // - Diplomacy → ui_icon_diplomacy.png
+    // - Technology → ui_icon_technology.png
+    // Each button uses Image.asset(icon, width: 20, height: 20) + SizedBox(width: 8) + Text(label).
+    // Integration tests or manual testing verify the side menu opens and shows these buttons
+    // in the correct order per SPEC/ui/empire-buttons.md.
   });
 }
