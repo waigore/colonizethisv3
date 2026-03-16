@@ -8,6 +8,7 @@ import 'config/themes.dart';
 import 'features/game/widgets/civilian_units_panel.dart';
 import 'features/game/widgets/diplomacy_panel.dart';
 import 'features/game/widgets/military_units_panel.dart';
+import 'features/game/widgets/naval_units_panel.dart';
 import 'features/game/widgets/production_panel.dart';
 import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
@@ -53,6 +54,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...productionPanelDirectories,
         ...civilianUnitsPanelDirectories,
         ...militaryUnitsPanelDirectories,
+      ...navalUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
       ],
@@ -447,6 +449,32 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'With map',
         builder: (context) => const _MilitaryPanelWithMapStory(),
+      ),
+    ],
+  ),
+];
+
+/// Naval Units Panel stories. SPEC/ui/naval-units-panel.md.
+List<WidgetbookNode> get navalUnitsPanelDirectories => [
+  WidgetbookFolder(
+    name: 'Naval Units Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId =
+              game.players.isNotEmpty ? game.players.first.id : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: NavalUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'With map',
+        builder: (context) => const _NavalPanelWithMapStory(),
       ),
     ],
   ),
@@ -1006,6 +1034,98 @@ class _MilitaryPanelWithMapStoryState
               game: game,
               humanPlayerId: humanPlayerId,
               onLocateTile: _onLocateTile,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Naval Units Panel + map in tandem. SPEC/ui/naval-units-panel.md.
+class _NavalPanelWithMapStory extends StatefulWidget {
+  const _NavalPanelWithMapStory();
+
+  @override
+  State<_NavalPanelWithMapStory> createState() =>
+      _NavalPanelWithMapStoryState();
+}
+
+class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
+  int _regionIndex = 0;
+  String? _highlightedTileKey;
+  String? _centerOnTileKey;
+
+  void _onLocateFleet(String tileKey, String regionId) {
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = getDebugInitGameResult();
+    final game = result.game;
+    final mapViewData = result.mapViewData;
+    final humanPlayerId =
+        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    final region =
+        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    return SizedBox(
+      width: 900,
+      height: 550,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Old World'),
+                        selected: _regionIndex == 0,
+                        onSelected: (_) => setState(() => _regionIndex = 0),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('New World'),
+                        selected: _regionIndex == 1,
+                        onSelected: (_) => setState(() => _regionIndex = 1),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: CtRegionMap(
+                    region: region,
+                    cellSizePx: 24,
+                    onProvinceSelected: (_) {},
+                    highlightedTileKey: _highlightedTileKey,
+                    centerOnTileKey: _centerOnTileKey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 360,
+            child: NavalUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              onLocateFleet: _onLocateFleet,
             ),
           ),
         ],

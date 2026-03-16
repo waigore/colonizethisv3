@@ -13,10 +13,11 @@
 | 1 | production | Production | Opens Production panel/screen |
 | 2 | civilian_units | Civilian Units | Opens Civilian Units panel (e.g. bottom sheet or route) |
 | 3 | military_units | Military Units | Opens Military Units panel |
-| 4 | diplomacy | Diplomacy | Opens Diplomacy screen |
-| 5 | technology | Technology | Opens Technology screen |
+| 4 | naval_units | Naval Units | Opens Naval Units panel |
+| 5 | diplomacy | Diplomacy | Opens Diplomacy screen |
+| 6 | technology | Technology | Opens Technology screen |
 
-Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) (`ui_icon_<id>.png`,32×32; display at 20×20 in buttons).
+Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) (`ui_icon_<id>.png`, 32×32; display at 20×20 in buttons). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 
 ---
 

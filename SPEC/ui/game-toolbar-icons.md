@@ -17,6 +17,7 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 | `production` | Production | Tools/gear icon for resource production | 32×32 |
 | `civilian_units` | Civilian Units | Worker/people icon, colonial era style | 32×32 |
 | `military_units` | Military Units | Sword/shield or soldier icon | 32×32 |
+| `naval_units` | Naval Units | Ship/anchor icon for naval fleets | 32×32 |
 | `diplomacy` | Diplomacy | Dove with olive branch | 32×32 |
 | `technology` | Technology | Book/scroll or beaker icon | 32×32 |
 | `layer_toggle` | Base Layer Cycle | Stacked layers/sheets icon for map layer toggle | 32×32 |
@@ -195,6 +196,24 @@ pixellab_create_map_object(
 
 **Prompt:** `pixel art home capital icon for center on capital button, colonial era style, small flag on pole or castle keep tower, top-down game UI icon, simple clean design`
 
+### ui_icon_naval_units.png (32×32)
+
+Use PixelLab’s Pixflux generator for the naval units panel icon. This icon represents fleets and should read clearly at 32×32 while matching the existing toolbar icon style.
+
+```text
+generate_image_pixflux(
+  description='pixel art naval fleet icon for naval units button, colonial era style, small sailing ship with mast and sail on stylized waves, with anchor motif, top-down game UI icon, simple clean design, limited palette',
+  width=32,
+  height=32,
+  outline='single color outline',
+  shading='medium shading',
+  detail='medium detail',
+  no_background=true
+)
+```
+
+**Prompt:** `pixel art naval fleet icon for naval units button, colonial era style, small sailing ship with mast and sail on stylized waves, with anchor motif, top-down game UI icon, simple clean design, limited palette`
+
 ---
 
 ## Style matching (optional but recommended)
@@ -278,6 +297,7 @@ To regenerate an icon:
 | production | ui_icon_production.png | ✅ Generated | 2026-03-15 |
 | civilian_units | ui_icon_civilian_units.png | ✅ Generated | 2026-03-15 |
 | military_units | ui_icon_military_units.png | ✅ Generated | 2026-03-15 |
+| naval_units | ui_icon_naval_units.png | ☐ Pending | — |
 | diplomacy | ui_icon_diplomacy.png | ✅ Generated | 2026-03-15 |
 | technology | ui_icon_technology.png | ✅ Generated | 2026-03-15 |
 | layer_toggle | ui_icon_layer_toggle.png | ✅ Generated | 2026-03-16 |

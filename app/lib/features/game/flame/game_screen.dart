@@ -19,6 +19,7 @@ import '../dialogue/overture_dialogue_overlay.dart';
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
+import '../widgets/naval_units_panel.dart';
 import '../widgets/production_screen.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
@@ -365,6 +366,22 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     });
   }
 
+  void _onLocateNavalFleet(String tileKey, String regionId) {
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    Navigator.of(context).maybePop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
     if (sel == null) return;
@@ -556,6 +573,22 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               game: widget.game,
               humanPlayerId: _humanPlayerId,
               onLocateTile: _onLocateMilitaryTile,
+            ),
+          );
+        },
+      ),
+      _empireButton(
+        context,
+        'assets/images/ui_icon_naval_units.png',
+        'Naval Units',
+        () {
+          setState(() => _sideMenuOpen = false);
+          showModalBottomSheet<void>(
+            context: context,
+            builder: (ctx) => NavalUnitsPanel(
+              game: widget.game,
+              humanPlayerId: _humanPlayerId,
+              onLocateFleet: _onLocateNavalFleet,
             ),
           );
         },
