@@ -617,9 +617,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildBaseLayerCycleButton(),
-            const SizedBox(height: 4),
-            _buildHomeToCapitalButton(),
+            Image.asset(iconAsset, width: 20, height: 20),
+            const SizedBox(width: 8),
+            Text(label),
           ],
         ),
       ),
