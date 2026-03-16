@@ -11,7 +11,8 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
-import '../../../../widgets/ct_region_map.dart';
+import '../../../../widgets/ct_region_map.dart'
+    show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
@@ -26,6 +27,9 @@ import 'game_canvas.dart';
 
 /// Breakpoint for in-game narrow layout (side menu, reduced top bar). SPEC/ui/in-game-shell-narrow.md.
 const double kInGameNarrowBreakpoint = 600;
+
+/// Key for the base layer cycle button (for tests). SPEC/ui/empire-overview.md § Base layer display cycle.
+const Key kBaseLayerCycleButtonKey = Key('base_layer_cycle_button');
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 void _showPauseMenu(BuildContext context) {
@@ -132,6 +136,9 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   bool _sideMenuOpen = false;
+  /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
+  BaseLayerDisplayMode _baseLayerDisplayMode =
+      BaseLayerDisplayMode.terrainResourcesImprovements;
 
   String get _humanPlayerId =>
       widget.game.players
@@ -163,6 +170,43 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
       currentOrders: orders,
     );
     return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+  }
+
+  void _cycleBaseLayerDisplayMode() {
+    setState(() {
+      _baseLayerDisplayMode = switch (_baseLayerDisplayMode) {
+        BaseLayerDisplayMode.terrainOnly =>
+          BaseLayerDisplayMode.terrainAndResources,
+        BaseLayerDisplayMode.terrainAndResources =>
+          BaseLayerDisplayMode.terrainResourcesImprovements,
+        BaseLayerDisplayMode.terrainResourcesImprovements =>
+          BaseLayerDisplayMode.terrainOnly,
+      };
+    });
+  }
+
+  /// Base layer cycle button (letter r). SPEC/ui/empire-overview.md § Base layer display cycle.
+  Widget _buildBaseLayerCycleButton() {
+    return Material(
+      key: kBaseLayerCycleButtonKey,
+      color: Colors.white.withValues(alpha: 0.9),
+      child: Tooltip(
+        message: 'Base layer: terrain / +resources / +improvements',
+        child: InkWell(
+          onTap: _cycleBaseLayerDisplayMode,
+          child: const Padding(
+            padding: EdgeInsets.all(10),
+            child: Text(
+              'r',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
@@ -731,6 +775,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                         region: _currentRegion,
                         cellSizePx: 24,
                         visibilityMode: CtMapVisibilityMode.playerConstrained,
+                        baseLayerDisplayMode: _baseLayerDisplayMode,
                         onProvinceSelected: _onProvinceSelected,
                         onProvinceHovered: (id) =>
                             setState(() => _hoveredDetailId = id),
@@ -748,6 +793,11 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                                     setState(() => _workTargetSelection = null)
                                 : null,
                       ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      child: _buildBaseLayerCycleButton(),
                     ),
                     if (isNarrow && !_sideMenuOpen)
                       Positioned(
@@ -767,43 +817,58 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                     if (_sideMenuOpen) _buildSideMenu(context),
                   ],
                 )
-              : Row(
+              : Stack(
             children: [
-              Expanded(
-                child: CtRegionMap(
-                  region: _currentRegion,
-                  cellSizePx: 24,
-                  visibilityMode: CtMapVisibilityMode.playerConstrained,
-                  onProvinceSelected: _onProvinceSelected,
-                  onProvinceHovered: (id) =>
-                      setState(() => _hoveredDetailId = id),
-                  onTileHovered: (key) => setState(() => _hoveredTileKey = key),
-                  highlightedTileKey: _highlightedTileKey,
-                  centerOnTileKey: _centerOnTileKey,
-                  validTileKeys: _validTileKeysForSelection,
-                  onTileSelected: _workTargetSelection != null
-                      ? _onTileSelectedForWork
-                      : null,
-                  onWorkTargetSelectionCancelled: _workTargetSelection != null
-                      ? () => setState(() => _workTargetSelection = null)
-                      : null,
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: CtRegionMap(
+                        region: _currentRegion,
+                        cellSizePx: 24,
+                        visibilityMode: CtMapVisibilityMode.playerConstrained,
+                        baseLayerDisplayMode: _baseLayerDisplayMode,
+                        onProvinceSelected: _onProvinceSelected,
+                        onProvinceHovered: (id) =>
+                            setState(() => _hoveredDetailId = id),
+                        onTileHovered: (key) =>
+                            setState(() => _hoveredTileKey = key),
+                        highlightedTileKey: _highlightedTileKey,
+                        centerOnTileKey: _centerOnTileKey,
+                        validTileKeys: _validTileKeysForSelection,
+                        onTileSelected: _workTargetSelection != null
+                            ? _onTileSelectedForWork
+                            : null,
+                        onWorkTargetSelectionCancelled:
+                            _workTargetSelection != null
+                                ? () =>
+                                    setState(() => _workTargetSelection = null)
+                                : null,
+                      ),
+                    ),
+                    if (!isNarrow && _selectedDetailId != null)
+                      SizedBox(
+                        width: 320,
+                        child: ProvinceSeaZoneDetailOverlay(
+                          game: widget.game,
+                          region: _currentRegion,
+                          selectedId: _selectedDetailId!,
+                          displayId: _displayId,
+                          humanPlayerId: _humanPlayerId,
+                          hoveredTileKey: _hoveredTileKey,
+                          onHighlightTile: (k) =>
+                              setState(() => _highlightedTileKey = k),
+                          onClose: () => setState(() => _selectedDetailId = null),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (!isNarrow && _selectedDetailId != null)
-                SizedBox(
-                  width: 320,
-                  child: ProvinceSeaZoneDetailOverlay(
-                    game: widget.game,
-                    region: _currentRegion,
-                    selectedId: _selectedDetailId!,
-                    displayId: _displayId,
-                    humanPlayerId: _humanPlayerId,
-                    hoveredTileKey: _hoveredTileKey,
-                    onHighlightTile: (k) =>
-                        setState(() => _highlightedTileKey = k),
-                    onClose: () => setState(() => _selectedDetailId = null),
-                  ),
-                ),
+              Positioned(
+                left: 0,
+                top: 0,
+                child: _buildBaseLayerCycleButton(),
+              ),
             ],
           ),
         ),

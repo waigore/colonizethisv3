@@ -23,9 +23,16 @@
 ## Map area
 
 - **Content:** One instance of the map widget per active view. When the user switches tabs, the map widget is updated or swapped to show the selected region's map.
-- **Layers:** Base tile layer always; political overlay (borders) togglable by the user (layer controls on this screen or in a shared toolbar).
+- **Layers:** Base tile layer always; political overlay (borders) togglable by the user (layer controls on this screen or in a shared toolbar). **Base layer display mode** is controlled by a cycle button overlaid at the top-left of the map (see below).
 - **Interaction:** Pan, zoom (fixed levels, smooth), tap/click for province selection. Map widget fires `onProvinceSelected`; the Empire overview screen responds (e.g. show province details in a panel or bottom sheet; content TBD).
 - **Data:** Region map data from game state / view model (PlayerView or equivalent for human player). Province identity: prefixed id per [world-model-identity.md](../game/world-model-identity.md).
+
+### Base layer display cycle (in-game map only)
+
+- **Overlay:** A single toggle button is overlaid at the **top-left** of the map area. Icon only: the letter **r** (stand-in; asset or icon may be replaced later). The button cycles the map's base layer display mode; it is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Modes (cycle order):** 1) **terrain only** — no resource or improvement/road letters; 2) **terrain + resources** — resource letters (g, t, i, …) only; 3) **terrain + resources + improvements** — resource letters plus improvement and road labels (I0, R0, …). Each tap advances to the next mode; after the third, the next tap returns to the first.
+- **Default at game start:** When the player enters the in-game shell (after init or load), the base layer display mode is **terrain + resources + improvements** (full letters).
+- **Spec reference:** [map-widget.md](map-widget.md) § Base layer display mode.
 
 ---
 
@@ -35,13 +42,12 @@
 +------------------------------------------------------------------+
 |  [ Old World ]  [ New World ]   (region tabs)    [ Layers ▼ ] …  |
 +------------------------------------------------------------------+
-|                                                                  |
-|                    Map widget (viewport = this area)              |
-|                    – base: terrain, resources, improvements,    |
-|                      towns, capitals                             |
-|                    – overlay: political borders (if enabled)      |
-|                    – pan / zoom / tap province                   |
-|                                                                  |
+| [r]                                                              |
+|     Map widget (viewport = this area)                             |
+|     – base: terrain [+ resources + improvements per cycle]       |
+|     – overlay: political borders (if enabled)                     |
+|     – pan / zoom / tap province                                   |
+|     – [r] = base layer cycle (top-left overlay, in-game only)    |
 +------------------------------------------------------------------+
 |  (HUD / province details / panels — layout and content TBD)       |
 +------------------------------------------------------------------+
@@ -57,6 +63,9 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **When** the user selects a different region tab, **then** the map area shows that region's map (one region per map; no side-by-side on mobile).
 - **Given** the map widget is visible, **then** the user can pan, zoom (fixed levels, smooth), and toggle the political overlay; tap/click on a province invokes the selection callback and the screen can show province details (details content TBD).
 - **Desktop and mobile:** Both use the same tab-based region switching; on mobile, one region per map and tab system only.
+- **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is terrain + resources + improvements (full letters visible).
+- **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button (letter r) at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvements → terrain only (repeating).
+- **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the top-left of the map area and displays the letter r (icon-only).
 
 ---
 

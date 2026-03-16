@@ -26,6 +26,22 @@ Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData`
 
 ---
 
+## Base layer display mode
+
+The base (tile) layer can show terrain only, terrain plus resource letters, or terrain plus resource and improvement/road letters. The widget accepts an optional **base layer display mode**; when provided, the map draws the letters overlay according to that mode. When not provided (e.g. Widgetbook, debug stories), the widget uses **full** mode so all letters are shown for backward compatibility.
+
+| Mode | Terrain | Resource letter (g, t, i, …) | Improvement/road (I0, R0, …) |
+|------|---------|-------------------------------|-------------------------------|
+| **terrainOnly** | Yes | No | No |
+| **terrainAndResources** | Yes | Yes | No |
+| **terrainResourcesImprovements** | Yes | Yes | Yes |
+
+Implementation: a single letters pass draws per-cell text; the mode controls which parts of that text are included. Capitals and ports are always drawn regardless of mode.
+
+The **in-game shell** (Empire overview) may overlay a cycle button that toggles this mode; see [empire-overview.md](empire-overview.md).
+
+---
+
 ## Viewport, scale, pan, zoom
 
 - **Viewport:** Exactly the size of the map widget in the layout. No intrinsic minimum; parent constrains the widget.
@@ -211,6 +227,9 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource/improvement/road letters are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
 
 - **Given** the map widget is in work target selection mode (non-null **validTileKeys** and **onTileSelected** provided), **when** the widget renders a tile whose key is in **validTileKeys** and in the current region, **then** that tile is drawn with a subtle glow (overlay or outline). When the user taps a tile in **validTileKeys**, **then** the widget invokes **onTileSelected** with that tile key; when the user taps a tile not in **validTileKeys** or empty area, **then** the widget does not invoke **onTileSelected**.
+- **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports) is drawn and no resource or improvement/road letters are drawn on tiles.
+- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource letters (g, t, i, …) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
+- **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource letters, and improvement/road labels are all drawn per cell where present.
 
 ---
 

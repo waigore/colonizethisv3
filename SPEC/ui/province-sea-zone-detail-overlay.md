@@ -32,6 +32,12 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 
 ---
 
+## Style / Implementation
+
+- Overlay uses **non-Material, pixel-art friendly** components: CtPanel, custom tab strip (CtTabStrip), explicit text styles. No Material Card, TabBar, or IconButton (UXD 02).
+
+---
+
 ## Province Overlay Content
 
 ### Tile (hovered tile details)

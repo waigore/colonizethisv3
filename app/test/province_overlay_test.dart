@@ -60,7 +60,7 @@ void main() {
       expect(find.text('Military'), findsOneWidget);
       expect(find.text('Civilian'), findsOneWidget);
       expect(find.text('Naval'), findsOneWidget);
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byKey(const Key('overlay_close')), findsOneWidget);
     });
 
     testWidgets('AC: Province overlay shows province name and owner',
@@ -111,7 +111,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byKey(const Key('overlay_close')));
       await tester.pumpAndSettle();
 
       expect(closed, isTrue);
@@ -400,7 +400,7 @@ void main() {
       expect(selectedId, isNotNull);
 
       // Close via the overlay and verify it clears selection.
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byKey(const Key('overlay_close')));
       await tester.pump();
       expect(selectedId, isNull);
     });
