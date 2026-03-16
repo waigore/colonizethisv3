@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
+import 'economy_debt_rules.dart';
 import 'research_rules.dart';
 
 /// Research phase resolution. SPEC/program/research-resolution.md.
@@ -35,6 +36,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
     final progress = Map<String, int>.from(
       player.researchProgressByTechId ?? const <String, int>{},
     );
+    final maxDebt = maxDebtForPlayer(player);
     var treasury = player.treasury;
 
     // One order per slot (SPEC: each slot holds at most one active tech). Duplicate slotIndex
@@ -90,7 +92,11 @@ Game resolveResearchPhase(Game game, Orders orders) {
       }
 
       final spend = treasuryCostForFunding(order.funding);
-      if (spend <= 0 || treasury < spend) {
+      if (spend <= 0) {
+        continue;
+      }
+      final nextTreasury = treasury - spend;
+      if (nextTreasury < -maxDebt) {
         continue;
       }
 
@@ -99,7 +105,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
         continue;
       }
 
-      treasury -= spend;
+      treasury = nextTreasury;
       progress[techId] = (progress[techId] ?? 0) + points;
     }
 
