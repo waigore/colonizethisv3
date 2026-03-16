@@ -14,8 +14,8 @@ void main() {
       expect(terrainLayer(TerrainType.plains), TerrainLayer.layer1LandBase);
     });
 
-    test('desert is layer2Features (features use standalone tiles)', () {
-      expect(terrainLayer(TerrainType.desert), TerrainLayer.layer2Features);
+    test('desert is layer1LandBase (desert is L1, not L2)', () {
+      expect(terrainLayer(TerrainType.desert), TerrainLayer.layer1LandBase);
     });
 
     test('forest is layer2Features', () {
@@ -83,7 +83,7 @@ void main() {
       final tileset = _MockWangTileset(
         name: 'test',
         lowerTerrainId: 'sea',
-        upperTerrainId: 'beach',
+        upperTerrainId: 'plains',
         tiles: tiles,
       );
 
@@ -103,7 +103,7 @@ void main() {
       final tileset = _MockWangTileset(
         name: 'test',
         lowerTerrainId: 'sea',
-        upperTerrainId: 'beach',
+        upperTerrainId: 'plains',
         tiles: tiles,
       );
 
@@ -128,7 +128,7 @@ void main() {
       final tileset = _MockWangTileset(
         name: 'test',
         lowerTerrainId: 'sea',
-        upperTerrainId: 'beach',
+        upperTerrainId: 'plains',
         tiles: tiles,
       );
 
@@ -153,7 +153,7 @@ void main() {
       final tileset = _MockWangTileset(
         name: 'test',
         lowerTerrainId: 'sea',
-        upperTerrainId: 'beach',
+        upperTerrainId: 'plains',
         tiles: tiles,
       );
 
@@ -168,23 +168,39 @@ void main() {
       expect(cache.isLoaded, false);
     });
 
-    test('getSeaBeachTileset returns null before loading', () {
+    test('getSeaPlainsTileset returns null before loading', () {
+      final cache = TerrainTilesetCache();
+      expect(cache.getSeaPlainsTileset(), isNull);
+    });
+
+    test('getSeaDesertTileset returns null before loading', () {
+      final cache = TerrainTilesetCache();
+      expect(cache.getSeaDesertTileset(), isNull);
+    });
+
+    test('getPlainsDesertTileset returns null before loading', () {
+      final cache = TerrainTilesetCache();
+      expect(cache.getPlainsDesertTileset(), isNull);
+    });
+
+    test('getSeaBeachTileset returns null before loading (legacy)', () {
       final cache = TerrainTilesetCache();
       expect(cache.getSeaBeachTileset(), isNull);
     });
 
-    test('getPlainsInteriorTile returns null before loading', () {
-      final cache = TerrainTilesetCache();
-      expect(cache.getPlainsInteriorTile(), isNull);
-    });
-
-    test('getStandaloneTile returns null before loading', () {
+    test('getStandaloneTile returns null before loading for features', () {
       final cache = TerrainTilesetCache();
       expect(cache.getStandaloneTile(TerrainType.forest), isNull);
-      expect(cache.getStandaloneTile(TerrainType.desert), isNull);
       expect(cache.getStandaloneTile(TerrainType.hills), isNull);
       expect(cache.getStandaloneTile(TerrainType.mountain), isNull);
       expect(cache.getStandaloneTile(TerrainType.swamp), isNull);
+    });
+
+    test('desert is not a standalone tile (desert is L1)', () {
+      // Desert is now L1 (land base), not L2 (feature)
+      // So getStandaloneTile for desert returns null
+      final cache = TerrainTilesetCache();
+      expect(cache.getStandaloneTile(TerrainType.desert), isNull);
     });
   });
 }
