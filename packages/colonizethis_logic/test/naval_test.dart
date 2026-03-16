@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/world/naval_resolution.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -42,6 +43,81 @@ void main() {
         expect(isAdjacentSeaZone(topology, 'p1', 'sea2'), isFalse);
         expect(isAdjacentSeaZone(topology, 'p2', 'sea2'), isFalse);
       });
+    });
+
+    test('ship reveal sets coastal tiles to revealed when fleet enters sea zone',
+        () {
+      // Single coastal province adjacent to a sea zone; moving fleet into that
+      // sea zone should reveal the province's coastal tiles for the fleet owner.
+      const ow = 'oldWorld';
+      const provinceLocalId = 'p1';
+      const fullProvinceId = '$ow|$provinceLocalId';
+      const tileKey = '$fullProvinceId|0|0';
+
+      final revealTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: provinceLocalId,
+              regionId: ow,
+              type: TopologyNodeType.province),
+          TopologyNode(
+              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(
+              id: 'sea2', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          // Province is coastal to the destination sea zone (sea2); sea1 adjacent
+          // to sea2 so fleet can move from sea1 into sea2 and then reveal coast.
+          TopologyEdge(id1: provinceLocalId, id2: 'sea2'),
+          TopologyEdge(id1: 'sea1', id2: 'sea2'),
+        ],
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.movement, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: const [
+            Fleet(
+              id: 'f1',
+              ownerId: 'gp1',
+              seaZoneId: 'sea1',
+              regionId: ow,
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              fullProvinceId: [tileKey],
+            },
+          },
+          playerVisibilityByTile: const {
+            'gp1': {},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+      );
+
+      final orders = {
+        'gp1': [
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'sea2',
+          ),
+        ],
+      };
+
+      final next =
+          applyNavalMovesAndShipReveal(game, revealTopology, orders);
+
+      expect(
+        next.worldState.playerVisibilityByTile['gp1']?[tileKey],
+        VisibilityLevel.revealed.name,
+      );
     });
 
     group('firstAdjacentSeaZone', () {
