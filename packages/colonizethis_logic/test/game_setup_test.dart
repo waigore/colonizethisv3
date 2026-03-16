@@ -159,6 +159,11 @@ void main() {
           start.initialImprovementSlots,
           reason: '${player.id} castIron for 5 improvements',
         );
+        expect(
+          player.stockpile.quantityOf(CommodityCatalog.wool.id),
+          start.initialWool,
+          reason: '${player.id} starting wool',
+        );
       }
     });
 
