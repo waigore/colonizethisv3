@@ -304,43 +304,59 @@ void main() {
   });
 
   group('ProvinceSeaZoneDetailOverlay with map', () {
-    testWidgets('AC: Map and overlay appear side by side when province selected',
-        (WidgetTester tester) async {
-      final game = demoGameForOverlay;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Row(
-              children: [
-                Expanded(
-                  child: CtRegionMap(
-                    region: demoRegionForOverlay,
-                    cellSizePx: 28,
-                    onProvinceSelected: (_) {},
-                    highlightedTileKey: null,
+    testWidgets(
+      'AC: Map and overlay appear side by side when province selected; closing overlay clears map highlight (orange cursor)',
+      (WidgetTester tester) async {
+        final game = demoGameForOverlay;
+        String? highlightedTileKey = 'oldWorld|p0|0|0';
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: StatefulBuilder(
+              builder: (context, setState) {
+                return Scaffold(
+                  body: Row(
+                    children: [
+                      Expanded(
+                        child: CtRegionMap(
+                          region: demoRegionForOverlay,
+                          cellSizePx: 28,
+                          onProvinceSelected: (_) {},
+                          highlightedTileKey: highlightedTileKey,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 320,
+                        child: ProvinceSeaZoneDetailOverlay(
+                          game: game,
+                          region: demoRegionForOverlay,
+                          selectedId: sampleProvinceIdForOverlay,
+                          displayId: sampleProvinceIdForOverlay,
+                          humanPlayerId: game.players.first.id,
+                          onClose: () => setState(() {
+                            highlightedTileKey = null;
+                          }),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(
-                  width: 320,
-                  child: ProvinceSeaZoneDetailOverlay(
-                    game: game,
-                    region: demoRegionForOverlay,
-                    selectedId: sampleProvinceIdForOverlay,
-                    displayId: sampleProvinceIdForOverlay,
-                    humanPlayerId: game.players.first.id,
-                    onClose: () {},
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(find.byType(CtRegionMap), findsOneWidget);
-      expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-    });
+        expect(find.byType(CtRegionMap), findsOneWidget);
+        expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
+        expect(highlightedTileKey, isNotNull);
+
+        await tester.tap(find.byKey(const Key('overlay_close')));
+        await tester.pumpAndSettle();
+
+        expect(highlightedTileKey, isNull);
+      },
+    );
 
     testWidgets('AC: Map tap invokes onProvinceSelected; overlay can show selection and stays open until closed',
         (WidgetTester tester) async {
