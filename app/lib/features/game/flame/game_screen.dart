@@ -14,6 +14,8 @@ import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
 import '../../../../widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
+import '../dialogue/game_start_intro_overlay.dart';
+import '../dialogue/overture_dialogue_overlay.dart';
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
@@ -74,46 +76,100 @@ class GameScreen extends ConsumerWidget {
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final showOverlayButtons =
         game != null && victory == null && (!isNarrow || mapViewData == null);
-    return CtScreenShell(
-      title: 'Game',
-      child: Stack(
-        children: [
-          if (mapViewData != null && game != null)
-            _GameMapArea(game: game, mapViewData: mapViewData)
-          else
-            GameWidget(game: ColonizeThisGame()),
-          if (showOverlayButtons) ...[
-            Positioned(
-              left: 16,
-              top: 16,
-              child: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _showPauseMenu(context),
-                tooltip: 'Pause menu',
-              ),
+    final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
+    final showIntro = game != null && !introShownIds.contains(game.id);
+    final pendingOvertures = ref.watch(pendingOverturesProvider);
+    Widget content = Stack(
+      children: [
+        if (mapViewData != null && game != null)
+          _GameMapArea(game: game, mapViewData: mapViewData)
+        else
+          GameWidget(game: ColonizeThisGame()),
+        if (showOverlayButtons) ...[
+          Positioned(
+            left: 16,
+            top: 16,
+            child: IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => _showPauseMenu(context),
+              tooltip: 'Pause menu',
             ),
-            Positioned(
-              right: 16,
-              top: 16,
-              child: CtNinePatchButton(
-                onPressed: () {
-                  final service = ref.read(gameServiceProvider);
-                  final orders = ref.read(currentOrdersProvider);
-                  final newGame = service.nextTurn(game, orders: orders);
-                  ref.read(currentGameProvider.notifier).state = newGame;
+          ),
+          Positioned(
+            right: 16,
+            top: 16,
+            child: CtNinePatchButton(
+              onPressed: () {
+                if (game == null) return;
+                final service = ref.read(gameServiceProvider);
+                final orders = ref.read(currentOrdersProvider);
+                final result = service.runTurnResolution(game, orders: orders);
+                if (result is TurnResolutionComplete) {
+                  ref.read(currentGameProvider.notifier).state = result.game;
                   ref.read(currentOrdersProvider.notifier).state =
                       const ct_models.Orders();
-                },
-                child: Text(
-                  'Next turn (${game!.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
-                ),
+                } else if (result is TurnResolutionPendingOvertures) {
+                  ref.read(currentGameProvider.notifier).state = result.game;
+                  ref.read(pendingOverturesProvider.notifier).state =
+                      result.pendingOvertures;
+                }
+              },
+              child: Text(
+                'Next turn (${game!.worldState.turnState.turnNumber} / '
+                '${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
               ),
             ),
-          ],
-          if (game != null && victory != null)
-            _VictoryOverlay(game: game, victory: victory),
+          ),
         ],
-      ),
+        if (game != null && victory != null)
+          _VictoryOverlay(game: game, victory: victory),
+      ],
+    );
+
+    if (showIntro) {
+      content = GameStartIntroOverlay(
+        onDismissed: () {
+          ref
+              .read(gameIdsWithIntroShownProvider.notifier)
+              .update((set) => {...set, game.id});
+        },
+        child: content,
+      );
+    }
+
+    if (game != null &&
+        pendingOvertures != null &&
+        pendingOvertures.isNotEmpty) {
+      content = OvertureDialogueOverlay(
+        game: game,
+        pendingOvertures: pendingOvertures,
+        onDecisions: (decisions) {
+          final service = ref.read(gameServiceProvider);
+          final orders = ref.read(currentOrdersProvider);
+          final result = service.resumeOvertureDecisions(
+            game,
+            pendingOvertures,
+            decisions,
+            orders,
+          );
+          ref.read(pendingOverturesProvider.notifier).state = null;
+          if (result is TurnResolutionComplete) {
+            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(currentOrdersProvider.notifier).state =
+                const ct_models.Orders();
+          } else if (result is TurnResolutionPendingOvertures) {
+            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(pendingOverturesProvider.notifier).state =
+                result.pendingOvertures;
+          }
+        },
+        child: content,
+      );
+    }
+
+    return CtScreenShell(
+      title: 'Game',
+      child: content,
     );
   }
 }

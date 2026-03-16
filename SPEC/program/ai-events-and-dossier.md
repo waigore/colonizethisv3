@@ -3,7 +3,7 @@
 **SPEC/program** — Event data and flows for dialogue, mood, evidence, dossier. Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ## Responsibility
-Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md).
+Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md). For AI–human dialogue that requires a player response (overtures, intervention, etc.), see [dialogue-system.md](dialogue-system.md) and [dialogue-management.md](../ai/dialogue-management.md).
 
 ## Data Model
 

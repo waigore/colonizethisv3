@@ -82,17 +82,19 @@ class GameService {
   /// Lists all saved game ids.
   List<String> listGameIds() => _adapter.listGameIds(_box);
 
-  /// Resolves one turn, persists the new state, and returns the updated game.
+  /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists)
+  /// or [TurnResolutionPendingOvertures] when the human must accept/reject overtures.
+  /// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
   ///
-  /// When [topology] and [tileMapByRegion] are not provided, uses cached map data for [current.id] if present
-  /// (so extraction runs from connectivity + resource extractor). Otherwise extraction phase leaves stockpiles unchanged.
-  /// When [aiOrders] is provided, merges with [orders] (human over AI) before resolution.
-  Game nextTurn(
+  /// When result is [TurnResolutionComplete], saves and returns. When [TurnResolutionPendingOvertures],
+  /// does not save; caller must present dialogue and call [resumeOvertureDecisions], then persist the final game.
+  TurnResolutionResult runTurnResolution(
     Game current, {
     Orders? orders,
     Orders? aiOrders,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
+    void Function(GameEvent)? onGameEvent,
   }) {
     final cache = _mapCache[current.id];
     final topo = topology ?? cache?.combinedTopology ?? const MapTopology();
@@ -106,10 +108,59 @@ class GameService {
       topology: topo,
       orders: resolvedOrders,
       tileMapByRegion: tileMaps,
+      onGameEvent: onGameEvent,
     );
-    final newGame = requireTurnResolutionComplete(result);
-    saveGame(newGame);
-    return newGame;
+    if (result is TurnResolutionComplete) {
+      saveGame(result.game);
+    }
+    return result;
+  }
+
+  /// Resumes turn resolution after the user has submitted overture accept/reject decisions.
+  /// Returns [TurnResolutionComplete] or again [TurnResolutionPendingOvertures].
+  /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
+  TurnResolutionResult resumeOvertureDecisions(
+    Game game,
+    List<OvertureOffer> pendingOvertures,
+    List<OvertureDecision> decisions,
+    Orders orders, {
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final cache = _mapCache[game.id];
+    final topo = cache?.combinedTopology ?? const MapTopology();
+    final tileMaps = cache?.tileMapByRegion;
+    final result = resumeTurnResolutionWithOvertureDecisions(
+      game: game,
+      pendingOvertures: pendingOvertures,
+      decisions: decisions,
+      topology: topo,
+      orders: orders,
+      tileMapByRegion: tileMaps,
+      onGameEvent: onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      saveGame(result.game);
+    }
+    return result;
+  }
+
+  /// Resolves one turn and returns the updated game; throws if resolution is pending overtures.
+  /// Prefer [runTurnResolution] when the UI can show the overture dialogue.
+  Game nextTurn(
+    Game current, {
+    Orders? orders,
+    Orders? aiOrders,
+    MapTopology? topology,
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    final result = runTurnResolution(
+      current,
+      orders: orders,
+      aiOrders: aiOrders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+    );
+    return requireTurnResolutionComplete(result);
   }
 
   /// Creates a new game via the full game-setup pipeline (map gen, province assignment, capital auto-choice).

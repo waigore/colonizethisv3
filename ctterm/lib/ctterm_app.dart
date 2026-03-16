@@ -66,6 +66,8 @@ class _CttermAppState extends State<CttermApp> {
   final List<GameEvent> _gameEvents = [];
   /// Current terminal theme.
   TerminalTheme _terminalTheme = TerminalTheme.dark;
+  /// Game ids for which the game-start intro has been shown. SPEC/ai/dialogue-management.md § First dialogue emission point.
+  final Set<String> _gameIdsWithIntroShown = {};
 
   @override
   void initState() {
@@ -357,6 +359,14 @@ class _CttermAppState extends State<CttermApp> {
         debugLogViewerReturnRoute: _route == CttermRoute.debugLogViewer
             ? _previousRoute
             : null,
+        showGameStartIntro: _currentGame != null &&
+            _route == CttermRoute.inGameShell &&
+            !_gameIdsWithIntroShown.contains(_currentGame!.id),
+        onIntroDismissed: () {
+          if (_currentGame != null) {
+            setState(() => _gameIdsWithIntroShown.add(_currentGame!.id));
+          }
+        },
       ),
     );
   }

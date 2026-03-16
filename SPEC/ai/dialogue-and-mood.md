@@ -6,7 +6,7 @@
 
 ## Purpose
 
-AI emits **events** that describe what to say and which mood to show. The UI (or test harness) resolves these to text and visuals. AI only produces structured event payloads; it does not load assets or render.
+AI emits **events** that describe what to say and which mood to show. The UI (or test harness) resolves these to text and visuals. AI only produces structured event payloads; it does not load assets or render. For dialogue that **prompts the player to respond** (overtures, intervention, alliance offers), see [dialogue-management.md](dialogue-management.md) and [dialogue-content-and-yarn.md](dialogue-content-and-yarn.md); those flows tie into game actions and use the same content keys and variables where applicable.
 
 ---
 

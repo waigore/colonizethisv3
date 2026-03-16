@@ -27,6 +27,8 @@ class InGameShellScreen extends StatefulComponent {
     required this.onVictory,
     required this.onDefeat,
     required this.onExitToMainMenu,
+    this.showGameStartIntro = false,
+    this.onIntroDismissed,
   });
 
   final Game? game;
@@ -46,9 +48,23 @@ class InGameShellScreen extends StatefulComponent {
   final void Function() onDefeat;
   final void Function() onExitToMainMenu;
 
+  /// When true, show game-start intro overlay until dismissed. SPEC/ai/dialogue-management.md.
+  final bool showGameStartIntro;
+
+  /// Called when user dismisses the intro (e.g. Enter).
+  final void Function()? onIntroDismissed;
+
   @override
   State<InGameShellScreen> createState() => _InGameShellScreenState();
 }
+
+/// Intro text for game start. SPEC/ai/dialogue-content-and-yarn.md (archaic language).
+const String _kGameStartIntroBody =
+    "The age of imperialism draweth nigh with swift and certain step. "
+    "Powers great and small shall contend for dominion o'er land and sea. "
+    "Thee, who holdest the fate of a nation in thy hand, art challenged: "
+    "usher in glory for thy realm, lest history forget thy name.";
+const String _kGameStartIntroPrompt = 'Press Enter to begin.';
 
 class _InGameShellScreenState extends State<InGameShellScreen> {
   String _selectedRegion = 'oldWorld';
@@ -423,12 +439,11 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     setState(() => _isEndingTurn = false);
   }
 
-  @override
-  Component build(BuildContext context) {
-    _ensureSelection();
+  Component _buildInGameContent(BuildContext context) {
     return Focusable(
-      focused: true,
+      focused: !component.showGameStartIntro,
       onKeyEvent: (event) {
+        if (component.showGameStartIntro) return false;
         final key = event.logicalKey;
         final c = event.character?.toLowerCase();
 
@@ -978,5 +993,50 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
                   ],
                 ),
     );
+  }
+
+  @override
+  Component build(BuildContext context) {
+    _ensureSelection();
+    final content = _buildInGameContent(context);
+    if (component.showGameStartIntro && component.onIntroDismissed != null) {
+      return Stack(
+        children: [
+          content,
+          Positioned.fill(
+            child: Focusable(
+              focused: true,
+              onKeyEvent: (event) {
+                if (event.logicalKey == LogicalKey.enter ||
+                    event.character == '\r') {
+                  _log.d('tui:dialogue: game start intro dismissed');
+                  component.onIntroDismissed?.call();
+                  return true;
+                }
+                return true;
+              },
+              child: Container(
+                color: Colors.black,
+                padding: const EdgeInsets.all(4),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_kGameStartIntroBody),
+                    const SizedBox(height: 2),
+                    Text(
+                      _kGameStartIntroPrompt,
+                      style: const TextStyle(color: Colors.cyan),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return content;
   }
 }
