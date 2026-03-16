@@ -31,8 +31,10 @@ class GameSetupResult {
   final Game game;
   final Map<String, TileMapResult> tileMapByRegion;
   final Map<String, MapTopology> topologyByRegion;
+
   /// Single topology with prefixed node ids and warp edges for resolveTurnForGame (movement, extraction). SPEC/game/map-topology.md.
   final MapTopology combinedTopology;
+
   /// Warp zone links between regions (OW↔NW). Empty if none generated.
   final List<WarpLink> warpLinks;
 }
@@ -70,10 +72,11 @@ GameSetupResult createGameFromGeneratedMaps({
     );
   }
 
-  final seaBoundOW = owProvinceIds
-      .where((id) => isProvinceSeaBound(topologyOldWorld, id))
-      .toList()
-    ..sort();
+  final seaBoundOW =
+      owProvinceIds
+          .where((id) => isProvinceSeaBound(topologyOldWorld, id))
+          .toList()
+        ..sort();
   if (seaBoundOW.length < config.greatPowerCount) {
     throw ArgumentError(
       'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
@@ -109,18 +112,22 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   final oldWorldProvinces = owOwner.entries
-      .map((e) => Province(
-            id: ProvinceId.full(kRegionOldWorld, e.key),
-            regionId: kRegionOldWorld,
-            ownerId: e.value,
-          ))
+      .map(
+        (e) => Province(
+          id: ProvinceId.full(kRegionOldWorld, e.key),
+          regionId: kRegionOldWorld,
+          ownerId: e.value,
+        ),
+      )
       .toList();
   final newWorldProvinces = nwOwner.entries
-      .map((e) => Province(
-            id: ProvinceId.full(kRegionNewWorld, e.key),
-            regionId: kRegionNewWorld,
-            ownerId: e.value,
-          ))
+      .map(
+        (e) => Province(
+          id: ProvinceId.full(kRegionNewWorld, e.key),
+          regionId: kRegionNewWorld,
+          ownerId: e.value,
+        ),
+      )
       .toList();
 
   final worldState = WorldState(
@@ -134,7 +141,8 @@ GameSetupResult createGameFromGeneratedMaps({
       startingResources.initialPeasants * startingResources.initialGrainTurns;
 
   // Base starting stockpile for each Great Power: grain for workers plus
-  // enough lumber and castIron to build a small number of level-1 improvements.
+  // enough lumber and castIron to build a small number of level-1 improvements,
+  // plus a small starting quantity of wool.
   final baseStockpileQuantities = <CommodityId, int>{};
   if (initialGrainQuantity > 0) {
     baseStockpileQuantities[CommodityCatalog.grain.id] = initialGrainQuantity;
@@ -145,6 +153,11 @@ GameSetupResult createGameFromGeneratedMaps({
         (baseStockpileQuantities[CommodityCatalog.lumber.id] ?? 0) + slots;
     baseStockpileQuantities[CommodityCatalog.castIron.id] =
         (baseStockpileQuantities[CommodityCatalog.castIron.id] ?? 0) + slots;
+  }
+  if (startingResources.initialWool > 0) {
+    baseStockpileQuantities[CommodityCatalog.wool.id] =
+        (baseStockpileQuantities[CommodityCatalog.wool.id] ?? 0) +
+        startingResources.initialWool;
   }
 
   var players = <Player>[
@@ -178,7 +191,7 @@ GameSetupResult createGameFromGeneratedMaps({
   // - This means: GP↔GP, GP↔Minor, Minor↔Minor (Old World); Tribe↔Tribe (New World)
   final allOldWorldIds = [...gpIds, ...minorIds];
   final allNewWorldIds = [...tribeIds];
-  
+
   final diplomacyRelations = <DiplomacyRelation>[
     // Old World: GP ↔ GP, GP ↔ Minor, Minor ↔ Minor
     for (var i = 0; i < allOldWorldIds.length; i++)
@@ -232,7 +245,14 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
     requireSeaBound: true,
     setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapital(game: g, playerId: factionId, provinceId: provinceId, tile: tile, topology: topo, tileMapByRegion: tmByRegion),
+        setCapital(
+          game: g,
+          playerId: factionId,
+          provinceId: provinceId,
+          tile: tile,
+          topology: topo,
+          tileMapByRegion: tmByRegion,
+        ),
   );
   game = _assignCapitalsForFactions(
     game: game,
@@ -244,7 +264,14 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
     requireSeaBound: false,
     setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapitalForMinorNation(game: g, minorId: factionId, provinceId: provinceId, tile: tile, topology: topo, tileMapByRegion: tmByRegion),
+        setCapitalForMinorNation(
+          game: g,
+          minorId: factionId,
+          provinceId: provinceId,
+          tile: tile,
+          topology: topo,
+          tileMapByRegion: tmByRegion,
+        ),
   );
   game = _assignCapitalsForFactions(
     game: game,
@@ -256,7 +283,14 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
     requireSeaBound: false,
     setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapitalForTribe(game: g, tribeId: factionId, provinceId: provinceId, tile: tile, topology: topo, tileMapByRegion: tmByRegion),
+        setCapitalForTribe(
+          game: g,
+          tribeId: factionId,
+          provinceId: provinceId,
+          tile: tile,
+          topology: topo,
+          tileMapByRegion: tmByRegion,
+        ),
   );
 
   // Apply initial per-player visibility/prospection (knowledge state) after
@@ -264,6 +298,7 @@ GameSetupResult createGameFromGeneratedMaps({
   game = applyInitialVisibility(
     game: game,
     tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
   );
 
   // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
@@ -338,17 +373,16 @@ Map<String, String> _buildPoliticalGlyphByPlayerId({
 
   final usedUpper = <String>{};
   for (final gpId in greatPowerIds) {
-    final player =
-        game.players.firstWhere((p) => p.id == gpId, orElse: () => game.players.first);
+    final player = game.players.firstWhere(
+      (p) => p.id == gpId,
+      orElse: () => game.players.first,
+    );
     final glyph = pickUpperForGp(player.displayName, usedUpper);
     glyphs[gpId] = glyph;
     usedUpper.add(glyph);
   }
 
-  final nonGpIds = <String>[
-    ...minorNationIds,
-    ...tribeIds,
-  ]..sort();
+  final nonGpIds = <String>[...minorNationIds, ...tribeIds]..sort();
 
   const digitGlyphs = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
   for (var i = 0; i < nonGpIds.length; i++) {
@@ -378,24 +412,18 @@ MapTopology buildCombinedTopology({
     final regionId = entry.key;
     final topo = entry.value;
     for (final n in topo.nodes) {
-      nodes.add(TopologyNode(
-        id: '$regionId|${n.id}',
-        regionId: regionId,
-        type: n.type,
-      ));
+      nodes.add(
+        TopologyNode(id: '$regionId|${n.id}', regionId: regionId, type: n.type),
+      );
     }
     for (final e in topo.edges) {
-      edges.add(TopologyEdge(
-        id1: '$regionId|${e.id1}',
-        id2: '$regionId|${e.id2}',
-      ));
+      edges.add(
+        TopologyEdge(id1: '$regionId|${e.id1}', id2: '$regionId|${e.id2}'),
+      );
     }
   }
   for (final link in warpLinks) {
-    edges.add(TopologyEdge(
-      id1: link.prefixedKey,
-      id2: link.otherPrefixedKey,
-    ));
+    edges.add(TopologyEdge(id1: link.prefixedKey, id2: link.otherPrefixedKey));
   }
   return MapTopology(nodes: nodes, edges: edges);
 }
@@ -512,7 +540,8 @@ Game _assignProvinceTowns({required Game game}) {
     if (p.id == capProvinceId && capTileKey != null) return capTileKey;
     final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (tiles.isEmpty) return null;
-    final sameRegion = capProvinceId != null &&
+    final sameRegion =
+        capProvinceId != null &&
         ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
     if (sameRegion && capTileKey != null) {
       final distances = bfsDistances(p.regionId, capTileKey);
@@ -593,8 +622,8 @@ Game _applyNaming({
       var name = p.id == capitalProvinceId
           ? capitalName
           : (pool.isNotEmpty
-              ? pool[poolIndices[poolIndex % poolIndices.length]]
-              : '$fallbackPrefix ${i + 1}');
+                ? pool[poolIndices[poolIndex % poolIndices.length]]
+                : '$fallbackPrefix ${i + 1}');
       if (name.isEmpty) name = generateFallback(rngSeed + i);
       if (p.id != capitalProvinceId && pool.isNotEmpty) poolIndex++;
       final updated = p.copyWith(displayName: name);
@@ -635,7 +664,9 @@ Game _applyNaming({
     final semanticId = selectedGreatPowerIds[i];
     final gpNaming = naming.gpById(semanticId);
     if (gpNaming == null || gpNaming.leaderVariants.isEmpty) continue;
-    final variantId = leaderVariantByGpId[semanticId] ?? naming.defaultLeaderVariantId(semanticId);
+    final variantId =
+        leaderVariantByGpId[semanticId] ??
+        naming.defaultLeaderVariantId(semanticId);
     final variant = gpNaming.variantById(variantId);
     final capitalProvId = player.capitalProvinceId;
     if (capitalProvId == null) continue;
@@ -663,11 +694,16 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = minor.capitalProvinceId;
     final capitalName = namingMinor.id.isEmpty
-        ? generateUniqueProvinceName(namingSeed + minor.id.hashCode, usedProvinceNames)
+        ? generateUniqueProvinceName(
+            namingSeed + minor.id.hashCode,
+            usedProvinceNames,
+          )
         : (namingMinor.provinceNamePool.isNotEmpty
-            ? namingMinor.provinceNamePool.first
-            : namingMinor.displayName);
-    final fallbackPrefix = namingMinor.id.isEmpty ? 'Territory' : namingMinor.displayName;
+              ? namingMinor.provinceNamePool.first
+              : namingMinor.displayName);
+    final fallbackPrefix = namingMinor.id.isEmpty
+        ? 'Territory'
+        : namingMinor.displayName;
     applyNamingToFaction(
       ownedProvinces: owned,
       capitalProvinceId: capitalProvId,
@@ -684,18 +720,24 @@ Game _applyNaming({
     final tribe = game.tribes[i];
     final namingTribe = naming.tribes.firstWhere(
       (n) => n.id == tribe.id,
-      orElse: () => const TribeNaming(id: '', displayName: '', provinceNamePool: []),
+      orElse: () =>
+          const TribeNaming(id: '', displayName: '', provinceNamePool: []),
     );
     final owned = nwProvinces.where((p) => p.ownerId == tribe.id).toList()
       ..sort((a, b) => a.id.compareTo(b.id));
     if (owned.isEmpty) continue;
     final capitalProvId = tribe.capitalProvinceId;
     final capitalName = namingTribe.id.isEmpty
-        ? generateUniqueProvinceName(namingSeed + tribe.id.hashCode, usedProvinceNames)
+        ? generateUniqueProvinceName(
+            namingSeed + tribe.id.hashCode,
+            usedProvinceNames,
+          )
         : (namingTribe.provinceNamePool.isNotEmpty
-            ? namingTribe.provinceNamePool.first
-            : namingTribe.displayName);
-    final fallbackPrefix = namingTribe.id.isEmpty ? 'Territory' : '${namingTribe.displayName} Territory';
+              ? namingTribe.provinceNamePool.first
+              : namingTribe.displayName);
+    final fallbackPrefix = namingTribe.id.isEmpty
+        ? 'Territory'
+        : '${namingTribe.displayName} Territory';
     applyNamingToFaction(
       ownedProvinces: owned,
       capitalProvinceId: capitalProvId,
@@ -721,12 +763,16 @@ Game _applyNaming({
       updatedPlayers.add(p);
       continue;
     }
-    final variantId = leaderVariantByGpId[semanticId] ?? naming.defaultLeaderVariantId(semanticId);
+    final variantId =
+        leaderVariantByGpId[semanticId] ??
+        naming.defaultLeaderVariantId(semanticId);
     final variant = gpNaming.variantById(variantId);
-    updatedPlayers.add(p.copyWith(
-      displayName: gpNaming.countryName,
-      leaderKey: variant.leaderKey,
-    ));
+    updatedPlayers.add(
+      p.copyWith(
+        displayName: gpNaming.countryName,
+        leaderKey: variant.leaderKey,
+      ),
+    );
   }
 
   final updatedMinors = game.minorNations.map((m) {
@@ -741,7 +787,8 @@ Game _applyNaming({
   final updatedTribes = game.tribes.map((t) {
     final namingTribe = naming.tribes.firstWhere(
       (n) => n.id == t.id,
-      orElse: () => const TribeNaming(id: '', displayName: '', provinceNamePool: []),
+      orElse: () =>
+          const TribeNaming(id: '', displayName: '', provinceNamePool: []),
     );
     if (namingTribe.id.isEmpty) return t;
     return t.copyWith(displayName: namingTribe.displayName);
@@ -749,13 +796,11 @@ Game _applyNaming({
 
   final updatedWorld = game.worldState.copyWith(
     oldWorld: RegionData(
-      provinces: owById.values.toList()
-        ..sort((a, b) => a.id.compareTo(b.id)),
+      provinces: owById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
       units: game.worldState.oldWorld.units,
     ),
     newWorld: RegionData(
-      provinces: nwById.values.toList()
-        ..sort((a, b) => a.id.compareTo(b.id)),
+      provinces: nwById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
       units: game.worldState.newWorld.units,
     ),
   );
@@ -769,10 +814,7 @@ Game _applyNaming({
 }
 
 /// Adds starting civilian units for each Great Power in their capital provinces.
-Game _addStartingUnits({
-  required Game game,
-  required GameSetupConfig config,
-}) {
+Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
@@ -782,8 +824,10 @@ Game _addStartingUnits({
     if (capitalProvinceId == null) continue;
 
     final capitalRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final tilesInCapital = tileKeysByRegion[capitalRegionId]?[capitalProvinceId];
-    final firstTileInCapital = (tilesInCapital != null && tilesInCapital.isNotEmpty)
+    final tilesInCapital =
+        tileKeysByRegion[capitalRegionId]?[capitalProvinceId];
+    final firstTileInCapital =
+        (tilesInCapital != null && tilesInCapital.isNotEmpty)
         ? tilesInCapital.first
         : null;
 
@@ -876,8 +920,7 @@ Game _addStartingMilitaryAndNaval({
 
       final homeFleetId = homeFleetIdFor(player.id);
       final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
-      final existingFleet =
-          existingIndex >= 0 ? fleets[existingIndex] : null;
+      final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
 
       final shipTypeId = _startingShipTypeForPlayer(player);
       final newShipTypes = <String>[
@@ -972,7 +1015,9 @@ Map<String, Set<String>> _provinceNeighboursFromTopology(MapTopology topology) {
 }
 
 /// Computes a landmass id (connected component id) per province based on P–P adjacency.
-Map<String, int> _landmassIdsFromNeighbours(Map<String, Set<String>> neighbours) {
+Map<String, int> _landmassIdsFromNeighbours(
+  Map<String, Set<String>> neighbours,
+) {
   final landmassByProvince = <String, int>{};
   var currentId = 0;
   for (final province in neighbours.keys) {
@@ -1001,10 +1046,21 @@ Game _assignCapitalsForFactions({
   required TileMapResult tileMap,
   required Map<String, TileMapResult> tileMapByRegion,
   required bool requireSeaBound,
-  required Game Function(Game, String, String, CapitalTile, MapTopology, Map<String, TileMapResult>) setCapitalFn,
+  required Game Function(
+    Game,
+    String,
+    String,
+    CapitalTile,
+    MapTopology,
+    Map<String, TileMapResult>,
+  )
+  setCapitalFn,
 }) {
   for (final factionId in factionIds) {
-    final owned = provinces.where((p) => p.ownerId == factionId).map((p) => p.id).toList();
+    final owned = provinces
+        .where((p) => p.ownerId == factionId)
+        .map((p) => p.id)
+        .toList();
     if (owned.isEmpty) continue;
     final (provinceId, tile) = pickCapitalForFaction(
       owned,
@@ -1013,7 +1069,14 @@ Game _assignCapitalsForFactions({
       tileMap,
       requireSeaBound: requireSeaBound,
     );
-    game = setCapitalFn(game, factionId, provinceId, tile, topology, tileMapByRegion);
+    game = setCapitalFn(
+      game,
+      factionId,
+      provinceId,
+      tile,
+      topology,
+      tileMapByRegion,
+    );
   }
   return game;
 }
@@ -1048,21 +1111,27 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     final lm = landmassIds[pid]!;
     landmassToProvinces.putIfAbsent(lm, () => <String>[]).add(pid);
   }
-  final landmassSizes = landmassToProvinces.map((k, v) => MapEntry(k, v.length));
-  final sortedLandmasses = landmassSizes.keys.toList()..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+  final landmassSizes = landmassToProvinces.map(
+    (k, v) => MapEntry(k, v.length),
+  );
+  final sortedLandmasses = landmassSizes.keys.toList()
+    ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
 
   // Assign each GP to a specific landmass based on fair distribution
   // Each GP gets a landmass that can support their target province count
   final targetPerGp = computeFairTargets(gpIds, availableForGps);
   final gpLandmassAssignments = <String, int>{};
   final usedLandmasses = <int>{};
-  
+
   // First pass: assign GPs to landmasses that can fully support their target
-  final sortedGpIds = gpIds.toList()..sort((a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!)); // Larger targets first
+  final sortedGpIds = gpIds.toList()
+    ..sort(
+      (a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!),
+    ); // Larger targets first
   for (final gpId in sortedGpIds) {
     final target = targetPerGp[gpId]!;
     int? assignedLandmass;
-    
+
     // Try to find a landmass that can support this GP's target
     for (final lm in sortedLandmasses) {
       if (usedLandmasses.contains(lm)) continue;
@@ -1073,7 +1142,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         break;
       }
     }
-    
+
     // If no landmass can fully support the target, pick the largest available
     if (assignedLandmass == null) {
       for (final lm in sortedLandmasses) {
@@ -1083,7 +1152,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         }
       }
     }
-    
+
     if (assignedLandmass != null) {
       gpLandmassAssignments[gpId] = assignedLandmass;
       usedLandmasses.add(assignedLandmass);
@@ -1116,8 +1185,10 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   final owners = Map<String, String>.from(gpOwners);
   if (minorCount > 0 && gpAvailable.isNotEmpty) {
     final remainingForMinors = gpAvailable.toList()..sort();
-    final targetPerMinor =
-        computeFairTargets(minorIds, remainingForMinors.length);
+    final targetPerMinor = computeFairTargets(
+      minorIds,
+      remainingForMinors.length,
+    );
     final minorSeeds = pickSimpleSeeds(
       factionIds: minorIds,
       candidateIds: remainingForMinors,
@@ -1145,7 +1216,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   required Map<String, int> gpLandmassAssignments,
 }) {
   final gpCount = gpIds.length;
-  
+
   // Group sea-bound provinces by landmass
   final seaBoundByLandmass = <int, List<String>>{};
   for (final pid in seaBoundProvinceIds) {
@@ -1160,10 +1231,10 @@ Map<String, String> _selectGpSeedsForLandmass({
   for (final gpId in gpIds) {
     final assignedLandmass = gpLandmassAssignments[gpId];
     if (assignedLandmass == null) continue;
-    
+
     final seaBoundOnLandmass = seaBoundByLandmass[assignedLandmass];
     if (seaBoundOnLandmass == null || seaBoundOnLandmass.isEmpty) continue;
-    
+
     // Pick the first available sea-bound province on this landmass
     seaBoundOnLandmass.sort();
     final seedProv = seaBoundOnLandmass.removeAt(0);

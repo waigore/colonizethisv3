@@ -30,7 +30,7 @@ class ProductionRecipe {
 }
 
 class ProductionRecipesCatalog {
-  /// 2 timber + 2 iron + 1 coal → 1 castIron.
+  /// 2 timber + 2 iron → 1 castIron.
   static final ProductionRecipe castIronFromTimberIronCoal = ProductionRecipe(
     id: 'castIron_from_timber_iron_coal',
     outputCommodityId: CommodityCatalog.castIron.id,
@@ -38,7 +38,6 @@ class ProductionRecipesCatalog {
     inputQuantities: {
       CommodityCatalog.timber.id: 2,
       CommodityCatalog.iron.id: 2,
-      CommodityCatalog.coal.id: 1,
     },
     labourPerOutput: 5,
   );

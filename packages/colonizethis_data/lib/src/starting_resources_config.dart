@@ -6,6 +6,7 @@ class StartingResourcesConfig {
     this.initialGrainTurns = 10,
     this.initialTreasury = 5000,
     this.initialImprovementSlots = 5,
+    this.initialWool = 4,
     this.initialMilitaryRegiments = 5,
     this.initialNavalShips = 3,
     this.startingCivilianUnits = _defaultStartingCivilianUnits,
@@ -13,6 +14,7 @@ class StartingResourcesConfig {
         assert(initialGrainTurns >= 0),
         assert(initialTreasury >= 0),
         assert(initialImprovementSlots >= 0),
+        assert(initialWool >= 0),
         assert(initialMilitaryRegiments >= 0),
         assert(initialNavalShips >= 0);
 
@@ -30,6 +32,10 @@ class StartingResourcesConfig {
   /// Default 5: each player has enough to build 5 level-1 improvements at game start.
   /// Each slot = 1 lumber + 1 castIron per SPEC/game/extraction-and-improvements.md.
   final int initialImprovementSlots;
+
+  /// Starting quantity of wool in each Great Power's central stockpile.
+  /// Default 4: every Great Power begins the game with 4 wool (ruleset-config § Starting stockpiles).
+  final int initialWool;
 
   /// Number of starting land regiments to spawn in each Great Power's capital.
   /// Concrete regiment type is chosen from the regiment catalog based on ruleset/tech.

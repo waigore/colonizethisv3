@@ -14,9 +14,12 @@ import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
 import '../../../../widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
+import '../dialogue/game_start_intro_overlay.dart';
+import '../dialogue/overture_dialogue_overlay.dart';
 import '../widgets/civilian_units_panel.dart';
 import '../widgets/diplomacy_screen.dart';
 import '../widgets/military_units_panel.dart';
+import '../widgets/naval_units_panel.dart';
 import '../widgets/production_screen.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
@@ -31,6 +34,9 @@ const double kInGameNarrowBreakpoint = 600;
 
 /// Key for the base layer cycle button (for tests). SPEC/ui/empire-overview.md § Base layer display cycle.
 const Key kBaseLayerCycleButtonKey = Key('base_layer_cycle_button');
+
+/// Key for the home-to-capital button (for tests). SPEC/ui/empire-overview.md § Home-to-capital button.
+const Key kHomeToCapitalButtonKey = Key('home_to_capital_button');
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 void _showPauseMenu(BuildContext context) {
@@ -68,50 +74,100 @@ class GameScreen extends ConsumerWidget {
     final game = ref.watch(currentGameProvider);
     final mapViewData = ref.watch(mapViewDataProvider);
     final victory = game?.victory;
-    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final showOverlayButtons =
-        game != null && victory == null && (!isNarrow || mapViewData == null);
-    return CtScreenShell(
-      title: 'Game',
-      child: Stack(
-        children: [
-          if (mapViewData != null && game != null)
-            _GameMapArea(game: game, mapViewData: mapViewData)
-          else
-            GameWidget(game: ColonizeThisGame()),
-          if (showOverlayButtons) ...[
-            Positioned(
-              left: 16,
-              top: 16,
-              child: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _showPauseMenu(context),
-                tooltip: 'Pause menu',
-              ),
+        game != null && victory == null && mapViewData == null;
+    final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
+    final showIntro = game != null && !introShownIds.contains(game.id);
+    final pendingOvertures = ref.watch(pendingOverturesProvider);
+    Widget content = Stack(
+      children: [
+        if (mapViewData != null && game != null)
+          _GameMapArea(game: game, mapViewData: mapViewData)
+        else
+          GameWidget(game: ColonizeThisGame()),
+        if (showOverlayButtons) ...[
+          Positioned(
+            left: 16,
+            top: 16,
+            child: IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => _showPauseMenu(context),
+              tooltip: 'Pause menu',
             ),
-            Positioned(
-              right: 16,
-              top: 16,
-              child: CtNinePatchButton(
-                onPressed: () {
-                  final service = ref.read(gameServiceProvider);
-                  final orders = ref.read(currentOrdersProvider);
-                  final newGame = service.nextTurn(game, orders: orders);
-                  ref.read(currentGameProvider.notifier).state = newGame;
+          ),
+          Positioned(
+            right: 16,
+            top: 16,
+            child: CtNinePatchButton(
+              onPressed: () {
+                if (game == null) return;
+                final service = ref.read(gameServiceProvider);
+                final orders = ref.read(currentOrdersProvider);
+                final result = service.runTurnResolution(game, orders: orders);
+                if (result is TurnResolutionComplete) {
+                  ref.read(currentGameProvider.notifier).state = result.game;
                   ref.read(currentOrdersProvider.notifier).state =
                       const ct_models.Orders();
-                },
-                child: Text(
-                  'Next turn (${game!.worldState.turnState.turnNumber} / ${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
-                ),
+                } else if (result is TurnResolutionPendingOvertures) {
+                  ref.read(currentGameProvider.notifier).state = result.game;
+                  ref.read(pendingOverturesProvider.notifier).state =
+                      result.pendingOvertures;
+                }
+              },
+              child: Text(
+                'Next turn (${game!.worldState.turnState.turnNumber} / '
+                '${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
               ),
             ),
-          ],
-          if (game != null && victory != null)
-            _VictoryOverlay(game: game, victory: victory),
+          ),
         ],
-      ),
+        if (game != null && victory != null)
+          _VictoryOverlay(game: game, victory: victory),
+      ],
     );
+
+    if (showIntro) {
+      content = GameStartIntroOverlay(
+        onDismissed: () {
+          ref
+              .read(gameIdsWithIntroShownProvider.notifier)
+              .update((set) => {...set, game.id});
+        },
+        child: content,
+      );
+    }
+
+    if (game != null &&
+        pendingOvertures != null &&
+        pendingOvertures.isNotEmpty) {
+      content = OvertureDialogueOverlay(
+        game: game,
+        pendingOvertures: pendingOvertures,
+        onDecisions: (decisions) {
+          final service = ref.read(gameServiceProvider);
+          final orders = ref.read(currentOrdersProvider);
+          final result = service.resumeOvertureDecisions(
+            game,
+            pendingOvertures,
+            decisions,
+            orders,
+          );
+          ref.read(pendingOverturesProvider.notifier).state = null;
+          if (result is TurnResolutionComplete) {
+            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(currentOrdersProvider.notifier).state =
+                const ct_models.Orders();
+          } else if (result is TurnResolutionPendingOvertures) {
+            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(pendingOverturesProvider.notifier).state =
+                result.pendingOvertures;
+          }
+        },
+        child: content,
+      );
+    }
+
+    return CtScreenShell(title: 'Game', child: content);
   }
 }
 
@@ -185,7 +241,7 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     });
   }
 
-  /// Base layer cycle button (letter r). SPEC/ui/empire-overview.md § Base layer display cycle.
+  /// Base layer cycle button. SPEC/ui/empire-overview.md § Base layer display cycle.
   Widget _buildBaseLayerCycleButton() {
     return Material(
       key: kBaseLayerCycleButtonKey,
@@ -194,16 +250,66 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
         message: 'Base layer: terrain / +resources / +improvements',
         child: InkWell(
           onTap: _cycleBaseLayerDisplayMode,
-          child: const Padding(
-            padding: EdgeInsets.all(10),
-            child: Text(
-              'r',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Image.asset(
+              'assets/images/ui_icon_layer_toggle.png',
+              width: 20,
+              height: 20,
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Home-to-capital button. SPEC/ui/empire-overview.md § Home-to-capital button.
+  Widget _buildHomeToCapitalButton() {
+    return Material(
+      key: kHomeToCapitalButtonKey,
+      color: Colors.white.withValues(alpha: 0.9),
+      child: Tooltip(
+        message: 'Center on capital',
+        child: InkWell(
+          onTap: _centerOnHumanCapital,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Image.asset(
+              'assets/images/ui_icon_home_capital.png',
+              width: 20,
+              height: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _centerOnHumanCapital() {
+    final player =
+        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.first;
+    final capital = player.capitalTile;
+    if (capital == null) {
+      return;
+    }
+    final tileKey = capital.toTileKey();
+    final regionId = capital.regionId;
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _centerOnTileKey = null;
+      });
+    });
   }
 
   /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
@@ -245,6 +351,22 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
   }
 
   void _onLocateMilitaryTile(String tileKey, String regionId) {
+    setState(() {
+      _highlightedTileKey = tileKey;
+      _centerOnTileKey = tileKey;
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+    Navigator.of(context).maybePop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
+  void _onLocateNavalFleet(String tileKey, String regionId) {
     setState(() {
       _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
@@ -457,6 +579,22 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
       ),
       _empireButton(
         context,
+        'assets/images/ui_icon_naval_units.png',
+        'Naval Units',
+        () {
+          setState(() => _sideMenuOpen = false);
+          showModalBottomSheet<void>(
+            context: context,
+            builder: (ctx) => NavalUnitsPanel(
+              game: widget.game,
+              humanPlayerId: _humanPlayerId,
+              onLocateFleet: _onLocateNavalFleet,
+            ),
+          );
+        },
+      ),
+      _empireButton(
+        context,
         'assets/images/ui_icon_diplomacy.png',
         'Diplomacy',
         () {
@@ -526,28 +664,26 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     return Column(
       children: [
-        if (isNarrow)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () =>
-                      setState(() => _sideMenuOpen = !_sideMenuOpen),
-                  tooltip: 'Menu',
-                ),
-                Expanded(
-                  child: CtNinePatchButton(
-                    onPressed: _onNextTurn,
-                    child: Text(
-                      'Next turn (${widget.game.worldState.turnState.turnNumber} / ${turnToYear(widget.game.worldState.turnState.turnNumber, widget.game.turnTimeMapping)})',
-                    ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => setState(() => _sideMenuOpen = !_sideMenuOpen),
+                tooltip: 'Menu',
+              ),
+              Expanded(
+                child: CtNinePatchButton(
+                  onPressed: _onNextTurn,
+                  child: Text(
+                    'Next turn (${widget.game.worldState.turnState.turnNumber} / ${turnToYear(widget.game.worldState.turnState.turnNumber, widget.game.turnTimeMapping)})',
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
@@ -564,228 +700,27 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                 selected: _regionIndex == 1,
                 onSelected: (_) => setState(() => _regionIndex = 1),
               ),
-              if (!isNarrow) ...[
-                const SizedBox(width: 16),
-                CtNinePatchButton(
-                  onPressed: () {
-                    final player =
-                        widget.game.players
-                            .where((p) => p.isHuman)
-                            .firstOrNull ??
-                        widget.game.players.first;
-                    final desired = ref.read(productionDesiredOutputProvider);
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (ctx) => ProductionScreen(
-                          game: widget.game,
-                          player: player,
-                          desiredOutputByRecipe: desired,
-                          onDesiredOutputChanged: (newMap) {
-                            ref
-                                    .read(
-                                      productionDesiredOutputProvider.notifier,
-                                    )
-                                    .state =
-                                newMap;
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/ui_icon_production.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Production'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: () {
-                    final orders = ref.read(currentOrdersProvider);
-                    showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (ctx) {
-                        final isNarrow = MediaQuery.sizeOf(ctx).width < 600;
-                        final maxHeight =
-                            MediaQuery.sizeOf(ctx).height *
-                            (isNarrow ? 0.33 : 0.5);
-                        return ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: maxHeight),
-                          child: CivilianUnitsPanel(
-                            game: ref.read(currentGameProvider) ?? widget.game,
-                            humanPlayerId: _humanPlayerId,
-                            currentOrders: orders,
-                            availableWorkTargets: ref.watch(
-                              availableWorkTargetsProvider,
-                            ),
-                            onLocateUnit: _onLocateCivilianUnit,
-                            onRemoveWorkOrder: (playerId, index) {
-                              final o = ref.read(currentOrdersProvider);
-                              final list = List<ct_models.WorkOrder>.from(
-                                o.workOrdersByPlayerId[playerId] ?? [],
-                              )..removeAt(index);
-                              ref.read(currentOrdersProvider.notifier).state = o
-                                  .copyWith(
-                                    workOrdersByPlayerId: {
-                                      ...o.workOrdersByPlayerId,
-                                      playerId: list,
-                                    },
-                                  );
-                            },
-                            onCancelUnitWork: _cancelUnitWork,
-                            onStartWorkTargetSelection: (unit, workTarget) {
-                              Navigator.of(ctx).pop();
-                              setState(
-                                () => _workTargetSelection = (
-                                  unit: unit,
-                                  workTarget: workTarget,
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/ui_icon_civilian_units.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Civilian Units'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: () {
-                    showModalBottomSheet<void>(
-                      context: context,
-                      builder: (ctx) => MilitaryUnitsPanel(
-                        game: widget.game,
-                        humanPlayerId: _humanPlayerId,
-                        onLocateTile: _onLocateMilitaryTile,
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/ui_icon_military_units.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Military Units'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: () {
-                    final orders = ref.read(currentOrdersProvider);
-                    final mapData = ref
-                        .read(gameServiceProvider)
-                        .getMapData(widget.game.id);
-                    final topology =
-                        mapData?.combinedTopology ?? const MapTopology();
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (_) => DiplomacyScreen(
-                          game: widget.game,
-                          humanPlayerId: _humanPlayerId,
-                          topology: topology,
-                          currentOrders: orders,
-                          onOrdersChanged: (newOrders) {
-                            ref.read(currentOrdersProvider.notifier).state =
-                                newOrders;
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/ui_icon_diplomacy.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Diplomacy'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: () {
-                    final orders = ref.read(currentOrdersProvider);
-                    final player =
-                        widget.game.players
-                            .where((p) => p.isHuman)
-                            .firstOrNull ??
-                        widget.game.players.first;
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (ctx) => TechnologyScreen(
-                          game: widget.game,
-                          player: player,
-                          currentOrders: orders,
-                          onOrdersChanged: (newOrders) {
-                            ref.read(currentOrdersProvider.notifier).state =
-                                newOrders;
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/ui_icon_technology.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('Technology'),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
         Expanded(
-          child: isNarrow
-              ? Focus(
-                  autofocus: true,
-                  onKeyEvent: (node, event) {
-                    if (_sideMenuOpen &&
-                        event is KeyDownEvent &&
-                        event.logicalKey == LogicalKeyboardKey.escape) {
-                      setState(() => _sideMenuOpen = false);
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  },
-                  child: Stack(
+          child: Focus(
+            autofocus: true,
+            onKeyEvent: (node, event) {
+              if (_sideMenuOpen &&
+                  event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.escape) {
+                setState(() => _sideMenuOpen = false);
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Row(
                     children: [
-                      Positioned.fill(
+                      Expanded(
                         child: CtRegionMap(
                           region: _currentRegion,
                           cellSizePx: 24,
@@ -809,96 +744,68 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
                               : null,
                         ),
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: _buildBaseLayerCycleButton(),
-                      ),
-                      if (isNarrow && !_sideMenuOpen)
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 20,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onHorizontalDragUpdate: (details) {
-                              if (details.delta.dx > 20) {
-                                setState(() => _sideMenuOpen = true);
-                              }
-                            },
+                      if (!isNarrow && _selectedDetailId != null)
+                        SizedBox(
+                          width: 320,
+                          child: ProvinceSeaZoneDetailOverlay(
+                            game: widget.game,
+                            region: _currentRegion,
+                            selectedId: _selectedDetailId!,
+                            displayId: _displayId,
+                            humanPlayerId: _humanPlayerId,
+                            hoveredTileKey: _hoveredTileKey,
+                            onHighlightTile: (k) =>
+                                setState(() => _highlightedTileKey = k),
+                            onClose: () => setState(() {
+                              _selectedDetailId = null;
+                              _highlightedTileKey = null;
+                            }),
                           ),
                         ),
-                      if (_sideMenuOpen) ...[
-                        Positioned.fill(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => setState(() => _sideMenuOpen = false),
-                            child: Container(color: Colors.black54),
-                          ),
-                        ),
-                        _buildSideMenu(context),
-                      ],
                     ],
                   ),
-                )
-              : Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: CtRegionMap(
-                              region: _currentRegion,
-                              cellSizePx: 24,
-                              visibilityMode:
-                                  CtMapVisibilityMode.playerConstrained,
-                              baseLayerDisplayMode: _baseLayerDisplayMode,
-                              onProvinceSelected: _onProvinceSelected,
-                              onProvinceHovered: (id) =>
-                                  setState(() => _hoveredDetailId = id),
-                              onTileHovered: (key) =>
-                                  setState(() => _hoveredTileKey = key),
-                              highlightedTileKey: _highlightedTileKey,
-                              centerOnTileKey: _centerOnTileKey,
-                              validTileKeys: _validTileKeysForSelection,
-                              onTileSelected: _workTargetSelection != null
-                                  ? _onTileSelectedForWork
-                                  : null,
-                              onWorkTargetSelectionCancelled:
-                                  _workTargetSelection != null
-                                  ? () => setState(
-                                      () => _workTargetSelection = null,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          if (!isNarrow && _selectedDetailId != null)
-                            SizedBox(
-                              width: 320,
-                              child: ProvinceSeaZoneDetailOverlay(
-                                game: widget.game,
-                                region: _currentRegion,
-                                selectedId: _selectedDetailId!,
-                                displayId: _displayId,
-                                humanPlayerId: _humanPlayerId,
-                                hoveredTileKey: _hoveredTileKey,
-                                onHighlightTile: (k) =>
-                                    setState(() => _highlightedTileKey = k),
-                                onClose: () =>
-                                    setState(() => _selectedDetailId = null),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      child: _buildBaseLayerCycleButton(),
-                    ),
-                  ],
                 ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBaseLayerCycleButton(),
+                      const SizedBox(height: 4),
+                      _buildHomeToCapitalButton(),
+                    ],
+                  ),
+                ),
+                if (!_sideMenuOpen)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 20,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragUpdate: (details) {
+                        if (details.delta.dx > 20) {
+                          setState(() => _sideMenuOpen = true);
+                        }
+                      },
+                    ),
+                  ),
+                if (_sideMenuOpen) ...[
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _sideMenuOpen = false),
+                      child: Container(color: Colors.black54),
+                    ),
+                  ),
+                  _buildSideMenu(context),
+                ],
+              ],
+            ),
+          ),
         ),
         if (isNarrow && _selectedDetailId != null)
           SizedBox(
@@ -911,7 +818,10 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               humanPlayerId: _humanPlayerId,
               hoveredTileKey: _hoveredTileKey,
               onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
-              onClose: () => setState(() => _selectedDetailId = null),
+              onClose: () => setState(() {
+                _selectedDetailId = null;
+                _highlightedTileKey = null;
+              }),
             ),
           ),
       ],

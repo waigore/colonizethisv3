@@ -71,6 +71,13 @@ InitGameResult runInitGame({
   required GameSetupConfig config,
   InitGameOptions options = const InitGameOptions(),
 }) {
+  if (config.numProvincesOldWorld < config.greatPowerCount) {
+    throw ArgumentError(
+      'Config requests ${config.numProvincesOldWorld} Old World provinces but '
+      '${config.greatPowerCount} Great Powers need at least one each',
+    );
+  }
+
   _log.i('logic: init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}');
   // Derive an effective seed: non-zero config seeds are used as-is for
   // reproducible runs; a zero seed means "choose a time-based seed".

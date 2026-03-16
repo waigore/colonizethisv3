@@ -12,10 +12,10 @@
 | apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | 4× labour; consume refined sugar |
 | trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | 6× labour; consume cigars |
 | master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | 8× labour; consume fur hats |
-| money_lending | Money Lending | 1 | land_enclosure | Borrow more; lower interest; leads to bureaucracy |
+| money_lending | Money Lending | 1 | land_enclosure | Borrow more; lower interest; allows research spending to drive treasury down to −500 (vs 0) |
 | banking | Banking | 3 | master_artisans, trade_fairs | Lower interest; larger negative spending; military funding |
 | trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Bid on 6 commodities (vs 3) |
-| university | University | 3 | money_lending, apprentice_workers, printing_press | Fourth research slot; leads to many advances |
+| university | University | 3 | money_lending, apprentice_workers, printing_press | Increases research slots from 3 to 4 (permanent per player); leads to many advances |
 
 ---
 

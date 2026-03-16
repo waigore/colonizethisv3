@@ -384,6 +384,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  jenny:
+    dependency: transitive
+    description:
+      name: jenny
+      sha256: "12133bfae0b48104bef95082a2e45945d022c6e4b6ce7ce437de6bb46fb0b8ef"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.1"
   json_annotation:
     dependency: transitive
     description:
@@ -476,10 +484,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "1741988757a65eb6b36abe716829688cf01910bbf91c34354ff7ec1c3de2b349"
+      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
       url: "https://pub.dev"
     source: hosted
-    version: "1.18.0"
+    version: "1.17.0"
   mime:
     dependency: transitive
     description:

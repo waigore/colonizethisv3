@@ -15,6 +15,7 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 - **Open:** User taps/clicks a province or sea zone on the map. The overlay appears.
 - **Close (desktop and mobile):** User taps/clicks the close button (or an explicit dismiss control provided by the shell). **Tapping the same province/sea zone again does not close the overlay;** it remains visible until explicitly dismissed.
 - **Switch:** Tapping/clicking a different province/sea zone updates the overlay content to the new selection while keeping the overlay visible.
+- **Map highlight (orange cursor):** When the overlay is closed (via its close control or equivalent shell action), the in-game shell must also **clear any map `highlightedTileKey`** so that the secondary/orange cursor disappears from the map.
 - **Hover (pointer devices):** When the overlay is open, hovering over the map immediately updates the overlay to show the hovered province and, in the Tile section, the hovered tile’s details (coordinates, terrain, resources, prospected, improvements, roads/railroads, civilian units in province).
 - **Tap-as-hover (touch/mobile):** On touch-only/mobile viewports where pointer hover is not available, tapping a tile acts as “hover” for the purposes of the Tile section and province display:
   - The map widget drives `onTileHovered` / `onProvinceHovered` for the tapped tile/province.
@@ -119,6 +120,8 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 - **Given** a mobile viewport, **when** the overlay is shown, **then** it appears as a bottom sheet with tabs and does not exceed one-third of screen height.
 - **Given** a desktop viewport, **when** the overlay is shown, **then** it appears as a side panel.
 - **Given** a touch/mobile viewport where pointer hover is not available and the overlay is open, **when** the user taps a non-`unrevealed` tile on the map, **then** the overlay’s Tile section and province header update to show that tile’s province and tile information while the overlay remains visible.
+
+- **Given** the overlay is shown and a tile coordinate hover or other UI has caused the map to display a secondary/orange cursor via `highlightedTileKey`, **when** the user closes the overlay, **then** the in-game shell clears the map’s `highlightedTileKey` so that the secondary/orange cursor is no longer shown on the map.
 
 - **Given** the map widget is in player-constrained visibility mode and the user hovers a tile whose `CellViewData.visibility` is `unrevealed`, **when** the overlay’s Tile section is rendered, **then** the UI layer shows the heading "Tile" and replaces all Tile data fields (coordinates, terrain, resource, prospected, improvement, road/railroad, civilian units in province) with the literal text `???`.
 

@@ -1,0 +1,165 @@
+# Naval Units Panel
+
+**SPEC/ui** — Panel that lists all naval fleets owned by the human player, grouped by region then by location (port province or sea zone). Shows key fleet info at a glance, with expandable details for composition and capabilities, and supports locating each fleet on the map. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [game-toolbar-icons.md](game-toolbar-icons.md), and [empire-buttons.md](empire-buttons.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [world-model.md](../game/world-model.md); movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Purpose
+
+The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. The panel:
+
+- Lists fleets grouped by **region** and by **location** (in port at a province vs at sea in a sea zone).
+- Always shows the **Home Fleet** as a special entry at the top for the player’s capital, even when it currently has zero ships.
+- Shows **key info first** (fleet name, current location, mission, and a short composition summary).
+- Lets the player expand a fleet to see **ship composition and capabilities** (including Home Fleet cargo capacity).
+- Centers the map on the selected fleet’s location and switches the region tab if needed so the player immediately sees where that fleet operates.
+
+---
+
+## Scope: which fleets are shown
+
+- **Included:** All fleets owned by the human player from `WorldState.fleets`, including the **Home Fleet** as defined in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet).
+- **Location semantics:** Per [ships-and-naval.md](../game/ships-and-naval.md) and [naval-movement-resolution.md](../program/naval-movement-resolution.md):
+  - A fleet is either **in port** at a province (`inPortAtProvinceId` set, no `seaZoneId`) or **at sea** in a sea zone (`seaZoneId` set, no `inPortAtProvinceId`).
+  - The **Home Fleet** is always **in port at the player’s capital province** and cannot move; its mission is effectively `none`.
+- **Grouping:** Fleets are grouped by:
+  - **Region** (`oldWorld`, `newWorld`); within each region:
+    - **Home Fleet group** (if that region is the capital region) pinned at the top.
+    - **Port provinces:** fleets in port at owned provinces in that region.
+    - **Sea zones:** fleets at sea in sea zones in that region.
+- **Excluded:** Fleets owned by other players, Minor Nations, or Tribes.
+
+---
+
+## Panel placement and opening
+
+- **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
+- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map, matching the Military Units panel’s placement and max size (map remains visible).
+- **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
+
+---
+
+## Grouping and order
+
+- **Regions:** Top-level grouping is by region id (`oldWorld`, `newWorld`). Each group shows a region heading label (e.g. “Old World”, “New World”) using the same mapping as the Military Units panel.
+- **Within a region:**
+  - **Home Fleet first:** If the human player’s capital is in that region, the **Home Fleet** is always shown as the first fleet entry in that region, even when it currently has **zero ships**.
+  - **Ports vs sea zones:** Remaining fleets are grouped by **location node**:
+    - **Port node:** A province in that region that has one or more fleets **in port**.
+    - **Sea zone node:** A sea zone in that region that has one or more fleets **at sea**.
+  - **Order:** Within a region:
+    - Port nodes are listed in a stable order (e.g. by province display name).
+    - Sea zone nodes are listed in a stable order (e.g. by sea zone id/name).
+    - Within a node, fleets are listed in a stable order (e.g. by fleet label or id).
+- **Home Fleet location:** The Home Fleet is displayed in a **dedicated “Home Fleet” section** for the capital region; its underlying port province (capital) is mentioned in the row content but not as a separate group above it.
+
+---
+
+## Per-fleet row content
+
+Each **fleet row** in the list has two levels of detail:
+
+### Collapsed row (always visible)
+
+For every fleet (including the Home Fleet), the collapsed row shows:
+
+| Field             | Source                                   | Notes |
+|-------------------|------------------------------------------|-------|
+| **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet”. For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback). |
+| **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province` for in-port fleets (province display name) or `Region — Sea zone` for at-sea fleets. Region label uses same mapping as Military Units panel. |
+| **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. |
+| **Ships summary** | Fleet ship list and naval catalog       | Summary text such as `Total ships: N` and a short breakdown, e.g. `2 warships · 3 merchants` based on ship types' merchant/warship role per [ships-and-naval.md](../game/ships-and-naval.md) (§ Ship Types). |
+
+The entire collapsed row is clickable to select/locate the fleet and to toggle expansion.
+
+### Expanded details (on demand)
+
+When a row is **expanded**, additional details are shown **within the same panel**:
+
+- **Composition table:** One row per ship type in the fleet:
+  - Type name (human-readable ship type, e.g. “Frigate”, “Merchant Steamship”).
+  - Count of ships of that type.
+  - Role tag (e.g. “Warship” vs “Merchant”) per [ships-and-naval.md](../game/ships-and-naval.md).
+- **Capabilities:**
+  - For **Home Fleet**:
+    - **Cargo capacity**: total cargo holds, computed as the sum of `cargoHold` for all merchant ships in the Home Fleet per [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet, Cargo holds and capacity). Display as `Cargo capacity: X holds`.
+  - For **sea-going fleets**:
+    - A simple **strength summary** derived from naval combat aggregation (e.g. a single “Strength” value or short label that reflects FRP/RNG/HULL per [ships-and-naval.md](../game/ships-and-naval.md) § Naval Strength Aggregation Formula). Exact numeric display may be minimal for v1; underlying formula remains per game spec.
+- **Additional status:** Optional badges such as “In port”, “At sea”, or mission badges (Patrol, Blockade, Beachhead, Defend).
+
+---
+
+## Map locate behavior
+
+- **Locate on tap:** When the user taps a fleet row (collapsed or expanded), the UI layer:
+  1. Resolves a **tile key** that represents the fleet’s location:
+     - For fleets **in port**: use the same logic as the Military Units panel for provinces, i.e. town tile key if available, otherwise the first tile for that province, using prefixed province id per [world-model-identity.md](../game/world-model-identity.md).
+     - For fleets **at sea**: resolve a **port tile adjacent to the fleet’s sea zone** using `portsByProvinceSeaboard` (same algorithm as `tileKeyForSeaZoneLocation` in the Military Units panel).
+  2. Sets the map’s **highlighted tile** to that tile key.
+  3. **Pans and centers** the map viewport on that tile.
+  4. **Switches the active region tab** to the fleet’s region if it differs from the current tab.
+- **Home Fleet:** The Home Fleet’s locate behavior always centers on the capital province’s port tile; region is always the capital region.
+- **Contract:** As with other panels, the panel delegates map control to the in-game shell via a callback (e.g. `onLocateFleet(tileKey, regionId)`); the shell owns the map widget’s `highlightedTileKey` and any `centerOnTileKey` prop.
+
+---
+
+## Empty states
+
+- **Home Fleet empty:** When the Home Fleet currently has **zero ships**, the panel still shows a Home Fleet row for the capital region with:
+  - Fleet name “Home Fleet”.
+  - Location `Region — Capital province name`.
+  - Mission “None”.
+  - Ships summary `Total ships: 0` (or similar), and expanded composition showing no ship rows but still showing `Cargo capacity: 0`.
+- **No other fleets:** If the human player has no fleets apart from the (possibly empty) Home Fleet, the panel shows only the Home Fleet row for the capital region and no other fleet entries.
+- **No fleets at all (edge case):** If, due to scenario setup, the home fleet has not yet been created, the panel shows an empty state message (e.g. “No naval units”) consistent with other panels; once a Home Fleet exists, it is always shown.
+
+---
+
+## Data and identity
+
+- **Province lookup:** Always use **prefixed province ids** (`regionId|localId`) when resolving provinces from fleet location or Home Fleet capital per [world-model-identity.md](../game/world-model-identity.md). Display **province names** (e.g. `Province.displayName`) and **never raw province ids** to the user.
+- **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet; where that id is local to the region, the UI derives a display name from that id or from a mapping. When showing a sea zone, always include the **region label** with it.
+- **Home Fleet detection:** The Home Fleet is identified via the rules in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet): it is the fleet in port at the capital province that cannot move and whose mission is effectively none. Implementation may use a dedicated flag if provided by the model, but behaviour must remain consistent with the spec.
+
+---
+
+## Widgetbook
+
+The naval units panel participates in the Widgetbook catalog for review and testing.
+
+- **Standalone story:**
+  - A Widgetbook use case shows the **Naval Units panel only** (no map).
+  - Uses a real initialized game from `getDebugInitGameResult()` (or equivalent) so that:
+    - At least one Home Fleet exists for the human player.
+    - Several sea-going fleets exist in different ports and sea zones.
+  - The story should demonstrate:
+    - Region grouping with Home Fleet pinned first in the capital region.
+    - Collapsed vs expanded fleet rows, showing composition and capabilities.
+- **With map story:**
+  - A Widgetbook use case shows the **Naval Units panel in tandem with the map**:
+    - A region map (CtRegionMap) built from real `mapViewData`.
+    - The Naval Units panel docked to the side, similar to the Military Units Panel “With map” story.
+  - The story demonstrates:
+    - Clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets), and switches region tab if needed.
+    - Expand/collapse behavior does not interfere with locate behavior.
+
+---
+
+## Acceptance criteria
+
+- **Given** the user is on the in-game shell (Empire overview) and the human player has at least one fleet, **when** the user opens the Naval Units panel from the toolbar, **then** the UI layer displays a panel that lists all fleets owned by the human player grouped by region and by location (ports and sea zones), with the capital region’s **Home Fleet** shown as the first entry in that region even when it currently has zero ships.
+
+- **Given** the Naval Units panel is open and shows a fleet row for a sea-going fleet at sea in a sea zone, **when** the user taps that fleet’s row, **then** the UI layer resolves a port tile adjacent to that sea zone using the same sea-zone-to-port logic as the Military Units panel, sets the map’s highlighted tile to that tile, pans and centers the map on it, and switches the active region tab to the fleet’s region if it differs from the current tab.
+
+- **Given** the Naval Units panel is open and shows a fleet row for a fleet in port at a province, **when** the user taps that fleet’s row, **then** the UI layer resolves a tile for that province (prefer the town tile, otherwise the first tile for that province) using prefixed province id per world-model identity, sets the map’s highlighted tile to that tile, pans and centers the map on it, and switches the active region tab to that province’s region if it differs from the current tab.
+
+- **Given** the Naval Units panel is open and the human player’s Home Fleet exists in port at the capital province, **when** the user views the Home Fleet row in the capital region group, **then** the UI layer shows the fleet name “Home Fleet”, the location as the capital’s province name with the correct region label, the mission as “None”, and a ships summary that reflects the fleet’s current ship count (including `Total ships: 0` when it has no ships).
+
+- **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
+
+- **Given** the Naval Units panel is open and the human player has at least one fleet, **when** the user views the list of fleets, **then** fleets are grouped by region with a heading per region, port and sea-zone locations under each region are ordered stably (e.g. by display name), and fleets within each location are shown in a stable order, with the capital region’s Home Fleet section pinned first in that region.
+
+- **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “Standalone” use case, **then** the UI layer displays only the Naval Units panel with demo or debug game data so that region grouping, Home Fleet pinning, collapsed vs expanded fleet rows, and composition/capabilities content can be verified in isolation.
+
+- **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “With map” use case, **then** the UI layer displays the Naval Units panel alongside a map built from a real generated map and initialized game (`getDebugInitGameResult()`), and clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets) while switching the region tab when necessary.
+

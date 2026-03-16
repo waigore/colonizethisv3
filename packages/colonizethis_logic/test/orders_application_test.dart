@@ -1206,6 +1206,79 @@ void main() {
       expect(u.currentWork!.remainingTurns, u.currentWork!.totalTurns - 1);
     });
 
+    test(
+        'explore work order totalTurns uses region-scoped formula ceil(3 * tilesInP / maxTilesInRegion)',
+        () {
+      // Region has two provinces with different tile counts; explorer in the
+      // smaller one should get totalTurns = ceil(3 * tilesInP / maxTilesInRegion).
+      const ow = 'oldWorld';
+      const provinceSmall = '$ow|P1';
+      const provinceLarge = '$ow|P2';
+      const tileSmall1 = '$ow|P1|0|0';
+      const tileSmall2 = '$ow|P1|1|0';
+      const tileLarge1 = '$ow|P2|0|0';
+      const tileLarge2 = '$ow|P2|1|0';
+      const tileLarge3 = '$ow|P2|2|0';
+      const tileLarge4 = '$ow|P2|3|0';
+
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: 'p1',
+        provinceId: provinceSmall,
+        tileKey: tileSmall1,
+      );
+
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceSmall, regionId: ow, ownerId: 'p1'),
+              Province(id: provinceLarge, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceSmall: [tileSmall1, tileSmall2], // tilesInP = 2
+              provinceLarge: [
+                tileLarge1,
+                tileLarge2,
+                tileLarge3,
+                tileLarge4,
+              ], // maxTilesInRegion = 4
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+              unitId: 'u1',
+              target: 'explore',
+              targetTileKey: tileSmall1,
+            ),
+          ],
+        },
+      );
+
+      final next = applyBuildAndWorkOrders(game, orders);
+      final u = next.worldState.oldWorld.units.single;
+
+      // tilesInP = 2, maxTilesInRegion = 4 → ceil(3 * 2 / 4) = ceil(1.5) = 2.
+      expect(u.currentWork, isNotNull);
+      expect(u.currentWork!.workTarget, 'explore');
+      expect(u.currentWork!.totalTurns, 2);
+      // One turn processed in same phase after applying.
+      expect(u.currentWork!.remainingTurns, 1);
+    });
+
     test('Engineer build_road work order sets currentWork', () {
       final unit = Unit(
         id: 'u1',
