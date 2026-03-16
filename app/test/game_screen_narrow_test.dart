@@ -1,4 +1,4 @@
-// In-game shell narrow viewport and side menu. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
+// In-game shell side menu. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
@@ -39,7 +39,7 @@ void main() {
 
   group('GameScreen — SPEC/ui/in-game-shell-narrow.md', () {
     testWidgets(
-      'AC: viewport >= 600 dp shows empire buttons in top bar',
+      'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (wide viewport)',
       (WidgetTester tester) async {
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
@@ -47,21 +47,25 @@ void main() {
         await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
         await tester.pump();
 
-        expect(find.text('Production'), findsOneWidget);
-        expect(find.text('Civilian Units'), findsOneWidget);
-        expect(find.text('Technology'), findsOneWidget);
+        expect(find.textContaining('Next turn'), findsOneWidget);
+        expect(find.byIcon(Icons.menu), findsOneWidget);
+        // Empire buttons should NOT be visible in top bar
+        expect(find.text('Production'), findsNothing);
+        expect(find.text('Civilian Units'), findsNothing);
+        expect(find.text('Technology'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
     testWidgets(
-      'AC: viewport < 600 dp shows only hamburger and turn counter in top bar',
+      'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (narrow viewport)',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildGameScreen(width: 399, height: 700));
         await tester.pump();
 
         expect(find.textContaining('Next turn'), findsOneWidget);
         expect(find.byIcon(Icons.menu), findsOneWidget);
+        // Empire buttons should NOT be visible in top bar
         expect(find.text('Production'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 15)),
