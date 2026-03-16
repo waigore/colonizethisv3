@@ -95,6 +95,8 @@ For each civilian unit, the panel shows:
 
 - **Given** the user clicked **Assign** for an idle civilian unit, **when** the order menu is shown, **then** the UI layer displays only work order targets allowed for that unit type (per game model); the user may select one or dismiss the menu.
 
+- **Given** the user opened the Assign menu for a civilian unit, **when** a work target has no valid tiles available for that unit this turn (computed from order suggestions at turn start), **then** the UI layer grays out that work target option and the user cannot select it; valid work targets remain enabled.
+
 - **Given** the user selected a work order from the Assign menu, **when** the shell is in work-target selection mode, **then** the map highlights **valid target tiles** for that (unit, order) with a subtle glow; the user may switch region tabs; clicking a valid tile submits the work order and exits selection mode; clicking elsewhere (invalid tile or empty area) exits selection mode without submitting.
 
 - **Given** province-level orders (`explore`, `steal_tech`, `counter_spy`), **when** the user clicks a tile on the map in work-target selection mode, **then** the UI layer derives the province from the clicked tile key and submits the work order with the canonical province-level tile key (e.g. `regionId|provinceId|0|0`) per orders spec.

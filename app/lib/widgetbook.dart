@@ -33,11 +33,7 @@ Widget mobileViewport(BuildContext context, Widget child) {
   const double height = 640;
   return MediaQuery(
     data: MediaQuery.of(context).copyWith(size: Size(width, height)),
-    child: SizedBox(
-      width: width,
-      height: height,
-      child: child,
-    ),
+    child: SizedBox(width: width, height: height, child: child),
   );
 }
 
@@ -110,259 +106,252 @@ List<WidgetbookNode> get buttonDirectories => [
 
 /// Main Menu stories (plain and pixel). Register in widget_catalog.json.
 List<WidgetbookNode> get mainMenuDirectories => [
-      WidgetbookFolder(
-        name: 'Main Menu',
-        children: [
-          WidgetbookUseCase(
-            name: 'Default',
-            builder: (context) => CtMainMenu(
-              variant: MainMenuVariant.plain,
-              state: MainMenuState.default_,
-              version: 'v1.0.0',
-              onNewGame: () {},
-              onLoadGame: () {},
-              onSettings: () {},
-              onQuit: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'After victory',
-            builder: (context) => CtMainMenu(
-              variant: MainMenuVariant.plain,
-              state: MainMenuState.afterVictory,
-              version: 'v1.0.0',
-              onNewGame: () {},
-              onLoadGame: () {},
-              onSettings: () {},
-              onQuit: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'No saves',
-            builder: (context) => CtMainMenu(
-              variant: MainMenuVariant.plain,
-              state: MainMenuState.noSaves,
-              version: 'v1.0.0',
-              onNewGame: () {},
-              onLoadGame: () {},
-              onSettings: () {},
-              onQuit: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Default (pixel)',
-            builder: (context) => CtMainMenu(
-              variant: MainMenuVariant.pixelArt,
-              state: MainMenuState.default_,
-              version: 'v1.0.0',
-              onNewGame: () {},
-              onLoadGame: () {},
-              onSettings: () {},
-              onQuit: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'After victory (pixel)',
-            builder: (context) => CtMainMenu(
-              variant: MainMenuVariant.pixelArt,
-              state: MainMenuState.afterVictory,
-              version: 'v1.0.0',
-              onNewGame: () {},
-              onLoadGame: () {},
-              onSettings: () {},
-              onQuit: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Default (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              CtMainMenu(
-                variant: MainMenuVariant.plain,
-                state: MainMenuState.default_,
-                version: 'v1.0.0',
-                onNewGame: () {},
-                onLoadGame: () {},
-                onSettings: () {},
-                onQuit: () {},
-              ),
-            ),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Main Menu',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.plain,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'After victory',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.plain,
+          state: MainMenuState.afterVictory,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'No saves',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.plain,
+          state: MainMenuState.noSaves,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'After victory (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.afterVictory,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtMainMenu(
+            variant: MainMenuVariant.plain,
+            state: MainMenuState.default_,
+            version: 'v1.0.0',
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// All choices unselected on load. SPEC/ui/game-setup.md.
 List<String> _unselectedInitialOrderedGpIds() => List.filled(6, '');
 
 /// Game Setup stories. SPEC/ui/game-setup.md; UXD 03b.
 List<WidgetbookNode> get gameSetupDirectories => [
-      WidgetbookFolder(
-        name: 'Game Setup',
-        children: [
-          WidgetbookUseCase(
-            name: 'Default',
-            builder: (context) => CtGameSetup(
-              variant: GameSetupVariant.plain,
-              state: GameSetupState.default_,
-              naming: defaultNamingConfig,
-              initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
-              initialLeaderVariantByGpId: {},
-              onStartGame: (_, __) {},
-              onBack: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Loading',
-            builder: (context) => CtGameSetup(
-              variant: GameSetupVariant.plain,
-              state: GameSetupState.loading,
-              naming: defaultNamingConfig,
-              initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
-              initialLeaderVariantByGpId: {},
-              onStartGame: (_, __) {},
-              onBack: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Default (pixel)',
-            builder: (context) => CtGameSetup(
-              variant: GameSetupVariant.pixelArt,
-              state: GameSetupState.default_,
-              naming: defaultNamingConfig,
-              initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
-              initialLeaderVariantByGpId: {},
-              onStartGame: (_, __) {},
-              onBack: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Loading (pixel)',
-            builder: (context) => CtGameSetup(
-              variant: GameSetupVariant.pixelArt,
-              state: GameSetupState.loading,
-              naming: defaultNamingConfig,
-              initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
-              initialLeaderVariantByGpId: {},
-              onStartGame: (_, __) {},
-              onBack: () {},
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Default (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              CtGameSetup(
-                variant: GameSetupVariant.plain,
-                state: GameSetupState.default_,
-                naming: defaultNamingConfig,
-                initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
-                initialLeaderVariantByGpId: {},
-                onStartGame: (_, __) {},
-                onBack: () {},
-              ),
-            ),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Game Setup',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.plain,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, __) {},
+          onBack: () {},
+        ),
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'Loading',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.plain,
+          state: GameSetupState.loading,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, __) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, __) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.loading,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: {},
+          onStartGame: (_, __) {},
+          onBack: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.plain,
+            state: GameSetupState.default_,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: {},
+            onStartGame: (_, __) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// Map Widget stories (debug mode). SPEC/ui/map-widget.md.
 List<WidgetbookNode> get mapWidgetDirectories => [
-      WidgetbookFolder(
-        name: 'Map Widget',
-        children: [
-          WidgetbookUseCase(
-            name: 'Debug mode (visibility toggle)',
-            builder: (context) => const DebugMapVisibilityStory(
-              showPoliticalOverlay: true,
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Debug mode (political overlay off)',
-            builder: (context) => const DebugMapVisibilityStory(
-              showPoliticalOverlay: false,
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Debug mode (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              Builder(
-                builder: (context) {
-                  return const DebugMapVisibilityStory(
-                    showPoliticalOverlay: true,
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Map Widget',
+    children: [
+      WidgetbookUseCase(
+        name: 'Debug mode (visibility toggle)',
+        builder: (context) =>
+            const DebugMapVisibilityStory(showPoliticalOverlay: true),
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'Debug mode (political overlay off)',
+        builder: (context) =>
+            const DebugMapVisibilityStory(showPoliticalOverlay: false),
+      ),
+      WidgetbookUseCase(
+        name: 'Debug mode (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          Builder(
+            builder: (context) {
+              return const DebugMapVisibilityStory(showPoliticalOverlay: true);
+            },
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// Civilian Units Panel stories. SPEC/ui/civilian-units-panel.md.
 List<WidgetbookNode> get civilianUnitsPanelDirectories => [
-      WidgetbookFolder(
-        name: 'Civilian Units Panel',
-        children: [
-          WidgetbookUseCase(
-            name: 'Standalone',
-            builder: (context) {
-              final result = getDebugInitGameResult();
-              final game = result.game;
-              final humanPlayerId =
-                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
-              return ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
-                child: CivilianUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                ),
-              );
-            },
-          ),
-          WidgetbookUseCase(
-            name: 'With map',
-            builder: (context) => const _CivilianPanelWithMapStory(),
-          ),
-          WidgetbookUseCase(
-            name: 'As bottom sheet',
-            builder: (context) => const _CivilianPanelAsBottomSheetStory(),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Civilian Units Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: CivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+          );
+        },
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'With map',
+        builder: (context) => const _CivilianPanelWithMapStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'As bottom sheet',
+        builder: (context) => const _CivilianPanelAsBottomSheetStory(),
+      ),
+    ],
+  ),
+];
 
 /// Production Panel stories. SPEC/ui/production-panel.md.
 List<WidgetbookNode> get productionPanelDirectories => [
-      WidgetbookFolder(
-        name: 'Diplomacy Panel',
-        children: [
-          WidgetbookUseCase(
-            name: 'With real game',
-            builder: (context) {
-              final result = getDebugInitGameResult();
-              final game = result.game;
-              final humanPlayerId =
-                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
-              return ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 800, maxHeight: 600),
-                child: DiplomacyPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  topology: result.combinedTopology,
-                  currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
-                ),
-              );
-            },
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Diplomacy Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'With real game',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+            child: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              topology: result.combinedTopology,
+              currentOrders: const Orders(),
+              onOrdersChanged: (_) {},
+            ),
+          );
+        },
       ),
-    ];
+    ],
+  ),
+];
 
 /// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
 List<WidgetbookNode> get techTreeDirectories => [
@@ -400,10 +389,7 @@ List<WidgetbookNode> get techTreeDirectories => [
           return MaterialApp(
             theme: AppThemes.colonial,
             home: Scaffold(
-              body: TechnologyScreen(
-                game: midGame,
-                player: midGamePlayer,
-              ),
+              body: TechnologyScreen(game: midGame, player: midGamePlayer),
             ),
           );
         },
@@ -441,153 +427,150 @@ List<WidgetbookNode> get techTreeDirectories => [
 
 /// Military Units Panel stories. SPEC/ui/military-units-panel.md.
 List<WidgetbookNode> get militaryUnitsPanelDirectories => [
-      WidgetbookFolder(
-        name: 'Military Units Panel',
-        children: [
-          WidgetbookUseCase(
-            name: 'Standalone',
-            builder: (context) {
-              final result = getDebugInitGameResult();
-              final game = result.game;
-              final humanPlayerId =
-                  game.players.isNotEmpty ? game.players.first.id : 'gp1';
-              return ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 400, maxHeight: 500),
-                child: MilitaryUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                ),
-              );
-            },
-          ),
-          WidgetbookUseCase(
-            name: 'With map',
-            builder: (context) => const _MilitaryPanelWithMapStory(),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Military Units Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: MilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+          );
+        },
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'With map',
+        builder: (context) => const _MilitaryPanelWithMapStory(),
+      ),
+    ],
+  ),
+];
 
 /// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
 List<WidgetbookNode> get diplomacyPanelDirectories => [
-      WidgetbookFolder(
-        name: 'Production Panel',
-        children: [
-          WidgetbookUseCase(
-            name: 'Full availability',
-            builder: (context) => const _ProductionPanelStory(
-              playerOverride: null,
-              useFullAvailability: true,
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Partial availability',
-            builder: (context) => const _ProductionPanelStory(
-              playerOverride: null,
-              useFullAvailability: false,
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Full availability (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              const _ProductionPanelStory(
-                playerOverride: null,
-                useFullAvailability: true,
-              ),
-            ),
-          ),
-          WidgetbookUseCase(
-            name: 'Partial availability (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              const _ProductionPanelStory(
-                playerOverride: null,
-                useFullAvailability: false,
-              ),
-            ),
-          ),
-        ],
+  WidgetbookFolder(
+    name: 'Production Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Full availability',
+        builder: (context) => const _ProductionPanelStory(
+          playerOverride: null,
+          useFullAvailability: true,
+        ),
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'Partial availability',
+        builder: (context) => const _ProductionPanelStory(
+          playerOverride: null,
+          useFullAvailability: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Full availability (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          const _ProductionPanelStory(
+            playerOverride: null,
+            useFullAvailability: true,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Partial availability (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          const _ProductionPanelStory(
+            playerOverride: null,
+            useFullAvailability: false,
+          ),
+        ),
+      ),
+    ],
+  ),
+];
 
 /// Province/Sea Zone Detail Overlay stories. SPEC/ui/province-sea-zone-detail-overlay.md.
 List<WidgetbookNode> get provinceOverlayDirectories => [
-      WidgetbookFolder(
-        name: 'Province Overlay',
-        children: [
-          WidgetbookUseCase(
-            name: 'Standalone — province',
-            builder: (context) {
-              final game = demoGameForOverlay;
-              final region = demoRegionForOverlay;
-              return SizedBox(
-                width: 320,
-                height: 400,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  selectedId: sampleProvinceIdForOverlay,
-                  displayId: sampleProvinceIdForOverlay,
-                  humanPlayerId: game.players.first.id,
-                  onClose: () {},
-                ),
-              );
-            },
-          ),
-          WidgetbookUseCase(
-            name: 'Standalone — sea zone',
-            builder: (context) {
-              final game = demoGameForOverlay;
-              final region = demoRegionForOverlay;
-              return SizedBox(
-                width: 320,
-                height: 280,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  selectedId: sampleSeaZoneIdForOverlay,
-                  displayId: sampleSeaZoneIdForOverlay,
-                  humanPlayerId: game.players.first.id,
-                  onClose: () {},
-                ),
-              );
-            },
-          ),
-          WidgetbookUseCase(
-            name: 'Standalone (mobile)',
-            builder: (context) => mobileViewport(
-              context,
-              Builder(
-                builder: (context) {
-                  final game = demoGameForOverlay;
-                  final region = demoRegionForOverlay;
-                  return ProvinceSeaZoneDetailOverlay(
-                    game: game,
-                    region: region,
-                    selectedId: sampleProvinceIdForOverlay,
-                    displayId: sampleProvinceIdForOverlay,
-                    humanPlayerId: game.players.first.id,
-                    onClose: () {},
-                  );
-                },
-              ),
+  WidgetbookFolder(
+    name: 'Province Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone — province',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          return SizedBox(
+            width: 320,
+            height: 400,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              selectedId: sampleProvinceIdForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+              humanPlayerId: game.players.first.id,
+              onClose: () {},
             ),
-          ),
-          WidgetbookUseCase(
-            name: 'With map — province selected',
-            builder: (context) =>
-                _MapWithOverlayStory(selectedId: sampleProvinceIdForOverlay),
-          ),
-          WidgetbookUseCase(
-            name: 'With map — sea zone selected',
-            builder: (context) =>
-                _MapWithOverlayStory(selectedId: sampleSeaZoneIdForOverlay),
-          ),
-        ],
+          );
+        },
       ),
-    ];
+      WidgetbookUseCase(
+        name: 'Standalone — sea zone',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          return SizedBox(
+            width: 320,
+            height: 280,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              selectedId: sampleSeaZoneIdForOverlay,
+              displayId: sampleSeaZoneIdForOverlay,
+              humanPlayerId: game.players.first.id,
+              onClose: () {},
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          Builder(
+            builder: (context) {
+              final game = demoGameForOverlay;
+              final region = demoRegionForOverlay;
+              return ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                selectedId: sampleProvinceIdForOverlay,
+                displayId: sampleProvinceIdForOverlay,
+                humanPlayerId: game.players.first.id,
+                onClose: () {},
+              );
+            },
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'With map — province selected',
+        builder: (context) =>
+            _MapWithOverlayStory(selectedId: sampleProvinceIdForOverlay),
+      ),
+      WidgetbookUseCase(
+        name: 'With map — sea zone selected',
+        builder: (context) =>
+            _MapWithOverlayStory(selectedId: sampleSeaZoneIdForOverlay),
+      ),
+    ],
+  ),
+];
 
 /// Production panel with local state for Widgetbook. SPEC/ui/production-panel.md.
 class _ProductionPanelStory extends StatefulWidget {
@@ -612,7 +595,8 @@ class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
   @override
   Widget build(BuildContext context) {
     final game = demoGameForOverlay;
-    final player = widget.playerOverride ??
+    final player =
+        widget.playerOverride ??
         (widget.useFullAvailability
             ? fullAvailabilityProductionPlayer()
             : partialAvailabilityProductionPlayer());
@@ -678,8 +662,11 @@ class _CivilianPanelWithMapStoryState
 
     Set<String> valid;
     if (_visibilityMode == CtMapVisibilityMode.playerConstrained) {
-      final view =
-          buildPlayerView(_game, result.combinedTopology, _humanPlayerId);
+      final view = buildPlayerView(
+        _game,
+        result.combinedTopology,
+        _humanPlayerId,
+      );
       valid = getValidWorkOrderTileKeysWithVisibility(
         game: _game,
         topology: result.combinedTopology,
@@ -699,8 +686,9 @@ class _CivilianPanelWithMapStoryState
       );
     }
 
-    final filtered =
-        valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+    final filtered = valid
+        .where((k) => k.startsWith('$_currentRegionId|'))
+        .toSet();
     _cachedValidTileKeys = filtered;
     _cachedWorkTargetSelection = cacheKey;
     return filtered;
@@ -745,12 +733,13 @@ class _CivilianPanelWithMapStoryState
       targetTileKey: targetTileKey,
     );
     setState(() {
-      final existing = _orders.workOrdersByPlayerId[_humanPlayerId] ?? const <WorkOrder>[];
+      final existing =
+          _orders.workOrdersByPlayerId[_humanPlayerId] ?? const <WorkOrder>[];
       final list = <WorkOrder>[...existing, workOrder];
       _orders = _orders.copyWith(
         workOrdersByPlayerId: {
           ..._orders.workOrdersByPlayerId,
-          _humanPlayerId: list
+          _humanPlayerId: list,
         },
       );
       _workTargetSelection = null;
@@ -763,8 +752,9 @@ class _CivilianPanelWithMapStoryState
     final mapViewData = _visibilityMode == CtMapVisibilityMode.playerConstrained
         ? debugMapViewDataWithVisibilityForFirstPlayer()
         : baseResult.mapViewData;
-    final region =
-        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    final region = _regionIndex == 0
+        ? mapViewData.oldWorld
+        : mapViewData.newWorld;
     // Panel at bottom, like province overlay "With map" story. SPEC/ui/civilian-units-panel.md.
     const panelHeight = 220.0;
     return SizedBox(
@@ -793,14 +783,17 @@ class _CivilianPanelWithMapStoryState
                   label: const Text('Full visibility'),
                   selected: _visibilityMode == CtMapVisibilityMode.full,
                   onSelected: (_) => setState(
-                      () => _visibilityMode = CtMapVisibilityMode.full),
+                    () => _visibilityMode = CtMapVisibilityMode.full,
+                  ),
                 ),
                 CtChoiceChip(
                   label: const Text('Player-constrained'),
-                  selected: _visibilityMode ==
-                      CtMapVisibilityMode.playerConstrained,
-                  onSelected: (_) => setState(() => _visibilityMode =
-                      CtMapVisibilityMode.playerConstrained),
+                  selected:
+                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
+                  onSelected: (_) => setState(
+                    () =>
+                        _visibilityMode = CtMapVisibilityMode.playerConstrained,
+                  ),
                 ),
               ],
             ),
@@ -828,6 +821,7 @@ class _CivilianPanelWithMapStoryState
               game: _game,
               humanPlayerId: _humanPlayerId,
               currentOrders: _orders,
+              availableWorkTargets: const {},
               onLocateUnit: _onLocateUnit,
               onRemoveWorkOrder: (playerId, index) {
                 setState(() {
@@ -837,7 +831,7 @@ class _CivilianPanelWithMapStoryState
                   _orders = _orders.copyWith(
                     workOrdersByPlayerId: {
                       ..._orders.workOrdersByPlayerId,
-                      playerId: list
+                      playerId: list,
                     },
                   );
                 });
@@ -846,8 +840,12 @@ class _CivilianPanelWithMapStoryState
                 setState(() => _game = clearUnitCurrentWork(_game, unitId));
               },
               onStartWorkTargetSelection: (unit, workTarget) {
-                setState(() => _workTargetSelection =
-                    (unit: unit, workTarget: workTarget));
+                setState(
+                  () => _workTargetSelection = (
+                    unit: unit,
+                    workTarget: workTarget,
+                  ),
+                );
               },
             ),
           ),
@@ -865,8 +863,9 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
   Widget build(BuildContext context) {
     final result = getDebugInitGameResult();
     final game = result.game;
-    final humanPlayerId =
-        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    final humanPlayerId = game.players.isNotEmpty
+        ? game.players.first.id
+        : 'gp1';
     return SizedBox(
       width: 600,
       height: 400,
@@ -881,13 +880,13 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
                   context: context,
                   isScrollControlled: true,
                   builder: (ctx) {
-                    final maxHeight =
-                        MediaQuery.sizeOf(ctx).height * 0.5;
+                    final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
                     return ConstrainedBox(
                       constraints: BoxConstraints(maxHeight: maxHeight),
                       child: CivilianUnitsPanel(
                         game: game,
                         humanPlayerId: humanPlayerId,
+                        availableWorkTargets: const {},
                       ),
                     );
                   },
@@ -955,10 +954,12 @@ class _MilitaryPanelWithMapStoryState
     final result = getDebugInitGameResult();
     final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId =
-        game.players.isNotEmpty ? game.players.first.id : 'gp1';
-    final region =
-        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    final humanPlayerId = game.players.isNotEmpty
+        ? game.players.first.id
+        : 'gp1';
+    final region = _regionIndex == 0
+        ? mapViewData.oldWorld
+        : mapViewData.newWorld;
     return SizedBox(
       width: 900,
       height: 550,
@@ -1062,7 +1063,9 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
     final region = mapViewData.oldWorld;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final totalHeight = constraints.maxHeight > 0 ? constraints.maxHeight : 500.0;
+        final totalHeight = constraints.maxHeight > 0
+            ? constraints.maxHeight
+            : 500.0;
         final overlayHeight = totalHeight / 2;
         return SizedBox(
           width: 800,
@@ -1087,7 +1090,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Player-constrained'),
-                      selected: _visibilityMode ==
+                      selected:
+                          _visibilityMode ==
                           CtMapVisibilityMode.playerConstrained,
                       onSelected: (_) {
                         setState(() {

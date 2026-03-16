@@ -33,6 +33,21 @@ When width < 600 dp:
 
 ---
 
+## Modal behaviour (side menu)
+
+- **Modal:** When the side menu is open, it is **modal with respect to the map widget and in-game controls underneath**:
+  - Pointer interaction (tap, drag, scroll, hover) is **captured by the side menu layer** and **does not reach the map widget** or underlying in-game UI.
+  - Keyboard interaction that would otherwise affect the map or in-game UI is **ignored by the map** while the menu is open.
+  - **OS / platform-level gestures** (system back, platform edge-swipes) continue to work as normal; modality only applies to the app content layer.
+- **Scrim:** A dimmed background (scrim) is shown behind the side menu while it is open so the player understands that the map is temporarily non-interactive.
+- **Dismissal:**
+  - Pressing **Escape** (or the equivalent back key on desktop/web) closes the side menu.
+  - Tapping or clicking **outside** the side menu, on the scrim, closes the side menu and **does not trigger any map interaction** for that tap/click.
+  - Tapping the **hamburger** again while the menu is open closes the side menu.
+  - Existing close affordances (swipe/drag to the left, close (×) button) continue to close the menu.
+
+---
+
 ## Wireframe (narrow)
 
 ```
@@ -70,6 +85,11 @@ Side menu (when open, overlaid from left):
 - **Given** the side menu is open, **when** the user taps the close (cross) button in the menu, **then** the side menu closes.
 - **Given** the side menu is open, **when** the user taps an empire button, **then** the same panel or screen opens as when that button is used in the wide top bar, and the side menu closes (or remains open; spec: close on action so the user sees the panel).
 - **Given** viewport width is **< 600 dp**, **when** the side menu is built, **then** it uses pixel-art layout (CtPanel, CtNinePatchButton, same icons as game-toolbar-icons) and no Material buttons or chrome.
+
+- **Given** viewport width is **< 600 dp** and the side menu is **open**, **when** the user attempts to interact with the map area (tap, drag, scroll, hover), **then** the map widget does not respond and no province selection or camera movement occurs until the side menu is closed.
+- **Given** viewport width is **< 600 dp** and the side menu is **open**, **when** the user performs a keyboard action that would normally affect the map (e.g. map hotkeys), **then** the map does not react while the menu is open.
+- **Given** viewport width is **< 600 dp** and the side menu is **open**, **when** the user taps or clicks outside the menu (on the dimmed background), **then** the side menu closes and that tap/click is **not** forwarded to the map (no province selection or camera movement is triggered).
+- **Given** viewport width is **< 600 dp** and the side menu is **open**, **when** the user presses **Escape** (or the platform back key where applicable), **then** the side menu closes and focus/input returns to the in-game shell.
 
 ---
 
