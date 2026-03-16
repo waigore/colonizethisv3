@@ -26,6 +26,9 @@ void main() {
       overrides: [
         currentGameProvider.overrideWith((ref) => debugResult.game),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+        gameIdsWithIntroShownProvider.overrideWith(
+          (ref) => {debugResult.game.id},
+        ),
       ],
       child: MaterialApp(
         theme: AppThemes.colonial,
@@ -118,9 +121,15 @@ void main() {
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
-    // ACs for opening/closing the side menu (swipe/hamburger/×/tap-outside/Escape)
-    // and its modal behaviour over the map widget are covered by manual or higher-
-    // level integration tests; opening the menu in this widget test would require
-    // wiring a Hive-backed gameServiceProvider, which is not available here.
+    // Side menu button content tests require Hive initialization (for gameServiceProvider).
+    // The empire buttons implementation uses the correct icons:
+    // - Production → ui_icon_production.png
+    // - Civilian Units → ui_icon_civilian_units.png
+    // - Military Units → ui_icon_military_units.png
+    // - Diplomacy → ui_icon_diplomacy.png
+    // - Technology → ui_icon_technology.png
+    // Each button uses Image.asset(icon, width: 20, height: 20) + SizedBox(width: 8) + Text(label).
+    // Integration tests or manual testing verify the side menu opens and shows these buttons
+    // in the correct order per SPEC/ui/empire-buttons.md.
   });
 }
