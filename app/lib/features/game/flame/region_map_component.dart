@@ -4,22 +4,50 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 import 'terrain_tileset.dart';
 
-/// Check if a terrain type uses standalone tile rendering (all features).
-/// Only Sea (coastline) and Plains use Wang tilesets; everything else is standalone.
+final _log = Logger();
+
+/// Check if a terrain type uses L2+ standalone tile rendering (features).
+/// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
-  return terrain == TerrainType.desert ||
-      terrain == TerrainType.forest ||
+  return terrain == TerrainType.forest ||
       terrain == TerrainType.hills ||
       terrain == TerrainType.mountain ||
       terrain == TerrainType.swamp;
 }
 
-/// Plains is the only land base terrain; all other land types are features.
-bool _isLandBaseTerrain(TerrainType terrain) {
-  return terrain == TerrainType.plains;
+/// Get the dominant adjacent land base type for coastline tileset selection.
+/// Returns 'plains' or 'desert' based on which is more common among neighbors.
+TerrainType? _getDominantAdjacentLandBase(
+  int x,
+  int y,
+  CellViewData? Function(int, int) getCellAt,
+) {
+  int plainsCount = 0;
+  int desertCount = 0;
+
+  for (final dy in [-1, 0, 1]) {
+    for (final dx in [-1, 0, 1]) {
+      if (dx == 0 && dy == 0) continue;
+      final cell = getCellAt(x + dx, y + dy);
+      if (cell != null && !cell.isSea) {
+        final terrain = cell.terrainType;
+        if (terrain == TerrainType.plains) {
+          plainsCount++;
+        } else if (terrain == TerrainType.desert) {
+          desertCount++;
+        } else if (terrain != null && _isFeatureTerrain(terrain)) {
+          plainsCount++; // Features have plains underneath
+        }
+      }
+    }
+  }
+
+  if (plainsCount >= desertCount) return TerrainType.plains;
+  return TerrainType.desert;
 }
 
 /// Visibility mode for the region map. SPEC/ui/map-widget.md.
@@ -80,6 +108,12 @@ class CtRegionMapComponent extends PositionComponent {
   Future<void> onLoad() async {
     await super.onLoad();
     await terrainTilesetCache.load();
+    _log.i(
+      'TerrainTilesetCache loaded. '
+      'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
+      'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
+      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}',
+    );
     size = Vector2(region.width * cellSize, region.height * cellSize);
   }
 
@@ -304,22 +338,50 @@ class CtRegionMapComponent extends PositionComponent {
 
     // Sea layer with coastline transitions
     // Check if this sea cell has land neighbors (coastline)
-    final landCorner = _getCornerValues(cell.x, cell.y, (c) => !c.isSea);
+    final landCorner = _getCoastlineCornerValues(cell.x, cell.y);
 
-    if (landCorner.same) {
-      // Interior sea - no land neighbors, draw solid sea color
-      final paint = Paint()..color = const Color(0xFF1e3a5f);
-      canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
+    // Determine which tileset to use based on adjacent land type (for both interior and coastline)
+    final dominantLandType = _getDominantAdjacentLandBase(
+      cell.x,
+      cell.y,
+      _getCellAt,
+    );
+    final tileset = dominantLandType == TerrainType.desert
+        ? terrainTilesetCache.getSeaDesertTileset()
+        : terrainTilesetCache.getSeaPlainsTileset();
+
+    if (tileset == null) {
+      final baseColor = const Color(0xFF1e3a5f);
+      final foggedColor =
+          visibilityMode == CtMapVisibilityMode.playerConstrained &&
+              cell.visibility == TileVisibility.fogged
+          ? Color.lerp(baseColor, Colors.black, 0.7)!
+          : baseColor;
+      canvas.drawRect(
+        Rect.fromLTWH(left, top, cellSize, cellSize),
+        Paint()..color = foggedColor,
+      );
       return;
     }
 
-    // Sea with land adjacency - use sea_beach tileset for all land types
-    // (desert, forest, hills, mountain, swamp all have plains base underneath)
-    final tileset = terrainTilesetCache.getSeaBeachTileset();
-
-    if (tileset == null) {
-      final paint = Paint()..color = const Color(0xFF1e3a5f);
-      canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
+    if (landCorner.same) {
+      // Interior sea - no land neighbors, use sea base tile
+      final seaBaseTileId = tileset.lowerBaseTileId;
+      final tile = seaBaseTileId != null
+          ? tileset.findTileById(seaBaseTileId)
+          : tileset.findTile(nw: false, ne: false, sw: false, se: false);
+      if (tile != null) {
+        final srcRect = tile.boundingBox;
+        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+        canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
+        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+            cell.visibility == TileVisibility.fogged) {
+          canvas.drawRect(
+            dstRect,
+            Paint()..color = const Color.fromRGBO(0, 0, 0, 0.7),
+          );
+        }
+      }
       return;
     }
 
@@ -348,50 +410,131 @@ class CtRegionMapComponent extends PositionComponent {
     }
 
     final terrain = cell.terrainType;
-    final isFeature = terrain != null && _isFeatureTerrain(terrain);
 
-    // For features, draw plains underneath first
-    if (isFeature) {
-      _paintPlainsTileOrColor(canvas, cell);
+    // Handle invalid terrain (should not happen, but fallback)
+    if (terrain == null) {
+      _paintSolidColor(
+        canvas,
+        cell,
+        const Color(0xFF7cb342),
+      ); // Plains fallback
       return;
     }
 
-    // Plains cell - draw plains tile or solid color
-    _paintPlainsTileOrColor(canvas, cell);
+    // Features draw their land base (plains or desert) first, then overlay
+    if (_isFeatureTerrain(terrain)) {
+      _paintLandBaseTile(canvas, cell);
+      return;
+    }
+
+    // Land base (plains or desert) - use Wang tileset for transitions
+    _paintLandBaseTile(canvas, cell);
   }
 
-  void _paintPlainsTileOrColor(Canvas canvas, CellViewData cell) {
+  /// Paint a land base tile (plains or desert) with Wang transitions.
+  void _paintLandBaseTile(Canvas canvas, CellViewData cell) {
     final left = cell.x * cellSize;
     final top = cell.y * cellSize;
+    final terrain = cell.terrainType;
 
-    // Check if near sea (coastline)
-    final nearSeaCorner = _getCornerValues(cell.x, cell.y, (c) => c.isSea);
-    final isNearSea = !nearSeaCorner.same && nearSeaCorner.value;
+    // Determine if this cell is plains or desert
+    final isPlains =
+        terrain == TerrainType.plains ||
+        (terrain != null && _isFeatureTerrain(terrain));
+    final isDesert = terrain == TerrainType.desert;
 
-    // Try to use plains interior tile if available
-    if (isNearSea) {
-      final tile = terrainTilesetCache.getPlainsInteriorTile();
-      if (tile != null) {
-        final paint = Paint();
-        _applyVisibilityFilter(cell, paint);
-        final srcRect = Rect.fromLTWH(
-          0,
-          0,
-          tile.image.width.toDouble(),
-          tile.image.height.toDouble(),
+    // Check for plains↔desert border
+    final nearDesertCorner = _getCornerValues(
+      cell.x,
+      cell.y,
+      (c) => !c.isSea && c.terrainType == TerrainType.desert,
+    );
+    final nearPlainsCorner = _getCornerValues(
+      cell.x,
+      cell.y,
+      (c) =>
+          !c.isSea &&
+          (c.terrainType == TerrainType.plains ||
+              (c.terrainType != null && _isFeatureTerrain(c.terrainType!))),
+    );
+
+    // Use plains_desert tileset for plains↔desert transitions
+    if (isPlains && !nearDesertCorner.same && nearDesertCorner.value) {
+      final tileset = terrainTilesetCache.getPlainsDesertTileset();
+      if (tileset != null) {
+        _drawTile(
+          canvas,
+          tileset,
+          left,
+          top,
+          nw: nearDesertCorner.nw,
+          ne: nearDesertCorner.ne,
+          sw: nearDesertCorner.sw,
+          se: nearDesertCorner.se,
+          cell: cell,
         );
-        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-        canvas.drawImageRect(tile.image, srcRect, dstRect, paint);
         return;
       }
     }
 
-    // Solid color fallback
+    if (isDesert && !nearPlainsCorner.same && nearPlainsCorner.value) {
+      final tileset = terrainTilesetCache.getPlainsDesertTileset();
+      if (tileset != null) {
+        // For desert viewing from desert side, invert corners
+        _drawTile(
+          canvas,
+          tileset,
+          left,
+          top,
+          nw: !nearPlainsCorner.nw,
+          ne: !nearPlainsCorner.ne,
+          sw: !nearPlainsCorner.sw,
+          se: !nearPlainsCorner.se,
+          cell: cell,
+        );
+        return;
+      }
+    }
+
+    // Interior cell - use base tile from sea tileset (cleaner with transition_size=0.5)
+    // Plains uses sea_plains tileset, Desert uses sea_desert tileset
+    // Note: In sea tilesets, 'lower'=sea, 'upper'=land
+    final interiorTileset = terrain == TerrainType.desert
+        ? terrainTilesetCache.getSeaDesertTileset()
+        : terrainTilesetCache.getSeaPlainsTileset();
+    if (interiorTileset != null) {
+      // Use upperBaseTileId for both plains and desert (land is 'upper' in sea tilesets)
+      final tile = interiorTileset.upperBaseTileId != null
+          ? interiorTileset.findTileById(interiorTileset.upperBaseTileId!)
+          : null;
+      if (tile != null) {
+        final srcRect = tile.boundingBox;
+        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+        final paint = Paint();
+        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+            cell.visibility == TileVisibility.fogged) {
+          paint.colorFilter = const ColorFilter.mode(
+            Color.fromRGBO(0, 0, 0, 0.7),
+            BlendMode.darken,
+          );
+        }
+        canvas.drawImageRect(interiorTileset.image, srcRect, dstRect, paint);
+        return;
+      }
+    }
+
+    // Fallback - use solid color
+    final rgb = terrain == TerrainType.desert
+        ? (215, 204, 200) // Desert beige
+        : (124, 179, 66); // Plains green
+    _paintSolidColor(canvas, cell, Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3));
+  }
+
+  void _paintSolidColor(Canvas canvas, CellViewData cell, Color baseColor) {
+    final left = cell.x * cellSize;
+    final top = cell.y * cellSize;
     final paint = Paint();
-    const rgb = (124, 179, 66); // Grass green
-    Color baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
-    baseColor = _applyFog(cell, baseColor);
-    paint.color = baseColor;
+    paint.color = _applyFog(cell, baseColor);
     canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
   }
 
@@ -500,6 +643,36 @@ class CtRegionMapComponent extends PositionComponent {
     );
   }
 
+  _CornerValues _getCoastlineCornerValues(int x, int y) {
+    final nwCell = _getCellAt(x - 1, y - 1);
+    final nCell = _getCellAt(x, y - 1);
+    final neCell = _getCellAt(x + 1, y - 1);
+    final wCell = _getCellAt(x - 1, y);
+    final eCell = _getCellAt(x + 1, y);
+    final swCell = _getCellAt(x - 1, y + 1);
+    final sCell = _getCellAt(x, y + 1);
+    final seCell = _getCellAt(x + 1, y + 1);
+
+    bool isLand(CellViewData? c) => c != null && !c.isSea;
+
+    final hasNW = isLand(nwCell) || isLand(nCell) || isLand(wCell);
+    final hasNE = isLand(neCell) || isLand(nCell) || isLand(eCell);
+    final hasSW = isLand(swCell) || isLand(sCell) || isLand(wCell);
+    final hasSE = isLand(seCell) || isLand(sCell) || isLand(eCell);
+
+    final allSame = (hasNW == hasNE && hasNE == hasSW && hasSW == hasSE);
+    final same = allSame && !hasNW;
+
+    return _CornerValues(
+      nw: hasNW,
+      ne: hasNE,
+      sw: hasSW,
+      se: hasSE,
+      same: same,
+      value: hasNW,
+    );
+  }
+
   bool _drawTile(
     Canvas canvas,
     WangTileset tileset,
@@ -512,21 +685,24 @@ class CtRegionMapComponent extends PositionComponent {
     required CellViewData cell,
   }) {
     final tile = tileset.findTile(nw: nw, ne: ne, sw: sw, se: se);
-    if (tile == null) return false;
+    if (tile == null) {
+      _log.w(
+        'No tile found in ${tileset.name} for corners: NW=$nw, NE=$ne, SW=$sw, SE=$se',
+      );
+      return false;
+    }
 
     final srcRect = tile.boundingBox;
     final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-    final paint = Paint();
+    canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         cell.visibility == TileVisibility.fogged) {
-      paint.colorFilter = const ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, 0.7),
-        BlendMode.darken,
+      canvas.drawRect(
+        dstRect,
+        Paint()..color = const Color.fromRGBO(0, 0, 0, 0.7),
       );
     }
-
-    canvas.drawImageRect(tileset.image, srcRect, dstRect, paint);
     return true;
   }
 
