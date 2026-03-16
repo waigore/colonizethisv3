@@ -31,6 +31,18 @@ enum CtMapVisibilityMode {
   playerConstrained,
 }
 
+/// Base layer display mode: which tile letters are drawn. SPEC/ui/map-widget.md § Base layer display mode.
+enum BaseLayerDisplayMode {
+  /// Terrain only; no resource or improvement/road letters.
+  terrainOnly,
+
+  /// Terrain + resource letters (g, t, i, …).
+  terrainAndResources,
+
+  /// Terrain + resource letters + improvement/road labels (I0, R0, …).
+  terrainResourcesImprovements,
+}
+
 /// Flame-based region map component. Renders one RegionMapViewData and exposes
 /// hover/selection state via callbacks. SPEC/ui/map-widget.md.
 class CtRegionMapComponent extends PositionComponent {
@@ -39,6 +51,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.cellSize,
     required this.showPoliticalOverlay,
     required this.visibilityMode,
+    this.baseLayerDisplayMode = BaseLayerDisplayMode.terrainResourcesImprovements,
     this.onProvinceSelected,
     this.onProvinceHovered,
     this.onTileHovered,
@@ -50,6 +63,7 @@ class CtRegionMapComponent extends PositionComponent {
   double cellSize;
   bool showPoliticalOverlay;
   CtMapVisibilityMode visibilityMode;
+  BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
@@ -520,6 +534,10 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   void _paintLetters(Canvas canvas) {
+    final showResources = baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
+        baseLayerDisplayMode == BaseLayerDisplayMode.terrainResourcesImprovements;
+    final showImprovements = baseLayerDisplayMode == BaseLayerDisplayMode.terrainResourcesImprovements;
+
     final double fontSize = math.max(10.0, cellSize * 0.35);
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     for (final cell in region.cells) {
@@ -529,13 +547,18 @@ class CtRegionMapComponent extends PositionComponent {
         continue;
       }
       final parts = <String>[];
-      final letter = resourceIdToLegendLetter(cell.resourceId);
-      if (letter != null) parts.add(letter);
-      final imp = cell.improvementLevel ?? 0;
-      parts.add('I$imp');
-      final road = cell.roadLevel ?? 0;
-      parts.add('R$road');
+      if (showResources) {
+        final letter = resourceIdToLegendLetter(cell.resourceId);
+        if (letter != null) parts.add(letter);
+      }
+      if (showImprovements) {
+        final imp = cell.improvementLevel ?? 0;
+        parts.add('I$imp');
+        final road = cell.roadLevel ?? 0;
+        parts.add('R$road');
+      }
       final text = parts.join(' ');
+      if (text.isEmpty) continue;
       final cx = cell.x * cellSize + cellSize / 2;
       final cy = cell.y * cellSize + cellSize / 2;
       textPainter.text = TextSpan(
