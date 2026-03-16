@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
 import 'economy_debt_rules.dart';
+import 'economy_tech_effects.dart';
 import 'research_rules.dart';
 
 /// Research phase resolution. SPEC/program/research-resolution.md.
@@ -135,9 +136,8 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
-    // SPEC/game/tech-tree.md: 4 slots with University tech.
     final nextResearchSlots =
-        (nextUnlockedForLevel['university'] == true) ? 4 : null;
+        researchSlotsForUnlockedTechs(player, nextUnlockedForLevel);
 
     updatedPlayers.add(
       player.copyWith(
@@ -145,7 +145,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
         techUnlocked: nextUnlocked,
         researchProgressByTechId: nextProgress,
         militaryLevel: militaryLevel,
-        researchSlots: nextResearchSlots ?? player.researchSlots,
+        researchSlots: nextResearchSlots,
       ),
     );
   }

@@ -16,3 +16,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
+
+[project.scripts]
+project-stats = "project_stats:main"

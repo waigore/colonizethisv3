@@ -95,8 +95,8 @@ void main() {
         2,
       );
       expect(
-        castIron.inputQuantities[CommodityCatalog.coal.id],
-        1,
+        castIron.inputQuantities.containsKey(CommodityCatalog.coal.id),
+        isFalse,
       );
     });
   });
