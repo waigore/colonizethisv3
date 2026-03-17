@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -92,6 +93,51 @@ void main() {
   }
 
   group('CtRegionMap (Flame map widget)', () {
+    testWidgets(
+      'required Wang tileset asset files are present in test asset bundle',
+      (WidgetTester tester) async {
+        // Pump a minimal widget tree so the test binding and asset bundle are initialized.
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const pngPaths = [
+          'assets/images/terrain/tilesets/tileset_sea_plains.png',
+          'assets/images/terrain/tilesets/tileset_sea_desert.png',
+          'assets/images/terrain/tilesets/tileset_plains_desert.png',
+        ];
+        const jsonPaths = [
+          'assets/images/terrain/tilesets/tileset_sea_plains.json',
+          'assets/images/terrain/tilesets/tileset_sea_desert.json',
+          'assets/images/terrain/tilesets/tileset_plains_desert.json',
+        ];
+
+        for (final path in [...pngPaths, ...jsonPaths]) {
+          final data = await rootBundle.load(path);
+          expect(data.lengthInBytes, greaterThan(0), reason: 'Asset $path is empty');
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'loads required Wang tilesets before rendering map',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        expect(terrainTilesetCache.isLoaded, isTrue);
+        expect(terrainTilesetCache.getSeaPlainsTileset(), isNotNull);
+        expect(terrainTilesetCache.getSeaDesertTileset(), isNotNull);
+        expect(terrainTilesetCache.getPlainsDesertTileset(), isNotNull);
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
     testWidgets(
       'builds without throwing for old world region',
       (WidgetTester tester) async {
