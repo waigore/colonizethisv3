@@ -10,6 +10,11 @@ import 'terrain_tileset.dart';
 
 final _log = Logger();
 
+/// Fog strength for fogged tiles: lerp toward black (0 = no fog, 1 = full black).
+const double _fogLerp = 0.4;
+/// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
+const double _fogOverlayOpacity = 0.4;
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -287,7 +292,7 @@ class CtRegionMapComponent extends PositionComponent {
           case TileVisibility.visible:
             break;
           case TileVisibility.fogged:
-            finalColor = Color.lerp(baseColor, Colors.black, 0.7)!;
+            finalColor = Color.lerp(baseColor, Colors.black, _fogLerp)!;
             break;
           case TileVisibility.unrevealed:
             finalColor = Colors.black;
@@ -355,7 +360,7 @@ class CtRegionMapComponent extends PositionComponent {
       final foggedColor =
           visibilityMode == CtMapVisibilityMode.playerConstrained &&
               cell.visibility == TileVisibility.fogged
-          ? Color.lerp(baseColor, Colors.black, 0.7)!
+          ? Color.lerp(baseColor, Colors.black, _fogLerp)!
           : baseColor;
       canvas.drawRect(
         Rect.fromLTWH(left, top, cellSize, cellSize),
@@ -378,7 +383,7 @@ class CtRegionMapComponent extends PositionComponent {
             cell.visibility == TileVisibility.fogged) {
           canvas.drawRect(
             dstRect,
-            Paint()..color = const Color.fromRGBO(0, 0, 0, 0.7),
+            Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
           );
         }
       }
@@ -513,8 +518,8 @@ class CtRegionMapComponent extends PositionComponent {
         final paint = Paint();
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
             cell.visibility == TileVisibility.fogged) {
-          paint.colorFilter = const ColorFilter.mode(
-            Color.fromRGBO(0, 0, 0, 0.7),
+          paint.colorFilter = ColorFilter.mode(
+            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
             BlendMode.darken,
           );
         }
@@ -541,8 +546,8 @@ class CtRegionMapComponent extends PositionComponent {
   void _applyVisibilityFilter(CellViewData cell, Paint paint) {
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         cell.visibility == TileVisibility.fogged) {
-      paint.colorFilter = const ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, 0.7),
+      paint.colorFilter = ColorFilter.mode(
+        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
         BlendMode.darken,
       );
     }
@@ -551,7 +556,7 @@ class CtRegionMapComponent extends PositionComponent {
   Color _applyFog(CellViewData cell, Color baseColor) {
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         cell.visibility == TileVisibility.fogged) {
-      return Color.lerp(baseColor, Colors.black, 0.7)!;
+      return Color.lerp(baseColor, Colors.black, _fogLerp)!;
     }
     return baseColor;
   }
@@ -700,7 +705,7 @@ class CtRegionMapComponent extends PositionComponent {
         cell.visibility == TileVisibility.fogged) {
       canvas.drawRect(
         dstRect,
-        Paint()..color = const Color.fromRGBO(0, 0, 0, 0.7),
+        Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
       );
     }
     return true;

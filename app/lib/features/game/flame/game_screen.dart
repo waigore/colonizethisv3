@@ -24,6 +24,7 @@ import '../widgets/production_screen.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 import '../widgets/technology_screen.dart';
 import '../../../widgets/ct_choice_chip.dart';
+import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_screen_shell.dart';
@@ -422,9 +423,42 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     ref.read(gameServiceProvider).saveGame(newGame);
   }
 
-  void _onNextTurn() {
+  Future<void> _onNextTurn() async {
     final game = ref.read(currentGameProvider);
     if (game == null) return;
+
+    final currentTurn = game.worldState.turnState.turnNumber;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => CtDialogShell(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('End turn?', style: Theme.of(ctx).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text('Turn $currentTurn will end. Continue?'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('No'),
+                ),
+                const SizedBox(width: 8),
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Yes'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+
     final service = ref.read(gameServiceProvider);
     final orders = ref.read(currentOrdersProvider);
     final newGame = service.nextTurn(game, orders: orders);

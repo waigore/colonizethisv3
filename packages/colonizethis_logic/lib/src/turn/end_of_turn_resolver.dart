@@ -1,7 +1,8 @@
-// End-of-turn phase: victory check, era dialogue, Spy 5-turn fog decay, Explorer/Spy fog decay.
-// SPEC/program/turn-resolution-phase-details.md § End-of-turn.
+// End-of-turn phase: victory check, era dialogue, Spy 5-turn fog decay, Explorer/Spy fog decay,
+// coastal sea zone full visibility. SPEC/program/turn-resolution-phase-details.md § End-of-turn.
 // Called from turn_resolver.resolveTurnForGame.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
@@ -10,8 +11,14 @@ import '../world/fog_resolution.dart';
 
 final Logger _log = Logger();
 
-/// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay, advance turn.
-Game runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
+/// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
+/// coastal sea zone full visibility, advance turn.
+Game runEndOfTurnPhase(
+  Game game, {
+  required MapTopology topology,
+  Map<String, MapTopology>? topologyByRegion,
+  void Function(DialogueEvent)? onDialogue,
+}) {
   if (game.victory != null) return game;
 
   final winnerId = findMilitaryVictoryWinner(game);
@@ -36,7 +43,13 @@ Game runEndOfTurnPhase(Game game, {void Function(DialogueEvent)? onDialogue}) {
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
-  final nextVisibility = applyFogDecay(stateForFog);
+  var nextVisibility = applyFogDecay(stateForFog);
+  nextVisibility = applyCoastalSeaZoneFullVisibility(
+    game,
+    nextVisibility,
+    topology,
+    topologyByRegion: topologyByRegion,
+  );
 
   return game.copyWith(
     worldState: game.worldState.copyWith(

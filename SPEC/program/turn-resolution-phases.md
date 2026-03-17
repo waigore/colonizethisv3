@@ -19,7 +19,7 @@ TurnResolver runs phases in **fixed order**:
 9. **Naval Interception & Naval Combat** — Patrol/blockade/beachhead interceptions; sea battles; fleet updates. [naval-movement-resolution.md](naval-movement-resolution.md), [naval-combat-resolution.md](naval-combat-resolution.md)
 10. **Combat** — Land battles; casualties; province flips.
 11. **Build / work** — BuildUnitOrder; WorkOrder (explore, prospect, improvements, roads, ports, forts, rails). [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md), [development-resolution.md](development-resolution.md)
-12. **End-of-turn** — Victory check; era-change dialogue; fog decay (Spy 5-turn + Explorer/Spy); advance turn number. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn.
+12. **End-of-turn** — Victory check; era-change dialogue; fog decay (Spy 5-turn + Explorer/Spy); coastal sea zone full visibility; advance turn number. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn.
 
 ---
 
