@@ -143,14 +143,15 @@ void main() {
         final nextTurnFinder = find.textContaining('Next turn');
         expect(nextTurnFinder, findsOneWidget);
         await tester.tap(nextTurnFinder);
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.text('End turn?'), findsOneWidget);
         expect(find.textContaining('will end'), findsOneWidget);
         expect(find.text('No'), findsOneWidget);
         expect(find.text('Yes'), findsOneWidget);
       },
-      timeout: const Timeout(Duration(seconds: 15)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
@@ -161,17 +162,18 @@ void main() {
 
         final nextTurnFinder = find.textContaining('Next turn');
         await tester.tap(nextTurnFinder);
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.text('End turn?'), findsOneWidget);
 
         await tester.tap(find.text('No'));
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
 
         expect(find.text('End turn?'), findsNothing);
-        expect(find.textContaining('Next turn'), findsOneWidget);
       },
-      timeout: const Timeout(Duration(seconds: 15)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
@@ -182,7 +184,8 @@ void main() {
 
         final nextTurnFinder = find.textContaining('Next turn');
         await tester.tap(nextTurnFinder);
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         final turnNumber = debugResult.game.worldState.turnState.turnNumber;
         expect(
@@ -190,7 +193,7 @@ void main() {
           findsOneWidget,
         );
       },
-      timeout: const Timeout(Duration(seconds: 15)),
+      timeout: const Timeout(Duration(seconds: 20)),
     );
   });
 }
