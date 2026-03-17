@@ -18,4 +18,20 @@ class WarpLink {
 
   /// Prefixed sea zone key for the other side.
   String get otherPrefixedKey => '$otherRegionId|$otherSeaZoneId';
+
+  /// Serializes to JSON.
+  Map<String, dynamic> toJson() => {
+        'regionId': regionId,
+        'seaZoneId': seaZoneId,
+        'otherRegionId': otherRegionId,
+        'otherSeaZoneId': otherSeaZoneId,
+      };
+
+  /// Deserializes from JSON.
+  factory WarpLink.fromJson(Map<String, dynamic> json) => WarpLink(
+        regionId: json['regionId'] as String,
+        seaZoneId: json['seaZoneId'] as String,
+        otherRegionId: json['otherRegionId'] as String,
+        otherSeaZoneId: json['otherSeaZoneId'] as String,
+      );
 }

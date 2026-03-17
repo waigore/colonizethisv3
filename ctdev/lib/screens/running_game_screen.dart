@@ -68,6 +68,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       seed: widget.baseSeed,
       configSummary: widget.initResult.mapViewData.configSummary,
       greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
+      warpLinks: widget.initResult.warpLinks,
     );
     final tabCount = 3 + _controller.game.players.length;
     _tabController = TabController(length: tabCount, vsync: this);
@@ -81,6 +82,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
         seed: _viewData.seed,
         configSummary: _viewData.configSummary,
         greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
+        warpLinks: widget.initResult.warpLinks,
       );
 
   @override

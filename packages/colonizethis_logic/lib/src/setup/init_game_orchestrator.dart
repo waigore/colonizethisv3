@@ -177,6 +177,7 @@ InitGameResult runInitGame({
     configSummary:
         'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
     greatPowerColorOverride: effectiveGpColorOverride,
+    warpLinks: warpLinks,
   );
 
   final mapPngBytes = options.renderPng

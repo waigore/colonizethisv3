@@ -11,10 +11,12 @@ class _GameMapCache {
     required this.combinedTopology,
     required this.tileMapByRegion,
     required this.topologyByRegion,
+    this.warpLinks,
   });
   final MapTopology combinedTopology;
   final Map<String, TileMapResult> tileMapByRegion;
   final Map<String, MapTopology> topologyByRegion;
+  final List<WarpLink>? warpLinks;
 }
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
@@ -42,6 +44,7 @@ class GameService {
         combinedTopology: mapData.combinedTopology,
         tileMapByRegion: mapData.tileMapByRegion,
         topologyByRegion: mapData.topologyByRegion,
+        warpLinks: mapData.warpLinks,
       );
     }
     return game;
@@ -52,6 +55,7 @@ class GameService {
     MapTopology combinedTopology,
     Map<String, TileMapResult> tileMapByRegion,
     Map<String, MapTopology> topologyByRegion,
+    List<WarpLink>? warpLinks,
   })?
   getMapData(String gameId) {
     final cached = _mapCache[gameId];
@@ -60,6 +64,7 @@ class GameService {
         combinedTopology: cached.combinedTopology,
         tileMapByRegion: cached.tileMapByRegion,
         topologyByRegion: cached.topologyByRegion,
+        warpLinks: cached.warpLinks,
       );
     }
     final mapData = _adapter.loadMapData(_box, gameId);
@@ -68,11 +73,13 @@ class GameService {
       combinedTopology: mapData.combinedTopology,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
+      warpLinks: mapData.warpLinks,
     );
     return (
       combinedTopology: mapData.combinedTopology,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
+      warpLinks: mapData.warpLinks,
     );
   }
 
@@ -208,6 +215,17 @@ class GameService {
       resourceRules: ResourceRules.defaultRules,
     );
 
+    // Generate warp zones between Old World and New World.
+    final warpLinks = generateWarpZones(
+      tileMapOldWorld: tileMapOW,
+      topologyOldWorld: topoOW,
+      tileMapNewWorld: tileMapNW,
+      topologyNewWorld: topoNW,
+      regionIdOld: 'oldWorld',
+      regionIdNew: 'newWorld',
+      seed: cfg.seed,
+    );
+
     final result = createGameFromGeneratedMaps(
       config: cfg,
       tileMapOldWorld: tileMapOW,
@@ -215,12 +233,14 @@ class GameService {
       tileMapNewWorld: tileMapNW,
       topologyNewWorld: topoNW,
       gameId: gameId,
+      warpLinks: warpLinks,
     );
 
     _mapCache[gameId] = _GameMapCache(
       combinedTopology: result.combinedTopology,
       tileMapByRegion: result.tileMapByRegion,
       topologyByRegion: result.topologyByRegion,
+      warpLinks: result.warpLinks,
     );
     _adapter.saveMapData(
       _box,
@@ -228,6 +248,7 @@ class GameService {
       tileMapByRegion: result.tileMapByRegion,
       topologyByRegion: result.topologyByRegion,
       combinedTopology: result.combinedTopology,
+      warpLinks: result.warpLinks,
     );
     saveGame(result.game);
     return result.game;

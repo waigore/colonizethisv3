@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
+import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
 
 final _log = Logger();
@@ -110,12 +111,13 @@ class CtRegionMapComponent extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await terrainTilesetCache.load();
+    await Future.wait([terrainTilesetCache.load(), resourceIconCache.load()]);
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
-      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}',
+      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
+      'ResourceIconCache loaded: ${resourceIconCache.isLoaded}',
     );
     size = Vector2(region.width * cellSize, region.height * cellSize);
   }
@@ -200,7 +202,7 @@ class CtRegionMapComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     _paintTiles(canvas);
-    _paintLetters(canvas);
+    _paintOverlay(canvas);
     _paintProvinceBorders(canvas);
     if (_hoveredProvinceId != null) {
       _paintHoveredProvinceGlow(canvas);
@@ -208,6 +210,7 @@ class CtRegionMapComponent extends PositionComponent {
     if (showPoliticalOverlay) _paintFactionBorders(canvas);
     _paintCapitals(canvas);
     _paintPorts(canvas);
+    _paintWarpZones(canvas);
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
     }
@@ -638,7 +641,7 @@ class CtRegionMapComponent extends PositionComponent {
     return region.cellAt(x, y);
   }
 
-  void _paintLetters(Canvas canvas) {
+  void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
         baseLayerDisplayMode ==
@@ -647,42 +650,68 @@ class CtRegionMapComponent extends PositionComponent {
         baseLayerDisplayMode ==
         BaseLayerDisplayMode.terrainResourcesImprovements;
 
-    final double fontSize = math.max(10.0, cellSize * 0.35);
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
           cell.visibility == TileVisibility.unrevealed) {
         continue;
       }
-      final parts = <String>[];
-      if (showResources) {
-        final letter = resourceIdToLegendLetter(cell.resourceId);
-        if (letter != null) parts.add(letter);
-      }
-      if (showImprovements) {
-        final imp = cell.improvementLevel ?? 0;
-        parts.add('I$imp');
-        final road = cell.roadLevel ?? 0;
-        parts.add('R$road');
-      }
-      final text = parts.join(' ');
-      if (text.isEmpty) continue;
+
       final cx = cell.x * cellSize + cellSize / 2;
       final cy = cell.y * cellSize + cellSize / 2;
-      textPainter.text = TextSpan(
-        text: text,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
-      );
+
+      // Draw resource icon if present and mode includes resources.
+      if (showResources && cell.resourceId != null) {
+        final icon = resourceIconCache.getIcon(cell.resourceId);
+        if (icon != null) {
+          final iconSize = ResourceIconCache.iconSize;
+          final scale = cellSize / iconSize;
+          final scaledSize = iconSize * scale;
+          final dstRect = Rect.fromLTWH(
+            cx - scaledSize / 2,
+            cy - scaledSize / 4,
+            scaledSize,
+            scaledSize,
+          );
+          final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
+          final paint = Paint();
+          if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+              cell.visibility == TileVisibility.fogged) {
+            paint.colorFilter = ColorFilter.mode(
+              const Color(0xFFFFFFFF).withValues(alpha: 0.6),
+              BlendMode.modulate,
+            );
+          }
+          canvas.drawImageRect(icon, srcRect, dstRect, paint);
+        }
+      }
+
+      // Draw improvement/road labels below the icon if mode includes improvements.
+      if (showImprovements) {
+        final imp = cell.improvementLevel ?? 0;
+        final road = cell.roadLevel ?? 0;
+        if (imp > 0 || road > 0) {
+          final parts = <String>[];
+          parts.add('I$imp');
+          parts.add('R$road');
+          final text = parts.join(' ');
+          final fontSize = math.max(8.0, cellSize * 0.25);
+          final textPainter = TextPainter(textDirection: TextDirection.ltr);
+          textPainter.text = TextSpan(
+            text: text,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w600,
+            ),
+          );
+          textPainter.layout();
+          textPainter.paint(
+            canvas,
+            Offset(cx - textPainter.width / 2, cy + cellSize / 4),
+          );
+        }
+      }
     }
   }
 
@@ -842,6 +871,109 @@ class CtRegionMapComponent extends PositionComponent {
       final rect = Rect.fromLTWH(cx - half, cy - half, half * 2, half * 2);
       canvas.drawRect(rect, fill);
       canvas.drawRect(rect, stroke);
+    }
+  }
+
+  void _paintWarpZones(Canvas canvas) {
+    // Collect sea zone ids that are warp zones.
+    final warpSeaZoneIds = region.warpMarkers.map((m) => m.seaZoneId).toSet();
+    if (warpSeaZoneIds.isEmpty) return;
+
+    // Build a set of all tile positions belonging to warp sea zones.
+    final warpTiles = <(int x, int y)>{};
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (warpSeaZoneIds.contains(cell.regionCellId)) {
+          warpTiles.add((x, y));
+        }
+      }
+    }
+
+    // Draw glowing yellow border around warp sea zone tiles.
+    // Outer glow (wider, more transparent).
+    final glowOuter = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.3); // gold glow
+    // Inner bright border.
+    final glowInner = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFFFFEA00); // bright yellow
+
+    for (final (x, y) in warpTiles) {
+      final cell = region.cellAt(x, y);
+      if (!warpSeaZoneIds.contains(cell.regionCellId)) continue;
+
+      // Check right neighbor.
+      if (x + 1 < region.width) {
+        final right = region.cellAt(x + 1, y);
+        if (!warpSeaZoneIds.contains(right.regionCellId)) {
+          final xEdge = (x + 1) * cellSize;
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowInner,
+          );
+        }
+      }
+      // Check bottom neighbor.
+      if (y + 1 < region.height) {
+        final bottom = region.cellAt(x, y + 1);
+        if (!warpSeaZoneIds.contains(bottom.regionCellId)) {
+          final yEdge = (y + 1) * cellSize;
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowInner,
+          );
+        }
+      }
+      // Check left neighbor (for left edge of warp zone).
+      if (x > 0) {
+        final left = region.cellAt(x - 1, y);
+        if (!warpSeaZoneIds.contains(left.regionCellId)) {
+          final xEdge = x * cellSize;
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowInner,
+          );
+        }
+      }
+      // Check top neighbor (for top edge of warp zone).
+      if (y > 0) {
+        final top = region.cellAt(x, y - 1);
+        if (!warpSeaZoneIds.contains(top.regionCellId)) {
+          final yEdge = y * cellSize;
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowInner,
+          );
+        }
+      }
     }
   }
 }

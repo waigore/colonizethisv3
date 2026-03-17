@@ -28,15 +28,75 @@ Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData`
 
 ## Base layer display mode
 
-The base (tile) layer can show terrain only, terrain plus resource letters, or terrain plus resource and improvement/road letters. The widget accepts an optional **base layer display mode**; when provided, the map draws the letters overlay according to that mode. When not provided (e.g. Widgetbook, debug stories), the widget uses **full** mode so all letters are shown for backward compatibility.
+The base (tile) layer can show terrain only, terrain plus resource icons, or terrain plus resource icons and improvement/road labels. The widget accepts an optional **base layer display mode**; when provided, the map draws the overlay according to that mode. When not provided (e.g. Widgetbook, debug stories), the widget uses **full** mode so all overlays are shown for backward compatibility.
 
-| Mode | Terrain | Resource letter (g, t, i, …) | Improvement/road (I0, R0, …) |
-|------|---------|-------------------------------|-------------------------------|
+| Mode | Terrain | Resource icon | Improvement/road (I0, R0, …) |
+|------|---------|---------------|-------------------------------|
 | **terrainOnly** | Yes | No | No |
-| **terrainAndResources** | Yes | Yes | No |
-| **terrainResourcesImprovements** | Yes | Yes | Yes |
+| **terrainAndResources** | Yes | Yes (icon) | No |
+| **terrainResourcesImprovements** | Yes | Yes (icon) | Yes |
 
-Implementation: a single letters pass draws per-cell text; the mode controls which parts of that text are included. Capitals and ports are always drawn regardless of mode.
+Implementation: a single overlay pass draws per-cell icons and text; the mode controls which elements are included. Capitals, ports, and warp zone indicators are always drawn regardless of mode.
+
+---
+
+## Resource Icons
+
+Resources are displayed as 32×32 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+
+### Asset Files
+
+Resource icons are stored in `app/assets/images/` with naming convention `ui_icon_com_<resource_id>.png`:
+
+| Resource ID | Icon File | Resource ID | Icon File |
+|-------------|-----------|-------------|-----------|
+| grain | ui_icon_com_grain.png | meat | ui_icon_com_meat.png |
+| timber | ui_icon_com_timber.png | iron | ui_icon_com_iron.png |
+| wool | ui_icon_com_wool.png | cotton | ui_icon_com_cotton.png |
+| coal | ui_icon_com_coal.png | sugar_cane | ui_icon_com_sugar_cane.png |
+| tobacco | ui_icon_com_tobacco.png | furs | ui_icon_com_furs.png |
+| copper | ui_icon_com_copper.png | tin | ui_icon_com_tin.png |
+| horses | ui_icon_com_horses.png | lumber | ui_icon_com_lumber.png |
+| cast_iron | ui_icon_com_cast_iron.png | fabric | ui_icon_com_fabric.png |
+| refined_sugar | ui_icon_com_refined_sugar.png | cigars | ui_icon_com_cigars.png |
+| fur_hats | ui_icon_com_fur_hats.png | steel | ui_icon_com_steel.png |
+| paper | ui_icon_com_paper.png | bronze | ui_icon_com_bronze.png |
+| gold | ui_icon_com_gold.png | silver | ui_icon_com_silver.png |
+| gems | ui_icon_com_gems.png | diamonds | ui_icon_com_diamonds.png |
+| spices | ui_icon_com_spices.png | | |
+
+All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style matching `ui_main_menu_button.png`.
+
+### Rendering
+
+- **Position:** Icon is centered horizontally within the tile cell; vertically positioned in the lower half of the cell to avoid overlapping terrain features.
+- **Size:** Icons are scaled to fit within the cell (default 32×32 icons on 32px cells render at native size; zoom scales proportionally).
+- **Caching:** The component loads all resource icons at startup via Flame's `Images` cache and reuses them across tiles.
+- **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
+
+---
+
+## Warp Zone Indicators
+
+Warp zones are sea zones that link to sea zones in other regions (Old World ↔ New World). The map widget renders a **glowing yellow border** around each warp sea zone to make cross-region connections visible.
+
+### Data Source
+
+Warp zone indicators are provided via `RegionMapViewData.warpMarkers` (list of `WarpMarkerView`). Each marker contains:
+- `x`, `y`: Tile coordinates (representative tile of the warp sea zone)
+- `seaZoneId`: The sea zone identifier
+- `otherRegionId`: The connected region ID
+- `otherSeaZoneId`: The connected sea zone ID on the other region
+
+### Rendering
+
+- **Style:** Glowing yellow border drawn around the perimeter of all tiles belonging to a warp sea zone.
+- **Glow Effect:** Two-layer border:
+  - Outer layer: 3px wide, semi-transparent gold (`0xFFFFD700` at 30% alpha)
+  - Inner layer: 1.5px wide, bright yellow (`0xFFFFEA00`)
+- **Border Logic:** Edges are drawn where a warp sea zone tile is adjacent to a non-warp tile (different sea zone or land province), similar to province border rendering.
+- **Layer:** Rendered after the base terrain and overlays (after ports, same layer as capitals).
+- **Visibility:** Always visible regardless of `baseLayerDisplayMode` (same as capitals and ports).
 
 The **in-game shell** (Empire overview) may overlay a cycle button that toggles this mode; see [empire-overview.md](empire-overview.md).
 
@@ -107,12 +167,12 @@ When the widget is in **full visibility mode**, it renders the base layer exactl
 
 When the widget is in **player-constrained visibility mode**, it maps `CellViewData.visibility` to rendering and interaction as follows:
 
-- **`visible`:** The tile is rendered unmodified (full terrain color, resource/improvement/road letters, and borders).
+- **`visible`:** The tile is rendered unmodified (full terrain color, resource icons, improvement/road labels, and borders).
 - **`fogged`:** The tile is rendered with the same content as `visible` but visually muted:
   - The base terrain color is blended towards a **darker gray or black** with a consistent, moderate darkening (e.g. ~40% toward black / 40% overlay) so fogged tiles are noticeably darker than fully visible tiles but remain readable.
-  - Resource/improvement/road letters remain readable but appear on the muted background.
+  - Resource icons and improvement/road labels remain readable but appear on the muted background.
 - **`unrevealed`:** The tile is rendered as a solid black square:
-  - No terrain color or letters are shown.
+  - No terrain color or icons/labels are shown.
   - Province and faction borders for unrevealed tiles are not emphasized; border behavior at the edge between revealed/fogged and unrevealed tiles is implementation-defined and may be omitted for unrevealed areas.
 
 Hover, selection, and overlay behavior:
@@ -225,13 +285,16 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **full**, **when** the widget renders tiles, **then** tiles whose visibility is `visible`, `fogged`, or `unrevealed` are all drawn as fully visible (no gray or black masking is applied based on visibility).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `visible`, **then** the tile is drawn identically to the current base behavior (full terrain color and overlays).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `fogged`, **then** the tile is drawn with the same terrain and overlays as `visible` tiles but with a consistent gray/opacity effect applied so the tile appears muted.
-- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource/improvement/road letters are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
+- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource icons/improvement/road labels are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
 
 - **Given** the map widget is in work target selection mode (non-null **validTileKeys** and **onTileSelected** provided), **when** the widget renders a tile whose key is in **validTileKeys** and in the current region, **then** that tile is drawn with a subtle glow (overlay or outline). When the user taps a tile in **validTileKeys**, **then** the widget invokes **onTileSelected** with that tile key; when the user taps a tile not in **validTileKeys** or empty area, **then** the widget does not invoke **onTileSelected**.
 - **Given** the map widget is in work target selection mode with **validTileKeys** provided but empty, **when** the user taps any tile, **then** the widget invokes **onWorkTargetSelectionCancelled** to allow the user to back out of selection mode.
-- **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports) is drawn and no resource or improvement/road letters are drawn on tiles.
-- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource letters (g, t, i, …) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
-- **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource letters, and improvement/road labels are all drawn per cell where present.
+- **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports) is drawn and no resource icons or improvement/road labels are drawn on tiles.
+- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
+- **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource icons, and improvement/road labels are all drawn per cell where present.
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/images/ui_icon_com_<resource_id>.png` and rendered centered within the tile cell.
+- **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
+- **Given** a map widget with `RegionMapViewData.warpMarkers` populated, **when** the user hovers over a warp zone sea zone tile, **then** the province border glow is shown (same as any other sea zone).
 
 ---
 

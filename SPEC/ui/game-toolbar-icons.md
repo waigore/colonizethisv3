@@ -292,6 +292,8 @@ To regenerate an icon:
 
 ## Asset manifest
 
+### Toolbar Icons
+
 | Asset ID | Filename | Status | Generated |
 |----------|----------|--------|-----------|
 | production | ui_icon_production.png | ✅ Generated | 2026-03-15 |
@@ -303,4 +305,63 @@ To regenerate an icon:
 | layer_toggle | ui_icon_layer_toggle.png | ✅ Generated | 2026-03-16 |
 | home_capital | ui_icon_home_capital.png | ✅ Generated | 2026-03-16 |
 
-All icons verified: 32×32 PNG with RGBA transparency.
+### Resource & Worker Icons (Production Panel)
+
+Per [production-panel.md](production-panel.md) § Resource and Worker Icons.
+
+**Food:**
+| Commodity ID | Filename | Description |
+|--------------|----------|-------------|
+| grain | ui_icon_com_grain.png | Wheat sheaf or grain bundle |
+| meat | ui_icon_com_meat.png | Meat cut or ham |
+
+**Raw Materials:**
+| Commodity ID | Filename | Description |
+|--------------|----------|-------------|
+| timber | ui_icon_com_timber.png | Wooden log |
+| iron | ui_icon_com_iron.png | Iron ore chunk or ingot |
+| wool | ui_icon_com_wool.png | Wool bundle or fleece |
+| cotton | ui_icon_com_cotton.png | Cotton boll |
+| coal | ui_icon_com_coal.png | Coal lump |
+| sugarCane | ui_icon_com_sugar_cane.png | Sugar cane stalk |
+| tobacco | ui_icon_com_tobacco.png | Tobacco leaf |
+| furs | ui_icon_com_furs.png | Fur pelt |
+| copper | ui_icon_com_copper.png | Copper ingot |
+| tin | ui_icon_com_tin.png | Tin ingot |
+| horses | ui_icon_com_horses.png | Horse head |
+
+**Manufactured:**
+| Commodity ID | Filename | Description |
+|--------------|----------|-------------|
+| lumber | ui_icon_com_lumber.png | Stack of lumber planks |
+| castIron | ui_icon_com_cast_iron.png | Cast iron product |
+| fabric | ui_icon_com_fabric.png | Fabric bolt or cloth roll |
+| refinedSugar | ui_icon_com_refined_sugar.png | Sugar loaf |
+| cigars | ui_icon_com_cigars.png | Cigar bundle |
+| furHats | ui_icon_com_fur_hats.png | Fur hat |
+| steel | ui_icon_com_steel.png | Steel ingot |
+| paper | ui_icon_com_paper.png | Paper scroll or sheet |
+| bronze | ui_icon_com_bronze.png | Bronze ingot |
+
+**Riches:**
+| Commodity ID | Filename | Description |
+|--------------|----------|-------------|
+| gold | ui_icon_com_gold.png | Gold nugget |
+| silver | ui_icon_com_silver.png | Silver ingot |
+| gems | ui_icon_com_gems.png | Colorful gem stones |
+| diamonds | ui_icon_com_diamonds.png | Brilliant diamond |
+
+**Advanced:**
+| Commodity ID | Filename | Description |
+|--------------|----------|-------------|
+| spices | ui_icon_com_spices.png | Spice bags pouch |
+
+**Workers:**
+| Worker Type | Filename | Description |
+|-------------|----------|-------------|
+| peasant | ui_icon_worker_peasant.png | Peasant worker |
+| apprentice | ui_icon_worker_apprentice.png | Apprentice worker |
+| journeyman | ui_icon_worker_journeyman.png | Journeyman worker |
+| master | ui_icon_worker_master.png | Master craftsman |
+
+All icons verified: 32×32 PNG with RGBA transparency. Generated 2026-03-17.

@@ -8,6 +8,7 @@ final Logger _log = Logger();
 const String _suffixTileMapByRegion = '_tileMapByRegion';
 const String _suffixTopologyByRegion = '_topologyByRegion';
 const String _suffixCombinedTopology = '_combinedTopology';
+const String _suffixWarpLinks = '_warpLinks';
 
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
 /// Optional map data (tile maps, topology) can be stored per game for Load Savegame view. See SPEC/program/save-load.md.
@@ -51,7 +52,8 @@ class GameSaveAdapter {
         .where((k) =>
             !k.endsWith(_suffixTileMapByRegion) &&
             !k.endsWith(_suffixTopologyByRegion) &&
-            !k.endsWith(_suffixCombinedTopology))
+            !k.endsWith(_suffixCombinedTopology) &&
+            !k.endsWith(_suffixWarpLinks))
         .toSet();
 
     final result = <String>[...definiteGameIds];
@@ -69,6 +71,10 @@ class GameSaveAdapter {
         final prefix =
             key.substring(0, key.length - _suffixCombinedTopology.length);
         if (!definiteGameIds.contains(prefix)) result.add(key);
+      } else if (key.endsWith(_suffixWarpLinks)) {
+        final prefix =
+            key.substring(0, key.length - _suffixWarpLinks.length);
+        if (!definiteGameIds.contains(prefix)) result.add(key);
       }
     }
 
@@ -82,6 +88,7 @@ class GameSaveAdapter {
     required Map<String, TileMapResult> tileMapByRegion,
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
+    List<WarpLink>? warpLinks,
   }) {
     _log.d('save: saving map data gameId=$gameId');
     box.put(
@@ -93,13 +100,21 @@ class GameSaveAdapter {
       topologyByRegion.map((k, v) => MapEntry(k, v.toJson())),
     );
     box.put(gameId + _suffixCombinedTopology, combinedTopology.toJson());
+    if (warpLinks != null) {
+      box.put(
+        gameId + _suffixWarpLinks,
+        warpLinks.map((l) => l.toJson()).toList(),
+      );
+    }
     _log.d('save: saved map data gameId=$gameId');
   }
 
   /// Loads map data for [gameId]. Returns null if any key is missing (legacy save).
+  /// Warp links are optional for backward compatibility with legacy saves.
   ({Map<String, TileMapResult> tileMapByRegion,
     Map<String, MapTopology> topologyByRegion,
-    MapTopology combinedTopology})? loadMapData(Box<dynamic> box, String gameId) {
+    MapTopology combinedTopology,
+    List<WarpLink>? warpLinks})? loadMapData(Box<dynamic> box, String gameId) {
     final tileRaw = box.get(gameId + _suffixTileMapByRegion);
     final topoRaw = box.get(gameId + _suffixTopologyByRegion);
     final combinedRaw = box.get(gameId + _suffixCombinedTopology);
@@ -121,11 +136,20 @@ class GameSaveAdapter {
       );
       final combinedTopology =
           MapTopology.fromJson(Map<String, dynamic>.from(combinedRaw as Map));
+      // Warp links are optional for backward compatibility.
+      final warpRaw = box.get(gameId + _suffixWarpLinks);
+      List<WarpLink>? warpLinks;
+      if (warpRaw != null) {
+        warpLinks = (warpRaw as List)
+            .map((l) => WarpLink.fromJson(Map<String, dynamic>.from(l as Map)))
+            .toList();
+      }
       _log.d('save: loaded map data gameId=$gameId');
       return (
         tileMapByRegion: tileMapByRegion,
         topologyByRegion: topologyByRegion,
         combinedTopology: combinedTopology,
+        warpLinks: warpLinks,
       );
     } catch (e, st) {
       _log.e('save: load map data failed gameId=$gameId',
@@ -140,5 +164,6 @@ class GameSaveAdapter {
     box.delete(gameId + _suffixTileMapByRegion);
     box.delete(gameId + _suffixTopologyByRegion);
     box.delete(gameId + _suffixCombinedTopology);
+    box.delete(gameId + _suffixWarpLinks);
   }
 }
