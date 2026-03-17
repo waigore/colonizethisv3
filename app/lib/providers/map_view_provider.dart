@@ -46,5 +46,6 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     cellSize: 24,
     greatPowerColorOverride: colorOverride,
     visibilityByTile: visibilityByTile,
+    warpLinks: mapData.warpLinks,
   );
 });

@@ -36,22 +36,31 @@ const Map<String, Color> _categoryColors = {
   'new-world': Color(0xFF4E342E),
 };
 
+/// Category icon map. SPEC/ui/tech-tree-widget.md: one icon per category.
+const Map<String, String> _categoryIcons = {
+  'gathering': 'assets/images/ui_icon_tech_gathering.png',
+  'new-world': 'assets/images/ui_icon_tech_new_world.png',
+  'transport': 'assets/images/ui_icon_tech_transport.png',
+  'labour': 'assets/images/ui_icon_tech_labour.png',
+  'civilian': 'assets/images/ui_icon_tech_civilian.png',
+  'diplomacy': 'assets/images/ui_icon_tech_diplomacy.png',
+  'naval': 'assets/images/ui_icon_tech_naval.png',
+  'military': 'assets/images/ui_icon_tech_military.png',
+};
+
 const double _nodeWidth = 100;
 const double _nodeHeight = 44;
 const double _layerGap = 140;
 const double _rowGap = 52;
 const double _edgeStrokeWidth = 2;
+
 /// Offset from source right edge for the vertical segment so it stays in the inter-column gap (never through nodes).
 const double _edgeBendOffset = (_layerGap - _nodeWidth) / 2;
 
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.
 class TechTreeWidget extends StatelessWidget {
-  const TechTreeWidget({
-    super.key,
-    required this.game,
-    required this.player,
-  });
+  const TechTreeWidget({super.key, required this.game, required this.player});
 
   final Game game;
   final Player player;
@@ -63,12 +72,14 @@ class TechTreeWidget extends StatelessWidget {
       return const Center(child: Text('No techs in catalog'));
     }
     final width = positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
-    final height = positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
+    final height =
+        positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
     final unlocked = player.techUnlocked ?? {};
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
     final researchable = researchableTechIds(
       unlocked,
-      hasDiscoveredResource: (r) => hasRevealedResourceForPlayer(game, player.id, r),
+      hasDiscoveredResource: (r) =>
+          hasRevealedResourceForPlayer(game, player.id, r),
     );
 
     return Column(
@@ -91,9 +102,7 @@ class TechTreeWidget extends StatelessWidget {
                   children: [
                     CustomPaint(
                       size: Size(width, height),
-                      painter: _TechTreeEdgePainter(
-                        positions: positions,
-                      ),
+                      painter: _TechTreeEdgePainter(positions: positions),
                     ),
                     ...positions.map((pos) {
                       final tech = techById(pos.techId);
@@ -129,7 +138,9 @@ class TechTreeWidget extends StatelessWidget {
   /// For edges that span multiple columns, reserves a row slot in each intermediate column for the
   /// connector (so the horizontal segment does not pass through nodes); other techs are shifted down.
   /// Used by the widget and by tests (column rule: A→B→C and A→C ⇒ B occupies column between A and C).
-  static List<TechNodePosition> computeLayout(Map<String, TechDefinition> catalog) {
+  static List<TechNodePosition> computeLayout(
+    Map<String, TechDefinition> catalog,
+  ) {
     if (catalog.isEmpty) return [];
 
     // Layer: 0 = roots, 1 = one step from root, etc.
@@ -146,11 +157,14 @@ class TechTreeWidget extends StatelessWidget {
       for (final p in tech.prerequisiteIds) {
         assignLayer(p);
       }
-      final prereqLayers = tech.prerequisiteIds.map((p) => layerByTech[p]!).toList();
+      final prereqLayers = tech.prerequisiteIds
+          .map((p) => layerByTech[p]!)
+          .toList();
       final layer = 1 + (prereqLayers.reduce(math.max));
       layerByTech[techId] = layer;
       if (layer > maxLayer) maxLayer = layer;
     }
+
     for (final id in catalog.keys) {
       assignLayer(id);
     }
@@ -173,12 +187,14 @@ class TechTreeWidget extends StatelessWidget {
 
       if (layer == maxLayer) {
         for (var i = 0; i < ids.length; i++) {
-          list.add(TechNodePosition(
-            techId: ids[i],
-            x: x,
-            y: 24 + i * _rowGap,
-            layer: layer,
-          ));
+          list.add(
+            TechNodePosition(
+              techId: ids[i],
+              x: x,
+              y: 24 + i * _rowGap,
+              layer: layer,
+            ),
+          );
         }
       } else {
         // Reserved row indices: rows that must be left free for connectors from left layers to right layers.
@@ -187,7 +203,9 @@ class TechTreeWidget extends StatelessWidget {
           for (final pos in positionsByLayer[rightLayer]!) {
             final tech = catalog[pos.techId];
             if (tech == null) continue;
-            final hasPrereqLeft = tech.prerequisiteIds.any((pr) => (layerByTech[pr] ?? -1) < layer);
+            final hasPrereqLeft = tech.prerequisiteIds.any(
+              (pr) => (layerByTech[pr] ?? -1) < layer,
+            );
             if (hasPrereqLeft) {
               final rowIndex = ((pos.y - 24) / _rowGap).round();
               reserved.add(rowIndex);
@@ -196,19 +214,24 @@ class TechTreeWidget extends StatelessWidget {
         }
         final totalRows = reserved.isEmpty
             ? ids.length
-            : math.max(ids.length + reserved.length, reserved.reduce(math.max) + 1);
-        final nonReserved = List<int>.generate(totalRows, (i) => i)
-            .where((i) => !reserved.contains(i))
-            .toList()
-          ..sort();
+            : math.max(
+                ids.length + reserved.length,
+                reserved.reduce(math.max) + 1,
+              );
+        final nonReserved = List<int>.generate(
+          totalRows,
+          (i) => i,
+        ).where((i) => !reserved.contains(i)).toList()..sort();
         for (var i = 0; i < ids.length; i++) {
           final rowIndex = nonReserved[i];
-          list.add(TechNodePosition(
-            techId: ids[i],
-            x: x,
-            y: 24 + rowIndex * _rowGap,
-            layer: layer,
-          ));
+          list.add(
+            TechNodePosition(
+              techId: ids[i],
+              x: x,
+              y: 24 + rowIndex * _rowGap,
+              layer: layer,
+            ),
+          );
         }
       }
       positionsByLayer[layer] = list;
@@ -233,10 +256,7 @@ class TechTreeWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              techDisplayName(tech.id),
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
@@ -269,8 +289,7 @@ class TechTreeWidget extends StatelessWidget {
                       ...effects.map(
                         (e) => Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child:
-                              Text('• $e', style: theme.textTheme.bodySmall),
+                          child: Text('• $e', style: theme.textTheme.bodySmall),
                         ),
                       ),
                     ],
@@ -348,7 +367,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Prerequisite for National Bureaucracy');
         break;
       case 'apprentice_workers':
-        list.add('Unlocks Apprentice Workers (4× labour; consume refined sugar)');
+        list.add(
+          'Unlocks Apprentice Workers (4× labour; consume refined sugar)',
+        );
         break;
       case 'trained_journeymen':
         list.add('Unlocks Trained Journeymen (6× labour; consume cigars)');
@@ -360,7 +381,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Can bid on 6 commodities instead of 3');
         break;
       case 'banking':
-        list.add('Enables advanced banking: lower interest and larger negative spending');
+        list.add(
+          'Enables advanced banking: lower interest and larger negative spending',
+        );
         break;
       case 'diplomatic_expertise':
         list.add('Unlocks embassies with Minor Nations');
@@ -392,7 +415,11 @@ class TechTreeWidget extends StatelessWidget {
     if (id.isEmpty) return id;
     return id
         .split('_')
-        .map((s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}')
+        .map(
+          (s) => s.isEmpty
+              ? s
+              : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}',
+        )
         .join(' ');
   }
 }
@@ -465,7 +492,8 @@ class _TechNode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _categoryColors[tech.category] ?? Colors.grey;
-    final bool locked = !state.researched && !state.inProgress && !state.available;
+    final bool locked =
+        !state.researched && !state.inProgress && !state.available;
 
     Color fillColor;
     Color borderColor;
@@ -502,17 +530,35 @@ class _TechNode extends StatelessWidget {
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                techDisplayName(tech.id),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: locked ? Colors.grey : null,
-                  fontWeight: state.researched ? FontWeight.w600 : null,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_categoryIcons.containsKey(tech.category))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 3),
+                      child: Image.asset(
+                        _categoryIcons[tech.category]!,
+                        width: 16,
+                        height: 16,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox(width: 16, height: 16),
+                      ),
+                    ),
+                  Flexible(
+                    child: Text(
+                      techDisplayName(tech.id),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: locked ? Colors.grey : null,
+                        fontWeight: state.researched ? FontWeight.w600 : null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -529,10 +575,7 @@ class _TechTreeLegend extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Technology tree legend',
-          style: theme.textTheme.labelLarge,
-        ),
+        Text('Technology tree legend', style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,
@@ -553,19 +596,35 @@ class _TechTreeLegend extends StatelessWidget {
           children: const [
             _StateLegendSample(
               label: 'Researched',
-              state: _TechNodeState(researched: true, inProgress: false, available: false),
+              state: _TechNodeState(
+                researched: true,
+                inProgress: false,
+                available: false,
+              ),
             ),
             _StateLegendSample(
               label: 'In progress',
-              state: _TechNodeState(researched: false, inProgress: true, available: false),
+              state: _TechNodeState(
+                researched: false,
+                inProgress: true,
+                available: false,
+              ),
             ),
             _StateLegendSample(
               label: 'Available',
-              state: _TechNodeState(researched: false, inProgress: false, available: true),
+              state: _TechNodeState(
+                researched: false,
+                inProgress: false,
+                available: true,
+              ),
             ),
             _StateLegendSample(
               label: 'Locked',
-              state: _TechNodeState(researched: false, inProgress: false, available: false),
+              state: _TechNodeState(
+                researched: false,
+                inProgress: false,
+                available: false,
+              ),
             ),
           ],
         ),
@@ -618,17 +677,10 @@ class _StateLegendSample extends StatelessWidget {
         SizedBox(
           width: 72,
           height: 24,
-          child: _TechNode(
-            tech: dummyTech,
-            state: state,
-            onTap: () {},
-          ),
+          child: _TechNode(tech: dummyTech, state: state, onTap: () {}),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

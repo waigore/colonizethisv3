@@ -115,6 +115,23 @@ class PortMarkerView {
   /// Optional key or label describing the seaboard/port grouping.
   final String? seaboardKey;
 }
+/// Warp zone marker location for a sea zone that links to another region.
+class WarpMarkerView {
+  const WarpMarkerView({
+    required this.x,
+    required this.y,
+    required this.seaZoneId,
+    required this.otherRegionId,
+    required this.otherSeaZoneId,
+  });
+
+  final int x;
+  final int y;
+  final String seaZoneId;
+  final String otherRegionId;
+  final String otherSeaZoneId;
+}
+
 
 /// View data for a single region (Old World or New World).
 class RegionMapViewData {
@@ -129,6 +146,7 @@ class RegionMapViewData {
     required this.factionColors,
     required this.terrainColors,
     this.unitMarkers = const [],
+    this.warpMarkers = const [],
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -148,6 +166,7 @@ class RegionMapViewData {
 
   final List<CapitalMarkerView> capitalMarkers;
   final List<PortMarkerView> portMarkers;
+  final List<WarpMarkerView> warpMarkers;
 
   /// Faction id -> RGB color used for ownership fills and legend.
   final Map<String, Rgb> factionColors;
