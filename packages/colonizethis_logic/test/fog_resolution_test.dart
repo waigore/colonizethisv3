@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/world/fog_resolution.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -240,6 +241,151 @@ void main() {
 
       expect(next.containsKey('p1'), isFalse);
       expect(next['p2']!.containsKey('$ow|P2'), isTrue);
+    });
+  });
+
+  group('applyCoastalSeaZoneFullVisibility', () {
+    test('sets sea zone tiles adjacent to owned coastal province to fullyVisible for that GP', () {
+      const ow = 'oldWorld';
+      const tileKeySea = 'oldWorld|s1|1|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 's1'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {tileKeySea: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'p1': ['oldWorld|p1|0|0'],
+              's1': [tileKeySea],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+      );
+      final inputVis = <String, Map<String, String>>{
+        'gp1': {tileKeySea: 'fogged'},
+      };
+
+      final out = applyCoastalSeaZoneFullVisibility(game, inputVis, topology);
+
+      expect(out['gp1']![tileKeySea], VisibilityLevel.fullyVisible.name);
+    });
+
+    test('does not set sea zone tiles when GP has no owned province adjacent to that sea zone', () {
+      const ow = 'oldWorld';
+      const tileKeySea = 'oldWorld|s1|1|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [], // p1 not adjacent to s1
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {tileKeySea: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {'s1': [tileKeySea]},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+      );
+      final inputVis = <String, Map<String, String>>{
+        'gp1': {tileKeySea: 'fogged'},
+      };
+
+      final out = applyCoastalSeaZoneFullVisibility(game, inputVis, topology);
+
+      expect(out['gp1']![tileKeySea], 'fogged');
+    });
+
+    test('each GP gets full visibility only for sea zones adjacent to their own provinces', () {
+      const ow = 'oldWorld';
+      const tileKeyS1 = 'oldWorld|s1|1|0';
+      const tileKeyS2 = 'oldWorld|s2|3|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 's1'),
+          TopologyEdge(id1: 'p2', id2: 's2'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+            'gp2': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'p1': ['oldWorld|p1|0|0'],
+              'p2': ['oldWorld|p2|2|0'],
+              's1': [tileKeyS1],
+              's2': [tileKeyS2],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        ],
+      );
+      final inputVis = <String, Map<String, String>>{
+        'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+        'gp2': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+      };
+
+      final out = applyCoastalSeaZoneFullVisibility(game, inputVis, topology);
+
+      expect(out['gp1']![tileKeyS1], VisibilityLevel.fullyVisible.name);
+      expect(out['gp1']![tileKeyS2], 'fogged');
+      expect(out['gp2']![tileKeyS1], 'fogged');
+      expect(out['gp2']![tileKeyS2], VisibilityLevel.fullyVisible.name);
     });
   });
 }
