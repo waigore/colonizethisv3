@@ -109,7 +109,7 @@ When the widget is in **player-constrained visibility mode**, it maps `CellViewD
 
 - **`visible`:** The tile is rendered unmodified (full terrain color, resource/improvement/road letters, and borders).
 - **`fogged`:** The tile is rendered with the same content as `visible` but visually muted:
-  - The base terrain color is blended towards a **darker gray or black** with a consistent opacity factor (e.g. at least 60% of the way towards black) so fogged tiles are noticeably darker than fully visible tiles.
+  - The base terrain color is blended towards a **darker gray or black** with a consistent, moderate darkening (e.g. ~40% toward black / 40% overlay) so fogged tiles are noticeably darker than fully visible tiles but remain readable.
   - Resource/improvement/road letters remain readable but appear on the muted background.
 - **`unrevealed`:** The tile is rendered as a solid black square:
   - No terrain color or letters are shown.
@@ -201,7 +201,7 @@ Tilesets are stored in `assets/images/terrain/`:
 
 When rendering in **player-constrained visibility mode**:
 - **visible tiles:** Render full tileset tiles
-- **fogged tiles:** Apply 70% black overlay to tile
+- **fogged tiles:** Apply a moderate black overlay to tile (e.g. 40% opacity) so fogged areas stay readable
 - **unrevealed tiles:** Render solid black (no tile)
 
 ### Fallback Behavior
