@@ -132,4 +132,65 @@ void main() {
     // Integration tests or manual testing verify the side menu opens and shows these buttons
     // in the correct order per SPEC/ui/empire-buttons.md.
   });
+
+  group('GameScreen — Next turn confirmation', () {
+    testWidgets(
+      'AC: clicking Next turn button shows confirmation dialog with turn number',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameScreen(width: 800, height: 600));
+        await tester.pump();
+
+        final nextTurnFinder = find.textContaining('Next turn');
+        expect(nextTurnFinder, findsOneWidget);
+        await tester.tap(nextTurnFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('End turn?'), findsOneWidget);
+        expect(find.textContaining('will end'), findsOneWidget);
+        expect(find.text('No'), findsOneWidget);
+        expect(find.text('Yes'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'AC: clicking No closes dialog without advancing turn',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameScreen(width: 800, height: 600));
+        await tester.pump();
+
+        final nextTurnFinder = find.textContaining('Next turn');
+        await tester.tap(nextTurnFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('End turn?'), findsOneWidget);
+
+        await tester.tap(find.text('No'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('End turn?'), findsNothing);
+        expect(find.textContaining('Next turn'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'AC: dialog shows correct turn number from game state',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameScreen(width: 800, height: 600));
+        await tester.pump();
+
+        final nextTurnFinder = find.textContaining('Next turn');
+        await tester.tap(nextTurnFinder);
+        await tester.pumpAndSettle();
+
+        final turnNumber = debugResult.game.worldState.turnState.turnNumber;
+        expect(
+          find.textContaining('Turn $turnNumber will end'),
+          findsOneWidget,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+  });
 }
