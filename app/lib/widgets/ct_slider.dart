@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Pixel-art friendly slider for integer values.
 /// Replaces Material [Slider] in production allocation.
-class CtSlider extends StatelessWidget {
+class CtSlider extends StatefulWidget {
   const CtSlider({
     super.key,
     required this.value,
@@ -19,10 +19,26 @@ class CtSlider extends StatelessWidget {
   final ValueChanged<double> onChanged;
 
   @override
+  State<CtSlider> createState() => _CtSliderState();
+}
+
+class _CtSliderState extends State<CtSlider> {
+  @override
+  void didUpdateWidget(CtSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final t = ((value - min) / (max - min)).clamp(0, 1);
+    final t = ((widget.value - widget.min) / (widget.max - widget.min)).clamp(
+      0,
+      1,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -34,13 +50,13 @@ class CtSlider extends StatelessWidget {
         void handleTapOrDrag(Offset localPos) {
           final x = localPos.dx.clamp(0, width - handleSize);
           final ratio = x / (width - handleSize);
-          final raw = min + ratio * (max - min);
-          if (divisions > 0) {
-            final step = (max - min) / divisions;
-            final snapped = (raw / step).round() * step + min;
-            onChanged(snapped.clamp(min, max));
+          final raw = widget.min + ratio * (widget.max - widget.min);
+          if (widget.divisions > 0) {
+            final step = (widget.max - widget.min) / widget.divisions;
+            final snapped = (raw / step).round() * step + widget.min;
+            widget.onChanged(snapped.clamp(widget.min, widget.max));
           } else {
-            onChanged(raw.clamp(min, max));
+            widget.onChanged(raw.clamp(widget.min, widget.max));
           }
         }
 
@@ -62,10 +78,7 @@ class CtSlider extends StatelessWidget {
                     height: trackHeight,
                     decoration: BoxDecoration(
                       color: colorScheme.surface.withValues(alpha: 0.7),
-                      border: Border.all(
-                        color: colorScheme.outline,
-                        width: 1,
-                      ),
+                      border: Border.all(color: colorScheme.outline, width: 1),
                     ),
                   ),
                 ),
@@ -103,4 +116,3 @@ class CtSlider extends StatelessWidget {
     );
   }
 }
-
