@@ -501,34 +501,36 @@ class CtRegionMapComponent extends PositionComponent {
     final terrain = cell.terrainType;
     if (terrain == null || !_isFeatureTerrain(terrain)) return;
 
-    // All features use standalone tiles; plains base is already drawn in pass 1
+    // All features use standalone tiles; plains base is already drawn in pass 1.
+    // If a standalone tile is missing (e.g. asset regression), skip drawing the
+    // overlay rather than failing the entire map render. Wang tilesets remain
+    // strict (they must exist), but L2+ overlays are best-effort.
     final standaloneTile = terrainTilesetCache.getStandaloneTile(terrain);
-
-    if (standaloneTile != null) {
-      final paint = Paint();
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.fogged) {
-        paint.colorFilter = ColorFilter.mode(
-          Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
-          BlendMode.darken,
-        );
-      }
-
-      final srcRect = Rect.fromLTWH(
-        0,
-        0,
-        standaloneTile.image.width.toDouble(),
-        standaloneTile.image.height.toDouble(),
+    if (standaloneTile == null) {
+      _log.w(
+        'Standalone tile missing for terrain=$terrain; '
+        'skipping feature overlay for cell (${cell.x}, ${cell.y})',
       );
-      final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-      canvas.drawImageRect(standaloneTile.image, srcRect, dstRect, paint);
       return;
     }
 
-    throw StateError(
-      'Standalone tile not found for terrain=$terrain - '
-      'terrain tileset failed to load',
+    final paint = Paint();
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.fogged) {
+      paint.colorFilter = ColorFilter.mode(
+        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+        BlendMode.darken,
+      );
+    }
+
+    final srcRect = Rect.fromLTWH(
+      0,
+      0,
+      standaloneTile.image.width.toDouble(),
+      standaloneTile.image.height.toDouble(),
     );
+    final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+    canvas.drawImageRect(standaloneTile.image, srcRect, dstRect, paint);
   }
 
   _CornerValues _getCornerValues(
