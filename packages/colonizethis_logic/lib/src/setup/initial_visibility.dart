@@ -5,12 +5,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/fog_resolution.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 
 /// Applies initial visibility and tile metadata to [game] using [tileMapByRegion].
 /// Own provinces: fullyVisible (OW) or unknown (NW). Others: fogged (OW).
 /// Sea zones: fogged (OW), unknown (NW).
+/// Then applies coastal sea zone full visibility for Great Powers.
 /// Builds tileKeysByRegionAndProvince and resourceByTileKey for resolution.
 Game applyInitialVisibility({
   required Game game,
@@ -122,5 +124,35 @@ Game applyInitialVisibility({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     resourceByTileKey: resourceByTileKey,
   );
-  return game.copyWith(worldState: updatedWorldState);
+  var resultGame = game.copyWith(worldState: updatedWorldState);
+
+  // Apply coastal sea zone full visibility for Great Powers.
+  // SPEC/program/fog-and-exploration-resolution.md § Coastal sea zone full visibility.
+  final combinedTopology = _buildCombinedTopology(topologyByRegion);
+  final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+    resultGame,
+    playerVisibilityByTile,
+    combinedTopology,
+    topologyByRegion: topologyByRegion,
+  );
+
+  resultGame = resultGame.copyWith(
+    worldState: resultGame.worldState.copyWith(
+      playerVisibilityByTile: visibilityAfterCoastal,
+    ),
+  );
+
+  return resultGame;
+}
+
+/// Builds a combined topology from per-region topologies for use in
+/// coastal sea zone visibility resolution.
+MapTopology _buildCombinedTopology(Map<String, MapTopology> topologyByRegion) {
+  final allNodes = <TopologyNode>[];
+  final allEdges = <TopologyEdge>[];
+  for (final topology in topologyByRegion.values) {
+    allNodes.addAll(topology.nodes);
+    allEdges.addAll(topology.edges);
+  }
+  return MapTopology(nodes: allNodes, edges: allEdges);
 }

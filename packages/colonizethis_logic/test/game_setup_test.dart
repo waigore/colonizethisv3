@@ -1246,7 +1246,9 @@ void main() {
       final vis = result.game.worldState.playerVisibilityByTile;
       final gpId = result.game.players.first.id;
 
-      // Old World sea tile (sea1) should be fogged
+      // Old World sea tile (sea1) should be fullyVisible because it's adjacent
+      // to the GP's province (p1). Coastal sea zone visibility is applied at
+      // game setup per SPEC/program/fog-and-exploration-resolution.md.
       final owSeaTileKey = 'oldWorld|sea1|1|0';
       expect(
         vis[gpId],
@@ -1255,11 +1257,13 @@ void main() {
       );
       expect(
         vis[gpId]![owSeaTileKey],
-        'fogged',
-        reason: 'OW sea tile should be fogged (visible terrain, fogged state)',
+        'fullyVisible',
+        reason:
+            'OW sea tile adjacent to owned province should be fullyVisible'
+            ' at game setup (coastal sea zone visibility)',
       );
 
-      // New World sea tile (sea1) should be unknown
+      // New World sea tile (sea1) should be unknown (no GP owns adjacent province)
       final nwSeaTileKey = 'newWorld|sea1|1|0';
       expect(
         vis[gpId],
@@ -1269,7 +1273,7 @@ void main() {
       expect(
         vis[gpId]![nwSeaTileKey],
         'unknown',
-        reason: 'NW sea tile should be unknown (never explored)',
+        reason: 'NW sea tile should be unknown (no GP owns adjacent province)',
       );
 
       // Verify land tiles also have visibility
