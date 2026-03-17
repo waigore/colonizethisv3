@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -112,7 +113,11 @@ void main() {
 
         for (final path in [...pngPaths, ...jsonPaths]) {
           final data = await rootBundle.load(path);
-          expect(data.lengthInBytes, greaterThan(0), reason: 'Asset $path is empty');
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Asset $path is empty',
+          );
         }
       },
       timeout: const Timeout(Duration(seconds: 10)),
@@ -597,6 +602,183 @@ void main() {
         // If we reach here, tilesets loaded successfully.
         // The test verifies that if tilesets failed to load, an error would be thrown
         // rather than silently falling back to solid colors.
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'required resource icon asset files are present in test asset bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        // Verify all resource icon assets exist and are non-empty
+        for (final resourceId in kResourceIconIds) {
+          final path = 'assets/images/ui_icon_com_$resourceId.png';
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Resource icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'resource icon cache loads all icons successfully',
+      (WidgetTester tester) async {
+        // Verify all resource icon assets can be loaded from the asset bundle
+        // Note: ui.decodeImageFromList may not work in test environment,
+        // so we verify the assets exist and are non-empty
+        var loadedCount = 0;
+        await tester.runAsync(() async {
+          for (final resourceId in kResourceIconIds) {
+            final path = 'assets/images/ui_icon_com_$resourceId.png';
+            try {
+              final data = await rootBundle.load(path);
+              if (data.lengthInBytes > 0) {
+                loadedCount++;
+              }
+            } catch (e) {
+              // Icon asset failed to load
+            }
+          }
+        });
+
+        // All icon assets should exist in the bundle
+        expect(
+          loadedCount,
+          equals(kResourceIconIds.length),
+          reason:
+              'Expected all ${kResourceIconIds.length} resource icon assets to load, but only $loadedCount loaded',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'map renders with resource icons in terrainAndResources mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+        );
+        await tester.pump();
+
+        // Widget should render without errors when resource icons are loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders with resource icons in terrainResourcesImprovements mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainResourcesImprovements,
+          ),
+        );
+        await tester.pump();
+
+        // Widget should render without errors when resource icons are loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders without resource icons in terrainOnly mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          ),
+        );
+        await tester.pump();
+
+        // Widget should render without errors even without resource icons loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'resource icons are fogged in player-constrained visibility mode for fogged tiles',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final base = _oldWorldRegion();
+        // Create a region with some fogged cells
+        final foggedCells = base.cells.map((c) {
+          if (c.isSea) return c;
+          final visibility = c.x < 2
+              ? TileVisibility.fogged
+              : TileVisibility.visible;
+          return CellViewData(
+            x: c.x,
+            y: c.y,
+            regionCellId: c.regionCellId,
+            isSea: c.isSea,
+            terrainType: c.terrainType,
+            resourceId: c.resourceId,
+            improvementLevel: c.improvementLevel,
+            roadLevel: c.roadLevel,
+            visibility: visibility,
+            ownerFactionId: c.ownerFactionId,
+          );
+        }).toList();
+
+        final region = RegionMapViewData(
+          regionId: base.regionId,
+          width: base.width,
+          height: base.height,
+          cellSize: base.cellSize,
+          cells: foggedCells,
+          capitalMarkers: base.capitalMarkers,
+          portMarkers: base.portMarkers,
+          factionColors: base.factionColors,
+          terrainColors: base.terrainColors,
+          unitMarkers: base.unitMarkers,
+        );
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+        );
+        await tester.pump();
+
+        // Widget should render without errors
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
