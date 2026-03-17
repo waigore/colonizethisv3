@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
+import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
 
 final _log = Logger();
@@ -110,12 +111,13 @@ class CtRegionMapComponent extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await terrainTilesetCache.load();
+    await Future.wait([terrainTilesetCache.load(), resourceIconCache.load()]);
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
-      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}',
+      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
+      'ResourceIconCache loaded: ${resourceIconCache.isLoaded}',
     );
     size = Vector2(region.width * cellSize, region.height * cellSize);
   }
@@ -200,7 +202,7 @@ class CtRegionMapComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     _paintTiles(canvas);
-    _paintLetters(canvas);
+    _paintOverlay(canvas);
     _paintProvinceBorders(canvas);
     if (_hoveredProvinceId != null) {
       _paintHoveredProvinceGlow(canvas);
@@ -638,7 +640,7 @@ class CtRegionMapComponent extends PositionComponent {
     return region.cellAt(x, y);
   }
 
-  void _paintLetters(Canvas canvas) {
+  void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
         baseLayerDisplayMode ==
@@ -647,42 +649,68 @@ class CtRegionMapComponent extends PositionComponent {
         baseLayerDisplayMode ==
         BaseLayerDisplayMode.terrainResourcesImprovements;
 
-    final double fontSize = math.max(10.0, cellSize * 0.35);
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
           cell.visibility == TileVisibility.unrevealed) {
         continue;
       }
-      final parts = <String>[];
-      if (showResources) {
-        final letter = resourceIdToLegendLetter(cell.resourceId);
-        if (letter != null) parts.add(letter);
-      }
-      if (showImprovements) {
-        final imp = cell.improvementLevel ?? 0;
-        parts.add('I$imp');
-        final road = cell.roadLevel ?? 0;
-        parts.add('R$road');
-      }
-      final text = parts.join(' ');
-      if (text.isEmpty) continue;
+
       final cx = cell.x * cellSize + cellSize / 2;
       final cy = cell.y * cellSize + cellSize / 2;
-      textPainter.text = TextSpan(
-        text: text,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
-      );
+
+      // Draw resource icon if present and mode includes resources.
+      if (showResources && cell.resourceId != null) {
+        final icon = resourceIconCache.getIcon(cell.resourceId);
+        if (icon != null) {
+          final iconSize = ResourceIconCache.iconSize;
+          final scale = cellSize / iconSize;
+          final scaledSize = iconSize * scale;
+          final dstRect = Rect.fromLTWH(
+            cx - scaledSize / 2,
+            cy - scaledSize / 4,
+            scaledSize,
+            scaledSize,
+          );
+          final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
+          final paint = Paint();
+          if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+              cell.visibility == TileVisibility.fogged) {
+            paint.colorFilter = ColorFilter.mode(
+              const Color(0xFFFFFFFF).withValues(alpha: 0.6),
+              BlendMode.modulate,
+            );
+          }
+          canvas.drawImageRect(icon, srcRect, dstRect, paint);
+        }
+      }
+
+      // Draw improvement/road labels below the icon if mode includes improvements.
+      if (showImprovements) {
+        final imp = cell.improvementLevel ?? 0;
+        final road = cell.roadLevel ?? 0;
+        if (imp > 0 || road > 0) {
+          final parts = <String>[];
+          parts.add('I$imp');
+          parts.add('R$road');
+          final text = parts.join(' ');
+          final fontSize = math.max(8.0, cellSize * 0.25);
+          final textPainter = TextPainter(textDirection: TextDirection.ltr);
+          textPainter.text = TextSpan(
+            text: text,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w600,
+            ),
+          );
+          textPainter.layout();
+          textPainter.paint(
+            canvas,
+            Offset(cx - textPainter.width / 2, cy + cellSize / 4),
+          );
+        }
+      }
     }
   }
 
