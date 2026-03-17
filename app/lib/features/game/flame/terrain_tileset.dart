@@ -139,49 +139,42 @@ class TerrainTilesetCache {
     if (_isLoaded || _isLoading) return;
     _isLoading = true;
 
-    final loadFutures = <Future<void>>[];
-
-    // L0/L1 Wang tilesets for coastline and land transitions
-    loadFutures.add(
-      _loadWangTileset(
-        'sea_plains',
-        seaTerrainId,
-        plainsTerrainId,
-        (tileset) => _seaPlainsTileset = tileset,
-      ),
-    );
-    loadFutures.add(
-      _loadWangTileset(
-        'sea_desert',
-        seaTerrainId,
-        desertTerrainId,
-        (tileset) => _seaDesertTileset = tileset,
-      ),
-    );
-    loadFutures.add(
-      _loadWangTileset(
-        'plains_desert',
-        plainsTerrainId,
-        desertTerrainId,
-        (tileset) => _plainsDesertTileset = tileset,
-      ),
-    );
-
-    // L2+ Standalone tiles for features (forest, hills, mountain, swamp)
-    // Note: Desert is now L1, not a standalone feature
-    for (final feature in [
-      TerrainType.forest,
-      TerrainType.hills,
-      TerrainType.mountain,
-      TerrainType.swamp,
-    ]) {
-      loadFutures.add(
-        _loadStandaloneTile('${feature.name}_standalone', feature.name),
-      );
-    }
-
     try {
-      await Future.wait(loadFutures);
+      // Load L0/L1 Wang tilesets for coastline and land transitions.
+      await Future.wait([
+        _loadWangTileset(
+          'sea_plains',
+          seaTerrainId,
+          plainsTerrainId,
+          (tileset) => _seaPlainsTileset = tileset,
+        ),
+        _loadWangTileset(
+          'sea_desert',
+          seaTerrainId,
+          desertTerrainId,
+          (tileset) => _seaDesertTileset = tileset,
+        ),
+        _loadWangTileset(
+          'plains_desert',
+          plainsTerrainId,
+          desertTerrainId,
+          (tileset) => _plainsDesertTileset = tileset,
+        ),
+      ]);
+
+      // L2+ standalone feature tiles are best-effort and loaded in the background.
+      // Failures must not block base terrain or map rendering. Desert is now L1.
+      for (final feature in [
+        TerrainType.forest,
+        TerrainType.hills,
+        TerrainType.mountain,
+        TerrainType.swamp,
+      ]) {
+        // Intentionally not awaited; errors are logged inside _loadStandaloneTile.
+        // ignore: discarded_futures
+        _loadStandaloneTile('${feature.name}_standalone', feature.name);
+      }
+
       _isLoaded = true;
     } catch (e) {
       _log.e('One or more terrain tilesets failed to load', error: e);
@@ -260,12 +253,11 @@ class TerrainTilesetCache {
         image: image,
       );
     } catch (e, stackTrace) {
-      _log.e(
-        'Failed to load standalone tile: $name',
+      _log.w(
+        'Failed to load standalone tile (non-fatal): $name',
         error: e,
         stackTrace: stackTrace,
       );
-      rethrow;
     }
   }
 
