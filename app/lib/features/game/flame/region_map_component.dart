@@ -210,6 +210,7 @@ class CtRegionMapComponent extends PositionComponent {
     if (showPoliticalOverlay) _paintFactionBorders(canvas);
     _paintCapitals(canvas);
     _paintPorts(canvas);
+    _paintWarpZones(canvas);
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
     }
@@ -870,6 +871,109 @@ class CtRegionMapComponent extends PositionComponent {
       final rect = Rect.fromLTWH(cx - half, cy - half, half * 2, half * 2);
       canvas.drawRect(rect, fill);
       canvas.drawRect(rect, stroke);
+    }
+  }
+
+  void _paintWarpZones(Canvas canvas) {
+    // Collect sea zone ids that are warp zones.
+    final warpSeaZoneIds = region.warpMarkers.map((m) => m.seaZoneId).toSet();
+    if (warpSeaZoneIds.isEmpty) return;
+
+    // Build a set of all tile positions belonging to warp sea zones.
+    final warpTiles = <(int x, int y)>{};
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (warpSeaZoneIds.contains(cell.regionCellId)) {
+          warpTiles.add((x, y));
+        }
+      }
+    }
+
+    // Draw glowing yellow border around warp sea zone tiles.
+    // Outer glow (wider, more transparent).
+    final glowOuter = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.3); // gold glow
+    // Inner bright border.
+    final glowInner = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFFFFEA00); // bright yellow
+
+    for (final (x, y) in warpTiles) {
+      final cell = region.cellAt(x, y);
+      if (!warpSeaZoneIds.contains(cell.regionCellId)) continue;
+
+      // Check right neighbor.
+      if (x + 1 < region.width) {
+        final right = region.cellAt(x + 1, y);
+        if (!warpSeaZoneIds.contains(right.regionCellId)) {
+          final xEdge = (x + 1) * cellSize;
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowInner,
+          );
+        }
+      }
+      // Check bottom neighbor.
+      if (y + 1 < region.height) {
+        final bottom = region.cellAt(x, y + 1);
+        if (!warpSeaZoneIds.contains(bottom.regionCellId)) {
+          final yEdge = (y + 1) * cellSize;
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowInner,
+          );
+        }
+      }
+      // Check left neighbor (for left edge of warp zone).
+      if (x > 0) {
+        final left = region.cellAt(x - 1, y);
+        if (!warpSeaZoneIds.contains(left.regionCellId)) {
+          final xEdge = x * cellSize;
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(xEdge, y * cellSize),
+            Offset(xEdge, (y + 1) * cellSize),
+            glowInner,
+          );
+        }
+      }
+      // Check top neighbor (for top edge of warp zone).
+      if (y > 0) {
+        final top = region.cellAt(x, y - 1);
+        if (!warpSeaZoneIds.contains(top.regionCellId)) {
+          final yEdge = y * cellSize;
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowOuter,
+          );
+          canvas.drawLine(
+            Offset(x * cellSize, yEdge),
+            Offset((x + 1) * cellSize, yEdge),
+            glowInner,
+          );
+        }
+      }
     }
   }
 }
