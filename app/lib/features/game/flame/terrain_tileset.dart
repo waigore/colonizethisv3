@@ -184,7 +184,8 @@ class TerrainTilesetCache {
       await Future.wait(loadFutures);
       _isLoaded = true;
     } catch (e) {
-      // Fall back to solid color rendering
+      _log.e('One or more terrain tilesets failed to load', error: e);
+      _isLoaded = false;
     } finally {
       _isLoading = false;
     }
@@ -238,6 +239,7 @@ class TerrainTilesetCache {
         error: e,
         stackTrace: stackTrace,
       );
+      rethrow;
     }
   }
 
@@ -257,8 +259,13 @@ class TerrainTilesetCache {
         terrainId: terrainId,
         image: image,
       );
-    } catch (e) {
-      // Tile not available; will fall back
+    } catch (e, stackTrace) {
+      _log.e(
+        'Failed to load standalone tile: $name',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
   }
 
