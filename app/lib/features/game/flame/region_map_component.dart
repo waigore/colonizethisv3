@@ -10,8 +10,6 @@ import 'terrain_tileset.dart';
 
 final _log = Logger();
 
-/// Fog strength for fogged tiles: lerp toward black (0 = no fog, 1 = full black).
-const double _fogLerp = 0.4;
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
 
@@ -258,51 +256,12 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   void _paintTiles(Canvas canvas) {
+    // Guard: if tilesets not loaded yet, render nothing (will render on next frame after load)
+    // This can happen when render() is called before onLoad() completes due to Flame's sync rendering
     if (!terrainTilesetCache.isLoaded) {
-      _paintTilesFallback(canvas);
       return;
     }
     _paintTilesWithTilesets(canvas);
-  }
-
-  void _paintTilesFallback(Canvas canvas) {
-    final paint = Paint()..style = PaintingStyle.fill;
-    for (final cell in region.cells) {
-      final left = cell.x * cellSize;
-      final top = cell.y * cellSize;
-
-      Color baseColor;
-      if (cell.isSea) {
-        baseColor = const Color(0xFF003366);
-      } else {
-        final terrain =
-            cell.terrainType ??
-            (cell.terrainTypeId != null
-                ? TerrainType.values.byName(cell.terrainTypeId!)
-                : null);
-        final rgb = terrain != null
-            ? (region.terrainColors[terrain] ?? (128, 128, 128))
-            : (128, 128, 128);
-        baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
-      }
-
-      Color finalColor = baseColor;
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
-        switch (cell.visibility) {
-          case TileVisibility.visible:
-            break;
-          case TileVisibility.fogged:
-            finalColor = Color.lerp(baseColor, Colors.black, _fogLerp)!;
-            break;
-          case TileVisibility.unrevealed:
-            finalColor = Colors.black;
-            break;
-        }
-      }
-
-      paint.color = finalColor;
-      canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
-    }
   }
 
   void _paintTilesWithTilesets(Canvas canvas) {
@@ -356,17 +315,10 @@ class CtRegionMapComponent extends PositionComponent {
         : terrainTilesetCache.getSeaPlainsTileset();
 
     if (tileset == null) {
-      final baseColor = const Color(0xFF1e3a5f);
-      final foggedColor =
-          visibilityMode == CtMapVisibilityMode.playerConstrained &&
-              cell.visibility == TileVisibility.fogged
-          ? Color.lerp(baseColor, Colors.black, _fogLerp)!
-          : baseColor;
-      canvas.drawRect(
-        Rect.fromLTWH(left, top, cellSize, cellSize),
-        Paint()..color = foggedColor,
+      throw StateError(
+        'Sea tileset is null for dominantLandType=$dominantLandType - '
+        'terrain tileset failed to load',
       );
-      return;
     }
 
     if (landCorner.same) {
@@ -416,14 +368,9 @@ class CtRegionMapComponent extends PositionComponent {
 
     final terrain = cell.terrainType;
 
-    // Handle invalid terrain (should not happen, but fallback)
+    // Handle invalid terrain - should not happen
     if (terrain == null) {
-      _paintSolidColor(
-        canvas,
-        cell,
-        const Color(0xFF7cb342),
-      ); // Plains fallback
-      return;
+      throw StateError('Cell has no terrain type: $cell');
     }
 
     // Features draw their land base (plains or desert) first, then overlay
@@ -466,39 +413,45 @@ class CtRegionMapComponent extends PositionComponent {
     // Use plains_desert tileset for plains↔desert transitions
     if (isPlains && !nearDesertCorner.same && nearDesertCorner.value) {
       final tileset = terrainTilesetCache.getPlainsDesertTileset();
-      if (tileset != null) {
-        _drawTile(
-          canvas,
-          tileset,
-          left,
-          top,
-          nw: nearDesertCorner.nw,
-          ne: nearDesertCorner.ne,
-          sw: nearDesertCorner.sw,
-          se: nearDesertCorner.se,
-          cell: cell,
+      if (tileset == null) {
+        throw StateError(
+          'Plains desert tileset is null - terrain tileset failed to load',
         );
-        return;
       }
+      _drawTile(
+        canvas,
+        tileset,
+        left,
+        top,
+        nw: nearDesertCorner.nw,
+        ne: nearDesertCorner.ne,
+        sw: nearDesertCorner.sw,
+        se: nearDesertCorner.se,
+        cell: cell,
+      );
+      return;
     }
 
     if (isDesert && !nearPlainsCorner.same && nearPlainsCorner.value) {
       final tileset = terrainTilesetCache.getPlainsDesertTileset();
-      if (tileset != null) {
-        // For desert viewing from desert side, invert corners
-        _drawTile(
-          canvas,
-          tileset,
-          left,
-          top,
-          nw: !nearPlainsCorner.nw,
-          ne: !nearPlainsCorner.ne,
-          sw: !nearPlainsCorner.sw,
-          se: !nearPlainsCorner.se,
-          cell: cell,
+      if (tileset == null) {
+        throw StateError(
+          'Plains desert tileset is null - terrain tileset failed to load',
         );
-        return;
       }
+      // For desert viewing from desert side, invert corners
+      _drawTile(
+        canvas,
+        tileset,
+        left,
+        top,
+        nw: !nearPlainsCorner.nw,
+        ne: !nearPlainsCorner.ne,
+        sw: !nearPlainsCorner.sw,
+        se: !nearPlainsCorner.se,
+        cell: cell,
+      );
+      return;
     }
 
     // Interior cell - use base tile from sea tileset (cleaner with transition_size=0.5)
@@ -507,43 +460,25 @@ class CtRegionMapComponent extends PositionComponent {
     final interiorTileset = terrain == TerrainType.desert
         ? terrainTilesetCache.getSeaDesertTileset()
         : terrainTilesetCache.getSeaPlainsTileset();
-    if (interiorTileset != null) {
-      // Use upperBaseTileId for both plains and desert (land is 'upper' in sea tilesets)
-      final tile = interiorTileset.upperBaseTileId != null
-          ? interiorTileset.findTileById(interiorTileset.upperBaseTileId!)
-          : null;
-      if (tile != null) {
-        final srcRect = tile.boundingBox;
-        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-        final paint = Paint();
-        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            cell.visibility == TileVisibility.fogged) {
-          paint.colorFilter = ColorFilter.mode(
-            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
-            BlendMode.darken,
-          );
-        }
-        canvas.drawImageRect(interiorTileset.image, srcRect, dstRect, paint);
-        return;
-      }
+    if (interiorTileset == null) {
+      throw StateError(
+        'Interior tileset is null for terrain=$terrain - '
+        'terrain tileset failed to load',
+      );
     }
-
-    // Fallback - use solid color
-    final rgb = terrain == TerrainType.desert
-        ? (215, 204, 200) // Desert beige
-        : (124, 179, 66); // Plains green
-    _paintSolidColor(canvas, cell, Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3));
-  }
-
-  void _paintSolidColor(Canvas canvas, CellViewData cell, Color baseColor) {
-    final left = cell.x * cellSize;
-    final top = cell.y * cellSize;
+    // Use upperBaseTileId for both plains and desert (land is 'upper' in sea tilesets)
+    final tile = interiorTileset.upperBaseTileId != null
+        ? interiorTileset.findTileById(interiorTileset.upperBaseTileId!)
+        : null;
+    if (tile == null) {
+      throw StateError(
+        'Base tile not found for terrain=$terrain - '
+        'upperBaseTileId=${interiorTileset.upperBaseTileId}',
+      );
+    }
+    final srcRect = tile.boundingBox;
+    final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
     final paint = Paint();
-    paint.color = _applyFog(cell, baseColor);
-    canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
-  }
-
-  void _applyVisibilityFilter(CellViewData cell, Paint paint) {
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         cell.visibility == TileVisibility.fogged) {
       paint.colorFilter = ColorFilter.mode(
@@ -551,14 +486,7 @@ class CtRegionMapComponent extends PositionComponent {
         BlendMode.darken,
       );
     }
-  }
-
-  Color _applyFog(CellViewData cell, Color baseColor) {
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
-      return Color.lerp(baseColor, Colors.black, _fogLerp)!;
-    }
-    return baseColor;
+    canvas.drawImageRect(interiorTileset.image, srcRect, dstRect, paint);
   }
 
   void _paintFeatureCell(Canvas canvas, CellViewData cell) {
@@ -578,7 +506,13 @@ class CtRegionMapComponent extends PositionComponent {
 
     if (standaloneTile != null) {
       final paint = Paint();
-      _applyVisibilityFilter(cell, paint);
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.fogged) {
+        paint.colorFilter = ColorFilter.mode(
+          Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+          BlendMode.darken,
+        );
+      }
 
       final srcRect = Rect.fromLTWH(
         0,
@@ -591,24 +525,10 @@ class CtRegionMapComponent extends PositionComponent {
       return;
     }
 
-    // Fallback to solid color if no tile available
-    final paint = Paint();
-    final rgb = _getFallbackColor(terrain);
-    Color baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
-    baseColor = _applyFog(cell, baseColor);
-    paint.color = baseColor;
-    canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
-  }
-
-  (int, int, int) _getFallbackColor(TerrainType terrain) {
-    return switch (terrain) {
-      TerrainType.forest => (46, 125, 50),
-      TerrainType.hills => (109, 76, 65),
-      TerrainType.mountain => (120, 144, 156),
-      TerrainType.swamp => (61, 74, 63),
-      TerrainType.plains => (124, 179, 66),
-      TerrainType.desert => (215, 204, 200),
-    };
+    throw StateError(
+      'Standalone tile not found for terrain=$terrain - '
+      'terrain tileset failed to load',
+    );
   }
 
   _CornerValues _getCornerValues(
