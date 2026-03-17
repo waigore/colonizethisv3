@@ -1,6 +1,8 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
@@ -122,5 +124,86 @@ Map<String, Map<String, int>> clearSpyRevealTimersForProvince(
     }
   });
   return timers;
+}
+
+/// Returns topology for [regionId]: [topologyByRegion][regionId] if set, otherwise
+/// subgraph of [topology] with nodes and edges in that region.
+MapTopology _topologyForRegion(
+  MapTopology topology,
+  Map<String, MapTopology>? topologyByRegion,
+  String regionId,
+) {
+  final regionTopology = topologyByRegion?[regionId];
+  if (regionTopology != null) return regionTopology;
+  final regionNodeIds = topology.nodes
+      .where((n) => n.regionId == regionId)
+      .map((n) => n.id)
+      .toSet();
+  if (regionNodeIds.isEmpty) {
+    return const MapTopology(nodes: [], edges: []);
+  }
+  final regionNodes = topology.nodes
+      .where((n) => n.regionId == regionId)
+      .toList();
+  final regionEdges = topology.edges
+      .where((e) => regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2))
+      .toList();
+  return MapTopology(nodes: regionNodes, edges: regionEdges);
+}
+
+/// For each Great Power, sets all tiles in sea zones adjacent to provinces they
+/// fully own to fullyVisible. Runs after fog decay in End-of-turn.
+/// SPEC/program/fog-and-exploration-resolution.md § Coastal sea zone full visibility.
+Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
+  Game game,
+  Map<String, Map<String, String>> visibilityAfterFogDecay,
+  MapTopology topology, {
+  Map<String, MapTopology>? topologyByRegion,
+}) {
+  final gpIds = game.players.map((p) => p.id).toSet();
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final result = <String, Map<String, String>>{};
+  for (final entry in visibilityAfterFogDecay.entries) {
+    result[entry.key] = Map<String, String>.from(entry.value);
+  }
+
+  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
+    final regionData = regionId == kRegionOldWorld
+        ? game.worldState.oldWorld
+        : game.worldState.newWorld;
+    final regionTopology = _topologyForRegion(
+      topology,
+      topologyByRegion,
+      regionId,
+    );
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) continue;
+
+    for (final player in game.players) {
+      if (!gpIds.contains(player.id)) continue;
+      final playerId = player.id;
+      final vis = result[playerId];
+      if (vis == null) continue;
+
+      for (final province in regionData.provinces) {
+        if (province.ownerId != playerId) continue;
+        final fullProvinceId = province.id;
+        final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+          regionTopology,
+          fullProvinceId,
+          regionId: regionId,
+        );
+        for (final seaZoneLocalId in adjacentSeaZones) {
+          final tileKeys = regionTileKeys[seaZoneLocalId];
+          if (tileKeys == null) continue;
+          for (final tileKey in tileKeys) {
+            vis[tileKey] = VisibilityLevel.fullyVisible.name;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
