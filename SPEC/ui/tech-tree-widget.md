@@ -15,6 +15,46 @@
 - **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for MVP.
 - **Categories:** One graph shows **all** techs. Each node is **color-coded by category** (gathering, transport, labour, civilian, diplomacy, naval, military; new-world if present). Category colours are distinct and consistent (e.g. gathering = green, transport = blue, labour = amber, etc.; exact palette in theme or widget).
 
+## Icons (one per category)
+
+Each tech node displays a **category icon** to the left of its label. Icons are assigned by category—every tech inherits the icon of its category:
+
+| Category | Icon filename | Icon description |
+|----------|---------------|------------------|
+| gathering | `ui_icon_tech_gathering.png` | Shovel/pickaxe for resource extraction |
+| new-world | `ui_icon_tech_new_world.png` | Compass or globe for New World discoveries |
+| transport | `ui_icon_tech_transport.png` | Road/wagon icon |
+| labour | `ui_icon_tech_labour.png` | Quill/pen for trade and commerce |
+| civilian | `ui_icon_tech_civilian.png` | Town hall/building icon |
+| diplomacy | `ui_icon_tech_diplomacy.png` | Dove with olive branch |
+| naval | `ui_icon_tech_naval.png` | Ship/anchor icon |
+| military | `ui_icon_tech_military.png` | Crossed swords or shield |
+
+**File naming:** `ui_icon_tech_<category>.png` in `app/assets/images/`.
+
+**Size:** 32×32, matching toolbar icons per [game-toolbar-icons.md](game-toolbar-icons.md).
+
+**Style:** Colonial 16th/17th century pixel art, matching existing UI icons (single color outline, medium shading).
+
+### Implementation
+
+The widget reads `tech.category` and looks up the icon path via a static map:
+
+```dart
+static const Map<String, String> _categoryIcons = {
+  'gathering': 'assets/images/ui_icon_tech_gathering.png',
+  'new-world': 'assets/images/ui_icon_tech_new_world.png',
+  'transport': 'assets/images/ui_icon_tech_transport.png',
+  'labour': 'assets/images/ui_icon_tech_labour.png',
+  'civilian': 'assets/images/ui_icon_tech_civilian.png',
+  'diplomacy': 'assets/images/ui_icon_tech_diplomacy.png',
+  'naval': 'assets/images/ui_icon_tech_naval.png',
+  'military': 'assets/images/ui_icon_tech_military.png',
+};
+```
+
+If no icon exists for a category, omit the icon (backwards compatible).
+
 ### Legend
 
 - **Category legend:** The tree screen shows a compact legend explaining the colour for each tech category (e.g. gathering = green, transport = blue, etc.), using the same palette as the nodes.
