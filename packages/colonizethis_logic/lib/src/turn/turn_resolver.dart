@@ -337,7 +337,12 @@ TurnResolutionResult resolveTurnForGame({
         break;
       case TurnPhase.endOfTurn:
         {
-          state = runEndOfTurnPhase(state, onDialogue: onDialogue);
+          state = runEndOfTurnPhase(
+            state,
+            topology: topology,
+            topologyByRegion: topologyByRegion,
+            onDialogue: onDialogue,
+          );
           emitVictorySetEvent(state, turn, onGameEvent);
           break;
         }

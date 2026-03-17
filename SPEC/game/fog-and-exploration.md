@@ -21,6 +21,14 @@ Four levels per player per tile. Visibility state is keyed by player and by prov
 
 Own provinces are always fully visible and never decay. Fogged applies only to other factions' provinces.
 
+### Coastal sea zone visibility
+
+For each **Great Power** (including the human player), all tiles in sea zones that are **immediately adjacent** (P–S edge in topology) to a province that player **fully owns** are **fully visible** to that player. Unknown or fogged tiles in those sea zones are overridden to fully visible.
+
+- **Ownership:** Only provinces with direct ownership (`Province.ownerId == playerId`). Vassals/puppets do not count.
+- **Recalculation:** Every turn at turn resolution, **after** all phases that affect visibility: Movement (ship reveal), Combat (ownership change), Build/work (exploration, prospecting), End-of-turn fog decay. The coastal sea zone visibility step runs in End-of-turn after fog decay so visibility is consistent for all players before the turn advances.
+- **Scope:** Full game rule: authoritative visibility state and PlayerView are updated; map widget, order suggestions, and AI use the same visibility.
+
 ### Initial Visibility
 
 - **Old World:** Starts fogged (own provinces fully visible).
@@ -123,6 +131,7 @@ Per [world-model-identity.md](world-model-identity.md):
 - **Order visibility:** Move orders require source and destination each with at least one tile not unknown. Work orders require minimum visibility per unit type and target (e.g. explore ≥ revealed, prospect ≥ fogged, build_* ≥ fogged); province and tile identity use prefixed form per world-model-identity.
 - **Extraction gating:** Minerals extractable only from connected, prospected tiles for that player; non-minerals unchanged.
 - **Implementation:** Visibility resolution, Spy timer, and PlayerView construction: [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+- **Coastal sea zone visibility:** For each Great Power, all tiles in sea zones adjacent (P–S) to provinces they fully own are fully visible; recalculated every turn in End-of-turn after fog decay; only direct ownership; overrides unknown/fogged for those tiles.
 
 ### Given–When–Then acceptance criteria
 
@@ -137,3 +146,15 @@ Per [world-model-identity.md](world-model-identity.md):
 - Given a Spy belonging to player A is located in a province owned by player B and that province has at least one land tile  
   When the system constructs the PlayerView for player A  
   Then all land tiles in that province appear in player A's PlayerView with visibility level `fullyVisible` while the Spy remains there, and this enhanced visibility does not change tile visibility for any other player.
+
+- Given a Great Power owns at least one coastal province P and sea zone S is adjacent to P (P–S edge in topology)  
+  When the system has run the End-of-turn phase including the coastal sea zone visibility step  
+  Then every tile in sea zone S has visibility `fullyVisible` for that player in WorldState and in that player's PlayerView.
+
+- Given a Great Power conquers a coastal province P so that P becomes owned by them, and sea zone S is adjacent to P  
+  When the system has run the End-of-turn phase including the coastal sea zone visibility step  
+  Then every tile in sea zone S has visibility `fullyVisible` for that player (even if those tiles were previously unknown or fogged).
+
+- Given a Great Power no longer owns any province adjacent to sea zone S (e.g. lost the only coastal province next to S)  
+  When the system has run the End-of-turn phase including the coastal sea zone visibility step  
+  Then coastal sea zone visibility does not force S's tiles to fully visible for that player; their visibility remains whatever they were from other sources (e.g. ship reveal, or they may become fogged/unrevealed over time per other rules).
