@@ -106,6 +106,7 @@ Future<({
   Map<String, TileMapResult> tileMapByRegion,
   Map<String, MapTopology> topologyByRegion,
   MapTopology combinedTopology,
+  List<WarpLink>? warpLinks,
 })?> loadMapData(String gameId, [String? dataDirOverride]) async {
   final box = await _ensureBox(dataDirOverride);
   return _adapter.loadMapData(box, gameId);
@@ -125,6 +126,7 @@ Future<void> saveGameAndMapData(
     tileMapByRegion: result.tileMapByRegion,
     topologyByRegion: result.topologyByRegion,
     combinedTopology: result.combinedTopology,
+    warpLinks: result.warpLinks,
   );
   _log.i('tui:save: saved gameId=${game.id} with map data');
 }

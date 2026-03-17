@@ -36,7 +36,7 @@ The base (tile) layer can show terrain only, terrain plus resource icons, or ter
 | **terrainAndResources** | Yes | Yes (icon) | No |
 | **terrainResourcesImprovements** | Yes | Yes (icon) | Yes |
 
-Implementation: a single overlay pass draws per-cell icons and text; the mode controls which elements are included. Capitals and ports are always drawn regardless of mode.
+Implementation: a single overlay pass draws per-cell icons and text; the mode controls which elements are included. Capitals, ports, and warp zone indicators are always drawn regardless of mode.
 
 ---
 
@@ -73,6 +73,30 @@ All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style ma
 - **Size:** Icons are scaled to fit within the cell (default 32×32 icons on 32px cells render at native size; zoom scales proportionally).
 - **Caching:** The component loads all resource icons at startup via Flame's `Images` cache and reuses them across tiles.
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
+
+---
+
+## Warp Zone Indicators
+
+Warp zones are sea zones that link to sea zones in other regions (Old World ↔ New World). The map widget renders a **glowing yellow border** around each warp sea zone to make cross-region connections visible.
+
+### Data Source
+
+Warp zone indicators are provided via `RegionMapViewData.warpMarkers` (list of `WarpMarkerView`). Each marker contains:
+- `x`, `y`: Tile coordinates (representative tile of the warp sea zone)
+- `seaZoneId`: The sea zone identifier
+- `otherRegionId`: The connected region ID
+- `otherSeaZoneId`: The connected sea zone ID on the other region
+
+### Rendering
+
+- **Style:** Glowing yellow border drawn around the perimeter of all tiles belonging to a warp sea zone.
+- **Glow Effect:** Two-layer border:
+  - Outer layer: 3px wide, semi-transparent gold (`0xFFFFD700` at 30% alpha)
+  - Inner layer: 1.5px wide, bright yellow (`0xFFFFEA00`)
+- **Border Logic:** Edges are drawn where a warp sea zone tile is adjacent to a non-warp tile (different sea zone or land province), similar to province border rendering.
+- **Layer:** Rendered after the base terrain and overlays (after ports, same layer as capitals).
+- **Visibility:** Always visible regardless of `baseLayerDisplayMode` (same as capitals and ports).
 
 The **in-game shell** (Empire overview) may overlay a cycle button that toggles this mode; see [empire-overview.md](empire-overview.md).
 
@@ -269,6 +293,8 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
 - **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource icons, and improvement/road labels are all drawn per cell where present.
 - **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/images/ui_icon_com_<resource_id>.png` and rendered centered within the tile cell.
+- **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
+- **Given** a map widget with `RegionMapViewData.warpMarkers` populated, **when** the user hovers over a warp zone sea zone tile, **then** the province border glow is shown (same as any other sea zone).
 
 ---
 

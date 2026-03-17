@@ -23,6 +23,8 @@ InitGameMapViewData buildInitGameMapViewData({
   /// key `regionId|provinceId|x|y`. When omitted, all tiles are treated as
   /// [TileVisibility.visible] in the view data.
   Map<String, TileVisibility>? visibilityByTile,
+  /// Optional warp links for rendering warp zone indicators.
+  List<WarpLink>? warpLinks,
 }) {
   Logger().i('map: buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
@@ -39,6 +41,7 @@ InitGameMapViewData buildInitGameMapViewData({
     isOldWorld: true,
     greatPowerColorOverride: greatPowerColorOverride,
     visibilityByTile: visibilityByTile,
+    warpLinks: warpLinks,
   );
   final nwRegion = _buildRegionViewData(
     regionId: _regionNewWorld,
@@ -49,6 +52,7 @@ InitGameMapViewData buildInitGameMapViewData({
     isOldWorld: false,
     greatPowerColorOverride: greatPowerColorOverride,
     visibilityByTile: visibilityByTile,
+    warpLinks: warpLinks,
   );
 
   Logger().i('map: buildInitGameMapViewData end');
@@ -69,6 +73,7 @@ RegionMapViewData _buildRegionViewData({
   required bool isOldWorld,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
   Map<String, TileVisibility>? visibilityByTile,
+  List<WarpLink>? warpLinks,
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -264,6 +269,53 @@ RegionMapViewData _buildRegionViewData({
     );
   });
 
+  // Sea zone id → representative tile (x,y) for warp zone markers.
+  final seaZoneToTile = <String, (int x, int y)>{};
+  for (var y = 0; y < tileMap.height; y++) {
+    for (var x = 0; x < tileMap.width; x++) {
+      final localId = tileMap.cell(x, y);
+      if (!seaZoneIds.contains(localId)) {
+        continue;
+      }
+      if (!seaZoneToTile.containsKey(localId)) {
+        seaZoneToTile[localId] = (x, y);
+      }
+    }
+  }
+
+  // Warp zone markers: one per warp link for this region.
+  final warpMarkers = <WarpMarkerView>[];
+  if (warpLinks != null) {
+    for (final link in warpLinks) {
+      // Check if this link involves the current region (either as source or destination).
+      if (link.regionId == regionId) {
+        // This region is the source of the warp link.
+        final tile = seaZoneToTile[link.seaZoneId];
+        if (tile != null) {
+          warpMarkers.add(WarpMarkerView(
+            x: tile.$1,
+            y: tile.$2,
+            seaZoneId: link.seaZoneId,
+            otherRegionId: link.otherRegionId,
+            otherSeaZoneId: link.otherSeaZoneId,
+          ));
+        }
+      } else if (link.otherRegionId == regionId) {
+        // This region is the destination of the warp link (reverse direction).
+        final tile = seaZoneToTile[link.otherSeaZoneId];
+        if (tile != null) {
+          warpMarkers.add(WarpMarkerView(
+            x: tile.$1,
+            y: tile.$2,
+            seaZoneId: link.otherSeaZoneId,
+            otherRegionId: link.regionId,
+            otherSeaZoneId: link.seaZoneId,
+          ));
+        }
+      }
+    }
+  }
+
   return RegionMapViewData(
     regionId: regionId,
     width: tileMap.width,
@@ -275,6 +327,7 @@ RegionMapViewData _buildRegionViewData({
     factionColors: factionColors,
     terrainColors: terrainColors,
     unitMarkers: unitMarkers,
+    warpMarkers: warpMarkers,
   );
 }
 
