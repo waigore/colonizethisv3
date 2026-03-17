@@ -522,7 +522,6 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
-    final desired = ref.read(productionDesiredOutputProvider);
     return [
       _empireButton(
         context,
@@ -535,11 +534,6 @@ class _GameMapAreaState extends ConsumerState<_GameMapArea> {
               builder: (ctx) => ProductionScreen(
                 game: widget.game,
                 player: player,
-                desiredOutputByRecipe: desired,
-                onDesiredOutputChanged: (newMap) {
-                  ref.read(productionDesiredOutputProvider.notifier).state =
-                      newMap;
-                },
               ),
             ),
           );
