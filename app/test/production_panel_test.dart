@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 
@@ -48,8 +49,9 @@ void main() {
   }
 
   group('ProductionPanel', () {
-    testWidgets('Available subpanel shows commodity groups',
-        (WidgetTester tester) async {
+    testWidgets('Available subpanel shows commodity groups', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
@@ -61,8 +63,9 @@ void main() {
       expect(find.textContaining('Effective labour:'), findsOneWidget);
     });
 
-    testWidgets('Available subpanel shows raw materials used as inputs',
-        (WidgetTester tester) async {
+    testWidgets('Available subpanel shows raw materials used as inputs', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
@@ -71,26 +74,32 @@ void main() {
       expect(find.textContaining('Coal:'), findsOneWidget);
     });
 
-    testWidgets('Allocation subpanel shows recipe labels with inputs',
-        (WidgetTester tester) async {
+    testWidgets('Allocation subpanel shows recipe labels with inputs', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
       expect(find.text('Allocation'), findsOneWidget);
-      expect(find.byType(CtSlider),
-          findsNWidgets(ProductionRecipesCatalog.all.length));
+      expect(
+        find.byType(CtSlider),
+        findsNWidgets(ProductionRecipesCatalog.all.length),
+      );
       expect(find.textContaining('Lumber'), findsWidgets);
       expect(find.textContaining('Fabric'), findsWidgets);
     });
 
-    testWidgets('Reset button clears all allocations',
-        (WidgetTester tester) async {
+    testWidgets('Reset button clears all allocations', (
+      WidgetTester tester,
+    ) async {
       Map<String, int>? lastOutput;
-      await tester.pumpWidget(buildPanel(
-        player: fullPlayer,
-        desiredOutputByRecipe: {'lumber_from_timber': 5},
-        onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
-      ));
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: {'lumber_from_timber': 5},
+          onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Reset'), findsOneWidget);
@@ -101,13 +110,16 @@ void main() {
       expect(lastOutput!.isEmpty, isTrue);
     });
 
-    testWidgets('Moving slider calls onDesiredOutputChanged',
-        (WidgetTester tester) async {
+    testWidgets('Moving slider calls onDesiredOutputChanged', (
+      WidgetTester tester,
+    ) async {
       Map<String, int>? lastOutput;
-      await tester.pumpWidget(buildPanel(
-        player: fullPlayer,
-        onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
-      ));
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
+        ),
+      );
       await tester.pumpAndSettle();
 
       final sliders = find.byType(CtSlider);
@@ -119,13 +131,12 @@ void main() {
       expect(lastOutput!.values.any((v) => v > 0), isTrue);
     });
 
-    testWidgets('Narrow viewport stacks subpanels and is scrollable',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        player: fullPlayer,
-        width: 400,
-        height: 600,
-      ));
+    testWidgets('Narrow viewport stacks subpanels and is scrollable', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(player: fullPlayer, width: 400, height: 600),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(SingleChildScrollView), findsAtLeastNWidgets(1));
@@ -133,13 +144,12 @@ void main() {
       expect(find.text('Allocation'), findsOneWidget);
     });
 
-    testWidgets('Wide viewport shows subpanels in row',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        player: fullPlayer,
-        width: 800,
-        height: 500,
-      ));
+    testWidgets('Wide viewport shows subpanels in row', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(player: fullPlayer, width: 800, height: 500),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(Row), findsWidgets);
@@ -154,12 +164,15 @@ void main() {
       expect(find.textContaining('Total labour:'), findsOneWidget);
     });
 
-    testWidgets('Net changes shown when allocations exist',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        player: fullPlayer,
-        desiredOutputByRecipe: {'lumber_from_timber': 5},
-      ));
+    testWidgets('Net changes shown when allocations exist', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: {'lumber_from_timber': 5},
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Timber:'), findsOneWidget);
@@ -168,25 +181,104 @@ void main() {
       expect(find.textContaining(r'(+5)'), findsOneWidget);
     });
 
-    testWidgets('Partial availability: sliders capped by achievable runs',
-        (WidgetTester tester) async {
+    testWidgets('Partial availability: sliders capped by achievable runs', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildPanel(player: partialPlayer));
       await tester.pumpAndSettle();
 
-      expect(find.byType(CtSlider),
-          findsNWidgets(ProductionRecipesCatalog.all.length));
+      expect(
+        find.byType(CtSlider),
+        findsNWidgets(ProductionRecipesCatalog.all.length),
+      );
       expect(find.text('Available'), findsOneWidget);
       expect(find.textContaining('Effective labour: 2'), findsOneWidget);
     });
 
-    testWidgets('Recipe labels show output with inputs in parentheses',
-        (WidgetTester tester) async {
+    testWidgets('Recipe labels show output with inputs in parentheses', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('('), findsWidgets);
       expect(find.textContaining('Lumber'), findsWidgets);
       expect(find.textContaining('Fabric'), findsWidgets);
+    });
+  });
+
+  group('ResourceIcon', () {
+    testWidgets('ResourceIcon displays for known commodities', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                ResourceIcon(commodityId: 'grain', size: 16),
+                ResourceIcon(commodityId: 'timber', size: 16),
+                ResourceIcon(commodityId: 'lumber', size: 16),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ResourceIcon), findsNWidgets(3));
+    });
+
+    testWidgets('ResourceIcon returns empty for unknown commodity', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ResourceIcon(commodityId: 'unknown_commodity', size: 16),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ResourceIcon), findsOneWidget);
+    });
+  });
+
+  group('WorkerIcon', () {
+    testWidgets('WorkerIcon displays for known worker types', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                WorkerIcon(workerType: 'peasant', size: 16),
+                WorkerIcon(workerType: 'apprentice', size: 16),
+                WorkerIcon(workerType: 'journeyman', size: 16),
+                WorkerIcon(workerType: 'master', size: 16),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkerIcon), findsNWidgets(4));
+    });
+
+    testWidgets('WorkerIcon returns empty for unknown type', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WorkerIcon(workerType: 'unknown', size: 16)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkerIcon), findsOneWidget);
     });
   });
 }
