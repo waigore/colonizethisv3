@@ -17,6 +17,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required RegionMapViewData region,
     required double cellSizePx,
     required bool showPoliticalOverlay,
+    required bool showBordersLayer,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
@@ -31,6 +32,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
+       showBordersLayer = showBordersLayer,
        visibilityMode = visibilityMode,
        baseLayerDisplayMode = baseLayerDisplayMode,
        onProvinceSelected = onProvinceSelected,
@@ -45,6 +47,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   RegionMapViewData region;
   final double cellSizePx;
   bool showPoliticalOverlay;
+  bool showBordersLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
@@ -69,6 +72,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       region: region,
       cellSize: cellSizePx,
       showPoliticalOverlay: showPoliticalOverlay,
+      showBordersLayer: showBordersLayer,
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
@@ -106,6 +110,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void updateProps({
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
+    bool? showBordersLayer,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? highlightedTileKey,
@@ -116,6 +121,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
     if (showPoliticalOverlay != null) {
       this.showPoliticalOverlay = showPoliticalOverlay;
+    }
+    if (showBordersLayer != null) {
+      this.showBordersLayer = showBordersLayer;
     }
     if (visibilityMode != null) {
       this.visibilityMode = visibilityMode;
@@ -135,6 +143,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..region = this.region
         ..cellSize = cellSizePx
         ..showPoliticalOverlay = this.showPoliticalOverlay
+        ..showBordersLayer = this.showBordersLayer
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
         ..highlightedTileKey = this.highlightedTileKey
@@ -302,6 +311,7 @@ class CtRegionMap extends StatefulWidget {
     super.key,
     required this.region,
     this.showPoliticalOverlay = true,
+    this.showBordersLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
     this.baseLayerDisplayMode,
@@ -318,6 +328,7 @@ class CtRegionMap extends StatefulWidget {
 
   final RegionMapViewData region;
   final bool showPoliticalOverlay;
+  final bool showBordersLayer;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
 
@@ -351,6 +362,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
     super.didUpdateWidget(oldWidget);
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
+        widget.showBordersLayer != oldWidget.showBordersLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
@@ -358,6 +370,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
+        showBordersLayer: widget.showBordersLayer,
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
@@ -379,6 +392,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       region: widget.region,
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
+      showBordersLayer: widget.showBordersLayer,
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:
           widget.baseLayerDisplayMode ??

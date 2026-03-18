@@ -5,6 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
+/// Global borders visibility for in-game Empire overview maps.
+/// Controls whether province and sea-zone boundary strokes are drawn.
+/// Defaults to true at app start; updated via the Map display options dialog.
+final mapBordersVisibleProvider = StateProvider<bool>((ref) => true);
+
 /// Map view data for the current game with player-constrained visibility.
 /// Null when no game, no map data (legacy save), or loading.
 final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
