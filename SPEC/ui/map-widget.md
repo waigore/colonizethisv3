@@ -273,7 +273,8 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 ## Acceptance criteria
 
 - **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
-- **When** the political overlay is enabled, **then** political borders are drawn on top of the base layer; when disabled, they are not.
+- **When** the political overlay is enabled, **then** political borders are drawn on top of the base layer (including province and sea-zone boundaries); when disabled, they are not.
+- **When** the map renders province/sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line); other political borders are also rendered subtly (not solid black).
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
 - **When** the user zooms, **then** only fixed zoom levels are used and zooming is smooth between levels.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.

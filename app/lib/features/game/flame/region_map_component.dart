@@ -14,6 +14,12 @@ final _log = Logger();
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
 
+/// Political border stroke colors.
+/// These are intentionally subtle so they don't overpower the terrain art.
+const Color _provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
+const Color _provinceBorderSeaLandColor = Color.fromRGBO(0, 0, 0, 0.25);
+const Color _provinceBorderSeaZoneColor = Color.fromRGBO(130, 200, 255, 0.55);
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -775,13 +781,14 @@ class CtRegionMapComponent extends PositionComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = Colors.black;
+      ..color = _provinceBorderLandColor;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (cell.regionCellId != right.regionCellId) {
+            paint.color = _provinceBorderColor(cell, right);
             final xEdge = (x + 1) * cellSize;
             canvas.drawLine(
               Offset(xEdge, y * cellSize),
@@ -793,6 +800,7 @@ class CtRegionMapComponent extends PositionComponent {
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (cell.regionCellId != bottom.regionCellId) {
+            paint.color = _provinceBorderColor(cell, bottom);
             final yEdge = (y + 1) * cellSize;
             canvas.drawLine(
               Offset(x * cellSize, yEdge),
@@ -803,6 +811,15 @@ class CtRegionMapComponent extends PositionComponent {
         }
       }
     }
+  }
+
+  Color _provinceBorderColor(CellViewData a, CellViewData b) {
+    final aIsSea = a.isSea;
+    final bIsSea = b.isSea;
+    if (aIsSea && bIsSea) return _provinceBorderSeaZoneColor;
+    if (!aIsSea && !bIsSea) return _provinceBorderLandColor;
+    // Mixed land/sea edge.
+    return _provinceBorderSeaLandColor;
   }
 
   void _paintFactionBorders(Canvas canvas) {
