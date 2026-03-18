@@ -66,14 +66,12 @@ class GameMapCornerControls extends StatelessWidget {
             message: 'Map display options',
             child: InkWell(
               onTap: onOpenMapDisplayOptions,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Text(
-                  'Map options',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Image.asset(
+                  'assets/images/ui_icon_map_options.png',
+                  width: 20,
+                  height: 20,
                 ),
               ),
             ),
@@ -83,4 +81,3 @@ class GameMapCornerControls extends StatelessWidget {
     );
   }
 }
-

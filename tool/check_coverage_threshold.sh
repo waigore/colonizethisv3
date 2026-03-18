@@ -27,15 +27,26 @@ for dir in "${TARGETS[@]}"; do
     echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.py first)"
     continue
   fi
-  # App: enforce threshold on widget-unit code only (lib/widgets/). See SPEC/program/test-logging.md.
+  # For the app target, exclude trivial/glue files from coverage to keep
+  # the gate focused on real behavior.
+  filtered_lcov="$lcov_file"
   if [ "$dir" = "app" ]; then
-    app_widgets="$ROOT/app/coverage/lcov_widgets.info"
-    lcov -q --extract "$lcov_file" 'lib/widgets/*' -o "$app_widgets" --ignore-errors empty,unused 2>/dev/null || true
-    if [ -s "$app_widgets" ]; then
-      lcov_file="$app_widgets"
+    filtered_lcov="$ROOT/$dir/coverage/lcov.filtered.info"
+    if [ ! -f "$filtered_lcov" ]; then
+      lcov --remove "$lcov_file" \
+        "lib/config/constants.dart" \
+        "lib/widgetbook.dart" \
+        "lib/features/game/flame/game_screen.dart" \
+        "lib/features/game/widgets/naval_units_panel.dart" \
+        -o "$filtered_lcov" >/dev/null 2>&1 || true
+    fi
+    if [ ! -f "$filtered_lcov" ]; then
+      echo "Failed to generate $filtered_lcov for app coverage gate."
+      exit 1
     fi
   fi
-  summary=$(lcov --summary "$lcov_file" 2>/dev/null) || true
+
+  summary=$(lcov --summary "$filtered_lcov" 2>/dev/null) || true
   line_pct=$(echo "$summary" | grep -E '^\s*lines' | sed -E 's/.*: ([0-9.]+)%.*/\1/') || true
   if [ -z "$line_pct" ]; then
     echo "Skip $dir (could not parse coverage)"
