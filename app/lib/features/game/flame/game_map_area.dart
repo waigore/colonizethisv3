@@ -25,11 +25,7 @@ import 'next_turn_confirmation_dialog.dart';
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 class GameMapArea extends ConsumerStatefulWidget {
-  const GameMapArea({
-    required this.game,
-    required this.mapViewData,
-    super.key,
-  });
+  const GameMapArea({required this.game, required this.mapViewData, super.key});
 
   final ct_models.Game game;
   final InitGameMapViewData mapViewData;
@@ -46,6 +42,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
+  Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
@@ -65,10 +62,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
 
-  Set<String>? get _validTileKeysForSelection {
-    if (_workTargetSelection == null) return null;
+  Set<String>? get _validTileKeysForSelection => _cachedValidTileKeys;
+
+  void _computeValidTileKeysForSelection() {
+    if (_workTargetSelection == null) {
+      _cachedValidTileKeys = null;
+      return;
+    }
     final game = ref.read(currentGameProvider);
-    if (game == null) return null;
+    if (game == null) {
+      _cachedValidTileKeys = null;
+      return;
+    }
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
@@ -81,7 +86,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       workTarget: _workTargetSelection!.workTarget,
       currentOrders: orders,
     );
-    return valid.where((k) => k.startsWith('$_currentRegionId|')).toSet();
+    _cachedValidTileKeys = valid
+        .where((k) => k.startsWith('$_currentRegionId|'))
+        .toSet();
   }
 
   void _cycleBaseLayerDisplayMode() {
@@ -206,13 +213,17 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       targetTileKey: targetTileKey,
     );
     final orders = ref.read(currentOrdersProvider);
-    ref.read(currentOrdersProvider.notifier).state =
-        GameMapAreaStateLogic.addHumanWorkOrder(
+    ref
+        .read(currentOrdersProvider.notifier)
+        .state = GameMapAreaStateLogic.addHumanWorkOrder(
       orders: orders,
       humanPlayerId: _humanPlayerId,
       workOrder: workOrder,
     );
-    setState(() => _workTargetSelection = null);
+    setState(() {
+      _workTargetSelection = null;
+      _cachedValidTileKeys = null;
+    });
   }
 
   void _cancelUnitWork(String unitId) {
@@ -289,16 +300,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   onProvinceSelected: _onProvinceSelected,
                   onProvinceHovered: (id) =>
                       setState(() => _hoveredDetailId = id),
-                  onTileHovered: (key) =>
-                      setState(() => _hoveredTileKey = key),
+                  onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   onTileSelectedForWork: _workTargetSelection != null
                       ? _onTileSelectedForWork
                       : null,
-                  onWorkTargetSelectionCancelled:
-                      _workTargetSelection != null
-                          ? () =>
-                              setState(() => _workTargetSelection = null)
-                          : null,
+                  onWorkTargetSelectionCancelled: _workTargetSelection != null
+                      ? () => setState(() {
+                          _workTargetSelection = null;
+                          _cachedValidTileKeys = null;
+                        })
+                      : null,
                   onHighlightTile: (k) =>
                       setState(() => _highlightedTileKey = k),
                   onCloseDetailOverlay: () => setState(() {
@@ -320,16 +331,20 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             title: const Text('Map display options'),
                             content: Consumer(
                               builder: (context, ref, _) {
-                                final bordersVisible =
-                                    ref.watch(mapBordersVisibleProvider);
+                                final bordersVisible = ref.watch(
+                                  mapBordersVisibleProvider,
+                                );
                                 return SwitchListTile(
                                   title: const Text('Show borders'),
                                   value: bordersVisible,
                                   onChanged: (value) {
                                     ref
-                                        .read(mapBordersVisibleProvider
-                                            .notifier)
-                                        .state = value;
+                                            .read(
+                                              mapBordersVisibleProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        value;
                                   },
                                 );
                               },
@@ -380,10 +395,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     onLocateNavalFleet: _onLocateNavalFleet,
                     onCancelUnitWork: _cancelUnitWork,
                     onStartWorkTargetSelection: (unit, workTarget) {
-                      setState(() => _workTargetSelection = (
-                        unit: unit,
-                        workTarget: workTarget,
-                      ));
+                      setState(() {
+                        _workTargetSelection = (
+                          unit: unit,
+                          workTarget: workTarget,
+                        );
+                        _computeValidTileKeysForSelection();
+                      });
                     },
                   ),
                 ],
@@ -399,8 +417,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             displayId: _displayId,
             humanPlayerId: _humanPlayerId,
             hoveredTileKey: _hoveredTileKey,
-            onHighlightTile: (k) =>
-                setState(() => _highlightedTileKey = k),
+            onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
             onClose: () => setState(() {
               _selectedDetailId = null;
               _highlightedTileKey = null;
@@ -410,4 +427,3 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     );
   }
 }
-

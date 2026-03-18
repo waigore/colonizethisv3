@@ -50,14 +50,14 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   bool showBordersLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
-  final void Function(String provinceId)? onProvinceSelected;
-  final VoidCallback? onRegionViewChanged;
-  final void Function(String? provinceId)? onProvinceHovered;
-  final void Function(String? tileKey)? onTileHovered;
+  void Function(String provinceId)? onProvinceSelected;
+  VoidCallback? onRegionViewChanged;
+  void Function(String? provinceId)? onProvinceHovered;
+  void Function(String? tileKey)? onTileHovered;
   String? highlightedTileKey;
   Set<String>? validTileKeys;
-  final void Function(String tileKey)? onTileSelected;
-  final VoidCallback? onWorkTargetSelectionCancelled;
+  void Function(String tileKey)? onTileSelected;
+  VoidCallback? onWorkTargetSelectionCancelled;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -77,21 +77,17 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
       onProvinceHovered: onProvinceHovered,
-      onTileHovered: (tileKey) {
+      onTileHovered: onTileHovered,
+      onTileTapped: (tileKey) {
+        // Tap handler for work target selection mode.
         if (onTileSelected != null && validTileKeys != null) {
-          if (validTileKeys!.isNotEmpty) {
-            // Work target mode with valid tiles: check if tapped tile is valid.
-            if (tileKey != null && validTileKeys!.contains(tileKey)) {
-              onTileSelected!.call(tileKey);
-            } else {
-              onWorkTargetSelectionCancelled?.call();
-            }
+          if (tileKey != null &&
+              validTileKeys!.isNotEmpty &&
+              validTileKeys!.contains(tileKey)) {
+            onTileSelected!.call(tileKey);
           } else {
-            // Work target mode but no valid tiles: allow cancel on any tap.
             onWorkTargetSelectionCancelled?.call();
           }
-        } else {
-          onTileHovered?.call(tileKey);
         }
       },
       highlightedTileKey: highlightedTileKey,
@@ -115,6 +111,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? highlightedTileKey,
     Set<String>? validTileKeys,
+    bool clearValidTileKeys = false,
+    void Function(String tileKey)? onTileSelected,
+    VoidCallback? onWorkTargetSelectionCancelled,
   }) {
     if (region != null) {
       this.region = region;
@@ -134,9 +133,14 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (highlightedTileKey != null) {
       this.highlightedTileKey = highlightedTileKey;
     }
-    if (validTileKeys != null) {
+    if (clearValidTileKeys) {
+      this.validTileKeys = null;
+    } else if (validTileKeys != null) {
       this.validTileKeys = validTileKeys;
     }
+    // Update callbacks (these may change when parent widget rebuilds).
+    this.onTileSelected = onTileSelected;
+    this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
 
     if (_mapLoaded) {
       _mapComponent
@@ -366,7 +370,10 @@ class _CtRegionMapState extends State<CtRegionMap> {
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
-        widget.highlightedTileKey != oldWidget.highlightedTileKey) {
+        widget.highlightedTileKey != oldWidget.highlightedTileKey ||
+        widget.onTileSelected != oldWidget.onTileSelected ||
+        widget.onWorkTargetSelectionCancelled !=
+            oldWidget.onWorkTargetSelectionCancelled) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -377,6 +384,10 @@ class _CtRegionMapState extends State<CtRegionMap> {
             BaseLayerDisplayMode.terrainResourcesImprovements,
         highlightedTileKey: widget.highlightedTileKey,
         validTileKeys: widget.validTileKeys,
+        clearValidTileKeys:
+            widget.validTileKeys == null && oldWidget.validTileKeys != null,
+        onTileSelected: widget.onTileSelected,
+        onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
       );
     }
     if (widget.centerOnTileKey != null &&
