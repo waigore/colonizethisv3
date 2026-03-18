@@ -671,14 +671,23 @@ class CtRegionMapComponent extends PositionComponent {
         final icon = resourceIconCache.getIcon(cell.resourceId);
         if (icon != null) {
           final iconSize = ResourceIconCache.iconSize;
-          final scale = cellSize / iconSize;
-          final scaledSize = iconSize * scale;
-          final dstRect = Rect.fromLTWH(
-            cx - scaledSize / 2,
-            cy - scaledSize / 4,
-            scaledSize,
-            scaledSize,
-          );
+          final tileLeft = cell.x * cellSize;
+          final tileTop = cell.y * cellSize;
+
+          // Resource icons are always 32x32, never upscaled.
+          // For tiles <= 32px: center horizontally, position in lower half.
+          // For tiles > 32px: position in bottom-left corner.
+          final double iconX;
+          final double iconY;
+          if (cellSize <= iconSize) {
+            iconX = tileLeft + (cellSize - iconSize) / 2;
+            iconY = tileTop + cellSize / 2;
+          } else {
+            iconX = tileLeft;
+            iconY = tileTop + cellSize - iconSize;
+          }
+
+          final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
           final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
           final paint = Paint();
           if (visibilityMode == CtMapVisibilityMode.playerConstrained &&

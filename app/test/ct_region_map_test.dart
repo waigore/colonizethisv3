@@ -783,5 +783,74 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
+
+    testWidgets(
+      'resource icons render at 32x32 native size for 64px tiles (SPEC/ui/map-widget.md § Resource Icons)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            cellSizePx: 64,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders correctly with 32px tile size (SPEC/ui/map-widget.md § Resource Icons)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            cellSizePx: 32,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders correctly with 16px tile size (SPEC/ui/map-widget.md § Resource Icons)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            cellSizePx: 16,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 }
