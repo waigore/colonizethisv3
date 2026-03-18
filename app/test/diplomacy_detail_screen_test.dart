@@ -118,13 +118,11 @@ void main() {
       ...game.tribes.map((t) => t.id),
     ].where((id) => id != humanPlayerId).toList();
 
-    DiplomacyRelation? bestNonNullRelation;
     String? nonEmptyHistoryFactionId;
     for (final id in allFactionIds) {
       final history = diplomaticHistoryForPair(game, humanPlayerId, id);
       if (history.isNotEmpty) {
         nonEmptyHistoryFactionId = id;
-        bestNonNullRelation = getRelation(game, humanPlayerId, id);
         break;
       }
     }
@@ -297,6 +295,182 @@ void main() {
     expect(find.text('Diplomatic history'), findsOneWidget);
     expect(find.text('Dossier'), findsNothing);
     expect(find.text('No recorded events with this faction.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'DiplomacyDetailScreen shows Peace (relation present) and hides Dossier for non-GP kind',
+      (WidgetTester tester) async {
+    const humanPlayerId = 'gp1';
+    const otherFactionId = 'gp2';
+
+    final game = _minimalGame(
+      humanPlayerId: humanPlayerId,
+      otherFactionId: otherFactionId,
+      eventType: DiplomaticEventType.peace,
+      includeHistory: false,
+      includeDossier: false,
+      atWar: false,
+    );
+
+    final relation = getRelation(game, humanPlayerId, otherFactionId);
+    expect(relation, isNotNull);
+    expect(relation!.atWar, isFalse);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: otherFactionId,
+          factionDisplayName: 'Other GP',
+          kind: FactionKind.minor,
+          relation: relation,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diplomatic history'), findsOneWidget);
+    expect(find.text('Dossier'), findsNothing);
+    expect(find.text('No recorded events with this faction.'), findsOneWidget);
+    expect(find.textContaining('Peace'), findsOneWidget);
+  });
+
+  testWidgets(
+      'DiplomacyDetailScreen shows Great Power Dossier empty-state when no evidence exists',
+      (WidgetTester tester) async {
+    const humanPlayerId = 'gp1';
+    const otherFactionId = 'gp2';
+
+    final game = _minimalGame(
+      humanPlayerId: humanPlayerId,
+      otherFactionId: otherFactionId,
+      eventType: DiplomaticEventType.declareWar,
+      includeHistory: false,
+      includeDossier: false,
+      atWar: false,
+    );
+
+    final relation = getRelation(game, humanPlayerId, otherFactionId);
+    expect(relation, isNotNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: otherFactionId,
+          factionDisplayName: 'Other GP',
+          kind: FactionKind.greatPower,
+          relation: relation,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diplomatic history'), findsOneWidget);
+    expect(find.text('Dossier'), findsOneWidget);
+    expect(find.text('No recorded events with this faction.'), findsOneWidget);
+    expect(find.text('No dossier evidence yet.'), findsOneWidget);
+    expect(find.textContaining('Peace'), findsOneWidget);
+  });
+
+  testWidgets(
+      'DiplomacyDetailScreen renders non-empty history with empty Dossier (great power)',
+      (WidgetTester tester) async {
+    const humanPlayerId = 'gp1';
+    const otherFactionId = 'gp2';
+
+    final game = _minimalGame(
+      humanPlayerId: humanPlayerId,
+      otherFactionId: otherFactionId,
+      eventType: DiplomaticEventType.declareWar,
+      includeHistory: true,
+      includeDossier: false,
+      atWar: true,
+    );
+
+    final relation = getRelation(game, humanPlayerId, otherFactionId);
+    expect(relation, isNotNull);
+    expect(relation!.atWar, isTrue);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: otherFactionId,
+          factionDisplayName: 'Other GP',
+          kind: FactionKind.greatPower,
+          relation: relation,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diplomatic history'), findsOneWidget);
+    expect(find.text('Dossier'), findsOneWidget);
+    expect(find.textContaining('declared war'), findsOneWidget);
+    expect(find.textContaining('War'), findsOneWidget);
+    expect(find.text('No dossier evidence yet.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'DiplomacyDetailScreen falls back to "Unknown faction" for events with unknown relation pairs',
+      (WidgetTester tester) async {
+    const humanPlayerId = 'gp1';
+    const unknownFactionId = 'minorX';
+
+    final game = Game(
+      id: 'test-unknown',
+      worldState: WorldState(
+        turnState: TurnState(
+          phase: TurnPhase.orders,
+          turnNumber: 1,
+        ),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      turnTimeMapping: TurnTimeMapping.gdd01,
+      players: [
+        Player(
+          id: humanPlayerId,
+          displayName: 'Human GP',
+          isHuman: true,
+          treasury: 0,
+        ),
+      ],
+      diplomacyRelations: const [],
+      diplomaticHistoryEvents: [
+        DiplomaticEvent(
+          turn: 2,
+          intraTurnIndex: 0,
+          type: DiplomaticEventType.declareWar,
+          participants: {humanPlayerId, unknownFactionId},
+          fromFactionId: humanPlayerId,
+          toFactionId: unknownFactionId,
+        ),
+      ],
+      dossierEvidenceEntries: const [],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          factionId: unknownFactionId,
+          factionDisplayName: 'Unknown Faction',
+          kind: FactionKind.minor,
+          relation: null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diplomatic history'), findsOneWidget);
+    expect(find.textContaining('Unknown faction'), findsOneWidget);
+    expect(find.textContaining('declared war'), findsOneWidget);
   });
 }
 

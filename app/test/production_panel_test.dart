@@ -195,6 +195,48 @@ void main() {
       expect(find.textContaining('Effective labour: 2'), findsOneWidget);
     });
 
+    testWidgets(
+        'Over-allocating labour shows insufficient labour warning in summary',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        player: fullPlayer,
+        desiredOutputByRecipe: {
+          // Choose a recipe and deliberately over-allocate beyond what labour allows.
+          'lumber_from_timber': 999,
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      // Summary line should turn into an error-coloured warning with explanatory text.
+      expect(
+        find.textContaining('Total labour:'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Insufficient labour — production will be capped next turn'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'Unknown recipe ids are ignored when computing total labour (no warning)',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(
+        player: fullPlayer,
+        desiredOutputByRecipe: {
+          // Not a real production recipe id; should be ignored by the panel.
+          'definitely_not_a_recipe_id': 5,
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Total labour:'), findsOneWidget);
+      expect(
+        find.text('Insufficient labour — production will be capped next turn'),
+        findsNothing,
+      );
+    });
+
     testWidgets('Recipe labels show output with inputs in parentheses', (
       WidgetTester tester,
     ) async {

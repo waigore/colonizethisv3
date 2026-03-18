@@ -26,7 +26,9 @@ List<MoveOrder> suggestMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestMoveOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestMoveOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
 
@@ -54,17 +56,24 @@ List<MoveOrder> suggestMoveOrders(
     }
 
     // Enumerate neighboring provinces in unit's region (region-scoped adjacency).
-    for (final neighborLocalId
-        in neighborProvinceIdsInRegion(topology, unitRegion, fromLocalId)) {
-      final destinationProvinceId =
-          ProvinceId.full(unitRegion, neighborLocalId);
+    for (final neighborLocalId in neighborProvinceIdsInRegion(
+      topology,
+      unitRegion,
+      fromLocalId,
+    )) {
+      final destinationProvinceId = ProvinceId.full(
+        unitRegion,
+        neighborLocalId,
+      );
 
       // Skip duplicates for this unit.
       final already = existingMoves[unit.id];
       if (already != null && already.contains(destinationProvinceId)) continue;
 
-      final destProvince =
-          view.provinceByRegionAndId(unitRegion, neighborLocalId);
+      final destProvince = view.provinceByRegionAndId(
+        unitRegion,
+        neighborLocalId,
+      );
       final destOwnerId = destProvince?.ownerId;
 
       // Require that the destination province has at least one tile that is
@@ -90,7 +99,7 @@ List<MoveOrder> suggestMoveOrders(
         final isGpOwner = game.players.any((p) => p.id == destOwnerId);
         final isMinorOrTribe =
             game.minorNations.any((m) => m.id == destOwnerId) ||
-                game.tribes.any((t) => t.id == destOwnerId);
+            game.tribes.any((t) => t.id == destOwnerId);
 
         if (isGpOwner) {
           // Civilians may not enter other Great Power territory at all.
@@ -108,7 +117,12 @@ List<MoveOrder> suggestMoveOrders(
       );
 
       if (_isMoveOrderAccepted(
-          game, topology, playerId, currentOrders, candidate)) {
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+      )) {
         suggestions.add(candidate);
       }
     }
@@ -121,11 +135,15 @@ List<MoveOrder> suggestMoveOrders(
   });
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestMoveOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestMoveOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+  );
   if (suggestions.isEmpty)
-    _log.w('$_kOrderSuggestionLogPrefix: suggestMoveOrders no candidates player=$playerId');
+    _log.w(
+      '$_kOrderSuggestionLogPrefix: suggestMoveOrders no candidates player=$playerId',
+    );
   return suggestions;
 }
 
@@ -139,7 +157,9 @@ List<WorkOrder> suggestWorkOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestWorkOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final suggestions = <WorkOrder>[];
 
@@ -171,13 +191,18 @@ List<WorkOrder> suggestWorkOrders(
     final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
 
     _log.d(
-        '$_kOrderSuggestionLogPrefix: suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}');
+      '$_kOrderSuggestionLogPrefix: suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
+    );
 
     // Explorers: explore/prospect in their current province only; visibility rules apply.
     if (isExplorer) {
       // Explore: province must be at least revealed, and something left to reveal.
       if (provinceHasAtLeastVisibility(
-          view, regionId, provinceId, VisibilityLevel.revealed)) {
+        view,
+        regionId,
+        provinceId,
+        VisibilityLevel.revealed,
+      )) {
         final hasPartiallyHiddenTile = view.visibilityByTile.entries.any((e) {
           final parts = e.key.split('|');
           if (parts.length != 4) return false;
@@ -191,7 +216,10 @@ List<WorkOrder> suggestWorkOrders(
           if (existing == null || !existing.contains(target)) {
             final targetTileKey = '$regionId|$localId|0|0';
             final candidate = WorkOrder(
-                unitId: unit.id, target: target, targetTileKey: targetTileKey);
+              unitId: unit.id,
+              target: target,
+              targetTileKey: targetTileKey,
+            );
             if (_isWorkOrderAccepted(
               game,
               topology,
@@ -207,7 +235,11 @@ List<WorkOrder> suggestWorkOrders(
 
       // Prospect: need a tile in province; use first tile if any.
       if (provinceHasAtLeastVisibility(
-              view, regionId, provinceId, VisibilityLevel.fogged) &&
+            view,
+            regionId,
+            provinceId,
+            VisibilityLevel.fogged,
+          ) &&
           tilesInProvince.isNotEmpty) {
         const prospectTarget = 'prospect';
         final existingProspect = existingTargetsByUnit[unit.id];
@@ -215,9 +247,10 @@ List<WorkOrder> suggestWorkOrders(
             !existingProspect.contains(prospectTarget)) {
           final prospectTileKey = tilesInProvince.first;
           final candidate = WorkOrder(
-              unitId: unit.id,
-              target: prospectTarget,
-              targetTileKey: prospectTileKey);
+            unitId: unit.id,
+            target: prospectTarget,
+            targetTileKey: prospectTileKey,
+          );
           if (_isWorkOrderAccepted(
             game,
             topology,
@@ -234,7 +267,8 @@ List<WorkOrder> suggestWorkOrders(
 
     // Civilian workers: only work on tiles under player control (owned province
     // or purchased tile).
-    final provinceControlled = ownerId == null ||
+    final provinceControlled =
+        ownerId == null ||
         ownerId == playerId ||
         tilesInProvince.any(
           (tk) => game.worldState.purchasedTilesByTileKey[tk] == playerId,
@@ -258,13 +292,25 @@ List<WorkOrder> suggestWorkOrders(
             continue;
           }
           final candidate = WorkOrder(
-              unitId: unit.id, target: target, targetTileKey: targetTileKey);
+            unitId: unit.id,
+            target: target,
+            targetTileKey: targetTileKey,
+          );
           if (_isWorkOrderAccepted(
-              game, topology, playerId, currentOrders, candidate)) {
-            _log.d('$_kOrderSuggestionLogPrefix: suggestWorkOrders candidate=$candidate');
+            game,
+            topology,
+            playerId,
+            currentOrders,
+            candidate,
+          )) {
+            _log.d(
+              '$_kOrderSuggestionLogPrefix: suggestWorkOrders candidate=$candidate',
+            );
             suggestions.add(candidate);
           } else {
-            _log.d('$_kOrderSuggestionLogPrefix: suggestWorkOrders rejected candidate=$candidate');
+            _log.d(
+              '$_kOrderSuggestionLogPrefix: suggestWorkOrders rejected candidate=$candidate',
+            );
           }
         }
       }
@@ -276,11 +322,17 @@ List<WorkOrder> suggestWorkOrders(
         if (allowedTargets.contains('counter_spy') && ownerId == playerId) {
           final targetTileKey = tilesInProvince.first;
           final candidate = WorkOrder(
-              unitId: unit.id,
-              target: 'counter_spy',
-              targetTileKey: targetTileKey);
+            unitId: unit.id,
+            target: 'counter_spy',
+            targetTileKey: targetTileKey,
+          );
           if (_isWorkOrderAccepted(
-              game, topology, playerId, currentOrders, candidate)) {
+            game,
+            topology,
+            playerId,
+            currentOrders,
+            candidate,
+          )) {
             suggestions.add(candidate);
           }
         }
@@ -294,11 +346,17 @@ List<WorkOrder> suggestWorkOrders(
                 tileKeysByRegion[capRegionId]?[capProvinceId] ?? const [];
             if (capTiles.isEmpty) continue;
             final candidate = WorkOrder(
-                unitId: unit.id,
-                target: 'steal_tech',
-                targetTileKey: capTiles.first);
+              unitId: unit.id,
+              target: 'steal_tech',
+              targetTileKey: capTiles.first,
+            );
             if (_isWorkOrderAccepted(
-                game, topology, playerId, currentOrders, candidate)) {
+              game,
+              topology,
+              playerId,
+              currentOrders,
+              candidate,
+            )) {
               suggestions.add(candidate);
               break;
             }
@@ -319,9 +377,17 @@ List<WorkOrder> suggestWorkOrders(
           for (final tk in tiles) {
             if (resourceByTile[tk] == null) continue;
             final candidate = WorkOrder(
-                unitId: unit.id, target: 'purchase_land', targetTileKey: tk);
+              unitId: unit.id,
+              target: 'purchase_land',
+              targetTileKey: tk,
+            );
             if (_isWorkOrderAccepted(
-                game, topology, playerId, currentOrders, candidate)) {
+              game,
+              topology,
+              playerId,
+              currentOrders,
+              candidate,
+            )) {
               suggestions.add(candidate);
               break;
             }
@@ -340,11 +406,15 @@ List<WorkOrder> suggestWorkOrders(
   });
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
+  );
   if (suggestions.isEmpty)
-    _log.w('$_kOrderSuggestionLogPrefix: suggestWorkOrders no candidates player=$playerId');
+    _log.w(
+      '$_kOrderSuggestionLogPrefix: suggestWorkOrders no candidates player=$playerId',
+    );
   return suggestions;
 }
 
@@ -355,14 +425,18 @@ List<BuildUnitOrder> suggestBuildOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestBuildOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestBuildOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
-    _log.w('$_kOrderSuggestionLogPrefix: suggestBuildOrders no capital player=$playerId');
+    _log.w(
+      '$_kOrderSuggestionLogPrefix: suggestBuildOrders no capital player=$playerId',
+    );
     return suggestions;
   }
 
@@ -377,7 +451,12 @@ List<BuildUnitOrder> suggestBuildOrders(
     );
 
     if (_isBuildOrderAccepted(
-        game, topology, playerId, currentOrders, candidate)) {
+      game,
+      topology,
+      playerId,
+      currentOrders,
+      candidate,
+    )) {
       suggestions.add(candidate);
     }
   }
@@ -392,7 +471,12 @@ List<BuildUnitOrder> suggestBuildOrders(
     );
 
     if (_isBuildOrderAccepted(
-        game, topology, playerId, currentOrders, candidate)) {
+      game,
+      topology,
+      playerId,
+      currentOrders,
+      candidate,
+    )) {
       suggestions.add(candidate);
     }
   }
@@ -400,11 +484,15 @@ List<BuildUnitOrder> suggestBuildOrders(
   suggestions.sort((a, b) => a.unitType.compareTo(b.unitType));
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestBuildOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestBuildOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}',
+  );
   if (suggestions.isEmpty)
-    _log.w('$_kOrderSuggestionLogPrefix: suggestBuildOrders no candidates player=$playerId');
+    _log.w(
+      '$_kOrderSuggestionLogPrefix: suggestBuildOrders no candidates player=$playerId',
+    );
   return suggestions;
 }
 
@@ -417,7 +505,9 @@ List<ResearchOrder> suggestResearchOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestResearchOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestResearchOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <ResearchOrder>[];
@@ -433,7 +523,8 @@ List<ResearchOrder> suggestResearchOrders(
   // Include discovery gate: only techs researchable with current visibility/prospection. SPEC/game/tech-tree.md.
   final researchableIds = researchableTechIds(
     unlocked,
-    hasDiscoveredResource: (r) => hasRevealedResourceForPlayer(game, playerId, r),
+    hasDiscoveredResource: (r) =>
+        hasRevealedResourceForPlayer(game, playerId, r),
   );
   final candidates = <TechDefinition>[];
   for (final id in researchableIds) {
@@ -466,9 +557,11 @@ List<ResearchOrder> suggestResearchOrders(
   }
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestResearchOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestResearchOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").toList()}',
+  );
   return suggestions;
 }
 
@@ -480,8 +573,12 @@ bool _isMoveOrderAccepted(
   MoveOrder candidate,
 ) {
   final engine = OrderEngine(initialOrders: baseOrders);
-  final result =
-      engine.addMoveOrderWithContext(game, topology, playerId, candidate);
+  final result = engine.addMoveOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
   return result.isAccepted;
 }
 
@@ -493,8 +590,12 @@ bool _isWorkOrderAccepted(
   WorkOrder candidate,
 ) {
   final engine = OrderEngine(initialOrders: baseOrders);
-  final result =
-      engine.addWorkOrderWithContext(game, topology, playerId, candidate);
+  final result = engine.addWorkOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
   return result.isAccepted;
 }
 
@@ -509,9 +610,9 @@ Set<String> getValidWorkOrderTileKeys(
   String workTarget,
   Orders currentOrders,
 ) {
-  final unit = allUnitsFromWorld(game.worldState)
-      .where((u) => u.id == unitId)
-      .firstOrNull;
+  final unit = allUnitsFromWorld(
+    game.worldState,
+  ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != playerId) return {};
   if (unit.currentWork != null) return {};
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
@@ -539,18 +640,16 @@ Set<String> getValidWorkOrderTileKeys(
     }
   }
   _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}');
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}',
+  );
   return valid;
 }
 
 /// Returns the set of tile keys that are valid targets for a work order,
-/// filtering by visibility from [view] BEFORE calling the order engine.
+/// filtering by work-target-specific criteria and visibility BEFORE calling
+/// the order engine for efficiency.
 ///
-/// This is more efficient than [getValidWorkOrderTileKeys] when visibility
-/// data is available, because it avoids expensive order-engine validation
-/// for invisible tiles.
-///
-/// Spec: SPEC/program/order-suggestions.md.
+/// Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
 Set<String> getValidWorkOrderTileKeysWithVisibility({
   required Game game,
   required MapTopology topology,
@@ -559,47 +658,75 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required String workTarget,
   required Orders currentOrders,
 }) {
-  final unit = allUnitsFromWorld(game.worldState)
-      .where((u) => u.id == unitId)
-      .firstOrNull;
+  final unit = allUnitsFromWorld(
+    game.worldState,
+  ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != view.playerId) {
     _log.d(
-        '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player');
+      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player',
+    );
     return {};
   }
   if (unit.currentWork != null) {
-    _log.d('$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit has current work');
+    _log.d(
+      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit has current work',
+    );
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) {
     _log.d(
-        '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}');
+      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}',
+    );
     return {};
   }
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget');
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
+  );
 
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final visibleTileKeys = <String>{};
+  final playerId = view.playerId;
+  final world = game.worldState;
+  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
+  final resourceByTile = world.resourceByTileKey;
+  final purchasedTiles = world.purchasedTilesByTileKey;
 
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      for (final tileKey in provinceEntry.value) {
-        final visibility = view.visibilityForTile(tileKey);
-        if (visibility == VisibilityLevel.fullyVisible ||
-            visibility == VisibilityLevel.fogged) {
-          visibleTileKeys.add(tileKey);
-        }
-      }
+  // Build set of owned province ids for quick lookup
+  final ownedProvinceIds = <String>{};
+  for (final p in allProvinces(world)) {
+    if (p.ownerId == playerId) {
+      ownedProvinceIds.add(p.id);
+    }
+  }
+
+  // Pre-filter candidate tiles based on work target type
+  final candidateTiles = _preFilterWorkTargetTiles(
+    game: game,
+    unit: unit,
+    workTarget: workTarget,
+    playerId: playerId,
+    tileKeysByRegion: tileKeysByRegion,
+    resourceByTile: resourceByTile,
+    purchasedTiles: purchasedTiles,
+    ownedProvinceIds: ownedProvinceIds,
+  );
+
+  // Further filter by visibility
+  final visibleCandidateTiles = <String>{};
+  for (final tileKey in candidateTiles) {
+    final visibility = view.visibilityForTile(tileKey);
+    if (visibility == VisibilityLevel.fullyVisible ||
+        visibility == VisibilityLevel.fogged) {
+      visibleCandidateTiles.add(tileKey);
     }
   }
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility visible tiles count=${visibleTileKeys.length}');
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility pre-filtered tiles count=${visibleCandidateTiles.length}',
+  );
 
+  // Final validation via order engine
   final valid = <String>{};
-  for (final tileKey in visibleTileKeys) {
+  for (final tileKey in visibleCandidateTiles) {
     final candidate = WorkOrder(
       unitId: unitId,
       target: workTarget,
@@ -608,7 +735,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     if (_isWorkOrderAccepted(
       game,
       topology,
-      view.playerId,
+      playerId,
       currentOrders,
       candidate,
     )) {
@@ -617,8 +744,281 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   }
 
   _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${visibleTileKeys.length} visible tiles)');
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${visibleCandidateTiles.length} pre-filtered tiles)',
+  );
   return valid;
+}
+
+/// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
+/// Returns a set of candidate tile keys that pass work-target requirements.
+Set<String> _preFilterWorkTargetTiles({
+  required Game game,
+  required Unit unit,
+  required String workTarget,
+  required String playerId,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> resourceByTile,
+  required Map<String, String> purchasedTiles,
+  required Set<String> ownedProvinceIds,
+}) {
+  final result = <String>{};
+
+  switch (workTarget) {
+    case 'build_improvement':
+      // Tiles in owned provinces or purchased tiles, must have resource
+      _addCandidateTilesForBuildImprovement(
+        tileKeysByRegion: tileKeysByRegion,
+        resourceByTile: resourceByTile,
+        purchasedTiles: purchasedTiles,
+        ownedProvinceIds: ownedProvinceIds,
+        playerId: playerId,
+        result: result,
+      );
+      break;
+
+    case 'build_road':
+    case 'build_rail':
+      // Tiles in owned provinces or purchased tiles
+      _addCandidateTilesForRoads(
+        tileKeysByRegion: tileKeysByRegion,
+        purchasedTiles: purchasedTiles,
+        ownedProvinceIds: ownedProvinceIds,
+        playerId: playerId,
+        result: result,
+      );
+      break;
+
+    case 'upgrade_town':
+    case 'build_fort':
+      // Town tiles in owned provinces only
+      _addCandidateTilesForTownWork(
+        game: game,
+        ownedProvinceIds: ownedProvinceIds,
+        result: result,
+      );
+      break;
+
+    case 'build_port':
+      // Coastal or river tiles in owned provinces
+      _addCandidateTilesForPort(
+        game: game,
+        ownedProvinceIds: ownedProvinceIds,
+        tileKeysByRegion: tileKeysByRegion,
+        result: result,
+      );
+      break;
+
+    case 'counter_spy':
+      // Any tile in owned provinces
+      _addCandidateTilesForCounterSpy(
+        tileKeysByRegion: tileKeysByRegion,
+        ownedProvinceIds: ownedProvinceIds,
+        result: result,
+      );
+      break;
+
+    case 'steal_tech':
+      // Other GP capital provinces
+      _addCandidateTilesForStealTech(
+        game: game,
+        playerId: playerId,
+        result: result,
+      );
+      break;
+
+    case 'purchase_land':
+      // Tiles in Minor/Tribe provinces with resource
+      _addCandidateTilesForPurchaseLand(
+        game: game,
+        tileKeysByRegion: tileKeysByRegion,
+        resourceByTile: resourceByTile,
+        playerId: playerId,
+        result: result,
+      );
+      break;
+
+    case 'explore':
+    case 'prospect':
+    default:
+      // No pre-filter; iterate all tiles (visibility filter applied later)
+      for (final regionEntry in tileKeysByRegion.entries) {
+        for (final provinceEntry in regionEntry.value.entries) {
+          result.addAll(provinceEntry.value);
+        }
+      }
+      break;
+  }
+
+  return result;
+}
+
+/// Adds candidate tiles for build_improvement: owned or purchased tiles with resource.
+void _addCandidateTilesForBuildImprovement({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> resourceByTile,
+  required Map<String, String> purchasedTiles,
+  required Set<String> ownedProvinceIds,
+  required String playerId,
+  required Set<String> result,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      // Skip sea zones (provinceId is not prefixed)
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+
+      final isOwnedProvince = ownedProvinceIds.contains(provinceId);
+      for (final tileKey in provinceEntry.value) {
+        // Check if tile is controlled by player (owned province or purchased)
+        final isPurchased = purchasedTiles[tileKey] == playerId;
+        if (!isOwnedProvince && !isPurchased) continue;
+
+        // Check if tile has a resource
+        final resourceId = resourceByTile[tileKey];
+        if (resourceId == null || resourceId.isEmpty) continue;
+
+        result.add(tileKey);
+      }
+    }
+  }
+}
+
+/// Adds candidate tiles for build_road/build_rail: owned or purchased tiles.
+void _addCandidateTilesForRoads({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> purchasedTiles,
+  required Set<String> ownedProvinceIds,
+  required String playerId,
+  required Set<String> result,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      // Skip sea zones
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+
+      final isOwnedProvince = ownedProvinceIds.contains(provinceId);
+      for (final tileKey in provinceEntry.value) {
+        final isPurchased = purchasedTiles[tileKey] == playerId;
+        if (!isOwnedProvince && !isPurchased) continue;
+        result.add(tileKey);
+      }
+    }
+  }
+}
+
+/// Adds candidate tiles for upgrade_town/build_fort: town tiles in owned provinces.
+void _addCandidateTilesForTownWork({
+  required Game game,
+  required Set<String> ownedProvinceIds,
+  required Set<String> result,
+}) {
+  for (final province in allProvinces(game.worldState)) {
+    if (!ownedProvinceIds.contains(province.id)) continue;
+    final townTileKey = province.townTileKey;
+    if (townTileKey == null || townTileKey.isEmpty) continue;
+    result.add(townTileKey);
+  }
+}
+
+/// Adds candidate tiles for build_port: coastal/river tiles in owned provinces.
+void _addCandidateTilesForPort({
+  required Game game,
+  required Set<String> ownedProvinceIds,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> result,
+}) {
+  // Port tiles must be in owned provinces; further validation checks coastal/river
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (!ownedProvinceIds.contains(provinceId)) continue;
+      result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+/// Adds candidate tiles for counter_spy: any tile in owned provinces.
+void _addCandidateTilesForCounterSpy({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> ownedProvinceIds,
+  required Set<String> result,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (!ownedProvinceIds.contains(provinceId)) continue;
+      result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+/// Adds candidate tiles for steal_tech: other GP capital provinces.
+void _addCandidateTilesForStealTech({
+  required Game game,
+  required String playerId,
+  required Set<String> result,
+}) {
+  for (final other in game.players) {
+    if (other.id == playerId) continue;
+    final capitalProvinceId = other.capitalProvinceId;
+    if (capitalProvinceId == null) continue;
+
+    // Find a tile in the capital province
+    final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
+    final tiles = byProvince?[capitalProvinceId];
+    if (tiles != null && tiles.isNotEmpty) {
+      result.add(tiles.first);
+    }
+  }
+}
+
+/// Adds candidate tiles for purchase_land: tiles in Minor/Tribe provinces with resource.
+void _addCandidateTilesForPurchaseLand({
+  required Game game,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> resourceByTile,
+  required String playerId,
+  required Set<String> result,
+}) {
+  // Get set of Great Power ids
+  final gpIds = game.players.map((p) => p.id).toSet();
+
+  // Get Minor and Tribe ids sets
+  final minorIds = game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = game.tribes.map((t) => t.id).toSet();
+
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+
+      // Find province owner
+      final province = tryGetProvince(game.worldState, provinceId);
+      if (province == null) continue;
+      final ownerId = province.ownerId;
+      if (ownerId == null) continue;
+
+      // Must be Minor or Tribe (not GP, not null)
+      if (gpIds.contains(ownerId)) continue;
+      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) continue;
+
+      for (final tileKey in provinceEntry.value) {
+        // Must have resource
+        final resourceId = resourceByTile[tileKey];
+        if (resourceId == null || resourceId.isEmpty) continue;
+
+        // Check if already purchased
+        final existingBuyer = game.worldState.purchasedTilesByTileKey[tileKey];
+        if (existingBuyer != null) continue; // Already purchased by someone
+
+        result.add(tileKey);
+      }
+    }
+  }
 }
 
 bool _isBuildOrderAccepted(
@@ -629,8 +1029,12 @@ bool _isBuildOrderAccepted(
   BuildUnitOrder candidate,
 ) {
   final engine = OrderEngine(initialOrders: baseOrders);
-  final result =
-      engine.addBuildOrderWithContext(game, topology, playerId, candidate);
+  final result = engine.addBuildOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
   return result.isAccepted;
 }
 
@@ -641,7 +1045,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
@@ -666,8 +1072,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       if (inPortProvinceId == null) continue;
       final parts = inPortProvinceId.split('|');
       final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
-      final localId =
-          parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
+      final localId = parts.length > 1
+          ? parts.sublist(1).join('|')
+          : inPortProvinceId;
       currentZone = seaZoneIdForProvince(topology, localId, regionId: regionId);
     }
     if (currentZone == null) continue;
@@ -678,10 +1085,17 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       final destId = node.id;
       if (!isAdjacentSeaZone(topology, currentZone, destId)) continue;
       if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-      final candidate =
-          NavalMoveOrder(fleetId: fleet.id, destinationSeaZoneId: destId);
+      final candidate = NavalMoveOrder(
+        fleetId: fleet.id,
+        destinationSeaZoneId: destId,
+      );
       if (_isNavalMoveOrderAccepted(
-          game, topology, playerId, currentOrders, candidate)) {
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+      )) {
         suggestions.add(candidate);
       }
     }
@@ -698,7 +1112,8 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         for (final localId in adjacentLocalIds) {
           final fullProvinceId = ProvinceId.full(zoneRegionId, localId);
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
-              false) continue;
+              false)
+            continue;
           final province = tryGetProvince(game.worldState, fullProvinceId);
           if (province?.ownerId != playerId) continue;
           final candidate = NavalMoveOrder(
@@ -706,7 +1121,12 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
             destinationPortProvinceId: fullProvinceId,
           );
           if (_isNavalMoveOrderAccepted(
-              game, topology, playerId, currentOrders, candidate)) {
+            game,
+            topology,
+            playerId,
+            currentOrders,
+            candidate,
+          )) {
             suggestions.add(candidate);
           }
         }
@@ -726,9 +1146,11 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     return keyA.compareTo(keyB);
   });
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").toList()}',
+  );
   return suggestions;
 }
 
@@ -739,7 +1161,9 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
   final existingByFleet = <String>{};
@@ -755,7 +1179,12 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     for (final mission in missions) {
       final candidate = NavalMissionOrder(fleetId: fleet.id, mission: mission);
       if (_isNavalMissionOrderAccepted(
-          game, topology, playerId, currentOrders, candidate)) {
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+      )) {
         suggestions.add(candidate);
       }
     }
@@ -767,9 +1196,11 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     return a.mission.compareTo(b.mission);
   });
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").toList()}',
+  );
   return suggestions;
 }
 
@@ -781,8 +1212,12 @@ bool _isNavalMoveOrderAccepted(
   NavalMoveOrder candidate,
 ) {
   final engine = OrderEngine(initialOrders: baseOrders);
-  final result =
-      engine.addNavalMoveOrderWithContext(game, topology, playerId, candidate);
+  final result = engine.addNavalMoveOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
   return result.isAccepted;
 }
 
@@ -795,7 +1230,11 @@ bool _isNavalMissionOrderAccepted(
 ) {
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addNavalMissionOrderWithContext(
-      game, topology, playerId, candidate);
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
   return result.isAccepted;
 }
 
@@ -823,7 +1262,9 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=${view.playerId}');
+  _log.d(
+    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=${view.playerId}',
+  );
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
@@ -857,37 +1298,55 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
   }
 
-  final otherGps =
-      game.players.where((p) => p.id != playerId).map((p) => p.id).toList();
+  final otherGps = game.players
+      .where((p) => p.id != playerId)
+      .map((p) => p.id)
+      .toList();
   final minorIds = game.minorNations.map((m) => m.id).toList();
   final tribeIds = game.tribes.map((t) => t.id).toList();
   final allTargets = <String>[...otherGps, ...minorIds, ...tribeIds];
-  final knownTargets =
-      allTargets.where((id) => knownFactionIds.contains(id)).toList();
+  final knownTargets = allTargets
+      .where((id) => knownFactionIds.contains(id))
+      .toList();
 
   for (final targetId in knownTargets) {
     if (targetId == playerId) continue;
     final rel = getRelation(game, playerId, targetId);
     final atPeace = rel == null || rel.atPeace;
     if (atPeace) {
-      suggestions.add(DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar, targetFactionId: targetId));
+      suggestions.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: targetId,
+        ),
+      );
     }
     if (rel != null && rel.atWar) {
-      suggestions.add(DiplomaticOrder(
-          type: DiplomaticOrderType.offerPeace, targetFactionId: targetId));
+      suggestions.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.offerPeace,
+          targetFactionId: targetId,
+        ),
+      );
     }
   }
 
   for (final targetId in otherGps) {
     final rel = getRelation(game, playerId, targetId);
     if (rel != null && rel.atPeace && rel.level != RelationLevel.allied) {
-      suggestions.add(DiplomaticOrder(
-          type: DiplomaticOrderType.alliance, targetFactionId: targetId));
+      suggestions.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: targetId,
+        ),
+      );
     }
   }
 
-  for (final targetId in [...minorIds, ...tribeIds].where(knownFactionIds.contains)) {
+  for (final targetId in [
+    ...minorIds,
+    ...tribeIds,
+  ].where(knownFactionIds.contains)) {
     final existing = getOverture(game, playerId, targetId);
     final current = existing?.stage ?? OvertureStage.none;
     final next = _nextOvertureStage(current);
@@ -905,11 +1364,13 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       final cost = joinEmpireCostForMinorOrTribe(game, targetId);
       if (treasury < cost) continue;
     }
-    suggestions.add(DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: targetId,
-      overtureStage: next,
-    ));
+    suggestions.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: targetId,
+        overtureStage: next,
+      ),
+    );
   }
 
   final overtureStates = game.overtureStates;
@@ -917,18 +1378,22 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     if (o.gpId != playerId) continue;
     final targetId = o.targetId;
     if (o.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
-      suggestions.add(DiplomaticOrder(
-        type: DiplomaticOrderType.grantAid,
-        targetFactionId: targetId,
-        amount: suggestedGrantOrSubsidyAmount,
-      ));
+      suggestions.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.grantAid,
+          targetFactionId: targetId,
+          amount: suggestedGrantOrSubsidyAmount,
+        ),
+      );
     }
     if (o.hasConsulate && treasury >= suggestedGrantOrSubsidyAmount) {
-      suggestions.add(DiplomaticOrder(
-        type: DiplomaticOrderType.setSubsidy,
-        targetFactionId: targetId,
-        amount: suggestedGrantOrSubsidyAmount,
-      ));
+      suggestions.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: targetId,
+          amount: suggestedGrantOrSubsidyAmount,
+        ),
+      );
     }
   }
 
@@ -938,9 +1403,11 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     return a.targetFactionId.compareTo(b.targetFactionId);
   });
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}');
+    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
+  );
   _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}');
+    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
+  );
   return suggestions;
 }
 

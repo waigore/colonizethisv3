@@ -41,6 +41,32 @@ void main() {
     expect(find.text('Researched (0):'), findsOneWidget);
   });
 
+  testWidgets('TechnologyPanel hides edit controls when onOrdersChanged is null',
+      (WidgetTester tester) async {
+    final techId = techCatalog.keys.first;
+    final withTech = player.copyWith(techUnlocked: {techId: true});
+    final gameWithTechs = game.copyWith(
+      players: [withTech, ...game.players.skip(1)],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TechnologyPanel(
+              game: gameWithTechs,
+              player: withTech,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose tech'), findsNothing);
+    expect(find.text('Cancel'), findsNothing);
+  });
+
   testWidgets('TechnologyPanel shows None yet when no researched techs', (WidgetTester tester) async {
     final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
     final gameWithEmpty = game.copyWith(
@@ -136,7 +162,6 @@ void main() {
 
   testWidgets('TechnologyPanel "Choose tech" shows no-techs modal when none available',
       (WidgetTester tester) async {
-    var capturedOrders = const Orders();
     final fullyUnlocked = player.copyWith(
       techUnlocked: {for (final id in techCatalog.keys) id: true},
     );
@@ -151,7 +176,7 @@ void main() {
             child: TechnologyPanel(
               game: gameWithFullyUnlocked,
               player: fullyUnlocked,
-              onOrdersChanged: (next) => capturedOrders = next,
+              onOrdersChanged: (_) {},
             ),
           ),
         ),
