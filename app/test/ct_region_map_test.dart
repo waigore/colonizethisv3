@@ -275,6 +275,39 @@ void main() {
     );
 
     testWidgets(
+      'hover and tap callbacks fire for visible tiles',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        String? lastProvinceId;
+        String? lastTileKey;
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onProvinceHovered: (id) => lastProvinceId = id,
+            onTileHovered: (key) => lastTileKey = key,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        // Move mouse over the center of the map.
+        final center = tester.getCenter(mapFinder);
+        final gesture =
+            await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await gesture.addPointer();
+        await gesture.moveTo(center);
+        await tester.pump();
+
+        expect(lastProvinceId, isNotNull);
+        expect(lastTileKey, isNotNull);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'centerOnTileKey triggers centering logic without throwing',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();

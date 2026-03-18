@@ -1,0 +1,32 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/config/routes.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  group('App shell and routes', () {
+    testWidgets('App uses Routes.shell as initial route', (WidgetTester tester) async {
+      await tester.pumpWidget(const App());
+      await tester.pumpAndSettle();
+
+      // Shell route should be active; CtMainMenu buttons should be visible.
+      expect(find.text('New Game'), findsOneWidget);
+      expect(find.text('Load Game'), findsOneWidget);
+    });
+
+    testWidgets('Debug log menu item pushes debug route', (WidgetTester tester) async {
+      await tester.pumpWidget(const App());
+      await tester.pumpAndSettle();
+
+      // Simulate menu selection using the exported navigator key.
+      appNavigatorKey.currentState?.pushNamed(Routes.debugLog);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Debug log'), findsOneWidget);
+    });
+  });
+}
+

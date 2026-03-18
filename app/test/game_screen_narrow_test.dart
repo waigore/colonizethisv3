@@ -1,7 +1,9 @@
 // In-game shell side menu. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
 
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -260,4 +262,92 @@ void main() {
       timeout: const Timeout(Duration(seconds: 20)),
     );
   });
+
+  group('GameScreen — pause menu and victory overlay', () {
+    Widget _buildGameScreenWithPauseMenu({
+      required Game game,
+    }) {
+      return ProviderScope(
+        overrides: [
+          currentGameProvider.overrideWith((ref) => game),
+          // No mapViewData override so that overlay buttons (pause menu, Next turn)
+          // are shown on top of the Flame canvas.
+          mapViewDataProvider.overrideWith((ref) => null),
+          gameIdsWithIntroShownProvider.overrideWith(
+            (ref) => {game.id},
+          ),
+        ],
+        child: MaterialApp(
+          routes: {
+            Routes.debugLog: (context) => const Scaffold(
+                  body: Center(child: Text('Debug log screen')),
+                ),
+          },
+          home: const GameScreen(),
+        ),
+      );
+    }
+
+    testWidgets(
+      'pause menu opens bottom sheet and shows debug log entry',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _buildGameScreenWithPauseMenu(game: debugResult.game),
+        );
+        await tester.pump();
+
+        // Tap the pause menu icon in the overlay stack.
+        await tester.tap(find.byIcon(Icons.menu).first);
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Bottom sheet should show a Debug log entry.
+        expect(find.text('Debug log'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'victory overlay shows and View final state hides it',
+      (WidgetTester tester) async {
+        final victoryGame = debugResult.game.copyWith(
+          victory: VictoryState(
+            winnerPlayerId: debugResult.game.players.first.id,
+            type: VictoryType.military,
+            turnNumber: debugResult.game.worldState.turnState.turnNumber,
+          ),
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              currentGameProvider.overrideWith((ref) => victoryGame),
+              mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+              gameIdsWithIntroShownProvider.overrideWith(
+                (ref) => {victoryGame.id},
+              ),
+            ],
+            child: MaterialApp(
+              theme: AppThemes.colonial,
+              home: const GameScreen(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.textContaining('victory'), findsOneWidget);
+
+        await tester.tap(find.text('View final state'));
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Overlay should be gone but we should still be on the Game screen shell.
+        expect(find.textContaining('victory'), findsNothing);
+        expect(find.byType(GameScreen), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+  });
+
+  // Note: overture dialogue overlay is covered indirectly via higher-level
+  // dialogue and diplomacy tests; here we focus on the in-game shell and
+  // next-turn confirmation flows for narrow layouts.
 }
