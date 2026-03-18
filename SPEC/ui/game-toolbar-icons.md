@@ -21,7 +21,8 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 | `diplomacy` | Diplomacy | Dove with olive branch | 32×32 |
 | `technology` | Technology | Book/scroll or beaker icon | 32×32 |
 | `layer_toggle` | Base Layer Cycle | Stacked layers/sheets icon for map layer toggle | 32×32 |
-| `home_capital` | Home to Capital | Flag/pole icon for centering on capital | 32×32 |
+| `home_capital` | Home to Capital | Flag/pole icon for centering on capital |32×32 |
+| `map_options` | Map Display Options | Gear/cog icon for map display settings | 32×32 |
 
 **File naming:** `ui_icon_<icon_id>.png` in `app/assets/images/`. Example: `ui_icon_diplomacy.png`.
 
@@ -196,6 +197,22 @@ pixellab_create_map_object(
 
 **Prompt:** `pixel art home capital icon for center on capital button, colonial era style, small flag on pole or castle keep tower, top-down game UI icon, simple clean design`
 
+### ui_icon_map_options.png (32×32)
+
+```
+pixellab_create_map_object(
+  description='gear icon, mechanical cog wheel with teeth, simple pixel art style for UI button',
+  width=32,
+  height=32,
+  view='high top-down',
+  outline='single color outline',
+  shading='basic shading',
+  detail='medium detail'
+)
+```
+
+**Prompt:** `gear icon, mechanical cog wheel with teeth, simple pixel art style for UI button`
+
 ### ui_icon_naval_units.png (32×32)
 
 Use PixelLab’s Pixflux generator for the naval units panel icon. This icon represents fleets and should read clearly at 32×32 while matching the existing toolbar icon style.
@@ -304,6 +321,7 @@ To regenerate an icon:
 | technology | ui_icon_technology.png | ✅ Generated | 2026-03-15 |
 | layer_toggle | ui_icon_layer_toggle.png | ✅ Generated | 2026-03-16 |
 | home_capital | ui_icon_home_capital.png | ✅ Generated | 2026-03-16 |
+| map_options | ui_icon_map_options.png | ✅ Generated | 2026-03-18 |
 
 ### Resource & Worker Icons (Production Panel)
 
