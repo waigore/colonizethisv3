@@ -1,0 +1,115 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/shell/shell_screen.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+
+class _DummyGameService extends GameService {
+  _DummyGameService(Box<dynamic> box, GameSaveAdapter adapter) : super(box, adapter);
+
+  Game? _loadedGame;
+  List<String> _ids = const [];
+
+  @override
+  List<String> listGameIds() => _ids;
+
+  @override
+  Game? loadGame(String gameId) => _loadedGame;
+
+  @override
+  Game createNewGame({String? id, config}) {
+    final game = Game(
+      id: id ?? 'game_1',
+      worldState: const WorldState(
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: RegionData(),
+        newWorld: RegionData(),
+      ),
+      players: const [
+        Player(
+          id: 'gp1',
+          displayName: 'Human',
+          isHuman: true,
+          treasury: 0,
+        ),
+      ],
+    );
+    _loadedGame = game;
+    _ids = [game.id];
+    return game;
+  }
+}
+
+void main() {
+  suppressLogsForTests();
+
+  late Box<dynamic> gamesBox;
+  late _DummyGameService dummyService;
+
+  setUpAll(() async {
+    Hive.init('./.dart_tool/test_hive_shell_screen');
+    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    dummyService = _DummyGameService(gamesBox, GameSaveAdapter());
+  });
+
+  Widget _buildApp() {
+    return ProviderScope(
+      overrides: [
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith((ref) => dummyService),
+      ],
+      child: MaterialApp(
+        initialRoute: Routes.shell,
+        routes: {
+          Routes.shell: (_) => const ShellScreen(),
+          Routes.game: (_) => const Scaffold(body: Text('In game')),
+        },
+      ),
+    );
+  }
+
+  testWidgets('ShellScreen New Game flow starts a game and navigates to game route',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('New Game'), findsOneWidget);
+
+    await tester.tap(find.text('New Game'));
+    await tester.pumpAndSettle();
+
+    // Dialog should appear with Start and Cancel buttons.
+    expect(find.text('Start'), findsOneWidget);
+
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('In game'), findsOneWidget);
+  });
+
+  testWidgets('ShellScreen Load Game loads first game id when available',
+      (WidgetTester tester) async {
+    // Seed the dummy service with a pre-existing game.
+    dummyService.createNewGame(id: 'saved_game');
+
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Load Game'), findsOneWidget);
+
+    await tester.tap(find.text('Load Game'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('In game'), findsOneWidget);
+  });
+}
+
