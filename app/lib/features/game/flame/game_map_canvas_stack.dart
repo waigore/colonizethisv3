@@ -58,38 +58,63 @@ class GameMapCanvasStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inWorkTargetSelectionMode = validTileKeysForSelection != null;
     return Positioned.fill(
-      child: Row(
+      child: Stack(
         children: [
-          Expanded(
-            child: CtRegionMap(
-              region: region,
-              cellSizePx: 24,
-              showBordersLayer: showBordersLayer,
-              visibilityMode: CtMapVisibilityMode.playerConstrained,
-              baseLayerDisplayMode: baseLayerDisplayMode,
-              onProvinceSelected: onProvinceSelected,
-              onProvinceHovered: onProvinceHovered,
-              onTileHovered: onTileHovered,
-              highlightedTileKey: highlightedTileKey,
-              centerOnTileKey: centerOnTileKey,
-              validTileKeys: validTileKeysForSelection,
-              onTileSelected: onTileSelectedForWork,
-              onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: CtRegionMap(
+                  region: region,
+                  cellSizePx: 24,
+                  showBordersLayer: showBordersLayer,
+                  visibilityMode: CtMapVisibilityMode.playerConstrained,
+                  baseLayerDisplayMode: baseLayerDisplayMode,
+                  onProvinceSelected: onProvinceSelected,
+                  onProvinceHovered: onProvinceHovered,
+                  onTileHovered: onTileHovered,
+                  highlightedTileKey: highlightedTileKey,
+                  centerOnTileKey: centerOnTileKey,
+                  validTileKeys: validTileKeysForSelection,
+                  onTileSelected: onTileSelectedForWork,
+                  onWorkTargetSelectionCancelled:
+                      onWorkTargetSelectionCancelled,
+                ),
+              ),
+              if (!isNarrow && selectedDetailId != null)
+                SizedBox(
+                  width: 320,
+                  child: ProvinceSeaZoneDetailOverlay(
+                    game: game,
+                    region: region,
+                    selectedId: selectedDetailId!,
+                    displayId: displayId,
+                    humanPlayerId: humanPlayerId,
+                    hoveredTileKey: hoveredTileKey,
+                    onHighlightTile: (k) => onHighlightTile(k),
+                    onClose: onCloseDetailOverlay,
+                  ),
+                ),
+            ],
           ),
-          if (!isNarrow && selectedDetailId != null)
-            SizedBox(
-              width: 320,
-              child: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                selectedId: selectedDetailId!,
-                displayId: displayId,
-                humanPlayerId: humanPlayerId,
-                hoveredTileKey: hoveredTileKey,
-                onHighlightTile: (k) => onHighlightTile(k),
-                onClose: onCloseDetailOverlay,
+          // Cancel button overlay for work target selection mode.
+          // SPEC/ui/map-widget.md § Work target selection mode.
+          if (inWorkTargetSelectionMode)
+            Positioned(
+              top: 8,
+              right: isNarrow ? 8 : 328,
+              child: Material(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: onWorkTargetSelectionCancelled,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.close, color: Colors.white, size: 24),
+                  ),
+                ),
               ),
             ),
         ],
@@ -97,4 +122,3 @@ class GameMapCanvasStack extends StatelessWidget {
     );
   }
 }
-

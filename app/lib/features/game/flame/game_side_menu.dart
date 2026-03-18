@@ -17,8 +17,6 @@ import '../widgets/technology_screen.dart';
 
 import 'game_screen_shared.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-
 /// Side menu ("Production", "Units", etc.) for the in-game shell.
 class GameSideMenu extends ConsumerWidget {
   const GameSideMenu({
@@ -40,12 +38,11 @@ class GameSideMenu extends ConsumerWidget {
   final VoidCallback onClose;
 
   final void Function(ct_models.Unit unit) onLocateCivilianUnit;
-  final void Function(String tileKey, String regionId)
-      onLocateMilitaryTile;
+  final void Function(String tileKey, String regionId) onLocateMilitaryTile;
   final void Function(String tileKey, String regionId) onLocateNavalFleet;
   final void Function(String unitId) onCancelUnitWork;
   final void Function(ct_models.Unit unit, String workTarget)
-      onStartWorkTargetSelection;
+  onStartWorkTargetSelection;
 
   static const double _kSideMenuWidth = 280;
 
@@ -71,10 +68,7 @@ class GameSideMenu extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildEmpireMenuButtons(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  List<Widget> _buildEmpireMenuButtons(BuildContext context, WidgetRef ref) {
     final player =
         game.players.where((p) => p.isHuman).firstOrNull ?? game.players.first;
     final orders = ref.read(currentOrdersProvider);
@@ -90,10 +84,7 @@ class GameSideMenu extends ConsumerWidget {
           onClose();
           Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (ctx) => ProductionScreen(
-                game: game,
-                player: player,
-              ),
+              builder: (ctx) => ProductionScreen(game: game, player: player),
             ),
           );
         },
@@ -104,6 +95,11 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Civilian Units',
         onPressed: () {
           onClose();
+          // Capture values before showing bottom sheet to avoid using
+          // disposed ref when widget rebuilds during work target selection.
+          final currentGame = ref.read(currentGameProvider) ?? game;
+          final currentOrders = ref.read(currentOrdersProvider);
+          final availableWorkTargets = ref.read(availableWorkTargetsProvider);
           showModalBottomSheet<void>(
             context: context,
             isScrollControlled: true,
@@ -115,18 +111,17 @@ class GameSideMenu extends ConsumerWidget {
               return ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: maxHeight),
                 child: CivilianUnitsPanel(
-                  game: ref.read(currentGameProvider) ?? game,
+                  game: currentGame,
                   humanPlayerId: humanPlayerId,
-                  currentOrders: orders,
-                  availableWorkTargets: ref.watch(availableWorkTargetsProvider),
+                  currentOrders: currentOrders,
+                  availableWorkTargets: availableWorkTargets,
                   onLocateUnit: onLocateCivilianUnit,
                   onRemoveWorkOrder: (playerId, index) {
-                    final o = ref.read(currentOrdersProvider);
+                    final o = currentOrders;
                     final list = List<ct_models.WorkOrder>.from(
                       o.workOrdersByPlayerId[playerId] ?? [],
                     )..removeAt(index);
-                    ref.read(currentOrdersProvider.notifier).state =
-                        o.copyWith(
+                    ref.read(currentOrdersProvider.notifier).state = o.copyWith(
                       workOrdersByPlayerId: {
                         ...o.workOrdersByPlayerId,
                         playerId: list,
@@ -251,10 +246,7 @@ class GameSideMenu extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CtNinePatchButton(
-                    onPressed: onClose,
-                    child: const Text('×'),
-                  ),
+                  CtNinePatchButton(onPressed: onClose, child: const Text('×')),
                 ],
               ),
               const SizedBox(height: 8),
@@ -266,4 +258,3 @@ class GameSideMenu extends ConsumerWidget {
     );
   }
 }
-
