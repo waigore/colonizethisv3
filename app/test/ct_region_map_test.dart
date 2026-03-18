@@ -61,6 +61,7 @@ void main() {
     double height = 320,
     double cellSizePx = 24,
     bool showPoliticalOverlay = true,
+    bool showBordersLayer = true,
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? centerOnTileKey,
@@ -79,6 +80,7 @@ void main() {
               region: region,
               cellSizePx: cellSizePx,
               showPoliticalOverlay: showPoliticalOverlay,
+              showBordersLayer: showBordersLayer,
               visibilityMode: visibilityMode,
               baseLayerDisplayMode: baseLayerDisplayMode,
               centerOnTileKey: centerOnTileKey,
@@ -166,11 +168,40 @@ void main() {
           _buildCtRegionMap(
             region: region,
             showPoliticalOverlay: false,
+            showBordersLayer: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
           ),
         );
         await tester.pump();
 
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'honors borders layer visibility flag without throwing',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+
+        // Borders on.
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showBordersLayer: true,
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+
+        // Borders off.
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showBordersLayer: false,
+          ),
+        );
+        await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 5)),
