@@ -1,13 +1,17 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 void main() {
+  suppressLogsForTests();
+
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_games_provider');
     await Hive.openBox<dynamic>(HiveBoxNames.games);

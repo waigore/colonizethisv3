@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jenny/jenny.dart';
 import 'package:logger/logger.dart';
@@ -6,6 +7,8 @@ import 'package:jenny/src/structure/line_content.dart';
 import 'package:colonizethis_app/features/game/dialogue/ct_dialogue_view.dart';
 
 void main() {
+  suppressLogsForTests();
+
   test('CtDialogueView advanceLine completes line future and clears state',
       () async {
     final view = CtDialogueView(logger: Logger());

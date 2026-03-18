@@ -1,3 +1,6 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -8,7 +11,6 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 class _FakeGameService extends GameService {
@@ -21,6 +23,8 @@ class _FakeGameService extends GameService {
 }
 
 void main() {
+  suppressLogsForTests();
+
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
