@@ -1,0 +1,176 @@
+// Tests for ProvinceSeaZoneDetailOverlay hover and branching paths.
+// Covers SPEC/ui/province-sea-zone-detail-overlay.md conditional content.
+
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  Widget buildOverlay({
+    required Game game,
+    required RegionMapViewData region,
+    required String selectedId,
+    required String displayId,
+    required String humanPlayerId,
+    String? hoveredTileKey,
+    VoidCallback? onClose,
+  }) {
+    return MaterialApp(
+      home: Scaffold(
+        body: ProvinceSeaZoneDetailOverlay(
+          game: game,
+          region: region,
+          selectedId: selectedId,
+          displayId: displayId,
+          humanPlayerId: humanPlayerId,
+          hoveredTileKey: hoveredTileKey,
+          onClose: onClose,
+        ),
+      ),
+    );
+  }
+
+  ({int x, int y}) coordsFromTileKey(String tileKey) {
+    final parts = tileKey.split('|');
+    // Tile keys are expected to include x/y at indexes 2 and 3.
+    final xPart = parts.length > 2 ? parts[2] : '';
+    final yPart = parts.length > 3 ? parts[3] : '';
+    final x = int.tryParse(xPart) ?? -1;
+    final y = int.tryParse(yPart) ?? -1;
+    return (x: x, y: y);
+  }
+
+  group('ProvinceSeaZoneDetailOverlay - hover + branching paths', () {
+    testWidgets(
+        'AC: Revealed hovered tile renders coordinates + terrain + prospected fields',
+        (WidgetTester tester) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      // Pick a land province with at least one revealed tile for hovering.
+      final landCell = region.cells.firstWhere(
+        (c) => !c.isSea && c.visibility != TileVisibility.unrevealed,
+      );
+      final provinceId = '${region.regionId}|${landCell.regionCellId}';
+      final possibleTiles =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+              const <String>[];
+
+      String? hoveredTileKey;
+      ({int x, int y}) coords = (x: -1, y: -1);
+      for (final tk in possibleTiles) {
+        final c = coordsFromTileKey(tk);
+        // Mirror overlay lookup: it uses region.cellAt(x,y) and checks visibility.
+        if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) {
+          continue;
+        }
+        final cell = region.cellAt(c.x, c.y);
+        if (cell.visibility != TileVisibility.unrevealed) {
+          hoveredTileKey = tk;
+          coords = c;
+          break;
+        }
+      }
+
+      // If demo data is unexpectedly unrevealed, fail with a clear message.
+      expect(hoveredTileKey, isNotNull, reason: 'No revealed tile found in demo overlay data');
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          selectedId: provinceId,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          hoveredTileKey: hoveredTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tile'), findsOneWidget);
+      expect(find.text('Coordinates: (${coords.x}, ${coords.y})'), findsOneWidget);
+      expect(find.textContaining('Terrain:'), findsOneWidget);
+      expect(find.textContaining('Prospected:'), findsOneWidget);
+    });
+
+    testWidgets('AC: Out-of-bounds hovered tile shows placeholder "—"', (
+      WidgetTester tester,
+    ) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      // Use the overlay's expected tile-key format but push x outside bounds.
+      final firstLandCell = region.cells.firstWhere((c) => !c.isSea);
+      final provinceId = '${region.regionId}|${firstLandCell.regionCellId}';
+      final hoveredTileKey = '${region.regionId}|${firstLandCell.regionCellId}|${region.width + 5}|0';
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          selectedId: provinceId,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          hoveredTileKey: hoveredTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tile'), findsOneWidget);
+      expect(find.textContaining('Coordinates:'), findsNothing);
+      expect(find.text('—'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets(
+        'AC: Sea zone display never renders Tile section even when hoveredTileKey is provided',
+        (WidgetTester tester) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      final seaZoneId = sampleSeaZoneIdForOverlay;
+
+      // Provide some hovered tile key; it should be ignored in sea-zone mode.
+      String? anyTileKey;
+      final byRegion =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId];
+      if (byRegion != null) {
+        for (final tiles in byRegion.values) {
+          if (tiles.isNotEmpty) {
+            anyTileKey = tiles.first;
+            break;
+          }
+        }
+      }
+      anyTileKey ??= '${region.regionId}|s0|0|0';
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          selectedId: seaZoneId,
+          displayId: seaZoneId,
+          humanPlayerId: humanPlayerId,
+          hoveredTileKey: anyTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sea zone'), findsOneWidget);
+      expect(find.text('Political'), findsOneWidget);
+      expect(find.text('Naval'), findsOneWidget);
+      expect(find.text('Tile'), findsNothing);
+      expect(find.textContaining('Coordinates:'), findsNothing);
+    });
+  });
+}
+
