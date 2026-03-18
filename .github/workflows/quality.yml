@@ -167,7 +167,7 @@ jobs:
             fi
           fi
 
-      - name: App coverage gate (lib/widgets/ >= 80%)
+      - name: App coverage gate (app/lib/ >= 80%)
         if: steps.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 app
 

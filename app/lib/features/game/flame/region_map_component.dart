@@ -95,6 +95,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.onProvinceSelected,
     this.onProvinceHovered,
     this.onTileHovered,
+    this.onTileTapped,
     this.highlightedTileKey,
     this.validTileKeys,
   });
@@ -108,6 +109,7 @@ class CtRegionMapComponent extends PositionComponent {
   void Function(String provinceId)? onProvinceSelected;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
+  void Function(String? tileKey)? onTileTapped;
   String? highlightedTileKey;
   Set<String>? validTileKeys;
 
@@ -188,12 +190,11 @@ class CtRegionMapComponent extends PositionComponent {
     final cell = region.cellAt(x, y);
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
     if (validTileKeys != null) {
+      // Work target mode: use tap handler for selection/cancellation.
       if (validTileKeys!.isNotEmpty && validTileKeys!.contains(tileKey)) {
-        // Work-target mode with valid tiles: widget wrapper will translate to onTileSelected.
-        onTileHovered?.call(tileKey);
+        onTileTapped?.call(tileKey);
       } else {
-        // No valid tiles OR non-valid tile tapped: trigger cancel via wrapper.
-        onTileHovered?.call(null);
+        onTileTapped?.call(null);
       }
       return;
     }
@@ -236,9 +237,14 @@ class CtRegionMapComponent extends PositionComponent {
 
   void _paintValidTilesGlow(Canvas canvas) {
     final keys = validTileKeys!;
+    // Flashing yellow border for valid tiles (opacity oscillates 0.4-0.8).
+    // SPEC/ui/map-widget.md § Work target selection mode.
+    final t = _hoverAnimationT;
+    final opacity = 0.4 + 0.4 * (0.5 + 0.5 * math.sin(t * 3));
     final paint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0x44AAFF88);
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..color = Color(0xFFFFFF00).withValues(alpha: opacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -785,10 +791,15 @@ class CtRegionMapComponent extends PositionComponent {
     final top = cy - half;
     final size = half * 2;
     final rect = Rect.fromLTWH(left, top, size, size);
+    // Orange cursor when in work target selection mode; white otherwise.
+    // SPEC/ui/map-widget.md § Work target selection mode.
+    final color = (validTileKeys != null && validTileKeys!.isNotEmpty)
+        ? const Color(0xFFFFAA00)
+        : const Color(0xFFFFFFFF);
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
-      ..color = const Color(0xFFFFFFFF);
+      ..color = color;
     canvas.drawRect(rect, paint);
   }
 
