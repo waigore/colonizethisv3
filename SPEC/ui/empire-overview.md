@@ -42,7 +42,7 @@
 
 ### Map display options button and dialog (in-game map only)
 
-- **Overlay:** A third button is overlaid at the **top-left** of the map area, directly **beneath** the home-to-capital button. The button uses a compact text label such as `Map options` inside a light rectangular chip (no custom pixel-art icon required). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Overlay:** A third button is overlaid at the **top-left** of the map area, directly **beneath** the home-to-capital button. Icon only: pixel-art gear icon (`ui_icon_map_options.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
 - **Dialog type:** Tapping the button opens a modal **“Map display options”** dialog that blocks interaction with the underlying map and closes when the user taps the dialog’s **Close** button, taps outside the dialog, or presses the back key.
 - **Borders toggle:** The dialog contains a single toggle control labelled **“Show borders”** (switch or checkbox). The toggle controls the global **borders layer visibility** for all in-game Empire overview maps in the current app session (Old World and New World).
 - **Default behavior:** At the start of a game session (after init or load), the **Show borders** toggle is **ON** by default. When the user changes it, the new value is remembered for the remainder of the session and is reflected every time the dialog is reopened.
@@ -84,7 +84,7 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible directly beneath the base-layer cycle button at the top-left of the map area.
 - **Given** the Empire overview map is visible and the human player has a defined capital tile, **when** the user taps the h button, **then** the active region switches (if needed) to the human player's capital region and the map centers on the human player's capital tile with the selection/highlight cursor placed on that tile.
 
-- **Given** the Empire overview map is visible, **then** a third button with a compact text label (e.g. `Map options`) is visible directly beneath the home-to-capital button at the top-left of the map area.
+- **Given** the Empire overview map is visible, **then** a third icon-only button with the gear icon is visible directly beneath the home-to-capital button at the top-left of the map area.
 - **Given** the Empire overview map is visible, **when** the user taps the third map display options button, **then** the UI layer shows a modal dialog titled `Map display options` with a dismiss action and the underlying map is not interactive until the dialog is closed.
 - **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows a single toggle control labelled `Show borders` in the ON state.
 - **Given** the Map display options dialog is visible, **when** the user toggles `Show borders` OFF, **then** the UI layer updates the global borders visibility state so that all in-game Empire overview maps stop drawing province and sea-zone boundary strokes until `Show borders` is toggled ON again.
