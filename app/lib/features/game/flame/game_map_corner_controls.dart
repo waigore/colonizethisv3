@@ -7,11 +7,13 @@ class GameMapCornerControls extends StatelessWidget {
   const GameMapCornerControls({
     required this.onCycleBaseLayerDisplayMode,
     required this.onCenterOnHomeCapital,
+    required this.onOpenMapDisplayOptions,
     super.key,
   });
 
   final VoidCallback onCycleBaseLayerDisplayMode;
   final VoidCallback onCenterOnHomeCapital;
+  final VoidCallback onOpenMapDisplayOptions;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,27 @@ class GameMapCornerControls extends StatelessWidget {
                   'assets/images/ui_icon_home_capital.png',
                   width: 20,
                   height: 20,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Material(
+          key: kMapDisplayOptionsButtonKey,
+          color: Colors.white.withValues(alpha: 0.9),
+          child: Tooltip(
+            message: 'Map display options',
+            child: InkWell(
+              onTap: onOpenMapDisplayOptions,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Text(
+                  'Map options',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),

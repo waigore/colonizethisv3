@@ -9,3 +9,6 @@ const Key kBaseLayerCycleButtonKey = Key('base_layer_cycle_button');
 /// Key for the home-to-capital button (for tests). SPEC/ui/empire-overview.md § Home-to-capital button.
 const Key kHomeToCapitalButtonKey = Key('home_to_capital_button');
 
+/// Key for the map display options button (for tests). SPEC/ui/empire-overview.md § Map display options button and dialog.
+const Key kMapDisplayOptionsButtonKey = Key('map_display_options_button');
+

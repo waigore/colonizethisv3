@@ -243,6 +243,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   @override
   Widget build(BuildContext context) {
+    final showBorders = ref.watch(mapBordersVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final nextTurnText =
         'Next turn (${widget.game.worldState.turnState.turnNumber} / ${turnToYear(widget.game.worldState.turnState.turnNumber, widget.game.turnTimeMapping)})';
@@ -277,6 +278,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   game: widget.game,
                   region: _currentRegion,
                   baseLayerDisplayMode: _baseLayerDisplayMode,
+                  showBordersLayer: showBorders,
                   humanPlayerId: _humanPlayerId,
                   selectedDetailId: _selectedDetailId,
                   displayId: _displayId,
@@ -310,6 +312,39 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   child: GameMapCornerControls(
                     onCycleBaseLayerDisplayMode: _cycleBaseLayerDisplayMode,
                     onCenterOnHomeCapital: _centerOnHumanCapital,
+                    onOpenMapDisplayOptions: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Map display options'),
+                            content: Consumer(
+                              builder: (context, ref, _) {
+                                final bordersVisible =
+                                    ref.watch(mapBordersVisibleProvider);
+                                return SwitchListTile(
+                                  title: const Text('Show borders'),
+                                  value: bordersVisible,
+                                  onChanged: (value) {
+                                    ref
+                                        .read(mapBordersVisibleProvider
+                                            .notifier)
+                                        .state = value;
+                                  },
+                                );
+                              },
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).maybePop(),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
                 if (!_sideMenuOpen)
