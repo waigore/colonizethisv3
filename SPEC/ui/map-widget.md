@@ -20,7 +20,8 @@
 | Layer | Content | Togglable |
 |-------|---------|-----------|
 | **Base (tile)** | Terrain, resources, improvements, towns, capitals. | Optional per-sublayer if needed; at minimum base is always on. |
-| **Political** | Political borders (ownership). Drawn on top of base. | Yes. User can turn political overlay on/off. |
+| **Borders** | Province and sea-zone boundaries (topology edges P–P, P–S, S–S). | Yes. User can turn the borders layer on/off. |
+| **Political** | Political borders (ownership differences between adjacent land provinces). Drawn on top of base and borders. | Yes. User can turn political overlay on/off. |
 
 Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData` / game + tile maps per [map-visualization.md](../program/map-visualization.md)). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
 
@@ -274,8 +275,10 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 ## Acceptance criteria
 
 - **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
-- **When** the political overlay is enabled, **then** political borders are drawn on top of the base layer (including province and sea-zone boundaries); when disabled, they are not.
-- **When** the map renders province/sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line); other political borders are also rendered subtly (not solid black).
+- **Given** the borders layer is enabled, **when** the map renders province and sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line) and other province/sea-zone borders are rendered subtly (not solid black).
+- **Given** the borders layer is disabled, **when** the map renders the region, **then** province and sea-zone boundary strokes are not drawn while hover selectors, hover glows, capitals, ports, and warp zone indicators remain visible.
+- **Given** the political overlay is enabled while the borders layer is enabled, **when** two adjacent land tiles belong to different owning factions, **then** a thicker political border stroke is drawn between them on top of the province/sea-zone boundary stroke.
+- **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the borders layer setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
 - **When** the user zooms, **then** only fixed zoom levels are used and zooming is smooth between levels.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.

@@ -121,6 +121,70 @@ void main() {
       timeout: const Timeout(Duration(seconds: 15)),
     );
 
+    testWidgets(
+      'AC: map display options button is visible beneath home-to-capital button and opens dialog (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
+        expect(optionsButtonFinder, findsOneWidget);
+
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.text('Map display options'), findsOneWidget);
+        expect(find.text('Show borders'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: toggling Show borders in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
+        expect(optionsButtonFinder, findsOneWidget);
+
+        // Open dialog.
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final showBordersFinder = find.byType(SwitchListTile);
+        expect(showBordersFinder, findsOneWidget);
+
+        // Toggle off.
+        await tester.tap(showBordersFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // Close dialog.
+        await tester.tap(find.text('Close'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // Re-open and ensure the toggle remains off.
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final switchTile =
+            tester.widget<SwitchListTile>(showBordersFinder.first);
+        expect(switchTile.value, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
     // Side menu button content tests require Hive initialization (for gameServiceProvider).
     // The empire buttons implementation uses the correct icons:
     // - Production → ui_icon_production.png

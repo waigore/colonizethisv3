@@ -88,6 +88,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.region,
     required this.cellSize,
     required this.showPoliticalOverlay,
+    required this.showBordersLayer,
     required this.visibilityMode,
     this.baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
@@ -101,6 +102,7 @@ class CtRegionMapComponent extends PositionComponent {
   RegionMapViewData region;
   double cellSize;
   bool showPoliticalOverlay;
+  bool showBordersLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
@@ -209,11 +211,15 @@ class CtRegionMapComponent extends PositionComponent {
     super.render(canvas);
     _paintTiles(canvas);
     _paintOverlay(canvas);
-    _paintProvinceBorders(canvas);
+    if (showBordersLayer) {
+      _paintProvinceBorders(canvas);
+    }
     if (_hoveredProvinceId != null) {
       _paintHoveredProvinceGlow(canvas);
     }
-    if (showPoliticalOverlay) _paintFactionBorders(canvas);
+    if (showPoliticalOverlay && showBordersLayer) {
+      _paintFactionBorders(canvas);
+    }
     _paintCapitals(canvas);
     _paintPorts(canvas);
     _paintWarpZones(canvas);
