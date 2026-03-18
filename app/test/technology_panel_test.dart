@@ -133,6 +133,90 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Research slots: $slots'), findsOneWidget);
   });
+
+  testWidgets('TechnologyPanel "Choose tech" shows no-techs modal when none available',
+      (WidgetTester tester) async {
+    var capturedOrders = const Orders();
+    final fullyUnlocked = player.copyWith(
+      techUnlocked: {for (final id in techCatalog.keys) id: true},
+    );
+    final gameWithFullyUnlocked = game.copyWith(
+      players: [fullyUnlocked, ...game.players.skip(1)],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TechnologyPanel(
+              game: gameWithFullyUnlocked,
+              player: fullyUnlocked,
+              onOrdersChanged: (next) => capturedOrders = next,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Choose tech is rendered for each slot when editing is enabled.
+    await tester.tap(find.text('Choose tech').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('No techs available to research'), findsOneWidget);
+  });
+
+  testWidgets('TechnologyPanel slot Cancel removes the slot order and shows snackbar',
+      (WidgetTester tester) async {
+    final techId = techCatalog.keys.first;
+    final withOrder = player.copyWith(
+      techUnlocked: <String, bool>{}, // ensures bottom sheet can be "no techs"
+    );
+    final gameWithEmptyUnlocked = game.copyWith(
+      players: [withOrder, ...game.players.skip(1)],
+    );
+
+    final orders = Orders(
+      researchOrdersByPlayerId: {
+        withOrder.id: [
+          ResearchOrder(
+            slotIndex: 0,
+            techId: techId,
+            funding: ResearchFundingLevel.low,
+          ),
+        ],
+      },
+    );
+
+    Orders? captured;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TechnologyPanel(
+              game: gameWithEmptyUnlocked,
+              player: withOrder,
+              currentOrders: orders,
+              onOrdersChanged: (next) => captured = next,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Cancel shown for slots that currently have a tech assigned.
+    await tester.tap(find.text('Cancel').first);
+    await tester.pump(); // allow scaffoldMessenger snack bar to schedule
+    await tester.pumpAndSettle(const Duration(milliseconds: 200));
+
+    expect(find.text('Research slot cancelled'), findsOneWidget);
+    expect(captured, isNotNull);
+    expect(
+      captured!.researchOrdersByPlayerId[withOrder.id],
+      isEmpty,
+    );
+  });
 }
 
 Player _dummyPlayer() {
