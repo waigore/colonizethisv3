@@ -110,6 +110,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? highlightedTileKey,
+    bool clearHighlightedTileKey = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
@@ -129,6 +130,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
     if (baseLayerDisplayMode != null) {
       this.baseLayerDisplayMode = baseLayerDisplayMode;
+    }
+    if (clearHighlightedTileKey) {
+      this.highlightedTileKey = null;
     }
     if (highlightedTileKey != null) {
       this.highlightedTileKey = highlightedTileKey;
@@ -383,6 +387,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
             widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainResourcesImprovements,
         highlightedTileKey: widget.highlightedTileKey,
+        clearHighlightedTileKey: widget.highlightedTileKey == null,
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
