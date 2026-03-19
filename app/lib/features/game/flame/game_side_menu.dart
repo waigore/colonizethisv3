@@ -25,6 +25,7 @@ class GameSideMenu extends ConsumerWidget {
     required this.humanPlayerId,
     required this.sideMenuOpen,
     required this.onClose,
+    required this.onPanelDismissed,
     required this.onLocateCivilianUnit,
     required this.onLocateMilitaryTile,
     required this.onLocateNavalFleet,
@@ -37,6 +38,7 @@ class GameSideMenu extends ConsumerWidget {
   final String humanPlayerId;
   final bool sideMenuOpen;
   final VoidCallback onClose;
+  final VoidCallback onPanelDismissed;
 
   final void Function(ct_models.Unit unit) onLocateCivilianUnit;
   final void Function(String tileKey, String regionId) onLocateMilitaryTile;
@@ -137,7 +139,7 @@ class GameSideMenu extends ConsumerWidget {
                 ),
               );
             },
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
@@ -153,7 +155,7 @@ class GameSideMenu extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               onLocateTile: onLocateMilitaryTile,
             ),
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
@@ -169,7 +171,7 @@ class GameSideMenu extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               onLocateFleet: onLocateNavalFleet,
             ),
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
