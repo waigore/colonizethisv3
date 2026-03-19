@@ -7,7 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, MapTopology, RegionMapViewData;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
@@ -257,7 +257,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   Widget build(BuildContext context) {
     final showBorders = ref.watch(mapBordersVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
       turnToYear(

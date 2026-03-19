@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
@@ -31,7 +31,7 @@ void _showPauseMenu(BuildContext context) {
         children: [
           ListTile(
             leading: const Icon(Icons.bug_report),
-            title: Text(AppLocalizations.of(ctx)!.debugLog_title),
+            title: Text(appL10n(ctx).debugLog_title),
             onTap: () {
               Navigator.of(ctx).pop();
               Navigator.of(context).pushNamed(Routes.debugLog);
@@ -39,7 +39,7 @@ void _showPauseMenu(BuildContext context) {
           ),
           ListTile(
             leading: const Icon(Icons.play_arrow),
-            title: Text(AppLocalizations.of(ctx)!.game_pauseMenu_resume),
+            title: Text(appL10n(ctx).game_pauseMenu_resume),
             onTap: () => Navigator.of(ctx).pop(),
           ),
         ],
@@ -75,7 +75,7 @@ class GameScreen extends ConsumerWidget {
             child: IconButton(
               icon: const Icon(Icons.menu),
               onPressed: () => _showPauseMenu(context),
-              tooltip: AppLocalizations.of(context)!.game_pauseMenu_tooltip,
+              tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
           ),
           Positioned(
@@ -98,7 +98,7 @@ class GameScreen extends ConsumerWidget {
                 }
               },
               child: Text(
-                AppLocalizations.of(context)!.game_nextTurnButton(
+                appL10n(context).game_nextTurnButton(
                   game!.worldState.turnState.turnNumber,
                   turnToYear(
                     game.worldState.turnState.turnNumber,
@@ -156,7 +156,7 @@ class GameScreen extends ConsumerWidget {
     }
 
     return CtScreenShell(
-      title: AppLocalizations.of(context)!.game_screenTitle,
+      title: appL10n(context).game_screenTitle,
       child: content,
     );
   }

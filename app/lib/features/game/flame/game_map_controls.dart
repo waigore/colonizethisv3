@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -24,7 +24,7 @@ class GameMapControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return Column(
       children: [
         Padding(

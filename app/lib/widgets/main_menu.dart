@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../config/themes.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -56,7 +56,7 @@ class CtMainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final Widget content = SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -148,7 +148,7 @@ class CtMainMenu extends StatelessWidget {
   Widget _buildLogo(BuildContext context) {
     if (variant == MainMenuVariant.plain) {
       return Text(
-        AppLocalizations.of(context)!.mainMenu_title,
+        appL10n(context).mainMenu_title,
         style: Theme.of(context).textTheme.headlineMedium,
         textAlign: TextAlign.center,
       );
@@ -299,7 +299,7 @@ class _LoadGameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     if (variant == MainMenuVariant.pixelArt) {
       return Tooltip(
         message: enabled ? '' : l10n.mainMenu_noSavesTooltip,

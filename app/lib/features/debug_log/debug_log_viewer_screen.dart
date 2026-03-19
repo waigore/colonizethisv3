@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
 class DebugLogViewerScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.debugLog_title),
@@ -50,7 +50,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
 
   Widget _buildFilters(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

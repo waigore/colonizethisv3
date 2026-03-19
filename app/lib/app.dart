@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'config/routes.dart';
 import 'config/themes.dart';
@@ -13,9 +14,10 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rootL10n = lookupAppLocalizations(const Locale('en'));
     final app = MaterialApp(
       navigatorKey: appNavigatorKey,
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.app_title,
+      onGenerateTitle: (context) => appL10n(context).app_title,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -30,10 +32,10 @@ class App extends StatelessWidget {
     return PlatformMenuBar(
       menus: <PlatformMenuItem>[
         PlatformMenu(
-          label: AppLocalizations.of(context)!.menu_view,
+          label: rootL10n.menu_view,
           menus: <PlatformMenuItem>[
             PlatformMenuItem(
-              label: AppLocalizations.of(context)!.menu_debugLog,
+              label: rootL10n.menu_debugLog,
               onSelected: () {
                 appNavigatorKey.currentState?.pushNamed(Routes.debugLog);
               },

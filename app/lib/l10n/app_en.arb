@@ -80,7 +80,7 @@
         "description": "Current turn number."
       },
       "year": {
-        "type": "String",
+        "type": "int",
         "description": "Calendar year derived from the turn."
       }
     }

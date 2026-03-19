@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../config/routes.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
@@ -117,7 +117,7 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final children = <Widget>[
       Text(
         l10n.shell_leaderDialog_intro,
