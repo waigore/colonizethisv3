@@ -99,6 +99,7 @@ class CivilianUnitsPanel extends StatelessWidget {
     this.onRemoveWorkOrder,
     this.onCancelUnitWork,
     this.onStartWorkTargetSelection,
+    this.onTrainPressed,
   });
 
   final Game game;
@@ -118,6 +119,9 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
+
+  /// Called when the user taps the Train button.
+  final VoidCallback? onTrainPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +158,11 @@ class CivilianUnitsPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
+                    if (onTrainPressed != null)
+                      CtNinePatchButton(
+                        onPressed: onTrainPressed,
+                        child: const Text('Train'),
+                      ),
                   ],
                 ),
               ),
@@ -344,8 +353,9 @@ class _UnitRow extends StatelessWidget {
     final allowed = workOrderTargetsByUnitType[unit.type];
     if (allowed == null ||
         allowed.isEmpty ||
-        onStartWorkTargetSelection == null)
+        onStartWorkTargetSelection == null) {
       return;
+    }
     final available = availableWorkTargets[unit.id] ?? [];
     showModalBottomSheet<void>(
       context: context,

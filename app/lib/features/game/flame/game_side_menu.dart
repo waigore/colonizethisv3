@@ -15,6 +15,7 @@ import '../widgets/military_units_panel.dart';
 import '../widgets/naval_units_panel.dart';
 import '../widgets/production_screen.dart';
 import '../widgets/technology_screen.dart';
+import '../widgets/train_civilians_dialog.dart';
 
 import 'game_screen_shared.dart';
 
@@ -135,6 +136,29 @@ class GameSideMenu extends ConsumerWidget {
                   onStartWorkTargetSelection: (unit, workTarget) {
                     Navigator.of(ctx).pop();
                     onStartWorkTargetSelection(unit, workTarget);
+                  },
+                  onTrainPressed: () {
+                    Navigator.of(ctx).pop();
+                    showDialog<void>(
+                      context: context,
+                      builder: (dialogCtx) => TrainCiviliansDialog(
+                        game: currentGame,
+                        humanPlayerId: humanPlayerId,
+                        currentOrders: currentOrders,
+                        onOrdersChanged: (newOrders) {
+                          final o = currentOrders;
+                          final existing =
+                              o.buildUnitOrdersByPlayerId[humanPlayerId] ?? [];
+                          ref.read(currentOrdersProvider.notifier).state = o
+                              .copyWith(
+                                buildUnitOrdersByPlayerId: {
+                                  ...o.buildUnitOrdersByPlayerId,
+                                  humanPlayerId: [...existing, ...newOrders],
+                                },
+                              );
+                        },
+                      ),
+                    );
                   },
                 ),
               );
