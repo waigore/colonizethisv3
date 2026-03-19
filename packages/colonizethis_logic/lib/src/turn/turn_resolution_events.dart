@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 
 /// Emits game events after turn resolution phases. SPEC/program/game-events.md.
@@ -11,7 +12,8 @@ void emitResearchCompleteEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  void Function(GameEvent) onGameEvent,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
 ) {
   for (final player in stateAfter.players) {
     final unlocked = player.techUnlocked ?? {};
@@ -20,15 +22,19 @@ void emitResearchCompleteEvents(
         .map((e) => e.key)
         .toSet();
     final previous = stateBefore.playerById(player.id)?.techUnlocked ?? {};
-    final previousSet =
-        previous.entries.where((e) => e.value).map((e) => e.key).toSet();
+    final previousSet = previous.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toSet();
     for (final tech in current) {
       if (!previousSet.contains(tech)) {
-        onGameEvent(ResearchCompleteEvent(
+        final event = ResearchCompleteEvent(
           playerId: player.id,
           techId: tech,
           turnNumber: turn,
-        ));
+        );
+        eventBus?.publish(event);
+        onGameEvent?.call(event);
       }
     }
   }
@@ -39,17 +45,20 @@ void emitDiplomacyChangeEvents(
   Map<String, Map<String, RelationState>> previousRelations,
   Game stateAfter,
   int turn,
-  void Function(GameEvent) onGameEvent,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
 ) {
   for (final rel in stateAfter.diplomacyRelations) {
     final prev1 = previousRelations[rel.factionId1]?[rel.factionId2];
     if (prev1 == null || prev1 != rel.state) {
-      onGameEvent(DiplomacyChangeEvent(
+      final event = DiplomacyChangeEvent(
         actorId: rel.factionId1,
         targetId: rel.factionId2,
         changeType: rel.state.name,
         turnNumber: turn,
-      ));
+      );
+      eventBus?.publish(event);
+      onGameEvent?.call(event);
     }
   }
 }
@@ -59,7 +68,8 @@ void emitProvinceCapturedEvents(
   Map<String, String?> previousOwnership,
   Game stateAfter,
   int turn,
-  void Function(GameEvent) onGameEvent,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
 ) {
   for (final region in [
     stateAfter.worldState.oldWorld,
@@ -68,12 +78,14 @@ void emitProvinceCapturedEvents(
     for (final prov in region.provinces) {
       final previousOwner = previousOwnership[prov.id];
       if (previousOwner != null && previousOwner != prov.ownerId) {
-        onGameEvent(ProvinceCapturedEvent(
+        final event = ProvinceCapturedEvent(
           provinceId: prov.id,
           previousOwnerId: previousOwner,
           newOwnerId: prov.ownerId ?? '',
           turnNumber: turn,
-        ));
+        );
+        eventBus?.publish(event);
+        onGameEvent?.call(event);
       }
     }
   }
@@ -83,13 +95,16 @@ void emitProvinceCapturedEvents(
 void emitVictorySetEvent(
   Game state,
   int turn,
+  GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
-  if (onGameEvent != null && state.victory != null) {
-    onGameEvent(VictorySetEvent(
+  if (state.victory != null) {
+    final event = VictorySetEvent(
       winnerPlayerId: state.victory!.winnerPlayerId,
       victoryType: state.victory!.type.name,
       turnNumber: turn,
-    ));
+    );
+    eventBus?.publish(event);
+    onGameEvent?.call(event);
   }
 }
