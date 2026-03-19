@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, MapTopology, RegionMapViewData;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
@@ -256,8 +257,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   Widget build(BuildContext context) {
     final showBorders = ref.watch(mapBordersVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
-    final nextTurnText =
-        'Next turn (${widget.game.worldState.turnState.turnNumber} / ${turnToYear(widget.game.worldState.turnState.turnNumber, widget.game.turnTimeMapping)})';
+    final l10n = AppLocalizations.of(context)!;
+    final nextTurnText = l10n.game_nextTurnButton(
+      widget.game.worldState.turnState.turnNumber,
+      turnToYear(
+        widget.game.worldState.turnState.turnNumber,
+        widget.game.turnTimeMapping,
+      ),
+    );
     return Column(
       children: [
         GameMapControls(
@@ -328,14 +335,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: const Text('Map display options'),
+                            title: Text(l10n.map_displayOptions_title),
                             content: Consumer(
                               builder: (context, ref, _) {
                                 final bordersVisible = ref.watch(
                                   mapBordersVisibleProvider,
                                 );
                                 return SwitchListTile(
-                                  title: const Text('Show borders'),
+                                  title: Text(l10n.map_displayOptions_showBorders),
                                   value: bordersVisible,
                                   onChanged: (value) {
                                     ref
@@ -353,7 +360,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                               TextButton(
                                 onPressed: () =>
                                     Navigator.of(context).maybePop(),
-                                child: const Text('Close'),
+                                child: Text(l10n.common_close),
                               ),
                             ],
                           );

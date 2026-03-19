@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -24,6 +24,7 @@ class GameMapControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Padding(
@@ -33,7 +34,7 @@ class GameMapControls extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: onToggleSideMenu,
-                tooltip: 'Menu',
+                tooltip: l10n.gameMap_menuTooltip,
               ),
               Expanded(
                 child: CtNinePatchButton(
@@ -50,13 +51,13 @@ class GameMapControls extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               CtChoiceChip(
-                label: const Text('Old World'),
+                label: Text(l10n.region_oldWorld),
                 selected: regionIndex == 0,
                 onSelected: (_) => onRegionIndexChanged(0),
               ),
               const SizedBox(width: 8),
               CtChoiceChip(
-                label: const Text('New World'),
+                label: Text(l10n.region_newWorld),
                 selected: regionIndex == 1,
                 onSelected: (_) => onRegionIndexChanged(1),
               ),

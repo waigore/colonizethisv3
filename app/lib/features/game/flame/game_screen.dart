@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
@@ -30,7 +31,7 @@ void _showPauseMenu(BuildContext context) {
         children: [
           ListTile(
             leading: const Icon(Icons.bug_report),
-            title: const Text('Debug log'),
+            title: Text(AppLocalizations.of(ctx)!.debugLog_title),
             onTap: () {
               Navigator.of(ctx).pop();
               Navigator.of(context).pushNamed(Routes.debugLog);
@@ -38,7 +39,7 @@ void _showPauseMenu(BuildContext context) {
           ),
           ListTile(
             leading: const Icon(Icons.play_arrow),
-            title: const Text('Resume'),
+            title: Text(AppLocalizations.of(ctx)!.game_pauseMenu_resume),
             onTap: () => Navigator.of(ctx).pop(),
           ),
         ],
@@ -74,7 +75,7 @@ class GameScreen extends ConsumerWidget {
             child: IconButton(
               icon: const Icon(Icons.menu),
               onPressed: () => _showPauseMenu(context),
-              tooltip: 'Pause menu',
+              tooltip: AppLocalizations.of(context)!.game_pauseMenu_tooltip,
             ),
           ),
           Positioned(
@@ -97,8 +98,13 @@ class GameScreen extends ConsumerWidget {
                 }
               },
               child: Text(
-                'Next turn (${game!.worldState.turnState.turnNumber} / '
-                '${turnToYear(game.worldState.turnState.turnNumber, game.turnTimeMapping)})',
+                AppLocalizations.of(context)!.game_nextTurnButton(
+                  game!.worldState.turnState.turnNumber,
+                  turnToYear(
+                    game.worldState.turnState.turnNumber,
+                    game.turnTimeMapping,
+                  ),
+                ),
               ),
             ),
           ),
@@ -149,6 +155,9 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    return CtScreenShell(title: 'Game', child: content);
+    return CtScreenShell(
+      title: AppLocalizations.of(context)!.game_screenTitle,
+      child: content,
+    );
   }
 }

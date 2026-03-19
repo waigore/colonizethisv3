@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'config/routes.dart';
 import 'config/themes.dart';
@@ -13,7 +15,14 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = MaterialApp(
       navigatorKey: appNavigatorKey,
-      title: 'Colonize This',
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.app_title,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppThemes.light,
       initialRoute: Routes.shell,
       onGenerateRoute: Routes.generate,
@@ -21,10 +30,10 @@ class App extends StatelessWidget {
     return PlatformMenuBar(
       menus: <PlatformMenuItem>[
         PlatformMenu(
-          label: 'View',
+          label: AppLocalizations.of(context)!.menu_view,
           menus: <PlatformMenuItem>[
             PlatformMenuItem(
-              label: 'Debug log',
+              label: AppLocalizations.of(context)!.menu_debugLog,
               onSelected: () {
                 appNavigatorKey.currentState?.pushNamed(Routes.debugLog);
               },
