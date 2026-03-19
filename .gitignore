@@ -34,6 +34,11 @@ pytool/.venv/
 # Coverage
 coverage/
 coverage_merged/
+app/coverage_report/
+
+# Flutter localization (generated)
+app/lib/l10n/app_localizations*.dart
+app/lib/l10n/untranslated.json
 
 # IDE
 .idea/

@@ -19,8 +19,9 @@ void main() {
 
   setUpAll(() {
     game = getDebugInitGameResult().game;
-    humanPlayerIdWithUnits =
-        game.players.isNotEmpty ? game.players.first.id : 'gp1';
+    humanPlayerIdWithUnits = game.players.isNotEmpty
+        ? game.players.first.id
+        : 'gp1';
   });
 
   Widget buildPanel({
@@ -40,62 +41,77 @@ void main() {
   }
 
   group('MilitaryUnitsPanel', () {
-    testWidgets('AC: Panel shows title Military Units',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
+    testWidgets('AC: Panel shows title Military Units', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Military Units'), findsOneWidget);
     });
 
-    testWidgets('AC: Empty state when human player has zero regiments and no fleets',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithNoUnits,
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'AC: Empty state when human player has zero regiments and no fleets',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('No military units'), findsOneWidget);
-      expect(find.byType(ListTile), findsNothing);
-    });
+        expect(find.text('No military units'), findsOneWidget);
+        expect(find.byType(ListTile), findsNothing);
+      },
+    );
 
-    testWidgets('AC: When player has military units, tree shows regions and type rows',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'AC: When player has military units, tree shows regions and type rows',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        );
+        await tester.pumpAndSettle();
 
-      final militaryCount = game.worldState.oldWorld.units
-              .where((u) =>
-                  u.ownerId == humanPlayerIdWithUnits && isMilitaryUnit(u.type))
-              .length +
-          game.worldState.newWorld.units
-              .where((u) =>
-                  u.ownerId == humanPlayerIdWithUnits && isMilitaryUnit(u.type))
-              .length;
-      final fleetCount = game.worldState.fleets
-          .where((f) =>
-              f.ownerId == humanPlayerIdWithUnits && f.shipTypeIds.isNotEmpty)
-          .length;
-      if (militaryCount > 0 || fleetCount > 0) {
-        expect(find.byType(ListTile), findsAtLeastNWidgets(1));
-        expect(find.text('Old World').evaluate().isNotEmpty ||
-            find.text('New World').evaluate().isNotEmpty, isTrue);
-      }
-    });
+        final militaryCount =
+            game.worldState.oldWorld.units
+                .where(
+                  (u) =>
+                      u.ownerId == humanPlayerIdWithUnits &&
+                      isMilitaryUnit(u.type),
+                )
+                .length +
+            game.worldState.newWorld.units
+                .where(
+                  (u) =>
+                      u.ownerId == humanPlayerIdWithUnits &&
+                      isMilitaryUnit(u.type),
+                )
+                .length;
+        final fleetCount = game.worldState.fleets
+            .where(
+              (f) =>
+                  f.ownerId == humanPlayerIdWithUnits &&
+                  f.shipTypeIds.isNotEmpty,
+            )
+            .length;
+        if (militaryCount > 0 || fleetCount > 0) {
+          expect(find.byType(ListTile), findsAtLeastNWidgets(1));
+          expect(
+            find.text('Old World').evaluate().isNotEmpty ||
+                find.text('New World').evaluate().isNotEmpty,
+            isTrue,
+          );
+        }
+      },
+    );
 
-    testWidgets('AC: Regiment rows show type, count, medals, status',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
+    testWidgets('AC: Regiment rows show type, count, medals, status', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
       await tester.pumpAndSettle();
 
       final listTiles = find.byType(ListTile);
@@ -104,60 +120,65 @@ void main() {
       expect(find.textContaining('Status:'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('AC: When tree has content, location headers show region (name — region)',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'AC: When tree has content, location headers show region (name — region)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        );
+        await tester.pumpAndSettle();
 
-      if (find.byType(ListTile).evaluate().isEmpty) return;
-      expect(find.textContaining(' — '), findsAtLeastNWidgets(1));
-    });
+        if (find.byType(ListTile).evaluate().isEmpty) return;
+        expect(find.textContaining(' — '), findsAtLeastNWidgets(1));
+      },
+    );
 
     testWidgets('panel is wrapped in CtPanel', (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(CtPanel), findsOneWidget);
     });
 
-    testWidgets('AC: Tapping a row invokes onLocateTile with tileKey and regionId',
-        (WidgetTester tester) async {
-      String? locatedTileKey;
-      String? locatedRegionId;
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-        onLocateTile: (tileKey, regionId) {
-          locatedTileKey = tileKey;
-          locatedRegionId = regionId;
-        },
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'AC: Tapping a row invokes onLocateTile with tileKey and regionId',
+      (WidgetTester tester) async {
+        String? locatedTileKey;
+        String? locatedRegionId;
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            onLocateTile: (tileKey, regionId) {
+              locatedTileKey = tileKey;
+              locatedRegionId = regionId;
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
-      await tester.tap(listTiles.first);
-      await tester.pumpAndSettle();
+        final listTiles = find.byType(ListTile);
+        if (listTiles.evaluate().isEmpty) return;
+        await tester.tap(listTiles.first);
+        await tester.pumpAndSettle();
 
-      expect(locatedTileKey, isNotNull);
-      expect(locatedRegionId, isNotNull);
-      expect(
+        expect(locatedTileKey, isNotNull);
+        expect(locatedRegionId, isNotNull);
+        expect(
           locatedRegionId == 'oldWorld' || locatedRegionId == 'newWorld',
-          isTrue);
-    });
+          isTrue,
+        );
+      },
+    );
 
-    testWidgets('builds without onLocateTile callback',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
+    testWidgets('builds without onLocateTile callback', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
@@ -169,10 +190,9 @@ void main() {
     });
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: game,
-        humanPlayerId: humanPlayerIdWithUnits,
-      ));
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(ListView), findsOneWidget);
@@ -191,68 +211,381 @@ void main() {
       }
     });
 
-    test('returns first tile from tileKeysByRegionAndProvince when townTileKey is null',
-        () {
-      const regionId = 'oldWorld';
-      const provinceId = 'p1';
-      const prefixedId = 'oldWorld|p1';
-      const tileKey = 'oldWorld|p1|0|0';
-      final minimalGame = Game(
-        id: 'min',
-        worldState: WorldState(
-          turnState: const TurnState(
-              phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: regionId,
-                ownerId: humanPlayerIdWithUnits,
-                townTileKey: null,
-              ),
-            ],
+    test(
+      'returns first tile from tileKeysByRegionAndProvince when townTileKey is null',
+      () {
+        const regionId = 'oldWorld';
+        const provinceId = 'p1';
+        const prefixedId = 'oldWorld|p1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final minimalGame = Game(
+          id: 'min',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: provinceId,
+                  regionId: regionId,
+                  ownerId: humanPlayerIdWithUnits,
+                  townTileKey: null,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              regionId: {
+                prefixedId: [tileKey],
+              },
+            },
           ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            regionId: {prefixedId: [tileKey]},
-          },
-        ),
-        players: const [],
-      );
-      final province = minimalGame.worldState.oldWorld.provinces.first;
-      final key = tileKeyForProvinceLocation(minimalGame, province);
-      expect(key, tileKey);
-    });
+          players: const [],
+        );
+        final province = minimalGame.worldState.oldWorld.provinces.first;
+        final key = tileKeyForProvinceLocation(minimalGame, province);
+        expect(key, tileKey);
+      },
+    );
 
-    test('returns null for province with no tiles in tileKeysByRegionAndProvince',
-        () {
-      final province = Province(
-        id: 'nonexistent',
-        regionId: 'oldWorld',
-        ownerId: humanPlayerIdWithUnits,
+    test(
+      'returns null for province with no tiles in tileKeysByRegionAndProvince',
+      () {
+        final province = Province(
+          id: 'nonexistent',
+          regionId: 'oldWorld',
+          ownerId: humanPlayerIdWithUnits,
+        );
+        final key = tileKeyForProvinceLocation(game, province);
+        expect(key, isNull);
+      },
+    );
+  });
+
+  group('tileKeyForSeaZoneLocation', () {
+    test(
+      'returns port tile when sea zone has port in portsByProvinceSeaboard',
+      () {
+        if (game.worldState.portsByProvinceSeaboard.isEmpty) return;
+        final entry = game.worldState.portsByProvinceSeaboard.entries.first;
+        final parts = entry.key.split('|');
+        final regionId = parts[0];
+        final seaZoneId = parts.length >= 3
+            ? parts.sublist(2).join('|')
+            : parts[1];
+        final key = tileKeyForSeaZoneLocation(game, regionId, seaZoneId);
+        expect(key, isNotNull);
+        expect(key, entry.value);
+      },
+    );
+
+    test('returns null for unknown sea zone', () {
+      final key = tileKeyForSeaZoneLocation(
+        game,
+        'oldWorld',
+        'nonexistent_sea_zone',
       );
-      final key = tileKeyForProvinceLocation(game, province);
       expect(key, isNull);
     });
   });
 
-  group('tileKeyForSeaZoneLocation', () {
-    test('returns port tile when sea zone has port in portsByProvinceSeaboard',
-        () {
-      if (game.worldState.portsByProvinceSeaboard.isEmpty) return;
-      final entry = game.worldState.portsByProvinceSeaboard.entries.first;
-      final parts = entry.key.split('|');
-      final regionId = parts[0];
-      final seaZoneId = parts.length >= 3 ? parts.sublist(2).join('|') : parts[1];
-      final key = tileKeyForSeaZoneLocation(game, regionId, seaZoneId);
-      expect(key, isNotNull);
-      expect(key, entry.value);
+  group('Sea zone fleet display', () {
+    testWidgets('shows ship rows for fleet at sea', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'test_player';
+      const seaZoneId = 'atlantic';
+      final gameWithSeaFleet = Game(
+        id: 'sea_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [],
+            provinces: [
+              Province(id: 'lisbon', regionId: 'oldWorld', ownerId: playerId),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet1',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              seaZoneId: seaZoneId,
+              shipTypeIds: ['galleon', 'carrack'],
+              mission: FleetMission.patrol,
+            ),
+          ],
+          portsByProvinceSeaboard: {
+            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithSeaFleet, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('atlantic — Old World'), findsOneWidget);
+      expect(find.textContaining('galleon: 1'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('carrack: 1'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Status: Patrol'), findsAtLeastNWidgets(1));
     });
 
-    test('returns null for unknown sea zone', () {
-      final key = tileKeyForSeaZoneLocation(
-          game, 'oldWorld', 'nonexistent_sea_zone');
-      expect(key, isNull);
+    testWidgets('shows multiple ships of same type aggregated', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'test_player';
+      final gameWithMultipleShips = Game(
+        id: 'multi_ship_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(units: []),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet1',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              seaZoneId: 'atlantic',
+              shipTypeIds: ['galleon', 'galleon', 'galleon'],
+              mission: FleetMission.blockade,
+            ),
+          ],
+          portsByProvinceSeaboard: {
+            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithMultipleShips, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('galleon: 3'), findsOneWidget);
+      expect(find.textContaining('Status: Blockade'), findsOneWidget);
+    });
+
+    testWidgets('fleet with defend mission shows Defend status', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'test_player';
+      final gameWithDefendFleet = Game(
+        id: 'defend_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(units: []),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet1',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              seaZoneId: 'atlantic',
+              shipTypeIds: ['fluyte'],
+              mission: FleetMission.defend,
+            ),
+          ],
+          portsByProvinceSeaboard: {
+            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithDefendFleet, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Status: Defend'), findsOneWidget);
+    });
+  });
+
+  group('Medals range display', () {
+    testWidgets('shows medal range when regiment has multiple medal values', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'multi_medal_player';
+      final gameWithMixedMedals = Game(
+        id: 'mixed_medals_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 1,
+                status: UnitStatus.idle,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 2,
+                status: UnitStatus.idle,
+              ),
+              Unit(
+                id: 'u3',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 3,
+                status: UnitStatus.idle,
+              ),
+            ],
+            provinces: [
+              Province(
+                id: 'lisbon',
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                townTileKey: 'oldWorld|lisbon|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithMixedMedals, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Medals: 1–3'), findsOneWidget);
+    });
+  });
+
+  group('Unit status display', () {
+    testWidgets('shows Working status when any unit is working', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'working_status_player';
+      final gameWithWorkingUnit = Game(
+        id: 'working_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 1,
+                status: UnitStatus.idle,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 1,
+                status: UnitStatus.working,
+              ),
+            ],
+            provinces: [
+              Province(
+                id: 'lisbon',
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                townTileKey: 'oldWorld|lisbon|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithWorkingUnit, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Status: Working'), findsOneWidget);
+    });
+
+    testWidgets('shows Done status when units are done and none working', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'done_status_player';
+      final gameWithDoneUnit = Game(
+        id: 'done_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: playerId,
+                provinceId: 'lisbon',
+                medals: 1,
+                status: UnitStatus.done,
+              ),
+            ],
+            provinces: [
+              Province(
+                id: 'lisbon',
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                townTileKey: 'oldWorld|lisbon|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameWithDoneUnit, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Status: Done'), findsOneWidget);
     });
   });
 }
