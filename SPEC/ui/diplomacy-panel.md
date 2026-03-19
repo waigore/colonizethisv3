@@ -53,9 +53,27 @@ Events are read from the flat diplomatic history list on `Game`, filtered to tho
 
 ## Actions
 
-- **No parameters:** Submit the overture/order immediately (e.g. Declare War, Offer Peace, Alliance).
-- **Parameters required:** Open a **dialog** to collect amount (Grant Aid, Set Subsidy) or overture stage (Establish Overture); on confirm, submit the order.
-- Orders are submitted into the current turn’s order set; resolution happens on Next Turn. The panel does not resolve orders itself.
+All diplomatic actions are **submitted for end-of-turn resolution** — the panel does not resolve orders itself. Orders accumulate in the current turn's order set until Next Turn.
+
+### Submitting an action
+
+- **Confirm dialog:** Before any action is submitted, the UI shows a **confirmation dialog** with the action name and target faction. The dialog has "Confirm" and "Cancel" buttons. Tapping "Confirm" submits the order; tapping "Cancel" dismisses without submitting.
+- **Parameter dialogs:** Actions that require parameters (Grant Aid amount, Set Subsidy amount, Establish Overture stage) open the parameter dialog first; after parameters are set, the confirmation dialog appears before the order is submitted.
+- **Pending state:** After an order is submitted, the corresponding action button for that (player, target, type) is shown with a **"Cancel" label** to indicate the action is pending. The button text changes from the action name to "Cancel" and tapping it **removes the pending order** (toggle off), returning the UI to the pre-submitted state.
+- **Toggle logic:** Clicking an action button while the same order is already pending cancels it. The pending state is per `(humanPlayerId, targetFactionId, DiplomaticOrderType)`. If the pending order has parameters (amount, overtureStage), canceling removes the entire order; the user must re-enter parameters to submit again.
+
+### Action button labels (pending state)
+
+| Action | Default | Pending (Cancel) |
+|--------|---------|-----------------|
+| Declare War | "Declare War" | "Cancel" |
+| Offer Peace | "Offer Peace" | "Cancel" |
+| Alliance | "Alliance" | "Cancel" |
+| Establish Overture | "Consulate/Embassy/NAP/Join Empire" | "Cancel" |
+| Grant Aid | "Grant Aid (£N)" | "Cancel" |
+| Set Subsidy | "Subsidy (£N)" | "Cancel" |
+
+Orders are submitted into the current turn's order set; resolution happens on Next Turn.
 
 ---
 
@@ -77,8 +95,10 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 - Given the user is in-game and taps the dove icon in the toolbar, the UI opens the Diplomacy panel as a full-page screen.
 - Given the Diplomacy panel is open, it lists only discovered factions, grouped as Great Powers, Minor Nations, Tribes; GPs sorted by military power then province count.
 - Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power score** (SPEC/game/diplomacy.md § Great Power power score) in **red** when the GP’s score is higher than the player’s, otherwise in **green**. To the right it shows only valid diplomatic actions for that faction.
-- Given the user taps an action that requires no parameters, the UI submits that diplomatic order for the current turn.
-- Given the user taps an action that requires parameters (amount or overture stage), the UI shows a dialog; on confirm, the UI submits the order with the chosen parameters.
+- Given the user taps an action button, the UI shows a **confirmation dialog** with the action name and target faction. Tapping "Confirm" in the dialog submits the diplomatic order; tapping "Cancel" dismisses without submitting.
+- Given the user has **already submitted** a diplomatic order for a (player, target, order type) combination, when the panel renders the action button for that order type toward that target, the button label shows **"Cancel"** and the action is **not shown** again in the suggested actions list for that faction.
+- Given the user has a pending diplomatic order toward a target faction, when the user taps the **"Cancel" button** for that pending order, the UI removes that order from the current turn's order set (toggle off) and the action reappears as a suggested action for that faction.
+- Given the user taps an action that requires parameters (amount or overture stage), the UI shows the **parameter dialog** first; after parameters are set, the **confirmation dialog** appears; on "Confirm" the order is submitted; on "Cancel" it is dismissed.
 
 - **Diplomacy Detail — open:** Given the Diplomacy panel is open and shows at least one faction row, when the user taps that row (or its Details affordance), then the UI opens a Diplomacy Detail view scoped to the current player’s Great Power and the tapped faction.
 - **Diplomacy Detail — history contents:** Given the Diplomacy Detail view is open for Great Power `A` and faction `B`, when the UI renders the history panel, then it shows all and only those `DiplomaticEvent` entries from the Game’s diplomatic history whose `participants` include both `A` and `B`, ordered by newest first (highest `turn`, then highest `intraTurnIndex`).
