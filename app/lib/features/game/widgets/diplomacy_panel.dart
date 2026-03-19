@@ -24,6 +24,7 @@ class DiplomacyRowData {
     required this.actions,
     this.powerScore,
     this.playerPowerScore,
+    required this.pendingOrderTypes,
   });
 
   final String factionId;
@@ -32,10 +33,15 @@ class DiplomacyRowData {
   final DiplomacyRelation? relation;
   final OvertureState? overture;
   final List<DiplomaticOrder> actions;
+
   /// Great Power power score (SPEC/game/diplomacy.md). Only set for GP rows.
   final int? powerScore;
+
   /// Human player's power score for comparison (red if GP score > this). Only set for GP rows.
   final int? playerPowerScore;
+
+  /// Set of DiplomaticOrderType that are currently pending for this target faction.
+  final Set<DiplomaticOrderType> pendingOrderTypes;
 }
 
 /// Builds list of discovered factions and their available actions.
@@ -48,7 +54,12 @@ List<DiplomacyRowData> buildDiplomacyRows(
 ) {
   final view = buildPlayerView(game, topology, humanPlayerId);
   final discoveredIds = view.diplomacyByOtherId.keys.toList();
-  final suggestions = suggestDiplomaticOrders(view, game, topology, currentOrders);
+  final suggestions = suggestDiplomaticOrders(
+    view,
+    game,
+    topology,
+    currentOrders,
+  );
   final actionsByTarget = <String, List<DiplomaticOrder>>{};
   for (final order in suggestions) {
     actionsByTarget.putIfAbsent(order.targetFactionId, () => []).add(order);
@@ -79,6 +90,12 @@ List<DiplomacyRowData> buildDiplomacyRows(
     return provB.compareTo(provA);
   });
 
+  final pendingByTarget = <String, Set<DiplomaticOrderType>>{};
+  final pending = currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
+  for (final o in pending) {
+    pendingByTarget.putIfAbsent(o.targetFactionId, () => {}).add(o.type);
+  }
+
   String displayNameFor(String id) {
     final p = game.playerById(id);
     if (p != null) return p.displayName;
@@ -94,42 +111,51 @@ List<DiplomacyRowData> buildDiplomacyRows(
   List<DiplomacyRowData> rows = [];
   final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
-    rows.add(DiplomacyRowData(
-      factionId: id,
-      displayName: displayNameFor(id),
-      kind: FactionKind.greatPower,
-      relation: view.diplomacyByOtherId[id],
-      overture: getOverture(game, humanPlayerId, id),
-      actions: actionsByTarget[id] ?? [],
-      powerScore: greatPowerPowerScore(game, id),
-      playerPowerScore: playerPower,
-    ));
+    rows.add(
+      DiplomacyRowData(
+        factionId: id,
+        displayName: displayNameFor(id),
+        kind: FactionKind.greatPower,
+        relation: view.diplomacyByOtherId[id],
+        overture: getOverture(game, humanPlayerId, id),
+        actions: actionsByTarget[id] ?? [],
+        powerScore: greatPowerPowerScore(game, id),
+        playerPowerScore: playerPower,
+        pendingOrderTypes: pendingByTarget[id] ?? {},
+      ),
+    );
   }
   minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in minorIds) {
-    rows.add(DiplomacyRowData(
-      factionId: id,
-      displayName: displayNameFor(id),
-      kind: FactionKind.minor,
-      relation: view.diplomacyByOtherId[id],
-      overture: getOverture(game, humanPlayerId, id),
-      actions: actionsByTarget[id] ?? [],
-      powerScore: null,
-      playerPowerScore: null,
-    ));
+    rows.add(
+      DiplomacyRowData(
+        factionId: id,
+        displayName: displayNameFor(id),
+        kind: FactionKind.minor,
+        relation: view.diplomacyByOtherId[id],
+        overture: getOverture(game, humanPlayerId, id),
+        actions: actionsByTarget[id] ?? [],
+        powerScore: null,
+        playerPowerScore: null,
+        pendingOrderTypes: pendingByTarget[id] ?? {},
+      ),
+    );
   }
   tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in tribeIds) {
-    rows.add(DiplomacyRowData(
-      factionId: id,
-      displayName: displayNameFor(id),
-      kind: FactionKind.tribe,
-      relation: view.diplomacyByOtherId[id],
-      overture: getOverture(game, humanPlayerId, id),
-      actions: actionsByTarget[id] ?? [],
-      powerScore: null,
-      playerPowerScore: null,
-    ));
+    rows.add(
+      DiplomacyRowData(
+        factionId: id,
+        displayName: displayNameFor(id),
+        kind: FactionKind.tribe,
+        relation: view.diplomacyByOtherId[id],
+        overture: getOverture(game, humanPlayerId, id),
+        actions: actionsByTarget[id] ?? [],
+        powerScore: null,
+        playerPowerScore: null,
+        pendingOrderTypes: pendingByTarget[id] ?? {},
+      ),
+    );
   }
   return rows;
 }
@@ -155,7 +181,12 @@ class DiplomacyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = buildDiplomacyRows(game, topology, humanPlayerId, currentOrders);
+    final rows = buildDiplomacyRows(
+      game,
+      topology,
+      humanPlayerId,
+      currentOrders,
+    );
     final gps = rows.where((r) => r.kind == FactionKind.greatPower).toList();
     final minors = rows.where((r) => r.kind == FactionKind.minor).toList();
     final tribes = rows.where((r) => r.kind == FactionKind.tribe).toList();
@@ -165,27 +196,33 @@ class DiplomacyPanel extends StatelessWidget {
       children: [
         if (gps.isNotEmpty) ...[
           _sectionHeader(context, 'Great Powers'),
-          ...gps.map((r) => _DiplomacyRow(
-                data: r,
-                onAction: (order) => _submitOrDialog(context, order),
-                onTap: () => _openDetail(context, r),
-              )),
+          ...gps.map(
+            (r) => _DiplomacyRow(
+              data: r,
+              onAction: (order) => _submitOrDialog(context, order),
+              onTap: () => _openDetail(context, r),
+            ),
+          ),
         ],
         if (minors.isNotEmpty) ...[
           _sectionHeader(context, 'Minor Nations'),
-          ...minors.map((r) => _DiplomacyRow(
-                data: r,
-                onAction: (order) => _submitOrDialog(context, order),
-                onTap: () => _openDetail(context, r),
-              )),
+          ...minors.map(
+            (r) => _DiplomacyRow(
+              data: r,
+              onAction: (order) => _submitOrDialog(context, order),
+              onTap: () => _openDetail(context, r),
+            ),
+          ),
         ],
         if (tribes.isNotEmpty) ...[
           _sectionHeader(context, 'Tribes'),
-          ...tribes.map((r) => _DiplomacyRow(
-                data: r,
-                onAction: (order) => _submitOrDialog(context, order),
-                onTap: () => _openDetail(context, r),
-              )),
+          ...tribes.map(
+            (r) => _DiplomacyRow(
+              data: r,
+              onAction: (order) => _submitOrDialog(context, order),
+              onTap: () => _openDetail(context, r),
+            ),
+          ),
         ],
         if (rows.isEmpty)
           Padding(
@@ -204,23 +241,101 @@ class DiplomacyPanel extends StatelessWidget {
       padding: const EdgeInsets.only(top: 16, bottom: 8),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
 
   void _submitOrDialog(BuildContext context, DiplomaticOrder order) {
-    final needsParams = order.type == DiplomaticOrderType.grantAid ||
+    final pending =
+        currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
+    final alreadyPending = pending.any(
+      (o) => o.type == order.type && o.targetFactionId == order.targetFactionId,
+    );
+    if (alreadyPending) {
+      _removeOrder(order.type, order.targetFactionId);
+      return;
+    }
+    final needsParams =
+        order.type == DiplomaticOrderType.grantAid ||
         order.type == DiplomaticOrderType.setSubsidy ||
         (order.type == DiplomaticOrderType.establishOverture &&
             order.overtureStage != null);
     if (needsParams) {
       _showDialogForOrder(context, order);
     } else {
-      _appendOrder(order);
+      _showConfirmDialog(context, order);
     }
+  }
+
+  String _actionLabel(DiplomaticOrder o) {
+    switch (o.type) {
+      case DiplomaticOrderType.declareWar:
+        return 'Declare War';
+      case DiplomaticOrderType.offerPeace:
+        return 'Offer Peace';
+      case DiplomaticOrderType.alliance:
+        return 'Alliance';
+      case DiplomaticOrderType.establishOverture:
+        return o.overtureStage != null
+            ? _overtureStageShort(o.overtureStage!)
+            : 'Overture';
+      case DiplomaticOrderType.grantAid:
+        return o.amount != null ? 'Grant Aid (£${o.amount})' : 'Grant Aid';
+      case DiplomaticOrderType.setSubsidy:
+        return o.amount != null ? 'Subsidy (£${o.amount})' : 'Set Subsidy';
+    }
+  }
+
+  String _overtureStageShort(OvertureStage s) {
+    return switch (s) {
+      OvertureStage.none => 'Overture',
+      OvertureStage.tradeConsulate => 'Consulate',
+      OvertureStage.embassy => 'Embassy',
+      OvertureStage.nap => 'NAP',
+      OvertureStage.joinEmpire => 'Join Empire',
+    };
+  }
+
+  void _showConfirmDialog(BuildContext context, DiplomaticOrder order) {
+    final actionLabel = _actionLabel(order);
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(actionLabel),
+        content: Text(
+          'Confirm $actionLabel against ${_targetName(order.targetFactionId)}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true) {
+        _appendOrder(order);
+      }
+    });
+  }
+
+  String _targetName(String factionId) {
+    final p = game.playerById(factionId);
+    if (p != null) return p.displayName;
+    for (final m in game.minorNations) {
+      if (m.id == factionId) return m.displayName ?? factionId;
+    }
+    for (final t in game.tribes) {
+      if (t.id == factionId) return t.displayName ?? factionId;
+    }
+    return factionId;
   }
 
   void _showDialogForOrder(BuildContext context, DiplomaticOrder order) {
@@ -233,17 +348,60 @@ class DiplomacyPanel extends StatelessWidget {
         targetFactionId: order.targetFactionId,
         isSubsidy: order.type == DiplomaticOrderType.setSubsidy,
         onSubmitted: (amount) {
-          _appendOrder(DiplomaticOrder(
-            type: order.type,
-            targetFactionId: order.targetFactionId,
-            amount: amount,
-          ));
+          final actionName = order.type == DiplomaticOrderType.grantAid
+              ? 'Grant Aid'
+              : 'Set Subsidy';
+          final target = _targetName(order.targetFactionId);
+          showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(actionName),
+              content: Text('$actionName of £$amount to $target?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            ),
+          ).then((confirmed) {
+            if (confirmed == true) {
+              _appendOrder(
+                DiplomaticOrder(
+                  type: order.type,
+                  targetFactionId: order.targetFactionId,
+                  amount: amount,
+                ),
+              );
+            }
+          });
         },
       );
     } else if (order.type == DiplomaticOrderType.establishOverture &&
         order.overtureStage != null) {
-      _appendOrder(order);
+      _showConfirmDialog(context, order);
     }
+  }
+
+  void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
+    final list =
+        List<DiplomaticOrder>.from(
+          currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
+        )..removeWhere(
+          (o) => o.type == type && o.targetFactionId == targetFactionId,
+        );
+    onOrdersChanged(
+      currentOrders.copyWith(
+        diplomaticOrdersByPlayerId: {
+          ...currentOrders.diplomaticOrdersByPlayerId,
+          humanPlayerId: list,
+        },
+      ),
+    );
   }
 
   void _openDetail(BuildContext context, DiplomacyRowData row) {
@@ -265,21 +423,19 @@ class DiplomacyPanel extends StatelessWidget {
     final list = List<DiplomaticOrder>.from(
       currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
     )..add(order);
-    onOrdersChanged(currentOrders.copyWith(
-      diplomaticOrdersByPlayerId: {
-        ...currentOrders.diplomaticOrdersByPlayerId,
-        humanPlayerId: list,
-      },
-    ));
+    onOrdersChanged(
+      currentOrders.copyWith(
+        diplomaticOrdersByPlayerId: {
+          ...currentOrders.diplomaticOrdersByPlayerId,
+          humanPlayerId: list,
+        },
+      ),
+    );
   }
 }
 
 class _DiplomacyRow extends StatelessWidget {
-  const _DiplomacyRow({
-    required this.data,
-    required this.onAction,
-    this.onTap,
-  });
+  const _DiplomacyRow({required this.data, required this.onAction, this.onTap});
 
   final DiplomacyRowData data;
   final void Function(DiplomaticOrder) onAction;
@@ -291,10 +447,12 @@ class _DiplomacyRow extends StatelessWidget {
     final stateLabel = rel == null
         ? '—'
         : rel.atWar
-            ? 'War'
-            : 'Peace';
+        ? 'War'
+        : 'Peace';
     // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
-    final relationStateLabel = rel == null ? '' : relationScoreToDisplayLabel(rel.score);
+    final relationStateLabel = rel == null
+        ? ''
+        : relationScoreToDisplayLabel(rel.score);
     final overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
@@ -304,53 +462,68 @@ class _DiplomacyRow extends StatelessWidget {
       children: [
         Expanded(
           child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        data.displayName,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(width: 8),
-                      _kindChip(context, data.kind),
-                      if (data.powerScore != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          'Power: ${data.powerScore}',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: data.playerPowerScore != null &&
-                                        data.powerScore! > data.playerPowerScore!
-                                    ? Colors.red
-                                    : Colors.green,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
                   Text(
-                    relationStateLabel.isEmpty
-                        ? '$stateLabel$overtureLabel'
-                        : '$stateLabel · $relationStateLabel$overtureLabel',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    data.displayName,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  _kindChip(context, data.kind),
+                  if (data.powerScore != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      'Power: ${data.powerScore}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color:
+                            data.playerPowerScore != null &&
+                                data.powerScore! > data.playerPowerScore!
+                            ? Colors.red
+                            : Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                relationStateLabel.isEmpty
+                    ? '$stateLabel$overtureLabel'
+                    : '$stateLabel · $relationStateLabel$overtureLabel',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
         Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: data.actions.map((order) {
-            return _ActionButton(
-              order: order,
-              onPressed: () => onAction(order),
-            );
-          }).toList(),
+          children: [
+            for (final order in data.actions)
+              if (!data.pendingOrderTypes.contains(order.type))
+                _ActionButton(order: order, onPressed: () => onAction(order)),
+            for (final orderType in data.pendingOrderTypes)
+              _ActionButton(
+                order: DiplomaticOrder(
+                  type: orderType,
+                  targetFactionId: data.factionId,
+                ),
+                onPressed: () {},
+                isPending: true,
+                onCancel: () => onAction(
+                  DiplomaticOrder(
+                    type: orderType,
+                    targetFactionId: data.factionId,
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -359,10 +532,7 @@ class _DiplomacyRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: onTap,
-        child: CtPanel(
-          padding: const EdgeInsets.all(12),
-          child: content,
-        ),
+        child: CtPanel(padding: const EdgeInsets.all(12), child: content),
       ),
     );
   }
@@ -382,9 +552,9 @@ class _DiplomacyRow extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -404,18 +574,22 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.order,
     required this.onPressed,
+    this.isPending = false,
+    this.onCancel,
   });
 
   final DiplomaticOrder order;
   final VoidCallback onPressed;
+  final bool isPending;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
-    final label = _actionLabel(order);
+    final label = isPending ? 'Cancel' : _actionLabel(order);
     return SizedBox(
       height: 32,
       child: CtNinePatchButton(
-        onPressed: onPressed,
+        onPressed: isPending ? onCancel : onPressed,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
