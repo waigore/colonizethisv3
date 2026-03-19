@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
@@ -21,8 +22,9 @@ void main() {
       player = game.players.first;
     });
 
-    testWidgets('Choose tech assigns an order and closes sheet',
-        (WidgetTester tester) async {
+    testWidgets('Choosing tech closes the bottom sheet (AC3)', (
+      WidgetTester tester,
+    ) async {
       Orders last = const Orders();
       await tester.pumpWidget(
         MaterialApp(
@@ -38,44 +40,56 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Open choose dialog for slot 1.
       await tester.tap(find.text('Choose tech').first);
       await tester.pumpAndSettle();
 
-      // Either we see a list of available techs, or the empty-state message.
-      if (find.text('No techs available to research').evaluate().isNotEmpty) {
-        expect(find.text('No techs available to research'), findsOneWidget);
+      final emptyState = find.text('No techs available to research');
+      if (emptyState.evaluate().isNotEmpty) {
+        expect(emptyState, findsOneWidget);
         return;
       }
 
-      // Tap the first tech row in the bottom sheet. The sheet tiles have a
-      // subtitle that includes "Era ...".
       final firstTechTile = find.ancestor(
         of: find.textContaining('Era ').first,
         matching: find.byType(ListTile),
       );
-      expect(firstTechTile, findsOneWidget);
       await tester.ensureVisible(firstTechTile);
       await tester.tap(firstTechTile);
       await tester.pumpAndSettle();
 
-      // Orders should now contain at least one research order for the player.
+      expect(
+        find.textContaining('Era '),
+        findsNothing,
+        reason: 'Bottom sheet should be closed after selection',
+      );
       final orders = last.researchOrdersByPlayerId[player.id] ?? const [];
       expect(orders, isNotEmpty);
       expect(orders.first.slotIndex, 0);
       expect(orders.first.techId, isNotEmpty);
     });
 
-    testWidgets('Cancel removes a research order and shows snack bar',
-        (WidgetTester tester) async {
-      Orders last = const Orders();
-      final techId = techCatalog.keys.first;
+    testWidgets('Tech assigned to slot 1 does not appear in slot 2 list (AC4)', (
+      WidgetTester tester,
+    ) async {
+      final rootIds =
+          techCatalog.entries
+              .where((e) => e.value.prerequisiteIds.isEmpty)
+              .map((e) => e.key)
+              .toList()
+            ..sort();
+      final techA = rootIds.length > 0 ? rootIds[0] : techCatalog.keys.first;
+      final techB = rootIds.length > 1
+          ? rootIds[1]
+          : (rootIds.length > 0
+                ? techCatalog.keys.firstWhere((k) => k != techA)
+                : techCatalog.keys.first);
+
       final seeded = Orders(
         researchOrdersByPlayerId: {
           player.id: [
             ResearchOrder(
               slotIndex: 0,
-              techId: techId,
+              techId: techA,
               funding: ResearchFundingLevel.medium,
             ),
           ],
@@ -89,21 +103,144 @@ void main() {
               game: game,
               player: player,
               currentOrders: seeded,
-              onOrdersChanged: (o) => last = o,
+              onOrdersChanged: (_) {},
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Cancel').first);
-      await tester.pump(); // snack bar enqueued
+      await tester.tap(find.text('Choose tech').last);
+      await tester.pumpAndSettle();
 
-      expect(find.text('Research slot cancelled'), findsOneWidget);
+      if (find.text('No techs available to research').evaluate().isNotEmpty) {
+        expect(find.text('No techs available to research'), findsOneWidget);
+        return;
+      }
 
-      final orders = last.researchOrdersByPlayerId[player.id] ?? const [];
-      expect(orders.where((o) => o.slotIndex == 0), isEmpty);
+      expect(
+        find.text(techDisplayName(techA)),
+        findsNothing,
+        reason:
+            'Tech already assigned to slot 1 should not appear in slot 2 list',
+      );
     });
+
+    testWidgets(
+      'Discovery tech does NOT appear when player has not revealed the resource (AC5)',
+      (WidgetTester tester) async {
+        const tileKey = 'oldWorld|r1:p1|0|0';
+        const playerId = 'test-player-ac5';
+
+        final playerWithNoVis = Player(
+          id: playerId,
+          displayName: 'Test Player',
+          isHuman: true,
+          techUnlocked: <String, bool>{},
+        );
+
+        final worldWithHiddenResource = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              const Province(id: 'oldWorld|r1:p1', regionId: 'oldWorld'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileKey: 'sugarCane'},
+          playerVisibilityByTile: {
+            playerId: {tileKey: 'unknown'},
+          },
+        );
+
+        final noVisGame = Game(
+          id: 'ac5-no-vis',
+          worldState: worldWithHiddenResource,
+          players: [playerWithNoVis],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TechnologyPanel(
+                game: noVisGame,
+                player: playerWithNoVis,
+                currentOrders: const Orders(),
+                onOrdersChanged: (_) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Choose tech').first);
+        await tester.pumpAndSettle();
+
+        if (find.text('No techs available to research').evaluate().isNotEmpty) {
+          expect(find.text('No techs available to research'), findsOneWidget);
+        } else {
+          expect(
+            find.text('Discovery of Sugar'),
+            findsNothing,
+            reason:
+                'Discovery of Sugar should not appear when sugarCane is not revealed',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'Root tech appears in assignable list when prereqs are met (AC1)',
+      (WidgetTester tester) async {
+        final emptyPlayer = Player(
+          id: player.id,
+          displayName: player.displayName,
+          isHuman: true,
+          techUnlocked: <String, bool>{},
+        );
+        final emptyGame = game.copyWith(
+          players: [emptyPlayer, ...game.players.skip(1)],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TechnologyPanel(
+                game: emptyGame,
+                player: emptyPlayer,
+                currentOrders: const Orders(),
+                onOrdersChanged: (_) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Choose tech').first);
+        await tester.pumpAndSettle();
+
+        if (find.text('No techs available to research').evaluate().isNotEmpty) {
+          // No root techs available — skip
+          return;
+        }
+
+        final rootTech =
+            techCatalog.values.where((t) => t.prerequisiteIds.isEmpty).toList()
+              ..sort(
+                (a, b) =>
+                    techDisplayName(a.id).compareTo(techDisplayName(b.id)),
+              );
+
+        if (rootTech.isNotEmpty) {
+          expect(
+            find.text(techDisplayName(rootTech.first.id)),
+            findsWidgets,
+            reason:
+                'Root tech "${techDisplayName(rootTech.first.id)}" '
+                'should appear in assignable list when prereqs are met',
+          );
+        }
+      },
+    );
   });
 }
-

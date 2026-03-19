@@ -390,6 +390,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     humanPlayerId: _humanPlayerId,
                     sideMenuOpen: _sideMenuOpen,
                     onClose: () => setState(() => _sideMenuOpen = false),
+                    onPanelDismissed: () =>
+                        setState(() => _highlightedTileKey = null),
                     onLocateCivilianUnit: _onLocateCivilianUnit,
                     onLocateMilitaryTile: _onLocateMilitaryTile,
                     onLocateNavalFleet: _onLocateNavalFleet,

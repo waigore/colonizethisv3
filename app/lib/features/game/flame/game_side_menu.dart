@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/routes.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -24,6 +25,7 @@ class GameSideMenu extends ConsumerWidget {
     required this.humanPlayerId,
     required this.sideMenuOpen,
     required this.onClose,
+    required this.onPanelDismissed,
     required this.onLocateCivilianUnit,
     required this.onLocateMilitaryTile,
     required this.onLocateNavalFleet,
@@ -36,6 +38,7 @@ class GameSideMenu extends ConsumerWidget {
   final String humanPlayerId;
   final bool sideMenuOpen;
   final VoidCallback onClose;
+  final VoidCallback onPanelDismissed;
 
   final void Function(ct_models.Unit unit) onLocateCivilianUnit;
   final void Function(String tileKey, String regionId) onLocateMilitaryTile;
@@ -136,7 +139,7 @@ class GameSideMenu extends ConsumerWidget {
                 ),
               );
             },
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
@@ -152,7 +155,7 @@ class GameSideMenu extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               onLocateTile: onLocateMilitaryTile,
             ),
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
@@ -168,7 +171,7 @@ class GameSideMenu extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               onLocateFleet: onLocateNavalFleet,
             ),
-          );
+          ).whenComplete(onPanelDismissed);
         },
       ),
       _empireButton(
@@ -200,17 +203,36 @@ class GameSideMenu extends ConsumerWidget {
           onClose();
           Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (ctx) => TechnologyScreen(
-                game: game,
-                player: player,
-                currentOrders: orders,
-                onOrdersChanged: (newOrders) {
-                  ref.read(currentOrdersProvider.notifier).state = newOrders;
-                },
+              builder: (ctx) => Consumer(
+                builder: (ctx, ref, _) => TechnologyScreen(
+                  game: game,
+                  player: player,
+                  currentOrders: ref.watch(currentOrdersProvider),
+                  onOrdersChanged: (newOrders) {
+                    ref.read(currentOrdersProvider.notifier).state = newOrders;
+                  },
+                ),
               ),
             ),
           );
         },
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: CtNinePatchButton(
+          onPressed: () {
+            onClose();
+            Navigator.of(context).pushNamed(Routes.debugLog);
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.bug_report, size: 20),
+              const SizedBox(width: 8),
+              const Text('Debug log'),
+            ],
+          ),
+        ),
       ),
     ];
   }
@@ -241,7 +263,6 @@ class GameSideMenu extends ConsumerWidget {
           padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -250,7 +271,13 @@ class GameSideMenu extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              ..._buildEmpireMenuButtons(context, ref),
+              // When more menu items are present (e.g. Debug log), the panel must
+              // remain within the available height; make the list scrollable.
+              Expanded(
+                child: ListView(
+                  children: _buildEmpireMenuButtons(context, ref),
+                ),
+              ),
             ],
           ),
         ),
