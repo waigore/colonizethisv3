@@ -190,11 +190,17 @@ class GameSideMenu extends ConsumerWidget {
           onClose();
           showModalBottomSheet<void>(
             context: context,
-            builder: (ctx) => NavalUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              onLocateFleet: onLocateNavalFleet,
-            ),
+            builder: (ctx) {
+              final currentGame = ref.read(currentGameProvider) ?? game;
+              return NavalUnitsPanel(
+                game: currentGame,
+                humanPlayerId: humanPlayerId,
+                onLocateFleet: onLocateNavalFleet,
+                onFleetsChanged: (newGame) {
+                  ref.read(currentGameProvider.notifier).state = newGame;
+                },
+              );
+            },
           ).whenComplete(onPanelDismissed);
         },
       ),
