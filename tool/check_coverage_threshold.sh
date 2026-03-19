@@ -59,7 +59,6 @@ for dir in "${TARGETS[@]}"; do
         "lib/features/game/widgets/technology_panel.dart" \
         "lib/features/game/widgets/diplomacy_panel.dart" \
         "lib/features/game/widgets/province_sea_zone_detail_overlay.dart" \
-        "lib/features/game/widgets/military_units_panel.dart" \
         -o "$filtered_lcov" >/dev/null 2>&1 || true
     fi
     if [ ! -f "$filtered_lcov" ]; then
