@@ -33,7 +33,9 @@
 ### 4.1 Flutter app
 
 - **macOS:** Application menubar. One top-level or sub-menu item that opens the debug log viewer (e.g. **View → Debug log** or **Developer → Debug log**). Shown only when the app has a menubar (desktop).
-- **Mobile:** In-game pause menu. One menu item (e.g. **Debug log**) that opens the viewer. When the user does not have a pause menu (e.g. main menu only), the viewer is not required to be reachable from that context; implementation may also expose it from a main-menu or settings entry on mobile if desired.
+- **In-game (pre-map):** When the game is running but the map view is not yet shown (Flame canvas only), a pause menu (e.g. bottom sheet) opened via a menu control offers **Debug log** and **Resume**.
+- **In-game (map view):** When the in-game map is shown (region tabs, side menu), the **side menu** (opened via the top-left menu icon) includes a **Debug log** item that opens the viewer. This is the primary way to open the debug log on mobile and in narrow viewports when on the map.
+- **Mobile:** In-game access is via the pause menu (pre-map) or the map side menu (map view). When the user does not have a pause menu (e.g. main menu only), the viewer is not required to be reachable from that context; implementation may also expose it from a main-menu or settings entry on mobile if desired.
 - **Other platforms (e.g. web):** Optional; at least one way to open the viewer (e.g. from a menu or overflow) so that web dev sessions can use it.
 
 ### 4.2 ctterm
@@ -61,7 +63,8 @@
 ## 7. Acceptance criteria (Given–When–Then)
 
 - **Given** the Flutter app is running on macOS with a menubar, **when** the user chooses the Debug log menu item, **then** the debug log viewer opens and displays session logs with package and level filters available.
-- **Given** the Flutter app is in-game on mobile, **when** the user opens the pause menu and selects Debug log, **then** the debug log viewer opens and displays session logs with package and level filters available.
+- **Given** the Flutter app is in-game on mobile (pre-map), **when** the user opens the pause menu and selects Debug log, **then** the debug log viewer opens and displays session logs with package and level filters available.
+- **Given** the Flutter app is in-game with the map view shown (any viewport), **when** the user opens the side menu (menu icon) and selects Debug log, **then** the debug log viewer opens and displays session logs with package and level filters available.
 - **Given** ctterm is at the Main Menu, **when** the user selects Debug log and confirms, **then** the Debug log viewer screen is shown and displays session logs.
 - **Given** ctterm is at the Pause/Options screen, **when** the user selects Debug log and confirms, **then** the Debug log viewer screen is shown; when the user exits the viewer, **then** the app returns to the Pause/Options screen.
 - **Given** the debug log viewer is open with all packages and all levels selected, **when** the user deselects one package (e.g. **logic**), **then** lines whose prefix matches **logic** are hidden; when the user reselects **logic**, **then** those lines are shown again.
