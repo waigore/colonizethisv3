@@ -274,8 +274,111 @@ void main() {
   });
 
   testWidgets(
-    'Tapping locked tech node opens dialog with benefits and effects',
+    'TechTreeWidget shows all four node states in legend for a mid-game player (AC3)',
     (WidgetTester tester) async {
+      final allIds = techCatalog.keys.toList()..sort();
+      final mid = (allIds.length / 2).floor();
+      final techUnlocked = Map<String, bool>.fromEntries(
+        allIds.take(mid).map((id) => MapEntry(id, true)),
+      );
+      final inProgressId = allIds[mid];
+      final midPlayer = player.copyWith(
+        techUnlocked: techUnlocked,
+        researchProgressByTechId: {inProgressId: 50},
+      );
+      final midGame = game.copyWith(
+        players: [midPlayer, ...game.players.skip(1)],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 400,
+              height: 600,
+              child: TechTreeWidget(game: midGame, player: midPlayer),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Researched'), findsOneWidget);
+      expect(find.text('In progress'), findsOneWidget);
+      expect(find.text('Available'), findsOneWidget);
+      expect(find.text('Locked'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'TechTreeWidget renders nodes with category-specific colours (AC5)',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 800,
+              height: 600,
+              child: TechTreeWidget(game: game, player: player),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final customPainters = find.byType(CustomPaint);
+      expect(
+        customPainters,
+        findsWidgets,
+        reason:
+            'CustomPaint widgets should be rendered for category-colored node backgrounds',
+      );
+
+      final sawMillNode = find.text('Saw Mill');
+      expect(
+        sawMillNode,
+        findsWidgets,
+        reason: 'Saw Mill (gathering category) should be rendered',
+      );
+
+      await tester.ensureVisible(sawMillNode.first);
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('TechTreeWidget scroll view is scrollable in both axes (AC2)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 600,
+            child: TechTreeWidget(game: game, player: player),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollers = find.byType(SingleChildScrollView);
+    expect(
+      scrollers,
+      findsWidgets,
+      reason:
+          'Scrollable viewport should contain SingleChildScrollView widgets',
+    );
+    expect(
+      scrollers,
+      findsAtLeastNWidgets(2),
+      reason: 'Both horizontal and vertical scroll views should be present',
+    );
+  });
+
+  testWidgets('Tapping locked tech node opens dialog with benefits and effects', (
+    WidgetTester tester,
+  ) async {
     final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
     final gameWithEmptyPlayer = game.copyWith(
       players: [emptyPlayer, ...game.players.skip(1)],
@@ -346,52 +449,55 @@ void main() {
     },
   );
 
-  test('Connector slot: edge A→C reserves row in middle layer so B is not on same row', () {
-    // SPEC: when an edge spans columns (A→C), the layout reserves that row in intermediate
-    // columns so the connector does not pass through other nodes (e.g. B).
-    const a = TechDefinition(
-      id: 'a',
-      era: 1,
-      category: 'gathering',
-      cost: 1,
-      prerequisiteIds: [],
-      regimentUnlockIds: [],
-      shipUnlockIds: [],
-    );
-    const b = TechDefinition(
-      id: 'b',
-      era: 1,
-      category: 'gathering',
-      cost: 1,
-      prerequisiteIds: ['a'],
-      regimentUnlockIds: [],
-      shipUnlockIds: [],
-    );
-    const c = TechDefinition(
-      id: 'c',
-      era: 1,
-      category: 'gathering',
-      cost: 1,
-      prerequisiteIds: ['a'],
-      regimentUnlockIds: [],
-      shipUnlockIds: [],
-    );
-    final catalog = <String, TechDefinition>{'a': a, 'b': b, 'c': c};
-    final positions = TechTreeWidget.computeLayout(catalog);
-    expect(positions.length, 3);
-    final posB = positions.firstWhere((p) => p.techId == 'b');
-    final posC = positions.firstWhere((p) => p.techId == 'c');
-    const rowGap = 52.0;
-    const baseY = 24.0;
-    final rowB = ((posB.y - baseY) / rowGap).round();
-    final rowC = ((posC.y - baseY) / rowGap).round();
-    expect(
-      rowB,
-      isNot(equals(rowC)),
-      reason:
-          'B must not share row with C so A→C connector has its own slot in middle column',
-    );
-  });
+  test(
+    'Connector slot: edge A→C reserves row in middle layer so B is not on same row',
+    () {
+      // SPEC: when an edge spans columns (A→C), the layout reserves that row in intermediate
+      // columns so the connector does not pass through other nodes (e.g. B).
+      const a = TechDefinition(
+        id: 'a',
+        era: 1,
+        category: 'gathering',
+        cost: 1,
+        prerequisiteIds: [],
+        regimentUnlockIds: [],
+        shipUnlockIds: [],
+      );
+      const b = TechDefinition(
+        id: 'b',
+        era: 1,
+        category: 'gathering',
+        cost: 1,
+        prerequisiteIds: ['a'],
+        regimentUnlockIds: [],
+        shipUnlockIds: [],
+      );
+      const c = TechDefinition(
+        id: 'c',
+        era: 1,
+        category: 'gathering',
+        cost: 1,
+        prerequisiteIds: ['a'],
+        regimentUnlockIds: [],
+        shipUnlockIds: [],
+      );
+      final catalog = <String, TechDefinition>{'a': a, 'b': b, 'c': c};
+      final positions = TechTreeWidget.computeLayout(catalog);
+      expect(positions.length, 3);
+      final posB = positions.firstWhere((p) => p.techId == 'b');
+      final posC = positions.firstWhere((p) => p.techId == 'c');
+      const rowGap = 52.0;
+      const baseY = 24.0;
+      final rowB = ((posB.y - baseY) / rowGap).round();
+      final rowC = ((posC.y - baseY) / rowGap).round();
+      expect(
+        rowB,
+        isNot(equals(rowC)),
+        reason:
+            'B must not share row with C so A→C connector has its own slot in middle column',
+      );
+    },
+  );
 }
 
 Player _dummyPlayer() {
