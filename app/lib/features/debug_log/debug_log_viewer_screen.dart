@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
 class DebugLogViewerScreen extends StatefulWidget {
@@ -24,14 +25,15 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Debug log'),
+        title: Text(l10n.debugLog_title),
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Close',
+            tooltip: l10n.common_close,
           ),
         ],
       ),
@@ -48,13 +50,14 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
 
   Widget _buildFilters(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = appL10n(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Package:', style: theme.textTheme.titleSmall),
+          Text(l10n.debugLog_filter_package, style: theme.textTheme.titleSmall),
           const SizedBox(width: 8),
           Wrap(
             spacing: 4,
@@ -77,7 +80,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
             }).toList(),
           ),
           const SizedBox(width: 16),
-          Text('Level:', style: theme.textTheme.titleSmall),
+          Text(l10n.debugLog_filter_level, style: theme.textTheme.titleSmall),
           const SizedBox(width: 8),
           Wrap(
             spacing: 4,

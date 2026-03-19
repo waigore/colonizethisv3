@@ -124,6 +124,17 @@ Diplomacy screen for managing relations with other Great Powers, Minor Nations, 
   - Do Nothing: lose Embassy with Minor
   - Diplomatic Protest: apply relation penalty to attackers
 
+## Order Submission and Cancellation
+
+All diplomatic actions are **submitted for end-of-turn resolution**. Orders accumulate in the current turn's order set until Next Turn.
+
+### Submitting an action
+
+- **Confirm prompt:** Before any action is issued, the TUI shows a **confirmation prompt** (e.g. `Declare war on France? [y/N]`) in the status/command area. Pressing `y` or `Y` submits the order; pressing `n`, `N`, or `Escape` dismisses without submitting. For actions with parameters (Grant Aid amount, Set Subsidy, Establish Overture stage), the parameter prompt appears first, then the confirmation prompt.
+- **Pending state:** After an order is submitted, the action is **marked as pending** for that faction. A pending action is shown with a visual indicator (e.g. `[PENDING]` tag or changed shortcut label) and the action is **not shown again** in the available actions list for that faction.
+- **Canceling a pending action:** The same keyboard shortcut that submits the action **cancels** it when the action is already pending. For example, pressing `d` to Declare War while a War declaration is already pending cancels the pending declaration. Pressing `c` to Establish Consulate while a Consulate is already pending cancels it.
+- **Toggle logic:** Issuing and canceling are a **toggle** — pressing the shortcut once submits; pressing again cancels. The pending state is per `(humanPlayerId, targetFactionId, DiplomaticOrderType)`. Pending orders appear in the end-of-turn order summary.
+
 ## Acceptance Criteria
 
 - [ ] Diplomacy screen displays title
@@ -143,6 +154,9 @@ Diplomacy screen for managing relations with other Great Powers, Minor Nations, 
 - [ ] Order validation feedback is shown (accepted/rejected with reason)
 - [ ] Escape key returns to In-Game Shell
 - [ ] Works on narrow terminals (stacked layout fallback)
+- [ ] Issuing a diplomatic action shows a confirmation prompt; confirming submits, declining dismisses
+- [ ] Issuing an action while it is already pending cancels the pending order (toggle)
+- [ ] Pending orders are visually marked and not shown again in available actions
 
 ## Keyboard Shortcuts
 

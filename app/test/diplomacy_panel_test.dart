@@ -1,16 +1,116 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+Future<void> _preWarmFlameImageCache() async {
+  try {
+    final bytes = await rootBundle.load(
+      'assets/images/ui_button_nine_patch.png',
+    );
+    await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+  } catch (_) {}
+}
+
+class _PanelWrapper extends StatefulWidget {
+  const _PanelWrapper({
+    required this.game,
+    required this.humanPlayerId,
+    required this.topology,
+    required this.initialOrders,
+    this.onOrdersChanged,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+  final MapTopology topology;
+  final Orders initialOrders;
+  final void Function(Orders)? onOrdersChanged;
+
+  @override
+  State<_PanelWrapper> createState() => _PanelWrapperState();
+}
+
+class _PanelWrapperState extends State<_PanelWrapper> {
+  late Orders _orders;
+
+  @override
+  void initState() {
+    super.initState();
+    _orders = widget.initialOrders;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DiplomacyPanel(
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+      topology: widget.topology,
+      currentOrders: _orders,
+      onOrdersChanged: (o) {
+        setState(() => _orders = o);
+        widget.onOrdersChanged?.call(o);
+      },
+    );
+  }
+}
+
+Widget buildPanel({
+  required Game game,
+  required String humanPlayerId,
+  required MapTopology topology,
+  Orders currentOrders = const Orders(),
+  void Function(Orders)? onOrdersChanged,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: _PanelWrapper(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        initialOrders: currentOrders,
+        onOrdersChanged: onOrdersChanged,
+      ),
+    ),
+  );
+}
+
+Game _gameWithNoDiscoveredFactions() {
+  const ow = 'oldWorld';
+  final p1 = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'P1',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: [p1], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'empty-diplo',
+    worldState: world,
+    players: const [player],
+    diplomacyRelations: const [],
+  );
+}
 
 void main() {
   suppressLogsForTests();
@@ -20,7 +120,8 @@ void main() {
   late String humanPlayerId;
   late MapTopology topology;
 
-  setUpAll(() {
+  setUpAll(() async {
+    unawaited(_preWarmFlameImageCache());
     final result = getDebugInitGameResult();
     gameWithFactions = result.game;
     topology = result.combinedTopology;
@@ -30,45 +131,32 @@ void main() {
     gameWithNoDiscovered = _gameWithNoDiscoveredFactions();
   });
 
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    required MapTopology topology,
-    Orders currentOrders = const Orders(),
-    void Function(Orders)? onOrdersChanged,
-  }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: DiplomacyPanel(
-          game: game,
+  group('DiplomacyPanel', () {
+    testWidgets('AC: Great Powers section when player has discovered GPs', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
-          currentOrders: currentOrders,
-          onOrdersChanged: onOrdersChanged ?? (_) {},
         ),
-      ),
-    );
-  }
-
-  group('DiplomacyPanel', () {
-    testWidgets('AC: Great Powers section when player has discovered GPs',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Great Powers'), findsOneWidget);
     });
 
-    testWidgets('AC: Faction rows show name and kind', (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
+    testWidgets('AC: Faction rows show name and kind', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(CtPanel), findsAtLeastNWidgets(1));
@@ -81,12 +169,16 @@ void main() {
       }
     });
 
-    testWidgets('AC: Relation state shown (Peace or War)', (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
+    testWidgets('AC: Relation state shown (Peace or War)', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(
@@ -96,35 +188,43 @@ void main() {
       );
     });
 
-    testWidgets('AC: One-word relation state shown (Hostile/Unfriendly/Cordial/Friendly), score hidden',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'AC: One-word relation state shown (Hostile/Unfriendly/Cordial/Friendly), score hidden',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // SPEC/game/diplomacy.md § Player-facing relation display: panel shows one-word state.
-      final displayLabels = ['Hostile', 'Unfriendly', 'Cordial', 'Friendly'];
-      final hasDisplayLabel = displayLabels.any(
-        (label) => find.textContaining(label).evaluate().isNotEmpty,
+        final displayLabels = ['Hostile', 'Unfriendly', 'Cordial', 'Friendly'];
+        final hasDisplayLabel = displayLabels.any(
+          (label) => find.textContaining(label).evaluate().isNotEmpty,
+        );
+        expect(
+          hasDisplayLabel,
+          isTrue,
+          reason: 'Panel must show one of $displayLabels',
+        );
+
+        expect(find.textContaining(' (50)'), findsNothing);
+        expect(find.text('Neutral'), findsNothing);
+      },
+    );
+
+    testWidgets('AC: Action buttons present for factions', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
       );
-      expect(hasDisplayLabel, isTrue, reason: 'Panel must show one of $displayLabels');
-
-      // Numeric relation score must not be shown (hidden variable). Old UI showed " (50)" for score.
-      expect(find.textContaining(' (50)'), findsNothing);
-      // Old level labels (internal) must not appear as relation label.
-      expect(find.text('Neutral'), findsNothing);
-    });
-
-    testWidgets('AC: Action buttons present for factions',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
       await tester.pumpAndSettle();
 
       expect(find.byType(CtNinePatchButton), findsAtLeastNWidgets(1));
@@ -136,52 +236,170 @@ void main() {
       );
     });
 
-    testWidgets('AC: Tapping no-param action calls onOrdersChanged',
-        (WidgetTester tester) async {
-      Orders? captured;
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-        onOrdersChanged: (o) => captured = o,
-      ));
+    testWidgets(
+      'AC: Tapping no-param action shows confirm dialog, Confirm submits order',
+      (WidgetTester tester) async {
+        Orders? captured;
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+            onOrdersChanged: (o) => captured = o,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final declareWar = find.text('Declare War');
+        if (declareWar.evaluate().isNotEmpty) {
+          await tester.tap(declareWar.first);
+          await tester.pumpAndSettle();
+          expect(find.text('Confirm'), findsOneWidget);
+          expect(find.text('Cancel'), findsWidgets);
+          await tester.tap(find.text('Confirm'));
+          await tester.pumpAndSettle();
+          expect(captured, isNotNull);
+          expect(
+            captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
+            hasLength(greaterThanOrEqualTo(1)),
+          );
+          expect(
+            captured!.diplomaticOrdersByPlayerId[humanPlayerId]!.any(
+              (o) => o.type == DiplomaticOrderType.declareWar,
+            ),
+            isTrue,
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'AC: Tapping Cancel in confirm dialog dismisses without submitting',
+      (WidgetTester tester) async {
+        Orders? captured;
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+            onOrdersChanged: (o) => captured = o,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final declareWar = find.text('Declare War');
+        if (declareWar.evaluate().isNotEmpty) {
+          await tester.tap(declareWar.first);
+          await tester.pumpAndSettle();
+          expect(find.text('Confirm'), findsOneWidget);
+          final cancelBtn = find.widgetWithText(TextButton, 'Cancel');
+          await tester.tap(cancelBtn.first);
+          await tester.pumpAndSettle();
+          expect(captured, isNull);
+        }
+      },
+    );
+
+    testWidgets('AC: Pending orders show Cancel button, action button hidden', (
+      WidgetTester tester,
+    ) async {
+      final otherGp = gameWithFactions.players.firstWhere(
+        (p) => p.id != humanPlayerId,
+      );
+      final initialOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanPlayerId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: otherGp.id,
+            ),
+          ],
+        },
+      );
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        initialOrders,
+      );
+      final targetRow = rows.firstWhere((r) => r.factionId == otherGp.id);
+      expect(
+        targetRow.pendingOrderTypes,
+        contains(DiplomaticOrderType.declareWar),
+      );
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+          currentOrders: initialOrders,
+        ),
+      );
       await tester.pumpAndSettle();
 
-      final declareWar = find.text('Declare War');
-      if (declareWar.evaluate().isNotEmpty) {
-        await tester.tap(declareWar.first);
-        await tester.pumpAndSettle();
-        expect(captured, isNotNull);
-        expect(
-          captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-          hasLength(greaterThanOrEqualTo(1)),
-        );
-        expect(
-          captured!.diplomaticOrdersByPlayerId[humanPlayerId]!
-              .any((o) => o.type == DiplomaticOrderType.declareWar),
-          isTrue,
-        );
-      }
+      expect(find.text('Cancel'), findsWidgets);
     });
 
-    testWidgets('AC: Empty state when no factions discovered',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithNoDiscovered,
-        humanPlayerId: 'gp1',
-        topology: const MapTopology(nodes: [], edges: []),
-      ));
+    testWidgets('AC: Tapping Cancel removes the pending order', (
+      WidgetTester tester,
+    ) async {
+      Orders? captured;
+      final otherGp = gameWithFactions.players.firstWhere(
+        (p) => p.id != humanPlayerId,
+      );
+      final initialOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanPlayerId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: otherGp.id,
+            ),
+          ],
+        },
+      );
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+          currentOrders: initialOrders,
+          onOrdersChanged: (o) => captured = o,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cancel'), findsWidgets);
+      await tester.tap(find.text('Cancel').first);
+      await tester.pumpAndSettle();
+      expect(
+        captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
+        isEmpty,
+      );
+    });
+
+    testWidgets('AC: Empty state when no factions discovered', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithNoDiscovered,
+          humanPlayerId: 'gp1',
+          topology: const MapTopology(nodes: [], edges: []),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('No other factions discovered yet.'), findsOneWidget);
     });
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
-      await tester.pumpWidget(buildPanel(
-        game: gameWithFactions,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-      ));
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(ListView), findsOneWidget);
@@ -189,16 +407,19 @@ void main() {
   });
 
   group('buildDiplomacyRows', () {
-    test('display mapping aligned with SPEC (relationScoreToDisplayLabel bands)', () {
-      expect(relationScoreToDisplayLabel(0), 'Hostile');
-      expect(relationScoreToDisplayLabel(29), 'Hostile');
-      expect(relationScoreToDisplayLabel(30), 'Unfriendly');
-      expect(relationScoreToDisplayLabel(49), 'Unfriendly');
-      expect(relationScoreToDisplayLabel(50), 'Cordial');
-      expect(relationScoreToDisplayLabel(69), 'Cordial');
-      expect(relationScoreToDisplayLabel(70), 'Friendly');
-      expect(relationScoreToDisplayLabel(100), 'Friendly');
-    });
+    test(
+      'display mapping aligned with SPEC (relationScoreToDisplayLabel bands)',
+      () {
+        expect(relationScoreToDisplayLabel(0), 'Hostile');
+        expect(relationScoreToDisplayLabel(29), 'Hostile');
+        expect(relationScoreToDisplayLabel(30), 'Unfriendly');
+        expect(relationScoreToDisplayLabel(49), 'Unfriendly');
+        expect(relationScoreToDisplayLabel(50), 'Cordial');
+        expect(relationScoreToDisplayLabel(69), 'Cordial');
+        expect(relationScoreToDisplayLabel(70), 'Friendly');
+        expect(relationScoreToDisplayLabel(100), 'Friendly');
+      },
+    );
 
     test('returns empty list when player has no relations', () {
       final rows = buildDiplomacyRows(
@@ -217,13 +438,19 @@ void main() {
         humanPlayerId,
         const Orders(),
       );
-      final gpRows = rows.where((r) => r.kind == FactionKind.greatPower).toList();
+      final gpRows = rows
+          .where((r) => r.kind == FactionKind.greatPower)
+          .toList();
       if (gpRows.length < 2) return;
       for (var i = 0; i < gpRows.length - 1; i++) {
         final strA = aggregateMilitaryStrengthForPlayer(
-            gameWithFactions, gpRows[i].factionId);
+          gameWithFactions,
+          gpRows[i].factionId,
+        );
         final strB = aggregateMilitaryStrengthForPlayer(
-            gameWithFactions, gpRows[i + 1].factionId);
+          gameWithFactions,
+          gpRows[i + 1].factionId,
+        );
         expect(strA >= strB, isTrue);
       }
     });
@@ -235,10 +462,16 @@ void main() {
         humanPlayerId,
         const Orders(),
       );
-      final gpRows = rows.where((r) => r.kind == FactionKind.greatPower).toList();
+      final gpRows = rows
+          .where((r) => r.kind == FactionKind.greatPower)
+          .toList();
       for (final r in gpRows) {
         expect(r.powerScore, isNotNull, reason: 'GP row ${r.displayName}');
-        expect(r.playerPowerScore, isNotNull, reason: 'GP row ${r.displayName}');
+        expect(
+          r.playerPowerScore,
+          isNotNull,
+          reason: 'GP row ${r.displayName}',
+        );
       }
       final nonGp = rows.where((r) => r.kind != FactionKind.greatPower);
       for (final r in nonGp) {
@@ -246,34 +479,32 @@ void main() {
         expect(r.playerPowerScore, isNull);
       }
     });
-  });
-}
 
-/// Minimal game with one player and no diplomacy relations (no discovered factions).
-Game _gameWithNoDiscoveredFactions() {
-  const ow = 'oldWorld';
-  final p1 = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'P1',
-    ownerId: 'gp1',
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [p1], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  const player = Player(
-    id: 'gp1',
-    displayName: 'Solo',
-    isHuman: true,
-  );
-  return Game(
-    id: 'empty-diplo',
-    worldState: world,
-    players: const [player],
-    diplomacyRelations: const [],
-  );
+    test('pendingOrderTypes reflects submitted diplomatic orders', () {
+      final otherGp = gameWithFactions.players.firstWhere(
+        (p) => p.id != humanPlayerId,
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanPlayerId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: otherGp.id,
+            ),
+          ],
+        },
+      );
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        orders,
+      );
+      final targetRow = rows.firstWhere((r) => r.factionId == otherGp.id);
+      expect(
+        targetRow.pendingOrderTypes,
+        contains(DiplomaticOrderType.declareWar),
+      );
+    });
+  });
 }

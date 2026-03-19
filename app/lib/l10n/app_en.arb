@@ -1,0 +1,185 @@
+{
+  "@@locale": "en",
+
+  "app_title": "Colonize This",
+  "@app_title": {
+    "description": "Window title / application title."
+  },
+
+  "menu_view": "View",
+  "@menu_view": {
+    "description": "Top-level platform menu label for View menu."
+  },
+
+  "menu_debugLog": "Debug log",
+  "@menu_debugLog": {
+    "description": "Platform menu item label that navigates to the debug log viewer."
+  },
+
+  "mainMenu_title": "ColonizeThis V3",
+  "@mainMenu_title": {
+    "description": "Main menu title text when not using the pixel-art logo."
+  },
+
+  "mainMenu_subtitleAfterVictory": "Congratulations, you won your last game.",
+  "@mainMenu_subtitleAfterVictory": {
+    "description": "Subtitle shown on the main menu after the player has won their last game."
+  },
+
+  "mainMenu_newGame": "New Game",
+  "@mainMenu_newGame": {
+    "description": "Main menu button label to start a new game."
+  },
+
+  "mainMenu_loadGame": "Load Game",
+  "@mainMenu_loadGame": {
+    "description": "Main menu button label to load an existing game."
+  },
+
+  "mainMenu_settings": "Settings",
+  "@mainMenu_settings": {
+    "description": "Main menu button label to open settings."
+  },
+
+  "mainMenu_quit": "Quit",
+  "@mainMenu_quit": {
+    "description": "Main menu button label to quit the app."
+  },
+
+  "mainMenu_noSavesTooltip": "No saved games. Start a new game first.",
+  "@mainMenu_noSavesTooltip": {
+    "description": "Tooltip explaining why Load Game is disabled when there are no saves."
+  },
+
+  "game_pauseMenu_debugLog": "Debug log",
+  "@game_pauseMenu_debugLog": {
+    "description": "Pause menu option label to open the debug log screen."
+  },
+
+  "game_pauseMenu_resume": "Resume",
+  "@game_pauseMenu_resume": {
+    "description": "Pause menu option label to resume the game."
+  },
+
+  "game_pauseMenu_tooltip": "Pause menu",
+  "@game_pauseMenu_tooltip": {
+    "description": "Tooltip for the pause menu button in the in-game UI."
+  },
+
+  "game_screenTitle": "Game",
+  "@game_screenTitle": {
+    "description": "Title used for the main game screen shell."
+  },
+
+  "game_nextTurnButton": "Next turn ({turn} / {year})",
+  "@game_nextTurnButton": {
+    "description": "Label for the Next Turn button showing current turn and year.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      },
+      "year": {
+        "type": "int",
+        "description": "Calendar year derived from the turn."
+      }
+    }
+  },
+
+  "game_nextTurnConfirm_title": "End turn?",
+  "@game_nextTurnConfirm_title": {
+    "description": "Title of the dialog asking the user to confirm ending the current turn."
+  },
+
+  "game_nextTurnConfirm_body": "Turn {turn} will end. Continue?",
+  "@game_nextTurnConfirm_body": {
+    "description": "Body text of the end-turn confirmation dialog.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      }
+    }
+  },
+
+  "common_no": "No",
+  "@common_no": {
+    "description": "Generic 'No' button label."
+  },
+
+  "common_yes": "Yes",
+  "@common_yes": {
+    "description": "Generic 'Yes' button label."
+  },
+
+  "map_displayOptions_title": "Map display options",
+  "@map_displayOptions_title": {
+    "description": "Dialog title for map display options."
+  },
+
+  "map_displayOptions_showBorders": "Show borders",
+  "@map_displayOptions_showBorders": {
+    "description": "Toggle label for showing map borders."
+  },
+
+  "common_close": "Close",
+  "@common_close": {
+    "description": "Generic Close button label or tooltip."
+  },
+
+  "gameMap_menuTooltip": "Menu",
+  "@gameMap_menuTooltip": {
+    "description": "Tooltip for the side menu button in the map controls."
+  },
+
+  "region_oldWorld": "Old World",
+  "@region_oldWorld": {
+    "description": "Label for the Old World region tab."
+  },
+
+  "region_newWorld": "New World",
+  "@region_newWorld": {
+    "description": "Label for the New World region tab."
+  },
+
+  "debugLog_title": "Debug log",
+  "@debugLog_title": {
+    "description": "Title of the debug log viewer screen and related actions."
+  },
+
+  "debugLog_filter_package": "Package:",
+  "@debugLog_filter_package": {
+    "description": "Label for the package filter section in the debug log viewer."
+  },
+
+  "debugLog_filter_level": "Level:",
+  "@debugLog_filter_level": {
+    "description": "Label for the log level filter section in the debug log viewer."
+  },
+
+  "shell_leaderDialog_intro": "Select leader for each Great Power (or keep default).",
+  "@shell_leaderDialog_intro": {
+    "description": "Intro text for the leader selection dialog in the new-game flow."
+  },
+
+  "shell_leaderDialog_selectLeaderHint": "Select leader",
+  "@shell_leaderDialog_selectLeaderHint": {
+    "description": "Hint text for the leader dropdown in the leader selection dialog."
+  },
+
+  "common_cancel": "Cancel",
+  "@common_cancel": {
+    "description": "Generic Cancel button label."
+  },
+
+  "common_start": "Start",
+  "@common_start": {
+    "description": "Generic Start button label used when beginning a flow."
+  },
+
+  "shell_leaderDialog_title": "New game — Leaders",
+  "@shell_leaderDialog_title": {
+    "description": "Title of the leader selection dialog in the new-game flow."
+  }
+}
+
