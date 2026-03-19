@@ -148,7 +148,11 @@ jobs:
         run: |
           set -e
           if [ -d app ]; then
-            (cd app && flutter test --coverage --reporter=compact)
+            (
+              cd app
+              flutter gen-l10n
+              flutter test --coverage --reporter=compact
+            )
           fi
 
       - name: App localization gate (flutter gen-l10n untranslated check)
