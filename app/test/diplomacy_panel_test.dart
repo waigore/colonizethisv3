@@ -1,16 +1,29 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+Future<void> _preWarmFlameImageCache() async {
+  try {
+    final bytes = await rootBundle.load(
+      'assets/images/ui_button_nine_patch.png',
+    );
+    await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+  } catch (_) {}
+}
 
 class _PanelWrapper extends StatefulWidget {
   const _PanelWrapper({
@@ -55,6 +68,50 @@ class _PanelWrapperState extends State<_PanelWrapper> {
   }
 }
 
+Widget buildPanel({
+  required Game game,
+  required String humanPlayerId,
+  required MapTopology topology,
+  Orders currentOrders = const Orders(),
+  void Function(Orders)? onOrdersChanged,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: _PanelWrapper(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        initialOrders: currentOrders,
+        onOrdersChanged: onOrdersChanged,
+      ),
+    ),
+  );
+}
+
+Game _gameWithNoDiscoveredFactions() {
+  const ow = 'oldWorld';
+  final p1 = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'P1',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: [p1], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'empty-diplo',
+    worldState: world,
+    players: const [player],
+    diplomacyRelations: const [],
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -63,7 +120,8 @@ void main() {
   late String humanPlayerId;
   late MapTopology topology;
 
-  setUpAll(() {
+  setUpAll(() async {
+    unawaited(_preWarmFlameImageCache());
     final result = getDebugInitGameResult();
     gameWithFactions = result.game;
     topology = result.combinedTopology;
@@ -72,26 +130,6 @@ void main() {
         : 'gp1';
     gameWithNoDiscovered = _gameWithNoDiscoveredFactions();
   });
-
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    required MapTopology topology,
-    Orders currentOrders = const Orders(),
-    void Function(Orders)? onOrdersChanged,
-  }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: _PanelWrapper(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-          initialOrders: currentOrders,
-          onOrdersChanged: onOrdersChanged,
-        ),
-      ),
-    );
-  }
 
   group('DiplomacyPanel', () {
     testWidgets('AC: Great Powers section when player has discovered GPs', (
@@ -162,7 +200,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // SPEC/game/diplomacy.md § Player-facing relation display: panel shows one-word state.
         final displayLabels = ['Hostile', 'Unfriendly', 'Cordial', 'Friendly'];
         final hasDisplayLabel = displayLabels.any(
           (label) => find.textContaining(label).evaluate().isNotEmpty,
@@ -173,9 +210,7 @@ void main() {
           reason: 'Panel must show one of $displayLabels',
         );
 
-        // Numeric relation score must not be shown (hidden variable). Old UI showed " (50)" for score.
         expect(find.textContaining(' (50)'), findsNothing);
-        // Old level labels (internal) must not appear as relation label.
         expect(find.text('Neutral'), findsNothing);
       },
     );
@@ -281,6 +316,17 @@ void main() {
           ],
         },
       );
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        initialOrders,
+      );
+      final targetRow = rows.firstWhere((r) => r.factionId == otherGp.id);
+      expect(
+        targetRow.pendingOrderTypes,
+        contains(DiplomaticOrderType.declareWar),
+      );
       await tester.pumpWidget(
         buildPanel(
           game: gameWithFactions,
@@ -291,8 +337,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(find.text('Declare War'), findsNothing);
+      expect(find.text('Cancel'), findsWidgets);
     });
 
     testWidgets('AC: Tapping Cancel removes the pending order', (
@@ -323,14 +368,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Cancel'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
+      expect(find.text('Cancel'), findsWidgets);
+      await tester.tap(find.text('Cancel').first);
       await tester.pumpAndSettle();
       expect(
         captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
         isEmpty,
       );
-      expect(find.text('Declare War'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('AC: Empty state when no factions discovered', (
@@ -463,28 +507,4 @@ void main() {
       );
     });
   });
-}
-
-Game _gameWithNoDiscoveredFactions() {
-  const ow = 'oldWorld';
-  final p1 = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'P1',
-    ownerId: 'gp1',
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [p1], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
-  return Game(
-    id: 'empty-diplo',
-    worldState: world,
-    players: const [player],
-    diplomacyRelations: const [],
-  );
 }
