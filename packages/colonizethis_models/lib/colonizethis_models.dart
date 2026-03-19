@@ -26,3 +26,4 @@ export 'src/unit.dart';
 export 'src/world_state.dart';
 export 'src/ai_events.dart';
 export 'src/dossier_evidence.dart';
+export 'src/events/dialogue_event_bus.dart';

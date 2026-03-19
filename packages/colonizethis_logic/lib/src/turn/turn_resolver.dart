@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../combat/combat_mode_selection.dart';
 import '../orders/order_engine.dart';
@@ -99,6 +100,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
@@ -110,6 +112,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
     game: game,
     topology: topology,
     orders: merged,
+    eventBus: eventBus,
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     tileMapByRegion: tileMapByRegion,
@@ -140,6 +143,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
@@ -148,10 +152,11 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     engine: engine,
     game: game,
     topology: topology,
-    onGameEvent: onGameEvent,
+    eventBus: eventBus,
   );
   return resolveTurnForGame(
     game: game,
+    eventBus: eventBus,
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     topology: topology,
@@ -182,14 +187,18 @@ TurnResolutionResult resolveTurnForGame({
 
   /// Per-player production assignments; when set, used for that player instead of [defaultAssignments]. SPEC/ai/economy-planner.md.
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+
+  /// Event bus for game events (combat, diplomacy, research, victory, etc.). When set, events are published via bus. SPEC/program/event-bus.md.
+  GameEventBus? eventBus,
+
   void Function(DialogueEvent)? onDialogue,
 
-  /// Callback for game events (combat, diplomacy, research, victory, etc.). SPEC/program/game-events.md.
+  /// Callback for game events (combat, diplomacy, research, victory, etc.). For backward compat; prefer [eventBus]. SPEC/program/game-events.md.
   void Function(GameEvent)? onGameEvent,
 
   /// Called after production phase with playerId → (recipeId → quantity produced). For projection API. SPEC/program/order-projections.md.
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-      onProductionComplete,
+  onProductionComplete,
 
   /// When non-null, skip phases before this (used when resuming after pending overture decisions).
   TurnPhase? startFromPhase,
@@ -239,14 +248,13 @@ TurnResolutionResult resolveTurnForGame({
         {
           final stateBeforeResearch = state;
           state = resolveResearchPhase(state, orders);
-          if (onGameEvent != null) {
-            emitResearchCompleteEvents(
-              stateBeforeResearch,
-              state,
-              turn,
-              onGameEvent,
-            );
-          }
+          emitResearchCompleteEvents(
+            stateBeforeResearch,
+            state,
+            turn,
+            eventBus,
+            onGameEvent,
+          );
           break;
         }
       case TurnPhase.diplomacy:
@@ -273,14 +281,13 @@ TurnResolutionResult resolveTurnForGame({
             );
           }
           state = diploResult.game;
-          if (onGameEvent != null) {
-            emitDiplomacyChangeEvents(
-              previousRelations,
-              state,
-              turn,
-              onGameEvent,
-            );
-          }
+          emitDiplomacyChangeEvents(
+            previousRelations,
+            state,
+            turn,
+            eventBus,
+            onGameEvent,
+          );
           break;
         }
       case TurnPhase.movement:
@@ -300,7 +307,7 @@ TurnResolutionResult resolveTurnForGame({
           final previousOwnership = <String, String?>{};
           for (final region in [
             state.worldState.oldWorld,
-            state.worldState.newWorld
+            state.worldState.newWorld,
           ]) {
             for (final prov in region.provinces) {
               previousOwnership[prov.id] = prov.ownerId;
@@ -316,14 +323,13 @@ TurnResolutionResult resolveTurnForGame({
             onDialogue: onDialogue,
             onGameEvent: onGameEvent,
           );
-          if (onGameEvent != null) {
-            emitProvinceCapturedEvents(
-              previousOwnership,
-              state,
-              turn,
-              onGameEvent,
-            );
-          }
+          emitProvinceCapturedEvents(
+            previousOwnership,
+            state,
+            turn,
+            eventBus,
+            onGameEvent,
+          );
           break;
         }
       case TurnPhase.buildWork:
@@ -343,7 +349,7 @@ TurnResolutionResult resolveTurnForGame({
             topologyByRegion: topologyByRegion,
             onDialogue: onDialogue,
           );
-          emitVictorySetEvent(state, turn, onGameEvent);
+          emitVictorySetEvent(state, turn, eventBus, onGameEvent);
           break;
         }
     }
@@ -360,7 +366,8 @@ Game requireTurnResolutionComplete(TurnResolutionResult result) {
   return switch (result) {
     TurnResolutionComplete(:final game) => game,
     TurnResolutionPendingOvertures() => throw StateError(
-        'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions'),
+      'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
+    ),
   };
 }
 
@@ -379,10 +386,11 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-      onProductionComplete,
+  onProductionComplete,
 }) {
   return resolveTurnForGame(
     game: game,
@@ -393,6 +401,7 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
     onProductionComplete: onProductionComplete,
@@ -410,6 +419,7 @@ void _filterOrderList<T>(
   List<int> idxBox,
   void Function(String playerId, T order) addAccepted,
   String Function(T order) orderSummary,
+  GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
   for (final order in orders) {
@@ -418,12 +428,14 @@ void _filterOrderList<T>(
         : results[idxBox[0]++];
     if (r.isAccepted) {
       addAccepted(playerId, order);
-    } else if (onGameEvent != null && r.reason != null) {
-      onGameEvent(OrderRejectedEvent(
+    } else if (r.reason != null) {
+      final event = OrderRejectedEvent(
         playerId: playerId,
         orderSummary: orderSummary(order),
         reasonCode: r.reason!,
-      ));
+      );
+      eventBus?.publish(event);
+      onGameEvent?.call(event);
     }
   }
 }
@@ -432,6 +444,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
   required OrderEngine engine,
   required Game game,
   required MapTopology topology,
+  GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 }) {
   final original = engine.orders;
@@ -451,15 +464,19 @@ Orders _filterAcceptedOrdersForAllPlayers({
     final moves = original.moveOrdersByPlayerId[playerId] ?? const [];
     final builds = original.buildUnitOrdersByPlayerId[playerId] ?? const [];
     final works = original.workOrdersByPlayerId[playerId] ?? const [];
-    final diplo = original.diplomaticOrdersByPlayerId[playerId] ??
+    final diplo =
+        original.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
 
     if (moves.isEmpty && builds.isEmpty && works.isEmpty && diplo.isEmpty) {
       continue;
     }
 
-    final results =
-        engine.validatePlayerOrdersWithContext(game, topology, playerId);
+    final results = engine.validatePlayerOrdersWithContext(
+      game,
+      topology,
+      playerId,
+    );
     final idxBox = [0];
 
     _filterOrderList<MoveOrder>(
@@ -467,9 +484,9 @@ Orders _filterAcceptedOrdersForAllPlayers({
       moves,
       results,
       idxBox,
-      (pid, m) =>
-          moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
+      (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
       (m) => 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+      eventBus,
       onGameEvent,
     );
     _filterOrderList<BuildUnitOrder>(
@@ -480,6 +497,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
       (pid, b) =>
           buildByPlayer.putIfAbsent(pid, () => <BuildUnitOrder>[]).add(b),
       (b) => 'Build unit: ${b.unitType}',
+      eventBus,
       onGameEvent,
     );
     _filterOrderList<WorkOrder>(
@@ -487,9 +505,9 @@ Orders _filterAcceptedOrdersForAllPlayers({
       works,
       results,
       idxBox,
-      (pid, w) =>
-          workByPlayer.putIfAbsent(pid, () => <WorkOrder>[]).add(w),
+      (pid, w) => workByPlayer.putIfAbsent(pid, () => <WorkOrder>[]).add(w),
       (w) => 'Work order: ${w.target}',
+      eventBus,
       onGameEvent,
     );
 
@@ -551,7 +569,8 @@ Game _runExtractionPhase(
   );
   var currentState = state;
   final updatedPlayers = <Player>[];
-  var extractionSeed = (state.globalGameSeed ?? 0) ^
+  var extractionSeed =
+      (state.globalGameSeed ?? 0) ^
       (state.worldState.turnState.turnNumber * 0x9E3779B1);
   for (final player in state.players) {
     var stockpile = player.stockpile;
@@ -572,8 +591,9 @@ Game _runExtractionPhase(
         );
         overseasDelivered = interception.reducedDelivered;
         currentState = currentState.copyWith(
-          worldState: currentState.worldState
-              .copyWith(fleets: interception.updatedFleets),
+          worldState: currentState.worldState.copyWith(
+            fleets: interception.updatedFleets,
+          ),
         );
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
@@ -588,7 +608,7 @@ Game _runProductionPhase(
   List<AssignedRecipe> defaultAssignments,
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-      onProductionComplete,
+  onProductionComplete,
 ) {
   final updatedPlayers = <Player>[];
   final productionByRecipeByPlayerId = <String, Map<String, int>>{};
@@ -602,8 +622,9 @@ Game _runProductionPhase(
       assignments: assignments,
     );
     if (result.productionByRecipe.isNotEmpty) {
-      productionByRecipeByPlayerId[player.id] =
-          Map<String, int>.from(result.productionByRecipe);
+      productionByRecipeByPlayerId[player.id] = Map<String, int>.from(
+        result.productionByRecipe,
+      );
     }
     updatedPlayers.add(
       player.copyWith(
@@ -681,11 +702,7 @@ Game _runRichesToTreasuryPhase(Game game) {
   return game.copyWith(players: updatedPlayers);
 }
 
-Game _runMovementPhase(
-  Game game,
-  MapTopology topology,
-  Orders orders,
-) {
+Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
   var state = game;
 
   final moveOrders = orders.moveOrdersByPlayerId;
@@ -697,7 +714,9 @@ Game _runMovementPhase(
     };
     // Movement within own provinces: no adjacency and no region restriction. SPEC/program/movement.md.
     bool isDestinationOwnedByPlayer(
-            String playerId, String destFullProvinceId) =>
+      String playerId,
+      String destFullProvinceId,
+    ) =>
         tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
         playerId;
 
@@ -786,7 +805,8 @@ Game _runMovementPhase(
   RegionData oldWorld,
   RegionData newWorld,
   Map<String, List<MoveOrder>> remainingMoveOrdersByPlayerId,
-}) _applyCrossRegionOwnProvinceMoves(
+})
+_applyCrossRegionOwnProvinceMoves(
   Game game,
   Map<String, List<MoveOrder>> moveOrdersByPlayerId,
   Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince,
@@ -823,8 +843,10 @@ Game _runMovementPhase(
         remainingForPlayer.add(o);
         continue;
       }
-      final destFullId =
-          resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
+      final destFullId = resolveToFullProvinceId(
+        game.worldState,
+        o.destinationProvinceId,
+      );
       final destRegion = ProvinceId.regionIdFrom(destFullId);
       if (destRegion == currentRegion) {
         remainingForPlayer.add(o);
@@ -838,8 +860,9 @@ Game _runMovementPhase(
 
       // Cross-region own-province move: apply immediately.
       final isCivilian = unit.tileKey != null && unit.tileKey!.isNotEmpty;
-      final firstTile =
-          isCivilian ? _firstTileFor(destRegion, destFullId) : null;
+      final firstTile = isCivilian
+          ? _firstTileFor(destRegion, destFullId)
+          : null;
       final movedUnit = isCivilian && firstTile != null
           ? unit.copyWith(provinceId: destFullId, tileKey: firstTile)
           : unit.copyWith(provinceId: destFullId);
