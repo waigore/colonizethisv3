@@ -203,13 +203,15 @@ class GameSideMenu extends ConsumerWidget {
           onClose();
           Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (ctx) => TechnologyScreen(
-                game: game,
-                player: player,
-                currentOrders: orders,
-                onOrdersChanged: (newOrders) {
-                  ref.read(currentOrdersProvider.notifier).state = newOrders;
-                },
+              builder: (ctx) => Consumer(
+                builder: (ctx, ref, _) => TechnologyScreen(
+                  game: game,
+                  player: player,
+                  currentOrders: ref.watch(currentOrdersProvider),
+                  onOrdersChanged: (newOrders) {
+                    ref.read(currentOrdersProvider.notifier).state = newOrders;
+                  },
+                ),
               ),
             ),
           );
