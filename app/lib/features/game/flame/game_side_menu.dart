@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/routes.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -212,6 +213,23 @@ class GameSideMenu extends ConsumerWidget {
           );
         },
       ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: CtNinePatchButton(
+          onPressed: () {
+            onClose();
+            Navigator.of(context).pushNamed(Routes.debugLog);
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.bug_report, size: 20),
+              const SizedBox(width: 8),
+              const Text('Debug log'),
+            ],
+          ),
+        ),
+      ),
     ];
   }
 
@@ -241,7 +259,6 @@ class GameSideMenu extends ConsumerWidget {
           padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -250,7 +267,13 @@ class GameSideMenu extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              ..._buildEmpireMenuButtons(context, ref),
+              // When more menu items are present (e.g. Debug log), the panel must
+              // remain within the available height; make the list scrollable.
+              Expanded(
+                child: ListView(
+                  children: _buildEmpireMenuButtons(context, ref),
+                ),
+              ),
             ],
           ),
         ),
