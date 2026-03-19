@@ -38,6 +38,8 @@ for dir in "${TARGETS[@]}"; do
         "lib/widgetbook.dart" \
         "lib/features/game/flame/game_screen.dart" \
         "lib/features/game/widgets/naval_units_panel.dart" \
+        "lib/features/game/widgets/split_fleet_dialog.dart" \
+        "lib/features/game/flame/game_side_menu.dart" \
         "lib/features/game/widgets/production_screen.dart" \
         "lib/features/game/widgets/diplomacy_detail_screen.dart" \
         "lib/features/game/widgets/diplomacy_dialogs.dart" \
