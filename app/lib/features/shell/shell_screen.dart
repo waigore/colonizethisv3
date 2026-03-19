@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../config/routes.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
@@ -117,10 +117,11 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final children = <Widget>[
-      const Text(
-        'Select leader for each Great Power (or keep default).',
-        style: TextStyle(fontSize: 14),
+      Text(
+        l10n.shell_leaderDialog_intro,
+        style: const TextStyle(fontSize: 14),
       ),
       const SizedBox(height: 16),
     ];
@@ -143,7 +144,7 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
                 child: CtDropdown<String>(
                   value: currentVariantId,
                   items: gp.leaderVariants.map((v) => v.id).toList(),
-                  hint: 'Select leader',
+                  hint: l10n.shell_leaderDialog_selectLeaderHint,
                   itemLabel: (id) =>
                       gp.leaderVariants.firstWhere((v) => v.id == id).name,
                   onChanged: (value) {
@@ -166,12 +167,12 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
         children: [
           CtNinePatchButton(
             onPressed: widget.onCancel,
-            child: const Text('Cancel'),
+            child: Text(l10n.common_cancel),
           ),
           const SizedBox(width: 8),
           CtNinePatchButton(
             onPressed: () => widget.onStart(_leaderByGpId),
-            child: const Text('Start'),
+            child: Text(l10n.common_start),
           ),
         ],
       ),
@@ -185,7 +186,7 @@ class _LeaderSelectionDialogState extends State<_LeaderSelectionDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'New game — Leaders',
+            l10n.shell_leaderDialog_title,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),

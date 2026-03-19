@@ -148,7 +148,29 @@ jobs:
         run: |
           set -e
           if [ -d app ]; then
-            (cd app && flutter test --coverage --reporter=compact)
+            (
+              cd app
+              flutter gen-l10n
+              flutter test --coverage --reporter=compact
+            )
+          fi
+
+      - name: App localization gate (flutter gen-l10n untranslated check)
+        if: steps.changes.outputs.tests == 'true'
+        run: |
+          set -e
+          if [ -d app ]; then
+            cd app
+            flutter gen-l10n
+            if [ -f lib/l10n/untranslated.json ]; then
+              # Fail if untranslated.json is non-empty (more than just {} or whitespace)
+              content=$(cat lib/l10n/untranslated.json | tr -d '[:space:]')
+              if [ "$content" != "{}" ] && [ "$content" != "" ]; then
+                echo "Untranslated localization messages detected:"
+                cat lib/l10n/untranslated.json
+                exit 1
+              fi
+            fi
           fi
 
       - name: Compile app entrypoints (Flutter analyze)

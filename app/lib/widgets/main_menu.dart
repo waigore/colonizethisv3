@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../config/themes.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -56,6 +56,7 @@ class CtMainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final Widget content = SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -72,7 +73,7 @@ class CtMainMenu extends StatelessWidget {
                 if (_showAfterVictorySubtitle) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Congratulations, you won your last game.',
+                    l10n.mainMenu_subtitleAfterVictory,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontStyle: FontStyle.italic,
                         ),
@@ -81,7 +82,7 @@ class CtMainMenu extends StatelessWidget {
                 ],
                 const SizedBox(height: 32),
                 _MenuButton(
-                  label: 'New Game',
+                  label: l10n.mainMenu_newGame,
                   variant: variant,
                   onPressed: onNewGame,
                 ),
@@ -93,7 +94,7 @@ class CtMainMenu extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _MenuButton(
-                  label: 'Settings',
+                  label: l10n.mainMenu_settings,
                   variant: variant,
                   onPressed: onSettings,
                 ),
@@ -104,7 +105,7 @@ class CtMainMenu extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _MenuButton(
-                  label: 'Quit',
+                  label: l10n.mainMenu_quit,
                   variant: variant,
                   onPressed: onQuit,
                 ),
@@ -147,7 +148,7 @@ class CtMainMenu extends StatelessWidget {
   Widget _buildLogo(BuildContext context) {
     if (variant == MainMenuVariant.plain) {
       return Text(
-        'ColonizeThis V3',
+        appL10n(context).mainMenu_title,
         style: Theme.of(context).textTheme.headlineMedium,
         textAlign: TextAlign.center,
       );
@@ -298,24 +299,25 @@ class _LoadGameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     if (variant == MainMenuVariant.pixelArt) {
       return Tooltip(
-        message: enabled ? '' : 'No saved games. Start a new game first.',
+        message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
         child: _PixelArtButton(
-          label: 'Load Game',
+          label: l10n.mainMenu_loadGame,
           enabled: enabled,
           onPressed: onPressed,
         ),
       );
     }
     return Tooltip(
-      message: enabled ? '' : 'No saved games. Start a new game first.',
+      message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
       child: SizedBox(
         width: double.infinity,
         child: CtNinePatchButton(
           onPressed: enabled ? onPressed : null,
           enabled: enabled,
-          child: const Text('Load Game'),
+          child: Text(l10n.mainMenu_loadGame),
         ),
       ),
     );
