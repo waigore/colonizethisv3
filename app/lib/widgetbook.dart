@@ -15,6 +15,7 @@ import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'features/game/widgets/tech_tree_widget.dart';
 import 'features/game/widgets/technology_screen.dart';
+import 'features/game/widgets/train_civilians_dialog.dart';
 import 'widgets/debug_init_game.dart';
 import 'widgets/ct_choice_chip.dart';
 import 'widgets/debug_map_visibility_story.dart';
@@ -53,8 +54,9 @@ class CtWidgetbookApp extends StatelessWidget {
         ...provinceOverlayDirectories,
         ...productionPanelDirectories,
         ...civilianUnitsPanelDirectories,
+        ...trainCiviliansDialogDirectories,
         ...militaryUnitsPanelDirectories,
-      ...navalUnitsPanelDirectories,
+        ...navalUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
       ],
@@ -326,6 +328,118 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
   ),
 ];
 
+/// Train Civilians Dialog stories. SPEC/ui/train-civilians-dialog.md.
+List<WidgetbookNode> get trainCiviliansDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Train Civilians Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.firstWhere((p) => p.isHuman).id
+              : game.players.first.id;
+          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final richGame = game.copyWith(
+            players: [
+              player.copyWith(
+                treasury: 10000,
+                stockpile: player.stockpile.merge(
+                  const Stockpile(quantities: {'paper': 100}),
+                ),
+              ),
+              ...game.players.where((p) => p.id != humanPlayerId),
+            ],
+          );
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TrainCiviliansDialog(
+                  game: richGame,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'With locked units',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.firstWhere((p) => p.isHuman).id
+              : game.players.first.id;
+          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final noTechGame = game.copyWith(
+            players: [
+              player.copyWith(
+                treasury: 10000,
+                stockpile: player.stockpile.merge(
+                  const Stockpile(quantities: {'paper': 100}),
+                ),
+                techUnlocked: <String, bool>{},
+              ),
+              ...game.players.where((p) => p.id != humanPlayerId),
+            ],
+          );
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TrainCiviliansDialog(
+                  game: noTechGame,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Low resources',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.firstWhere((p) => p.isHuman).id
+              : game.players.first.id;
+          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final poorGame = game.copyWith(
+            players: [
+              player.copyWith(
+                treasury: 500,
+                stockpile: player.stockpile.merge(
+                  const Stockpile(quantities: {'paper': 3}),
+                ),
+              ),
+              ...game.players.where((p) => p.id != humanPlayerId),
+            ],
+          );
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TrainCiviliansDialog(
+                  game: poorGame,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
 /// Production Panel stories. SPEC/ui/production-panel.md.
 List<WidgetbookNode> get productionPanelDirectories => [
   WidgetbookFolder(
@@ -464,8 +578,9 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
         builder: (context) {
           final result = getDebugInitGameResult();
           final game = result.game;
-          final humanPlayerId =
-              game.players.isNotEmpty ? game.players.first.id : 'gp1';
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
             child: NavalUnitsPanel(game: game, humanPlayerId: humanPlayerId),
@@ -1076,10 +1191,12 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
     final result = getDebugInitGameResult();
     final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId =
-        game.players.isNotEmpty ? game.players.first.id : 'gp1';
-    final region =
-        _regionIndex == 0 ? mapViewData.oldWorld : mapViewData.newWorld;
+    final humanPlayerId = game.players.isNotEmpty
+        ? game.players.first.id
+        : 'gp1';
+    final region = _regionIndex == 0
+        ? mapViewData.oldWorld
+        : mapViewData.newWorld;
     return SizedBox(
       width: 900,
       height: 550,
