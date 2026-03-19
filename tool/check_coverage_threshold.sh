@@ -53,7 +53,6 @@ for dir in "${TARGETS[@]}"; do
         "lib/features/shell/shell_screen.dart" \
         "lib/providers/games_provider.dart" \
         "lib/providers/map_view_provider.dart" \
-        "lib/features/game/flame/terrain_tileset.dart" \
         "lib/features/game/flame/region_map_component.dart" \
         "lib/core/services/game_service.dart" \
         "lib/features/game/widgets/technology_panel.dart" \
