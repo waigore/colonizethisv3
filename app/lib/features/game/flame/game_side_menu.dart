@@ -259,7 +259,6 @@ class GameSideMenu extends ConsumerWidget {
           padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -268,7 +267,13 @@ class GameSideMenu extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              ..._buildEmpireMenuButtons(context, ref),
+              // When more menu items are present (e.g. Debug log), the panel must
+              // remain within the available height; make the list scrollable.
+              Expanded(
+                child: ListView(
+                  children: _buildEmpireMenuButtons(context, ref),
+                ),
+              ),
             ],
           ),
         ),
