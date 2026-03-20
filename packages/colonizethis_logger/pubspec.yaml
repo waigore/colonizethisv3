@@ -1,5 +1,5 @@
-name: colonizethis_save
-description: Save format, schema, migrations for Colonize This.
+name: colonizethis_logger
+description: Prefixed logger utility for consistent log categorization in the debug log viewer.
 version: 0.0.1
 publish_to: none
 repository: https://github.com/colonizethisv3/colonizethisv3
@@ -10,10 +10,6 @@ environment:
 
 dependencies:
   logger: ^2.0.2
-  colonizethis_logger:
-  colonizethis_data:
-  colonizethis_models:
-  hive: ^2.2.3
 
 dev_dependencies:
   colonizethis_test:

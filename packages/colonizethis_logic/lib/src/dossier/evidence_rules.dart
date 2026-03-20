@@ -2,20 +2,17 @@
 // When diplomatic (or other) actions are applied, evidence rules add suspicion points per agenda type.
 // Evidence is stored per (observer, subject, agenda type); only human observers receive entries.
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
-final _log = Logger();
+final _log = logicLogger();
 
 /// Human Great Power ids (observers for whom we store evidence).
 List<String> _humanObserverIds(Game game) {
-  return game.players
-      .where((p) => p.isHuman)
-      .map((p) => p.id)
-      .toList();
+  return game.players.where((p) => p.isHuman).map((p) => p.id).toList();
 }
 
 /// True if [playerId] is AI-controlled (evidence/dialogue only for AI subjects).
@@ -56,28 +53,34 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
     if (wasAllied) {
-      entries.add(DossierEvidenceEntry(
-        observerId: observerId,
-        subjectId: actorGpId,
-        agendaType: 'backstabber',
-        turnNumber: turnNumber,
-        description: 'declared war on ally',
-        scoreDelta: 2,
-      ));
+      entries.add(
+        DossierEvidenceEntry(
+          observerId: observerId,
+          subjectId: actorGpId,
+          agendaType: 'backstabber',
+          turnNumber: turnNumber,
+          description: 'declared war on ally',
+          scoreDelta: 2,
+        ),
+      );
     }
     if (weaker) {
-      entries.add(DossierEvidenceEntry(
-        observerId: observerId,
-        subjectId: actorGpId,
-        agendaType: 'warmonger',
-        turnNumber: turnNumber,
-        description: 'declared war on weaker neighbor',
-        scoreDelta: 2,
-      ));
+      entries.add(
+        DossierEvidenceEntry(
+          observerId: observerId,
+          subjectId: actorGpId,
+          agendaType: 'warmonger',
+          turnNumber: turnNumber,
+          description: 'declared war on weaker neighbor',
+          scoreDelta: 2,
+        ),
+      );
     }
   }
   if (entries.isNotEmpty) {
-    _log.d('data: evidence for declareWar actor=$actorGpId target=$targetFactionId entries=${entries.length}');
+    _log.d(
+      'data: evidence for declareWar actor=$actorGpId target=$targetFactionId entries=${entries.length}',
+    );
   }
   return entries;
 }
@@ -95,16 +98,20 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
 
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
-    entries.add(DossierEvidenceEntry(
-      observerId: observerId,
-      subjectId: actorGpId,
-      agendaType: 'peacemaker',
-      turnNumber: turnNumber,
-      description: 'offered peace',
-      scoreDelta: 1,
-    ));
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: actorGpId,
+        agendaType: 'peacemaker',
+        turnNumber: turnNumber,
+        description: 'offered peace',
+        scoreDelta: 1,
+      ),
+    );
   }
-  _log.d('data: evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}');
+  _log.d(
+    'data: evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}',
+  );
   return entries;
 }
 
@@ -126,17 +133,23 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
 
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
-    entries.add(DossierEvidenceEntry(
-      observerId: observerId,
-      subjectId: victorGpId,
-      agendaType: 'warmonger',
-      turnNumber: turnNumber,
-      description: weaker ? 'won battle vs weaker neighbor' : 'won battle as attacker',
-      scoreDelta: scoreDelta,
-    ));
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: victorGpId,
+        agendaType: 'warmonger',
+        turnNumber: turnNumber,
+        description: weaker
+            ? 'won battle vs weaker neighbor'
+            : 'won battle as attacker',
+        scoreDelta: scoreDelta,
+      ),
+    );
   }
   if (entries.isNotEmpty) {
-    _log.d('data: evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}');
+    _log.d(
+      'data: evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}',
+    );
   }
   return entries;
 }
@@ -154,17 +167,21 @@ List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
 
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
-    entries.add(DossierEvidenceEntry(
-      observerId: observerId,
-      subjectId: victorOwnerId,
-      agendaType: 'warmonger',
-      turnNumber: turnNumber,
-      description: 'won naval battle',
-      scoreDelta: 1,
-    ));
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: victorOwnerId,
+        agendaType: 'warmonger',
+        turnNumber: turnNumber,
+        description: 'won naval battle',
+        scoreDelta: 1,
+      ),
+    );
   }
   if (entries.isNotEmpty) {
-    _log.d('data: evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}');
+    _log.d(
+      'data: evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}',
+    );
   }
   return entries;
 }

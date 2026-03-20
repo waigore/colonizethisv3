@@ -4,9 +4,9 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Picks one representative sea zone per map edge (top, bottom, left, right).
 /// Returns a map of edge name ('top', 'bottom', 'left', 'right') to sea zone id.
@@ -95,14 +95,18 @@ List<WarpLink> generateWarpZones({
 
   final links = <WarpLink>[];
   for (final edge in commonEdges) {
-    links.add(WarpLink(
-      regionId: regionIdOld,
-      seaZoneId: owZones[edge]!,
-      otherRegionId: regionIdNew,
-      otherSeaZoneId: nwZones[edge]!,
-    ));
+    links.add(
+      WarpLink(
+        regionId: regionIdOld,
+        seaZoneId: owZones[edge]!,
+        otherRegionId: regionIdNew,
+        otherSeaZoneId: nwZones[edge]!,
+      ),
+    );
   }
 
-  _log.d('logic: warp zones: ${links.length} links on edges ${commonEdges.join(", ")}');
+  _log.d(
+    'logic: warp zones: ${links.length} links on edges ${commonEdges.join(", ")}',
+  );
   return links;
 }

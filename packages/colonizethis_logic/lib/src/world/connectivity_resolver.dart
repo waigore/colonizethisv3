@@ -1,13 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'naval.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
 /// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
@@ -36,7 +36,10 @@ class ConnectivityResult {
 /// A province is blockaded for its owner when an **enemy fleet at sea** (at war) is on Blockade
 /// mission targeting it and the fleet's sea zone is **adjacent to that province's port**.
 /// SPEC/game/capital-and-connectivity.md § Blockade.
-Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game, MapTopology topology) {
+Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(
+  Game game,
+  MapTopology topology,
+) {
   final result = <String, Set<String>>{};
   for (final player in game.players) {
     result[player.id] = {};
@@ -48,7 +51,10 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(Game game, MapTop
     final targetProvinceId = fleet.targetProvinceId;
     if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
     if (!ProvinceId.isPrefixed(targetProvinceId)) continue;
-    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(topology, targetProvinceId);
+    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+      topology,
+      targetProvinceId,
+    );
     if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
     final province = tryGetProvince(game.worldState, targetProvinceId);
     final ownerId = province?.ownerId;
@@ -70,16 +76,21 @@ Map<String, ConnectivityResult> resolveConnectivity({
   required MapTopology topology,
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
-  _log.d('logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}');
+  _log.d(
+    'logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
+  );
   final provinceIdsByType = provinceNodeIds(topology);
   final blockadedByPlayer =
-      blockadedPortProvincesByPlayerId ?? computeBlockadedPortProvincesByPlayer(game, topology);
+      blockadedPortProvincesByPlayerId ??
+      computeBlockadedPortProvincesByPlayer(game, topology);
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      _log.d('logic: connectivity resolve player=${player.id} skipped (no capital)');
+      _log.d(
+        'logic: connectivity resolve player=${player.id} skipped (no capital)',
+      );
       result[player.id] = ConnectivityResult(connected: {});
       continue;
     }
@@ -146,7 +157,10 @@ Set<String> _seaZonesReachableBySeaPath(
 }
 
 /// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
-Set<String> _seaZonesAdjacentToProvince(MapTopology topology, String localProvinceId) {
+Set<String> _seaZonesAdjacentToProvince(
+  MapTopology topology,
+  String localProvinceId,
+) {
   final seaZoneIds = topology.nodes
       .where((n) => n.type == TopologyNodeType.seaZone)
       .map((n) => n.id)
@@ -255,13 +269,21 @@ ConnectivityResult _connectedTilesForPlayer({
     final map = tileMapByRegion[regionId];
     if (map == null) continue;
 
-    final hasRoadOrPort = (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
+    final hasRoadOrPort =
+        (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
     final canExpand = (key == capitalKey) || hasRoadOrPort;
 
     if (!canExpand) continue;
 
     final bottleneckU = pathCap[key] ?? 0;
-    for (final n in _adjacentTileKeys(regionId, localProvinceId, x, y, map, provinceIdsByType)) {
+    for (final n in _adjacentTileKeys(
+      regionId,
+      localProvinceId,
+      x,
+      y,
+      map,
+      provinceIdsByType,
+    )) {
       final transportN = _transportLevelAtTile(worldState, n);
       final candidate = bottleneckU < transportN ? bottleneckU : transportN;
       final existing = pathCap[n] ?? -1;
@@ -292,7 +314,9 @@ ConnectivityResult _connectedTilesForPlayer({
   }
 
   final seaConnectedPortKeys = <String>{};
-  final capitalProvinceBlockaded = blockadedPortProvinces.contains(capital.provinceId);
+  final capitalProvinceBlockaded = blockadedPortProvinces.contains(
+    capital.provinceId,
+  );
   final capitalOnSeaboard = _isCapitalTileOnSeaboard(
     capital,
     tileMapByRegion,
@@ -303,14 +327,21 @@ ConnectivityResult _connectedTilesForPlayer({
     final provinceIdForLookup = prefixedTopology
         ? capital.provinceId
         : ProvinceId.localIdFrom(capital.provinceId);
-    final capitalSeaZones = _seaZonesAdjacentToProvince(topology, provinceIdForLookup);
+    final capitalSeaZones = _seaZonesAdjacentToProvince(
+      topology,
+      provinceIdForLookup,
+    );
     final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
     for (final e in worldState.portsByProvinceSeaboard.entries) {
       final provSea = e.key;
       final tileKey = e.value;
       final parts = provSea.split('|');
-      final seaZoneId = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : null);
-      final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : (parts.length >= 2 ? parts[0] : null);
+      final seaZoneId = parts.length >= 3
+          ? parts[2]
+          : (parts.length >= 2 ? parts[1] : null);
+      final fullProvinceId = parts.length >= 3
+          ? '${parts[0]}|${parts[1]}'
+          : (parts.length >= 2 ? parts[0] : null);
       if (seaZoneId == null || fullProvinceId == null) continue;
       if (blockadedPortProvinces.contains(fullProvinceId)) continue;
       final seaZoneIdForReachable = prefixedTopology && parts.length >= 3
@@ -324,7 +355,9 @@ ConnectivityResult _connectedTilesForPlayer({
     for (final portKey in capitalRegionPortKeys) {
       final parts = portKey.split('|');
       if (parts.length >= 2) {
-        final fullProvinceId = parts.length >= 3 ? '${parts[0]}|${parts[1]}' : parts[0];
+        final fullProvinceId = parts.length >= 3
+            ? '${parts[0]}|${parts[1]}'
+            : parts[0];
         if (!blockadedPortProvinces.contains(fullProvinceId)) {
           seaConnectedPortKeys.add(portKey);
         }
@@ -363,7 +396,8 @@ ConnectivityResult _connectedTilesForPlayer({
     final y = int.tryParse(parts[3]) ?? -1;
     if (x < 0 || y < 0) continue;
 
-    final hasRoadOrPort = (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
+    final hasRoadOrPort =
+        (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
     final canExpand = hasRoadOrPort;
 
     if (!canExpand) continue;
@@ -372,7 +406,14 @@ ConnectivityResult _connectedTilesForPlayer({
     if (map == null) continue;
 
     final bottleneckU = pathCap[key] ?? 0;
-    for (final n in _adjacentTileKeys(regionId, provinceId, x, y, map, provinceIdsByType)) {
+    for (final n in _adjacentTileKeys(
+      regionId,
+      provinceId,
+      x,
+      y,
+      map,
+      provinceIdsByType,
+    )) {
       final transportN = _transportLevelAtTile(worldState, n);
       final candidate = bottleneckU < transportN ? bottleneckU : transportN;
       final existing = pathCap[n] ?? -1;
@@ -397,8 +438,9 @@ ConnectivityResult _connectedTilesForPlayer({
     for (final key in connected.toList()) {
       final parts = key.split('|');
       if (parts.length >= 2) {
-        final fullProvinceId =
-            parts.length >= 3 ? '${parts[0]}|${parts[1]}' : parts[0];
+        final fullProvinceId = parts.length >= 3
+            ? '${parts[0]}|${parts[1]}'
+            : parts[0];
         if (blockadedPortProvinces.contains(fullProvinceId) &&
             fullProvinceId != capital.provinceId) {
           connected.remove(key);
@@ -423,12 +465,7 @@ List<String> _adjacentTileKeys(
   final out = <String>[];
   final w = map.width;
   final h = map.height;
-  for (final d in [
-    (0, -1),
-    (1, 0),
-    (0, 1),
-    (-1, 0),
-  ]) {
+  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;

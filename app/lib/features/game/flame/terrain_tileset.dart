@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/services.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = gameLogger();
 
 /// Sea terrain identifier (not in TerrainType enum).
 const String seaTerrainId = 'sea';

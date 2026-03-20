@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
@@ -35,7 +35,7 @@ import 'end_of_turn_resolver.dart';
 import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Resolution sequence. SPEC/program/turn-resolution-phases.md
 const List<TurnPhase> turnResolutionSequence = [

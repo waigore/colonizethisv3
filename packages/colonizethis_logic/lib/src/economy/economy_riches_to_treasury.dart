@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Riches-to-treasury phase: convert riches in stockpile to treasury at base price.
 /// SPEC/program/turn-resolution-phases.md (Riches to treasury).
@@ -43,7 +43,9 @@ RichesToTreasuryResult resolveRichesToTreasury({
     updatedStockpile = updatedStockpile.applyDelta(id, -qty);
   }
 
-  _log.d('logic: riches-to-treasury treasuryDelta=$totalCash multiplier=$richesCashMultiplier');
+  _log.d(
+    'logic: riches-to-treasury treasuryDelta=$totalCash multiplier=$richesCashMultiplier',
+  );
   return RichesToTreasuryResult(
     stockpile: updatedStockpile,
     treasuryDelta: totalCash,

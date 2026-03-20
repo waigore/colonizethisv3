@@ -2,8 +2,8 @@
 /// Steps: overture payments (two-way accept/reject), advance overtures,
 /// Join Empire/Colony, alliance proposals, Declare War/Peace, relation modifiers, score update.
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../combat/conflict_detection.dart';
@@ -15,7 +15,7 @@ import 'diplomacy_relation_updates.dart';
 
 export 'diplomacy_relation_lookup.dart';
 
-final Logger _diploLog = Logger();
+final _diploLog = logicLogger();
 
 /// Appends one diplomatic history event. intraTurnIndex = count of events already in this turn.
 Game _appendDiplomaticEvent(
@@ -44,9 +44,7 @@ Game _appendDiplomaticEvent(
     reason: reason,
     wasAiInitiator: wasAiInitiator,
   );
-  return game.copyWith(
-    diplomaticHistoryEvents: [...events, event],
-  );
+  return game.copyWith(diplomaticHistoryEvents: [...events, event]);
 }
 
 bool isMinorOrTribe(Game game, String factionId) {
@@ -110,7 +108,9 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = overtureResult.game;
   if (overtureResult.pendingOvertures != null &&
       overtureResult.pendingOvertures!.isNotEmpty) {
-    _diploLog.d('logic: diplomacy phase suspended (pending overture decisions)');
+    _diploLog.d(
+      'logic: diplomacy phase suspended (pending overture decisions)',
+    );
     return DiplomacyPhaseResult(state, overtureResult.pendingOvertures);
   }
 
@@ -124,8 +124,12 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = _processAlliances(state, diploByPlayer, turn);
 
   // 5. Process Declare War and Peace
-  state =
-      _processWarAndPeace(state, diploByPlayer, turn, onDialogue: onDialogue);
+  state = _processWarAndPeace(
+    state,
+    diploByPlayer,
+    turn,
+    onDialogue: onDialogue,
+  );
 
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
@@ -205,7 +209,7 @@ _OverturePaymentsResult _processOverturePayments(
       final prevStage = _previousStage(stage);
       final atPrevStage =
           (existing == null && prevStage == OvertureStage.none) ||
-              (existing != null && existing.stage == prevStage);
+          (existing != null && existing.stage == prevStage);
       if (!atPrevStage) continue;
 
       int cost;
@@ -227,12 +231,23 @@ _OverturePaymentsResult _processOverturePayments(
         accepted = _minorOrTribeAcceptsByRule(stage);
       } else {
         // Target is GP.
-        final decision = _findDecision(overtureDecisions, gpId, targetId, stage);
+        final decision = _findDecision(
+          overtureDecisions,
+          gpId,
+          targetId,
+          stage,
+        );
         if (decision != null) {
           accepted = decision.accepted;
         } else if (_isTargetHumanGp(state, targetId)) {
           // Suspend: need human response.
-          final pending = [OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage)];
+          final pending = [
+            OvertureOffer(
+              offererGpId: gpId,
+              targetFactionId: targetId,
+              stage: stage,
+            ),
+          ];
           state = state.copyWith(players: players, overtureStates: overtures);
           return _OverturePaymentsResult(state, pending);
         } else {
@@ -261,17 +276,24 @@ _OverturePaymentsResult _processOverturePayments(
         players[playerIdx] = player;
       }
 
-      final osIdx =
-          overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
+      final osIdx = overtures.indexWhere(
+        (o) => o.gpId == gpId && o.targetId == targetId,
+      );
       if (osIdx >= 0) {
         overtures = List<OvertureState>.from(overtures);
-        overtures[osIdx] =
-            overtures[osIdx].copyWith(stage: stage, sinceTurn: turn);
+        overtures[osIdx] = overtures[osIdx].copyWith(
+          stage: stage,
+          sinceTurn: turn,
+        );
       } else {
         overtures = [
           ...overtures,
           OvertureState(
-              gpId: gpId, targetId: targetId, stage: stage, sinceTurn: turn)
+            gpId: gpId,
+            targetId: targetId,
+            stage: stage,
+            sinceTurn: turn,
+          ),
         ];
       }
       state = state.copyWith(players: players, overtureStates: overtures);
@@ -285,7 +307,9 @@ _OverturePaymentsResult _processOverturePayments(
         overtureStage: stage,
         wasAiInitiator: isAiControlledForEvidence(state, gpId),
       );
-      _diploLog.i('logic: diplomacy overture $gpId -> $targetId $stage (accepted)');
+      _diploLog.i(
+        'logic: diplomacy overture $gpId -> $targetId $stage (accepted)',
+      );
     }
   }
 
@@ -338,7 +362,8 @@ Game _resolveJoinEmpireColony(
 
       final rel = getRelation(game, gpId, targetId);
       final score = rel?.score ?? relationScoreNeutral;
-      if (score < relationScoreMinFriendly) continue; // Must be Friendly or Allied
+      if (score < relationScoreMinFriendly)
+        continue; // Must be Friendly or Allied
 
       final cost = joinEmpireCostForMinorOrTribe(game, targetId);
       if (player.treasury < cost) continue;
@@ -363,13 +388,20 @@ Game _resolveJoinEmpireColony(
 }
 
 List<Province> _transferProvinceOwnership(
-    List<Province> provinces, String fromId, String toId) {
+  List<Province> provinces,
+  String fromId,
+  String toId,
+) {
   return provinces
       .map((p) => p.ownerId == fromId ? p.copyWith(ownerId: toId) : p)
       .toList();
 }
 
-List<Unit> _transferUnitOwnership(List<Unit> units, String fromId, String toId) {
+List<Unit> _transferUnitOwnership(
+  List<Unit> units,
+  String fromId,
+  String toId,
+) {
   return units
       .map((u) => u.ownerId == fromId ? u.copyWith(ownerId: toId) : u)
       .toList();
@@ -378,26 +410,45 @@ List<Unit> _transferUnitOwnership(List<Unit> units, String fromId, String toId) 
 /// Transfers all provinces, units, and fleets owned by [targetId] to [gpId],
 /// deducts Join Empire cost from GP treasury, removes the Minor/Tribe and
 /// cleans overtures/relations. SPEC/game/diplomacy.md.
-Game _absorbMinorOrTribeIntoGp(Game game, String gpId, String targetId, int turn) {
+Game _absorbMinorOrTribeIntoGp(
+  Game game,
+  String gpId,
+  String targetId,
+  int turn,
+) {
   final cost = joinEmpireCostForMinorOrTribe(game, targetId);
   var players = List<Player>.from(game.players);
   final gpIdx = players.indexWhere((p) => p.id == gpId);
   if (gpIdx >= 0) {
     players = List<Player>.from(players);
-    players[gpIdx] = players[gpIdx].copyWith(treasury: players[gpIdx].treasury - cost);
+    players[gpIdx] = players[gpIdx].copyWith(
+      treasury: players[gpIdx].treasury - cost,
+    );
   }
 
   // Transfer provinces: ownerId targetId -> gpId
-  final owProvinces =
-      _transferProvinceOwnership(game.worldState.oldWorld.provinces, targetId, gpId);
-  final nwProvinces =
-      _transferProvinceOwnership(game.worldState.newWorld.provinces, targetId, gpId);
+  final owProvinces = _transferProvinceOwnership(
+    game.worldState.oldWorld.provinces,
+    targetId,
+    gpId,
+  );
+  final nwProvinces = _transferProvinceOwnership(
+    game.worldState.newWorld.provinces,
+    targetId,
+    gpId,
+  );
 
   // Transfer units: ownerId targetId -> gpId
-  final owUnits =
-      _transferUnitOwnership(game.worldState.oldWorld.units, targetId, gpId);
-  final nwUnits =
-      _transferUnitOwnership(game.worldState.newWorld.units, targetId, gpId);
+  final owUnits = _transferUnitOwnership(
+    game.worldState.oldWorld.units,
+    targetId,
+    gpId,
+  );
+  final nwUnits = _transferUnitOwnership(
+    game.worldState.newWorld.units,
+    targetId,
+    gpId,
+  );
 
   // Transfer fleets
   final fleets = game.worldState.fleets
@@ -492,7 +543,10 @@ Game _processAlliances(
               )
             : existing.copyWith(
                 level: RelationLevel.allied,
-                score: existing.score.clamp(relationScoreMinAllied, relationScoreMax),
+                score: existing.score.clamp(
+                  relationScoreMinAllied,
+                  relationScoreMax,
+                ),
                 lastInteractionTurn: turn,
               ),
       );
@@ -528,8 +582,7 @@ Game _processWarAndPeace(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.offerPeace) continue;
       final targetId = order.targetFactionId;
-      if (!isGreatPower(game, gpId) || !isGreatPower(game, targetId))
-        continue;
+      if (!isGreatPower(game, gpId) || !isGreatPower(game, targetId)) continue;
       final key = pairKey(gpId, targetId);
       final offerers = peaceOffersByPairKey.putIfAbsent(key, () => <String>{});
       offerers.add(gpId);
@@ -545,13 +598,15 @@ Game _processWarAndPeace(
         final atPeace = rel == null || rel.atPeace;
         if (atPeace) {
           if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
-            onDialogue(DialogueEvent(
-              leaderId: gpId,
-              category: 'diplomatic',
-              situation: 'declare_war',
-              era: 'earlyModern',
-              variables: {'otherNation': targetId},
-            ));
+            onDialogue(
+              DialogueEvent(
+                leaderId: gpId,
+                category: 'diplomatic',
+                situation: 'declare_war',
+                era: 'earlyModern',
+                variables: {'otherNation': targetId},
+              ),
+            );
           }
           final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
 
@@ -561,20 +616,27 @@ Game _processWarAndPeace(
             targetId: targetId,
             turn: turn,
           );
-          
+
           // Cancel any active subsidies between these factions
           var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
           final cancelledSubsidies = subsidyStates
-              .where((s) =>
-                  (s.payerId == gpId && s.targetId == targetId) ||
-                  (s.payerId == targetId && s.targetId == gpId))
+              .where(
+                (s) =>
+                    (s.payerId == gpId && s.targetId == targetId) ||
+                    (s.payerId == targetId && s.targetId == gpId),
+              )
               .toList();
           subsidyStates = subsidyStates
-              .where((s) => !((s.payerId == gpId && s.targetId == targetId) ||
-                  (s.payerId == targetId && s.targetId == gpId)))
+              .where(
+                (s) =>
+                    !((s.payerId == gpId && s.targetId == targetId) ||
+                        (s.payerId == targetId && s.targetId == gpId)),
+              )
               .toList();
           if (cancelledSubsidies.isNotEmpty) {
-            _diploLog.i('logic: diplomacy subsidies cancelled due to war $gpId vs $targetId');
+            _diploLog.i(
+              'logic: diplomacy subsidies cancelled due to war $gpId vs $targetId',
+            );
           }
 
           game = game.copyWith(
@@ -582,7 +644,7 @@ Game _processWarAndPeace(
             subsidyStates: subsidyStates,
             dossierEvidenceEntries: [
               ...game.dossierEvidenceEntries,
-              ...evidence
+              ...evidence,
             ],
           );
           game = _appendDiplomaticEvent(
@@ -606,7 +668,9 @@ Game _processWarAndPeace(
               wasAiInitiator: isAiControlledForEvidence(game, s.payerId),
             );
           }
-          _diploLog.i('logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)');
+          _diploLog.i(
+            'logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)',
+          );
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
         final targetId = order.targetFactionId;
@@ -634,13 +698,15 @@ Game _processWarAndPeace(
           }
 
           if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
-            onDialogue(DialogueEvent(
-              leaderId: gpId,
-              category: 'diplomatic',
-              situation: 'peace_offer',
-              era: 'earlyModern',
-              variables: {'otherNation': targetId},
-            ));
+            onDialogue(
+              DialogueEvent(
+                leaderId: gpId,
+                category: 'diplomatic',
+                situation: 'peace_offer',
+                era: 'earlyModern',
+                variables: {'otherNation': targetId},
+              ),
+            );
           }
           final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
           if (hasMutualOffer) {
@@ -690,15 +756,20 @@ Game _terminateAgreementsOnWar(Game game) {
     final id1 = rel.factionId1;
     final id2 = rel.factionId2;
     overtures = overtures
-        .where((o) => !((o.gpId == id1 && o.targetId == id2) ||
-            (o.gpId == id2 && o.targetId == id1)))
+        .where(
+          (o) =>
+              !((o.gpId == id1 && o.targetId == id2) ||
+                  (o.gpId == id2 && o.targetId == id1)),
+        )
         .toList();
   }
   if (overtures.length != game.overtureStates.length) {
     final removed = game.overtureStates
-        .where((o) =>
-            !overtures.any((n) =>
-                n.gpId == o.gpId && n.targetId == o.targetId))
+        .where(
+          (o) => !overtures.any(
+            (n) => n.gpId == o.gpId && n.targetId == o.targetId,
+          ),
+        )
         .toList();
     game = game.copyWith(overtureStates: overtures);
     for (final o in removed) {
@@ -743,8 +814,9 @@ Game _applyRelationModifiersAndUpdateScores(
       final playerIdx = players.indexWhere((p) => p.id == gpId);
       if (playerIdx >= 0) {
         players = List<Player>.from(players);
-        players[playerIdx] = players[playerIdx]
-            .copyWith(treasury: players[playerIdx].treasury - amount);
+        players[playerIdx] = players[playerIdx].copyWith(
+          treasury: players[playerIdx].treasury - amount,
+        );
       }
 
       relations = applyGrantAidModifier(
@@ -764,8 +836,9 @@ Game _applyRelationModifiersAndUpdateScores(
         amount: amount,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
-      _diploLog
-          .i('logic: diplomacy GrantAid $gpId -> $targetId amount $amount');
+      _diploLog.i(
+        'logic: diplomacy GrantAid $gpId -> $targetId amount $amount',
+      );
     }
   }
 
@@ -789,30 +862,36 @@ Game _applyRelationModifiersAndUpdateScores(
       final payerIdx = players.indexWhere((p) => p.id == gpId);
       if (payerIdx >= 0) {
         players = List<Player>.from(players);
-        players[payerIdx] = players[payerIdx]
-            .copyWith(treasury: players[payerIdx].treasury - amount);
+        players[payerIdx] = players[payerIdx].copyWith(
+          treasury: players[payerIdx].treasury - amount,
+        );
       }
 
       // Store/update ongoing subsidy state
       final existingSubsidyIdx = subsidyStates.indexWhere(
-          (s) => s.payerId == gpId && s.targetId == targetId);
+        (s) => s.payerId == gpId && s.targetId == targetId,
+      );
       final isUpdate = existingSubsidyIdx >= 0;
       if (isUpdate) {
         subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
             .copyWith(amountPerTurn: amount);
       } else {
-        subsidyStates.add(SubsidyState(
-          payerId: gpId,
-          targetId: targetId,
-          amountPerTurn: amount,
-        ));
+        subsidyStates.add(
+          SubsidyState(
+            payerId: gpId,
+            targetId: targetId,
+            amountPerTurn: amount,
+          ),
+        );
       }
 
       game = game.copyWith(players: players, subsidyStates: subsidyStates);
       game = _appendDiplomaticEvent(
         game,
         turn,
-        isUpdate ? DiplomaticEventType.subsidyUpdated : DiplomaticEventType.subsidySet,
+        isUpdate
+            ? DiplomaticEventType.subsidyUpdated
+            : DiplomaticEventType.subsidySet,
         {gpId, targetId},
         fromFactionId: gpId,
         toFactionId: targetId,
@@ -822,10 +901,12 @@ Game _applyRelationModifiersAndUpdateScores(
       final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
         _diploLog.i(
-            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)');
+          'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)',
+        );
       } else {
         _diploLog.i(
-            'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)');
+          'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)',
+        );
       }
     }
   }
@@ -862,7 +943,9 @@ Game _processOngoingSubsidies(Game game, int turn) {
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
-      _diploLog.i('logic: diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)');
+      _diploLog.i(
+        'logic: diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)',
+      );
       continue;
     }
 
@@ -882,7 +965,9 @@ Game _processOngoingSubsidies(Game game, int turn) {
       subsidyStates = subsidyStates
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
-      _diploLog.i('logic: diplomacy subsidy cancelled $payerId -> $targetId (war declared)');
+      _diploLog.i(
+        'logic: diplomacy subsidy cancelled $payerId -> $targetId (war declared)',
+      );
       continue;
     }
 
@@ -890,13 +975,15 @@ Game _processOngoingSubsidies(Game game, int turn) {
     final payerIdx = players.indexWhere((p) => p.id == payerId);
     if (payerIdx >= 0) {
       players = List<Player>.from(players);
-      players[payerIdx] = players[payerIdx]
-          .copyWith(treasury: players[payerIdx].treasury - amount);
+      players[payerIdx] = players[payerIdx].copyWith(
+        treasury: players[payerIdx].treasury - amount,
+      );
     }
 
     // Calculate relation boost: +subsidyBoostRelationPerStep per subsidyBoostDucatsPerStep ducats, max subsidyBoostMax
-    final boost = ((amount ~/ subsidyBoostDucatsPerStep) * subsidyBoostRelationPerStep)
-        .clamp(0, subsidyBoostMax);
+    final boost =
+        ((amount ~/ subsidyBoostDucatsPerStep) * subsidyBoostRelationPerStep)
+            .clamp(0, subsidyBoostMax);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
     if (isMinorOrTribe(game, targetId)) {
@@ -907,19 +994,28 @@ Game _processOngoingSubsidies(Game game, int turn) {
         boost: boost,
         turn: turn,
       );
-      _diploLog.i('logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost');
+      _diploLog.i(
+        'logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost',
+      );
     } else {
       // GP target: transfer treasury
       final targetIdx = players.indexWhere((p) => p.id == targetId);
       if (targetIdx >= 0) {
-        players[targetIdx] = players[targetIdx]
-            .copyWith(treasury: players[targetIdx].treasury + amount);
+        players[targetIdx] = players[targetIdx].copyWith(
+          treasury: players[targetIdx].treasury + amount,
+        );
       }
-      _diploLog.i('logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount (treasury transfer)');
+      _diploLog.i(
+        'logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount (treasury transfer)',
+      );
     }
   }
 
-  return game.copyWith(players: players, diplomacyRelations: relations, subsidyStates: subsidyStates);
+  return game.copyWith(
+    players: players,
+    diplomacyRelations: relations,
+    subsidyStates: subsidyStates,
+  );
 }
 
 /// Apply relation convergence: all non-war relations move +/-1 toward neutral.
@@ -984,8 +1080,9 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
   if (!defenderIsMinorOrTribe) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
-  final attackerIsGp =
-      attackerIds.any((id) => game.players.any((p) => p.id == id));
+  final attackerIsGp = attackerIds.any(
+    (id) => game.players.any((p) => p.id == id),
+  );
   if (!attackerIsGp) return null;
 
   for (final p in game.players) {
@@ -994,8 +1091,11 @@ String? needsInterventionChoice(Game game, BattleContext ctx) {
 
     final o = getOverture(game, p.id, defenderId);
     final hasEmbassy = o != null && o.hasEmbassy;
-    final hasInvestment =
-        _gpHasPurchasedLandInFactionProvinces(game, p.id, defenderId);
+    final hasInvestment = _gpHasPurchasedLandInFactionProvinces(
+      game,
+      p.id,
+      defenderId,
+    );
     if (hasEmbassy || hasInvestment) return p.id;
   }
   return null;
@@ -1037,8 +1137,9 @@ Game applyInterventionChoice(
 
     if (choice == InterventionChoice.intervene) {
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
-      relations =
-          upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
+      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (
+        existing,
+      ) {
         if (existing == null) {
           return DiplomacyRelation(
             factionId1: ids.id1,
@@ -1051,7 +1152,10 @@ Game applyInterventionChoice(
           );
         }
         if (!existing.atPeace) return existing;
-        final newScore = (existing.score - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
+        final newScore = (existing.score - relationScoreWarDelta).clamp(
+          relationScoreMin,
+          relationScoreMax,
+        );
         return existing.copyWith(
           state: RelationState.atWar,
           sinceTurn: turn,
@@ -1062,9 +1166,12 @@ Game applyInterventionChoice(
       });
     } else if (choice == InterventionChoice.protest) {
       final ids = canonicalPairIds(gpIdWithEmbassy, attackerId);
-      relations =
-          upsertRelation(relations, gpIdWithEmbassy, attackerId, (existing) {
-        final newScore = ((existing?.score ?? relationScoreNeutral) - relationScoreWarDelta).clamp(relationScoreMin, relationScoreMax);
+      relations = upsertRelation(relations, gpIdWithEmbassy, attackerId, (
+        existing,
+      ) {
+        final newScore =
+            ((existing?.score ?? relationScoreNeutral) - relationScoreWarDelta)
+                .clamp(relationScoreMin, relationScoreMax);
         final newLevel = scoreToLevel(newScore);
         if (existing == null) {
           return DiplomacyRelation(
@@ -1076,7 +1183,10 @@ Game applyInterventionChoice(
           );
         }
         return existing.copyWith(
-            score: newScore, level: newLevel, lastInteractionTurn: turn);
+          score: newScore,
+          level: newLevel,
+          lastInteractionTurn: turn,
+        );
       });
     }
   }

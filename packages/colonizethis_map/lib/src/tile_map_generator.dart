@@ -3,7 +3,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 
 import 'grid_voronoi.dart';
 import 'topology_inference.dart';
@@ -12,11 +12,7 @@ import 'topology_inference.dart';
 const String _landSentinel = '_land';
 
 /// How land-shape seeds are placed around each continent seed. SPEC/program/tile-map-gen-algorithm.md § Pass 2.
-enum LandSeedClusterShape {
-  gaussian,
-  uniformDisk,
-  uniformAnnulus,
-}
+enum LandSeedClusterShape { gaussian, uniformDisk, uniformAnnulus }
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
@@ -33,32 +29,41 @@ class MapGenerationParams {
     this.skipFillLakes = false,
     this.joinContinents = true,
     this.seedBeforeAssignment = false,
-  })  : assert(targetTilesPerProvince >= 1),
-        assert(seaFraction >= 0 && seaFraction < 1),
-        assert(numContinents >= 1),
-        assert(voronoiNoiseScale >= 0),
-        assert(continentBufferTiles >= 0);
+  }) : assert(targetTilesPerProvince >= 1),
+       assert(seaFraction >= 0 && seaFraction < 1),
+       assert(numContinents >= 1),
+       assert(voronoiNoiseScale >= 0),
+       assert(continentBufferTiles >= 0);
 
   /// Average land tiles per province; used to derive total land and grid size.
   final int targetTilesPerProvince;
+
   /// Fraction of grid that is sea (0–1); e.g. 0.6 for 60:40 sea:land.
   final double seaFraction;
+
   /// Number of continents; used when deriving grid size (e.g. when loading topology from file).
   final int numContinents;
   final int seed;
+
   /// 0–1; 0 = no border noise.
   final double borderNoise;
   final int maxEnforceIterations;
+
   /// How land-shape seeds are clustered around each continent seed.
   final LandSeedClusterShape clusterShape;
+
   /// Voronoi noise scale (0 = off). When > 0, perturb distance in Pass 3 for irregular boundaries.
   final double voronoiNoiseScale;
+
   /// Minimum Manhattan distance from another continent when assigning land (organic). 0 = legacy 1-tile.
   final int continentBufferTiles;
+
   /// When true, skip Pass 4 (no lake-to-land conversion).
   final bool skipFillLakes;
+
   /// When true, run join step after Pass 9 if a topology continent has multiple land components.
   final bool joinContinents;
+
   /// When true, use legacy land assignment (place all seeds first, then one Voronoi).
   /// When false (default), use organic land growing.
   final bool seedBeforeAssignment;
@@ -84,7 +89,10 @@ class MapGenerationParams {
 
 /// Builds province-to-continent map by partitioning p1..pN across C continents.
 /// Each continent gets a similar number of provinces (≈ N/C, remainder distributed).
-Map<String, int> buildProvinceToContinentMap(int numProvinces, int numContinents) {
+Map<String, int> buildProvinceToContinentMap(
+  int numProvinces,
+  int numContinents,
+) {
   if (numProvinces <= 0 || numContinents <= 0) return {};
   final result = <String, int>{};
   final continentSize = numProvinces ~/ numContinents;
@@ -180,51 +188,65 @@ class TileMapParams {
     this.jitterNeighborSupportThreshold = 2,
     // Pass 7 — multi-region resource cap
     this.multiRegionResourceCapFraction = 0.30,
-  })  : assert(seaFraction >= 0 && seaFraction < 1),
-        assert(voronoiNoiseScale >= 0),
-        assert(continentBufferTiles >= 0),
-        assert(maxSeaZoneFraction > 0 && maxSeaZoneFraction <= 1),
-        assert(mountainRangesFactor >= 0),
-        assert(mountainRangesMin >= 0),
-        assert(mountainRangesMax >= mountainRangesMin),
-        assert(mountainRangeMinLength >= 0),
-        assert(terrainSeedsFactor >= 0),
-        assert(terrainSeedsMin >= 0),
-        assert(terrainSeedsMax >= terrainSeedsMin),
-        assert(terrainMacroFraction >= 0 && terrainMacroFraction <= 1),
-        assert(patternMinBlobSize >= 0),
-        assert(patternMaxFractionPerBlob >= 0 && patternMaxFractionPerBlob <= 1),
-        assert(patternSeedFactor >= 0),
-        assert(patternMaxSeedsPerBlob >= 0),
-        assert(patternMaxChangesPerSeed >= 0),
-        assert(patternMaxRadius >= 0),
-        assert(jitterHomogeneityThreshold >= 0 && jitterHomogeneityThreshold <= 1),
-        assert(jitterMaxFraction >= 0 && jitterMaxFraction <= 1),
-        assert(jitterProbability >= 0 && jitterProbability <= 1),
-        assert(jitterMinProvinceSize >= 0),
-        assert(jitterNeighborSupportThreshold >= 0),
-        assert(multiRegionResourceCapFraction >= 0 && multiRegionResourceCapFraction <= 1);
+  }) : assert(seaFraction >= 0 && seaFraction < 1),
+       assert(voronoiNoiseScale >= 0),
+       assert(continentBufferTiles >= 0),
+       assert(maxSeaZoneFraction > 0 && maxSeaZoneFraction <= 1),
+       assert(mountainRangesFactor >= 0),
+       assert(mountainRangesMin >= 0),
+       assert(mountainRangesMax >= mountainRangesMin),
+       assert(mountainRangeMinLength >= 0),
+       assert(terrainSeedsFactor >= 0),
+       assert(terrainSeedsMin >= 0),
+       assert(terrainSeedsMax >= terrainSeedsMin),
+       assert(terrainMacroFraction >= 0 && terrainMacroFraction <= 1),
+       assert(patternMinBlobSize >= 0),
+       assert(patternMaxFractionPerBlob >= 0 && patternMaxFractionPerBlob <= 1),
+       assert(patternSeedFactor >= 0),
+       assert(patternMaxSeedsPerBlob >= 0),
+       assert(patternMaxChangesPerSeed >= 0),
+       assert(patternMaxRadius >= 0),
+       assert(
+         jitterHomogeneityThreshold >= 0 && jitterHomogeneityThreshold <= 1,
+       ),
+       assert(jitterMaxFraction >= 0 && jitterMaxFraction <= 1),
+       assert(jitterProbability >= 0 && jitterProbability <= 1),
+       assert(jitterMinProvinceSize >= 0),
+       assert(jitterNeighborSupportThreshold >= 0),
+       assert(
+         multiRegionResourceCapFraction >= 0 &&
+             multiRegionResourceCapFraction <= 1,
+       );
 
   final int width;
   final int height;
   final int seed;
+
   /// Fraction of grid that is sea (0–1); used for land budget in Pass 3.
   final double seaFraction;
+
   /// 0–1; 0 = no border noise.
   final double borderNoise;
   final int maxEnforceIterations;
+
   /// How land-shape seeds are clustered around each continent seed.
   final LandSeedClusterShape clusterShape;
+
   /// Voronoi noise scale (0 = off). When > 0, perturb distance in Pass 3.
   final double voronoiNoiseScale;
+
   /// Minimum Manhattan distance from another continent when assigning land (organic). 0 = legacy 1-tile.
   final int continentBufferTiles;
+
   /// When true, skip Pass 4 (no lake-to-land conversion).
   final bool skipFillLakes;
+
   /// When true, run join step after Pass 9 when needed.
   final bool joinContinents;
+
   /// When true, use legacy land assignment (place all seeds first, then one Voronoi).
   final bool seedBeforeAssignment;
+
   /// Max fraction of total sea tiles per sea zone (Pass 11); e.g. 0.05 = 5%.
   final double maxSeaZoneFraction;
 
@@ -293,10 +315,12 @@ class _MultiRegionCapState {
   bool shouldRestrictToRegionOnly(List<Resource> allowed) {
     if (totalCount == 0) return false;
     if (bothCount / totalCount < capFraction) return false;
-    final hasBoth =
-        allowed.any((r) => rules.regionRule[r] == ResourceRegionRule.both);
-    final hasRegionOnly =
-        allowed.any((r) => rules.regionRule[r] != ResourceRegionRule.both);
+    final hasBoth = allowed.any(
+      (r) => rules.regionRule[r] == ResourceRegionRule.both,
+    );
+    final hasRegionOnly = allowed.any(
+      (r) => rules.regionRule[r] != ResourceRegionRule.both,
+    );
     return hasBoth && hasRegionOnly;
   }
 
@@ -316,6 +340,7 @@ class TileMapGenerator {
   TileMapGenerator({this.params = const TileMapParams()});
 
   final TileMapParams params;
+  final _log = mapLogger();
 
   /// Generate a tile map from province/continent count. Returns (TileMapResult, inferred MapTopology).
   /// Optional [onLog] receives one line per pass.
@@ -330,17 +355,23 @@ class TileMapGenerator {
     String seaZoneId = 's1',
     ResourceRules? resourceRules,
     void Function(String)? onLog,
-    void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)? onLandSeedsPlaced,
+    void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
+    onLandSeedsPlaced,
     void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
   }) {
-    Logger().i('map: TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}');
+    _log.i(
+      'TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}',
+    );
     if (numProvinces < 1) {
       throw ArgumentError('numProvinces must be at least 1');
     }
     if (numContinents < 1) {
       throw ArgumentError('numContinents must be at least 1');
     }
-    final provinceToContinent = buildProvinceToContinentMap(numProvinces, numContinents);
+    final provinceToContinent = buildProvinceToContinentMap(
+      numProvinces,
+      numContinents,
+    );
     final rnd = Random(params.seed);
 
     // Pass 1: Initialize grid (all sea)
@@ -348,7 +379,9 @@ class TileMapGenerator {
       params.height,
       (_) => List.filled(params.width, seaZoneId),
     );
-    onLog?.call('Pass 1: Grid initialized (${params.width}x${params.height}), all sea');
+    onLog?.call(
+      'Pass 1: Grid initialized (${params.width}x${params.height}), all sea',
+    );
 
     List<(int x, int y)> continentSeeds;
     List<(int x, int y)> landSeeds;
@@ -360,16 +393,31 @@ class TileMapGenerator {
       continentSeeds = placed.$1;
       landSeeds = placed.$2;
       continentBySeedIndex = placed.$3;
-      onLog?.call('Pass 2: Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}');
-      grid = _assignLandByLandSeeds(grid, landSeeds, continentBySeedIndex, provinceToContinent, seaZoneId);
+      onLog?.call(
+        'Pass 2: Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
+      );
+      grid = _assignLandByLandSeeds(
+        grid,
+        landSeeds,
+        continentBySeedIndex,
+        provinceToContinent,
+        seaZoneId,
+      );
     } else {
       // Organic: interleaved seed placement + small Voronoi + coastline growth
-      final organic = _placeLandSeedsOrganic(grid, provinceToContinent, seaZoneId, rnd);
+      final organic = _placeLandSeedsOrganic(
+        grid,
+        provinceToContinent,
+        seaZoneId,
+        rnd,
+      );
       continentSeeds = organic.$1;
       landSeeds = organic.$2;
       continentBySeedIndex = organic.$3;
       grid = organic.$4;
-      onLog?.call('Pass 2–3 (organic): Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}');
+      onLog?.call(
+        'Pass 2–3 (organic): Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
+      );
     }
 
     if (landSeeds.isNotEmpty) {
@@ -388,7 +436,9 @@ class TileMapGenerator {
         if (grid[y][x] == _landSentinel) landCount++;
       }
     }
-    onLog?.call('Pass 3: Land assignment complete ($landCount land, ${params.width * params.height - landCount} sea)');
+    onLog?.call(
+      'Pass 3: Land assignment complete ($landCount land, ${params.width * params.height - landCount} sea)',
+    );
 
     // Pass 4: Fill lakes (ocean = sea connected to edge; lake → land; optional coastal swap)
     if (params.skipFillLakes) {
@@ -425,13 +475,23 @@ class TileMapGenerator {
       onLog?.call('Pass 6: Terrain assigned ($terrainCount land cells)');
       onLog?.call('Pass 7: Resources placed ($resourceCount cells)');
     } else {
-      onLog?.call('Pass 6–7: Terrain/resources skipped (no rules or no provinces)');
+      onLog?.call(
+        'Pass 6–7: Terrain/resources skipped (no rules or no provinces)',
+      );
     }
 
     // Pass 8: Province seeds on land (one per province, per continent)
     final provinceSeeds = _placeProvinceSeedsOnLand(
-        grid, provinceToContinent, landSeeds, continentBySeedIndex, seaZoneId, rnd);
-    onLog?.call('Pass 8: Province seeds on land (${provinceSeeds.length} provinces)');
+      grid,
+      provinceToContinent,
+      landSeeds,
+      continentBySeedIndex,
+      seaZoneId,
+      rnd,
+    );
+    onLog?.call(
+      'Pass 8: Province seeds on land (${provinceSeeds.length} provinces)',
+    );
 
     // Pass 9: Province assignment (Voronoi on land; replace sentinel with province id)
     grid = _assignProvincesFromSeeds(grid, provinceSeeds, seaZoneId);
@@ -465,9 +525,15 @@ class TileMapGenerator {
     // Pass 11: Sea zone subdivision with size cap (max fraction of total sea per zone).
     final totalSea = _countSeaCells(grid, seaZoneId);
     if (totalSea > 0) {
-      final (newGrid, numSeaZones) = _subdivideSeaZonesWithCap(grid, seaZoneId, totalSea);
+      final (newGrid, numSeaZones) = _subdivideSeaZonesWithCap(
+        grid,
+        seaZoneId,
+        totalSea,
+      );
       grid = newGrid;
-      onLog?.call('Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)');
+      onLog?.call(
+        'Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)',
+      );
     }
 
     final result = TileMapResult(
@@ -478,7 +544,9 @@ class TileMapGenerator {
       resourceGrid: resourceGrid,
     );
     final topology = inferTopologyFromTileMap(result, regionId, seaZoneId);
-    Logger().i('map: TileMapGenerator.generate end regionId=$regionId provinces=${topology.nodes.where((n) => n.type == TopologyNodeType.province).length}');
+    _log.i(
+      'TileMapGenerator.generate end regionId=$regionId provinces=${topology.nodes.where((n) => n.type == TopologyNodeType.province).length}',
+    );
     return (result, topology);
   }
 
@@ -492,9 +560,9 @@ class TileMapGenerator {
     String regionId,
     Random rnd,
   ) {
-    final allowedNonMountain = allowedTerrainsForRegion(regionId)
-        .where((t) => t != TerrainType.mountain)
-        .toList();
+    final allowedNonMountain = allowedTerrainsForRegion(
+      regionId,
+    ).where((t) => t != TerrainType.mountain).toList();
     if (allowedNonMountain.isEmpty) return;
 
     final height = grid.length;
@@ -513,12 +581,7 @@ class TileMapGenerator {
     }
     if (tilesByProvince.isEmpty) return;
 
-    const directions4 = <(int dx, int dy)>[
-      (0, -1),
-      (1, 0),
-      (0, 1),
-      (-1, 0),
-    ];
+    const directions4 = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
     const directions8 = <(int dx, int dy)>[
       (0, -1),
       (1, 0),
@@ -605,7 +668,8 @@ class TileMapGenerator {
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
           if (grid[ny][nx] != entry.key) continue; // same province only
           final nt = terrainGrid[ny][nx];
-          if (nt == null || nt == dominant || nt == TerrainType.mountain) continue;
+          if (nt == null || nt == dominant || nt == TerrainType.mountain)
+            continue;
           neighborCounts[nt] = (neighborCounts[nt] ?? 0) + 1;
         }
 
@@ -626,7 +690,8 @@ class TileMapGenerator {
   }
 
   /// Join step: for each continent with >1 land component, connect two by a shortest path of sea cells. Returns (grid, terrainGrid, resourceGrid, didJoin).
-  (List<List<String>>, List<List<TerrainType?>>?, List<List<Resource?>>?, bool) _joinContinents(
+  (List<List<String>>, List<List<TerrainType?>>?, List<List<Resource?>>?, bool)
+  _joinContinents(
     List<List<String>> grid,
     List<List<TerrainType?>>? terrainGrid,
     List<List<Resource?>>? resourceGrid,
@@ -636,15 +701,21 @@ class TileMapGenerator {
     ResourceRules? resourceRules,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty) return (grid, terrainGrid, resourceGrid, false);
+    if (provinceToContinent.isEmpty)
+      return (grid, terrainGrid, resourceGrid, false);
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
     var g = grid.map((row) => row.toList()).toList();
-    var tg = terrainGrid != null ? terrainGrid.map((row) => row.toList()).toList() : null;
-    var rg = resourceGrid != null ? resourceGrid.map((row) => row.toList()).toList() : null;
+    var tg = terrainGrid != null
+        ? terrainGrid.map((row) => row.toList()).toList()
+        : null;
+    var rg = resourceGrid != null
+        ? resourceGrid.map((row) => row.toList()).toList()
+        : null;
     final ocean = _oceanCells(g, seaZoneId);
 
-    final capState = (tg != null &&
+    final capState =
+        (tg != null &&
             rg != null &&
             mapRegionId != null &&
             resourceRules != null &&
@@ -659,7 +730,12 @@ class TileMapGenerator {
 
     for (var c = 0; c < numContinents; c++) {
       while (true) {
-        final landCells = _landCellsForContinent(g, provinceToContinent, c, seaZoneId);
+        final landCells = _landCellsForContinent(
+          g,
+          provinceToContinent,
+          c,
+          seaZoneId,
+        );
         final components = _connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
@@ -670,7 +746,10 @@ class TileMapGenerator {
         final provinceId = _provinceIdAdjacentToSeaPath(g, compA, path);
         for (final (x, y) in path) {
           g[y][x] = provinceId;
-          if (tg != null && rg != null && mapRegionId != null && resourceRules != null) {
+          if (tg != null &&
+              rg != null &&
+              mapRegionId != null &&
+              resourceRules != null) {
             _assignTerrainAndResourceForCell(
               tg,
               rg,
@@ -706,7 +785,9 @@ class TileMapGenerator {
     return out;
   }
 
-  List<Set<(int x, int y)>> _connectedComponentsOfLand(Set<(int x, int y)> landCells) {
+  List<Set<(int x, int y)>> _connectedComponentsOfLand(
+    Set<(int x, int y)> landCells,
+  ) {
     if (landCells.isEmpty) return [];
     final result = <Set<(int x, int y)>>[];
     final remaining = Set<(int x, int y)>.from(landCells);
@@ -798,7 +879,8 @@ class TileMapGenerator {
       final K = (size / maxPerZone).ceil().clamp(1, size);
       final seeds = _placeSeaSeedsFarthestPoint(component, K);
       final seedMap = <String, (int x, int y)>{
-        for (var i = 0; i < seeds.length; i++) 's${nextSeaZoneIndex + i}': seeds[i],
+        for (var i = 0; i < seeds.length; i++)
+          's${nextSeaZoneIndex + i}': seeds[i],
       };
       final assignment = assignCellsToNearestSeed(
         component,
@@ -816,7 +898,10 @@ class TileMapGenerator {
   }
 
   /// Place K well-spread seeds in [cells] using farthest-point sampling.
-  List<(int x, int y)> _placeSeaSeedsFarthestPoint(Set<(int x, int y)> cells, int K) {
+  List<(int x, int y)> _placeSeaSeedsFarthestPoint(
+    Set<(int x, int y)> cells,
+    int K,
+  ) {
     if (cells.isEmpty || K <= 0) return [];
     final list = cells.toList();
     if (K >= list.length) return list;
@@ -859,7 +944,10 @@ class TileMapGenerator {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = x + dx;
         final ny = y + dy;
-        if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+        if (nx >= 0 &&
+            nx < params.width &&
+            ny >= 0 &&
+            ny < params.height &&
             grid[ny][nx] == seaZoneId) {
           seaAdjacentToA.add((nx, ny));
         }
@@ -870,7 +958,10 @@ class TileMapGenerator {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = x + dx;
         final ny = y + dy;
-        if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+        if (nx >= 0 &&
+            nx < params.width &&
+            ny >= 0 &&
+            ny < params.height &&
             grid[ny][nx] == seaZoneId) {
           seaAdjacentToB.add((nx, ny));
         }
@@ -893,7 +984,8 @@ class TileMapGenerator {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = x + dx;
         final ny = y + dy;
-        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) continue;
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height)
+          continue;
         if (grid[ny][nx] != seaZoneId) continue;
         final n = (nx, ny);
         if (prev.containsKey(n)) continue;
@@ -920,7 +1012,10 @@ class TileMapGenerator {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = px + dx;
         final ny = py + dy;
-        if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+        if (nx >= 0 &&
+            nx < params.width &&
+            ny >= 0 &&
+            ny < params.height &&
             compA.contains((nx, ny))) {
           return grid[ny][nx];
         }
@@ -945,9 +1040,11 @@ class TileMapGenerator {
     terrainGrid[y][x] = landTerrains[rnd.nextInt(landTerrains.length)];
     final terrain = terrainGrid[y][x]!;
     var allowed = Resource.values
-        .where((r) =>
-            rules.isAllowedInRegion(r, mapRegionId) &&
-            rules.isAllowedOnTerrain(r, terrain))
+        .where(
+          (r) =>
+              rules.isAllowedInRegion(r, mapRegionId) &&
+              rules.isAllowedOnTerrain(r, terrain),
+        )
         .toList();
     if (allowed.isEmpty) return;
     if (capState != null &&
@@ -983,31 +1080,55 @@ class TileMapGenerator {
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] == seaZoneId) continue;
-        final oceanNeighbours = [
-          (x - 1, y),
-          (x + 1, y),
-          (x, y - 1),
-          (x, y + 1),
-        ].where((p) => p.$1 >= 0 && p.$1 < params.width && p.$2 >= 0 && p.$2 < params.height &&
-            grid[p.$2][p.$1] == seaZoneId && ocean.contains(p)).length;
+        final oceanNeighbours = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+            .where(
+              (p) =>
+                  p.$1 >= 0 &&
+                  p.$1 < params.width &&
+                  p.$2 >= 0 &&
+                  p.$2 < params.height &&
+                  grid[p.$2][p.$1] == seaZoneId &&
+                  ocean.contains(p),
+            )
+            .length;
         if (oceanNeighbours >= 1) coastal.add((x, y));
       }
     }
     coastal.sort((a, b) {
-      final na = [
-        (a.$1 - 1, a.$2),
-        (a.$1 + 1, a.$2),
-        (a.$1, a.$2 - 1),
-        (a.$1, a.$2 + 1),
-      ].where((p) => p.$1 >= 0 && p.$1 < params.width && p.$2 >= 0 && p.$2 < params.height &&
-          grid[p.$2][p.$1] == seaZoneId && ocean.contains(p)).length;
-      final nb = [
-        (b.$1 - 1, b.$2),
-        (b.$1 + 1, b.$2),
-        (b.$1, b.$2 - 1),
-        (b.$1, b.$2 + 1),
-      ].where((p) => p.$1 >= 0 && p.$1 < params.width && p.$2 >= 0 && p.$2 < params.height &&
-          grid[p.$2][p.$1] == seaZoneId && ocean.contains(p)).length;
+      final na =
+          [
+                (a.$1 - 1, a.$2),
+                (a.$1 + 1, a.$2),
+                (a.$1, a.$2 - 1),
+                (a.$1, a.$2 + 1),
+              ]
+              .where(
+                (p) =>
+                    p.$1 >= 0 &&
+                    p.$1 < params.width &&
+                    p.$2 >= 0 &&
+                    p.$2 < params.height &&
+                    grid[p.$2][p.$1] == seaZoneId &&
+                    ocean.contains(p),
+              )
+              .length;
+      final nb =
+          [
+                (b.$1 - 1, b.$2),
+                (b.$1 + 1, b.$2),
+                (b.$1, b.$2 - 1),
+                (b.$1, b.$2 + 1),
+              ]
+              .where(
+                (p) =>
+                    p.$1 >= 0 &&
+                    p.$1 < params.width &&
+                    p.$2 >= 0 &&
+                    p.$2 < params.height &&
+                    grid[p.$2][p.$1] == seaZoneId &&
+                    ocean.contains(p),
+              )
+              .length;
       return nb.compareTo(na);
     });
     for (var i = 0; i < count && i < coastal.length; i++) {
@@ -1079,9 +1200,11 @@ class TileMapGenerator {
         final terrain = terrainGrid[y][x];
         if (terrain == null) continue;
         var allowed = Resource.values
-            .where((r) =>
-                rules.isAllowedInRegion(r, mapRegionId) &&
-                rules.isAllowedOnTerrain(r, terrain))
+            .where(
+              (r) =>
+                  rules.isAllowedInRegion(r, mapRegionId) &&
+                  rules.isAllowedOnTerrain(r, terrain),
+            )
             .toList();
         if (allowed.isEmpty) continue;
         // Multi-region cap: when at cap, restrict to region-only where possible.
@@ -1119,16 +1242,15 @@ class TileMapGenerator {
   ) {
     final totalLand = landCells.length;
     if (totalLand == 0) return;
-    final targetMountain =
-        (distribution.mountainFraction * totalLand).round().clamp(0, totalLand);
+    final targetMountain = (distribution.mountainFraction * totalLand)
+        .round()
+        .clamp(0, totalLand);
     if (targetMountain <= 0) return;
 
     // Determine number of ranges based on target mountain tiles.
-    final suggestedRanges =
-        (params.mountainRangesFactor * sqrt(targetMountain)).round().clamp(
-              params.mountainRangesMin,
-              params.mountainRangesMax,
-            );
+    final suggestedRanges = (params.mountainRangesFactor * sqrt(targetMountain))
+        .round()
+        .clamp(params.mountainRangesMin, params.mountainRangesMax);
     final numRanges = suggestedRanges.clamp(1, targetMountain);
     if (numRanges <= 0) return;
 
@@ -1154,12 +1276,7 @@ class TileMapGenerator {
     }
 
     // 4-connected directions: up, right, down, left.
-    const directions = <(int dx, int dy)>[
-      (0, -1),
-      (1, 0),
-      (0, 1),
-      (-1, 0),
-    ];
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
 
     for (var r = 0; r < numRanges && remainingMountain > 0; r++) {
       final start = pickStart();
@@ -1206,10 +1323,7 @@ class TileMapGenerator {
           final nx = x + dir.$1;
           final ny = y + dir.$2;
           attempts++;
-          if (nx < 0 ||
-              nx >= params.width ||
-              ny < 0 ||
-              ny >= params.height) {
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
             continue;
           }
           if (grid[ny][nx] != _landSentinel) continue;
@@ -1249,10 +1363,7 @@ class TileMapGenerator {
         for (final (dx, dy) in directions) {
           final nx = x + dx;
           final ny = y + dy;
-          if (nx < 0 ||
-              nx >= params.width ||
-              ny < 0 ||
-              ny >= params.height) {
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
             continue;
           }
           if (grid[ny][nx] != _landSentinel) continue;
@@ -1305,9 +1416,9 @@ class TileMapGenerator {
     Random rnd,
   ) {
     // Allowed non-mountain terrains for this region.
-    final allowed = allowedTerrainsForRegion(mapRegionId)
-        .where((t) => t != TerrainType.mountain)
-        .toList();
+    final allowed = allowedTerrainsForRegion(
+      mapRegionId,
+    ).where((t) => t != TerrainType.mountain).toList();
     if (allowed.isEmpty) return;
 
     // Collect remaining land cells (not sea, not mountain).
@@ -1326,12 +1437,7 @@ class TileMapGenerator {
     final components = _connectedComponentsOfLand(remainingLand.toSet());
     if (components.isEmpty) return;
 
-    const directions = <(int dx, int dy)>[
-      (0, -1),
-      (1, 0),
-      (0, 1),
-      (-1, 0),
-    ];
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
 
     for (final component in components) {
       if (component.isEmpty) continue;
@@ -1448,10 +1554,7 @@ class TileMapGenerator {
         for (final (dx, dy) in dirs) {
           final nx = cx + dx;
           final ny = cy + dy;
-          if (nx < 0 ||
-              nx >= params.width ||
-              ny < 0 ||
-              ny >= params.height) {
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
             continue;
           }
           if (!cellSet.contains((nx, ny))) continue;
@@ -1552,10 +1655,7 @@ class TileMapGenerator {
           for (final (dx, dy) in dirs) {
             final nx = cx + dx;
             final ny = cy + dy;
-            if (nx < 0 ||
-                nx >= params.width ||
-                ny < 0 ||
-                ny >= params.height) {
+            if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
               continue;
             }
             if (!cellSet.contains((nx, ny))) continue;
@@ -1577,10 +1677,7 @@ class TileMapGenerator {
         for (final (dx, dy) in directions) {
           final nx = x + dx;
           final ny = y + dy;
-          if (nx < 0 ||
-              nx >= params.width ||
-              ny < 0 ||
-              ny >= params.height) {
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
             continue;
           }
           if (!cellSet.contains((nx, ny))) continue;
@@ -1649,12 +1746,7 @@ class TileMapGenerator {
     }
 
     // Neighbour directions for interior tests and BFS (4-connected).
-    const directions = <(int dx, int dy)>[
-      (0, -1),
-      (1, 0),
-      (0, 1),
-      (-1, 0),
-    ];
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
 
     for (final terrain in allowedNonMountain) {
       final blobs = blobsForTerrain(terrain);
@@ -1665,8 +1757,9 @@ class TileMapGenerator {
         if (size < params.patternMinBlobSize) continue;
 
         // Budget: how many tiles in this blob we may convert away from [terrain].
-        final maxChangesForBlob =
-            (params.patternMaxFractionPerBlob * size).floor().clamp(0, size);
+        final maxChangesForBlob = (params.patternMaxFractionPerBlob * size)
+            .floor()
+            .clamp(0, size);
         if (maxChangesForBlob <= 0) continue;
 
         // Identify interior cells: all 4-neighbors are also in this blob.
@@ -1700,15 +1793,22 @@ class TileMapGenerator {
           ),
         ).clamp(1, maxChangesForBlob);
 
-        final interiorShuffled = List<(int x, int y)>.from(interior)..shuffle(rnd);
+        final interiorShuffled = List<(int x, int y)>.from(interior)
+          ..shuffle(rnd);
         final seeds = <(int x, int y, TerrainType target)>[];
         var interiorIndex = 0;
 
-        for (var i = 0; i < seedCount && interiorIndex < interiorShuffled.length; i++) {
+        for (
+          var i = 0;
+          i < seedCount && interiorIndex < interiorShuffled.length;
+          i++
+        ) {
           final (sx, sy) = interiorShuffled[interiorIndex++];
           // Choose a target terrain different from the blob terrain, optionally
           // preferring underrepresented terrains according to distribution.
-          final options = allowedNonMountain.where((t) => t != terrain).toList();
+          final options = allowedNonMountain
+              .where((t) => t != terrain)
+              .toList();
           if (options.isEmpty) break;
 
           // Weight by desired fraction heuristic (simplified).
@@ -1778,10 +1878,15 @@ class TileMapGenerator {
   }
 
   /// One continent seed per continent; then a cluster of land-shape seeds per continent (K from province count). No province seeds yet.
-  (List<(int x, int y)>, List<(int x, int y)>, List<int>) _placeLandSeeds(Map<String, int> provinceToContinent, Random rnd) {
-    if (provinceToContinent.isEmpty) return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+  (List<(int x, int y)>, List<(int x, int y)>, List<int>) _placeLandSeeds(
+    Map<String, int> provinceToContinent,
+    Random rnd,
+  ) {
+    if (provinceToContinent.isEmpty)
+      return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1) return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+    if (numContinents < 1)
+      return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
       provincesByContinent.putIfAbsent(e.value, () => []).add(e.key);
@@ -1837,7 +1942,8 @@ class TileMapGenerator {
             break;
           case LandSeedClusterShape.uniformAnnulus:
             final angle = rnd.nextDouble() * 2 * pi;
-            final r = annulusInner + rnd.nextDouble() * (annulusOuter - annulusInner);
+            final r =
+                annulusInner + rnd.nextDouble() * (annulusOuter - annulusInner);
             dx = (cos(angle) * r).round();
             dy = (sin(angle) * r).round();
             break;
@@ -1853,15 +1959,18 @@ class TileMapGenerator {
 
   /// Organic land growing: interleaved seed placement + small Voronoi + coastline growth.
   /// Returns (continentSeeds, landSeeds, continentBySeedIndex, grid).
-  (List<(int x, int y)>, List<(int x, int y)>, List<int>, List<List<String>>) _placeLandSeedsOrganic(
+  (List<(int x, int y)>, List<(int x, int y)>, List<int>, List<List<String>>)
+  _placeLandSeedsOrganic(
     List<List<String>> grid,
     Map<String, int> provinceToContinent,
     String seaZoneId,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty) return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    if (provinceToContinent.isEmpty)
+      return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1) return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    if (numContinents < 1)
+      return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
 
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
@@ -1875,13 +1984,17 @@ class TileMapGenerator {
     final seedsPerContinent = <int>[];
     for (var c = 0; c < numContinents; c++) {
       final pc = provincesByContinent[c]!.length;
-      seedsPerContinent.add(minSeedsPerContinent > pc ? minSeedsPerContinent : pc);
+      seedsPerContinent.add(
+        minSeedsPerContinent > pc ? minSeedsPerContinent : pc,
+      );
     }
     final totalSeeds = seedsPerContinent.reduce((a, b) => a + b);
     final totalRounds = (totalSeeds / numContinents).ceil().clamp(1, 999);
 
-    final landBudgetTotal = ((1 - params.seaFraction) * params.width * params.height).round();
-    if (landBudgetTotal <= 0) return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    final landBudgetTotal =
+        ((1 - params.seaFraction) * params.width * params.height).round();
+    if (landBudgetTotal <= 0)
+      return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
 
     // Step 0: Place continent seeds
     final continentSeeds = <(int x, int y)>[];
@@ -1908,7 +2021,10 @@ class TileMapGenerator {
     const awayPenalty = 0.7;
 
     // Per-round land budget: reserve totalSeeds for seed positions, rest for Voronoi
-    final voronoiBudgetTotal = (landBudgetTotal - totalSeeds).clamp(0, landBudgetTotal);
+    final voronoiBudgetTotal = (landBudgetTotal - totalSeeds).clamp(
+      0,
+      landBudgetTotal,
+    );
     final totalProvinces = provinceToContinent.length;
 
     final seedCountsPerContinent = List<int>.filled(numContinents, 0);
@@ -1920,7 +2036,10 @@ class TileMapGenerator {
           : (voronoiBudgetTotal / totalRounds).round();
       final budgetPerContinent = <int>[];
       for (var c = 0; c < numContinents; c++) {
-        budgetPerContinent.add((roundBudget * provincesByContinent[c]!.length / totalProvinces).round());
+        budgetPerContinent.add(
+          (roundBudget * provincesByContinent[c]!.length / totalProvinces)
+              .round(),
+        );
       }
       var roundUsed = 0;
       for (var c = 0; c < numContinents; c++) {
@@ -1981,7 +2100,14 @@ class TileMapGenerator {
     }
     if (usedTotal < landBudgetTotal) {
       final remaining = landBudgetTotal - usedTotal;
-      final (g2, _) = _growCoastlines(g, continentGrid, remaining, provinceToContinent, seaZoneId, rnd);
+      final (g2, _) = _growCoastlines(
+        g,
+        continentGrid,
+        remaining,
+        provinceToContinent,
+        seaZoneId,
+        rnd,
+      );
       g = g2;
     }
 
@@ -2024,8 +2150,14 @@ class TileMapGenerator {
     if (candidates.isEmpty) {
       final (cx, cy) = continentSeed;
       const jitter = 2;
-      final jx = (cx + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(0, params.width - 1);
-      final jy = (cy + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(0, params.height - 1);
+      final jx = (cx + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(
+        0,
+        params.width - 1,
+      );
+      final jy = (cy + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(
+        0,
+        params.height - 1,
+      );
       return (jx, jy);
     }
     var bestScore = -1e100;
@@ -2113,7 +2245,8 @@ class TileMapGenerator {
             if (dd < d2) d2 = dd;
           }
           final noise = params.voronoiNoiseScale > 0
-              ? _deterministicNoise(params.seed, x, y) * params.voronoiNoiseScale
+              ? _deterministicNoise(params.seed, x, y) *
+                    params.voronoiNoiseScale
               : 0.0;
           final effective = d2.toDouble() + noise;
           if (effective < bestD2) {
@@ -2129,7 +2262,9 @@ class TileMapGenerator {
     final next = grid.map((row) => row.toList()).toList();
     final nextContinent = continentGrid.map((row) => row.toList()).toList();
     final used = List<int>.filled(numContinents, 0);
-    final buffer = params.continentBufferTiles == 0 ? 1 : params.continentBufferTiles;
+    final buffer = params.continentBufferTiles == 0
+        ? 1
+        : params.continentBufferTiles;
     final offsets = _bufferOffsets(buffer);
     for (final (_, x, y, c) in entries) {
       if (next[y][x] == _landSentinel) continue;
@@ -2188,7 +2323,10 @@ class TileMapGenerator {
         for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
           final nx = x + dx;
           final ny = y + dy;
-          if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
               g[ny][nx] == seaZoneId) {
             coastalByContinent[c]!.add((nx, ny));
             break;
@@ -2200,14 +2338,19 @@ class TileMapGenerator {
     final budgetPerContinent = List<int>.filled(numContinents, 0);
     var allocated = 0;
     for (var c = 0; c < numContinents; c++) {
-      budgetPerContinent[c] = (remaining * provincesByContinent[c]!.length / totalProvinces).round();
+      budgetPerContinent[c] =
+          (remaining * provincesByContinent[c]!.length / totalProvinces)
+              .round();
       allocated += budgetPerContinent[c];
     }
-    if (allocated < remaining && numContinents > 0) budgetPerContinent[0] += remaining - allocated;
+    if (allocated < remaining && numContinents > 0)
+      budgetPerContinent[0] += remaining - allocated;
 
     // Radius for local land-neighbour scoring when picking coastal cells.
     const scoreRadius = 3;
-    final buffer = params.continentBufferTiles == 0 ? 1 : params.continentBufferTiles;
+    final buffer = params.continentBufferTiles == 0
+        ? 1
+        : params.continentBufferTiles;
     final bufferOffsets = _bufferOffsets(buffer);
 
     // Local helper: score a coastal sea cell for continent [continentIndex].
@@ -2336,7 +2479,8 @@ class TileMapGenerator {
     String seaZoneId,
   ) {
     if (landSeeds.isEmpty) return grid;
-    final landBudgetTotal = ((1 - params.seaFraction) * params.width * params.height).round();
+    final landBudgetTotal =
+        ((1 - params.seaFraction) * params.width * params.height).round();
     if (landBudgetTotal <= 0) return grid;
 
     if (provinceToContinent.isEmpty) return grid;
@@ -2393,7 +2537,8 @@ class TileMapGenerator {
             if (dd < d2) d2 = dd;
           }
           final noise = params.voronoiNoiseScale > 0
-              ? _deterministicNoise(params.seed, x, y) * params.voronoiNoiseScale
+              ? _deterministicNoise(params.seed, x, y) *
+                    params.voronoiNoiseScale
               : 0.0;
           final effective = d2.toDouble() + noise;
           if (effective < bestD2) {
@@ -2445,7 +2590,8 @@ class TileMapGenerator {
         ocean.add((0, y));
         queue.add((0, y));
       }
-      if (params.width > 1 && grid[y][params.width - 1] == seaZoneId &&
+      if (params.width > 1 &&
+          grid[y][params.width - 1] == seaZoneId &&
           !ocean.contains((params.width - 1, y))) {
         ocean.add((params.width - 1, y));
         queue.add((params.width - 1, y));
@@ -2453,14 +2599,13 @@ class TileMapGenerator {
     }
     while (queue.isNotEmpty) {
       final (x, y) = queue.removeLast();
-      for (final (nx, ny) in [
-        (x - 1, y),
-        (x + 1, y),
-        (x, y - 1),
-        (x, y + 1),
-      ]) {
-        if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
-            grid[ny][nx] == seaZoneId && !ocean.contains((nx, ny))) {
+      for (final (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]) {
+        if (nx >= 0 &&
+            nx < params.width &&
+            ny >= 0 &&
+            ny < params.height &&
+            grid[ny][nx] == seaZoneId &&
+            !ocean.contains((nx, ny))) {
           ocean.add((nx, ny));
           queue.add((nx, ny));
         }
@@ -2516,7 +2661,10 @@ class TileMapGenerator {
         for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
           final nx = x + dx;
           final ny = y + dy;
-          if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
               grid[ny][nx] != seaZoneId) {
             borderingLand.add((nx, ny));
           }
@@ -2524,7 +2672,9 @@ class TileMapGenerator {
       }
       final continentsBordering = <int>{};
       for (final (lx, ly) in borderingLand) {
-        continentsBordering.add(_continentForLandCell(lx, ly, landSeeds, continentBySeedIndex));
+        continentsBordering.add(
+          _continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
+        );
       }
       if (continentsBordering.length >= 2) continue;
       for (final (x, y) in component) {
@@ -2533,7 +2683,10 @@ class TileMapGenerator {
         for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
           final nx = x + dx;
           final ny = y + dy;
-          if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
               next[ny][nx] == seaZoneId &&
               _oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
             coastalLandCandidates.add((nx, ny));
@@ -2553,14 +2706,24 @@ class TileMapGenerator {
     return next;
   }
 
-  int _oceanNeighbourCount(List<List<String>> grid, int x, int y, String seaZoneId,
-      Set<(int x, int y)> ocean) {
+  int _oceanNeighbourCount(
+    List<List<String>> grid,
+    int x,
+    int y,
+    String seaZoneId,
+    Set<(int x, int y)> ocean,
+  ) {
     var n = 0;
     for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
       final nx = x + dx;
       final ny = y + dy;
-      if (nx >= 0 && nx < params.width && ny >= 0 && ny < params.height &&
-          grid[ny][nx] == seaZoneId && ocean.contains((nx, ny))) n++;
+      if (nx >= 0 &&
+          nx < params.width &&
+          ny >= 0 &&
+          ny < params.height &&
+          grid[ny][nx] == seaZoneId &&
+          ocean.contains((nx, ny)))
+        n++;
     }
     return n;
   }
@@ -2594,7 +2757,7 @@ class TileMapGenerator {
         final neighbouringContinents = <int>{};
         final sameContinentDirectionCounts = <int, int>{};
 
-    for (final (dx, dy) in const <(int, int)>[
+        for (final (dx, dy) in const <(int, int)>[
           (0, -1), // N
           (1, 0), // E
           (0, 1), // S
@@ -2606,14 +2769,20 @@ class TileMapGenerator {
             continue;
           }
           if (next[ny][nx] == seaZoneId) continue;
-          final continent = _continentForLandCell(nx, ny, landSeeds, continentBySeedIndex);
+          final continent = _continentForLandCell(
+            nx,
+            ny,
+            landSeeds,
+            continentBySeedIndex,
+          );
           neighbouringContinents.add(continent);
           sameContinentDirectionCounts[continent] =
               (sameContinentDirectionCounts[continent] ?? 0) + 1;
         }
 
         if (neighbouringContinents.isEmpty) continue;
-        if (neighbouringContinents.length > 1) continue; // multi-continent strait, keep as sea
+        if (neighbouringContinents.length > 1)
+          continue; // multi-continent strait, keep as sea
 
         final c = neighbouringContinents.single;
         final dirCount = sameContinentDirectionCounts[c] ?? 0;
@@ -2631,14 +2800,7 @@ class TileMapGenerator {
 
     // Preserve overall sea fraction by converting an equal number of coastal
     // land tiles back to sea, using the existing helper.
-    _preserveSeaFraction(
-      next,
-      null,
-      null,
-      seaZoneId,
-      ocean,
-      moatCells.length,
-    );
+    _preserveSeaFraction(next, null, null, seaZoneId, ocean, moatCells.length);
 
     return next;
   }
@@ -2686,22 +2848,30 @@ class TileMapGenerator {
   ) {
     if (provinceToContinent.isEmpty) return {};
     final numContinents = provinceToContinent.values.toSet().length;
-    final byContinent = _landCellsByContinent(grid, landSeeds, continentBySeedIndex);
+    final byContinent = _landCellsByContinent(
+      grid,
+      landSeeds,
+      continentBySeedIndex,
+    );
     final seeds = <String, (int x, int y)>{};
     const minDist = 3;
     for (var c = 0; c < numContinents; c++) {
       final cells = byContinent[c] ?? [];
       if (cells.isEmpty) continue;
-      final provinceIds = provinceToContinent.entries
-          .where((e) => e.value == c)
-          .map((e) => e.key)
-          .toList()
-        ..sort();
+      final provinceIds =
+          provinceToContinent.entries
+              .where((e) => e.value == c)
+              .map((e) => e.key)
+              .toList()
+            ..sort();
       final used = <(int x, int y)>{};
       for (final provinceId in provinceIds) {
         final shuffled = List<(int x, int y)>.from(cells)..shuffle(rnd);
         for (final (x, y) in shuffled) {
-          if (used.any((p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist)) continue;
+          if (used.any(
+            (p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist,
+          ))
+            continue;
           seeds[provinceId] = (x, y);
           used.add((x, y));
           break;
@@ -2744,21 +2914,21 @@ class TileMapGenerator {
   }
 
   /// Border noise: swap only at land/sea boundary (sentinel vs seaZoneId).
-  List<List<String>> _borderNoise(List<List<String>> grid, String seaZoneId, Random rnd) {
+  List<List<String>> _borderNoise(
+    List<List<String>> grid,
+    String seaZoneId,
+    Random rnd,
+  ) {
     final next = grid.map((row) => row.toList()).toList();
     for (var y = 1; y < params.height - 1; y++) {
       for (var x = 1; x < params.width - 1; x++) {
         if (rnd.nextDouble() >= params.borderNoise) continue;
         final id = grid[y][x];
-        final neighbors = [
-          (x - 1, y),
-          (x + 1, y),
-          (x, y - 1),
-          (x, y + 1),
-        ];
+        final neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
         for (final (nx, ny) in neighbors) {
           final nid = grid[ny][nx];
-          final atBoundary = (id == _landSentinel && nid == seaZoneId) ||
+          final atBoundary =
+              (id == _landSentinel && nid == seaZoneId) ||
               (id == seaZoneId && nid == _landSentinel);
           if (atBoundary) {
             next[ny][nx] = id;
@@ -2771,4 +2941,3 @@ class TileMapGenerator {
     return next;
   }
 }
-
