@@ -15,11 +15,14 @@ class GameStartIntroOverlay extends StatefulWidget {
     required this.onDismissed,
     required this.child,
     this.logger,
+    /// When set (e.g. in tests), used to load the Yarn asset instead of [rootBundle].
+    this.assetBundle,
   });
 
   final VoidCallback onDismissed;
   final Widget child;
   final Logger? logger;
+  final AssetBundle? assetBundle;
 
   @override
   State<GameStartIntroOverlay> createState() => _GameStartIntroOverlayState();
@@ -43,7 +46,8 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
   Future<void> _loadAndRun() async {
     final log = widget.logger ?? Logger();
     try {
-      final text = await rootBundle.loadString(_kIntroAsset);
+      final bundle = widget.assetBundle ?? rootBundle;
+      final text = await bundle.loadString(_kIntroAsset);
       final project = YarnProject();
       project.parse(text);
       if (!project.nodes.containsKey(_kIntroNode)) {
