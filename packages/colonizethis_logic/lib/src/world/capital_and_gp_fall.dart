@@ -1,12 +1,12 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../setup/capital_choice.dart';
 import '../world/province_lookup.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 Game applyCapitalReassignmentAfterCombat(
   Game state,
@@ -22,8 +22,9 @@ Game applyCapitalReassignmentAfterCombat(
     final regionTopology = topologyByRegion?[regionId] ?? topology;
     final region = regionDataForId(state.worldState, regionId);
     if (region == null) continue;
-    final province =
-        region.provinces.where((p) => p.id == capProvinceId).firstOrNull;
+    final province = region.provinces
+        .where((p) => p.id == capProvinceId)
+        .firstOrNull;
     if (province == null) continue;
     if (province.ownerId == player.id) continue;
 
@@ -38,7 +39,8 @@ Game applyCapitalReassignmentAfterCombat(
       }).toList();
       game = game.copyWith(players: updatedPlayers);
       _log.i(
-          'logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared');
+        'logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
+      );
       continue;
     }
     final tileMap = tileMapByRegion[regionId];
@@ -60,10 +62,14 @@ Game applyCapitalReassignmentAfterCombat(
         tileMapByRegion: tileMapByRegion,
       );
       _log.i(
-          'logic: player ${player.id} capital reassigned to $newProvinceId after loss');
+        'logic: player ${player.id} capital reassigned to $newProvinceId after loss',
+      );
     } catch (e, st) {
-      _log.w('logic: capital reassignment failed for ${player.id}',
-          error: e, stackTrace: st);
+      _log.w(
+        'logic: capital reassignment failed for ${player.id}',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
   return game;
@@ -110,15 +116,14 @@ Game applyGreatPowerFall(
 
     RegionData transferRegion(RegionData region) {
       final updatedProvinces = region.provinces
-          .map((p) =>
-              p.ownerId == playerId ? p.copyWith(ownerId: conquerorId) : p)
+          .map(
+            (p) => p.ownerId == playerId ? p.copyWith(ownerId: conquerorId) : p,
+          )
           .toList();
-      final remainingUnits =
-          region.units.where((u) => u.ownerId != playerId).toList();
-      return RegionData(
-        provinces: updatedProvinces,
-        units: remainingUnits,
-      );
+      final remainingUnits = region.units
+          .where((u) => u.ownerId != playerId)
+          .toList();
+      return RegionData(provinces: updatedProvinces, units: remainingUnits);
     }
 
     final newOldWorld = transferRegion(game.worldState.oldWorld);
@@ -135,13 +140,14 @@ Game applyGreatPowerFall(
         fleets: remainingFleets,
       ),
       players: game.players
-          .map((p) => p.id == playerId
-              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-              : p)
+          .map(
+            (p) => p.id == playerId
+                ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+                : p,
+          )
           .toList(),
     );
   }
 
   return game;
 }
-

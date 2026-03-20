@@ -2,11 +2,13 @@
 /// SPEC/program/map-visualization.md § Map view model for tools.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'init_game_map_view_data.dart';
 import 'tile_map_visualization_shared.dart';
+
+final _log = mapLogger();
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
@@ -19,14 +21,16 @@ InitGameMapViewData buildInitGameMapViewData({
   int? seed,
   String? configSummary,
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+
   /// Optional per-tile visibility for the current player view, keyed by tile
   /// key `regionId|provinceId|x|y`. When omitted, all tiles are treated as
   /// [TileVisibility.visible] in the view data.
   Map<String, TileVisibility>? visibilityByTile,
+
   /// Optional warp links for rendering warp zone indicators.
   List<WarpLink>? warpLinks,
 }) {
-  Logger().i('map: buildInitGameMapViewData start gameId=${game.id}');
+  _log.i('buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
   final nwTileMap = tileMapByRegion[_regionNewWorld]!;
   final owTopology = topologyByRegion[_regionOldWorld]!;
@@ -55,7 +59,7 @@ InitGameMapViewData buildInitGameMapViewData({
     warpLinks: warpLinks,
   );
 
-  Logger().i('map: buildInitGameMapViewData end');
+  _log.i('buildInitGameMapViewData end');
   return InitGameMapViewData(
     oldWorld: owRegion,
     newWorld: nwRegion,
@@ -77,7 +81,7 @@ RegionMapViewData _buildRegionViewData({
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id
+      if (n.type == TopologyNodeType.seaZone) n.id,
   };
 
   // Owner and province display name by province id.
@@ -139,10 +143,10 @@ RegionMapViewData _buildRegionViewData({
       final tileKey = '$regionId|$localId|$x|$y';
       final improvement = isSea ? null : tileState.improvementLevel(tileKey);
       final road = isSea ? null : tileState.roadLevel(tileKey);
-      final visibility =
-          visibilityByTile != null ? (visibilityByTile[tileKey] ?? TileVisibility.visible) : TileVisibility.visible;
-      final fullProvinceId =
-          isSea ? null : ProvinceId.full(regionId, localId);
+      final visibility = visibilityByTile != null
+          ? (visibilityByTile[tileKey] ?? TileVisibility.visible)
+          : TileVisibility.visible;
+      final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
         CellViewData(
           x: x,
@@ -152,13 +156,14 @@ RegionMapViewData _buildRegionViewData({
           terrainTypeId: terrain?.name,
           terrainType: terrain,
           resourceId: resource?.name,
-          ownerFactionId:
-              fullProvinceId != null ? ownerByProvinceId[fullProvinceId] : null,
+          ownerFactionId: fullProvinceId != null
+              ? ownerByProvinceId[fullProvinceId]
+              : null,
           provinceDisplayName: isSea
               ? null
               : (fullProvinceId != null
-                  ? provinceDisplayNameById[fullProvinceId]
-                  : null),
+                    ? provinceDisplayNameById[fullProvinceId]
+                    : null),
           improvementLevel: isSea ? null : improvement,
           roadLevel: isSea ? null : road,
           visibility: visibility,
@@ -232,11 +237,9 @@ RegionMapViewData _buildRegionViewData({
   for (final u in regionUnits) {
     final tile = provinceToTile[u.provinceId];
     if (tile != null) {
-      unitMarkers.add(UnitMarkerView(
-        x: tile.$1,
-        y: tile.$2,
-        ownerFactionId: u.ownerId,
-      ));
+      unitMarkers.add(
+        UnitMarkerView(x: tile.$1, y: tile.$2, ownerFactionId: u.ownerId),
+      );
     }
   }
 
@@ -292,25 +295,29 @@ RegionMapViewData _buildRegionViewData({
         // This region is the source of the warp link.
         final tile = seaZoneToTile[link.seaZoneId];
         if (tile != null) {
-          warpMarkers.add(WarpMarkerView(
-            x: tile.$1,
-            y: tile.$2,
-            seaZoneId: link.seaZoneId,
-            otherRegionId: link.otherRegionId,
-            otherSeaZoneId: link.otherSeaZoneId,
-          ));
+          warpMarkers.add(
+            WarpMarkerView(
+              x: tile.$1,
+              y: tile.$2,
+              seaZoneId: link.seaZoneId,
+              otherRegionId: link.otherRegionId,
+              otherSeaZoneId: link.otherSeaZoneId,
+            ),
+          );
         }
       } else if (link.otherRegionId == regionId) {
         // This region is the destination of the warp link (reverse direction).
         final tile = seaZoneToTile[link.otherSeaZoneId];
         if (tile != null) {
-          warpMarkers.add(WarpMarkerView(
-            x: tile.$1,
-            y: tile.$2,
-            seaZoneId: link.otherSeaZoneId,
-            otherRegionId: link.regionId,
-            otherSeaZoneId: link.seaZoneId,
-          ));
+          warpMarkers.add(
+            WarpMarkerView(
+              x: tile.$1,
+              y: tile.$2,
+              seaZoneId: link.otherSeaZoneId,
+              otherRegionId: link.regionId,
+              otherSeaZoneId: link.seaZoneId,
+            ),
+          );
         }
       }
     }
@@ -330,4 +337,3 @@ RegionMapViewData _buildRegionViewData({
     warpMarkers: warpMarkers,
   );
 }
-

@@ -1,8 +1,8 @@
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 
 import 'starting_resources_config.dart';
 
-final Logger _log = Logger();
+final _log = dataLogger();
 
 /// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md.
 /// Program-level config only (no JSON in MVP).
@@ -18,13 +18,18 @@ class GameSetupConfig {
     this.minProvincesPerMinor = 3,
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
-  })  : assert(selectedGreatPowerIds.isNotEmpty, 'At least one Great Power required'),
-        assert(continentCount >= 1),
-        assert(minorNationCount >= 0),
-        assert(tribeCount >= 0),
-        assert(minProvincesPerMinor >= 0),
-        assert(numProvincesNewWorld >= 1) {
-    _log.d('data: GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld');
+  }) : assert(
+         selectedGreatPowerIds.isNotEmpty,
+         'At least one Great Power required',
+       ),
+       assert(continentCount >= 1),
+       assert(minorNationCount >= 0),
+       assert(tribeCount >= 0),
+       assert(minProvincesPerMinor >= 0),
+       assert(numProvincesNewWorld >= 1) {
+    _log.d(
+      'data: GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
+    );
   }
 
   static const List<String> _defaultSelectedGreatPowerIds = [
@@ -50,6 +55,7 @@ class GameSetupConfig {
   final int tribeCount;
   final int numProvincesOldWorld;
   final int numProvincesNewWorld;
+
   /// Minimum provinces the ruleset attempts to reserve per Minor Nation on the Old World map.
   final int minProvincesPerMinor;
   final int seed;

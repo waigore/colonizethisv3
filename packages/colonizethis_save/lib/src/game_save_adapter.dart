@@ -1,9 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
-import 'package:logger/logger.dart';
 
-final Logger _log = Logger();
+final _log = saveLogger();
 
 const String _suffixTileMapByRegion = '_tileMapByRegion';
 const String _suffixTopologyByRegion = '_topologyByRegion';
@@ -49,31 +49,38 @@ class GameSaveAdapter {
     final allKeys = box.keys.whereType<String>().toSet();
 
     final definiteGameIds = allKeys
-        .where((k) =>
-            !k.endsWith(_suffixTileMapByRegion) &&
-            !k.endsWith(_suffixTopologyByRegion) &&
-            !k.endsWith(_suffixCombinedTopology) &&
-            !k.endsWith(_suffixWarpLinks))
+        .where(
+          (k) =>
+              !k.endsWith(_suffixTileMapByRegion) &&
+              !k.endsWith(_suffixTopologyByRegion) &&
+              !k.endsWith(_suffixCombinedTopology) &&
+              !k.endsWith(_suffixWarpLinks),
+        )
         .toSet();
 
     final result = <String>[...definiteGameIds];
 
     for (final key in allKeys) {
       if (key.endsWith(_suffixTileMapByRegion)) {
-        final prefix =
-            key.substring(0, key.length - _suffixTileMapByRegion.length);
+        final prefix = key.substring(
+          0,
+          key.length - _suffixTileMapByRegion.length,
+        );
         if (!definiteGameIds.contains(prefix)) result.add(key);
       } else if (key.endsWith(_suffixTopologyByRegion)) {
-        final prefix =
-            key.substring(0, key.length - _suffixTopologyByRegion.length);
+        final prefix = key.substring(
+          0,
+          key.length - _suffixTopologyByRegion.length,
+        );
         if (!definiteGameIds.contains(prefix)) result.add(key);
       } else if (key.endsWith(_suffixCombinedTopology)) {
-        final prefix =
-            key.substring(0, key.length - _suffixCombinedTopology.length);
+        final prefix = key.substring(
+          0,
+          key.length - _suffixCombinedTopology.length,
+        );
         if (!definiteGameIds.contains(prefix)) result.add(key);
       } else if (key.endsWith(_suffixWarpLinks)) {
-        final prefix =
-            key.substring(0, key.length - _suffixWarpLinks.length);
+        final prefix = key.substring(0, key.length - _suffixWarpLinks.length);
         if (!definiteGameIds.contains(prefix)) result.add(key);
       }
     }
@@ -111,10 +118,13 @@ class GameSaveAdapter {
 
   /// Loads map data for [gameId]. Returns null if any key is missing (legacy save).
   /// Warp links are optional for backward compatibility with legacy saves.
-  ({Map<String, TileMapResult> tileMapByRegion,
+  ({
+    Map<String, TileMapResult> tileMapByRegion,
     Map<String, MapTopology> topologyByRegion,
     MapTopology combinedTopology,
-    List<WarpLink>? warpLinks})? loadMapData(Box<dynamic> box, String gameId) {
+    List<WarpLink>? warpLinks,
+  })?
+  loadMapData(Box<dynamic> box, String gameId) {
     final tileRaw = box.get(gameId + _suffixTileMapByRegion);
     final topoRaw = box.get(gameId + _suffixTopologyByRegion);
     final combinedRaw = box.get(gameId + _suffixCombinedTopology);
@@ -134,8 +144,9 @@ class GameSaveAdapter {
           MapTopology.fromJson(Map<String, dynamic>.from(v as Map)),
         ),
       );
-      final combinedTopology =
-          MapTopology.fromJson(Map<String, dynamic>.from(combinedRaw as Map));
+      final combinedTopology = MapTopology.fromJson(
+        Map<String, dynamic>.from(combinedRaw as Map),
+      );
       // Warp links are optional for backward compatibility.
       final warpRaw = box.get(gameId + _suffixWarpLinks);
       List<WarpLink>? warpLinks;
@@ -152,8 +163,11 @@ class GameSaveAdapter {
         warpLinks: warpLinks,
       );
     } catch (e, st) {
-      _log.e('save: load map data failed gameId=$gameId',
-          error: e, stackTrace: st);
+      _log.e(
+        'save: load map data failed gameId=$gameId',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }
