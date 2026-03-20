@@ -98,6 +98,10 @@ class GameSideMenu extends ConsumerWidget {
         iconAsset: 'assets/images/ui_icon_civilian_units.png',
         label: 'Civilian Units',
         onPressed: () {
+          // Capture navigator before onClose(): GameSideMenu is removed from
+          // the tree when the sheet opens; Train's showDialog must not use this
+          // widget's BuildContext (it would be unmounted).
+          final navigator = Navigator.of(context);
           onClose();
           // Capture values before showing bottom sheet to avoid using
           // disposed ref when widget rebuilds during work target selection.
@@ -105,7 +109,7 @@ class GameSideMenu extends ConsumerWidget {
           final currentOrders = ref.read(currentOrdersProvider);
           final availableWorkTargets = ref.read(availableWorkTargetsProvider);
           showModalBottomSheet<void>(
-            context: context,
+            context: navigator.context,
             isScrollControlled: true,
             builder: (ctx) {
               final isNarrowCtx =
@@ -140,7 +144,7 @@ class GameSideMenu extends ConsumerWidget {
                   onTrainPressed: () {
                     Navigator.of(ctx).pop();
                     showDialog<void>(
-                      context: context,
+                      context: navigator.context,
                       builder: (dialogCtx) => TrainCiviliansDialog(
                         game: currentGame,
                         humanPlayerId: humanPlayerId,
