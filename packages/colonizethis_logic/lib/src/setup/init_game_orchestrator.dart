@@ -75,9 +75,11 @@ class InitGameOptions {
 
 /// Runs the full game creation process: generate OW+NW maps, create game, render map, format markdown.
 /// Returns InitGameResult; does not save the game.
+/// When [generateRegion] is null, uses [defaultTileMapRegionGenerator].
 InitGameResult runInitGame({
   required GameSetupConfig config,
   InitGameOptions options = const InitGameOptions(),
+  TileMapRegionGenerator? generateRegion,
 }) {
   if (config.numProvincesOldWorld < config.greatPowerCount) {
     throw ArgumentError(
@@ -111,8 +113,10 @@ InitGameResult runInitGame({
     seaFraction: 0.6,
     skipFillLakes: options.skipFillLakes,
   );
+  final gen = generateRegion ?? defaultTileMapRegionGenerator;
   _log.d('logic: init game generating OW map');
-  final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
+  final (tileMapOW, topoOW) = gen(
+    params: paramsOW,
     numProvinces: config.numProvincesOldWorld,
     numContinents: config.continentCount,
     regionId: kRegionOldWorld,
@@ -131,7 +135,8 @@ InitGameResult runInitGame({
     seaFraction: 0.6,
     skipFillLakes: options.skipFillLakes,
   );
-  final (tileMapNW, topoNW) = TileMapGenerator(params: paramsNW).generate(
+  final (tileMapNW, topoNW) = gen(
+    params: paramsNW,
     numProvinces: config.numProvincesNewWorld,
     numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
     regionId: kRegionNewWorld,
