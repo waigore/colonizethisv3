@@ -32,6 +32,7 @@ void main() {
       expect(find.textContaining('imperialism'), findsOneWidget);
       expect(find.byType(CtNinePatchButton), findsWidgets);
     });
+
   });
 
   group('OvertureDialogueOverlay — SPEC/ui/dialogue-presentation.md AC', () {

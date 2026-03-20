@@ -38,10 +38,9 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   for (final order in suggestions) {
     byUnitId.putIfAbsent(order.unitId, () => []).add(order.target);
   }
-  for (final list in byUnitId.values) {
-    list.toSet().toList();
-  }
-  return byUnitId;
+  return {
+    for (final e in byUnitId.entries) e.key: e.value.toSet().toList(),
+  };
 });
 
 /// Set of game ids for which the game-start intro dialogue has been shown.

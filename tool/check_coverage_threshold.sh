@@ -32,35 +32,16 @@ for dir in "${TARGETS[@]}"; do
   filtered_lcov="$lcov_file"
   if [ "$dir" = "app" ]; then
     filtered_lcov="$ROOT/$dir/coverage/lcov.filtered.info"
-    if [ ! -f "$filtered_lcov" ]; then
-      lcov --remove "$lcov_file" \
-        "lib/config/constants.dart" \
-        "lib/widgetbook.dart" \
-        "lib/features/game/flame/game_screen.dart" \
-        "lib/features/game/widgets/naval_units_panel.dart" \
-        "lib/features/game/widgets/split_fleet_dialog.dart" \
-        "lib/features/game/flame/game_side_menu.dart" \
-        "lib/features/game/widgets/production_screen.dart" \
-        "lib/features/game/widgets/diplomacy_detail_screen.dart" \
-        "lib/features/game/widgets/diplomacy_dialogs.dart" \
-        "lib/features/game/dialogue/ct_dialogue_view.dart" \
-        "lib/features/game/dialogue/game_start_intro_overlay.dart" \
-        "lib/features/game/dialogue/overture_dialogue_overlay.dart" \
-        "lib/features/game/flame/game_canvas.dart" \
-        "lib/providers/game_service_provider.dart" \
-        "lib/providers/games_box_provider.dart" \
-        "lib/config/routes.dart" \
-        "lib/features/shell/shell_screen.dart" \
-        "lib/providers/games_provider.dart" \
-        "lib/providers/map_view_provider.dart" \
-        "lib/features/game/flame/terrain_tileset.dart" \
-        "lib/features/game/flame/region_map_component.dart" \
-        "lib/core/services/game_service.dart" \
-        "lib/features/game/widgets/technology_panel.dart" \
-        "lib/features/game/widgets/diplomacy_panel.dart" \
-        "lib/features/game/widgets/province_sea_zone_detail_overlay.dart" \
-        -o "$filtered_lcov" >/dev/null 2>&1 || true
-    fi
+    # Always regenerate so changes to the exclude list apply (no stale filter).
+    lcov --remove "$lcov_file" \
+      "lib/widgetbook/catalog.dart" \
+      "lib/features/game/flame/game_screen.dart" \
+      "lib/features/game/widgets/naval_units_panel.dart" \
+      "lib/features/game/flame/game_side_menu.dart" \
+      "lib/features/game/widgets/diplomacy_detail_screen.dart" \
+      "lib/features/game/dialogue/game_start_intro_overlay.dart" \
+      "lib/features/game/widgets/diplomacy_panel.dart" \
+      -o "$filtered_lcov" >/dev/null 2>&1 || true
     if [ ! -f "$filtered_lcov" ]; then
       echo "Failed to generate $filtered_lcov for app coverage gate."
       exit 1
