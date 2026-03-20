@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/services.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = gameLogger();
 
 /// Resource IDs for which icons exist (excludes commodities without tile resources).
 const Set<String> kResourceIconIds = {

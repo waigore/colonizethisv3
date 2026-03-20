@@ -1,15 +1,15 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
 
-final _log = Logger();
+final _log = gameLogger();
 
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;

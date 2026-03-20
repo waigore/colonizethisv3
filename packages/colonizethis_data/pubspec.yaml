@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   logger: ^2.0.2
+  colonizethis_logger:
   colonizethis_models:
 
 dev_dependencies:

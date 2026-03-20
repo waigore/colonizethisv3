@@ -4,13 +4,15 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/order_suggestion.dart';
 import '../world/player_view.dart';
+
+final _log = logicLogger();
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
@@ -22,21 +24,15 @@ int turnSeedForPlayer(
   int? fallbackAiSeed,
 }) {
   final global = game.globalGameSeed ?? 0;
-  final aiSeed = game.aiSeedByGpId[playerId] ??
-      fallbackAiSeed ??
-      playerId.hashCode;
+  final aiSeed =
+      game.aiSeedByGpId[playerId] ?? fallbackAiSeed ?? playerId.hashCode;
   const int prime = 0x9E3779B1;
   var h = global ^ (turnNumber * prime);
   h ^= aiSeed * prime;
   return h & 0x7fffffff;
 }
 
-enum _SuggestionCategory {
-  moves,
-  work,
-  build,
-  research,
-}
+enum _SuggestionCategory { moves, work, build, research }
 
 /// Generates orders for a single player using the shared simple heuristics:
 /// PlayerView, order suggestion API, category order (move → work → build →
@@ -64,8 +60,12 @@ Orders generateOrdersWithSimpleHeuristics(
     final moveSuggestions = suggestMoveOrders(view, game, topology, current);
     final workSuggestions = suggestWorkOrders(view, game, topology, current);
     final buildSuggestions = suggestBuildOrders(view, game, topology, current);
-    final researchSuggestions =
-        suggestResearchOrders(view, game, topology, current);
+    final researchSuggestions = suggestResearchOrders(
+      view,
+      game,
+      topology,
+      current,
+    );
 
     final categories = <_SuggestionCategory>[];
     if (moveSuggestions.isNotEmpty) {
@@ -172,23 +172,28 @@ Orders generateOrdersWithSimpleHeuristics(
     }
   }
   if (current.buildUnitOrdersByPlayerId.containsKey(player.id)) {
-    buildByPlayer[player.id] =
-        List<BuildUnitOrder>.from(current.buildUnitOrdersByPlayerId[player.id]!);
+    buildByPlayer[player.id] = List<BuildUnitOrder>.from(
+      current.buildUnitOrdersByPlayerId[player.id]!,
+    );
   }
   if (current.workOrdersByPlayerId.containsKey(player.id)) {
-    workByPlayer[player.id] =
-        List<WorkOrder>.from(current.workOrdersByPlayerId[player.id]!);
+    workByPlayer[player.id] = List<WorkOrder>.from(
+      current.workOrdersByPlayerId[player.id]!,
+    );
   }
   if (current.researchOrdersByPlayerId.containsKey(player.id)) {
-    researchByPlayer[player.id] =
-        List<ResearchOrder>.from(current.researchOrdersByPlayerId[player.id]!);
+    researchByPlayer[player.id] = List<ResearchOrder>.from(
+      current.researchOrdersByPlayerId[player.id]!,
+    );
   }
 
   final m = moveByPlayer[player.id]?.length ?? 0;
   final b = buildByPlayer[player.id]?.length ?? 0;
   final w = workByPlayer[player.id]?.length ?? 0;
   final r = researchByPlayer[player.id]?.length ?? 0;
-  Logger().i('ai: simple heuristics generated orders player=${player.id} move=$m build=$b work=$w research=$r');
+  _log.i(
+    'simple heuristics generated orders player=${player.id} move=$m build=$b work=$w research=$r',
+  );
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,

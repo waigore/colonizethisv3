@@ -10,6 +10,7 @@ workspace:
   - ctdev
   - ctterm
   - packages/session_log_buffer
+  - packages/colonizethis_logger
   - packages/colonizethis_models
   - packages/colonizethis_data
   - packages/colonizethis_save

@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'worker_economy.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Consumption resolution helpers.
 /// SPEC/game/workers-and-population.md
@@ -43,10 +43,7 @@ ConsumptionResult resolveConsumption({
 }) {
   Stockpile current = stockpile;
 
-  int feedGroup({
-    required int count,
-    required int foodPerUnit,
-  }) {
+  int feedGroup({required int count, required int foodPerUnit}) {
     if (count <= 0 || foodPerUnit <= 0) return count;
     final requiredFood = count * foodPerUnit;
     final (nextStockpile, consumed) = consumeFoodUnits(
@@ -119,10 +116,7 @@ ConsumptionResult resolveConsumption({
     masters: fedMasters,
   );
 
-  current = deductLuxuryForWorkers(
-    stockpile: current,
-    workers: updatedWorkers,
-  );
+  current = deductLuxuryForWorkers(stockpile: current, workers: updatedWorkers);
 
   _log.d(
     'logic: consumption totalRegiments=$totalRegiments fullyFedRegiments=$fullyFedRegiments',

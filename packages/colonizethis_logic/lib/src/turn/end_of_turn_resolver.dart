@@ -3,13 +3,13 @@
 // Called from turn_resolver.resolveTurnForGame.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
 /// coastal sea zone full visibility, advance turn.
@@ -64,7 +64,9 @@ Game runEndOfTurnPhase(
 }
 
 void _emitEraChangeDialogue(
-    Game game, void Function(DialogueEvent)? onDialogue) {
+  Game game,
+  void Function(DialogueEvent)? onDialogue,
+) {
   if (onDialogue == null) return;
   final currentTurn = game.worldState.turnState.turnNumber;
   final nextTurn = currentTurn + 1;
@@ -76,6 +78,7 @@ void _emitEraChangeDialogue(
   final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
   for (final e in events) onDialogue(e);
 }
+
 /// Returns the id of a Great Power that controls 31+ Old World provinces, or null.
 String? findMilitaryVictoryWinner(Game game) {
   const int requiredProvinces = 31;

@@ -5,8 +5,8 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'capital_choice.dart';
 import '../constants.dart';
@@ -16,7 +16,7 @@ import '../world/naval.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {

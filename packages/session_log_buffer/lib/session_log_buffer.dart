@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 /// Default maximum number of log entries to retain (oldest dropped when exceeded).
 const int defaultMaxEntries = 5000;
 
-/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui).
+/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game).
 /// Used for filter options in the viewer.
 const List<String> knownPrefixes = [
   'ctdev',
@@ -14,6 +14,7 @@ const List<String> knownPrefixes = [
   'data',
   'map',
   'save',
+  'game',
   'tui',
 ];
 
@@ -69,9 +70,26 @@ class SessionLogEntry {
   }
 }
 
+class _DebugLevelFilter implements LogFilter {
+  @override
+  Level? level;
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<void> destroy() async {}
+
+  @override
+  bool shouldLog(LogEvent event) {
+    return event.level >= Logger.level;
+  }
+}
+
 /// In-memory session log buffer. Thread-safe for single-threaded Dart; call [init] once at startup.
 class SessionLogBuffer {
-  SessionLogBuffer({int maxEntries = defaultMaxEntries}) : _maxEntries = maxEntries;
+  SessionLogBuffer({int maxEntries = defaultMaxEntries})
+    : _maxEntries = maxEntries;
 
   final int _maxEntries;
   final List<SessionLogEntry> _entries = [];
@@ -79,7 +97,9 @@ class SessionLogBuffer {
 
   /// Adds a log event to the buffer. Drops oldest entries when over [maxEntries].
   void add(LogEvent e) {
-    final msg = e.message is String ? e.message as String : e.message.toString();
+    final msg = e.message is String
+        ? e.message as String
+        : e.message.toString();
     final entry = SessionLogEntry(
       time: e.time,
       level: e.level,
@@ -128,6 +148,7 @@ class SessionLogBuffer {
     if (_instance._initialized) return;
     _instance._initialized = true;
     Logger.level = Level.debug;
+    Logger.defaultFilter = () => _DebugLevelFilter();
     Logger.addLogListener((LogEvent e) {
       _instance.add(e);
     });

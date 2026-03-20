@@ -1,23 +1,19 @@
 // Economy planner: worker allocation and cargo preference. SPEC/ai/economy-planner.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'ai_config.dart';
 import 'seed_bundle.dart';
 
-final Logger _log = Logger();
+final _log = aiLogger();
 
 const String _kEconomyLogPrefix = 'ai/economy_planner';
 
 /// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
-enum CargoPreference {
-  none,
-  preferCargo,
-  strongCargo,
-}
+enum CargoPreference { none, preferCargo, strongCargo }
 
 /// Result of the economy planner for one AI player.
 class EconomyPlan {
@@ -102,20 +98,22 @@ CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
   // Trade-oriented agendas/personalities favour cargo.
   final economyWeight = domainWeights.economy;
   if (economyWeight < 30) {
-    _log.d('$_kEconomyLogPrefix: cargoPreference none economyWeight=$economyWeight');
+    _log.d(
+      '$_kEconomyLogPrefix: cargoPreference none economyWeight=$economyWeight',
+    );
     return CargoPreference.none;
   }
   // Strong when economy is high and agenda is trade-related.
   final tradeBias = agendaId == 'industrial_trader' || agendaId == 'merchant'
       ? 20
       : agendaId == 'navigator'
-          ? 15
-          : 0;
+      ? 15
+      : 0;
   final pref = economyWeight >= 70 + tradeBias
       ? CargoPreference.strongCargo
       : economyWeight >= 50 + tradeBias
-          ? CargoPreference.preferCargo
-          : CargoPreference.none;
+      ? CargoPreference.preferCargo
+      : CargoPreference.none;
   _log.d(
     '$_kEconomyLogPrefix: cargoPreference eval playerId=$playerId '
     'economyWeight=$economyWeight agendaId=$agendaId tradeBias=$tradeBias result=$pref',
@@ -205,11 +203,16 @@ List<AssignedRecipe> _allocateLabour({
     for (final entry in recipe.inputQuantities.entries) {
       virtual = virtual.applyDelta(entry.key, -entry.value * runs);
     }
-    virtual = virtual.applyDelta(recipe.outputCommodityId, recipe.outputQuantity * runs);
+    virtual = virtual.applyDelta(
+      recipe.outputCommodityId,
+      recipe.outputQuantity * runs,
+    );
   }
 
   for (final entry in labourByRecipe.entries) {
-    result.add(AssignedRecipe(recipeId: entry.key, assignedLabour: entry.value));
+    result.add(
+      AssignedRecipe(recipeId: entry.key, assignedLabour: entry.value),
+    );
   }
 
   _log.d(
@@ -271,5 +274,7 @@ double _scoreRecipe({
     agenda = 0.5;
   }
 
-  return shortage * _kShortageWeight + chain * _kChainWeight + agenda * _kAgendaWeight;
+  return shortage * _kShortageWeight +
+      chain * _kChainWeight +
+      agenda * _kAgendaWeight;
 }
