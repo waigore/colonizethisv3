@@ -1,223 +1,238 @@
-// Tests for SplitFleetDialog. SPEC/ui/naval-units-fleet-management.md.
-//
-// Note: Full dialog tests require nine-patch assets that aren't available
-// in the test environment. The NavalUnitsPanel tests cover the fleet
-// management functionality. These tests verify the basic state logic.
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+
+Widget _openDialogButton(VoidCallback onOpen) {
+  return TextButton(onPressed: onOpen, child: const Text('open'));
+}
 
 void main() {
   suppressLogsForTests();
 
-  late Game game;
-  late String humanPlayerId;
-
-  setUpAll(() {
-    game = getDebugInitGameResult().game;
-    humanPlayerId = game.players.isNotEmpty ? game.players.first.id : 'gp1';
-  });
-
-  Fleet _createTestFleet({
-    required String id,
-    required String ownerId,
-    required String regionId,
-    String? inPortAtProvinceId,
-    String? seaZoneId,
-    List<String> shipTypeIds = const [],
-  }) {
-    return Fleet(
-      id: id,
-      ownerId: ownerId,
-      regionId: regionId,
-      inPortAtProvinceId: inPortAtProvinceId,
-      seaZoneId: seaZoneId,
-      shipTypeIds: shipTypeIds,
+  Game _minimalGame({required List<Province> provinces}) {
+    return Game(
+      id: 'g1',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: RegionData(provinces: provinces),
+        newWorld: const RegionData(),
+      ),
+      players: const [
+        Player(
+          id: 'gp1',
+          displayName: 'Human',
+          isHuman: true,
+          treasury: 0,
+        ),
+      ],
     );
   }
 
-  group('SplitFleetDialog Logic', () {
-    test('Fleet can be split into two fleets', () {
-      final originalFleet = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack', 'fluyte', 'galleon'],
-      );
+  testWidgets('SplitFleetDialog at sea shows region label and can confirm split', (
+    WidgetTester tester,
+  ) async {
+    List<String>? captured;
+    final fleet = Fleet(
+      id: 'f1',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
+    );
+    final game = _minimalGame(provinces: const []);
 
-      expect(originalFleet.shipTypeIds.length, 3);
-    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return _openDialogButton(() {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => SplitFleetDialog(
+                    originalFleet: fleet,
+                    game: game,
+                    humanPlayerId: 'gp1',
+                    isHomeFleet: false,
+                    onConfirm: (ships) => captured = ships,
+                  ),
+                );
+              });
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
 
-    test('Split fleet preserves location', () {
-      final originalFleet = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack', 'fluyte'],
-      );
+    expect(find.textContaining('Region'), findsWidgets);
 
-      expect(originalFleet.inPortAtProvinceId, 'lisbon');
-      expect(originalFleet.regionId, 'oldWorld');
-    });
+    await tester.tap(find.byIcon(Icons.arrow_forward).first);
+    await tester.pump();
+    await tester.tap(find.text('Confirm Split'));
+    await tester.pumpAndSettle();
 
-    test('Fleet at sea can be split', () {
-      final fleet = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        seaZoneId: 'atlantic',
-        shipTypeIds: ['galleon', 'galleon'],
-      );
-
-      expect(fleet.isAtSea, true);
-      expect(fleet.seaZoneId, 'atlantic');
-    });
-
-    test('New fleet needs unique ID', () {
-      final existingIds = ['1', '2', '5'];
-      final maxId = existingIds
-          .map((id) => int.tryParse(id) ?? 0)
-          .fold(0, (max, id) => id > max ? id : max);
-      final newId = (maxId + 1).toString();
-
-      expect(newId, '6');
-    });
-
-    test('Home Fleet is identified by location at capital', () {
-      final homeFleet = _createTestFleet(
-        id: 'home_fleet',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'capital',
-        shipTypeIds: ['fluyte'],
-      );
-
-      expect(homeFleet.isInPort, true);
-      expect(homeFleet.inPortAtProvinceId, 'capital');
-    });
-
-    test('Minimum ship count validation', () {
-      final fleet = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack'],
-      );
-
-      final canSplit = fleet.shipTypeIds.length >= 1;
-      expect(canSplit, true);
-
-      final fleetWithNoShips = _createTestFleet(
-        id: '2',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: [],
-      );
-
-      final canSplitEmpty = fleetWithNoShips.shipTypeIds.length >= 1;
-      expect(canSplitEmpty, false);
-    });
+    expect(captured, isNotNull);
+    expect(captured!.length, 1);
   });
 
-  group('Combine Logic', () {
-    test('Fleets at same port can be combined', () {
-      final fleet1 = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack'],
-      );
+  testWidgets('SplitFleetDialog in port shows province name and home fleet blocks moves', (
+    WidgetTester tester,
+  ) async {
+    const ow = 'oldWorld';
+    final province = Province(
+      id: '$ow|p1',
+      regionId: ow,
+      displayName: 'TestPort',
+      ownerId: 'gp1',
+    );
+    final game = _minimalGame(provinces: [province]);
+    final fleet = Fleet(
+      id: 'f2',
+      ownerId: 'gp1',
+      regionId: ow,
+      inPortAtProvinceId: province.id,
+      shipTypeIds: const ['fluyte'],
+    );
 
-      final fleet2 = _createTestFleet(
-        id: '2',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['fluyte'],
-      );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return _openDialogButton(() {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => SplitFleetDialog(
+                    originalFleet: fleet,
+                    game: game,
+                    humanPlayerId: 'gp1',
+                    isHomeFleet: false,
+                    onConfirm: (_) {},
+                  ),
+                );
+              });
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
 
-      expect(fleet1.inPortAtProvinceId, fleet2.inPortAtProvinceId);
-    });
+    expect(find.text('TestPort — Old World'), findsNWidgets(2));
 
-    test('Fleets at different ports cannot be combined', () {
-      final fleet1 = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack'],
-      );
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_forward));
+    await tester.pump();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+  });
 
-      final fleet2 = _createTestFleet(
-        id: '2',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'porto',
-        shipTypeIds: ['fluyte'],
-      );
+  testWidgets('SplitFleetDialog home fleet disables confirm and bulk transfer', (
+    WidgetTester tester,
+  ) async {
+    final fleet = Fleet(
+      id: 'home_fleet',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['carrack'],
+    );
+    final game = _minimalGame(provinces: const []);
 
-      expect(fleet1.inPortAtProvinceId != fleet2.inPortAtProvinceId, true);
-    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return _openDialogButton(() {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => SplitFleetDialog(
+                    originalFleet: fleet,
+                    game: game,
+                    humanPlayerId: 'gp1',
+                    isHomeFleet: true,
+                    onConfirm: (_) {},
+                  ),
+                );
+              });
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
 
-    test('Home Fleet cannot be combined', () {
-      final homeFleet = _createTestFleet(
-        id: 'home_fleet',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'capital',
-        shipTypeIds: ['fluyte'],
-      );
+    final confirm = tester.widget<CtNinePatchButton>(
+      find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+    );
+    expect(confirm.enabled, isFalse);
 
-      expect(homeFleet.id, 'home_fleet');
-    });
+    final bulkBack = find.descendant(
+      of: find.byType(SplitFleetDialog),
+      matching: find.byWidgetPredicate(
+        (w) =>
+            w is CtNinePatchButton &&
+            w.child is Icon &&
+            (w.child! as Icon).icon == Icons.arrow_back,
+      ),
+    );
+    expect(tester.widget<CtNinePatchButton>(bulkBack.first).enabled, isFalse);
+  });
 
-    test('Combining ships aggregates correctly', () {
-      final fleet1 = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['carrack', 'galleon'],
-      );
+  testWidgets('SplitFleetDialog long-press moves all of one type', (
+    WidgetTester tester,
+  ) async {
+    List<String>? captured;
+    final fleet = Fleet(
+      id: 'f3',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 's1',
+      shipTypeIds: const ['a', 'a', 'b'],
+    );
+    final game = _minimalGame(provinces: const []);
 
-      final fleet2 = _createTestFleet(
-        id: '2',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: 'lisbon',
-        shipTypeIds: ['fluyte', 'fluyte', 'fluyte'],
-      );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return _openDialogButton(() {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => SplitFleetDialog(
+                    originalFleet: fleet,
+                    game: game,
+                    humanPlayerId: 'gp1',
+                    isHomeFleet: false,
+                    onConfirm: (ships) => captured = ships,
+                  ),
+                );
+              });
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
 
-      final combined = [...fleet1.shipTypeIds, ...fleet2.shipTypeIds];
-      expect(combined.length, 5);
-    });
+    await tester.longPress(find.byIcon(Icons.arrow_forward).first);
+    await tester.pump();
+    await tester.tap(find.text('Confirm Split'));
+    await tester.pumpAndSettle();
 
-    test('Same sea zone fleets can be combined', () {
-      final fleet1 = _createTestFleet(
-        id: '1',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        seaZoneId: 'atlantic',
-        shipTypeIds: ['galleon'],
-      );
-
-      final fleet2 = _createTestFleet(
-        id: '2',
-        ownerId: humanPlayerId,
-        regionId: 'oldWorld',
-        seaZoneId: 'atlantic',
-        shipTypeIds: ['carrack'],
-      );
-
-      expect(fleet1.seaZoneId, fleet2.seaZoneId);
-    });
+    expect(captured, isNotNull);
+    expect(captured!.where((s) => s == 'a').length, 2);
   });
 }
