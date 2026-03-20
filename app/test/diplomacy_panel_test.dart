@@ -31,6 +31,7 @@ class _PanelWrapper extends StatefulWidget {
     required this.humanPlayerId,
     required this.topology,
     required this.initialOrders,
+    required this.bus,
     this.onOrdersChanged,
   });
 
@@ -38,6 +39,7 @@ class _PanelWrapper extends StatefulWidget {
   final String humanPlayerId;
   final MapTopology topology;
   final Orders initialOrders;
+  final AppEventBus bus;
   final void Function(Orders)? onOrdersChanged;
 
   @override
@@ -60,6 +62,7 @@ class _PanelWrapperState extends State<_PanelWrapper> {
       humanPlayerId: widget.humanPlayerId,
       topology: widget.topology,
       currentOrders: _orders,
+      bus: widget.bus,
       onOrdersChanged: (o) {
         setState(() => _orders = o);
         widget.onOrdersChanged?.call(o);
@@ -74,7 +77,9 @@ Widget buildPanel({
   required MapTopology topology,
   Orders currentOrders = const Orders(),
   void Function(Orders)? onOrdersChanged,
+  AppEventBus? bus,
 }) {
+  final panelBus = bus ?? AppEventBus();
   return MaterialApp(
     home: Scaffold(
       body: _PanelWrapper(
@@ -82,6 +87,7 @@ Widget buildPanel({
         humanPlayerId: humanPlayerId,
         topology: topology,
         initialOrders: currentOrders,
+        bus: panelBus,
         onOrdersChanged: onOrdersChanged,
       ),
     ),

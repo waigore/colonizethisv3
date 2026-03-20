@@ -25,4 +25,6 @@ export 'src/turn_time_mapping.dart';
 export 'src/unit.dart';
 export 'src/world_state.dart';
 export 'src/ai_events.dart';
+export 'src/app_event_bus.dart';
+export 'src/app_events.dart';
 export 'src/dossier_evidence.dart';

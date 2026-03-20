@@ -1,9 +1,13 @@
 // AI dialogue and mood events. SPEC/ai/dialogue-and-mood.md, SPEC/program/ai-events-and-dossier.md.
 // Phase 6: emitted by colonizethis_ai; consumed by UI or tooling.
+//
+// DialogueEvent and PortraitMoodEvent extend AppEvent so they can flow through AppEventBus.
+
+import 'app_events.dart';
 
 /// Emitted when AI should display a dialogue line.
 /// UI resolves (leaderId, category, situation, era, mood, variables) to text.
-class DialogueEvent {
+class DialogueEvent extends AppEvent {
   const DialogueEvent({
     required this.leaderId,
     required this.category,
@@ -21,13 +25,13 @@ class DialogueEvent {
   final Map<String, String> variables;
 
   Map<String, dynamic> toJson() => {
-        'leaderId': leaderId,
-        'category': category,
-        'situation': situation,
-        'era': era,
-        if (mood != null) 'mood': mood,
-        if (variables.isNotEmpty) 'variables': Map<String, String>.from(variables),
-      };
+    'leaderId': leaderId,
+    'category': category,
+    'situation': situation,
+    'era': era,
+    if (mood != null) 'mood': mood,
+    if (variables.isNotEmpty) 'variables': Map<String, String>.from(variables),
+  };
 
   static DialogueEvent fromJson(Map<String, dynamic> json) {
     final vars = json['variables'];
@@ -39,7 +43,8 @@ class DialogueEvent {
       mood: json['mood'] as String?,
       variables: vars is Map
           ? Map<String, String>.from(
-              vars.map((k, v) => MapEntry(k.toString(), v.toString())))
+              vars.map((k, v) => MapEntry(k.toString(), v.toString())),
+            )
           : const {},
     );
   }
@@ -47,7 +52,7 @@ class DialogueEvent {
 
 /// Emitted when portrait mood should change (e.g. during negotiation).
 /// UI uses for portrait/animation choice.
-class PortraitMoodEvent {
+class PortraitMoodEvent extends AppEvent {
   const PortraitMoodEvent({
     required this.leaderId,
     required this.fromMood,
@@ -61,11 +66,11 @@ class PortraitMoodEvent {
   final int durationMs;
 
   Map<String, dynamic> toJson() => {
-        'leaderId': leaderId,
-        'fromMood': fromMood,
-        'toMood': toMood,
-        'durationMs': durationMs,
-      };
+    'leaderId': leaderId,
+    'fromMood': fromMood,
+    'toMood': toMood,
+    'durationMs': durationMs,
+  };
 
   static PortraitMoodEvent fromJson(Map<String, dynamic> json) {
     return PortraitMoodEvent(
