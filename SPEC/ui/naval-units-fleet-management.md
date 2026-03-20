@@ -66,7 +66,7 @@ Each non-Home Fleet row in the expanded state shows a **"Combine"** button.
 
 ### Trigger
 
-Each non-Home Fleet row in the expanded state shows a **"Split Fleet"** button.
+Each fleet row in the expanded state shows a **"Split Fleet"** button, including the Home Fleet.
 
 ### Dialog
 
@@ -112,7 +112,7 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 |------|-------------|
 | Same location | New fleet spawns at the same port province or sea zone as the original. |
 | Minimum ships | Original fleet must retain at least 1 ship (unless it's the Home Fleet). |
-| Home Fleet | Home Fleet **cannot be split**. |
+| Home Fleet | Home Fleet **can be split** — all newly built ships appear in the Home Fleet, so players must be able to split off a detachment. |
 | Naming | New fleet is assigned the next available number: "Fleet N" where N is the next unused integer. |
 | Region | New fleet has the same `regionId` as the original. |
 | Mission | New fleet has `mission = FleetMission.none`. |
@@ -173,7 +173,7 @@ After any fleet operation (split or combine):
 
 - **Given** a fleet with 4 ships, **when** the user moves all 4 ships to the new fleet in the split dialog, **then** the Confirm button is disabled and the original fleet cannot be split.
 
-- **Given** the Home Fleet is present, **when** the user views fleet options, **then** the Home Fleet does not show a Split Fleet button.
+- **Given** the Home Fleet is present with ships, **when** the user expands the Home Fleet row, **then** the Home Fleet shows a Split Fleet button, allowing the player to split off a detachment.
 
 ### Empty Fleet Cleanup
 
