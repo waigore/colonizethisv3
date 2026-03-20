@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import '../orders/order_suggestion.dart';
 import '../orders/order_suggestion_api_impl.dart';
 import 'ai_control.dart';
 import 'simple_ai_heuristics.dart';
@@ -72,6 +73,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   Game game,
   MapTopology topology,
   String playerId, {
+  OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
 }) {
@@ -97,7 +99,8 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     personalityId: leaderId,
     hiddenAgendaId: agendaId,
   );
-  const suggestionAPI = DefaultOrderSuggestionAPI();
+  final suggestionAPI =
+      orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
   return generateStrategicOrders(
     game: game,
     topology: topology,
@@ -126,6 +129,7 @@ class FullAIResult {
 FullAIResult generateOrdersForGameFullAI(
   Game game,
   MapTopology topology, {
+  OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
 }) {
@@ -144,6 +148,7 @@ FullAIResult generateOrdersForGameFullAI(
       game,
       topology,
       player.id,
+      orderSuggestionApi: orderSuggestionApi,
       onDialogue: onDialogue,
       onMood: onMood,
     );
