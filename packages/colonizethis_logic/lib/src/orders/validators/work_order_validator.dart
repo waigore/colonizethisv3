@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
+import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
@@ -104,23 +105,15 @@ class WorkOrderValidator {
             return OrderValidationResult.rejected(
                 'purchase_land target must be a Minor or Tribe province');
           }
-          final isMinor = _game.minorNations.any((m) => m.id == ownerId);
-          final isTribe = _game.tribes.any((t) => t.id == ownerId);
-          if (!isMinor && !isTribe) {
+          if (!isMinorOrTribe(_game, ownerId)) {
             return OrderValidationResult.rejected(
                 'purchase_land target must be a Minor or Tribe province');
           }
-          final rel = _game.diplomacyRelations
-              .where((r) =>
-                  (r.factionId1 == _playerId && r.factionId2 == ownerId) ||
-                  (r.factionId2 == _playerId && r.factionId1 == ownerId))
-              .firstOrNull;
-          if (rel != null && rel.atWar) {
+          final rel = getRelation(_game, _playerId, ownerId);
+          if (rel?.atWar == true) {
             return OrderValidationResult.rejected('Cannot purchase land: at war with that faction');
           }
-          final overture = _game.overtureStates
-              .where((ov) => ov.gpId == _playerId && ov.targetId == ownerId)
-              .firstOrNull;
+          final overture = getOverture(_game, _playerId, ownerId);
           if (overture == null || !overture.hasEmbassy) {
             return OrderValidationResult.rejected(
                 'Cannot purchase land: embassy required with that Minor/Tribe');

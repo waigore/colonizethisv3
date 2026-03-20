@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 
 void main() {
   group('runInitGame', () {
@@ -130,6 +131,45 @@ void main() {
       );
       expect(result.mapPngBytes, isA<Uint8List>());
       expect(result.mapPngBytes.length, greaterThan(0));
+    });
+
+    test('generateRegion injection is used for OW and NW map generation', () {
+      var callCount = 0;
+      final TileMapRegionGenerator countingGen = ({
+        required TileMapParams params,
+        required int numProvinces,
+        required int numContinents,
+        required String regionId,
+        String seaZoneId = 's1',
+        ResourceRules? resourceRules,
+        void Function(String)? onLog,
+        void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
+            onLandSeedsPlaced,
+        void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+      }) {
+        callCount++;
+        return defaultTileMapRegionGenerator(
+          params: params,
+          numProvinces: numProvinces,
+          numContinents: numContinents,
+          regionId: regionId,
+          seaZoneId: seaZoneId,
+          resourceRules: resourceRules,
+          onLog: onLog,
+          onLandSeedsPlaced: onLandSeedsPlaced,
+          onContinentSeedsPlaced: onContinentSeedsPlaced,
+        );
+      };
+
+      final config = GameSetupConfig.defaultConfig;
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        generateRegion: countingGen,
+      );
+
+      expect(callCount, 2);
+      expect(result.game, isNotNull);
     });
 
     test('throws ArgumentError when OW provinces fewer than Great Powers', () {
