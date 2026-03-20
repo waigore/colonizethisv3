@@ -797,5 +797,77 @@ void main() {
 
       expect(find.byType(Checkbox), findsNothing);
     });
+
+    testWidgets('AC: Beachhead mission appears in status line', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'p_beach';
+      final gameBeach = Game(
+        id: 'beach_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(units: []),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'bf1',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              seaZoneId: 'atlantic',
+              shipTypeIds: const ['carrack'],
+              mission: FleetMission.beachhead,
+            ),
+          ],
+          portsByProvinceSeaboard: {
+            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(id: playerId, displayName: 'P', isHuman: true),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: gameBeach, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Beachhead'), findsWidgets);
+    });
+
+    testWidgets('AC: No fleets and no capital shows empty naval message', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'p_empty';
+      final emptyGame = Game(
+        id: 'empty_naval',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: [
+          const Player(
+            id: playerId,
+            displayName: 'Solo',
+            isHuman: true,
+            treasury: 0,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: emptyGame, humanPlayerId: playerId),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('No naval units'), findsOneWidget);
+    });
+
   });
 }

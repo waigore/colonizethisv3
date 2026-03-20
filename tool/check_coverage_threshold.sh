@@ -27,25 +27,12 @@ for dir in "${TARGETS[@]}"; do
     echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.py first)"
     continue
   fi
-  # For the app target, exclude trivial/glue files from coverage to keep
-  # the gate focused on real behavior.
+  # App: use full lcov (widgetbook/catalog.dart uses Dart coverage:ignore-file).
+  # Copy so consumers of lcov.filtered.info always get a fresh file.
   filtered_lcov="$lcov_file"
   if [ "$dir" = "app" ]; then
     filtered_lcov="$ROOT/$dir/coverage/lcov.filtered.info"
-    # Always regenerate so changes to the exclude list apply (no stale filter).
-    lcov --remove "$lcov_file" \
-      "lib/widgetbook/catalog.dart" \
-      "lib/features/game/flame/game_screen.dart" \
-      "lib/features/game/widgets/naval_units_panel.dart" \
-      "lib/features/game/flame/game_side_menu.dart" \
-      "lib/features/game/widgets/diplomacy_detail_screen.dart" \
-      "lib/features/game/dialogue/game_start_intro_overlay.dart" \
-      "lib/features/game/widgets/diplomacy_panel.dart" \
-      -o "$filtered_lcov" >/dev/null 2>&1 || true
-    if [ ! -f "$filtered_lcov" ]; then
-      echo "Failed to generate $filtered_lcov for app coverage gate."
-      exit 1
-    fi
+    cp "$lcov_file" "$filtered_lcov"
   fi
 
   summary=$(lcov --summary "$filtered_lcov" 2>/dev/null) || true
