@@ -1,7 +1,17 @@
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -14,12 +24,14 @@ void main() {
 
   late Game game;
 
+  late Box<dynamic> gamesBox;
+
   setUpAll(() async {
     final result = getDebugInitGameResult();
     game = result.game;
 
     Hive.init('./.dart_tool/test_hive_side_menu');
-    await Hive.openBox<dynamic>('games');
+    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
   testWidgets('GameSideMenu builds empire buttons and close button calls onClose',
@@ -33,8 +45,15 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
           currentGameProvider.overrideWith((ref) => game),
           currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -80,8 +99,15 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
           currentGameProvider.overrideWith((ref) => game),
           currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -123,8 +149,15 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
           currentGameProvider.overrideWith((ref) => game),
           currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -154,6 +187,322 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Technology'), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu opens Military Units panel', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(480, 1600)),
+        child: ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Military Units'));
+    await tester.tap(find.text('Military Units'));
+    await tester.pumpAndSettle();
+    expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu opens Naval Units panel', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(480, 1600)),
+        child: ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Naval Units'));
+    await tester.tap(find.text('Naval Units'));
+    await tester.pumpAndSettle();
+    expect(find.byType(NavalUnitsPanel), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu opens Civilian Units sheet', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith((ref) => game),
+          currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Stack(
+              children: [
+                GameSideMenu(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  sideMenuOpen: true,
+                  onClose: () {},
+                  onPanelDismissed: () {},
+                  onLocateCivilianUnit: (_) {},
+                  onLocateMilitaryTile: (_, __) {},
+                  onLocateNavalFleet: (_, __) {},
+                  onCancelUnitWork: (_) {},
+                  onStartWorkTargetSelection: (_, __) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Civilian Units'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu Diplomacy pushes DiplomacyScreen', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith((ref) => game),
+          currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Stack(
+              children: [
+                GameSideMenu(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  sideMenuOpen: true,
+                  onClose: () {},
+                  onPanelDismissed: () {},
+                  onLocateCivilianUnit: (_) {},
+                  onLocateMilitaryTile: (_, __) {},
+                  onLocateNavalFleet: (_, __) {},
+                  onCancelUnitWork: (_) {},
+                  onStartWorkTargetSelection: (_, __) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Diplomacy'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DiplomacyScreen), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu Debug log navigates to named route', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith((ref) => game),
+          currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
+        ],
+        child: MaterialApp(
+          routes: {
+            Routes.debugLog: (_) => const Scaffold(
+                  body: Center(child: Text('debug-route-marker')),
+                ),
+          },
+          home: Scaffold(
+            body: Stack(
+              children: [
+                GameSideMenu(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  sideMenuOpen: true,
+                  onClose: () {},
+                  onPanelDismissed: () {},
+                  onLocateCivilianUnit: (_) {},
+                  onLocateMilitaryTile: (_, __) {},
+                  onLocateNavalFleet: (_, __) {},
+                  onCancelUnitWork: (_) {},
+                  onStartWorkTargetSelection: (_, __) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Debug log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('debug-route-marker'), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu horizontal drag left invokes onClose', (
+    WidgetTester tester,
+  ) async {
+    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+        ? game.players.where((p) => p.isHuman).first.id
+        : game.players.first.id;
+
+    var closed = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith((ref) => game),
+          currentOrdersProvider.overrideWith((ref) => const Orders()),
+          availableWorkTargetsProvider.overrideWith(
+            (ref) => <String, List<String>>{},
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Stack(
+              children: [
+                GameSideMenu(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  sideMenuOpen: true,
+                  onClose: () => closed = true,
+                  onPanelDismissed: () {},
+                  onLocateCivilianUnit: (_) {},
+                  onLocateMilitaryTile: (_, __) {},
+                  onLocateNavalFleet: (_, __) {},
+                  onCancelUnitWork: (_) {},
+                  onStartWorkTargetSelection: (_, __) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.byType(GameSideMenu),
+      const Offset(-40, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(closed, isTrue);
   });
 }
 
