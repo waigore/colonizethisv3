@@ -74,10 +74,15 @@ class NavalOrderValidator {
           if (inPortProvinceId == null) {
             return OrderValidationResult.rejected('Invalid naval move');
           }
-          final parts = inPortProvinceId.split('|');
-          final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
-          final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
-          currentZone = seaZoneIdForProvince(_topology, localId, regionId: regionId);
+          final rl = regionAndLocalProvinceForFleetInPort(
+            inPortProvinceId,
+            fleet.regionId,
+          );
+          currentZone = seaZoneIdForProvince(
+            _topology,
+            rl.localId,
+            regionId: rl.regionId,
+          );
         }
         final destZone = o.destinationSeaZoneId;
         final valid = currentZone != null &&

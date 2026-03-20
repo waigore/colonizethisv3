@@ -5,8 +5,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// and application. SPEC/program/orders.md § Build orders.
 /// Used by BuildOrderValidator and orders_application.
 
-/// Result of checking whether a player can afford a build order.
-({bool canAfford, String? reason}) canAffordBuild(
+typedef _BuildDeductionPlan = ({
+  int treasuryCost,
+  Map<CommodityId, int> materialCosts,
+  bool subtractOnePeasant,
+});
+
+/// Resolves whether the player can pay for [order] and, if so, the exact deduction.
+({String? failReason, _BuildDeductionPlan? plan}) _resolveBuildDeductionPlan(
   Player player,
   BuildUnitOrder order,
   WorkerPool workers,
@@ -17,64 +23,100 @@ import 'package:colonizethis_models/colonizethis_models.dart';
   switch (category) {
     case BuildUnitCategory.civilian:
       final econ = CivilianEconomyCatalog.byId[order.unitType];
-      if (econ == null) return (canAfford: false, reason: 'Insufficient resources');
+      if (econ == null) return (failReason: 'Insufficient resources', plan: null);
       final unlockingTechId = unlockingTechByCivilianId[order.unitType];
       if (unlockingTechId != null &&
           (player.techUnlocked?[unlockingTechId] != true)) {
-        return (canAfford: false, reason: 'Insufficient resources');
+        return (failReason: 'Insufficient resources', plan: null);
       }
       if (treasury < econ.buildTreasuryCost) {
-        return (canAfford: false, reason: 'Insufficient treasury');
+        return (failReason: 'Insufficient treasury', plan: null);
       }
       for (final e in econ.buildInputs.entries) {
         if (stockpile.quantityOf(e.key) < e.value) {
-          return (canAfford: false, reason: 'Insufficient materials');
+          return (failReason: 'Insufficient materials', plan: null);
         }
       }
-      return (canAfford: true, reason: null);
+      return (
+        failReason: null,
+        plan: (
+          treasuryCost: econ.buildTreasuryCost,
+          materialCosts: econ.buildInputs,
+          subtractOnePeasant: false,
+        ),
+      );
 
     case BuildUnitCategory.military:
       final econ = RegimentEconomyCatalog.byId[order.unitType];
-      if (econ == null) return (canAfford: false, reason: 'Insufficient resources');
+      if (econ == null) return (failReason: 'Insufficient resources', plan: null);
       final regimentUnlockTech = unlockingTechByRegimentId[order.unitType];
       if (regimentUnlockTech != null &&
           (player.techUnlocked?[regimentUnlockTech] != true)) {
-        return (canAfford: false, reason: 'Insufficient resources');
+        return (failReason: 'Insufficient resources', plan: null);
       }
       if (workers.peasants <= 0) {
-        return (canAfford: false, reason: 'Insufficient resources');
+        return (failReason: 'Insufficient resources', plan: null);
       }
       if (treasury < econ.buildTreasuryCost) {
-        return (canAfford: false, reason: 'Insufficient treasury');
+        return (failReason: 'Insufficient treasury', plan: null);
       }
       for (final e in econ.buildInputs.entries) {
         if (stockpile.quantityOf(e.key) < e.value) {
-          return (canAfford: false, reason: 'Insufficient materials');
+          return (failReason: 'Insufficient materials', plan: null);
         }
       }
-      return (canAfford: true, reason: null);
+      return (
+        failReason: null,
+        plan: (
+          treasuryCost: econ.buildTreasuryCost,
+          materialCosts: econ.buildInputs,
+          subtractOnePeasant: true,
+        ),
+      );
 
     case BuildUnitCategory.naval:
       final shipEcon = ShipEconomyCatalog.byId[order.unitType];
-      if (shipEcon == null) return (canAfford: false, reason: 'Insufficient resources');
+      if (shipEcon == null) return (failReason: 'Insufficient resources', plan: null);
       final shipUnlockTech = unlockingTechByShipId[order.unitType];
       if (shipUnlockTech != null &&
           (player.techUnlocked?[shipUnlockTech] != true)) {
-        return (canAfford: false, reason: 'Insufficient tech');
+        return (failReason: 'Insufficient tech', plan: null);
       }
       if (treasury < shipEcon.buildTreasuryCost) {
-        return (canAfford: false, reason: 'Insufficient treasury');
+        return (failReason: 'Insufficient treasury', plan: null);
       }
       for (final e in shipEcon.buildInputs.entries) {
         if (stockpile.quantityOf(e.key) < e.value) {
-          return (canAfford: false, reason: 'Insufficient materials');
+          return (failReason: 'Insufficient materials', plan: null);
         }
       }
-      return (canAfford: true, reason: null);
+      return (
+        failReason: null,
+        plan: (
+          treasuryCost: shipEcon.buildTreasuryCost,
+          materialCosts: shipEcon.buildInputs,
+          subtractOnePeasant: false,
+        ),
+      );
 
     case BuildUnitCategory.unknown:
-      return (canAfford: false, reason: 'Insufficient resources');
+      return (failReason: 'Insufficient resources', plan: null);
   }
+}
+
+/// Result of checking whether a player can afford a build order.
+({bool canAfford, String? reason}) canAffordBuild(
+  Player player,
+  BuildUnitOrder order,
+  WorkerPool workers,
+  Stockpile stockpile,
+  int treasury,
+) {
+  final r = _resolveBuildDeductionPlan(player, order, workers, stockpile, treasury);
+  if (r.failReason != null) {
+    return (canAfford: false, reason: r.failReason);
+  }
+  return (canAfford: true, reason: null);
 }
 
 /// Applies cost deduction for [order]. Call only when [canAffordBuild] returned true.
@@ -86,34 +128,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
   Stockpile stockpile,
   int treasury,
 ) {
-  final category = buildUnitCategoryForUnitType(order.unitType);
-  switch (category) {
-    case BuildUnitCategory.civilian:
-      final econ = CivilianEconomyCatalog.byId[order.unitType]!;
-      treasury -= econ.buildTreasuryCost;
-      for (final e in econ.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(e.key, -e.value);
-      }
-      return (workers: workers, stockpile: stockpile, treasury: treasury);
-
-    case BuildUnitCategory.military:
-      final econ = RegimentEconomyCatalog.byId[order.unitType]!;
-      treasury -= econ.buildTreasuryCost;
-      for (final e in econ.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(e.key, -e.value);
-      }
-      workers = workers.copyWith(peasants: workers.peasants - 1);
-      return (workers: workers, stockpile: stockpile, treasury: treasury);
-
-    case BuildUnitCategory.naval:
-      final shipEcon = ShipEconomyCatalog.byId[order.unitType]!;
-      treasury -= shipEcon.buildTreasuryCost;
-      for (final e in shipEcon.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(e.key, -e.value);
-      }
-      return (workers: workers, stockpile: stockpile, treasury: treasury);
-
-    case BuildUnitCategory.unknown:
-      return (workers: workers, stockpile: stockpile, treasury: treasury);
+  final r = _resolveBuildDeductionPlan(player, order, workers, stockpile, treasury);
+  final plan = r.plan;
+  if (plan == null) {
+    return (workers: workers, stockpile: stockpile, treasury: treasury);
   }
+  var t = treasury - plan.treasuryCost;
+  var s = stockpile;
+  for (final e in plan.materialCosts.entries) {
+    s = s.applyDelta(e.key, -e.value);
+  }
+  var w = workers;
+  if (plan.subtractOnePeasant) {
+    w = w.copyWith(peasants: w.peasants - 1);
+  }
+  return (workers: w, stockpile: s, treasury: t);
 }
