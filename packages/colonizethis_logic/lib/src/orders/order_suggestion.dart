@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
@@ -14,7 +14,7 @@ import '../world/unit_lookup.dart';
 
 export 'order_suggestion_helpers.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 const String _kOrderSuggestionLogPrefix = 'logic/order_suggestion';
 

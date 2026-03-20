@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:logger/logger.dart';
 
 import 'ai_config.dart';
 import 'domain_planners.dart';
@@ -11,12 +11,11 @@ import 'mood_state_machine.dart';
 import 'perception.dart';
 import 'seed_bundle.dart';
 
+final _log = aiLogger();
+
 /// Result of strategic order generation: orders and economy plan. SPEC/ai/economy-planner.md.
 class StrategicOrderResult {
-  const StrategicOrderResult({
-    required this.orders,
-    required this.economyPlan,
-  });
+  const StrategicOrderResult({required this.orders, required this.economyPlan});
   final Orders orders;
   final EconomyPlan economyPlan;
 }
@@ -37,10 +36,10 @@ StrategicOrderResult generateStrategicOrders({
   void Function(PortraitMoodEvent)? onMood,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  Logger().i('ai/strategic_ai: generateStrategicOrders nationId=$nationId turn=$turn');
+  _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
   final primaryGoal = selectPrimaryGoal(snapshot, config, seeds.goalSeed);
-  Logger().d('ai/strategic_ai: primaryGoal=$primaryGoal');
+  _log.d('primaryGoal=$primaryGoal');
   final economyPlan = runEconomyPlanner(
     game: game,
     view: view,
@@ -63,7 +62,9 @@ StrategicOrderResult generateStrategicOrders({
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
-  Logger().i('ai/strategic_ai: generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount');
+  _log.i(
+    'generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount',
+  );
   _emitDialogueAndMood(
     config: config,
     seeds: seeds,
@@ -86,21 +87,25 @@ void _emitDialogueAndMood({
   // `dialogueSeed % kDialogueTurnsBetweenComments == 0`.
   if (onDialogue != null &&
       seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
-    onDialogue(DialogueEvent(
-      leaderId: config.leaderId,
-      category: 'agenda',
-      situation: 'comment',
-      era: 'earlyModern',
-      variables: const {},
-    ));
+    onDialogue(
+      DialogueEvent(
+        leaderId: config.leaderId,
+        category: 'agenda',
+        situation: 'comment',
+        era: 'earlyModern',
+        variables: const {},
+      ),
+    );
   }
   if (onMood != null &&
       seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
-    onMood(PortraitMoodEvent(
-      leaderId: config.leaderId,
-      fromMood: kDefaultMood,
-      toMood: kDefaultMood,
-      durationMs: 0,
-    ));
+    onMood(
+      PortraitMoodEvent(
+        leaderId: config.leaderId,
+        fromMood: kDefaultMood,
+        toMood: kDefaultMood,
+        durationMs: 0,
+      ),
+    );
   }
 }

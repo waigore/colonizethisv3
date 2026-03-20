@@ -1,18 +1,18 @@
 // Dossier projection: PlayerView-safe read API. SPEC/ai/ai-dossier.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-const String _kDossierLogPrefix = 'ai/dossier';
+final _log = aiLogger();
 
 /// Suspicion band for display. Never exposes true agenda.
 /// Bands defined by [dossierScoreUnknownMax], [dossierScorePossibleMax], etc. SPEC/ai/ai-dossier.md.
 enum SuspicionBand {
-  unknown,   // 0–dossierScoreUnknownMax
+  unknown, // 0–dossierScoreUnknownMax
   possible, // dossierScoreUnknownMax+1 – dossierScorePossibleMax
-  likely,   // dossierScorePossibleMax+1 – dossierScoreLikelyMax
+  likely, // dossierScorePossibleMax+1 – dossierScoreLikelyMax
   almostCertain, // dossierScoreLikelyMax+1 – dossierScoreAlmostCertainMax
   confirmed, // dossierScoreAlmostCertainMax+1+
 }
@@ -31,11 +31,7 @@ const int dossierConfidenceAlmostCertain = 85;
 const int dossierConfidenceConfirmed = 100;
 
 /// Relative strength for basic intel (observer vs subject).
-enum RelativeStrength {
-  weaker,
-  even,
-  stronger,
-}
+enum RelativeStrength { weaker, even, stronger }
 
 /// Basic intel section: personality/archetype, relation, relative strength. PlayerView-safe.
 class DossierBasicIntel {
@@ -51,6 +47,7 @@ class DossierBasicIntel {
   final RelationState? relationState;
   final RelativeStrength? relativeMilitaryStrength;
   final RelativeStrength? relativeEconomicStrength;
+
   /// Human-readable archetype (e.g. "Fortifier"). From config; never exposes true agenda.
   final String? personalityArchetype;
 }
@@ -101,7 +98,8 @@ int confidencePercentFromScore(int score) {
   if (score <= dossierScoreUnknownMax) return dossierConfidenceUnknown;
   if (score <= dossierScorePossibleMax) return dossierConfidencePossible;
   if (score <= dossierScoreLikelyMax) return dossierConfidenceLikely;
-  if (score <= dossierScoreAlmostCertainMax) return dossierConfidenceAlmostCertain;
+  if (score <= dossierScoreAlmostCertainMax)
+    return dossierConfidenceAlmostCertain;
   return dossierConfidenceConfirmed;
 }
 
@@ -119,13 +117,20 @@ RelativeStrength _relativeStrength(int observerValue, int subjectValue) {
 }
 
 /// Builds basic intel from game state (relation, relative strength, personality archetype).
-DossierBasicIntel? _buildBasicIntel(Game game, String observerId, String subjectId) {
+DossierBasicIntel? _buildBasicIntel(
+  Game game,
+  String observerId,
+  String subjectId,
+) {
   final rel = getRelation(game, observerId, subjectId);
   final obs = _player(game, observerId);
   final subj = _player(game, subjectId);
   if (obs == null || subj == null) {
-    final archetype = getArchetypeDisplayNameForLeader(subjectId) ??
-        (subj?.leaderKey != null ? getArchetypeDisplayNameForLeader(subj!.leaderKey!) : null);
+    final archetype =
+        getArchetypeDisplayNameForLeader(subjectId) ??
+        (subj?.leaderKey != null
+            ? getArchetypeDisplayNameForLeader(subj!.leaderKey!)
+            : null);
     return DossierBasicIntel(
       relationLevel: rel?.level,
       relationState: rel?.state,
@@ -136,7 +141,8 @@ DossierBasicIntel? _buildBasicIntel(Game game, String observerId, String subject
   final militarySubj = subj.militaryLevel ?? 0;
   final economicObs = obs.treasury;
   final economicSubj = subj.treasury;
-  final archetype = getArchetypeDisplayNameForLeader(subjectId) ??
+  final archetype =
+      getArchetypeDisplayNameForLeader(subjectId) ??
       getArchetypeDisplayNameForLeader(subj.leaderKey ?? '');
   return DossierBasicIntel(
     relationLevel: rel?.level,
@@ -173,8 +179,12 @@ List<String> _buildBehavioralNotes(List<DossierEvidenceEntry> entries) {
     byDesc[key] = (byDesc[key] ?? 0) + 1;
   }
   final notes = <String>[];
-  if ((byDesc['declared war on weaker neighbor'] ?? 0) + (byDesc['declared war on ally'] ?? 0) > 0) {
-    final n = (byDesc['declared war on weaker neighbor'] ?? 0) + (byDesc['declared war on ally'] ?? 0);
+  if ((byDesc['declared war on weaker neighbor'] ?? 0) +
+          (byDesc['declared war on ally'] ?? 0) >
+      0) {
+    final n =
+        (byDesc['declared war on weaker neighbor'] ?? 0) +
+        (byDesc['declared war on ally'] ?? 0);
     notes.add('Declared war ($n).');
   }
   if ((byDesc['offered peace'] ?? 0) > 0) {
@@ -199,7 +209,8 @@ DossierView getDossierForSubject(
       : entries;
   final scoreByAgenda = <String, int>{};
   for (final e in cappedEntries) {
-    scoreByAgenda[e.agendaType] = (scoreByAgenda[e.agendaType] ?? 0) + e.scoreDelta;
+    scoreByAgenda[e.agendaType] =
+        (scoreByAgenda[e.agendaType] ?? 0) + e.scoreDelta;
   }
   final suspicionByAgendaType = <String, SuspicionBand>{};
   for (final e in scoreByAgenda.entries) {
@@ -215,8 +226,8 @@ DossierView getDossierForSubject(
   final bestGuess = _buildBestGuessAgenda(scoreByAgenda);
   final behavioralNotes = _buildBehavioralNotes(cappedEntries);
 
-  Logger().d(
-    '$_kDossierLogPrefix: getDossierForSubject observerId=$observerId subjectId=$subjectId '
+  _log.d(
+    'getDossierForSubject observerId=$observerId subjectId=$subjectId '
     'scoreByAgenda=$scoreByAgenda suspicionByAgendaType=${suspicionByAgendaType.map((k, v) => MapEntry(k, v.name))} '
     'bestGuessAgenda=${bestGuess?.agendaType} confidencePercent=${bestGuess?.confidencePercent} '
     'evidenceCount=${evidenceList.length} behavioralNotes=$behavioralNotes '

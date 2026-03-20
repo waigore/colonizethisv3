@@ -1,26 +1,23 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'worker_economy.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 int _effectiveLabourForWorkers({
   required WorkerPool workers,
   required Stockpile stockpile,
-}) =>
-    effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
+}) => effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
 /// SPEC/game/workers-and-population.md
 
 class AssignedRecipe {
-  const AssignedRecipe({
-    required this.recipeId,
-    required this.assignedLabour,
-  }) : assert(assignedLabour >= 0, 'assignedLabour must be non-negative');
+  const AssignedRecipe({required this.recipeId, required this.assignedLabour})
+    : assert(assignedLabour >= 0, 'assignedLabour must be non-negative');
 
   final String recipeId;
   final int assignedLabour;
@@ -80,7 +77,8 @@ ProductionResult resolveProduction({
       continue;
     }
 
-    final labourBudgetForAssignment = assignment.assignedLabour <= remainingEffectiveLabour
+    final labourBudgetForAssignment =
+        assignment.assignedLabour <= remainingEffectiveLabour
         ? assignment.assignedLabour
         : remainingEffectiveLabour;
     if (labourBudgetForAssignment <= 0) continue;
@@ -132,4 +130,3 @@ ProductionResult resolveProduction({
     productionByRecipe: productionByRecipe,
   );
 }
-

@@ -1,19 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
 
-final Logger _log = Logger();
+final _log = logicLogger();
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
-  const ExtractionTotals({
-    this.land = const {},
-    this.overseas = const {},
-  });
+  const ExtractionTotals({this.land = const {}, this.overseas = const {}});
 
   final Map<CommodityId, int> land;
   final Map<CommodityId, int> overseas;
@@ -49,7 +46,8 @@ Map<String, ExtractionTotals> computeExtraction({
     final landTotals = <CommodityId, int>{};
     final overseasTotals = <CommodityId, int>{};
 
-    final prospected = game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
+    final prospected =
+        game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
 
     for (final tileKey in connected) {
       final parts = tileKey.split('|');
@@ -75,32 +73,57 @@ Map<String, ExtractionTotals> computeExtraction({
       // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
       final provinceId = '$regionId|${parts[1]}';
       final regionData = regionDataForId(game.worldState, regionId);
-      final province = regionData?.provinces.where((p) => p.id == provinceId).firstOrNull;
+      final province = regionData?.provinces
+          .where((p) => p.id == provinceId)
+          .firstOrNull;
       final townDevelopmentCap = province?.townDevelopmentLevel ?? 4;
 
-      final improvementLevel = game.worldState.tileState.improvementLevel(tileKey).clamp(0, 4);
+      final improvementLevel = game.worldState.tileState
+          .improvementLevel(tileKey)
+          .clamp(0, 4);
       final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-      final isPort = game.worldState.portsByProvinceSeaboard.values.contains(tileKey);
+      final isPort = game.worldState.portsByProvinceSeaboard.values.contains(
+        tileKey,
+      );
       final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
       final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
 
-      final production = (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
-      final effective = (production < pathCap ? production : pathCap).clamp(0, 4);
-      final effectiveCapped = (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(0, 4);
+      final production =
+          (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
+      final effective = (production < pathCap ? production : pathCap).clamp(
+        0,
+        4,
+      );
+      final effectiveCapped =
+          (effective < townDevelopmentCap ? effective : townDevelopmentCap)
+              .clamp(0, 4);
       if (effectiveCapped <= 0) continue;
 
       if (regionId == capitalRegionId) {
-        landTotals[commodityId] = (landTotals[commodityId] ?? 0) + effectiveCapped;
+        landTotals[commodityId] =
+            (landTotals[commodityId] ?? 0) + effectiveCapped;
       } else {
-        overseasTotals[commodityId] = (overseasTotals[commodityId] ?? 0) + effectiveCapped;
+        overseasTotals[commodityId] =
+            (overseasTotals[commodityId] ?? 0) + effectiveCapped;
       }
     }
 
-    out[player.id] = ExtractionTotals(land: landTotals, overseas: overseasTotals);
+    out[player.id] = ExtractionTotals(
+      land: landTotals,
+      overseas: overseasTotals,
+    );
   }
-  final landSum = out.values.fold<int>(0, (s, t) => s + t.land.values.fold(0, (a, b) => a + b));
-  final overseasSum = out.values.fold<int>(0, (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b));
-  _log.d('logic: extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum');
+  final landSum = out.values.fold<int>(
+    0,
+    (s, t) => s + t.land.values.fold(0, (a, b) => a + b),
+  );
+  final overseasSum = out.values.fold<int>(
+    0,
+    (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
+  );
+  _log.d(
+    'logic: extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
+  );
   return out;
 }
 

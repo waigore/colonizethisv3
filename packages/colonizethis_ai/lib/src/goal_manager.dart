@@ -1,25 +1,18 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 
 import 'ai_config.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
+final _log = aiLogger();
+
 // Goal selection (behavior tree). SPEC/ai/ai-architecture.md, ai-personalities.md.
 
-const String _kGoalLogPrefix = 'ai/goal_manager';
-
 /// Top-level strategy goals for the AI.
-enum StrategicGoal {
-  defend,
-  expand,
-  conquer,
-  trade,
-  tech,
-  diplomacy,
-}
+enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 
 /// Selects primary strategic goal from snapshot, personality, and agenda modifiers.
 /// Deterministic given [snapshot], [config], and [goalSeed].
@@ -43,7 +36,8 @@ StrategicGoal selectPrimaryGoal(
   diplomacy += agendaDiplomacyModifier(config.hiddenAgendaId);
   // Personality thresholds: war likelihood boosts conquer; peace/alliance boost diplomacy goal.
   conquer += (thresholds.warLikelihood - 50);
-  diplomacy += ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) - 50;
+  diplomacy +=
+      ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) - 50;
 
   if (snapshot.threats.atWarWith.isNotEmpty) {
     defend += 30;
@@ -67,8 +61,8 @@ StrategicGoal selectPrimaryGoal(
     StrategicGoal.diplomacy: diplomacy,
   };
 
-  Logger().d(
-    '$_kGoalLogPrefix: eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
+  _log.d(
+    'eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
     'weights defend=$defend expand=$expand conquer=$conquer trade=$trade tech=$tech diplomacy=$diplomacy',
   );
 
@@ -84,6 +78,6 @@ StrategicGoal selectPrimaryGoal(
       break;
     }
   }
-  Logger().i('$_kGoalLogPrefix: selected primaryGoal=$selected');
+  _log.i('selected primaryGoal=$selected');
   return selected;
 }
