@@ -58,7 +58,6 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
   }
 
   bool get _canConfirm {
-    if (widget.isHomeFleet) return false;
     return _totalOriginal >= 1;
   }
 
@@ -209,7 +208,7 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
                       }
                     }
                   },
-                  enabled: _totalOriginal > 0 && !widget.isHomeFleet,
+                  enabled: _totalOriginal > 0,
                   child: const Icon(Icons.arrow_back),
                 ),
                 const SizedBox(width: 16),
