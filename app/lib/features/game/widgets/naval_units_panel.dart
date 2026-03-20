@@ -658,8 +658,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                                   onCombineToggle: () =>
                                       _toggleFleetForCombine(group.homeFleet!),
                                   onCombineConfirm: () => _confirmCombine(),
-                                  onSplitFleet: null,
-                                  isSplitAllowed: false,
+                                  onSplitFleet: () =>
+                                      _openSplitDialog(group.homeFleet!),
+                                  isSplitAllowed: true,
                                 ),
                               for (final loc in group.locations) ...[
                                 _LocationHeader(
