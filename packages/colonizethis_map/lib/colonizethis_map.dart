@@ -7,6 +7,7 @@ export 'src/topology_generator.dart';
 export 'src/topology_inference.dart';
 export 'src/tile_map_topology_validation.dart';
 export 'src/tile_map_generator.dart';
+export 'src/tile_map_generation_fn.dart';
 export 'src/tile_map_visualization.dart';
 export 'src/tile_map_visualization_shared.dart'
     show landSeedMarkerRgb, continentSeedMarkerRgb, resourceIdToLegendLetter;

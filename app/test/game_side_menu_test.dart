@@ -7,6 +7,7 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -345,6 +346,50 @@ void main() {
     expect(find.byType(CivilianUnitsPanel), findsOneWidget);
   });
 
+  testWidgets(
+    'GameSideMenu Train presents dialog when side menu was unmounted (regression)',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+          ],
+          child: MaterialApp(
+            home: _SideMenuUnmountingHost(
+              game: game,
+              humanPlayerId: humanPlayerId,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Civilian Units'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GameSideMenu), findsNothing);
+      expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+
+      await tester.tap(find.text('Train'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+      expect(find.text('Train Civilians'), findsOneWidget);
+    },
+  );
+
   testWidgets('GameSideMenu Diplomacy pushes DiplomacyScreen', (
     WidgetTester tester,
   ) async {
@@ -504,5 +549,48 @@ void main() {
 
     expect(closed, isTrue);
   });
+}
+
+/// Mirrors [GameMapArea]: opening Civilian Units calls [GameSideMenu.onClose],
+/// which removes the menu from the tree before the bottom sheet is shown.
+class _SideMenuUnmountingHost extends ConsumerStatefulWidget {
+  const _SideMenuUnmountingHost({
+    required this.game,
+    required this.humanPlayerId,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+
+  @override
+  ConsumerState<_SideMenuUnmountingHost> createState() =>
+      _SideMenuUnmountingHostState();
+}
+
+class _SideMenuUnmountingHostState extends ConsumerState<_SideMenuUnmountingHost> {
+  bool _sideMenuOpen = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          if (_sideMenuOpen)
+            GameSideMenu(
+              game: widget.game,
+              humanPlayerId: widget.humanPlayerId,
+              sideMenuOpen: true,
+              onClose: () => setState(() => _sideMenuOpen = false),
+              onPanelDismissed: () {},
+              onLocateCivilianUnit: (_) {},
+              onLocateMilitaryTile: (_, __) {},
+              onLocateNavalFleet: (_, __) {},
+              onCancelUnitWork: (_) {},
+              onStartWorkTargetSelection: (_, __) {},
+            ),
+        ],
+      ),
+    );
+  }
 }
 

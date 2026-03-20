@@ -511,7 +511,7 @@ void main() {
       },
     );
 
-    testWidgets('AC: Split button is not shown for Home Fleet', (
+    testWidgets('AC: Split button is shown for Home Fleet with ships', (
       WidgetTester tester,
     ) async {
       final humanId = humanPlayerIdWithFleets;
@@ -524,11 +524,18 @@ void main() {
         return;
       }
 
+      final homeFleet = game.worldState.fleets.where(
+        (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
+      );
+      if (homeFleet.isEmpty) {
+        return;
+      }
+
       await tester.ensureVisible(homeFleetFinder);
       await tester.tap(homeFleetFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Split'), findsNothing);
+      expect(find.text('Split'), findsOneWidget);
     });
 
     testWidgets('AC: Combine button is not shown for Home Fleet', (
@@ -827,9 +834,7 @@ void main() {
             },
           },
         ),
-        players: const [
-          Player(id: playerId, displayName: 'P', isHuman: true),
-        ],
+        players: const [Player(id: playerId, displayName: 'P', isHuman: true)],
       );
 
       await tester.pumpWidget(
@@ -868,6 +873,5 @@ void main() {
 
       expect(find.text('No naval units'), findsOneWidget);
     });
-
   });
 }

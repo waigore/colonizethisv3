@@ -33,6 +33,8 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 **Rule:** No UI in shared packages. Game logic lives only in shared packages; app is shell, routing, and integration.
 
+**Riverpod in packages:** Canonical `Provider`s for logic/map/AI seams live in optional `di.dart` libraries; see [dependency-injection.md](dependency-injection.md).
+
 ---
 
 ## Dependency direction

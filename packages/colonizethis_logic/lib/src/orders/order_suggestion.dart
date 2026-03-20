@@ -1070,12 +1070,15 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     } else {
       final inPortProvinceId = fleet.inPortAtProvinceId;
       if (inPortProvinceId == null) continue;
-      final parts = inPortProvinceId.split('|');
-      final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
-      final localId = parts.length > 1
-          ? parts.sublist(1).join('|')
-          : inPortProvinceId;
-      currentZone = seaZoneIdForProvince(topology, localId, regionId: regionId);
+      final rl = regionAndLocalProvinceForFleetInPort(
+        inPortProvinceId,
+        fleet.regionId,
+      );
+      currentZone = seaZoneIdForProvince(
+        topology,
+        rl.localId,
+        regionId: rl.regionId,
+      );
     }
     if (currentZone == null) continue;
 

@@ -179,10 +179,15 @@ Game applyNavalMovesAndShipReveal(
         // Fleet in port: adjacency is from the port's sea zone.
         final inPortProvinceId = fleet.inPortAtProvinceId;
         if (inPortProvinceId == null) continue;
-        final parts = inPortProvinceId.split('|');
-        final regionId = parts.isNotEmpty ? parts.first : fleet.regionId;
-        final localId = parts.length > 1 ? parts.sublist(1).join('|') : inPortProvinceId;
-        currentSeaZoneId = seaZoneIdForProvince(topology, localId, regionId: regionId);
+        final rl = regionAndLocalProvinceForFleetInPort(
+          inPortProvinceId,
+          fleet.regionId,
+        );
+        currentSeaZoneId = seaZoneIdForProvince(
+          topology,
+          rl.localId,
+          regionId: rl.regionId,
+        );
       }
       final destZoneId = order.destinationSeaZoneId;
       if (currentSeaZoneId == null || destZoneId == null || destZoneId.isEmpty) continue;

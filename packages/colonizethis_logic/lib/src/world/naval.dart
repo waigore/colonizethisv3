@@ -6,6 +6,22 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Home fleet id convention for a Great Power. SPEC/game/ships-and-naval.md.
 String homeFleetIdFor(String playerId) => 'fleet_$playerId';
 
+/// Region and local province id for a fleet in port ([inPortAtProvinceId]).
+/// Prefixed ids use [ProvinceId]; legacy unprefixed ids use [fleetRegionId].
+/// SPEC/game/world-model-identity.md.
+({String regionId, String localId}) regionAndLocalProvinceForFleetInPort(
+  String inPortProvinceId,
+  String fleetRegionId,
+) {
+  if (ProvinceId.isPrefixed(inPortProvinceId)) {
+    return (
+      regionId: ProvinceId.regionIdFrom(inPortProvinceId),
+      localId: ProvinceId.localIdFrom(inPortProvinceId),
+    );
+  }
+  return (regionId: fleetRegionId, localId: inPortProvinceId);
+}
+
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
 bool isAdjacentSeaZone(
   MapTopology topology,
