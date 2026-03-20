@@ -277,12 +277,77 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   void _paintTiles(Canvas canvas) {
-    // Guard: if tilesets not loaded yet, render nothing (will render on next frame after load)
-    // This can happen when render() is called before onLoad() completes due to Flame's sync rendering
+    // If Wang tilesets are not ready yet, still paint visibility-aware solid colors so the
+    // map never flashes empty (Flame can render before onLoad completes).
     if (!terrainTilesetCache.isLoaded) {
+      _paintTilesFallback(canvas);
       return;
     }
     _paintTilesWithTilesets(canvas);
+  }
+
+  /// Solid-colour fallback for all cells; honours [CtMapVisibilityMode.playerConstrained].
+  void _paintTilesFallback(Canvas canvas) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    for (final cell in region.cells) {
+      final left = cell.x * cellSize;
+      final top = cell.y * cellSize;
+      final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
+
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed) {
+        paint.color = Colors.black;
+        canvas.drawRect(rect, paint);
+        continue;
+      }
+
+      final Color baseColor;
+      if (cell.isSea) {
+        baseColor = const Color(0xFF003366);
+      } else {
+        final terrain = _terrainTypeForCell(cell);
+        final rgb = terrain != null
+            ? (region.terrainColors[terrain] ?? (128, 128, 128))
+            : (128, 128, 128);
+        baseColor = Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3);
+      }
+
+      paint.color = _fogAdjustedSolidColor(cell, baseColor);
+      canvas.drawRect(rect, paint);
+    }
+  }
+
+  TerrainType? _terrainTypeForCell(CellViewData cell) {
+    if (cell.terrainType != null) return cell.terrainType;
+    final id = cell.terrainTypeId;
+    if (id == null) return null;
+    try {
+      return TerrainType.values.byName(id);
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  Color _fogAdjustedSolidColor(CellViewData cell, Color baseColor) {
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.fogged) {
+      return Color.lerp(baseColor, Colors.black, 0.7)!;
+    }
+    return baseColor;
+  }
+
+  void _paintSeaSolidFallback(
+    Canvas canvas,
+    CellViewData cell,
+    double left,
+    double top,
+  ) {
+    const baseColor = Color(0xFF1e3a5f);
+    final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
+    canvas.drawRect(
+      rect,
+      Paint()..color = _fogAdjustedSolidColor(cell, baseColor),
+    );
   }
 
   void _paintTilesWithTilesets(Canvas canvas) {
@@ -336,10 +401,12 @@ class CtRegionMapComponent extends PositionComponent {
         : terrainTilesetCache.getSeaPlainsTileset();
 
     if (tileset == null) {
-      throw StateError(
-        'Sea tileset is null for dominantLandType=$dominantLandType - '
-        'terrain tileset failed to load',
+      _log.w(
+        'Sea Wang tileset missing for dominantLandType=$dominantLandType; '
+        'using solid sea fallback',
       );
+      _paintSeaSolidFallback(canvas, cell, left, top);
+      return;
     }
 
     if (landCorner.same) {
@@ -359,11 +426,13 @@ class CtRegionMapComponent extends PositionComponent {
             Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
           );
         }
+      } else {
+        _paintSeaSolidFallback(canvas, cell, left, top);
       }
       return;
     }
 
-    _drawTile(
+    if (!_drawTile(
       canvas,
       tileset,
       left,
@@ -373,7 +442,9 @@ class CtRegionMapComponent extends PositionComponent {
       sw: landCorner.sw,
       se: landCorner.se,
       cell: cell,
-    );
+    )) {
+      _paintSeaSolidFallback(canvas, cell, left, top);
+    }
   }
 
   void _paintLandBaseCell(Canvas canvas, CellViewData cell) {

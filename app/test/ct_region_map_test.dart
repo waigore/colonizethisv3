@@ -646,26 +646,17 @@ void main() {
     );
 
     testWidgets(
-      'map throws StateError when terrain tileset fails to load (no silent fallback)',
+      'map builds when Wang tilesets load; uses visibility-aware solid fallback until loaded',
       (WidgetTester tester) async {
-        // This test verifies that the map fails loudly instead of falling back to solid colors
-        // when terrain tilesets cannot be loaded. The behavior is:
-        // - region_map_component.dart throws StateError when tileset is null
-        // - This ensures missing tilesets are visible as errors, not silently rendered as solid colors
-
-        // The global terrainTilesetCache must be loaded for the map to render properly.
-        // If it fails to load (e.g., missing assets), the component will throw.
-        // This test documents the expected behavior: map should NOT silently fall back.
+        // TerrainTilesetCache logs and leaves isLoaded false if Wang assets fail to load.
+        // CtRegionMapComponent then paints [_paintTilesFallback] (no blank frame) until
+        // tilesets succeed. Sea Wang lookup failures at paint time log and use a sea solid
+        // fallback instead of throwing.
         final region = _oldWorldRegion();
 
-        // Build map - if tileset loading failed, this would throw a StateError
-        // rather than rendering solid color fallback
         await tester.pumpWidget(_buildCtRegionMap(region: region));
         await tester.pump();
 
-        // If we reach here, tilesets loaded successfully.
-        // The test verifies that if tilesets failed to load, an error would be thrown
-        // rather than silently falling back to solid colors.
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
