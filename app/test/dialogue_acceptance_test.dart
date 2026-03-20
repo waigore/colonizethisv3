@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
@@ -10,10 +11,42 @@ import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overla
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+class _ThrowingAssetBundle extends Fake implements AssetBundle {
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    throw Exception('missing asset');
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
   group('GameStartIntroOverlay — SPEC/ai/dialogue-management.md § First dialogue emission point', () {
+    testWidgets(
+      'AC: asset load failure shows error shell; Continue invokes onDismissed',
+      (WidgetTester tester) async {
+        var dismissed = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: GameStartIntroOverlay(
+              assetBundle: _ThrowingAssetBundle(),
+              onDismissed: () => dismissed = true,
+              child: const SizedBox(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(
+          find.textContaining('Could not load intro dialogue'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Continue'));
+        await tester.pump();
+        expect(dismissed, isTrue);
+      },
+    );
+
     testWidgets('AC: modal uses CtDialogShell and blocks; intro text and Continue present',
         (WidgetTester tester) async {
       var dismissed = false;
