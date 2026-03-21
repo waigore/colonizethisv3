@@ -417,45 +417,46 @@ void main() {
       expect(find.text('Train'), findsOneWidget);
     });
 
-    testWidgets('AC: Train button opens TrainCiviliansDialog via app event bus', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            currentGameProvider.overrideWith((ref) => game),
-            currentOrdersProvider.overrideWith((ref) => const Orders()),
-            appEventBusProvider.overrideWith((ref) {
-              final bus = AppEventBus.create();
-              ref.onDispose(bus.dispose);
-              return bus;
-            }),
-          ],
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Consumer(
-                  builder: (context, ref, _) {
-                    return CivilianUnitsPanel(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      bus: ref.watch(appEventBusProvider),
-                    );
-                  },
+    testWidgets(
+      'AC: Train button opens TrainCiviliansDialog via app event bus',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              currentGameProvider.overrideWith((ref) => game),
+              currentOrdersProvider.overrideWith((ref) => const Orders()),
+              appEventBusProvider.overrideWith((ref) {
+                final bus = AppEventBus.create();
+                ref.onDispose(bus.dispose);
+                return bus;
+              }),
+            ],
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                home: Scaffold(
+                  body: Consumer(
+                    builder: (context, ref, _) {
+                      return CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerId,
+                        bus: ref.watch(appEventBusProvider),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Train'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Train'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(TrainCiviliansDialog), findsOneWidget);
-      expect(find.text('Train Civilians'), findsOneWidget);
-    });
+        expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+        expect(find.text('Train Civilians'), findsOneWidget);
+      },
+    );
   });
 }
