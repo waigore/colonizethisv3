@@ -1,13 +1,16 @@
+import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +19,7 @@ void main() {
   suppressLogsForTests();
 
   late InitGameResult debugResult;
-  late ct_models.Game baseGame;
+  late Game baseGame;
 
   setUpAll(() {
     debugResult = getDebugInitGameResult();
@@ -26,7 +29,7 @@ void main() {
   Widget buildGameScreen({
     required double width,
     required double height,
-    required ct_models.Game game,
+    required Game game,
     required InitGameMapViewData? mapViewData,
     required Set<String> introShownIds,
   }) {
@@ -35,24 +38,33 @@ void main() {
         currentGameProvider.overrideWith((ref) => game),
         mapViewDataProvider.overrideWith((ref) => mapViewData),
         gameIdsWithIntroShownProvider.overrideWith((ref) => introShownIds),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
       ],
-      child: MaterialApp(
-        theme: AppThemes.colonial,
-        home: MediaQuery(
-          data: MediaQueryData(size: Size(width, height)),
-          child: const GameScreen(),
+      child: AppEventHandlerScope(
+        child: MaterialApp(
+          navigatorKey: appNavigatorKey,
+          theme: AppThemes.colonial,
+          home: MediaQuery(
+            data: MediaQueryData(size: Size(width, height)),
+            child: const GameScreen(),
+          ),
         ),
       ),
     );
   }
 
-  testWidgets('GameScreen shows VictoryOverlay when game.victory is set',
-      (WidgetTester tester) async {
+  testWidgets('GameScreen shows VictoryOverlay when game.victory is set', (
+    WidgetTester tester,
+  ) async {
     final winner = baseGame.players.first;
     final victoryGame = baseGame.copyWith(
-      victory: ct_models.VictoryState(
+      victory: VictoryState(
         winnerPlayerId: winner.id,
-        type: ct_models.VictoryType.military,
+        type: VictoryType.military,
         turnNumber: 7,
       ),
     );
@@ -72,8 +84,9 @@ void main() {
     expect(find.textContaining('wins on turn 7'), findsOneWidget);
   });
 
-  testWidgets('GameScreen shows pause menu and opens bottom sheet',
-      (WidgetTester tester) async {
+  testWidgets('GameScreen shows pause menu and opens bottom sheet', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       buildGameScreen(
         width: 800,
@@ -89,27 +102,28 @@ void main() {
     expect(find.byIcon(Icons.menu), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.menu));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Debug log'), findsOneWidget);
     expect(find.text('Resume'), findsOneWidget);
   });
 
-  testWidgets('GameScreen wraps content in GameStartIntroOverlay when not shown',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      buildGameScreen(
-        width: 800,
-        height: 600,
-        game: baseGame,
-        mapViewData: debugResult.mapViewData,
-        introShownIds: const <String>{},
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 200));
+  testWidgets(
+    'GameScreen wraps content in GameStartIntroOverlay when not shown',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildGameScreen(
+          width: 800,
+          height: 600,
+          game: baseGame,
+          mapViewData: debugResult.mapViewData,
+          introShownIds: const <String>{},
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
 
-    // Just verifying presence is enough to cover the GameScreen branch.
-    expect(find.byType(GameStartIntroOverlay), findsOneWidget);
-  });
+      expect(find.byType(GameStartIntroOverlay), findsOneWidget);
+    },
+  );
 }
-

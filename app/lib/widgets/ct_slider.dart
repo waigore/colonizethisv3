@@ -35,24 +35,40 @@ class _CtSliderState extends State<CtSlider> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final t = ((widget.value - widget.min) / (widget.max - widget.min)).clamp(
-      0,
-      1,
-    );
+    final range = widget.max - widget.min;
+    final t = (range > 0 && range.isFinite)
+        ? ((widget.value - widget.min) / range).clamp(0.0, 1.0)
+        : 0.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final trackHeight = 6.0;
         final handleSize = 14.0;
-        final handleX = t * (width - handleSize);
+        final trackUsable = width.isFinite && width > handleSize
+            ? width - handleSize
+            : 0.0;
+        final handleX =
+            trackUsable > 0 && t.isFinite ? t * trackUsable : 0.0;
 
         void handleTapOrDrag(Offset localPos) {
-          final x = localPos.dx.clamp(0, width - handleSize);
-          final ratio = x / (width - handleSize);
-          final raw = widget.min + ratio * (widget.max - widget.min);
+          if (range <= 0 || !range.isFinite) {
+            widget.onChanged(widget.min);
+            return;
+          }
+          if (!width.isFinite || width <= handleSize) {
+            return;
+          }
+          final d = width - handleSize;
+          final x = localPos.dx.clamp(0.0, d);
+          final ratio = x / d;
+          final raw = widget.min + ratio * range;
           if (widget.divisions > 0) {
-            final step = (widget.max - widget.min) / widget.divisions;
+            final step = range / widget.divisions;
+            if (step <= 0 || !step.isFinite) {
+              widget.onChanged(widget.min);
+              return;
+            }
             final snapped = (raw / step).round() * step + widget.min;
             widget.onChanged(snapped.clamp(widget.min, widget.max));
           } else {

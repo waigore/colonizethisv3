@@ -169,6 +169,7 @@ class DiplomacyPanel extends StatelessWidget {
     required this.topology,
     required this.currentOrders,
     required this.onOrdersChanged,
+    required this.bus,
     this.onClose,
   });
 
@@ -177,6 +178,7 @@ class DiplomacyPanel extends StatelessWidget {
   final MapTopology topology;
   final Orders currentOrders;
   final void Function(Orders) onOrdersChanged;
+  final AppEventBus bus;
   final VoidCallback? onClose;
 
   @override
@@ -301,29 +303,18 @@ class DiplomacyPanel extends StatelessWidget {
 
   void _showConfirmDialog(BuildContext context, DiplomaticOrder order) {
     final actionLabel = _actionLabel(order);
-    showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(actionLabel),
-        content: Text(
-          'Confirm $actionLabel against ${_targetName(order.targetFactionId)}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirm'),
-          ),
-        ],
+    bus.emit(
+      ConfirmDialogEvent(
+        title: actionLabel,
+        message:
+            'Confirm $actionLabel against ${_targetName(order.targetFactionId)}?',
+        onResult: (confirmed) {
+          if (confirmed) {
+            _appendOrder(order);
+          }
+        },
       ),
-    ).then((confirmed) {
-      if (confirmed == true) {
-        _appendOrder(order);
-      }
-    });
+    );
   }
 
   String _targetName(String factionId) {
@@ -352,33 +343,23 @@ class DiplomacyPanel extends StatelessWidget {
               ? 'Grant Aid'
               : 'Set Subsidy';
           final target = _targetName(order.targetFactionId);
-          showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(actionName),
-              content: Text('$actionName of £$amount to $target?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Confirm'),
-                ),
-              ],
+          bus.emit(
+            ConfirmDialogEvent(
+              title: actionName,
+              message: '$actionName of £$amount to $target?',
+              onResult: (confirmed) {
+                if (confirmed) {
+                  _appendOrder(
+                    DiplomaticOrder(
+                      type: order.type,
+                      targetFactionId: order.targetFactionId,
+                      amount: amount,
+                    ),
+                  );
+                }
+              },
             ),
-          ).then((confirmed) {
-            if (confirmed == true) {
-              _appendOrder(
-                DiplomaticOrder(
-                  type: order.type,
-                  targetFactionId: order.targetFactionId,
-                  amount: amount,
-                ),
-              );
-            }
-          });
+          );
         },
       );
     } else if (order.type == DiplomaticOrderType.establishOverture &&

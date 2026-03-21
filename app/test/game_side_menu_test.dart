@@ -1,5 +1,7 @@
+import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
@@ -8,6 +10,7 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -35,64 +38,75 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  testWidgets('GameSideMenu builds empire buttons and close button calls onClose',
-      (WidgetTester tester) async {
-    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
-        ? game.players.where((p) => p.isHuman).first.id
-        : game.players.first.id;
+  testWidgets(
+    'GameSideMenu builds empire buttons and close button calls onClose',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
 
-    var closed = false;
+      var closed = false;
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentGameProvider.overrideWith((ref) => game),
-          currentOrdersProvider.overrideWith((ref) => const Orders()),
-          availableWorkTargetsProvider.overrideWith(
-            (ref) => <String, List<String>>{},
-          ),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () => closed = true,
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
+          ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () => closed = true,
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Production'), findsOneWidget);
-    expect(find.text('Diplomacy'), findsOneWidget);
-    expect(find.text('×'), findsOneWidget);
+      expect(find.text('Production'), findsOneWidget);
+      expect(find.text('Diplomacy'), findsOneWidget);
+      expect(find.text('×'), findsOneWidget);
 
-    await tester.tap(find.text('×'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('×'));
+      await tester.pumpAndSettle();
 
-    expect(closed, isTrue);
-  });
+      expect(closed, isTrue);
+    },
+  );
 
-  testWidgets('GameSideMenu tapping Production navigates to ProductionScreen',
-      (WidgetTester tester) async {
+  testWidgets('GameSideMenu tapping Production navigates to ProductionScreen', (
+    WidgetTester tester,
+  ) async {
     final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
@@ -109,24 +123,33 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -141,8 +164,9 @@ void main() {
     expect(find.text('Production'), findsOneWidget);
   });
 
-  testWidgets('GameSideMenu tapping Technology navigates to TechnologyScreen',
-      (WidgetTester tester) async {
+  testWidgets('GameSideMenu tapping Technology navigates to TechnologyScreen', (
+    WidgetTester tester,
+  ) async {
     final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
@@ -159,24 +183,33 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -211,24 +244,32 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    sideMenuOpen: true,
-                    onClose: () {},
-                    onPanelDismissed: () {},
-                    onLocateCivilianUnit: (_) {},
-                    onLocateMilitaryTile: (_, __) {},
-                    onLocateNavalFleet: (_, __) {},
-                    onCancelUnitWork: (_) {},
-                    onStartWorkTargetSelection: (_, __) {},
-                  ),
-                ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () {},
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -264,24 +305,32 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    sideMenuOpen: true,
-                    onClose: () {},
-                    onPanelDismissed: () {},
-                    onLocateCivilianUnit: (_) {},
-                    onLocateMilitaryTile: (_, __) {},
-                    onLocateNavalFleet: (_, __) {},
-                    onCancelUnitWork: (_) {},
-                    onStartWorkTargetSelection: (_, __) {},
-                  ),
-                ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () {},
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -315,24 +364,32 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -365,11 +422,19 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: _SideMenuUnmountingHost(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: _SideMenuUnmountingHost(
+                game: game,
+                humanPlayerId: humanPlayerId,
+              ),
             ),
           ),
         ),
@@ -387,6 +452,59 @@ void main() {
 
       expect(find.byType(TrainCiviliansDialog), findsOneWidget);
       expect(find.text('Train Civilians'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'TrainCiviliansDialog onClose does not throw when GameSideMenu is disposed',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
+          ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: _SideMenuUnmountingHost(
+                game: game,
+                humanPlayerId: humanPlayerId,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Civilian Units'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Train'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainCiviliansDialog), findsNothing);
     },
   );
 
@@ -409,24 +527,33 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -459,29 +586,37 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          routes: {
-            Routes.debugLog: (_) => const Scaffold(
-                  body: Center(child: Text('debug-route-marker')),
-                ),
-          },
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            routes: {
+              Routes.debugLog: (_) => const Scaffold(
+                body: Center(child: Text('debug-route-marker')),
+              ),
+            },
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -516,24 +651,32 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () => closed = true,
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () => closed = true,
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -541,10 +684,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.drag(
-      find.byType(GameSideMenu),
-      const Offset(-40, 0),
-    );
+    await tester.drag(find.byType(GameSideMenu), const Offset(-40, 0));
     await tester.pumpAndSettle();
 
     expect(closed, isTrue);
@@ -567,7 +707,8 @@ class _SideMenuUnmountingHost extends ConsumerStatefulWidget {
       _SideMenuUnmountingHostState();
 }
 
-class _SideMenuUnmountingHostState extends ConsumerState<_SideMenuUnmountingHost> {
+class _SideMenuUnmountingHostState
+    extends ConsumerState<_SideMenuUnmountingHost> {
   bool _sideMenuOpen = true;
 
   @override
@@ -593,4 +734,3 @@ class _SideMenuUnmountingHostState extends ConsumerState<_SideMenuUnmountingHost
     );
   }
 }
-

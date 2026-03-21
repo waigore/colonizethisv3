@@ -27,6 +27,10 @@ class GameService {
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
 
+  /// Optional event bus to emit game events to. When set, GameToUIEvent variants
+  /// are emitted alongside the raw GameEvent callbacks.
+  AppEventBus? eventBus;
+
   /// In-memory cache: game id -> map data for resolveTurnForGame and map rendering.
   /// Populated when creating a new game or when loading a game with persisted map data.
   final Map<String, _GameMapCache> _mapCache = {};
@@ -118,7 +122,14 @@ class GameService {
       onGameEvent: onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      saveGame(result.game);
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+        ),
+      );
     }
     return result;
   }
@@ -146,7 +157,14 @@ class GameService {
       onGameEvent: onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      saveGame(result.game);
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+        ),
+      );
     }
     return result;
   }
@@ -251,6 +269,7 @@ class GameService {
       warpLinks: result.warpLinks,
     );
     saveGame(result.game);
+    eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
     return result.game;
   }
 }

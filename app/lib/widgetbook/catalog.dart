@@ -314,7 +314,11 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
               : 'gp1';
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: CivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+            child: CivilianUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: AppEventBus(),
+            ),
           );
         },
       ),
@@ -463,6 +467,7 @@ List<WidgetbookNode> get productionPanelDirectories => [
               topology: result.combinedTopology,
               currentOrders: const Orders(),
               onOrdersChanged: (_) {},
+              bus: AppEventBus(),
             ),
           );
         },
@@ -967,6 +972,7 @@ class _CivilianPanelWithMapStoryState
               humanPlayerId: _humanPlayerId,
               currentOrders: _orders,
               availableWorkTargets: const {},
+              bus: AppEventBus(),
               onLocateUnit: _onLocateUnit,
               onRemoveWorkOrder: (playerId, index) {
                 setState(() {
@@ -1032,6 +1038,7 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
                         game: game,
                         humanPlayerId: humanPlayerId,
                         availableWorkTargets: const {},
+                        bus: AppEventBus(),
                       ),
                     );
                   },

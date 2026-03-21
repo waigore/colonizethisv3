@@ -1,10 +1,12 @@
 // Civilian units panel. SPEC/ui/civilian-units-panel.md.
 
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../widgets/ct_dialog_shell.dart';
+import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -92,6 +94,7 @@ class CivilianUnitsPanel extends StatelessWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    required this.bus,
     this.currentOrders = const Orders(),
     this.availableWorkTargets = const {},
     this.onLocateUnit,
@@ -99,11 +102,11 @@ class CivilianUnitsPanel extends StatelessWidget {
     this.onRemoveWorkOrder,
     this.onCancelUnitWork,
     this.onStartWorkTargetSelection,
-    this.onTrainPressed,
   });
 
   final Game game;
   final String humanPlayerId;
+  final AppEventBus bus;
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
   final Orders currentOrders;
@@ -119,9 +122,6 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
-
-  /// Called when the user taps the Train button.
-  final VoidCallback? onTrainPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -158,11 +158,13 @@ class CivilianUnitsPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    if (onTrainPressed != null)
-                      CtNinePatchButton(
-                        onPressed: onTrainPressed,
-                        child: const Text('Train'),
-                      ),
+                    CtNinePatchButton(
+                      onPressed: () {
+                        Navigator.of(context).maybePop();
+                        bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+                      },
+                      child: const Text('Train'),
+                    ),
                   ],
                 ),
               ),
@@ -181,6 +183,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 currentOrders: currentOrders,
                                 availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
+                                bus: bus,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
                                     : null,
@@ -201,6 +204,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 currentOrders: currentOrders,
                                 availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
+                                bus: bus,
                                 onTap: onLocateUnit != null && u.tileKey != null
                                     ? () => onLocateUnit!(u)
                                     : null,
@@ -264,6 +268,7 @@ class _UnitRow extends StatelessWidget {
     required this.currentOrders,
     required this.availableWorkTargets,
     required this.humanPlayerId,
+    required this.bus,
     this.onTap,
     this.onAddWorkOrder,
     this.onRemoveWorkOrder,
@@ -276,6 +281,7 @@ class _UnitRow extends StatelessWidget {
   final Orders currentOrders;
   final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
+  final AppEventBus bus;
   final VoidCallback? onTap;
   final void Function(WorkOrder order)? onAddWorkOrder;
   final void Function(String playerId, int index)? onRemoveWorkOrder;
@@ -396,41 +402,19 @@ class _UnitRow extends StatelessWidget {
   }
 
   Future<void> _confirmCancel(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => CtDialogShell(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Cancel work order?',
-              style: Theme.of(ctx).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'This will cancel the current or pending work for this unit. Materials are not refunded.',
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('No'),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Yes'),
-                ),
-              ],
-            ),
-          ],
-        ),
+    final completer = Completer<bool>();
+    bus.emit(
+      ConfirmDialogEvent(
+        title: 'Cancel work order?',
+        message:
+            'This will cancel the current or pending work for this unit. Materials are not refunded.',
+        confirmLabel: 'Yes',
+        cancelLabel: 'No',
+        onResult: completer.complete,
       ),
     );
-    if (ok != true || !context.mounted) return;
+    final confirmed = await completer.future;
+    if (!confirmed || !context.mounted) return;
     final idx = _pendingIndex;
     if (idx != null && onRemoveWorkOrder != null) {
       onRemoveWorkOrder!(humanPlayerId, idx);
