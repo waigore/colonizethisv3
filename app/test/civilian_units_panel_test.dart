@@ -1,5 +1,7 @@
 // Tests for CivilianUnitsPanel. SPEC/ui/civilian-units-panel.md.
 
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -8,6 +10,61 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+class _EventHandlingWrapper extends StatefulWidget {
+  const _EventHandlingWrapper({
+    required this.bus,
+    required this.child,
+    required this.navigatorKey,
+  });
+
+  final AppEventBus bus;
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  @override
+  State<_EventHandlingWrapper> createState() => _EventHandlingWrapperState();
+}
+
+class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
+      final nav = widget.navigatorKey.currentState;
+      if (nav == null) return;
+      final result = await showDialog<bool>(
+        context: nav.context,
+        builder: (ctx) => AlertDialog(
+          title: Text(event.title),
+          content: Text(event.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(event.cancelLabel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(event.confirmLabel),
+            ),
+          ],
+        ),
+      );
+      event.result(result ?? false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 void main() {
   suppressLogsForTests();
@@ -34,18 +91,26 @@ void main() {
     void Function(String unitId)? onCancelUnitWork,
     void Function(Unit unit, String workTarget)? onStartWorkTargetSelection,
   }) {
+    final bus = AppEventBus();
+    final navigatorKey = GlobalKey<NavigatorState>();
     return MaterialApp(
+      navigatorKey: navigatorKey,
       home: Scaffold(
-        body: CivilianUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          currentOrders: currentOrders,
-          availableWorkTargets: availableWorkTargets,
-          onLocateUnit: onLocateUnit,
-          onAddWorkOrder: onAddWorkOrder,
-          onRemoveWorkOrder: onRemoveWorkOrder,
-          onCancelUnitWork: onCancelUnitWork,
-          onStartWorkTargetSelection: onStartWorkTargetSelection,
+        body: _EventHandlingWrapper(
+          bus: bus,
+          navigatorKey: navigatorKey,
+          child: CivilianUnitsPanel(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            availableWorkTargets: availableWorkTargets,
+            bus: bus,
+            onLocateUnit: onLocateUnit,
+            onAddWorkOrder: onAddWorkOrder,
+            onRemoveWorkOrder: onRemoveWorkOrder,
+            onCancelUnitWork: onCancelUnitWork,
+            onStartWorkTargetSelection: onStartWorkTargetSelection,
+          ),
         ),
       ),
     );

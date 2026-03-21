@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -78,6 +79,7 @@ class GameSideMenu extends ConsumerWidget {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? MapTopology();
+    final bus = ref.read(appEventBusProvider);
 
     return [
       _empireButton(
@@ -86,10 +88,11 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Production',
         onPressed: () {
           onClose();
-          Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (ctx) => ProductionScreen(game: game, player: player),
-            ),
+          bus.emit(
+            ct_models.NavigateToRouteEvent(Routes.production, {
+              'game': game,
+              'humanPlayerId': humanPlayerId,
+            }),
           );
         },
       ),
@@ -121,6 +124,7 @@ class GameSideMenu extends ConsumerWidget {
                 child: CivilianUnitsPanel(
                   game: currentGame,
                   humanPlayerId: humanPlayerId,
+                  bus: bus,
                   currentOrders: currentOrders,
                   availableWorkTargets: availableWorkTargets,
                   onLocateUnit: onLocateCivilianUnit,
@@ -214,19 +218,16 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Diplomacy',
         onPressed: () {
           onClose();
-          Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (_) => DiplomacyScreen(
-                game: game,
-                humanPlayerId: humanPlayerId,
-                topology: topology,
-                currentOrders: orders,
-                onOrdersChanged: (newOrders) {
-                  ref.read(currentOrdersProvider.notifier).state = newOrders;
-                },
-              ),
-            ),
-          );
+          ref
+              .read(appEventBusProvider)
+              .emit(
+                ct_models.NavigateToRouteEvent(Routes.diplomacy, {
+                  'game': game,
+                  'humanPlayerId': humanPlayerId,
+                  'topology': topology,
+                  'currentOrders': orders,
+                }),
+              );
         },
       ),
       _empireButton(
@@ -235,20 +236,15 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Technology',
         onPressed: () {
           onClose();
-          Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (ctx) => Consumer(
-                builder: (ctx, ref, _) => TechnologyScreen(
-                  game: game,
-                  player: player,
-                  currentOrders: ref.watch(currentOrdersProvider),
-                  onOrdersChanged: (newOrders) {
-                    ref.read(currentOrdersProvider.notifier).state = newOrders;
-                  },
-                ),
-              ),
-            ),
-          );
+          ref
+              .read(appEventBusProvider)
+              .emit(
+                ct_models.NavigateToRouteEvent(Routes.technology, {
+                  'game': game,
+                  'humanPlayerId': humanPlayerId,
+                  'currentOrders': orders,
+                }),
+              );
         },
       ),
       Padding(
@@ -256,7 +252,9 @@ class GameSideMenu extends ConsumerWidget {
         child: CtNinePatchButton(
           onPressed: () {
             onClose();
-            Navigator.of(context).pushNamed(Routes.debugLog);
+            ref
+                .read(appEventBusProvider)
+                .emit(const ct_models.NavigateToRouteEvent(Routes.debugLog));
           },
           child: Row(
             mainAxisSize: MainAxisSize.min,
