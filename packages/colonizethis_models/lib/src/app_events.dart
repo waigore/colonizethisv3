@@ -8,6 +8,12 @@
 //
 // Note: GameEvent lives in colonizethis_logic to avoid circular deps.
 // DialogueEvent and PortraitMoodEvent live here in colonizethis_models.
+//
+// Panel requests: prefer typed subclasses below (SPEC/program/app-event-bus.md).
+// [OpenPanelEvent] remains for legacy string-id panels until migrated.
+
+import 'game.dart';
+import 'unit.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
 
@@ -70,6 +76,58 @@ class OpenPanelEvent extends UIActionEvent {
 /// Request to close the current panel or overlay.
 class ClosePanelEvent extends UIActionEvent {
   const ClosePanelEvent();
+}
+
+/// In-game pause menu bottom sheet. Handled by the shell-level event handler (app layer).
+class OpenPauseMenuPanelEvent extends UIActionEvent {
+  const OpenPauseMenuPanelEvent({this.onDebugLog, this.onResume});
+
+  final void Function()? onDebugLog;
+  final void Function()? onResume;
+}
+
+/// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod;
+/// callbacks bridge map/shell behavior (locate, work orders, target pick).
+class OpenCivilianUnitsPanelEvent extends UIActionEvent {
+  OpenCivilianUnitsPanelEvent({
+    required this.onLocateUnit,
+    required this.onRemoveWorkOrder,
+    required this.onCancelUnitWork,
+    required this.onStartWorkTargetSelection,
+    this.onPanelDismissed,
+  });
+
+  final void Function(Unit unit) onLocateUnit;
+  final void Function(String playerId, int index) onRemoveWorkOrder;
+  final void Function(String unitId) onCancelUnitWork;
+  final void Function(Unit unit, String workTarget) onStartWorkTargetSelection;
+
+  /// Invoked when the bottom sheet route is popped (any reason).
+  final void Function()? onPanelDismissed;
+}
+
+/// Military units bottom sheet.
+class OpenMilitaryUnitsPanelEvent extends UIActionEvent {
+  OpenMilitaryUnitsPanelEvent({
+    required this.onLocateTile,
+    this.onPanelDismissed,
+  });
+
+  final void Function(String tileKey, String regionId) onLocateTile;
+  final void Function()? onPanelDismissed;
+}
+
+/// Naval units bottom sheet.
+class OpenNavalUnitsPanelEvent extends UIActionEvent {
+  OpenNavalUnitsPanelEvent({
+    required this.onLocateFleet,
+    required this.onFleetsChanged,
+    this.onPanelDismissed,
+  });
+
+  final void Function(String tileKey, String regionId) onLocateFleet;
+  final void Function(Game game) onFleetsChanged;
+  final void Function()? onPanelDismissed;
 }
 
 /// Request to start a unit target-selection mode (map enters target-pick state).

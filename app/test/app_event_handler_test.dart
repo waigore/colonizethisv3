@@ -157,6 +157,38 @@ void main() {
       expect(find.text('base_route'), findsOneWidget);
     });
 
+    testWidgets('OpenPauseMenuPanelEvent opens pause bottom sheet', (
+      tester,
+    ) async {
+      handler.bind();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navKey,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => bus.emit(
+                  const OpenPauseMenuPanelEvent(
+                    onDebugLog: null,
+                    onResume: null,
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Debug log'), findsOneWidget);
+      expect(find.text('Resume'), findsOneWidget);
+    });
+
     testWidgets('OpenPanelEvent opens registered bottom sheet panel', (
       tester,
     ) async {

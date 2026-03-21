@@ -5,6 +5,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 
 import 'app.dart';
 import 'config/constants.dart';
+import 'core/services/app_event_handler_scope.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,5 +18,5 @@ void main() async {
   } catch (_) {
     // Phase 0: stub wiring; boxes may be locked (e.g. another instance). App still runs.
   }
-  runApp(const ProviderScope(child: App()));
+  runApp(const ProviderScope(child: AppEventHandlerScope(child: App())));
 }

@@ -14,6 +14,7 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
+import '../../../widgets/game_to_ui_bus_listener.dart';
 
 import '../dialogue/game_start_intro_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
@@ -22,17 +23,16 @@ import 'game_map_area.dart';
 import 'victory_overlay.dart';
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
-/// Emits `OpenPanelEvent('pause_menu')` via [bus] to let AppEventHandler open the bottom sheet.
-/// Menu item actions emit `ClosePanelEvent` and `NavigateToRouteEvent`.
+/// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
 void _showPauseMenu(AppEventBus bus) {
   bus.emit(
-    OpenPanelEvent('pause_menu', {
-      'onDebugLog': () {
+    OpenPauseMenuPanelEvent(
+      onDebugLog: () {
         bus.emit(const ClosePanelEvent());
         bus.emit(NavigateToRouteEvent(Routes.debugLog));
       },
-      'onResume': () => bus.emit(const ClosePanelEvent()),
-    }),
+      onResume: () => bus.emit(const ClosePanelEvent()),
+    ),
   );
 }
 
@@ -100,6 +100,10 @@ class GameScreen extends ConsumerWidget {
           VictoryOverlay(game: game, victory: victory),
       ],
     );
+
+    if (game != null) {
+      content = GameToUIBusListener(gameId: game.id, child: content);
+    }
 
     if (showIntro) {
       content = GameStartIntroOverlay(

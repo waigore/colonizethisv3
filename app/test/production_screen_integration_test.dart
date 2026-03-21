@@ -4,8 +4,10 @@
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
-import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -31,6 +33,12 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
+        currentGameProvider.overrideWith((ref) => demoGame),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
         if (initialDesiredOutput != null)
           productionDesiredOutputProvider
               .overrideWith((ref) => initialDesiredOutput),
@@ -38,7 +46,11 @@ void main() {
       child: MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(size: Size(width, height)),
-          child: ProductionScreen(game: demoGame, player: fullPlayer),
+          child: ProductionScreen(
+            game: demoGame,
+            player: fullPlayer,
+            attachGameToUiListener: false,
+          ),
         ),
       ),
     );
