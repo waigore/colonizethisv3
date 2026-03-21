@@ -241,6 +241,7 @@ void main() {
       expect(stock.quantityOf('grain'), expectedGrain);
       expect(stock.quantityOf('lumber'), expectedSlots);
       expect(stock.quantityOf('castIron'), expectedSlots);
+      expect(stock.quantityOf('paper'), starting.initialPaper);
 
       final screen = InGameShellScreen(
         orders: const Orders(),

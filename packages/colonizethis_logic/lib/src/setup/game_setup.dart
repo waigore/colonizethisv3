@@ -142,7 +142,7 @@ GameSetupResult createGameFromGeneratedMaps({
 
   // Base starting stockpile for each Great Power: grain for workers plus
   // enough lumber and castIron to build a small number of level-1 improvements,
-  // plus a small starting quantity of wool.
+  // plus starting wool and paper from config (ruleset-config / StartingResourcesConfig).
   final baseStockpileQuantities = <CommodityId, int>{};
   if (initialGrainQuantity > 0) {
     baseStockpileQuantities[CommodityCatalog.grain.id] = initialGrainQuantity;
@@ -158,6 +158,11 @@ GameSetupResult createGameFromGeneratedMaps({
     baseStockpileQuantities[CommodityCatalog.wool.id] =
         (baseStockpileQuantities[CommodityCatalog.wool.id] ?? 0) +
         startingResources.initialWool;
+  }
+  if (startingResources.initialPaper > 0) {
+    baseStockpileQuantities[CommodityCatalog.paper.id] =
+        (baseStockpileQuantities[CommodityCatalog.paper.id] ?? 0) +
+        startingResources.initialPaper;
   }
 
   var players = <Player>[
