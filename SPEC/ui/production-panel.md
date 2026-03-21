@@ -8,59 +8,7 @@ The production panel lets the player allocate production by setting **desired ou
 
 ## Resource and Worker Icons
 
-Each commodity and worker tier has a unique pixel-art icon (32×32) following the style defined in [game-toolbar-icons.md](game-toolbar-icons.md).
-
-### Icon Asset Names
-
-| Icon ID | Filename | Description |
-|---------|----------|-------------|
-| **Food** |||
-| grain | `ui_icon_com_grain.png` | Wheat sheaf or grain bundle |
-| meat | `ui_icon_com_meat.png` | Meat cut or ham |
-| **Raw Materials** |||
-| timber | `ui_icon_com_timber.png` | Wooden log |
-| iron | `ui_icon_com_iron.png` | Iron ore chunk or ingot |
-| wool | `ui_icon_com_wool.png` | Wool bundle or fleece |
-| cotton | `ui_icon_com_cotton.png` | Cotton boll |
-| coal | `ui_icon_com_coal.png` | Coal lump |
-| sugar_cane | `ui_icon_com_sugar_cane.png` | Sugar cane stalk |
-| tobacco | `ui_icon_com_tobacco.png` | Tobacco leaf |
-| furs | `ui_icon_com_furs.png` | Fur pelt |
-| copper | `ui_icon_com_copper.png` | Copper ingot |
-| tin | `ui_icon_com_tin.png` | Tin ingot |
-| horses | `ui_icon_com_horses.png` | Horse head |
-| **Manufactured** |||
-| lumber | `ui_icon_com_lumber.png` | Stack of lumber planks |
-| cast_iron | `ui_icon_com_cast_iron.png` | Cast iron product |
-| fabric | `ui_icon_com_fabric.png` | Fabric bolt or cloth roll |
-| refined_sugar | `ui_icon_com_refined_sugar.png` | Sugar loaf |
-| cigars | `ui_icon_com_cigars.png` | Cigar bundle |
-| fur_hats | `ui_icon_com_fur_hats.png` | Fur hat |
-| steel | `ui_icon_com_steel.png` | Steel ingot |
-| paper | `ui_icon_com_paper.png` | Paper scroll or sheet |
-| bronze | `ui_icon_com_bronze.png` | Bronze ingot |
-| **Workers** |||
-| peasant | `ui_icon_worker_peasant.png` | Peasant worker |
-| apprentice | `ui_icon_worker_apprentice.png` | Apprentice worker |
-| journeyman | `ui_icon_worker_journeyman.png` | Journeyman worker |
-| master | `ui_icon_worker_master.png` | Master craftsman |
-
-### Icon Style
-
-Icons follow the style defined in [game-toolbar-icons.md](game-toolbar-icons.md):
-- Size: 32×32 pixels
-- Format: PNG with RGBA transparency
-- Outline: `single color outline`
-- Shading: `medium shading`
-- Detail: `medium detail`
-- View: `high top-down` (orthographic)
-- Style lock: Match color palette from `ui_main_menu_button.png`
-
-### Icon Usage
-
-Icons appear in two contexts:
-1. **Available subpanel:** Before each commodity and worker quantity line
-2. **Allocation subpanel:** Before each commodity name in recipe labels (output and inputs)
+Asset filenames and style for commodities and workers appear in [game-toolbar-icons.md](game-toolbar-icons.md) § Resource & Worker Icons (Production Panel). **Usage:** (1) **Available** — icon before each commodity/worker line; (2) **Allocation** — icon before the **output** commodity name on each recipe row (input materials are listed by name in parentheses).
 
 ## Layout
 
@@ -71,7 +19,7 @@ Icons appear in two contexts:
   - **Workers section:** Displayed in a **2-column grid**. Each cell shows: icon, worker type, and count.
   - **Effective labour:** Bold line at bottom of workers section.
   - Read-only display of stockpile quantities and net changes from current allocations.
-- **Subpanel 2 — Allocation (right):** One row per production recipe: label showing output icon with commodity name and input icons with names (e.g. "🪵 Lumber (🪵 timber ×2)"), slider for desired output, and validation feedback when labour is insufficient.
+- **Subpanel 2 — Allocation (right):** One row per recipe: left, output icon + name and inputs in parentheses; **right-aligned** on that row, `max · bottleneck` (`max` = slider cap; `bottleneck` = limiting commodity **display name** or **Labour**). Next row: slider; **right-aligned** numeric desired output. Summary lines below retain total labour / insufficient-labour warning.
 - Subpanels are laid out in a **row** (Available | Allocation) to conserve horizontal space.
 
 ### Mobile / narrow viewport (e.g. width < 600 dp)
@@ -90,32 +38,18 @@ Icons appear in two contexts:
 
 - Sliders adjust desired output; recipe labels display **icon + output commodity name** followed by **icon + input commodities** in parentheses (e.g. "🪵 Lumber (🪵 timber ×2)").
 - **Reset:** A "Reset" button clears all slider allocations to zero.
-- **Validation:** Each recipe slider is capped at the **achievable runs** considering both current stockpile inputs AND labour already allocated to other recipes. The slider maximum is recalculated dynamically as other allocations change. The UI does not accept a desired output above that cap. When total required labour across all recipes exceeds effective labour, the UI shows **insufficient labour** and displays a warning that production will be capped next turn.
+- **Validation:** Slider max = same **max** as the affordance readout: min of labour headroom (excluding this recipe) and each input’s stock headroom (excluding this recipe), after subtracting **other** recipes’ committed inputs/labour; then clamp 0–`kProductionAllocationSliderCap` (50). Recalculates on **any** allocation change. No desired output above that max. If **total** required labour > effective labour, show error styling and “capped next turn” message.
+- **Affordance bottleneck:** Tightest of labour + **all** recipe inputs (catalog display names; labour label **Labour**). **Ties:** first tied **input** in `inputQuantities` iteration order; if no input ties, **Labour**.
 - **Net Changes:** The Available panel displays expected net change for each commodity based on current allocations, shown in parentheses (positive for production, negative for consumption).
 - When the player advances the turn, the app passes the current allocation as production assignments for the human player to the turn resolver (`defaultAssignmentsByPlayerId`). Assignment is not persisted in the save (app state only) unless extended later.
 - The turn resolver still runs as many complete recipe runs as inputs and labour allow (per production-recipes.md).
 
 ## Acceptance Criteria
 
-- **Given** the user opens the production panel, **when** viewing the Available subpanel, **then** the UI layer shows commodity groups (Food, Raw Materials, Manufactured) in a 3-column grid layout with stockpile quantities and icons for all commodities from the commodity catalog, and worker pool tiers (peasants, apprentices, journeymen, masters) in a 2-column grid layout plus effective labour.
-
-- **Given** the user opens the production panel, **when** viewing any commodity or worker entry, **then** the UI displays the corresponding 32×32 pixel-art icon before the name, matching the style from [game-toolbar-icons.md](game-toolbar-icons.md).
-
-- **Given** the user opens the production panel with active allocations, **when** viewing the Available subpanel, **then** each commodity displays its icon, name, current quantity, followed by the expected net change in parentheses (e.g. "🪵 Timber: 100 (-20)").
-
-- **Given** the user is on the Allocation subpanel, **when** viewing the recipe labels, **then** each label shows the output icon and commodity name followed by input icons and commodity names in parentheses (e.g. "🪵 Lumber (🪵 timber ×2)").
-
-- **Given** the user is on the Allocation subpanel, **when** the user moves a slider for a recipe, **then** the UI layer enforces the slider maximum at the achievable runs for that recipe, considering both current stockpile inputs and labour already allocated to other recipes.
-
-- **Given** the user taps the Reset button, **when** viewing the Allocation subpanel, **then** all sliders are set to zero and the allocation state is cleared.
-
-- **Given** the user has set desired outputs and closes the panel, **when** the user presses Next turn, **then** the system passes the corresponding production assignments for the human player to the turn resolver and production runs accordingly.
-
-- **Given** the total required labour across all recipes exceeds the player's effective labour, **when** the user views the Allocation subpanel, **then** the UI layer shows total required labour vs effective labour in error colour and a message that production will be capped next turn.
-
-- **Given** the viewport width is less than 600 dp (narrow/mobile), **when** the production panel is displayed, **then** the UI layer stacks the Available subpanel above the Allocation subpanel in a single column and makes the content scrollable so all content is reachable, while maintaining 3-column resource grids and 2-column worker grid.
-
-- **Given** the viewport width is at least 600 dp (wide), **when** the production panel is displayed, **then** the UI layer shows the Available subpanel and the Allocation subpanel side by side in a row.
+- **Available:** Food / Raw Materials / Manufactured in **3-column** grids (icon, name, qty, net change in parentheses); Workers **2-column** + effective labour; icons 32×32 per [game-toolbar-icons.md](game-toolbar-icons.md).
+- **Allocation:** Each recipe: output icon + name; inputs in parentheses; **right-aligned** `max · bottleneck`; slider row with **right-aligned** desired number. **max** equals slider cap (Behaviour). Changing **any** recipe’s allocation updates **every** row’s **max** / **bottleneck**.
+- **Reset** clears all sliders. **Next turn** passes human assignments to the turn resolver. **Labour line** uses error colour + cap message when total required labour > effective.
+- **Narrow (<600 dp):** stack subpanels, scroll, keep grid column counts. **Wide (≥600 dp):** Available | Allocation in a row.
 
 ## Integration
 

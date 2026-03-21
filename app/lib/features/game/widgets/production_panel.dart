@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../production_recipe_affordance.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_slider.dart';
@@ -288,58 +289,6 @@ class _AllocationSubpanel extends StatelessWidget {
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
-  static const int _absoluteMaxSliderOutput = 50;
-
-  int _remainingLabour(String excludeRecipeId) {
-    int used = 0;
-    for (final entry in desiredOutputByRecipe.entries) {
-      if (entry.key == excludeRecipeId) continue;
-      final recipe = ProductionRecipesCatalog.byId[entry.key];
-      if (recipe != null) {
-        used += entry.value * recipe.labourPerOutput;
-      }
-    }
-    return (effectiveLabour - used).clamp(0, effectiveLabour);
-  }
-
-  Map<String, int> _remainingInputs(String excludeRecipeId) {
-    final remaining = <String, int>{};
-    for (final comm in CommodityCatalog.all) {
-      remaining[comm.id] = player.stockpile.quantityOf(comm.id);
-    }
-    for (final entry in desiredOutputByRecipe.entries) {
-      if (entry.key == excludeRecipeId) continue;
-      final recipe = ProductionRecipesCatalog.byId[entry.key];
-      if (recipe != null) {
-        for (final input in recipe.inputQuantities.entries) {
-          remaining[input.key] =
-              (remaining[input.key] ?? 0) - (input.value * entry.value);
-        }
-      }
-    }
-    for (final key in remaining.keys.toList()) {
-      if (remaining[key]! < 0) remaining[key] = 0;
-    }
-    return remaining;
-  }
-
-  int _achievableRunsForRecipe(ProductionRecipe recipe) {
-    final remainingLabour = _remainingLabour(recipe.id);
-    var maxByLabour = remainingLabour ~/ recipe.labourPerOutput;
-    if (maxByLabour <= 0) return 0;
-    final remainingInputs = _remainingInputs(recipe.id);
-    var maxByInputs = maxByLabour;
-    for (final entry in recipe.inputQuantities.entries) {
-      final remaining = remainingInputs[entry.key] ?? 0;
-      final perRun = entry.value;
-      if (perRun <= 0) continue;
-      final runs = remaining ~/ perRun;
-      if (runs < maxByInputs) maxByInputs = runs;
-    }
-    final cap = maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
-    return cap.clamp(0, _absoluteMaxSliderOutput);
-  }
-
   Widget _buildRecipeLabel(ProductionRecipe recipe, ThemeData theme) {
     final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
     final outputName = outputCommodity?.displayName ?? recipe.outputCommodityId;
@@ -354,10 +303,6 @@ class _AllocationSubpanel extends StatelessWidget {
 
     final hasOutputIcon =
         outputCommodity != null && ResourceIcon.hasIcon(outputCommodity.id);
-    final inputCommodities = recipe.inputQuantities.entries
-        .map((e) => CommodityCatalog.byId[e.key])
-        .whereType<Commodity>()
-        .toList();
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -412,10 +357,18 @@ class _AllocationSubpanel extends StatelessWidget {
             const SizedBox(height: 8),
             ...ProductionRecipesCatalog.all.map((recipe) {
               final desired = desiredOutputByRecipe[recipe.id] ?? 0;
-              final maxAchievable = _achievableRunsForRecipe(recipe);
+              final affordance = computeRecipeAffordance(
+                recipe: recipe,
+                stockpile: player.stockpile,
+                desiredOutputByRecipe: desiredOutputByRecipe,
+                effectiveLabour: effectiveLabour,
+              );
+              final maxAchievable = affordance.maxDesiredOutput;
               final sliderMax = maxAchievable == 0
                   ? 0.0
-                  : maxAchievable.clamp(1, _absoluteMaxSliderOutput).toDouble();
+                  : maxAchievable
+                        .clamp(1, kProductionAllocationSliderCap)
+                        .toDouble();
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -423,7 +376,24 @@ class _AllocationSubpanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildRecipeLabel(recipe, theme),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: _buildRecipeLabel(recipe, theme),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${affordance.maxDesiredOutput} · ${affordance.limitingLabel}',
+                            textAlign: TextAlign.right,
+                            style: theme.textTheme.labelSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                     Row(
                       children: [
                         Expanded(
@@ -435,7 +405,7 @@ class _AllocationSubpanel extends StatelessWidget {
                                 ? 1
                                 : maxAchievable.clamp(
                                     1,
-                                    _absoluteMaxSliderOutput,
+                                    kProductionAllocationSliderCap,
                                   ),
                             onChanged: (v) {
                               final next = Map<String, int>.from(
@@ -455,6 +425,7 @@ class _AllocationSubpanel extends StatelessWidget {
                           width: 36,
                           child: Text(
                             '$desired',
+                            textAlign: TextAlign.right,
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
