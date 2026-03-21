@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -11,6 +12,9 @@ import 'app_event_handler.dart';
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-event-bus.md.
 const String trainCiviliansDialogId = 'train_civilians';
+
+/// [OpenDialogEvent] id for [GrantOrSubsidyDialog]. SPEC/program/app-event-bus.md.
+const String grantOrSubsidyDialogId = 'grant_or_subsidy';
 
 final _log = Logger();
 
@@ -56,16 +60,32 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             currentOrders: orders,
             onOrdersChanged: (newOrders) {
               final o = container.read(currentOrdersProvider);
-              final existing =
-                  o.buildUnitOrdersByPlayerId[humanPlayerId] ?? [];
-              container.read(currentOrdersProvider.notifier).state = o
-                  .copyWith(
-                    buildUnitOrdersByPlayerId: {
-                      ...o.buildUnitOrdersByPlayerId,
-                      humanPlayerId: [...existing, ...newOrders],
-                    },
-                  );
+              final existing = o.buildUnitOrdersByPlayerId[humanPlayerId] ?? [];
+              container.read(currentOrdersProvider.notifier).state = o.copyWith(
+                buildUnitOrdersByPlayerId: {
+                  ...o.buildUnitOrdersByPlayerId,
+                  humanPlayerId: [...existing, ...newOrders],
+                },
+              );
             },
+          );
+        },
+        grantOrSubsidyDialogId: (ctx, params) {
+          final container = ProviderScope.containerOf(ctx);
+          final game = container.read(currentGameProvider);
+          if (game == null) {
+            return const SizedBox.shrink();
+          }
+          final humanPlayerId = _humanPlayerId(game);
+          final bus = container.read(appEventBusProvider);
+          final isSubsidy = params?['isSubsidy'] as bool? ?? false;
+          final targetFactionId = params?['targetFactionId'] as String? ?? '';
+          return GrantOrSubsidyDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            targetFactionId: targetFactionId,
+            isSubsidy: isSubsidy,
+            bus: bus,
           );
         },
       },

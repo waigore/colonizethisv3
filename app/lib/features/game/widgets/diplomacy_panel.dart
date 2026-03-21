@@ -5,10 +5,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/routes.dart';
+import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
-import 'diplomacy_dialogs.dart';
-import 'diplomacy_detail_screen.dart';
 
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
@@ -332,35 +332,11 @@ class DiplomacyPanel extends StatelessWidget {
   void _showDialogForOrder(BuildContext context, DiplomaticOrder order) {
     if (order.type == DiplomaticOrderType.grantAid ||
         order.type == DiplomaticOrderType.setSubsidy) {
-      showGrantOrSubsidyDialog(
-        context: context,
-        game: game,
-        humanPlayerId: humanPlayerId,
-        targetFactionId: order.targetFactionId,
-        isSubsidy: order.type == DiplomaticOrderType.setSubsidy,
-        onSubmitted: (amount) {
-          final actionName = order.type == DiplomaticOrderType.grantAid
-              ? 'Grant Aid'
-              : 'Set Subsidy';
-          final target = _targetName(order.targetFactionId);
-          bus.emit(
-            ConfirmDialogEvent(
-              title: actionName,
-              message: '$actionName of £$amount to $target?',
-              onResult: (confirmed) {
-                if (confirmed) {
-                  _appendOrder(
-                    DiplomaticOrder(
-                      type: order.type,
-                      targetFactionId: order.targetFactionId,
-                      amount: amount,
-                    ),
-                  );
-                }
-              },
-            ),
-          );
-        },
+      bus.emit(
+        OpenDialogEvent(grantOrSubsidyDialogId, {
+          'targetFactionId': order.targetFactionId,
+          'isSubsidy': order.type == DiplomaticOrderType.setSubsidy,
+        }),
       );
     } else if (order.type == DiplomaticOrderType.establishOverture &&
         order.overtureStage != null) {
@@ -386,17 +362,15 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context, DiplomacyRowData row) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => DiplomacyDetailScreen(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          factionId: row.factionId,
-          factionDisplayName: row.displayName,
-          kind: row.kind,
-          relation: row.relation,
-        ),
-      ),
+    bus.emit(
+      NavigateToRouteEvent(Routes.diplomacyDetail, {
+        'game': game,
+        'humanPlayerId': humanPlayerId,
+        'factionId': row.factionId,
+        'factionDisplayName': row.displayName,
+        'kind': row.kind,
+        'relation': row.relation,
+      }),
     );
   }
 
