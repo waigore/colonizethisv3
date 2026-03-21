@@ -149,6 +149,19 @@ class CancelTargetSelectionEvent extends UIActionEvent {
   const CancelTargetSelectionEvent();
 }
 
+/// Emitted by GrantOrSubsidyDialog when user submits the amount form.
+/// Carries the data needed to show a final confirmation dialog.
+class GrantOrSubsidySubmittedEvent extends UIActionEvent {
+  const GrantOrSubsidySubmittedEvent({
+    required this.targetFactionId,
+    required this.amount,
+    required this.isSubsidy,
+  });
+  final String targetFactionId;
+  final int amount;
+  final bool isSubsidy;
+}
+
 // ---------------------------------------------------------------------------
 // UISystemEvent — emitted by any layer to request transient system feedback.
 // ---------------------------------------------------------------------------

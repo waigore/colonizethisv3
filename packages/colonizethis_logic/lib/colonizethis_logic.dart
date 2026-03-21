@@ -51,6 +51,11 @@ export 'src/orders/order_suggestion.dart'
 export 'src/orders/order_suggestion_api_impl.dart';
 export 'src/orders/order_visibility.dart';
 export 'src/orders/orders_application.dart';
+export 'src/orders/unit_type_helpers.dart' show
+    devExclusiveReservedTileKeysForPlayer,
+    devExclusiveTilesFromWorld,
+    isDevExclusiveUnitType,
+    isDevExclusiveWorkTarget;
 
 // Diplomacy
 export 'src/diplomacy/diplomacy_resolver.dart';
