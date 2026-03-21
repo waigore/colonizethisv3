@@ -153,16 +153,42 @@ void main() {
     });
 
     test('OpenPauseMenuPanelEvent equal when both use null callbacks', () {
-      expect(
-        const OpenPauseMenuPanelEvent(),
-        const OpenPauseMenuPanelEvent(),
-      );
+      expect(const OpenPauseMenuPanelEvent(), const OpenPauseMenuPanelEvent());
     });
 
     test('StartTargetSelectionEvent equal for same params', () {
       expect(
         const StartTargetSelectionEvent(unitId: 'u1', action: 'move'),
         const StartTargetSelectionEvent(unitId: 'u1', action: 'move'),
+      );
+    });
+
+    test('GrantOrSubsidySubmittedEvent equal for same params', () {
+      expect(
+        const GrantOrSubsidySubmittedEvent(
+          targetFactionId: 'gp2',
+          amount: 500,
+          isSubsidy: false,
+        ),
+        const GrantOrSubsidySubmittedEvent(
+          targetFactionId: 'gp2',
+          amount: 500,
+          isSubsidy: false,
+        ),
+      );
+      expect(
+        const GrantOrSubsidySubmittedEvent(
+          targetFactionId: 'gp2',
+          amount: 500,
+          isSubsidy: false,
+        ),
+        isNot(
+          const GrantOrSubsidySubmittedEvent(
+            targetFactionId: 'gp2',
+            amount: 500,
+            isSubsidy: true,
+          ),
+        ),
       );
     });
   });

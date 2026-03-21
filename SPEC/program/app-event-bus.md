@@ -56,7 +56,8 @@ AppEvent (sealed)
 │   ├── OpenNavalUnitsPanelEvent(onLocateFleet, onFleetsChanged, onPanelDismissed?)
 │   ├── ClosePanelEvent()
 │   ├── StartTargetSelectionEvent(unitId, action, onComplete?, onCancel?)
-│   └── CancelTargetSelectionEvent()
+│   ├── CancelTargetSelectionEvent()
+│   └── GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy)
 │
 ├── UISystemEvent        — transient system feedback
 │   ├── ShowSnackBarEvent(message, actionLabel?, action?)
@@ -141,6 +142,7 @@ class AppEventHandler {
 | ID | Widget | Registered in |
 |----|--------|----------------|
 | `train_civilians` | `TrainCiviliansDialog` | `app_event_handler_scope.dart` (`trainCiviliansDialogId`) |
+| `grant_or_subsidy` | `GrantOrSubsidyDialog` | `app_event_handler_scope.dart` (`grantOrSubsidyDialogId`) |
 
 | ID | Widget | Status |
 |----|--------|--------|
@@ -148,7 +150,7 @@ class AppEventHandler {
 | `combat_mode_choice` | `CombatModeChoiceDialog` | planned |
 | `map_display_options` | inline `AlertDialog` | planned |
 | `tech_detail` | tech detail dialog | planned |
-| `grant_or_subsidy` | `GrantOrSubsidyDialog` | planned |
+| `split_fleet` | `SplitFleetDialog` | planned |
 
 ---
 
@@ -161,6 +163,7 @@ Routes are named strings passed via `NavigateToRouteEvent`. Handled by `AppEvent
 | `Routes.debugLog` | `DebugLogViewerScreen` |
 | `Routes.production` | `ProductionScreen` (in-game, full screen) |
 | `Routes.diplomacy` | `DiplomacyScreen` (in-game, full screen) |
+| `Routes.diplomacyDetail` | `DiplomacyDetailScreen` (in-game, full screen) |
 | `Routes.technology` | `TechnologyScreen` (in-game, full screen) |
 
 ---
@@ -180,7 +183,18 @@ The raw `GameEvent` stream from `TurnResolver` remains available via `void Funct
 
 ## Remaining migration
 
-- Replace remaining inline dialogs with `OpenDialogEvent` + builders (combat, map options, tech detail, grant/subsidy).
+### Completed
+- `grant_or_subsidy` dialog → `OpenDialogEvent('grant_or_subsidy')` via `GrantOrSubsidyDialog` widget + `GrantOrSubsidySubmittedEvent`
+- `DiplomacyDetailScreen` push → `NavigateToRouteEvent(Routes.diplomacyDetail)`
+- `DiplomacyDetailScreen` back button → `PopNavigationEvent` via `DiplomacyDetailScreen` as `ConsumerWidget`
+
+### Planned
+- Replace remaining inline dialogs with `OpenDialogEvent` + builders:
+  - `quick_battle_result` (`QuickBattleResultDialog`)
+  - `combat_mode_choice` (`CombatModeChoiceDialog`)
+  - `map_display_options` (inline `AlertDialog` in `GameMapArea`)
+  - `tech_detail` (inline dialog in `TechTreeWidget`)
+  - `split_fleet` (`SplitFleetDialog` in `NavalUnitsPanel`)
 - Prefer new typed panel events over `OpenPanelEvent(panelId)` for any new panels.
 
 ---
@@ -204,6 +218,8 @@ The raw `GameEvent` stream from `TurnResolver` remains available via `void Funct
 
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
 - Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` directly).
+- Given `DiplomacyPanel` is mounted with a bus, When the user taps a Grant Aid or Set Subsidy action, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
+- Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
 
 ### GameToUI and screens
 
