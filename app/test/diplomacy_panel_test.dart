@@ -16,6 +16,61 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
+class _EventHandlingWrapper extends StatefulWidget {
+  const _EventHandlingWrapper({
+    required this.bus,
+    required this.child,
+    required this.navigatorKey,
+  });
+
+  final AppEventBus bus;
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  @override
+  State<_EventHandlingWrapper> createState() => _EventHandlingWrapperState();
+}
+
+class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
+      final nav = widget.navigatorKey.currentState;
+      if (nav == null) return;
+      final result = await showDialog<bool>(
+        context: nav.context,
+        builder: (ctx) => AlertDialog(
+          title: Text(event.title),
+          content: Text(event.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(event.cancelLabel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(event.confirmLabel),
+            ),
+          ],
+        ),
+      );
+      event.result(result ?? false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 Future<void> _preWarmFlameImageCache() async {
   try {
     final bytes = await rootBundle.load(
@@ -80,15 +135,21 @@ Widget buildPanel({
   AppEventBus? bus,
 }) {
   final panelBus = bus ?? AppEventBus();
+  final navigatorKey = GlobalKey<NavigatorState>();
   return MaterialApp(
+    navigatorKey: navigatorKey,
     home: Scaffold(
-      body: _PanelWrapper(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-        initialOrders: currentOrders,
+      body: _EventHandlingWrapper(
         bus: panelBus,
-        onOrdersChanged: onOrdersChanged,
+        navigatorKey: navigatorKey,
+        child: _PanelWrapper(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+          initialOrders: currentOrders,
+          bus: panelBus,
+          onOrdersChanged: onOrdersChanged,
+        ),
       ),
     ),
   );
@@ -260,9 +321,9 @@ void main() {
         if (declareWar.evaluate().isNotEmpty) {
           await tester.tap(declareWar.first);
           await tester.pumpAndSettle();
-          expect(find.text('Confirm'), findsOneWidget);
+          expect(find.text('OK'), findsOneWidget);
           expect(find.text('Cancel'), findsWidgets);
-          await tester.tap(find.text('Confirm'));
+          await tester.tap(find.text('OK'));
           await tester.pumpAndSettle();
           expect(captured, isNotNull);
           expect(
@@ -297,7 +358,7 @@ void main() {
         if (declareWar.evaluate().isNotEmpty) {
           await tester.tap(declareWar.first);
           await tester.pumpAndSettle();
-          expect(find.text('Confirm'), findsOneWidget);
+          expect(find.text('OK'), findsOneWidget);
           final cancelBtn = find.widgetWithText(TextButton, 'Cancel');
           await tester.tap(cancelBtn.first);
           await tester.pumpAndSettle();
