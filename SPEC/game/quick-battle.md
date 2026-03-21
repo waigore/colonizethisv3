@@ -29,6 +29,16 @@ Province terrain provides a base context; each lane is tagged with a single terr
 
 Lane terrain is used as a modifier on top of existing tactical stats (FPN, FPM, RNG, DEF, MVR).
 
+## Emplaced fort artillery (virtual units)
+
+When the battle is a **siege** (`fortLevel ≥ 1` per [siege-mechanics.md](siege-mechanics.md)), the System **injects virtual emplaced gun entities** for the **defender** only. They are **not** stored as `Unit` records on the province map; they are created when Quick Battle input is built and discarded after the battle.
+
+- **Count:** Matches fort level (1 / 2 / 3 guns). **Stats:** Each has **HP** and **attack** and **defense** strength derived from ruleset tables and the defender’s emplaced-quality tech (Royal → Heavy → Siege) per [tech-tree-military.md](tech-tree-military.md); **+1 RNG** vs same-era heavy artillery baseline applies when resolving their fire. **Assignment:** The System auto-places them **behind the fort** in a single deterministic slot (e.g. defender `CENTER` + `SUPPORT`, or a documented “battery” attachment to that lane — exact placement is fixed in SPEC/program so seeds replay identically).
+- **Targeting:** Quick Battle actions that deal damage to defender combatants **may** allocate damage to these virtual guns per the technical spec (which actions hit the battery first vs front-line regiments is defined in [quick-battle-resolution.md](../program/quick-battle-resolution.md)).
+- **Field artillery:** Attacker and defender **regiment** artillery remain normal units in battalion groups. Virtual emplaced guns **do not** duplicate them.
+
+**Integration:** When Quick Battle ends, if **every** virtual emplaced gun was destroyed, the combat pipeline **must** decrement province `fortLevel` by 1 (floor at 0) when applying results, regardless of whether the province flips. The Quick Battle resolver **must not** add a parallel lump-sum emplaced strength term for those same guns (no double-counting).
+
 ## Cohesion (morale) model
 
 Each battalion group (lane + line) has a **cohesion** value on a 0–3 integer scale:
@@ -92,7 +102,7 @@ After up to 3 rounds (or earlier if one side collapses), the Quick Battle produc
 - Updated status of key lanes and side morale (e.g. broken center vs intact battle line).
 - A single **battle result**: decisive attacker win, decisive defender hold, or mutual exhaustion.
 
-Quick Battle does **not** change the underlying combat formula; it supplies structured inputs (lane-level strengths, modifiers, cohesion effects) into the existing resolution pipeline and receives standard outputs:
+Quick Battle does **not** change the underlying combat formula for **map regiments**; it supplies structured inputs (lane-level strengths, modifiers, cohesion effects) into the resolution pipeline and receives standard outputs. **Siege Quick Battle** additionally runs the **virtual emplaced gun** model above, which replaces the aggregate emplaced defender bonus for that path only:
 
 - Casualty lists for both sides.
 - Whether the province flips to the attacker or remains with the defender (consistent with combat and siege rules).
@@ -130,4 +140,16 @@ The game then applies casualties and province ownership changes using the same w
 - Given a Quick Battle round is about to begin and both sides have regiments and optional general medals  
   When the System determines which side acts first in that round  
   Then the System computes initiative consistent with [combat.md](combat.md) § Rules (Initiative) (cavalryShare × W_cav + generalMedals × W_medal) and uses that ordering (or tie-break by faction id) to decide first-acting side. General medals (deployment limit, initiative, morale aura) apply the same way as in auto-resolve per [military-generals.md](military-generals.md).
+
+- Given a siege Quick Battle (`fortLevel` 1, 2, or 3) is initialized for a province  
+  When the System builds Quick Battle input  
+  Then the System includes the correct count of virtual emplaced gun entities with per-gun HP and attack/defense per [siege-mechanics.md](siege-mechanics.md), places them behind the fort in the documented lane/line slot, and does not add duplicate virtual guns for defender field artillery regiments already on the map.
+
+- Given a siege Quick Battle is in progress and at least one virtual emplaced gun has remaining HP  
+  When a Quick Battle action that can deal damage to the defender resolves  
+  Then the System may reduce emplaced gun HP (or destroy guns) according to [quick-battle-resolution.md](../program/quick-battle-resolution.md); destroyed guns do not contribute further offense or defense for that battle.
+
+- Given a siege Quick Battle completes and every virtual emplaced gun was destroyed during the battle  
+  When the combat pipeline applies the Quick Battle result to world state  
+  Then the System sets the province `fortLevel` to `max(0, previousFortLevel - 1)` regardless of `provinceFlips` or mutual exhaustion, and applies regiment casualties and ownership per existing rules.
 
