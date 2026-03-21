@@ -18,8 +18,11 @@ final currentGameProvider = StateProvider<Game?>((ref) => null);
 /// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.
 final currentOrdersProvider = StateProvider<Orders>((ref) => const Orders());
 
-/// Computes available work targets for each civilian unit at turn start.
-/// Returns a map from unitId to list of work targets that have at least one valid tile.
+/// Available work targets per civilian unit (unitId → allowed target ids).
+///
+/// **SPEC/program/order-suggestions.md** and **orders.md**: derived entirely from
+/// [suggestWorkOrders] in `colonizethis_logic` (including dev-exclusive tile
+/// reservations). The app does not compute exclusivity itself.
 final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return {};
@@ -41,6 +44,21 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   return {
     for (final e in byUnitId.entries) e.key: e.value.toSet().toList(),
   };
+});
+
+/// Tile keys reserved for the human player’s Builder/Engineer/Merchant
+/// exclusivity (in-progress work + pending dev-exclusive work orders).
+///
+/// **SPEC/program/order-suggestions.md** § Dev-exclusive tile reservations.
+/// Exposed for UI/diagnostics; availability for assignment still flows from
+/// [availableWorkTargetsProvider] and [getValidWorkOrderTileKeysWithVisibility].
+final devExclusiveReservedWorkTileKeysProvider = Provider<Set<String>>((ref) {
+  final game = ref.watch(currentGameProvider);
+  if (game == null) return {};
+
+  final orders = ref.watch(currentOrdersProvider);
+  final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+  return devExclusiveReservedTileKeysForPlayer(game, orders, humanPlayerId);
 });
 
 /// Set of game ids for which the game-start intro dialogue has been shown.
