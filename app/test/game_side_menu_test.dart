@@ -474,11 +474,19 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: _SideMenuUnmountingHost(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: _SideMenuUnmountingHost(
+                game: game,
+                humanPlayerId: humanPlayerId,
+              ),
             ),
           ),
         ),
@@ -589,8 +597,8 @@ void main() {
             navigatorKey: appNavigatorKey,
             routes: {
               Routes.debugLog: (_) => const Scaffold(
-                    body: Center(child: Text('debug-route-marker')),
-                  ),
+                body: Center(child: Text('debug-route-marker')),
+              ),
             },
             home: Scaffold(
               body: Stack(
