@@ -6,9 +6,9 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
 import '../world/province_lookup.dart';
-import '../world/tile_control.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
+import 'unit_type_helpers.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 
@@ -148,9 +148,12 @@ List<MoveOrder> suggestMoveOrders(
 }
 
 /// Suggests candidate work orders for explorers and civilian workers owned by
-/// [view.playerId]. Work suggestions are only for the unit's current province
-/// (unit.provinceId); the API must never suggest work in a province the unit
-/// is not in. Visibility rules per SPEC/program/fog-and-exploration-resolution.md.
+/// [view.playerId]. Worker units (Builder, Engineer, Rail Builder): at least
+/// one suggestion per (unit, allowed target) when any **player-controlled** tile
+/// (owned or purchased) is valid under visibility and the order engine — same
+/// scope as work-order validation, not limited to the unit’s current province.
+/// Explorers/Spies/Merchants follow type-specific rules. Visibility per
+/// SPEC/program/fog-and-exploration-resolution.md.
 List<WorkOrder> suggestWorkOrders(
   PlayerView view,
   Game game,
@@ -173,6 +176,15 @@ List<WorkOrder> suggestWorkOrders(
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
 
+  // Pre-filter + visibility sort per workTarget; reused across worker units.
+  final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
+
+  final devExclusiveReservedTiles = devExclusiveReservedTileKeysForPlayer(
+    game,
+    currentOrders,
+    playerId,
+  );
+
   for (final unit in view.ownUnits) {
     if (unit.currentWork != null) continue;
 
@@ -188,7 +200,8 @@ List<WorkOrder> suggestWorkOrders(
     final localId = ProvinceId.localIdFrom(provinceId);
     final province = view.provinceByRegionAndId(regionId, provinceId);
     final ownerId = province?.ownerId;
-    final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
+    final tilesInProvince =
+        tileKeysByRegion[regionId]?[provinceId] ?? const <String>[];
 
     _log.d(
       '$_kOrderSuggestionLogPrefix: suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
@@ -265,51 +278,55 @@ List<WorkOrder> suggestWorkOrders(
       continue;
     }
 
-    // Civilian workers: only work on tiles under player control (owned province
-    // or purchased tile).
-    final provinceControlled =
-        ownerId == null ||
-        ownerId == playerId ||
-        tilesInProvince.any(
-          (tk) => game.worldState.purchasedTilesByTileKey[tk] == playerId,
-        );
-    if (!provinceControlled) {
-      continue;
-    }
-
-    if (isWorker && tilesInProvince.isNotEmpty) {
+    if (isWorker) {
       final allowedTargets = workOrderTargetsByUnitType[type];
       if (allowedTargets != null) {
         for (final target in allowedTargets) {
           final existing = existingTargetsByUnit[unit.id];
           if (existing != null && existing.contains(target)) continue;
 
-          final targetTileKey = tilesInProvince.firstWhere(
-            (tk) => isTileControlledByPlayer(game, playerId, tk),
-            orElse: () => '',
+          final sortedVisible = visibleCandidatesSortedByWorkTarget.putIfAbsent(
+            target,
+            () {
+              final raw = _rawCandidateTilesForWorkTarget(
+                game: game,
+                playerId: playerId,
+                workTarget: target,
+              );
+              return _sortedVisibleWorkTargetCandidates(view, raw);
+            },
           );
-          if (targetTileKey.isEmpty) {
-            continue;
-          }
-          final candidate = WorkOrder(
-            unitId: unit.id,
-            target: target,
-            targetTileKey: targetTileKey,
-          );
-          if (_isWorkOrderAccepted(
-            game,
-            topology,
-            playerId,
-            currentOrders,
-            candidate,
-          )) {
-            _log.d(
-              '$_kOrderSuggestionLogPrefix: suggestWorkOrders candidate=$candidate',
+
+          WorkOrder? accepted;
+          for (final tk in sortedVisible) {
+            if (isDevExclusiveWorkTarget(target) &&
+                devExclusiveReservedTiles.contains(tk)) {
+              continue;
+            }
+            final candidate = WorkOrder(
+              unitId: unit.id,
+              target: target,
+              targetTileKey: tk,
             );
-            suggestions.add(candidate);
+            if (_isWorkOrderAccepted(
+              game,
+              topology,
+              playerId,
+              currentOrders,
+              candidate,
+            )) {
+              accepted = candidate;
+              break;
+            }
+          }
+          if (accepted != null) {
+            _log.d(
+              '$_kOrderSuggestionLogPrefix: suggestWorkOrders candidate=$accepted',
+            );
+            suggestions.add(accepted);
           } else {
             _log.d(
-              '$_kOrderSuggestionLogPrefix: suggestWorkOrders rejected candidate=$candidate',
+              '$_kOrderSuggestionLogPrefix: suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
             );
           }
         }
@@ -376,6 +393,7 @@ List<WorkOrder> suggestWorkOrders(
           final tiles = tileKeysByRegion[regionId]?[p.id] ?? const [];
           for (final tk in tiles) {
             if (resourceByTile[tk] == null) continue;
+            if (devExclusiveReservedTiles.contains(tk)) continue;
             final candidate = WorkOrder(
               unitId: unit.id,
               target: 'purchase_land',
@@ -617,11 +635,22 @@ Set<String> getValidWorkOrderTileKeys(
   if (unit.currentWork != null) return {};
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
 
+  final reservedForPicker = devExclusiveReservedTileKeysForPlayer(
+    game,
+    currentOrders,
+    playerId,
+    ignorePendingWorkOrderUnitId: unitId,
+  );
+
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final valid = <String>{};
   for (final regionEntry in tileKeysByRegion.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       for (final tileKey in provinceEntry.value) {
+        if (isDevExclusiveWorkTarget(workTarget) &&
+            reservedForPicker.contains(tileKey)) {
+          continue;
+        }
         final candidate = WorkOrder(
           unitId: unitId,
           target: workTarget,
@@ -685,48 +714,31 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   );
 
   final playerId = view.playerId;
-  final world = game.worldState;
-  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
-  final resourceByTile = world.resourceByTileKey;
-  final purchasedTiles = world.purchasedTilesByTileKey;
 
-  // Build set of owned province ids for quick lookup
-  final ownedProvinceIds = <String>{};
-  for (final p in allProvinces(world)) {
-    if (p.ownerId == playerId) {
-      ownedProvinceIds.add(p.id);
-    }
-  }
-
-  // Pre-filter candidate tiles based on work target type
-  final candidateTiles = _preFilterWorkTargetTiles(
-    game: game,
-    unit: unit,
-    workTarget: workTarget,
-    playerId: playerId,
-    tileKeysByRegion: tileKeysByRegion,
-    resourceByTile: resourceByTile,
-    purchasedTiles: purchasedTiles,
-    ownedProvinceIds: ownedProvinceIds,
+  final reservedForPicker = devExclusiveReservedTileKeysForPlayer(
+    game,
+    currentOrders,
+    playerId,
+    ignorePendingWorkOrderUnitId: unitId,
   );
 
-  // Further filter by visibility
-  final visibleCandidateTiles = <String>{};
-  for (final tileKey in candidateTiles) {
-    final visibility = view.visibilityForTile(tileKey);
-    if (visibility == VisibilityLevel.fullyVisible ||
-        visibility == VisibilityLevel.fogged) {
-      visibleCandidateTiles.add(tileKey);
-    }
-  }
+  final raw = _rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: playerId,
+    workTarget: workTarget,
+  );
+  final sortedVisible = _sortedVisibleWorkTargetCandidates(view, raw);
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility pre-filtered tiles count=${visibleCandidateTiles.length}',
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
   );
 
-  // Final validation via order engine
   final valid = <String>{};
-  for (final tileKey in visibleCandidateTiles) {
+  for (final tileKey in sortedVisible) {
+    if (isDevExclusiveWorkTarget(workTarget) &&
+        reservedForPicker.contains(tileKey)) {
+      continue;
+    }
     final candidate = WorkOrder(
       unitId: unitId,
       target: workTarget,
@@ -744,7 +756,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   }
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${visibleCandidateTiles.length} pre-filtered tiles)',
+    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${sortedVisible.length} visible candidates)',
   );
   return valid;
 }
@@ -753,7 +765,6 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
 /// Returns a set of candidate tile keys that pass work-target requirements.
 Set<String> _preFilterWorkTargetTiles({
   required Game game,
-  required Unit unit,
   required String workTarget,
   required String playerId,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
@@ -850,6 +861,45 @@ Set<String> _preFilterWorkTargetTiles({
   }
 
   return result;
+}
+
+Set<String> _rawCandidateTilesForWorkTarget({
+  required Game game,
+  required String playerId,
+  required String workTarget,
+}) {
+  final world = game.worldState;
+  final ownedProvinceIds = <String>{};
+  for (final p in allProvinces(world)) {
+    if (p.ownerId == playerId) {
+      ownedProvinceIds.add(p.id);
+    }
+  }
+  return _preFilterWorkTargetTiles(
+    game: game,
+    workTarget: workTarget,
+    playerId: playerId,
+    tileKeysByRegion: world.tileKeysByRegionAndProvince,
+    resourceByTile: world.resourceByTileKey,
+    purchasedTiles: world.purchasedTilesByTileKey,
+    ownedProvinceIds: ownedProvinceIds,
+  );
+}
+
+List<String> _sortedVisibleWorkTargetCandidates(
+  PlayerView view,
+  Set<String> rawCandidates,
+) {
+  final list = <String>[];
+  for (final tk in rawCandidates) {
+    final visibility = view.visibilityForTile(tk);
+    if (visibility == VisibilityLevel.fullyVisible ||
+        visibility == VisibilityLevel.fogged) {
+      list.add(tk);
+    }
+  }
+  list.sort();
+  return list;
 }
 
 /// Adds candidate tiles for build_improvement: owned or purchased tiles with resource.

@@ -33,6 +33,13 @@ void main() {
     expect(targets, isEmpty);
   });
 
+  test('devExclusiveReservedWorkTileKeysProvider empty when no current game', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
+  });
+
   test('gameIdsWithIntroShownProvider defaults empty and can be updated', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

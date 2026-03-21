@@ -1,4 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show WorldState;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show Game, Orders, WorldState;
 
 import '../world/unit_lookup.dart' show allUnitsFromWorld;
 
@@ -31,6 +32,39 @@ Set<String> devExclusiveTilesFromWorld(WorldState world, String playerId) {
         w.tileKey.isNotEmpty) {
       tiles.add(w.tileKey);
     }
+  }
+  return tiles;
+}
+
+/// Tiles reserved for Builder/Engineer/Merchant per-tile exclusivity for [playerId].
+///
+/// Union of [devExclusiveTilesFromWorld] and `targetTileKey` for each pending
+/// [WorkOrder] in [orders] for that player whose target is [isDevExclusiveWorkTarget].
+///
+/// When [ignorePendingWorkOrderUnitId] is set, pending orders whose [WorkOrder.unitId]
+/// equals that value are **omitted** from the pending contribution (in-progress
+/// work from the world is unchanged). Used when listing valid tiles for the **same**
+/// unit’s tile picker so a tile already chosen in the pending list stays selectable;
+/// [suggestWorkOrders] uses the full set (no ignore) so a second unit does not see
+/// tiles reserved by another unit’s pending order.
+///
+/// SPEC/program/orders.md § WorkOrder per-tile exclusivity; order-suggestions.md.
+Set<String> devExclusiveReservedTileKeysForPlayer(
+  Game game,
+  Orders orders,
+  String playerId, {
+  String? ignorePendingWorkOrderUnitId,
+}) {
+  final tiles = devExclusiveTilesFromWorld(game.worldState, playerId);
+  final workList = orders.workOrdersByPlayerId[playerId] ?? const [];
+  for (final o in workList) {
+    if (!isDevExclusiveWorkTarget(o.target)) continue;
+    if (o.targetTileKey.isEmpty) continue;
+    if (ignorePendingWorkOrderUnitId != null &&
+        o.unitId == ignorePendingWorkOrderUnitId) {
+      continue;
+    }
+    tiles.add(o.targetTileKey);
   }
   return tiles;
 }
