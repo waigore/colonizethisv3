@@ -1,14 +1,14 @@
 export 'game_screen_shared.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
@@ -22,29 +22,17 @@ import 'game_map_area.dart';
 import 'victory_overlay.dart';
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
-void _showPauseMenu(BuildContext context) {
-  showModalBottomSheet<void>(
-    context: context,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.bug_report),
-            title: Text(appL10n(ctx).debugLog_title),
-            onTap: () {
-              Navigator.of(ctx).pop();
-              Navigator.of(context).pushNamed(Routes.debugLog);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.play_arrow),
-            title: Text(appL10n(ctx).game_pauseMenu_resume),
-            onTap: () => Navigator.of(ctx).pop(),
-          ),
-        ],
-      ),
-    ),
+/// Emits `OpenPanelEvent('pause_menu')` via [bus] to let AppEventHandler open the bottom sheet.
+/// Menu item actions emit `ClosePanelEvent` and `NavigateToRouteEvent`.
+void _showPauseMenu(AppEventBus bus) {
+  bus.emit(
+    OpenPanelEvent('pause_menu', {
+      'onDebugLog': () {
+        bus.emit(const ClosePanelEvent());
+        bus.emit(NavigateToRouteEvent(Routes.debugLog));
+      },
+      'onResume': () => bus.emit(const ClosePanelEvent()),
+    }),
   );
 }
 
@@ -74,7 +62,7 @@ class GameScreen extends ConsumerWidget {
             top: 16,
             child: IconButton(
               icon: const Icon(Icons.menu),
-              onPressed: () => _showPauseMenu(context),
+              onPressed: () => _showPauseMenu(ref.read(appEventBusProvider)),
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
           ),
@@ -83,14 +71,13 @@ class GameScreen extends ConsumerWidget {
             top: 16,
             child: CtNinePatchButton(
               onPressed: () {
-                if (game == null) return;
                 final service = ref.read(gameServiceProvider);
                 final orders = ref.read(currentOrdersProvider);
                 final result = service.runTurnResolution(game, orders: orders);
                 if (result is TurnResolutionComplete) {
                   ref.read(currentGameProvider.notifier).state = result.game;
                   ref.read(currentOrdersProvider.notifier).state =
-                      const ct_models.Orders();
+                      const Orders();
                 } else if (result is TurnResolutionPendingOvertures) {
                   ref.read(currentGameProvider.notifier).state = result.game;
                   ref.read(pendingOverturesProvider.notifier).state =
@@ -99,7 +86,7 @@ class GameScreen extends ConsumerWidget {
               },
               child: Text(
                 appL10n(context).game_nextTurnButton(
-                  game!.worldState.turnState.turnNumber,
+                  game.worldState.turnState.turnNumber,
                   turnToYear(
                     game.worldState.turnState.turnNumber,
                     game.turnTimeMapping,
@@ -143,8 +130,7 @@ class GameScreen extends ConsumerWidget {
           ref.read(pendingOverturesProvider.notifier).state = null;
           if (result is TurnResolutionComplete) {
             ref.read(currentGameProvider.notifier).state = result.game;
-            ref.read(currentOrdersProvider.notifier).state =
-                const ct_models.Orders();
+            ref.read(currentOrdersProvider.notifier).state = const Orders();
           } else if (result is TurnResolutionPendingOvertures) {
             ref.read(currentGameProvider.notifier).state = result.game;
             ref.read(pendingOverturesProvider.notifier).state =

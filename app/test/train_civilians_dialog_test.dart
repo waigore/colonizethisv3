@@ -385,6 +385,7 @@ void main() {
             body: CivilianUnitsPanel(
               game: game,
               humanPlayerId: humanPlayerId,
+              bus: AppEventBus(),
               onTrainPressed: () {},
             ),
           ),
@@ -406,6 +407,7 @@ void main() {
             body: CivilianUnitsPanel(
               game: game,
               humanPlayerId: humanPlayerId,
+              bus: AppEventBus(),
               onTrainPressed: () {
                 trainPressed = true;
               },

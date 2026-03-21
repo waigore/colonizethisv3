@@ -41,6 +41,7 @@ void main() {
           humanPlayerId: humanPlayerId,
           currentOrders: currentOrders,
           availableWorkTargets: availableWorkTargets,
+          bus: AppEventBus(),
           onLocateUnit: onLocateUnit,
           onAddWorkOrder: onAddWorkOrder,
           onRemoveWorkOrder: onRemoveWorkOrder,

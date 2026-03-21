@@ -57,6 +57,7 @@ class _PendingOrderShellState extends State<_PendingOrderShell> {
           topology: widget.topology,
           currentOrders: _orders,
           onOrdersChanged: (o) => setState(() => _orders = o),
+          bus: AppEventBus(),
         ),
       ),
     );
@@ -78,12 +79,7 @@ void main() {
         newWorld: RegionData(),
       ),
       players: const [
-        Player(
-          id: humanId,
-          displayName: 'Only',
-          isHuman: true,
-          treasury: 0,
-        ),
+        Player(id: humanId, displayName: 'Only', isHuman: true, treasury: 0),
       ],
     );
 
@@ -96,6 +92,7 @@ void main() {
             topology: MapTopology(),
             currentOrders: const Orders(),
             onOrdersChanged: (_) {},
+            bus: AppEventBus(),
           ),
         ),
       ),
@@ -121,6 +118,7 @@ void main() {
               topology: r.combinedTopology,
               currentOrders: const Orders(),
               onOrdersChanged: (_) {},
+              bus: AppEventBus(),
             ),
           ),
         ),
@@ -158,8 +156,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state<_PendingOrderShellState>(find.byType(_PendingOrderShell));
+      final state = tester.state<_PendingOrderShellState>(
+        find.byType(_PendingOrderShell),
+      );
       expect(
         state.ordersSnapshot.diplomaticOrdersByPlayerId[humanId],
         isNotEmpty,
