@@ -9,7 +9,8 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Dart coverage + full package matrix + Flutter app tests routinely exceed 25m as the suite grows.
+    timeout-minutes: 45
     permissions:
       pull-requests: read
     steps:
