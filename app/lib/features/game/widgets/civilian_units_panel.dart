@@ -124,8 +124,9 @@ class CivilianUnitsPanel extends StatelessWidget {
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
-  /// Called when the user taps the Train button.
-  final VoidCallback? onTrainPressed;
+  /// Called when the user taps the Train button. The callback receives [dialogContext]
+  /// which should be used to show the Train dialog.
+  final void Function(BuildContext dialogContext)? onTrainPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +165,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                     ),
                     if (onTrainPressed != null)
                       CtNinePatchButton(
-                        onPressed: onTrainPressed,
+                        onPressed: () => onTrainPressed!(context),
                         child: const Text('Train'),
                       ),
                   ],

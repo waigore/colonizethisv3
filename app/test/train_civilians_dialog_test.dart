@@ -386,7 +386,7 @@ void main() {
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus(),
-              onTrainPressed: () {},
+              onTrainPressed: (_) {},
             ),
           ),
         ),
@@ -408,7 +408,7 @@ void main() {
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus(),
-              onTrainPressed: () {
+              onTrainPressed: (_) {
                 trainPressed = true;
               },
             ),

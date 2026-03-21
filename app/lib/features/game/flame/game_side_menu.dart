@@ -111,6 +111,7 @@ class GameSideMenu extends ConsumerWidget {
           final currentGame = ref.read(currentGameProvider) ?? game;
           final currentOrders = ref.read(currentOrdersProvider);
           final availableWorkTargets = ref.read(availableWorkTargetsProvider);
+          final ordersNotifier = ref.read(currentOrdersProvider.notifier);
           showModalBottomSheet<void>(
             context: navigator.context,
             isScrollControlled: true,
@@ -133,7 +134,7 @@ class GameSideMenu extends ConsumerWidget {
                     final list = List<ct_models.WorkOrder>.from(
                       o.workOrdersByPlayerId[playerId] ?? [],
                     )..removeAt(index);
-                    ref.read(currentOrdersProvider.notifier).state = o.copyWith(
+                    ordersNotifier.state = o.copyWith(
                       workOrdersByPlayerId: {
                         ...o.workOrdersByPlayerId,
                         playerId: list,
@@ -145,25 +146,25 @@ class GameSideMenu extends ConsumerWidget {
                     Navigator.of(ctx).pop();
                     onStartWorkTargetSelection(unit, workTarget);
                   },
-                  onTrainPressed: () {
+                  onTrainPressed: (dialogContext) {
                     Navigator.of(ctx).pop();
                     showDialog<void>(
-                      context: navigator.context,
+                      context: dialogContext,
                       builder: (dialogCtx) => TrainCiviliansDialog(
                         game: currentGame,
                         humanPlayerId: humanPlayerId,
                         currentOrders: currentOrders,
                         onOrdersChanged: (newOrders) {
-                          final o = currentOrders;
                           final existing =
-                              o.buildUnitOrdersByPlayerId[humanPlayerId] ?? [];
-                          ref.read(currentOrdersProvider.notifier).state = o
-                              .copyWith(
-                                buildUnitOrdersByPlayerId: {
-                                  ...o.buildUnitOrdersByPlayerId,
-                                  humanPlayerId: [...existing, ...newOrders],
-                                },
-                              );
+                              currentOrders
+                                  .buildUnitOrdersByPlayerId[humanPlayerId] ??
+                              [];
+                          ordersNotifier.state = currentOrders.copyWith(
+                            buildUnitOrdersByPlayerId: {
+                              ...currentOrders.buildUnitOrdersByPlayerId,
+                              humanPlayerId: [...existing, ...newOrders],
+                            },
+                          );
                         },
                       ),
                     );

@@ -454,6 +454,51 @@ void main() {
     },
   );
 
+  testWidgets(
+    'TrainCiviliansDialog onClose does not throw when GameSideMenu is disposed',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+          ],
+          child: MaterialApp(
+            home: _SideMenuUnmountingHost(
+              game: game,
+              humanPlayerId: humanPlayerId,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Civilian Units'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Train'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainCiviliansDialog), findsNothing);
+    },
+  );
+
   testWidgets('GameSideMenu Diplomacy pushes DiplomacyScreen', (
     WidgetTester tester,
   ) async {
