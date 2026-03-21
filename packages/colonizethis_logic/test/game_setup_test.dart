@@ -242,6 +242,11 @@ void main() {
             start.initialWool,
             reason: '${player.id} starting wool',
           );
+          expect(
+            player.stockpile.quantityOf(CommodityCatalog.paper.id),
+            start.initialPaper,
+            reason: '${player.id} starting paper',
+          );
         }
       },
     );

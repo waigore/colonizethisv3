@@ -48,8 +48,9 @@ For the MVP ruleset, each Great Power starts the game with a small, symmetric na
   - `lumber = initialImprovementSlots`
   - `castIron = initialImprovementSlots`
   - `wool = 4`
+  - `paper = 2` (commodity id `paper`; supports civilian training costs per [civilian-units.md](civilian-units.md))
 
-The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovementSlots`, and the wool quantity are exposed via the ruleset/config layer (MVP: program-level `StartingResourcesConfig` in `colonizethis_data`; later: Base → Difficulty → Scenario merge per this document). Scenario layers MAY override any of these starting stockpile quantities on a per-commodity basis; when a scenario overrides a commodity, its value fully replaces the base-layer value for that scenario (no implicit addition).
+The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovementSlots`, the wool quantity, and the paper quantity are exposed via the ruleset/config layer (MVP: program-level `StartingResourcesConfig` in `colonizethis_data`; later: Base → Difficulty → Scenario merge per this document). Scenario layers MAY override any of these starting stockpile quantities on a per-commodity basis; when a scenario overrides a commodity, its value fully replaces the base-layer value for that scenario (no implicit addition).
 
 ## Configurable Values
 
@@ -63,7 +64,7 @@ The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovemen
 | New World provinces | ≈80 | Base, Scenario |
 | Continent count | 3–4 | Base, Scenario |
 
-Starting stockpile quantities are part of the economic starting-conditions profile and are configured via the ruleset’s economy/setup sections (MVP: constants in `StartingResourcesConfig` mirrored into the resolved ruleset when a loader is introduced). For the default MVP ruleset, every Great Power’s starting stockpile uses the same values, including `wool = 4` from turn 0.
+Starting stockpile quantities are part of the economic starting-conditions profile and are configured via the ruleset’s economy/setup sections (MVP: constants in `StartingResourcesConfig` mirrored into the resolved ruleset when a loader is introduced). For the default MVP ruleset, every Great Power’s starting stockpile uses the same values, including `wool = 4` and `paper = 2` from turn 0.
 
 Turn-time mapping parameters are part of the resolved ruleset but documented in [turn-time-mapping.md](turn-time-mapping.md). Scenarios or future ruleset layers may override the mapping as a whole; when no mapping is present in the resolved ruleset, the System uses the default described there.
 
@@ -88,9 +89,12 @@ Turn-time mapping parameters are part of the resolved ruleset but documented in 
   - `grain` equal to `initialPeasants × initialGrainTurns` from the active starting-resources config,
   - `lumber` equal to `initialImprovementSlots`,
   - `castIron` equal to `initialImprovementSlots`,
-  - and `wool` equal to 4,
+  - `wool` equal to 4,
+  - and `paper` equal to 2,
   and these quantities are identical across all Great Powers.
 
 - **Starting stockpile overrides:** Given a scenario or difficulty layer in the resolved ruleset overrides the starting stockpile quantity for `wool` with a non-negative integer value `W_override`, and a new game is started using that ruleset, when the System completes game setup step 7f, then for every Great Power player the central stockpile contains `wool = W_override` and not the base value 4.
+
+- **Starting stockpile paper override:** Given a scenario or difficulty layer overrides the starting stockpile quantity for `paper` with a non-negative integer value `P_override`, and a new game is started using that ruleset, when the System completes game setup step 7f, then for every Great Power player the central stockpile contains `paper = P_override` and not the base value 2.
 
 - **Province naming at setup:** Given a game in the setup phase, when the System names provinces owned by each faction, then it uses the resolved naming section from the ruleset. Provinces acquired during play retain their existing display name.

@@ -7,6 +7,7 @@ class StartingResourcesConfig {
     this.initialTreasury = 5000,
     this.initialImprovementSlots = 5,
     this.initialWool = 4,
+    this.initialPaper = 2,
     this.initialMilitaryRegiments = 5,
     this.initialNavalShips = 3,
     this.startingCivilianUnits = _defaultStartingCivilianUnits,
@@ -15,6 +16,7 @@ class StartingResourcesConfig {
         assert(initialTreasury >= 0),
         assert(initialImprovementSlots >= 0),
         assert(initialWool >= 0),
+        assert(initialPaper >= 0),
         assert(initialMilitaryRegiments >= 0),
         assert(initialNavalShips >= 0);
 
@@ -36,6 +38,10 @@ class StartingResourcesConfig {
   /// Starting quantity of wool in each Great Power's central stockpile.
   /// Default 4: every Great Power begins the game with 4 wool (ruleset-config § Starting stockpiles).
   final int initialWool;
+
+  /// Starting quantity of paper (commodity id `paper`) in each Great Power's central stockpile.
+  /// Default 2: supports early civilian training per SPEC/game/civilian-units.md.
+  final int initialPaper;
 
   /// Number of starting land regiments to spawn in each Great Power's capital.
   /// Concrete regiment type is chosen from the regiment catalog based on ruleset/tech.
