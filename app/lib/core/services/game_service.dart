@@ -157,7 +157,14 @@ class GameService {
       onGameEvent: onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      saveGame(result.game);
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+        ),
+      );
     }
     return result;
   }
@@ -262,6 +269,7 @@ class GameService {
       warpLinks: result.warpLinks,
     );
     saveGame(result.game);
+    eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
     return result.game;
   }
 }

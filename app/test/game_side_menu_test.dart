@@ -1,5 +1,7 @@
+import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
@@ -20,51 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
-import 'dart:async';
-
-class TestAppEventBus implements AppEventBus {
-  TestAppEventBus(this._inner);
-
-  final AppEventBus _inner;
-  NavigatorState? _navigator;
-
-  void setNavigator(NavigatorState navigator) {
-    _navigator = navigator;
-  }
-
-  @override
-  void emit(AppEvent event) {
-    if (event is NavigateToRouteEvent && _navigator != null) {
-      _navigator!.pushNamed(event.route, arguments: event.arguments);
-    }
-    _inner.emit(event);
-  }
-
-  @override
-  Stream<AppEvent> get stream => _inner.stream;
-
-  @override
-  Stream<T> on<T extends AppEvent>() => _inner.on<T>();
-
-  @override
-  Stream<UIActionEvent> get uiActionEvents => _inner.uiActionEvents;
-
-  @override
-  Stream<UISystemEvent> get uiSystemEvents => _inner.uiSystemEvents;
-
-  @override
-  Stream<GameToUIEvent> get gameToUIEvents => _inner.gameToUIEvents;
-
-  @override
-  Stream<DialogueEvent> get dialogueEvents => _inner.dialogueEvents;
-
-  @override
-  Stream<PortraitMoodEvent> get portraitMoodEvents => _inner.portraitMoodEvents;
-
-  @override
-  void dispose() => _inner.dispose();
-}
 
 void main() {
   suppressLogsForTests();
@@ -102,24 +59,32 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    sideMenuOpen: true,
-                    onClose: () => closed = true,
-                    onPanelDismissed: () {},
-                    onLocateCivilianUnit: (_) {},
-                    onLocateMilitaryTile: (_, __) {},
-                    onLocateNavalFleet: (_, __) {},
-                    onCancelUnitWork: (_) {},
-                    onStartWorkTargetSelection: (_, __) {},
-                  ),
-                ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () => closed = true,
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -146,9 +111,6 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
-    final testBus = TestAppEventBus(AppEventBus.create());
-    final navigatorKey = GlobalKey<NavigatorState>();
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -161,33 +123,38 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
-          appEventBusProvider.overrideWith((ref) => testBus),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          navigatorKey: navigatorKey,
-          onGenerateRoute: Routes.generate,
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Production'));
@@ -204,9 +171,6 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
-    final testBus = TestAppEventBus(AppEventBus.create());
-    final navigatorKey = GlobalKey<NavigatorState>();
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -219,33 +183,38 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
-          appEventBusProvider.overrideWith((ref) => testBus),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          navigatorKey: navigatorKey,
-          onGenerateRoute: Routes.generate,
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Technology'));
@@ -275,24 +244,32 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    sideMenuOpen: true,
-                    onClose: () {},
-                    onPanelDismissed: () {},
-                    onLocateCivilianUnit: (_) {},
-                    onLocateMilitaryTile: (_, __) {},
-                    onLocateNavalFleet: (_, __) {},
-                    onCancelUnitWork: (_) {},
-                    onStartWorkTargetSelection: (_, __) {},
-                  ),
-                ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () {},
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -328,24 +305,32 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    sideMenuOpen: true,
-                    onClose: () {},
-                    onPanelDismissed: () {},
-                    onLocateCivilianUnit: (_) {},
-                    onLocateMilitaryTile: (_, __) {},
-                    onLocateNavalFleet: (_, __) {},
-                    onCancelUnitWork: (_) {},
-                    onStartWorkTargetSelection: (_, __) {},
-                  ),
-                ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () {},
+                      onPanelDismissed: () {},
+                      onLocateCivilianUnit: (_) {},
+                      onLocateMilitaryTile: (_, __) {},
+                      onLocateNavalFleet: (_, __) {},
+                      onCancelUnitWork: (_) {},
+                      onStartWorkTargetSelection: (_, __) {},
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -379,24 +364,32 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -429,11 +422,19 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: _SideMenuUnmountingHost(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: _SideMenuUnmountingHost(
+                game: game,
+                humanPlayerId: humanPlayerId,
+              ),
             ),
           ),
         ),
@@ -473,11 +474,19 @@ void main() {
             availableWorkTargetsProvider.overrideWith(
               (ref) => <String, List<String>>{},
             ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
           ],
-          child: MaterialApp(
-            home: _SideMenuUnmountingHost(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: _SideMenuUnmountingHost(
+                game: game,
+                humanPlayerId: humanPlayerId,
+              ),
             ),
           ),
         ),
@@ -506,9 +515,6 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
-    final testBus = TestAppEventBus(AppEventBus.create());
-    final navigatorKey = GlobalKey<NavigatorState>();
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -521,33 +527,38 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
-          appEventBusProvider.overrideWith((ref) => testBus),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          navigatorKey: navigatorKey,
-          onGenerateRoute: Routes.generate,
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            onGenerateRoute: Routes.generate,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Diplomacy'));
@@ -563,9 +574,6 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
-    final testBus = TestAppEventBus(AppEventBus.create());
-    final navigatorKey = GlobalKey<NavigatorState>();
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -578,36 +586,42 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
-          appEventBusProvider.overrideWith((ref) => testBus),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          navigatorKey: navigatorKey,
-          routes: {
-            Routes.debugLog: (_) =>
-                const Scaffold(body: Center(child: Text('debug-route-marker'))),
-          },
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () {},
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            routes: {
+              Routes.debugLog: (_) => const Scaffold(
+                body: Center(child: Text('debug-route-marker')),
+              ),
+            },
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () {},
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Debug log'));
@@ -637,24 +651,32 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () => closed = true,
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () => closed = true,
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),

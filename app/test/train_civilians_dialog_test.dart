@@ -1,14 +1,18 @@
 // Tests for TrainCiviliansDialog. SPEC/ui/train-civilians-dialog.md.
 
+import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
@@ -380,13 +384,30 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              bus: AppEventBus(),
-              onTrainPressed: (_) {},
+        ProviderScope(
+          overrides: [
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
+          ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, _) {
+                    return CivilianUnitsPanel(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      bus: ref.watch(appEventBusProvider),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -396,31 +417,46 @@ void main() {
       expect(find.text('Train'), findsOneWidget);
     });
 
-    testWidgets('AC: Train button triggers onTrainPressed callback', (
-      WidgetTester tester,
-    ) async {
-      bool trainPressed = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              bus: AppEventBus(),
-              onTrainPressed: (_) {
-                trainPressed = true;
-              },
+    testWidgets(
+      'AC: Train button opens TrainCiviliansDialog via app event bus',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              currentGameProvider.overrideWith((ref) => game),
+              currentOrdersProvider.overrideWith((ref) => const Orders()),
+              appEventBusProvider.overrideWith((ref) {
+                final bus = AppEventBus.create();
+                ref.onDispose(bus.dispose);
+                return bus;
+              }),
+            ],
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                home: Scaffold(
+                  body: Consumer(
+                    builder: (context, ref, _) {
+                      return CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerId,
+                        bus: ref.watch(appEventBusProvider),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Train'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Train'));
+        await tester.pumpAndSettle();
 
-      expect(trainPressed, isTrue);
-    });
+        expect(find.byType(TrainCiviliansDialog), findsOneWidget);
+        expect(find.text('Train Civilians'), findsOneWidget);
+      },
+    );
   });
 }

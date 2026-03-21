@@ -10,15 +10,6 @@ import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
-import '../widgets/civilian_units_panel.dart';
-import '../widgets/diplomacy_screen.dart';
-import '../widgets/military_units_panel.dart';
-import '../widgets/naval_units_panel.dart';
-import '../widgets/production_screen.dart';
-import '../widgets/technology_screen.dart';
-import '../widgets/train_civilians_dialog.dart';
-
-import 'game_screen_shared.dart';
 
 /// Side menu ("Production", "Units", etc.) for the in-game shell.
 class GameSideMenu extends ConsumerWidget {
@@ -74,8 +65,6 @@ class GameSideMenu extends ConsumerWidget {
   }
 
   List<Widget> _buildEmpireMenuButtons(BuildContext context, WidgetRef ref) {
-    final player =
-        game.players.where((p) => p.isHuman).firstOrNull ?? game.players.first;
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? MapTopology();
@@ -101,78 +90,27 @@ class GameSideMenu extends ConsumerWidget {
         iconAsset: 'assets/images/ui_icon_civilian_units.png',
         label: 'Civilian Units',
         onPressed: () {
-          // Capture navigator before onClose(): GameSideMenu is removed from
-          // the tree when the sheet opens; Train's showDialog must not use this
-          // widget's BuildContext (it would be unmounted).
-          final navigator = Navigator.of(context);
           onClose();
-          // Capture values before showing bottom sheet to avoid using
-          // disposed ref when widget rebuilds during work target selection.
-          final currentGame = ref.read(currentGameProvider) ?? game;
-          final currentOrders = ref.read(currentOrdersProvider);
-          final availableWorkTargets = ref.read(availableWorkTargetsProvider);
-          final ordersNotifier = ref.read(currentOrdersProvider.notifier);
-          showModalBottomSheet<void>(
-            context: navigator.context,
-            isScrollControlled: true,
-            builder: (ctx) {
-              final isNarrowCtx =
-                  MediaQuery.sizeOf(ctx).width < kInGameNarrowBreakpoint;
-              final maxHeight =
-                  MediaQuery.sizeOf(ctx).height * (isNarrowCtx ? 0.33 : 0.5);
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxHeight),
-                child: CivilianUnitsPanel(
-                  game: currentGame,
-                  humanPlayerId: humanPlayerId,
-                  bus: bus,
-                  currentOrders: currentOrders,
-                  availableWorkTargets: availableWorkTargets,
-                  onLocateUnit: onLocateCivilianUnit,
-                  onRemoveWorkOrder: (playerId, index) {
-                    final o = currentOrders;
-                    final list = List<ct_models.WorkOrder>.from(
-                      o.workOrdersByPlayerId[playerId] ?? [],
-                    )..removeAt(index);
-                    ordersNotifier.state = o.copyWith(
-                      workOrdersByPlayerId: {
-                        ...o.workOrdersByPlayerId,
-                        playerId: list,
-                      },
-                    );
+          bus.emit(
+            ct_models.OpenCivilianUnitsPanelEvent(
+              onLocateUnit: onLocateCivilianUnit,
+              onRemoveWorkOrder: (playerId, index) {
+                final o = ref.read(currentOrdersProvider);
+                final list = List<ct_models.WorkOrder>.from(
+                  o.workOrdersByPlayerId[playerId] ?? [],
+                )..removeAt(index);
+                ref.read(currentOrdersProvider.notifier).state = o.copyWith(
+                  workOrdersByPlayerId: {
+                    ...o.workOrdersByPlayerId,
+                    playerId: list,
                   },
-                  onCancelUnitWork: onCancelUnitWork,
-                  onStartWorkTargetSelection: (unit, workTarget) {
-                    Navigator.of(ctx).pop();
-                    onStartWorkTargetSelection(unit, workTarget);
-                  },
-                  onTrainPressed: (dialogContext) {
-                    Navigator.of(ctx).pop();
-                    showDialog<void>(
-                      context: dialogContext,
-                      builder: (dialogCtx) => TrainCiviliansDialog(
-                        game: currentGame,
-                        humanPlayerId: humanPlayerId,
-                        currentOrders: currentOrders,
-                        onOrdersChanged: (newOrders) {
-                          final existing =
-                              currentOrders
-                                  .buildUnitOrdersByPlayerId[humanPlayerId] ??
-                              [];
-                          ordersNotifier.state = currentOrders.copyWith(
-                            buildUnitOrdersByPlayerId: {
-                              ...currentOrders.buildUnitOrdersByPlayerId,
-                              humanPlayerId: [...existing, ...newOrders],
-                            },
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-          ).whenComplete(onPanelDismissed);
+                );
+              },
+              onCancelUnitWork: onCancelUnitWork,
+              onStartWorkTargetSelection: onStartWorkTargetSelection,
+              onPanelDismissed: onPanelDismissed,
+            ),
+          );
         },
       ),
       _empireButton(
@@ -181,14 +119,12 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Military Units',
         onPressed: () {
           onClose();
-          showModalBottomSheet<void>(
-            context: context,
-            builder: (ctx) => MilitaryUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
+          bus.emit(
+            ct_models.OpenMilitaryUnitsPanelEvent(
               onLocateTile: onLocateMilitaryTile,
+              onPanelDismissed: onPanelDismissed,
             ),
-          ).whenComplete(onPanelDismissed);
+          );
         },
       ),
       _empireButton(
@@ -197,20 +133,15 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Naval Units',
         onPressed: () {
           onClose();
-          showModalBottomSheet<void>(
-            context: context,
-            builder: (ctx) {
-              final currentGame = ref.read(currentGameProvider) ?? game;
-              return NavalUnitsPanel(
-                game: currentGame,
-                humanPlayerId: humanPlayerId,
-                onLocateFleet: onLocateNavalFleet,
-                onFleetsChanged: (newGame) {
-                  ref.read(currentGameProvider.notifier).state = newGame;
-                },
-              );
-            },
-          ).whenComplete(onPanelDismissed);
+          bus.emit(
+            ct_models.OpenNavalUnitsPanelEvent(
+              onLocateFleet: onLocateNavalFleet,
+              onFleetsChanged: (newGame) {
+                ref.read(currentGameProvider.notifier).state = newGame;
+              },
+              onPanelDismissed: onPanelDismissed,
+            ),
+          );
         },
       ),
       _empireButton(

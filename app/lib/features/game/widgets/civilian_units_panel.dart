@@ -6,7 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../widgets/ct_dialog_shell.dart';
+import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -102,7 +102,6 @@ class CivilianUnitsPanel extends StatelessWidget {
     this.onRemoveWorkOrder,
     this.onCancelUnitWork,
     this.onStartWorkTargetSelection,
-    this.onTrainPressed,
   });
 
   final Game game;
@@ -123,10 +122,6 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
-
-  /// Called when the user taps the Train button. The callback receives [dialogContext]
-  /// which should be used to show the Train dialog.
-  final void Function(BuildContext dialogContext)? onTrainPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -163,11 +158,13 @@ class CivilianUnitsPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    if (onTrainPressed != null)
-                      CtNinePatchButton(
-                        onPressed: () => onTrainPressed!(context),
-                        child: const Text('Train'),
-                      ),
+                    CtNinePatchButton(
+                      onPressed: () {
+                        Navigator.of(context).maybePop();
+                        bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+                      },
+                      child: const Text('Train'),
+                    ),
                   ],
                 ),
               ),

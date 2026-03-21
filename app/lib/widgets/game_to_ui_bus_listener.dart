@@ -1,0 +1,64 @@
+import 'dart:async';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/app_event_bus_provider.dart';
+import '../providers/game_service_provider.dart';
+import '../providers/games_provider.dart';
+
+/// Subscribes to [TurnResolutionCompleteEvent] for [gameId] and reloads
+/// [currentGameProvider] from [GameService] when the active game matches.
+/// SPEC/program/app-event-bus.md — empire screens subscribe individually.
+class GameToUIBusListener extends ConsumerStatefulWidget {
+  const GameToUIBusListener({
+    super.key,
+    required this.gameId,
+    required this.child,
+  });
+
+  final String gameId;
+  final Widget child;
+
+  @override
+  ConsumerState<GameToUIBusListener> createState() =>
+      _GameToUIBusListenerState();
+}
+
+class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
+  StreamSubscription<TurnResolutionCompleteEvent>? _turnSub;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _turnSub ??=
+        ref.read(appEventBusProvider).on<TurnResolutionCompleteEvent>().listen(
+              _onTurnResolutionComplete,
+            );
+  }
+
+  void _onTurnResolutionComplete(TurnResolutionCompleteEvent event) {
+    if (!mounted || event.gameId != widget.gameId) {
+      return;
+    }
+    final current = ref.read(currentGameProvider);
+    if (current?.id != event.gameId) {
+      return;
+    }
+    final reloaded = ref.read(gameServiceProvider).loadGame(event.gameId);
+    if (reloaded == null || !mounted) {
+      return;
+    }
+    ref.read(currentGameProvider.notifier).state = reloaded;
+  }
+
+  @override
+  void dispose() {
+    _turnSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}

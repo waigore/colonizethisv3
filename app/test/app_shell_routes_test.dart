@@ -1,15 +1,21 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('App shell and routes', () {
-    testWidgets('App uses Routes.shell as initial route', (WidgetTester tester) async {
-      await tester.pumpWidget(const App());
+    testWidgets('App uses Routes.shell as initial route', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const ProviderScope(child: AppEventHandlerScope(child: App())),
+      );
       await tester.pumpAndSettle();
 
       // Shell route should be active; CtMainMenu buttons should be visible.
@@ -17,8 +23,12 @@ void main() {
       expect(find.text('Load Game'), findsOneWidget);
     });
 
-    testWidgets('Debug log menu item pushes debug route', (WidgetTester tester) async {
-      await tester.pumpWidget(const App());
+    testWidgets('Debug log menu item pushes debug route', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const ProviderScope(child: AppEventHandlerScope(child: App())),
+      );
       await tester.pumpAndSettle();
 
       // Simulate menu selection using the exported navigator key.
@@ -29,4 +39,3 @@ void main() {
     });
   });
 }
-

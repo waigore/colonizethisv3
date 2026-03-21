@@ -4,12 +4,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_screen.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
@@ -23,6 +26,21 @@ void main() {
     game = result.game;
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
+
+  Widget _scopedTechnology(Game g, Widget child) {
+    return ProviderScope(
+      overrides: [
+        currentGameProvider.overrideWith((ref) => g),
+        currentOrdersProvider.overrideWith((ref) => const Orders()),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+      ],
+      child: child,
+    );
+  }
 
   testWidgets('TechTreeWidget builds and shows scrollable content', (
     WidgetTester tester,
@@ -67,9 +85,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechnologyScreen(game: game, player: player),
+      _scopedTechnology(
+        game,
+        MaterialApp(
+          home: Scaffold(
+            body: TechnologyScreen(game: game, player: player),
+          ),
         ),
       ),
     );
@@ -83,14 +104,17 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Navigator(
-          pages: [
-            MaterialPage(
-              child: TechnologyScreen(game: game, player: player),
-            ),
-          ],
-          onDidRemovePage: (_) {},
+      _scopedTechnology(
+        game,
+        MaterialApp(
+          home: Navigator(
+            pages: [
+              MaterialPage(
+                child: TechnologyScreen(game: game, player: player),
+              ),
+            ],
+            onDidRemovePage: (_) {},
+          ),
         ),
       ),
     );
@@ -105,15 +129,18 @@ void main() {
   ) async {
     await tester.pumpWidget(MaterialApp(home: const Text('Home')));
     await tester.pumpWidget(
-      MaterialApp(
-        home: Navigator(
-          pages: [
-            const MaterialPage(child: Text('Home')),
-            MaterialPage(
-              child: TechnologyScreen(game: game, player: player),
-            ),
-          ],
-          onDidRemovePage: (_) {},
+      _scopedTechnology(
+        game,
+        MaterialApp(
+          home: Navigator(
+            pages: [
+              const MaterialPage(child: Text('Home')),
+              MaterialPage(
+                child: TechnologyScreen(game: game, player: player),
+              ),
+            ],
+            onDidRemovePage: (_) {},
+          ),
         ),
       ),
     );
@@ -132,9 +159,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechnologyScreen(game: game, player: player),
+      _scopedTechnology(
+        game,
+        MaterialApp(
+          home: Scaffold(
+            body: TechnologyScreen(game: game, player: player),
+          ),
         ),
       ),
     );

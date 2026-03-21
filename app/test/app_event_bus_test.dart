@@ -152,6 +152,13 @@ void main() {
       );
     });
 
+    test('OpenPauseMenuPanelEvent equal when both use null callbacks', () {
+      expect(
+        const OpenPauseMenuPanelEvent(),
+        const OpenPauseMenuPanelEvent(),
+      );
+    });
+
     test('StartTargetSelectionEvent equal for same params', () {
       expect(
         const StartTargetSelectionEvent(unitId: 'u1', action: 'move'),

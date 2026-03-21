@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/debug_log/debug_log_viewer_screen.dart';
 import '../features/game/flame/game_screen.dart';
@@ -7,7 +6,6 @@ import '../features/game/widgets/diplomacy_screen.dart';
 import '../features/game/widgets/production_screen.dart';
 import '../features/game/widgets/technology_screen.dart';
 import '../features/shell/shell_screen.dart';
-import '../providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
@@ -77,16 +75,11 @@ class Routes {
         );
       case technology:
         final player = game.players.firstWhere((p) => p.id == humanPlayerId);
-        final currentOrders =
-            args['currentOrders'] as Orders? ?? const Orders();
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => Consumer(
-            builder: (_, ref, __) => TechnologyScreen(
-              game: game,
-              player: player,
-              currentOrders: ref.watch(currentOrdersProvider),
-            ),
+          builder: (_) => TechnologyScreen(
+            game: game,
+            player: player,
           ),
         );
       default:
