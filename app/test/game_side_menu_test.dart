@@ -8,6 +8,7 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -19,6 +20,51 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'dart:async';
+
+class TestAppEventBus implements AppEventBus {
+  TestAppEventBus(this._inner);
+
+  final AppEventBus _inner;
+  NavigatorState? _navigator;
+
+  void setNavigator(NavigatorState navigator) {
+    _navigator = navigator;
+  }
+
+  @override
+  void emit(AppEvent event) {
+    if (event is NavigateToRouteEvent && _navigator != null) {
+      _navigator!.pushNamed(event.route, arguments: event.arguments);
+    }
+    _inner.emit(event);
+  }
+
+  @override
+  Stream<AppEvent> get stream => _inner.stream;
+
+  @override
+  Stream<T> on<T extends AppEvent>() => _inner.on<T>();
+
+  @override
+  Stream<UIActionEvent> get uiActionEvents => _inner.uiActionEvents;
+
+  @override
+  Stream<UISystemEvent> get uiSystemEvents => _inner.uiSystemEvents;
+
+  @override
+  Stream<GameToUIEvent> get gameToUIEvents => _inner.gameToUIEvents;
+
+  @override
+  Stream<DialogueEvent> get dialogueEvents => _inner.dialogueEvents;
+
+  @override
+  Stream<PortraitMoodEvent> get portraitMoodEvents => _inner.portraitMoodEvents;
+
+  @override
+  void dispose() => _inner.dispose();
+}
 
 void main() {
   suppressLogsForTests();
@@ -35,67 +81,73 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  testWidgets('GameSideMenu builds empire buttons and close button calls onClose',
-      (WidgetTester tester) async {
-    final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
-        ? game.players.where((p) => p.isHuman).first.id
-        : game.players.first.id;
+  testWidgets(
+    'GameSideMenu builds empire buttons and close button calls onClose',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
 
-    var closed = false;
+      var closed = false;
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentGameProvider.overrideWith((ref) => game),
-          currentOrdersProvider.overrideWith((ref) => const Orders()),
-          availableWorkTargetsProvider.overrideWith(
-            (ref) => <String, List<String>>{},
-          ),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: Stack(
-              children: [
-                GameSideMenu(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  sideMenuOpen: true,
-                  onClose: () => closed = true,
-                  onPanelDismissed: () {},
-                  onLocateCivilianUnit: (_) {},
-                  onLocateMilitaryTile: (_, __) {},
-                  onLocateNavalFleet: (_, __) {},
-                  onCancelUnitWork: (_) {},
-                  onStartWorkTargetSelection: (_, __) {},
-                ),
-              ],
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith((ref) => game),
+            currentOrdersProvider.overrideWith((ref) => const Orders()),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    sideMenuOpen: true,
+                    onClose: () => closed = true,
+                    onPanelDismissed: () {},
+                    onLocateCivilianUnit: (_) {},
+                    onLocateMilitaryTile: (_, __) {},
+                    onLocateNavalFleet: (_, __) {},
+                    onCancelUnitWork: (_) {},
+                    onStartWorkTargetSelection: (_, __) {},
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Production'), findsOneWidget);
-    expect(find.text('Diplomacy'), findsOneWidget);
-    expect(find.text('×'), findsOneWidget);
+      expect(find.text('Production'), findsOneWidget);
+      expect(find.text('Diplomacy'), findsOneWidget);
+      expect(find.text('×'), findsOneWidget);
 
-    await tester.tap(find.text('×'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('×'));
+      await tester.pumpAndSettle();
 
-    expect(closed, isTrue);
-  });
+      expect(closed, isTrue);
+    },
+  );
 
-  testWidgets('GameSideMenu tapping Production navigates to ProductionScreen',
-      (WidgetTester tester) async {
+  testWidgets('GameSideMenu tapping Production navigates to ProductionScreen', (
+    WidgetTester tester,
+  ) async {
     final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
+
+    final testBus = TestAppEventBus(AppEventBus.create());
+    final navigatorKey = GlobalKey<NavigatorState>();
 
     await tester.pumpWidget(
       ProviderScope(
@@ -109,8 +161,11 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) => testBus),
         ],
         child: MaterialApp(
+          navigatorKey: navigatorKey,
+          onGenerateRoute: Routes.generate,
           home: Scaffold(
             body: Stack(
               children: [
@@ -132,6 +187,7 @@ void main() {
         ),
       ),
     );
+    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Production'));
@@ -141,11 +197,15 @@ void main() {
     expect(find.text('Production'), findsOneWidget);
   });
 
-  testWidgets('GameSideMenu tapping Technology navigates to TechnologyScreen',
-      (WidgetTester tester) async {
+  testWidgets('GameSideMenu tapping Technology navigates to TechnologyScreen', (
+    WidgetTester tester,
+  ) async {
     final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
+
+    final testBus = TestAppEventBus(AppEventBus.create());
+    final navigatorKey = GlobalKey<NavigatorState>();
 
     await tester.pumpWidget(
       ProviderScope(
@@ -159,8 +219,11 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) => testBus),
         ],
         child: MaterialApp(
+          navigatorKey: navigatorKey,
+          onGenerateRoute: Routes.generate,
           home: Scaffold(
             body: Stack(
               children: [
@@ -182,6 +245,7 @@ void main() {
         ),
       ),
     );
+    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Technology'));
@@ -397,6 +461,9 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
+    final testBus = TestAppEventBus(AppEventBus.create());
+    final navigatorKey = GlobalKey<NavigatorState>();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -409,8 +476,11 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) => testBus),
         ],
         child: MaterialApp(
+          navigatorKey: navigatorKey,
+          onGenerateRoute: Routes.generate,
           home: Scaffold(
             body: Stack(
               children: [
@@ -432,6 +502,7 @@ void main() {
         ),
       ),
     );
+    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Diplomacy'));
@@ -447,6 +518,9 @@ void main() {
         ? game.players.where((p) => p.isHuman).first.id
         : game.players.first.id;
 
+    final testBus = TestAppEventBus(AppEventBus.create());
+    final navigatorKey = GlobalKey<NavigatorState>();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -459,12 +533,13 @@ void main() {
           availableWorkTargetsProvider.overrideWith(
             (ref) => <String, List<String>>{},
           ),
+          appEventBusProvider.overrideWith((ref) => testBus),
         ],
         child: MaterialApp(
+          navigatorKey: navigatorKey,
           routes: {
-            Routes.debugLog: (_) => const Scaffold(
-                  body: Center(child: Text('debug-route-marker')),
-                ),
+            Routes.debugLog: (_) =>
+                const Scaffold(body: Center(child: Text('debug-route-marker'))),
           },
           home: Scaffold(
             body: Stack(
@@ -487,6 +562,7 @@ void main() {
         ),
       ),
     );
+    testBus.setNavigator(navigatorKey.currentState!);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Debug log'));
@@ -541,10 +617,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.drag(
-      find.byType(GameSideMenu),
-      const Offset(-40, 0),
-    );
+    await tester.drag(find.byType(GameSideMenu), const Offset(-40, 0));
     await tester.pumpAndSettle();
 
     expect(closed, isTrue);
@@ -567,7 +640,8 @@ class _SideMenuUnmountingHost extends ConsumerStatefulWidget {
       _SideMenuUnmountingHostState();
 }
 
-class _SideMenuUnmountingHostState extends ConsumerState<_SideMenuUnmountingHost> {
+class _SideMenuUnmountingHostState
+    extends ConsumerState<_SideMenuUnmountingHost> {
   bool _sideMenuOpen = true;
 
   @override
@@ -593,4 +667,3 @@ class _SideMenuUnmountingHostState extends ConsumerState<_SideMenuUnmountingHost
     );
   }
 }
-

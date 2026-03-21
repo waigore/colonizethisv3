@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
@@ -34,20 +35,22 @@ void main() {
     Orders currentOrders = const Orders(),
     void Function(Orders)? onOrdersChanged,
   }) {
-    return MaterialApp(
-      home: Navigator(
-        pages: [
-          MaterialPage(
-            child: DiplomacyScreen(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              topology: topology,
-              currentOrders: currentOrders,
-              onOrdersChanged: onOrdersChanged ?? (_) {},
+    return ProviderScope(
+      child: MaterialApp(
+        home: Navigator(
+          pages: [
+            MaterialPage(
+              child: DiplomacyScreen(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                topology: topology,
+                currentOrders: currentOrders,
+                onOrdersChanged: onOrdersChanged ?? (_) {},
+              ),
             ),
-          ),
-        ],
-        onPopPage: (_, __) => false,
+          ],
+          onPopPage: (_, __) => false,
+        ),
       ),
     );
   }
@@ -98,7 +101,12 @@ void main() {
     testWidgets('back button is tappable', (WidgetTester tester) async {
       final navigatorKey = GlobalKey<NavigatorState>();
       await tester.pumpWidget(
-        MaterialApp(navigatorKey: navigatorKey, home: const Text('Home')),
+        ProviderScope(
+          child: MaterialApp(
+            navigatorKey: navigatorKey,
+            home: const Text('Home'),
+          ),
+        ),
       );
 
       navigatorKey.currentState!.push<void>(

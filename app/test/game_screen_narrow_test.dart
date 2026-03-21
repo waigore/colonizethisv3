@@ -4,6 +4,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -13,6 +14,87 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'dart:async';
+
+class TestAppEventBus implements AppEventBus {
+  TestAppEventBus(this._inner);
+
+  final AppEventBus _inner;
+  NavigatorState? _navigator;
+  BuildContext? _context;
+
+  void setNavigator(NavigatorState navigator) {
+    _navigator = navigator;
+  }
+
+  void setContext(BuildContext context) {
+    _context = context;
+  }
+
+  @override
+  void emit(AppEvent event) {
+    if (event is NavigateToRouteEvent && _navigator != null) {
+      _navigator!.pushNamed(event.route, arguments: event.arguments);
+    } else if (event is OpenPanelEvent && event.panelId == 'pause_menu') {
+      if (_context != null) {
+        _showPauseMenu(_context!, event.params);
+      }
+    }
+    _inner.emit(event);
+  }
+
+  void _showPauseMenu(BuildContext context, Map<String, Object?>? params) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text('Debug log'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              (params?['onDebugLog'] as VoidCallback?)?.call();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('Resume'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              (params?['onResume'] as VoidCallback?)?.call();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Stream<AppEvent> get stream => _inner.stream;
+
+  @override
+  Stream<T> on<T extends AppEvent>() => _inner.on<T>();
+
+  @override
+  Stream<UIActionEvent> get uiActionEvents => _inner.uiActionEvents;
+
+  @override
+  Stream<UISystemEvent> get uiSystemEvents => _inner.uiSystemEvents;
+
+  @override
+  Stream<GameToUIEvent> get gameToUIEvents => _inner.gameToUIEvents;
+
+  @override
+  Stream<DialogueEvent> get dialogueEvents => _inner.dialogueEvents;
+
+  @override
+  Stream<PortraitMoodEvent> get portraitMoodEvents => _inner.portraitMoodEvents;
+
+  @override
+  void dispose() => _inner.dispose();
+}
 
 void main() {
   suppressLogsForTests();
@@ -180,8 +262,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final switchTile =
-            tester.widget<SwitchListTile>(showBordersFinder.first);
+        final switchTile = tester.widget<SwitchListTile>(
+          showBordersFinder.first,
+        );
         expect(switchTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -266,6 +349,7 @@ void main() {
   group('GameScreen — pause menu and victory overlay', () {
     Widget _buildGameScreenWithPauseMenu({
       required Game game,
+      TestAppEventBus? testBus,
     }) {
       return ProviderScope(
         overrides: [
@@ -273,15 +357,14 @@ void main() {
           // No mapViewData override so that overlay buttons (pause menu, Next turn)
           // are shown on top of the Flame canvas.
           mapViewDataProvider.overrideWith((ref) => null),
-          gameIdsWithIntroShownProvider.overrideWith(
-            (ref) => {game.id},
-          ),
+          gameIdsWithIntroShownProvider.overrideWith((ref) => {game.id}),
+          if (testBus != null)
+            appEventBusProvider.overrideWith((ref) => testBus),
         ],
         child: MaterialApp(
           routes: {
-            Routes.debugLog: (context) => const Scaffold(
-                  body: Center(child: Text('Debug log screen')),
-                ),
+            Routes.debugLog: (context) =>
+                const Scaffold(body: Center(child: Text('Debug log screen'))),
           },
           home: const GameScreen(),
         ),
@@ -291,13 +374,22 @@ void main() {
     testWidgets(
       'pause menu opens bottom sheet and shows debug log entry',
       (WidgetTester tester) async {
+        final testBus = TestAppEventBus(AppEventBus.create());
+
         await tester.pumpWidget(
-          _buildGameScreenWithPauseMenu(game: debugResult.game),
+          _buildGameScreenWithPauseMenu(
+            game: debugResult.game,
+            testBus: testBus,
+          ),
         );
         await tester.pump();
 
+        final scaffoldFinder = find.byType(Scaffold);
+        testBus.setContext(tester.element(scaffoldFinder));
+
         // Tap the pause menu icon in the overlay stack.
         await tester.tap(find.byIcon(Icons.menu).first);
+        await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
         // Bottom sheet should show a Debug log entry.
@@ -321,7 +413,9 @@ void main() {
           ProviderScope(
             overrides: [
               currentGameProvider.overrideWith((ref) => victoryGame),
-              mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+              mapViewDataProvider.overrideWith(
+                (ref) => debugResult.mapViewData,
+              ),
               gameIdsWithIntroShownProvider.overrideWith(
                 (ref) => {victoryGame.id},
               ),
