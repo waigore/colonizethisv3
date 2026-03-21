@@ -7,6 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flame/cache.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,8 +78,12 @@ Future<void> _preWarmFlameImageCache() async {
     final bytes = await rootBundle.load(
       'assets/images/ui_button_nine_patch.png',
     );
-    await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-  } catch (_) {}
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    Flame.images.add('ui_button_nine_patch.png', frame.image);
+  } catch (e) {
+    // Silently fail - the test might still work if the image is available later
+  }
 }
 
 class _PanelWrapper extends StatefulWidget {
@@ -188,7 +194,7 @@ void main() {
   late MapTopology topology;
 
   setUpAll(() async {
-    unawaited(_preWarmFlameImageCache());
+    await _preWarmFlameImageCache();
     final result = getDebugInitGameResult();
     gameWithFactions = result.game;
     topology = result.combinedTopology;
