@@ -27,9 +27,12 @@ class GameService {
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
 
-  /// Optional event bus to emit game events to. When set, GameToUIEvent variants
-  /// are emitted alongside the raw GameEvent callbacks.
+  /// Optional app-level event bus for GameToUIEvent emission (TurnResolutionComplete, OvertureRequired, etc.).
   AppEventBus? eventBus;
+
+  /// Optional logic-level event bus for GameEvent forwarding to AppEventBus via GameEventBridge.
+  /// When set, runTurnResolution passes it to resolveTurnForGame.
+  GameEventBus? logicEventBus;
 
   /// In-memory cache: game id -> map data for resolveTurnForGame and map rendering.
   /// Populated when creating a new game or when loading a game with persisted map data.
@@ -119,6 +122,7 @@ class GameService {
       topology: topo,
       orders: resolvedOrders,
       tileMapByRegion: tileMaps,
+      eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
     if (result is TurnResolutionComplete) {
@@ -130,6 +134,8 @@ class GameService {
           turnNumber: complete.game.worldState.turnState.turnNumber,
         ),
       );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
     }
     return result;
   }
@@ -154,6 +160,7 @@ class GameService {
       topology: topo,
       orders: orders,
       tileMapByRegion: tileMaps,
+      eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
     if (result is TurnResolutionComplete) {
@@ -165,6 +172,8 @@ class GameService {
           turnNumber: complete.game.worldState.turnState.turnNumber,
         ),
       );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
     }
     return result;
   }

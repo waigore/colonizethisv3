@@ -65,9 +65,15 @@ AppEvent (sealed)
 │   ├── DismissOverlayEvent(overlayId)
 │   └── NotifyEvent(title, body, priority?)
 │
-└── GameToUIEvent       — game layer → UI triggers
+└── GameToUIEvent       — game layer → UI triggers (bridge: SPEC/program/game-event-bridge.md)
     ├── TurnResolutionCompleteEvent(gameId, turnNumber)
     ├── OvertureRequiredEvent(overtures)
+    ├── AppCombatResultEvent(provinceId, attackerId, defenderId, winnerId, turnNumber, casualties?)
+    ├── AppProvinceCapturedEvent(provinceId, previousOwnerId, newOwnerId, turnNumber)
+    ├── AppDiplomacyChangeEvent(actorId, targetId, changeType, turnNumber)
+    ├── AppResearchCompleteEvent(playerId, techId, turnNumber)
+    ├── AppVictorySetEvent(winnerPlayerId, victoryType, turnNumber)
+    ├── AppOrderRejectedEvent(playerId, orderSummary, reasonCode)
     ├── SaveGameCompleteEvent(gameId)
     └── NewGameCreatedEvent(gameId)
 ```
@@ -174,12 +180,13 @@ Routes are named strings passed via `NavigateToRouteEvent`. Handled by `AppEvent
 
 - `TurnResolutionCompleteEvent` after `runTurnResolution` or `resumeOvertureDecisions` completes with `TurnResolutionComplete`
 - `NewGameCreatedEvent` after `createNewGame()` saves
+- `OvertureRequiredEvent` when `runTurnResolution` returns `TurnResolutionPendingOvertures` (see bridge)
 
-**Consumption:** There is no single shell subscriber for `GameToUIEvent`. Each screen that must react mounts its own subscription (e.g. `GameToUIBusListener` wraps `GameScreen`, `ProductionScreen`, `DiplomacyScreen`, `TechnologyScreen` for `TurnResolutionCompleteEvent` and reloads `currentGameProvider` via `GameService.loadGame` when the event’s `gameId` matches the mounted screen’s game and `currentGameProvider` already holds that game).
+**Full bridge architecture:** **SPEC/program/game-event-bridge.md**.
 
-The raw `GameEvent` stream from `TurnResolver` remains available via `void Function(GameEvent)? onGameEvent` for logic-layer consumers.
+`GameEventBridge` subscribes to `GameEventBus` (from `colonizethis_logic`) and maps each `GameEvent` subtype to the corresponding `GameToUIEvent` subtype on `AppEventBus`. This allows UI components to react to individual game occurrences (combat, diplomacy, research, victory) without polling.
 
----
+**Consumption:** There is no single shell subscriber for `GameToUIEvent`. Each screen that must react mounts its own subscription (e.g. `GameToUIBusListener` wraps `GameScreen`, `ProductionScreen`, `DiplomacyScreen`, `TechnologyScreen` for `TurnResolutionCompleteEvent` and reloads `currentGameProvider` via `GameService.loadGame` when the event's `gameId` matches the mounted screen's game and `currentGameProvider` already holds that game).
 
 ## Remaining migration
 
@@ -231,11 +238,19 @@ The raw `GameEvent` stream from `TurnResolver` remains available via `void Funct
 - Given `GameService.eventBus` is non-null, When `runTurnResolution` completes with `TurnResolutionComplete`, Then the service emits `TurnResolutionCompleteEvent` with matching `gameId` and `turnNumber`.
 - Given `GameService.eventBus` is null, When `runTurnResolution` completes with `TurnResolutionComplete`, Then no `TurnResolutionCompleteEvent` is emitted.
 
+### GameEventBridge (SPEC/program/game-event-bridge.md)
+
+- Given a `GameEventBridge` started with a `DefaultGameEventBus` as logicBus and `AppEventBus` as appBus, When the logic bus publishes `CombatResultEvent`, Then `AppEventBus` receives exactly one `AppCombatResultEvent` with matching fields.
+- Given a `GameEventBridge` started, When the logic bus publishes `ProvinceCapturedEvent`, `DiplomacyChangeEvent`, `ResearchCompleteEvent`, `VictorySetEvent`, or `OrderRejectedEvent`, Then `AppEventBus` receives the corresponding `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppVictorySetEvent`, or `AppOrderRejectedEvent`.
+- Given a `GameEventBridge` started, When `stop()` is called, Then subsequent events on the logic bus are not forwarded.
+- Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingOvertures`, Then `AppEventBus` has emitted `OvertureRequiredEvent` before the result is returned.
+
 ### Automated tests (must pass in CI)
 
-- `app/test/app_event_bus_test.dart` covers bus delivery, filtering, dispose, and equality for `UIActionEvent` / `UISystemEvent` / `GameToUIEvent` (including `OpenPauseMenuPanelEvent` where const).
+- `app/test/app_event_bus_test.dart` covers bus delivery, filtering, dispose, and equality for `UIActionEvent` / `UISystemEvent` / `GameToUIEvent` (including `OpenPauseMenuPanelEvent` where const and all new GameToUIEvent subtypes).
 - `app/test/app_event_handler_test.dart` covers `OpenDialogEvent`, `NavigateToRouteEvent`, `ConfirmDialogEvent`, `OpenPanelEvent`, `OpenPauseMenuPanelEvent`, `PopNavigationEvent`, and snackbar/overlay callbacks.
 - `app/test/game_to_ui_bus_listener_test.dart` covers `TurnResolutionCompleteEvent` → provider reload.
+- `app/test/game_event_bridge_test.dart` covers bridge forwarding of all GameEvent → GameToUIEvent mappings.
 - Widget tests for `GameScreen`, `GameSideMenu`, and `TrainCiviliansDialog` / `CivilianUnitsPanel` cover pause menu, empire panels, and Train-via-bus behavior.
 
 ---
@@ -247,3 +262,4 @@ The raw `GameEvent` stream from `TurnResolver` remains available via `void Funct
 - Dialog builders are registered at shell init time; unknown IDs log a warning.
 - Event emission is fire-and-forget; `ConfirmDialogEvent` carries `onResult` / `result()` for the bool outcome (user choice A: callback on the event).
 - Province ids in any game events are always **prefixed** (`regionId|localId`).
+- `GameEventBridge` (app layer) maps logic-layer `GameEvent` → app-layer `GameToUIEvent`; the two type hierarchies are never shared to avoid circular deps.
