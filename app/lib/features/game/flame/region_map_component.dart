@@ -100,10 +100,12 @@ class CtRegionMapComponent extends PositionComponent {
     this.baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
     this.onProvinceSelected,
+    this.onMapTileTappedForDetail,
     this.onProvinceHovered,
     this.onTileHovered,
     this.onTileTapped,
-    this.highlightedTileKey,
+    this.selectedTileKey,
+    this.secondaryHighlightTileKey,
     this.validTileKeys,
   });
 
@@ -118,10 +120,12 @@ class CtRegionMapComponent extends PositionComponent {
   double cameraZoom = 1.0;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
+  void Function(String tileKey)? onMapTileTappedForDetail;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
   void Function(String? tileKey)? onTileTapped;
-  String? highlightedTileKey;
+  String? selectedTileKey;
+  String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
 
   int? _hoveredTileX;
@@ -216,11 +220,8 @@ class CtRegionMapComponent extends PositionComponent {
     }
     // Not in work target mode: allow province selection.
     final provinceId = '${region.regionId}|${cell.regionCellId}';
+    onMapTileTappedForDetail?.call(tileKey);
     onProvinceSelected?.call(provinceId);
-
-    // On touch/mobile, treat tap as hover so the selector and province glow
-    // move to the tapped tile (for non-unrevealed tiles). SPEC/ui/map-widget.md.
-    _setHoverFromCell(x, y);
   }
 
   @override
@@ -246,8 +247,11 @@ class CtRegionMapComponent extends PositionComponent {
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
     }
-    if (highlightedTileKey != null) {
-      _paintHighlightedTile(canvas);
+    if (selectedTileKey != null) {
+      _paintSelectedTile(canvas);
+    }
+    if (secondaryHighlightTileKey != null) {
+      _paintSecondaryHighlightTile(canvas);
     }
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       _paintValidTilesGlow(canvas);
@@ -276,9 +280,31 @@ class CtRegionMapComponent extends PositionComponent {
     }
   }
 
-  void _paintHighlightedTile(Canvas canvas) {
-    final key = highlightedTileKey!;
-    final parts = key.split('|');
+  void _paintSelectedTile(Canvas canvas) {
+    _paintTileOutlineRing(
+      canvas,
+      tileKey: selectedTileKey!,
+      color: const Color(0xFFFFAA00),
+      strokeWidth: 3,
+    );
+  }
+
+  void _paintSecondaryHighlightTile(Canvas canvas) {
+    _paintTileOutlineRing(
+      canvas,
+      tileKey: secondaryHighlightTileKey!,
+      color: const Color(0xFF66D9FF),
+      strokeWidth: 2.5,
+    );
+  }
+
+  void _paintTileOutlineRing(
+    Canvas canvas, {
+    required String tileKey,
+    required Color color,
+    required double strokeWidth,
+  }) {
+    final parts = tileKey.split('|');
     if (parts.length < 4) return;
     if (parts[0] != region.regionId) return;
     final x = int.tryParse(parts[2]);
@@ -290,8 +316,8 @@ class CtRegionMapComponent extends PositionComponent {
     final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..color = const Color(0xFFFFAA00);
+      ..strokeWidth = strokeWidth
+      ..color = color;
     canvas.drawRect(rect, paint);
   }
 

@@ -24,6 +24,20 @@ String get sampleProvinceIdForOverlay {
   return '${region.regionId}|p1';
 }
 
+/// A full tile key in [sampleProvinceIdForOverlay] for Tile section demos/tests.
+String get sampleTileKeyForProvinceOverlay {
+  final game = getDebugInitGameResult().game;
+  final region = getDebugInitGameResult().mapViewData.oldWorld;
+  final provinceId = sampleProvinceIdForOverlay;
+  final tiles =
+      game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId];
+  if (tiles != null && tiles.isNotEmpty) {
+    return tiles.first;
+  }
+  final cell = region.cells.firstWhere((c) => !c.isSea);
+  return '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
+}
+
 /// First sea zone prefixed id in Old World (for overlay story selectedId).
 String get sampleSeaZoneIdForOverlay {
   final region = getDebugInitGameResult().mapViewData.oldWorld;

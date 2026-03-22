@@ -1,4 +1,4 @@
-// Tests for ProvinceSeaZoneDetailOverlay hover and branching paths.
+// Tests for ProvinceSeaZoneDetailOverlay tile selection and branching paths.
 // Covers SPEC/ui/province-sea-zone-detail-overlay.md conditional content.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -18,10 +18,9 @@ void main() {
   Widget buildOverlay({
     required Game game,
     required RegionMapViewData region,
-    required String selectedId,
     required String displayId,
     required String humanPlayerId,
-    String? hoveredTileKey,
+    String? selectedTileKey,
     VoidCallback? onClose,
   }) {
     return MaterialApp(
@@ -29,10 +28,9 @@ void main() {
         body: ProvinceSeaZoneDetailOverlay(
           game: game,
           region: region,
-          selectedId: selectedId,
           displayId: displayId,
+          selectedTileKey: selectedTileKey,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: hoveredTileKey,
           onClose: onClose,
         ),
       ),
@@ -49,9 +47,9 @@ void main() {
     return (x: x, y: y);
   }
 
-  group('ProvinceSeaZoneDetailOverlay - hover + branching paths', () {
+  group('ProvinceSeaZoneDetailOverlay - selected tile + branching paths', () {
     testWidgets(
-        'AC: Revealed hovered tile renders coordinates + terrain + prospected fields',
+        'AC: Revealed selected tile renders coordinates + terrain + prospected fields',
         (WidgetTester tester) async {
       final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
@@ -66,7 +64,7 @@ void main() {
           game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
               const <String>[];
 
-      String? hoveredTileKey;
+      String? selectedTileKey;
       ({int x, int y}) coords = (x: -1, y: -1);
       for (final tk in possibleTiles) {
         final c = coordsFromTileKey(tk);
@@ -76,23 +74,22 @@ void main() {
         }
         final cell = region.cellAt(c.x, c.y);
         if (cell.visibility != TileVisibility.unrevealed) {
-          hoveredTileKey = tk;
+          selectedTileKey = tk;
           coords = c;
           break;
         }
       }
 
       // If demo data is unexpectedly unrevealed, fail with a clear message.
-      expect(hoveredTileKey, isNotNull, reason: 'No revealed tile found in demo overlay data');
+      expect(selectedTileKey, isNotNull, reason: 'No revealed tile found in demo overlay data');
 
       await tester.pumpWidget(
         buildOverlay(
           game: game,
           region: region,
-          selectedId: provinceId,
           displayId: provinceId,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: hoveredTileKey,
+          selectedTileKey: selectedTileKey,
         ),
       );
       await tester.pumpAndSettle();
@@ -103,7 +100,7 @@ void main() {
       expect(find.textContaining('Prospected:'), findsOneWidget);
     });
 
-    testWidgets('AC: Out-of-bounds hovered tile shows placeholder "—"', (
+    testWidgets('AC: Out-of-bounds selected tile shows placeholder "—"', (
       WidgetTester tester,
     ) async {
       final game = demoGameForOverlay;
@@ -113,16 +110,15 @@ void main() {
       // Use the overlay's expected tile-key format but push x outside bounds.
       final firstLandCell = region.cells.firstWhere((c) => !c.isSea);
       final provinceId = '${region.regionId}|${firstLandCell.regionCellId}';
-      final hoveredTileKey = '${region.regionId}|${firstLandCell.regionCellId}|${region.width + 5}|0';
+      final badTileKey = '${region.regionId}|${firstLandCell.regionCellId}|${region.width + 5}|0';
 
       await tester.pumpWidget(
         buildOverlay(
           game: game,
           region: region,
-          selectedId: provinceId,
           displayId: provinceId,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: hoveredTileKey,
+          selectedTileKey: badTileKey,
         ),
       );
       await tester.pumpAndSettle();
@@ -133,7 +129,7 @@ void main() {
     });
 
     testWidgets(
-        'AC: Sea zone display never renders Tile section even when hoveredTileKey is provided',
+        'AC: Sea zone display never renders Tile section even when selectedTileKey is provided',
         (WidgetTester tester) async {
       final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
@@ -159,10 +155,9 @@ void main() {
         buildOverlay(
           game: game,
           region: region,
-          selectedId: seaZoneId,
           displayId: seaZoneId,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: anyTileKey,
+          selectedTileKey: anyTileKey,
         ),
       );
       await tester.pumpAndSettle();
@@ -186,26 +181,25 @@ void main() {
       final possibleTiles =
           game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
               const <String>[];
-      String? hoveredTileKey;
+      String? selectedTileKey;
       for (final tk in possibleTiles) {
         final c = coordsFromTileKey(tk);
         if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) continue;
         final cell = region.cellAt(c.x, c.y);
         if (cell.visibility != TileVisibility.unrevealed) {
-          hoveredTileKey = tk;
+          selectedTileKey = tk;
           break;
         }
       }
-      expect(hoveredTileKey, isNotNull, reason: 'No revealed tile in New World demo province');
+      expect(selectedTileKey, isNotNull, reason: 'No revealed tile in New World demo province');
 
       await tester.pumpWidget(
         buildOverlay(
           game: game,
           region: region,
-          selectedId: provinceId,
           displayId: provinceId,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: hoveredTileKey,
+          selectedTileKey: selectedTileKey,
         ),
       );
       await tester.pumpAndSettle();
@@ -238,26 +232,25 @@ void main() {
       final possibleTiles =
           game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
               const <String>[];
-      String? hoveredTileKey;
+      String? selectedTileKey;
       for (final tk in possibleTiles) {
         final c = coordsFromTileKey(tk);
         if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) continue;
         final cell = region.cellAt(c.x, c.y);
         if (cell.visibility != TileVisibility.unrevealed) {
-          hoveredTileKey = tk;
+          selectedTileKey = tk;
           break;
         }
       }
-      expect(hoveredTileKey, isNotNull);
+      expect(selectedTileKey, isNotNull);
 
       await tester.pumpWidget(
         buildOverlay(
           game: game,
           region: region,
-          selectedId: provinceId,
           displayId: provinceId,
           humanPlayerId: humanPlayerId,
-          hoveredTileKey: hoveredTileKey,
+          selectedTileKey: selectedTileKey,
         ),
       );
       await tester.pumpAndSettle();

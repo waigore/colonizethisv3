@@ -23,10 +23,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
     required void Function(String provinceId)? onProvinceSelected,
+    void Function(String tileKey)? onMapTileTappedForDetail,
     required VoidCallback? onRegionViewChanged,
     required void Function(String? provinceId)? onProvinceHovered,
     required void Function(String? tileKey)? onTileHovered,
-    required String? highlightedTileKey,
+    required String? selectedTileKey,
+    required String? secondaryHighlightTileKey,
     required Set<String>? validTileKeys,
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
@@ -38,10 +40,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
        visibilityMode = visibilityMode,
        baseLayerDisplayMode = baseLayerDisplayMode,
        onProvinceSelected = onProvinceSelected,
+       onMapTileTappedForDetail = onMapTileTappedForDetail,
        onRegionViewChanged = onRegionViewChanged,
        onProvinceHovered = onProvinceHovered,
        onTileHovered = onTileHovered,
-       highlightedTileKey = highlightedTileKey,
+       selectedTileKey = selectedTileKey,
+       secondaryHighlightTileKey = secondaryHighlightTileKey,
        validTileKeys = validTileKeys,
        onTileSelected = onTileSelected,
        onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
@@ -54,10 +58,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
+  void Function(String tileKey)? onMapTileTappedForDetail;
   VoidCallback? onRegionViewChanged;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
-  String? highlightedTileKey;
+  String? selectedTileKey;
+  String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
@@ -80,8 +86,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
+      onMapTileTappedForDetail: onMapTileTappedForDetail,
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
+      selectedTileKey: selectedTileKey,
+      secondaryHighlightTileKey: secondaryHighlightTileKey,
       onTileTapped: (tileKey) {
         // Tap handler for work target selection mode.
         if (onTileSelected != null && validTileKeys != null) {
@@ -94,7 +103,6 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
           }
         }
       },
-      highlightedTileKey: highlightedTileKey,
       validTileKeys: validTileKeys,
     )..position = Vector2.zero();
     await world.add(_mapComponent);
@@ -122,8 +130,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     bool? showProvinceNamesLayer,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
-    String? highlightedTileKey,
-    bool clearHighlightedTileKey = false,
+    String? selectedTileKey,
+    String? secondaryHighlightTileKey,
+    bool clearSelectedTileKey = false,
+    bool clearSecondaryHighlightTileKey = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
@@ -147,11 +157,15 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (baseLayerDisplayMode != null) {
       this.baseLayerDisplayMode = baseLayerDisplayMode;
     }
-    if (clearHighlightedTileKey) {
-      this.highlightedTileKey = null;
+    if (clearSelectedTileKey) {
+      this.selectedTileKey = null;
+    } else if (selectedTileKey != null) {
+      this.selectedTileKey = selectedTileKey;
     }
-    if (highlightedTileKey != null) {
-      this.highlightedTileKey = highlightedTileKey;
+    if (clearSecondaryHighlightTileKey) {
+      this.secondaryHighlightTileKey = null;
+    } else if (secondaryHighlightTileKey != null) {
+      this.secondaryHighlightTileKey = secondaryHighlightTileKey;
     }
     if (clearValidTileKeys) {
       this.validTileKeys = null;
@@ -171,7 +185,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..showProvinceNamesLayer = this.showProvinceNamesLayer
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
-        ..highlightedTileKey = this.highlightedTileKey
+        ..selectedTileKey = this.selectedTileKey
+        ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
         ..validTileKeys = this.validTileKeys;
     }
   }
@@ -342,10 +357,12 @@ class CtRegionMap extends StatefulWidget {
     this.visibilityMode = CtMapVisibilityMode.full,
     this.baseLayerDisplayMode,
     this.onProvinceSelected,
+    this.onMapTileTappedForDetail,
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
-    this.highlightedTileKey,
+    this.selectedTileKey,
+    this.secondaryHighlightTileKey,
     this.centerOnTileKey,
     this.validTileKeys,
     this.onTileSelected,
@@ -362,10 +379,12 @@ class CtRegionMap extends StatefulWidget {
   /// When null, full letters (terrain + resources + improvements) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
+  final void Function(String tileKey)? onMapTileTappedForDetail;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
-  final String? highlightedTileKey;
+  final String? selectedTileKey;
+  final String? secondaryHighlightTileKey;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
   final void Function(String tileKey)? onTileSelected;
@@ -394,7 +413,9 @@ class _CtRegionMapState extends State<CtRegionMap> {
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
-        widget.highlightedTileKey != oldWidget.highlightedTileKey ||
+        widget.selectedTileKey != oldWidget.selectedTileKey ||
+        widget.secondaryHighlightTileKey !=
+            oldWidget.secondaryHighlightTileKey ||
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled) {
@@ -407,8 +428,11 @@ class _CtRegionMapState extends State<CtRegionMap> {
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainResourcesImprovements,
-        highlightedTileKey: widget.highlightedTileKey,
-        clearHighlightedTileKey: widget.highlightedTileKey == null,
+        selectedTileKey: widget.selectedTileKey,
+        clearSelectedTileKey: widget.selectedTileKey == null,
+        secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
+        clearSecondaryHighlightTileKey:
+            widget.secondaryHighlightTileKey == null,
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
@@ -436,10 +460,12 @@ class _CtRegionMapState extends State<CtRegionMap> {
           widget.baseLayerDisplayMode ??
           BaseLayerDisplayMode.terrainResourcesImprovements,
       onProvinceSelected: widget.onProvinceSelected,
+      onMapTileTappedForDetail: widget.onMapTileTappedForDetail,
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,
       onTileHovered: widget.onTileHovered,
-      highlightedTileKey: widget.highlightedTileKey,
+      selectedTileKey: widget.selectedTileKey,
+      secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
       validTileKeys: widget.validTileKeys,
       onTileSelected: widget.onTileSelected,
       onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
