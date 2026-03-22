@@ -139,3 +139,40 @@ RecipeAffordance computeRecipeAffordance({
     limitingLabel: limitingLabel,
   );
 }
+
+/// Whether the allocation slider should show the comfort headroom track styling
+/// (thumb→max segment). SPEC/ui/production-panel.md
+bool recipeAllocationComfortHeadroomActive({
+  required ProductionRecipe recipe,
+  required int desiredOutput,
+  required int maxDesiredOutput,
+  required Stockpile stockpile,
+  required Map<String, int> desiredOutputByRecipe,
+  required int effectiveLabour,
+}) {
+  if (recipe.labourPerOutput <= 0) return false;
+  if (maxDesiredOutput <= 0 || desiredOutput >= maxDesiredOutput) {
+    return false;
+  }
+
+  final remainingLabour = _remainingLabourForRecipe(
+    recipeId: recipe.id,
+    effectiveLabour: effectiveLabour,
+    desiredOutputByRecipe: desiredOutputByRecipe,
+  );
+  final requiredLabour = desiredOutput * recipe.labourPerOutput;
+  if (remainingLabour <= requiredLabour) return false;
+
+  final remainingStock = _remainingStockByCommodity(
+    recipeId: recipe.id,
+    stockpile: stockpile,
+    desiredOutputByRecipe: desiredOutputByRecipe,
+  );
+  for (final entry in recipe.inputQuantities.entries) {
+    final perUnit = entry.value;
+    if (perUnit <= 0) continue;
+    final have = remainingStock[entry.key] ?? 0;
+    if (have <= desiredOutput * perUnit) return false;
+  }
+  return true;
+}

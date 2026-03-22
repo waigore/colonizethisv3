@@ -102,6 +102,23 @@ void main() {
       },
     );
 
+    testWidgets(
+      'Full availability: sliders enable comfort headroom at default allocation',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await tester.pumpAndSettle();
+
+        final sliders = tester
+            .widgetList<CtSlider>(find.byType(CtSlider))
+            .toList();
+        expect(sliders, isNotEmpty);
+        expect(
+          sliders.every((s) => s.comfortHeadroomActive),
+          isTrue,
+        );
+      },
+    );
+
     testWidgets('Reset button clears all allocations', (
       WidgetTester tester,
     ) async {

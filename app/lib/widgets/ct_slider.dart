@@ -10,6 +10,8 @@ class CtSlider extends StatefulWidget {
     required this.max,
     required this.divisions,
     required this.onChanged,
+    this.comfortHeadroomActive = false,
+    this.comfortHeadroomColor,
   });
 
   final double value;
@@ -17,6 +19,13 @@ class CtSlider extends StatefulWidget {
   final double max;
   final int divisions;
   final ValueChanged<double> onChanged;
+
+  /// When true, draws the track segment from thumb to max in [comfortHeadroomColor].
+  /// SPEC/ui/production-panel.md
+  final bool comfortHeadroomActive;
+
+  /// Deeper purple than the filled track; defaults to a fixed deep purple.
+  final Color? comfortHeadroomColor;
 
   @override
   State<CtSlider> createState() => _CtSliderState();
@@ -50,6 +59,9 @@ class _CtSliderState extends State<CtSlider> {
             : 0.0;
         final handleX =
             trackUsable > 0 && t.isFinite ? t * trackUsable : 0.0;
+        final thumbCenterX = handleX + handleSize / 2;
+        final comfortColor = widget.comfortHeadroomColor ??
+            const Color(0xFF4527A0); // Deep purple 800 — darker than primary @0.5
 
         void handleTapOrDrag(Offset localPos) {
           if (range <= 0 || !range.isFinite) {
@@ -98,11 +110,24 @@ class _CtSliderState extends State<CtSlider> {
                     ),
                   ),
                 ),
+                if (widget.comfortHeadroomActive &&
+                    trackUsable > 0 &&
+                    t < 1.0 - 1e-9) ...[
+                  Positioned(
+                    left: 1 + thumbCenterX,
+                    right: 1,
+                    top: (24 - trackHeight + 2) / 2,
+                    child: Container(
+                      height: trackHeight - 2,
+                      color: comfortColor,
+                    ),
+                  ),
+                ],
                 // Filled portion
                 Positioned(
                   left: 1,
                   top: (24 - trackHeight + 2) / 2,
-                  width: handleX + handleSize / 2,
+                  width: thumbCenterX,
                   child: Container(
                     height: trackHeight - 2,
                     color: colorScheme.primary.withValues(alpha: 0.5),
