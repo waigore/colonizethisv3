@@ -39,9 +39,9 @@ jobs:
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
 
-  # One resolved pub cache + workspace .dart_tool + gen-l10n output; shards reuse via --no-pub.
+  # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   app_tests_cache:
-    name: App test cache (deps + l10n)
+    name: App test cache (deps + l10n + analyze)
     needs: changes
     if: needs.changes.outputs.tests == 'true'
     runs-on: ubuntu-latest
@@ -66,6 +66,20 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
+
+      - name: Compile app entrypoints (Flutter analyze)
+        run: |
+          set -e
+          if [ -d app ]; then
+            cd app
+            output=$(flutter analyze 2>&1 || true)
+            echo "$output"
+            error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
+            if [ "$error_count" -gt 0 ]; then
+              echo "Errors found: $error_count"
+              exit 1
+            fi
+          fi
 
       - name: Pack cache for test shards
         run: |
@@ -269,20 +283,6 @@ jobs:
                 cat lib/l10n/untranslated.json
                 exit 1
               fi
-            fi
-          fi
-
-      - name: Compile app entrypoints (Flutter analyze)
-        if: needs.changes.outputs.tests == 'true'
-        run: |
-          if [ -d app ]; then
-            cd app
-            output=$(flutter analyze 2>&1 || true)
-            echo "$output"
-            error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
-            if [ "$error_count" -gt 0 ]; then
-              echo "Errors found: $error_count"
-              exit 1
             fi
           fi
 
