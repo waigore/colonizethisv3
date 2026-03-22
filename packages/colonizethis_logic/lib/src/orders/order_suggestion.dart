@@ -8,6 +8,7 @@ import '../world/naval.dart';
 import '../world/province_lookup.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
+import 'orders_application_helpers.dart';
 import 'unit_type_helpers.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -246,7 +247,7 @@ List<WorkOrder> suggestWorkOrders(
         }
       }
 
-      // Prospect: need a tile in province; use first tile if any.
+      // Prospect: first mineral-eligible, not-yet-prospected tile in province.
       if (provinceHasAtLeastVisibility(
             view,
             regionId,
@@ -258,20 +259,30 @@ List<WorkOrder> suggestWorkOrders(
         final existingProspect = existingTargetsByUnit[unit.id];
         if (existingProspect == null ||
             !existingProspect.contains(prospectTarget)) {
-          final prospectTileKey = tilesInProvince.first;
-          final candidate = WorkOrder(
-            unitId: unit.id,
-            target: prospectTarget,
-            targetTileKey: prospectTileKey,
-          );
-          if (_isWorkOrderAccepted(
-            game,
-            topology,
-            playerId,
-            currentOrders,
-            candidate,
-          )) {
-            suggestions.add(candidate);
+          final prospected =
+              game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+          String? prospectTileKey;
+          for (final tk in tilesInProvince) {
+            if (prospected.contains(tk)) continue;
+            if (!isMineralEligibleTile(game, null, tk)) continue;
+            prospectTileKey = tk;
+            break;
+          }
+          if (prospectTileKey != null) {
+            final candidate = WorkOrder(
+              unitId: unit.id,
+              target: prospectTarget,
+              targetTileKey: prospectTileKey,
+            );
+            if (_isWorkOrderAccepted(
+              game,
+              topology,
+              playerId,
+              currentOrders,
+              candidate,
+            )) {
+              suggestions.add(candidate);
+            }
           }
         }
       }
@@ -605,14 +616,16 @@ bool _isWorkOrderAccepted(
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  WorkOrder candidate,
-) {
+  WorkOrder candidate, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addWorkOrderWithContext(
     game,
     topology,
     playerId,
     candidate,
+    tileMapByRegion: tileMapByRegion,
   );
   return result.isAccepted;
 }
@@ -626,8 +639,9 @@ Set<String> getValidWorkOrderTileKeys(
   String playerId,
   String unitId,
   String workTarget,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final unit = allUnitsFromWorld(
     game.worldState,
   ).where((u) => u.id == unitId).firstOrNull;
@@ -642,30 +656,32 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final raw = _rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: playerId,
+    workTarget: workTarget,
+    tileMapByRegion: tileMapByRegion,
+  );
   final valid = <String>{};
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      for (final tileKey in provinceEntry.value) {
-        if (isDevExclusiveWorkTarget(workTarget) &&
-            reservedForPicker.contains(tileKey)) {
-          continue;
-        }
-        final candidate = WorkOrder(
-          unitId: unitId,
-          target: workTarget,
-          targetTileKey: tileKey,
-        );
-        if (_isWorkOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-        )) {
-          valid.add(tileKey);
-        }
-      }
+  for (final tileKey in raw) {
+    if (isDevExclusiveWorkTarget(workTarget) &&
+        reservedForPicker.contains(tileKey)) {
+      continue;
+    }
+    final candidate = WorkOrder(
+      unitId: unitId,
+      target: workTarget,
+      targetTileKey: tileKey,
+    );
+    if (_isWorkOrderAccepted(
+      game,
+      topology,
+      playerId,
+      currentOrders,
+      candidate,
+      tileMapByRegion: tileMapByRegion,
+    )) {
+      valid.add(tileKey);
     }
   }
   _log.d(
@@ -686,6 +702,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required String unitId,
   required String workTarget,
   required Orders currentOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final unit = allUnitsFromWorld(
     game.worldState,
@@ -726,6 +743,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     game: game,
     playerId: playerId,
     workTarget: workTarget,
+    tileMapByRegion: tileMapByRegion,
   );
   final sortedVisible = _sortedVisibleWorkTargetCandidates(view, raw);
 
@@ -750,6 +768,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
       playerId,
       currentOrders,
       candidate,
+      tileMapByRegion: tileMapByRegion,
     )) {
       valid.add(tileKey);
     }
@@ -771,6 +790,7 @@ Set<String> _preFilterWorkTargetTiles({
   required Map<String, String> resourceByTile,
   required Map<String, String> purchasedTiles,
   required Set<String> ownedProvinceIds,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final result = <String>{};
 
@@ -849,9 +869,24 @@ Set<String> _preFilterWorkTargetTiles({
       break;
 
     case 'explore':
+      for (final regionEntry in tileKeysByRegion.entries) {
+        for (final provinceEntry in regionEntry.value.entries) {
+          result.addAll(provinceEntry.value);
+        }
+      }
+      break;
+
     case 'prospect':
+      _addCandidateTilesForProspect(
+        game: game,
+        playerId: playerId,
+        tileKeysByRegion: tileKeysByRegion,
+        tileMapByRegion: tileMapByRegion,
+        result: result,
+      );
+      break;
+
     default:
-      // No pre-filter; iterate all tiles (visibility filter applied later)
       for (final regionEntry in tileKeysByRegion.entries) {
         for (final provinceEntry in regionEntry.value.entries) {
           result.addAll(provinceEntry.value);
@@ -867,6 +902,7 @@ Set<String> _rawCandidateTilesForWorkTarget({
   required Game game,
   required String playerId,
   required String workTarget,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final world = game.worldState;
   final ownedProvinceIds = <String>{};
@@ -883,6 +919,7 @@ Set<String> _rawCandidateTilesForWorkTarget({
     resourceByTile: world.resourceByTileKey,
     purchasedTiles: world.purchasedTilesByTileKey,
     ownedProvinceIds: ownedProvinceIds,
+    tileMapByRegion: tileMapByRegion,
   );
 }
 
@@ -927,6 +964,31 @@ void _addCandidateTilesForBuildImprovement({
         final resourceId = resourceByTile[tileKey];
         if (resourceId == null || resourceId.isEmpty) continue;
 
+        result.add(tileKey);
+      }
+    }
+  }
+}
+
+/// Adds candidate tiles for prospect: land provinces only; mineral-eligible;
+/// not yet in the player's prospected set. SPEC/program/order-suggestions.md.
+void _addCandidateTilesForProspect({
+  required Game game,
+  required String playerId,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> result,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final prospected =
+      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+
+      for (final tileKey in provinceEntry.value) {
+        if (prospected.contains(tileKey)) continue;
+        if (!isMineralEligibleTile(game, tileMapByRegion, tileKey)) continue;
         result.add(tileKey);
       }
     }

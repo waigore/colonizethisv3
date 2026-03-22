@@ -6,6 +6,7 @@ import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
+import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import '../unit_type_helpers.dart';
@@ -21,6 +22,7 @@ class WorkOrderValidator {
   final PlayerView _view;
   final Map<String, Unit> _unitsById;
   final Set<String> _devExclusiveTiles;
+  final Map<String, TileMapResult>? _tileMapByRegion;
 
   Stockpile _stockpile;
   int _treasury;
@@ -34,12 +36,14 @@ class WorkOrderValidator {
     required Set<String> devExclusiveTiles,
     required Stockpile stockpile,
     required int treasury,
+    Map<String, TileMapResult>? tileMapByRegion,
   })  : _game = game,
         _player = player,
         _playerId = playerId,
         _view = view,
         _unitsById = unitsById,
         _devExclusiveTiles = devExclusiveTiles,
+        _tileMapByRegion = tileMapByRegion,
         _stockpile = stockpile,
         _treasury = treasury;
 
@@ -223,6 +227,24 @@ class WorkOrderValidator {
 
         if (!workOrderVisibilityOk(_view, unit, o.target, o.targetTileKey)) {
           return OrderValidationResult.rejected('Province or tile not visible for this work');
+        }
+
+        if (o.target == 'prospect') {
+          if (!isMineralEligibleTile(
+            _game,
+            _tileMapByRegion,
+            o.targetTileKey,
+          )) {
+            return OrderValidationResult.rejected(
+              'Tile is not mineral-eligible for prospecting',
+            );
+          }
+          final prospected =
+              _game.worldState.playerProspectedTiles[_playerId] ??
+                  const <String>{};
+          if (prospected.contains(o.targetTileKey)) {
+            return OrderValidationResult.rejected('Tile already prospected');
+          }
         }
 
         if (isDevExclusiveUnitType(type) && isDevExclusiveWorkTarget(o.target)) {

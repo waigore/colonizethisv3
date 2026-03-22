@@ -724,6 +724,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       unitId: unit.id,
       workTarget: target,
       currentOrders: component.orders,
+      tileMapByRegion: component.tileMapByRegion,
     );
 
     final byProvince = <String, List<String>>{};

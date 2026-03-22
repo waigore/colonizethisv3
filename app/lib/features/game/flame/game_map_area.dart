@@ -86,6 +86,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       unitId: _workTargetSelection!.unit.id,
       workTarget: _workTargetSelection!.workTarget,
       currentOrders: orders,
+      tileMapByRegion: mapData?.tileMapByRegion,
     );
     _cachedValidTileKeys = valid
         .where((k) => k.startsWith('$_currentRegionId|'))
