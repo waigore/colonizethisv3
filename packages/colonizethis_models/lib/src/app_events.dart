@@ -144,6 +144,14 @@ class CancelTargetSelectionEvent extends UIActionEvent {
   const CancelTargetSelectionEvent();
 }
 
+/// Request to open the province/sea zone detail overlay for [provinceId].
+/// Emitted by the map widget when user taps a town or port icon.
+/// SPEC/ui/town-port-icons.md.
+class OpenProvinceDetailPanelEvent extends UIActionEvent {
+  const OpenProvinceDetailPanelEvent(this.provinceId);
+  final String provinceId;
+}
+
 /// Emitted by GrantOrSubsidyDialog when user submits the amount form.
 /// Carries the data needed to show a final confirmation dialog.
 class GrantOrSubsidySubmittedEvent extends UIActionEvent {
