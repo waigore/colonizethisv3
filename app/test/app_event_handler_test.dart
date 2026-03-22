@@ -1,4 +1,4 @@
-// Tests for AppEventHandler. SPEC/program/app-event-bus.md.
+// Tests for AppEventHandler. SPEC/program/app-event-bus.md (architecture).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

@@ -1,12 +1,12 @@
-# App Event Bus — SPEC/program/app-event-bus.md
+# App Event Bus (architecture) — SPEC/program/app-event-bus.md
 
-**SPEC/program** — Typed event bus for decoupling UI↔UI, UI↔game logic, and game logic→UI communication. Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/program** — **`AppEventBus`** types, stream API, **`AppEventHandler`** contract, **`GameService` → UI** bridge, and **core** acceptance criteria. **How to wire panels, dialogs, routes, and coupling rules:** **[app-ui-wiring.md](app-ui-wiring.md)**. Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
-## Background / Motivation
+## Background
 
-Direct `showDialog()` and `Navigator.of(context).push()/pop()` calls couple UI widgets to each other, making testing harder and preventing service-layer access to UI actions. A typed event bus lets any component emit actions (open dialog, navigate) without knowing who handles them, and lets handlers be composed, swapped, or tested in isolation.
+A typed event bus lets emitters publish **`AppEvent`** subclasses without depending on who handles them. **`AppEventHandler`** (shell) turns **`UIActionEvent`** / **`UISystemEvent`** into Flutter **`Navigator`** / **`showDialog`** / snackbars. **UI authors:** follow **[app-ui-wiring.md](app-ui-wiring.md)** for when to emit vs local APIs and for **`Ref` / `BuildContext` bans**.
 
 ---
 
@@ -40,52 +40,32 @@ Direct `showDialog()` and `Navigator.of(context).push()/pop()` calls couple UI w
 
 ---
 
-## Event Hierarchy
+## Event hierarchy
+
+Defined in **`colonizethis_models`** (`app_events.dart`, exports). Summary:
 
 ```
 AppEvent (sealed)
-├── UIActionEvent        — UI requests other UI actions
-│   ├── OpenDialogEvent(dialogId, params?)
-│   ├── ConfirmDialogEvent(title, message, confirmLabel, cancelLabel) → bool
-│   ├── NavigateToRouteEvent(route, arguments?)
-│   ├── PopNavigationEvent()
-│   ├── OpenPanelEvent(panelId, params?)   // legacy string id
-│   ├── OpenPauseMenuPanelEvent(onDebugLog?, onResume?)
-│   ├── OpenCivilianUnitsPanelEvent(…callbacks…, onPanelDismissed?)
-│   ├── OpenMilitaryUnitsPanelEvent(onLocateTile, onPanelDismissed?)
-│   ├── OpenNavalUnitsPanelEvent(onLocateFleet, onFleetsChanged, onPanelDismissed?)
-│   ├── ClosePanelEvent()
-│   ├── StartTargetSelectionEvent(unitId, action, onComplete?, onCancel?)
-│   ├── CancelTargetSelectionEvent()
-│   └── GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy)
-│
-├── UISystemEvent        — transient system feedback
-│   ├── ShowSnackBarEvent(message, actionLabel?, action?)
-│   ├── ShowOverlayEvent(overlayId, params?)
-│   ├── DismissOverlayEvent(overlayId)
-│   └── NotifyEvent(title, body, priority?)
-│
-└── GameToUIEvent       — game layer → UI triggers
-    ├── TurnResolutionCompleteEvent(gameId, turnNumber)
-    ├── OvertureRequiredEvent(overtures)
-    ├── SaveGameCompleteEvent(gameId)
-    └── NewGameCreatedEvent(gameId)
+├── UIActionEvent        — UI requests (dialogs, nav, panels, target selection, …)
+├── UISystemEvent        — Snackbar, overlay, notify
+└── GameToUIEvent        — TurnResolutionCompleteEvent, OvertureRequiredEvent, …
 ```
+
+Full list of subclasses: source and **[app-ui-wiring.md](app-ui-wiring.md)** (dialog IDs / typed panels).
 
 ---
 
-## Event Bus API
+## Event bus API
 
 ```dart
 class AppEventBus {
   factory AppEventBus() => _instance ??= AppEventBus._();
   static AppEventBus? _instance;
 
-  void emit(AppEvent event);          // broadcast to all listeners
-  Stream<AppEvent> get stream;        // raw stream
-  Stream<T> on<T extends AppEvent>(); // typed filter
+  void emit(AppEvent event);
+  Stream<AppEvent> get stream;
+  Stream<T> on<T extends AppEvent>();
 
-  // Convenience streams
   Stream<UIActionEvent>  get uiActionEvents;
   Stream<UISystemEvent>  get uiSystemEvents;
   Stream<GameToUIEvent>  get gameToUIEvents;
@@ -96,106 +76,49 @@ class AppEventBus {
 }
 ```
 
+**Implementation:** `packages/colonizethis_models/lib/src/app_event_bus.dart`. **App provider:** `app/lib/providers/app_event_bus_provider.dart`.
+
 ---
 
 ## AppEventHandler
 
-`AppEventHandler` lives at the shell level and translates events into Flutter calls.
+Lives in **`app/`**. Translates **`UIActionEvent`** / **`UISystemEvent`** into Flutter APIs using **`GlobalKey<NavigatorState>`**.
 
 ```dart
 class AppEventHandler {
   AppEventHandler({
     required AppEventBus bus,
     required GlobalKey<NavigatorState> navigatorKey,
-    Map<String, DialogBuilder>? dialogBuilders,    // dialogId → builder
-    Map<String, PanelBuilder>? panelBuilders,      // panelId → builder
+    Map<String, DialogBuilder>? dialogBuilders,
+    Map<String, PanelBuilder>? panelBuilders,
     void Function(ShowSnackBarEvent)? onShowSnackBar,
     void Function(ShowOverlayEvent)? onShowOverlay,
     void Function(DismissOverlayEvent)? onDismissOverlay,
     void Function(NotifyEvent)? onNotify,
   });
 
-  void bind();   // start listening (call in initState)
-  void unbind(); // stop listening (call in dispose)
+  void bind();
+  void unbind();
 }
 ```
 
-**DialogBuilder**: `Widget Function(BuildContext, Map<String, Object?>? params?)`
+**DialogBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`  
+**PanelBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 
-**PanelBuilder**: `Widget Function(BuildContext, Map<String, Object?>? params?)`
-
----
-
-## Typed panel events (preferred)
-
-| Event | Opened by | Handler builds |
-|-------|-----------|----------------|
-| `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
-| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders) |
-| `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
-| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` |
-
-`onPanelDismissed` on unit panel events runs when the sheet route completes (e.g. map highlight cleanup).
-
-## Dialog IDs (`OpenDialogEvent`)
-
-| ID | Widget | Registered in |
-|----|--------|----------------|
-| `train_civilians` | `TrainCiviliansDialog` | `app_event_handler_scope.dart` (`trainCiviliansDialogId`) |
-| `grant_or_subsidy` | `GrantOrSubsidyDialog` | `app_event_handler_scope.dart` (`grantOrSubsidyDialogId`) |
-
-| ID | Widget | Status |
-|----|--------|--------|
-| `quick_battle_result` | `QuickBattleResultDialog` | planned |
-| `combat_mode_choice` | `CombatModeChoiceDialog` | planned |
-| `map_display_options` | inline `AlertDialog` | planned |
-| `tech_detail` | tech detail dialog | planned |
-| `split_fleet` | `SplitFleetDialog` | planned |
+**Registration:** `app/lib/core/services/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
 
 ---
 
-## Routes
+## Game logic → UI bridge
 
-Routes are named strings passed via `NavigateToRouteEvent`. Handled by `AppEventHandler` via `nav.pushNamed()`.
+**`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`**. When set, it emits:
 
-| Route name | Screen |
-|------------|--------|
-| `Routes.debugLog` | `DebugLogViewerScreen` |
-| `Routes.production` | `ProductionScreen` (in-game, full screen) |
-| `Routes.diplomacy` | `DiplomacyScreen` (in-game, full screen) |
-| `Routes.diplomacyDetail` | `DiplomacyDetailScreen` (in-game, full screen) |
-| `Routes.technology` | `TechnologyScreen` (in-game, full screen) |
+- **`TurnResolutionCompleteEvent`** after `runTurnResolution` / `resumeOvertureDecisions` completes with **`TurnResolutionComplete`**
+- **`NewGameCreatedEvent`** after **`createNewGame()`** saves
 
----
+**Consumption:** No single shell subscriber. Each screen that must react listens (e.g. **`GameToUIBusListener`**) and reloads **`currentGameProvider`** when **`gameId`** matches.
 
-## Game Logic → UI Bridge
-
-`GameService` holds an optional `AppEventBus? eventBus` (wired from Riverpod in the app). When set, it emits:
-
-- `TurnResolutionCompleteEvent` after `runTurnResolution` or `resumeOvertureDecisions` completes with `TurnResolutionComplete`
-- `NewGameCreatedEvent` after `createNewGame()` saves
-
-**Consumption:** There is no single shell subscriber for `GameToUIEvent`. Each screen that must react mounts its own subscription (e.g. `GameToUIBusListener` wraps `GameScreen`, `ProductionScreen`, `DiplomacyScreen`, `TechnologyScreen` for `TurnResolutionCompleteEvent` and reloads `currentGameProvider` via `GameService.loadGame` when the event’s `gameId` matches the mounted screen’s game and `currentGameProvider` already holds that game).
-
-The raw `GameEvent` stream from `TurnResolver` remains available via `void Function(GameEvent)? onGameEvent` for logic-layer consumers.
-
----
-
-## Remaining migration
-
-### Completed
-- `grant_or_subsidy` dialog → `OpenDialogEvent('grant_or_subsidy')` via `GrantOrSubsidyDialog` widget + `GrantOrSubsidySubmittedEvent`
-- `DiplomacyDetailScreen` push → `NavigateToRouteEvent(Routes.diplomacyDetail)`
-- `DiplomacyDetailScreen` back button → `PopNavigationEvent` via `DiplomacyDetailScreen` as `ConsumerWidget`
-
-### Planned
-- Replace remaining inline dialogs with `OpenDialogEvent` + builders:
-  - `quick_battle_result` (`QuickBattleResultDialog`)
-  - `combat_mode_choice` (`CombatModeChoiceDialog`)
-  - `map_display_options` (inline `AlertDialog` in `GameMapArea`)
-  - `tech_detail` (inline dialog in `TechTreeWidget`)
-  - `split_fleet` (`SplitFleetDialog` in `NavalUnitsPanel`)
-- Prefer new typed panel events over `OpenPanelEvent(panelId)` for any new panels.
+**`GameEvent`** from **`TurnResolver`** remains on **`void Function(GameEvent)? onGameEvent`** for logic-layer use.
 
 ---
 
@@ -203,47 +126,42 @@ The raw `GameEvent` stream from `TurnResolver` remains available via `void Funct
 
 ### Event bus core
 
-- Given a fresh `AppEventBus` from `AppEventBus.create()` and a listener on `on<OpenDialogEvent>()`, When the system emits any `OpenDialogEvent`, Then the listener receives exactly that event and no other `UIActionEvent` types on that stream.
-- Given two subscribers on `bus.stream`, When the system emits one `PopNavigationEvent`, Then both subscribers each receive one event.
-- Given a bus on which `dispose()` has been called, When a test calls `emit` again, Then the call throws or fails as defined by the stream contract (no silent delivery).
+- Given a fresh **`AppEventBus`** from **`AppEventBus.create()`** and a listener on **`on<OpenDialogEvent>()`**, When the system emits any **`OpenDialogEvent`**, Then that listener receives exactly that event and no other **`UIActionEvent`** on that typed stream.
+- Given two subscribers on **`bus.stream`**, When the system emits one **`PopNavigationEvent`**, Then both subscribers each receive one event.
+- Given a bus on which **`dispose()`** has been called, When a test calls **`emit`** again, Then the call throws or fails per the stream contract (no silent delivery).
 
 ### AppEventHandler
 
-- Given `AppEventHandler` is bound with a registered `trainCiviliansDialogId` builder, When the system emits `OpenDialogEvent('train_civilians')`, Then `showDialog` runs and the dialog widget tree is present.
-- Given `AppEventHandler` is bound, When the system emits `OpenPauseMenuPanelEvent`, Then a modal bottom sheet appears listing Debug log and Resume.
-- Given `AppEventHandler` is bound, When the system emits `OpenDialogEvent` with an unknown `dialogId`, Then the handler logs a debug warning and does not throw.
-- Given `ConfirmDialogEvent` with `onResult`, When the user taps confirm, Then `onResult(true)` runs; When the user taps cancel, Then `onResult(false)` runs.
-
-### Typed panels and decoupling
-
-- Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
-- Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` directly).
-- Given `DiplomacyPanel` is mounted with a bus, When the user taps a Grant Aid or Set Subsidy action, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
-- Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
+- Given **`AppEventHandler`** is bound with a registered **`train_civilians`** dialog builder, When the system emits **`OpenDialogEvent('train_civilians')`**, Then **`showDialog`** runs and the dialog widget tree is present.
+- Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a modal bottom sheet appears listing Debug log and Resume.
+- Given **`AppEventHandler`** is bound, When the system emits **`OpenDialogEvent`** with an unknown **`dialogId`**, Then the handler logs a debug warning and does not throw.
+- Given **`ConfirmDialogEvent`** with **`onResult`**, When the user taps confirm, Then **`onResult(true)`** runs; When the user taps cancel, Then **`onResult(false)`** runs.
 
 ### GameToUI and screens
 
-- Given `GameToUIBusListener` wraps a widget for `gameId` G and `currentGameProvider` is G, When the bus emits `TurnResolutionCompleteEvent` for G with a newer turn saved in `GameService`, Then `currentGameProvider` updates to the loaded game from storage.
-- Given `GameToUIBusListener` for `gameId` G, When the bus emits `TurnResolutionCompleteEvent` for a different game id, Then `currentGameProvider` is unchanged.
+- Given **`GameToUIBusListener`** wraps a widget for **`gameId` G** and **`currentGameProvider`** is G, When the bus emits **`TurnResolutionCompleteEvent`** for G with a newer turn saved in **`GameService`**, Then **`currentGameProvider`** updates to the loaded game from storage.
+- Given **`GameToUIBusListener`** for **`gameId` G**, When the bus emits **`TurnResolutionCompleteEvent`** for a different game id, Then **`currentGameProvider`** is unchanged.
 
 ### GameService bridge
 
-- Given `GameService.eventBus` is non-null, When `runTurnResolution` completes with `TurnResolutionComplete`, Then the service emits `TurnResolutionCompleteEvent` with matching `gameId` and `turnNumber`.
-- Given `GameService.eventBus` is null, When `runTurnResolution` completes with `TurnResolutionComplete`, Then no `TurnResolutionCompleteEvent` is emitted.
+- Given **`GameService.eventBus`** is non-null, When **`runTurnResolution`** completes with **`TurnResolutionComplete`**, Then the service emits **`TurnResolutionCompleteEvent`** with matching **`gameId`** and **`turnNumber`**.
+- Given **`GameService.eventBus`** is null, When **`runTurnResolution`** completes with **`TurnResolutionComplete`**, Then no **`TurnResolutionCompleteEvent`** is emitted.
 
 ### Automated tests (must pass in CI)
 
-- `app/test/app_event_bus_test.dart` covers bus delivery, filtering, dispose, and equality for `UIActionEvent` / `UISystemEvent` / `GameToUIEvent` (including `OpenPauseMenuPanelEvent` where const).
-- `app/test/app_event_handler_test.dart` covers `OpenDialogEvent`, `NavigateToRouteEvent`, `ConfirmDialogEvent`, `OpenPanelEvent`, `OpenPauseMenuPanelEvent`, `PopNavigationEvent`, and snackbar/overlay callbacks.
-- `app/test/game_to_ui_bus_listener_test.dart` covers `TurnResolutionCompleteEvent` → provider reload.
-- Widget tests for `GameScreen`, `GameSideMenu`, and `TrainCiviliansDialog` / `CivilianUnitsPanel` cover pause menu, empire panels, and Train-via-bus behavior.
+- **`app/test/app_event_bus_test.dart`** — delivery, filtering, **`dispose`**, equality for **`UIActionEvent`** / **`UISystemEvent`** / **`GameToUIEvent`**.
+- **`app/test/app_event_handler_test.dart`** — **`OpenDialogEvent`**, **`NavigateToRouteEvent`**, **`ConfirmDialogEvent`**, **`OpenPanelEvent`**, **`OpenPauseMenuPanelEvent`**, **`PopNavigationEvent`**, snackbar/overlay callbacks.
+- **`app/test/game_to_ui_bus_listener_test.dart`** — **`TurnResolutionCompleteEvent`** → provider reload.
+
+Panel/widget coupling ACs: **[app-ui-wiring.md](app-ui-wiring.md)**.
 
 ---
 
 ## Constraints
 
-- `GameEvent` lives in `colonizethis_logic` (avoids circular dep with `colonizethis_models`); `DialogueEvent`/`PortraitMoodEvent` live in `colonizethis_models`.
-- No Flutter imports in `colonizethis_models` package — event bus and handlers live in `app/`.
-- Dialog builders are registered at shell init time; unknown IDs log a warning.
-- Event emission is fire-and-forget; `ConfirmDialogEvent` carries `onResult` / `result()` for the bool outcome (user choice A: callback on the event).
-- Province ids in any game events are always **prefixed** (`regionId|localId`).
+- **`GameEvent`** lives in **`colonizethis_logic`**; **`DialogueEvent`** / **`PortraitMoodEvent`** in **`colonizethis_models`**.
+- No Flutter imports in **`colonizethis_models`** for the bus — handler lives in **`app/`**.
+- Dialog/panel builders registered at shell init; unknown dialog/panel IDs log a warning.
+- Emission is fire-and-forget; **`ConfirmDialogEvent`** uses **`onResult`** / **`result()`** for the bool outcome.
+- Province ids in game events: **prefixed** (`regionId|localId`).
+- **Cross-cutting UI coupling** ( **`Ref` / context / `Navigator` chains**, panel **`onXxx` orchestration**): **[app-ui-wiring.md](app-ui-wiring.md)**.

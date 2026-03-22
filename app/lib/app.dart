@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'config/routes.dart';
 import 'config/themes.dart';
@@ -37,7 +38,7 @@ class App extends StatelessWidget {
             PlatformMenuItem(
               label: rootL10n.menu_debugLog,
               onSelected: () {
-                appNavigatorKey.currentState?.pushNamed(Routes.debugLog);
+                AppEventBus().emit(const NavigateToRouteEvent(Routes.debugLog));
               },
             ),
           ],

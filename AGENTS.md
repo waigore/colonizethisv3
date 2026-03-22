@@ -14,7 +14,7 @@ These rules are applied in every context; follow them for all changes.
 | Rule file | Summary |
 |-----------|---------|
 | **colonizethis-spec-required.mdc** | SPEC-first: specify before implementing; no behavior that contradicts specs. GDD `SPEC/game/`, TDD `SPEC/program/`, AI `SPEC/ai/`, UI `SPEC/ui/` (sub-specs, max 1000 words). Source of truth: GDD for game/AI, TDD for architecture. Conflicts: resolve GDD/TDD first. Rulesets: configurable; specify where/how in GDD/TDD. New behavior: point to authorizing spec or add/extend spec first. |
-| **colonizethis-core-principles.mdc** | Stack: Flutter (UI), Flame (game/simulation), Dart. Strict typing, null safety, logger (no `print`). Thin screens; delegate to services/controllers/Flame. Province lookup: always use `(regionId, provinceId)` or prefixed id; never province id alone. |
+| **colonizethis-core-principles.mdc** | Stack: Flutter (UI), Flame (game/simulation), Dart. Strict typing, null safety, logger (no `print`). Thin screens; delegate to services/controllers/Flame. Province lookup: always use `(regionId, provinceId)` or prefixed id; never province id alone. **UI:** `SPEC/program/app-ui-wiring.md` (coupling, dialogs, routes); `SPEC/program/app-event-bus.md` (bus architecture). |
 | **colonizethis-logging-file.mdc** | Whenever file logging is needed, use **basic_logger_file** (BasicLogger + FileOutputLogger). Do not implement custom file logging (e.g. raw File/IOSink or manual log-to-file). |
 
 ## Context-specific rules
@@ -35,7 +35,7 @@ Apply these when working in the indicated areas (by path or topic).
 ## Quick reference for agents
 
 1. **Before implementing:** Check GDD/TDD/UI spec; implement only what is specified; if missing, add or extend the spec first.
-2. **Code style:** Strict Dart, logger (no `print`), thin screens, single responsibility. Province lookup: always `(regionId, provinceId)` or prefixed id.
+2. **Code style:** Strict Dart, logger (no `print`), thin screens, single responsibility. Province lookup: always `(regionId, provinceId)` or prefixed id. Cross-panel UI: `SPEC/program/app-ui-wiring.md` + `SPEC/program/app-event-bus.md`.
 3. **When touching UI:** Wireframes in spec; Widgetbook + catalog; pixel art per UXD (exact prompts in spec; check assets first, don’t regenerate if suitable asset exists); Flame for canvas, Flutter for shell/overlays/menus.
 4. **When adding a tool:** Thin facade in `tool/<name>`; logic in packages; Melos script and `docs/project-tools.md` updated.
 5. **When writing tests:** 90% per package; unit/widget/game-component layers; cover combat, economy, save/load, ruleset loading. **App/ctdev widget tests:** run with `flutter test` from app/ (or `melos run test_app`); do not use `dart test app/...`.
