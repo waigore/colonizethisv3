@@ -107,10 +107,12 @@ Map<String, String> assignTerritoriesByBfsGrowth({
                   break;
                 }
               }
+            } else {
+              seed = sorted.isNotEmpty ? sorted.first : null;
             }
+          } else {
+            seed = sorted.isNotEmpty ? sorted.first : null;
           }
-          // Fall back to any available province if no landmass-specific one found
-          seed ??= sorted.isNotEmpty ? sorted.first : null;
           if (seed == null || sorted.isEmpty || totalAssigned >= total) break;
           if (!available.remove(seed)) continue;
           owners[seed] = factionId;
@@ -144,7 +146,13 @@ Map<String, String> assignTerritoriesByBfsGrowth({
             bestFaction = fid;
           }
         }
-        chosenFactionId = bestFaction ?? factionIds.first;
+        if (bestFaction == null) {
+          throw StateError(
+            'assignTerritoriesByBfsGrowth: no faction can claim province $provinceId '
+            'under factionLandmassIds constraints',
+          );
+        }
+        chosenFactionId = bestFaction;
       } else {
         final sortedFactionIds = factionIds.toList()
           ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
