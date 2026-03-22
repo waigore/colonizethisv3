@@ -22,6 +22,7 @@
 | **Base (tile)** | Terrain, resources, improvements, towns, capitals. | Optional per-sublayer if needed; at minimum base is always on. |
 | **Borders** | Province and sea-zone boundaries (topology edges P–P, P–S, S–S). | Yes. User can turn the borders layer on/off. |
 | **Political** | Political borders (ownership differences between adjacent land provinces). Drawn on top of base and borders. | Yes. User can turn political overlay on/off. |
+| **Province names** | Land province labels: `CellViewData.provinceDisplayName` (same string as the Political section in the province detail overlay), with fallback to local province id when missing. One label per land province per region. Position: centroid of that province’s **land** tiles in the region (tile centers averaged). **Not** drawn for sea zones. **Player-constrained visibility:** only tiles that are not `unrevealed` participate in the centroid and get a label; if no qualifying tiles, no label. **Screen space:** text and backing plate use roughly **constant logical pixel size** regardless of map zoom (inverse scale in world space). Style: short label on a semi-transparent rectangular plate; neighbor overlap is acceptable. Rendered after province/political border strokes and before capitals/ports. | Yes. Independent of borders and political overlay toggles. |
 
 Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData` / game + tile maps per [map-visualization.md](../program/map-visualization.md)). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
 
@@ -281,7 +282,10 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 
 - **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
 - **Given** the borders layer is enabled, **when** the map renders province and sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line) and other province/sea-zone borders are rendered subtly (not solid black).
-- **Given** the borders layer is disabled, **when** the map renders the region, **then** province and sea-zone boundary strokes are not drawn while hover selectors, hover glows, capitals, ports, and warp zone indicators remain visible.
+- **Given** the borders layer is disabled, **when** the map renders the region, **then** province and sea-zone boundary strokes are not drawn while hover selectors, hover glows, capitals, ports, warp zone indicators, and (if enabled) province name labels remain visible.
+- **Given** the province names layer is enabled, **when** the map renders land provinces, **then** each land province has at most one label at the centroid of its land tiles (subject to visibility rules above), using `provinceDisplayName` with local-id fallback, on a semi-transparent plate, with roughly constant on-screen size across zoom levels.
+- **Given** the province names layer is disabled, **when** the map renders, **then** no province name labels are drawn.
+- **Given** the province names layer is enabled and the borders layer is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on borders).
 - **Given** the political overlay is enabled while the borders layer is enabled, **when** two adjacent land tiles belong to different owning factions, **then** a thicker political border stroke is drawn between them on top of the province/sea-zone boundary stroke.
 - **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the borders layer setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
