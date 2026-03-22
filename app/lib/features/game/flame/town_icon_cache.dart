@@ -28,12 +28,14 @@ class TownIconCache {
       _isLoaded = true;
       _log.i('Loaded ${_icons.length} town/port icons');
     } catch (e, stackTrace) {
+      _icons.clear();
+      _isLoaded = false;
       _log.e(
         'Failed to load town/port icons',
         error: e,
         stackTrace: stackTrace,
       );
-      _isLoaded = false;
+      rethrow;
     } finally {
       _isLoading = false;
     }
@@ -41,23 +43,11 @@ class TownIconCache {
 
   Future<void> _loadIcon(String iconId) async {
     final pngPath = '${kAppIconAssetPrefix}ui_icon_com_$iconId.png';
-
-    try {
-      final imageData = await rootBundle.load(pngPath);
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(
-        imageData.buffer.asUint8List(),
-        completer.complete,
-      );
-      final image = await completer.future;
-      _icons[iconId] = image;
-    } catch (e, stackTrace) {
-      _log.w(
-        'Failed to load town/port icon (non-fatal): $iconId',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
+    final imageData = await rootBundle.load(pngPath);
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
+    final image = await completer.future;
+    _icons[iconId] = image;
   }
 
   ui.Image? getIcon(String? iconId) {
