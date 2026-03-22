@@ -122,6 +122,11 @@
     "description": "Toggle label for showing map borders."
   },
 
+  "map_displayOptions_showProvinceNames": "Show province names",
+  "@map_displayOptions_showProvinceNames": {
+    "description": "Toggle label for showing land province names on the map."
+  },
+
   "common_close": "Close",
   "@common_close": {
     "description": "Generic Close button label or tooltip."

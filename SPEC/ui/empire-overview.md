@@ -44,9 +44,9 @@
 
 - **Overlay:** A third button is overlaid at the **top-left** of the map area, directly **beneath** the home-to-capital button. Icon only: pixel-art gear icon (`ui_icon_map_options.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
 - **Dialog type:** Tapping the button opens a modal **“Map display options”** dialog that blocks interaction with the underlying map and closes when the user taps the dialog’s **Close** button, taps outside the dialog, or presses the back key.
-- **Borders toggle:** The dialog contains a single toggle control labelled **“Show borders”** (switch or checkbox). The toggle controls the global **borders layer visibility** for all in-game Empire overview maps in the current app session (Old World and New World).
-- **Default behavior:** At the start of a game session (after init or load), the **Show borders** toggle is **ON** by default. When the user changes it, the new value is remembered for the remainder of the session and is reflected every time the dialog is reopened.
-- **Effect on rendering:** When **Show borders** is ON, the map widget draws province and sea-zone boundary strokes per [map-widget.md](map-widget.md) § Layer model. When OFF, province and sea-zone boundary strokes are not drawn; hover selectors, hover province glows, capitals, ports, and warp zone indicators remain visible.
+- **Toggles:** The dialog contains **two** independent toggles (switch or checkbox): **“Show borders”** and **“Show province names”**. Each controls its own global layer for all in-game Empire overview maps in the current session (Old World and New World). Neither toggle affects the other.
+- **Default behavior:** At the start of a game session (after init or load), **Show borders** and **Show province names** are both **ON** by default. When the user changes either toggle, the new values are remembered for the remainder of the session and are reflected every time the dialog is reopened.
+- **Effect on rendering:** When **Show borders** is ON, the map widget draws province and sea-zone boundary strokes per [map-widget.md](map-widget.md) § Layer model. When OFF, those strokes are not drawn; hover selectors, hover province glows, capitals, ports, warp zone indicators, and (per the province-names toggle) labels remain according to their own toggle. When **Show province names** is ON, land province labels are drawn per [map-widget.md](map-widget.md) § Layer model (province names row). When OFF, no province name labels are drawn.
 
 ---
 
@@ -86,9 +86,12 @@ On mobile: same tab row; map area fills available space; one region visible at a
 
 - **Given** the Empire overview map is visible, **then** a third icon-only button with the gear icon is visible directly beneath the home-to-capital button at the top-left of the map area.
 - **Given** the Empire overview map is visible, **when** the user taps the third map display options button, **then** the UI layer shows a modal dialog titled `Map display options` with a dismiss action and the underlying map is not interactive until the dialog is closed.
-- **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows a single toggle control labelled `Show borders` in the ON state.
+- **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows toggle controls labelled `Show borders` and `Show province names`, both in the ON state.
 - **Given** the Map display options dialog is visible, **when** the user toggles `Show borders` OFF, **then** the UI layer updates the global borders visibility state so that all in-game Empire overview maps stop drawing province and sea-zone boundary strokes until `Show borders` is toggled ON again.
 - **Given** the user has toggled `Show borders` OFF in the Map display options dialog and then closed the dialog, **when** the user reopens the Map display options dialog in the same app session, **then** the `Show borders` toggle appears in the OFF state and the in-game maps continue to omit province and sea-zone boundary strokes.
+- **Given** the Map display options dialog is visible, **when** the user toggles `Show province names` OFF, **then** the UI layer updates global state so all in-game Empire overview maps stop drawing land province name labels until the toggle is ON again.
+- **Given** the user has toggled `Show province names` OFF and closed the dialog, **when** they reopen the dialog in the same session, **then** the `Show province names` toggle appears OFF and maps continue to omit province name labels.
+- **Given** `Show borders` is OFF and `Show province names` is ON, **when** the map renders, **then** province name labels are still visible (no dependency on the borders toggle).
 
 ---
 

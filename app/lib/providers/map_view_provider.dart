@@ -10,6 +10,10 @@ import 'games_provider.dart';
 /// Defaults to true at app start; updated via the Map display options dialog.
 final mapBordersVisibleProvider = StateProvider<bool>((ref) => true);
 
+/// Global land province name labels on in-game Empire overview maps.
+/// Independent of [mapBordersVisibleProvider]. Defaults to true at app start.
+final mapProvinceNamesVisibleProvider = StateProvider<bool>((ref) => true);
+
 /// Map view data for the current game with player-constrained visibility.
 /// Null when no game, no map data (legacy save), or loading.
 final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {

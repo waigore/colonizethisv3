@@ -20,6 +20,12 @@ const Color _provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
 const Color _provinceBorderSeaLandColor = Color.fromRGBO(0, 0, 0, 0.25);
 const Color _provinceBorderSeaZoneColor = Color.fromRGBO(130, 200, 255, 0.55);
 
+/// Land province labels: max text width and font size in **logical pixels** (screen space).
+const double _provinceLabelMaxWidthPx = 120;
+const double _provinceLabelFontSizePx = 11;
+const double _provinceLabelPlatePaddingPx = 4;
+const Color _provinceLabelPlateColor = Color.fromRGBO(0, 0, 0, 0.55);
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -89,6 +95,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.cellSize,
     required this.showPoliticalOverlay,
     required this.showBordersLayer,
+    required this.showProvinceNamesLayer,
     required this.visibilityMode,
     this.baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
@@ -106,7 +113,11 @@ class CtRegionMapComponent extends PositionComponent {
   double cellSize;
   bool showPoliticalOverlay;
   bool showBordersLayer;
+  bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
+
+  /// Camera zoom from Flame viewfinder; used to keep label size constant on screen.
+  double cameraZoom = 1.0;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String tileKey)? onMapTileTappedForDetail;
@@ -121,6 +132,11 @@ class CtRegionMapComponent extends PositionComponent {
   int? _hoveredTileY;
   String? _hoveredProvinceId;
   double _hoverAnimationT = 0.0;
+
+  RegionMapViewData? _provinceLabelsRegionRef;
+  double? _provinceLabelsCellSize;
+  CtMapVisibilityMode? _provinceLabelsVisibilityMode;
+  List<({double cx, double cy, String text})>? _provinceLabelsCached;
 
   @override
   Future<void> onLoad() async {
@@ -222,6 +238,9 @@ class CtRegionMapComponent extends PositionComponent {
     if (showPoliticalOverlay && showBordersLayer) {
       _paintFactionBorders(canvas);
     }
+    if (showProvinceNamesLayer) {
+      _paintProvinceNames(canvas);
+    }
     _paintCapitals(canvas);
     _paintPorts(canvas);
     _paintWarpZones(canvas);
@@ -300,6 +319,105 @@ class CtRegionMapComponent extends PositionComponent {
       ..strokeWidth = strokeWidth
       ..color = color;
     canvas.drawRect(rect, paint);
+  }
+
+  void _ensureProvinceLabelCache() {
+    if (identical(_provinceLabelsRegionRef, region) &&
+        _provinceLabelsCellSize == cellSize &&
+        _provinceLabelsVisibilityMode == visibilityMode &&
+        _provinceLabelsCached != null) {
+      return;
+    }
+    _provinceLabelsRegionRef = region;
+    _provinceLabelsCellSize = cellSize;
+    _provinceLabelsVisibilityMode = visibilityMode;
+    _provinceLabelsCached = _computeProvinceLabels();
+  }
+
+  List<({double cx, double cy, String text})> _computeProvinceLabels() {
+    final byLocalId = <String, List<CellViewData>>{};
+    for (final cell in region.cells) {
+      if (cell.isSea) continue;
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed) {
+        continue;
+      }
+      byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
+    }
+    final out = <({double cx, double cy, String text})>[];
+    for (final e in byLocalId.entries) {
+      final cells = e.value;
+      if (cells.isEmpty) continue;
+      var sx = 0.0;
+      var sy = 0.0;
+      for (final c in cells) {
+        sx += (c.x + 0.5) * cellSize;
+        sy += (c.y + 0.5) * cellSize;
+      }
+      final n = cells.length;
+      final cx = sx / n;
+      final cy = sy / n;
+      String? name;
+      for (final c in cells) {
+        final dn = c.provinceDisplayName;
+        if (dn != null && dn.isNotEmpty) {
+          name = dn;
+          break;
+        }
+      }
+      final text = name ?? e.key;
+      out.add((cx: cx, cy: cy, text: text));
+    }
+    return out;
+  }
+
+  void _paintProvinceNames(Canvas canvas) {
+    _ensureProvinceLabelCache();
+    final labels = _provinceLabelsCached;
+    if (labels == null || labels.isEmpty) {
+      return;
+    }
+
+    final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: _provinceLabelFontSizePx,
+      fontWeight: FontWeight.w600,
+      shadows: <Shadow>[
+        Shadow(
+          blurRadius: 2,
+          color: Color(0x8A000000),
+          offset: Offset(0.5, 0.5),
+        ),
+      ],
+    );
+    final platePaint = Paint()..color = _provinceLabelPlateColor;
+
+    for (final item in labels) {
+      final tp = TextPainter(
+        text: TextSpan(text: item.text, style: textStyle),
+        textDirection: TextDirection.ltr,
+        maxLines: 3,
+        ellipsis: '…',
+      )..layout(maxWidth: _provinceLabelMaxWidthPx);
+
+      final tw = tp.width;
+      final th = tp.height;
+      const pad = _provinceLabelPlatePaddingPx;
+      final bw = tw + pad * 2;
+      final bh = th + pad * 2;
+
+      canvas.save();
+      canvas.translate(item.cx, item.cy);
+      canvas.scale(invZ);
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset.zero, width: bw, height: bh),
+        const Radius.circular(4),
+      );
+      canvas.drawRRect(rect, platePaint);
+      tp.paint(canvas, Offset(-tw / 2, -th / 2));
+      canvas.restore();
+    }
   }
 
   void _paintTiles(Canvas canvas) {
