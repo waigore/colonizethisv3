@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -588,7 +590,11 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
               : 'gp1';
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: NavalUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+            child: NavalUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: AppEventBus.create(),
+            ),
           );
         },
       ),
@@ -774,6 +780,8 @@ class _CivilianPanelWithMapStory extends StatefulWidget {
 class _CivilianPanelWithMapStoryState
     extends State<_CivilianPanelWithMapStory> {
   late Game _game;
+  late AppEventBus _panelBus;
+  final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
   Orders _orders = const Orders();
   int _regionIndex = 0;
   String? _highlightedTileKey;
@@ -787,6 +795,29 @@ class _CivilianPanelWithMapStoryState
   void initState() {
     super.initState();
     _game = getDebugInitGameResult().game;
+    _panelBus = AppEventBus.create();
+    _sessionCommandSubs.addAll([
+      _panelBus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
+        if (!mounted) return;
+        setState(() {
+          _orders = removePendingWorkOrderAt(_orders, e.playerId, e.index);
+        });
+      }),
+      _panelBus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
+        if (!mounted) return;
+        setState(() {
+          _game = clearUnitCurrentWork(_game, e.unitId);
+        });
+      }),
+    ]);
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _sessionCommandSubs) {
+      sub.cancel();
+    }
+    super.dispose();
   }
 
   String get _humanPlayerId =>
@@ -970,24 +1001,8 @@ class _CivilianPanelWithMapStoryState
               humanPlayerId: _humanPlayerId,
               currentOrders: _orders,
               availableWorkTargets: const {},
-              bus: AppEventBus(),
+              bus: _panelBus,
               onLocateUnit: _onLocateUnit,
-              onRemoveWorkOrder: (playerId, index) {
-                setState(() {
-                  final list = List<WorkOrder>.from(
-                    _orders.workOrdersByPlayerId[playerId] ?? [],
-                  )..removeAt(index);
-                  _orders = _orders.copyWith(
-                    workOrdersByPlayerId: {
-                      ..._orders.workOrdersByPlayerId,
-                      playerId: list,
-                    },
-                  );
-                });
-              },
-              onCancelUnitWork: (unitId) {
-                setState(() => _game = clearUnitCurrentWork(_game, unitId));
-              },
               onStartWorkTargetSelection: (unit, workTarget) {
                 setState(
                   () => _workTargetSelection = (
@@ -1177,6 +1192,27 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
+  late Game _game;
+  late AppEventBus _navalBus;
+  StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
+
+  @override
+  void initState() {
+    super.initState();
+    final result = getDebugInitGameResult();
+    _game = result.game;
+    _navalBus = AppEventBus.create();
+    _navalSub = _navalBus.on<NavalFleetsUpdatedEvent>().listen((e) {
+      if (!mounted) return;
+      setState(() => _game = e.game);
+    });
+  }
+
+  @override
+  void dispose() {
+    _navalSub?.cancel();
+    super.dispose();
+  }
 
   void _onLocateFleet(String tileKey, String regionId) {
     setState(() {
@@ -1196,10 +1232,9 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   @override
   Widget build(BuildContext context) {
     final result = getDebugInitGameResult();
-    final game = result.game;
     final mapViewData = result.mapViewData;
-    final humanPlayerId = game.players.isNotEmpty
-        ? game.players.first.id
+    final humanPlayerId = _game.players.isNotEmpty
+        ? _game.players.first.id
         : 'gp1';
     final region = _regionIndex == 0
         ? mapViewData.oldWorld
@@ -1247,8 +1282,9 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
           SizedBox(
             width: 360,
             child: NavalUnitsPanel(
-              game: game,
+              game: _game,
               humanPlayerId: humanPlayerId,
+              bus: _navalBus,
               onLocateFleet: _onLocateFleet,
             ),
           ),

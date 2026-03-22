@@ -266,6 +266,57 @@ void main() {
       expect(find.text('Cancel'), findsOneWidget);
     });
 
+    testWidgets(
+      'ConfirmDialogEvent from widget inside modal bottom sheet shows dialog',
+      (tester) async {
+        handler.bind();
+        bool? dialogResult;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navKey,
+            home: Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: ctx,
+                    builder: (sheetCtx) => TextButton(
+                      onPressed: () {
+                        bus.emit(
+                          ConfirmDialogEvent(
+                            title: 'Sheet confirm',
+                            message: 'From bottom sheet',
+                            onResult: (b) => dialogResult = b,
+                          ),
+                        );
+                      },
+                      child: const Text('emit from sheet'),
+                    ),
+                  );
+                },
+                child: const Text('open sheet'),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('open sheet'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('emit from sheet'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Sheet confirm'), findsOneWidget);
+        expect(find.text('From bottom sheet'), findsOneWidget);
+
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
+
+        expect(dialogResult, isTrue);
+      },
+    );
+
     testWidgets('ShowSnackBarEvent calls onShowSnackBar callback', (
       tester,
     ) async {

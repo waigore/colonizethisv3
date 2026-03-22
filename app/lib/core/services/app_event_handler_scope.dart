@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +9,7 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 
 import 'app_event_handler.dart';
@@ -33,6 +37,7 @@ class AppEventHandlerScope extends ConsumerStatefulWidget {
 class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
   AppEventHandler? _handler;
   bool _bound = false;
+  final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
 
   @override
   void didChangeDependencies() {
@@ -92,7 +97,31 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       onShowSnackBar: _showSnackBar,
     );
     _handler!.bind();
-    _log.d('ui:app_event: AppEventHandler bound');
+
+    _sessionCommandSubs.addAll([
+      bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        final updated = removePendingWorkOrderAt(
+          current,
+          e.playerId,
+          e.index,
+        );
+        ref.read(currentOrdersProvider.notifier).state = updated;
+      }),
+      bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
+        final game = ref.read(currentGameProvider);
+        if (game == null) return;
+        final newGame = clearUnitCurrentWork(game, e.unitId);
+        ref.read(currentGameProvider.notifier).state = newGame;
+        ref.read(gameServiceProvider).saveGame(newGame);
+      }),
+      bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+        ref.read(currentGameProvider.notifier).state = e.game;
+      }),
+    ]);
+    _log.d(
+      'ui:app_event: AppEventHandler bound; session command listeners attached',
+    );
   }
 
   void _showSnackBar(ShowSnackBarEvent event) {
@@ -119,6 +148,10 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
 
   @override
   void dispose() {
+    for (final s in _sessionCommandSubs) {
+      s.cancel();
+    }
+    _sessionCommandSubs.clear();
     _handler?.unbind();
     super.dispose();
   }

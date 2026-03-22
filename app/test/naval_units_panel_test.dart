@@ -1,5 +1,7 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
+import 'dart:async';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -26,16 +28,17 @@ void main() {
   Widget buildPanel({
     required Game game,
     required String humanPlayerId,
+    AppEventBus? bus,
     void Function(String tileKey, String regionId)? onLocateFleet,
-    void Function(Game newGame)? onFleetsChanged,
   }) {
+    final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
       home: Scaffold(
         body: NavalUnitsPanel(
           game: game,
           humanPlayerId: humanPlayerId,
+          bus: resolvedBus,
           onLocateFleet: onLocateFleet,
-          onFleetsChanged: onFleetsChanged,
         ),
       ),
     );
@@ -625,23 +628,61 @@ void main() {
     });
 
     testWidgets(
-      'AC: onFleetsChanged is called when fleet operations are performed',
+      'AC: NavalFleetsUpdatedEvent is emitted when fleet split completes',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
 
-        Game? updatedGame;
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? fleetEvent;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          fleetEvent = e;
+        });
+        addTearDown(sub.cancel);
+
+        final splittable = game.worldState.fleets
+            .where(
+              (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
+            )
+            .toList();
+        if (splittable.isEmpty) return;
+
+        final targetFleet = splittable.first;
+        final tileLabel = targetFleet.id == 'home_fleet'
+            ? 'Home Fleet'
+            : 'Fleet ${targetFleet.id}';
+
         await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanId,
-            onFleetsChanged: (newGame) {
-              updatedGame = newGame;
-            },
-          ),
+          buildPanel(bus: bus, game: game, humanPlayerId: humanId),
         );
         await tester.pumpAndSettle();
 
-        expect(updatedGame, isNull);
+        final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
+        if (fleetFinder.evaluate().isEmpty) return;
+
+        await tester.ensureVisible(fleetFinder);
+        await tester.tap(fleetFinder);
+        await tester.pumpAndSettle();
+
+        final splitButton = find.text('Split');
+        if (splitButton.evaluate().isEmpty) return;
+
+        await tester.tap(splitButton);
+        await tester.pumpAndSettle();
+
+        final moveToNew = find.byIcon(Icons.arrow_back);
+        if (moveToNew.evaluate().isEmpty) return;
+
+        await tester.tap(moveToNew);
+        await tester.pumpAndSettle();
+
+        final confirmSplit = find.text('Confirm Split');
+        if (confirmSplit.evaluate().isEmpty) return;
+
+        await tester.tap(confirmSplit);
+        await tester.pumpAndSettle();
+
+        expect(fleetEvent, isNotNull);
+        expect(fleetEvent!.game.worldState.fleets, isNotEmpty);
       },
     );
 
@@ -700,7 +741,6 @@ void main() {
       if (playerFleets.isEmpty) return;
 
       final fleet1 = playerFleets.first;
-      final fleet1Ships = fleet1.shipTypeIds.length;
 
       final gameWithTwoFleetsAtSamePort = game.copyWith(
         worldState: game.worldState.copyWith(
@@ -715,14 +755,10 @@ void main() {
         ),
       );
 
-      Game? updatedGame;
       await tester.pumpWidget(
         buildPanel(
           game: gameWithTwoFleetsAtSamePort,
           humanPlayerId: humanId,
-          onFleetsChanged: (newGame) {
-            updatedGame = newGame;
-          },
         ),
       );
       await tester.pumpAndSettle();
@@ -769,15 +805,8 @@ void main() {
         return;
       if (fleet1.inPortAtProvinceId == fleet2.inPortAtProvinceId) return;
 
-      Game? updatedGame;
       await tester.pumpWidget(
-        buildPanel(
-          game: game,
-          humanPlayerId: humanId,
-          onFleetsChanged: (newGame) {
-            updatedGame = newGame;
-          },
-        ),
+        buildPanel(game: game, humanPlayerId: humanId),
       );
       await tester.pumpAndSettle();
 

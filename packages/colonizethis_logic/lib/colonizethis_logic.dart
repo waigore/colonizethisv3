@@ -50,6 +50,7 @@ export 'src/orders/order_suggestion.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'src/orders/order_suggestion_api_impl.dart';
 export 'src/orders/order_visibility.dart';
+export 'src/orders/draft_orders_mutations.dart';
 export 'src/orders/orders_application.dart';
 export 'src/orders/unit_type_helpers.dart' show
     devExclusiveReservedTileKeysForPlayer,

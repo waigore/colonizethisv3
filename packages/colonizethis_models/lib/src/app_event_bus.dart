@@ -39,6 +39,9 @@ class AppEventBus {
 
   Stream<UIActionEvent> get uiActionEvents => on<UIActionEvent>();
 
+  Stream<SessionCommandEvent> get sessionCommandEvents =>
+      on<SessionCommandEvent>();
+
   Stream<UISystemEvent> get uiSystemEvents => on<UISystemEvent>();
 
   Stream<GameToUIEvent> get gameToUIEvents => on<GameToUIEvent>();

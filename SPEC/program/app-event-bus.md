@@ -10,6 +10,13 @@ Direct `showDialog()` and `Navigator.of(context).push()/pop()` calls couple UI w
 
 ---
 
+## Principles
+
+- **Stable handlers, not ephemeral refs:** Panels, side menus, and routes that close before an async action completes must not capture `WidgetRef` or other context that becomes invalid on dispose. Emit a typed **command event** (e.g. `SessionCommandEvent`); a **long-lived** shell listener (e.g. `AppEventHandlerScope`) applies mutations using a stable ref.
+- **No coupling on sibling mount state:** Do not assume another widget is still mounted when handling user actions. The emitter publishes intent; the subscriber owns session state and may outlive any single panel.
+
+---
+
 ## Architecture
 
 ```
@@ -51,13 +58,18 @@ AppEvent (sealed)
 │   ├── PopNavigationEvent()
 │   ├── OpenPanelEvent(panelId, params?)   // legacy string id
 │   ├── OpenPauseMenuPanelEvent(onDebugLog?, onResume?)
-│   ├── OpenCivilianUnitsPanelEvent(…callbacks…, onPanelDismissed?)
+│   ├── OpenCivilianUnitsPanelEvent(onLocateUnit, onStartWorkTargetSelection, onPanelDismissed?)
 │   ├── OpenMilitaryUnitsPanelEvent(onLocateTile, onPanelDismissed?)
-│   ├── OpenNavalUnitsPanelEvent(onLocateFleet, onFleetsChanged, onPanelDismissed?)
+│   ├── OpenNavalUnitsPanelEvent(onLocateFleet, onPanelDismissed?)
 │   ├── ClosePanelEvent()
 │   ├── StartTargetSelectionEvent(unitId, action, onComplete?, onCancel?)
 │   ├── CancelTargetSelectionEvent()
 │   └── GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy)
+│
+├── SessionCommandEvent  — session mutations; shell listeners only (not AppEventHandler)
+│   ├── RemovePendingWorkOrderRequestedEvent(playerId, index)
+│   ├── CancelInProgressCivilianWorkRequestedEvent(unitId)
+│   └── NavalFleetsUpdatedEvent(game)
 │
 ├── UISystemEvent        — transient system feedback
 │   ├── ShowSnackBarEvent(message, actionLabel?, action?)
@@ -89,6 +101,7 @@ class AppEventBus {
   Stream<UIActionEvent>  get uiActionEvents;
   Stream<UISystemEvent>  get uiSystemEvents;
   Stream<GameToUIEvent>  get gameToUIEvents;
+  Stream<SessionCommandEvent> get sessionCommandEvents;
   Stream<DialogueEvent>  get dialogueEvents;
   Stream<PortraitMoodEvent> get portraitMoodEvents;
 
@@ -131,11 +144,13 @@ class AppEventHandler {
 | Event | Opened by | Handler builds |
 |-------|-----------|----------------|
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
-| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders) |
+| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`) |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
-| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` |
+| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`) |
 
 `onPanelDismissed` on unit panel events runs when the sheet route completes (e.g. map highlight cleanup).
+
+**Civilian / naval work and fleets:** `CivilianUnitsPanel` emits `RemovePendingWorkOrderRequestedEvent` and `CancelInProgressCivilianWorkRequestedEvent`; `NavalUnitsPanel` emits `NavalFleetsUpdatedEvent` after split/combine. `AppEventHandlerScope` subscribes and updates `currentOrdersProvider` / `currentGameProvider` using `colonizethis_logic` (`removePendingWorkOrderAt`, `clearUnitCurrentWork`). Panels do not receive Riverpod `ref` for those mutations.
 
 ## Dialog IDs (`OpenDialogEvent`)
 

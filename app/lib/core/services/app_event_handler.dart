@@ -24,6 +24,7 @@ import 'dart:async';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 
 import '../../features/game/flame/game_screen_shared.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
@@ -35,6 +36,8 @@ import '../../providers/games_provider.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
+
+final _log = Logger();
 
 class AppEventHandler {
   AppEventHandler({
@@ -136,27 +139,41 @@ class AppEventHandler {
     ConfirmDialogEvent event,
     NavigatorState? nav,
   ) async {
-    if (nav == null) return false;
-    final result = await showDialog<bool>(
-      context: nav.context,
-      builder: (ctx) => AlertDialog(
-        title: Text(event.title),
-        content: Text(event.message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(event.cancelLabel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(event.confirmLabel),
-          ),
-        ],
-      ),
-    );
-    final confirmed = result ?? false;
-    event.result(confirmed);
-    return confirmed;
+    if (nav == null) {
+      event.result(false);
+      return false;
+    }
+    try {
+      final result = await showDialog<bool>(
+        context: nav.context,
+        useRootNavigator: true,
+        builder: (ctx) => AlertDialog(
+          title: Text(event.title),
+          content: Text(event.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(event.cancelLabel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(event.confirmLabel),
+            ),
+          ],
+        ),
+      );
+      final confirmed = result ?? false;
+      event.result(confirmed);
+      return confirmed;
+    } catch (e, st) {
+      _log.e(
+        'ui:app_event: ConfirmDialog failed',
+        error: e,
+        stackTrace: st,
+      );
+      event.result(false);
+      return false;
+    }
   }
 
   Future<void> _openPanel(OpenPanelEvent event, NavigatorState? nav) async {
@@ -219,8 +236,6 @@ class AppEventHandler {
               currentOrders: currentOrders,
               availableWorkTargets: availableWorkTargets,
               onLocateUnit: event.onLocateUnit,
-              onRemoveWorkOrder: event.onRemoveWorkOrder,
-              onCancelUnitWork: event.onCancelUnitWork,
               onStartWorkTargetSelection: (unit, workTarget) {
                 Navigator.of(context).pop();
                 event.onStartWorkTargetSelection(unit, workTarget);
@@ -270,11 +285,12 @@ class AppEventHandler {
             return const SizedBox.shrink();
           }
           final humanPlayerId = _humanPlayerId(game);
+          final bus = ref.watch(appEventBusProvider);
           return NavalUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
+            bus: bus,
             onLocateFleet: event.onLocateFleet,
-            onFleetsChanged: event.onFleetsChanged,
           );
         },
       ),

@@ -85,30 +85,27 @@ void main() {
     required String humanPlayerId,
     Orders currentOrders = const Orders(),
     Map<String, List<String>> availableWorkTargets = const {},
+    AppEventBus? bus,
     void Function(Unit unit)? onLocateUnit,
     void Function(WorkOrder order)? onAddWorkOrder,
-    void Function(String playerId, int index)? onRemoveWorkOrder,
-    void Function(String unitId)? onCancelUnitWork,
     void Function(Unit unit, String workTarget)? onStartWorkTargetSelection,
   }) {
-    final bus = AppEventBus();
+    final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
     return MaterialApp(
       navigatorKey: navigatorKey,
       home: Scaffold(
         body: _EventHandlingWrapper(
-          bus: bus,
+          bus: resolvedBus,
           navigatorKey: navigatorKey,
           child: CivilianUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             currentOrders: currentOrders,
             availableWorkTargets: availableWorkTargets,
-            bus: bus,
+            bus: resolvedBus,
             onLocateUnit: onLocateUnit,
             onAddWorkOrder: onAddWorkOrder,
-            onRemoveWorkOrder: onRemoveWorkOrder,
-            onCancelUnitWork: onCancelUnitWork,
             onStartWorkTargetSelection: onStartWorkTargetSelection,
           ),
         ),
@@ -240,23 +237,6 @@ void main() {
     );
 
     testWidgets(
-      'builds with onCancelUnitWork and onRemoveWorkOrder callbacks',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            onCancelUnitWork: (_) {},
-            onRemoveWorkOrder: (_, __) {},
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.byType(CivilianUnitsPanel), findsOneWidget);
-      },
-    );
-
-    testWidgets(
       'tap Assign opens order menu; tap order invokes onStartWorkTargetSelection',
       (WidgetTester tester) async {
         // Find an idle civilian unit
@@ -301,7 +281,7 @@ void main() {
     );
 
     testWidgets(
-      'tap Cancel shows confirm dialog; tap Yes invokes onRemoveWorkOrder when unit has pending work',
+      'tap Cancel shows confirm dialog; tap Yes emits RemovePendingWorkOrderRequestedEvent',
       (WidgetTester tester) async {
         final units = [
           ...game.worldState.oldWorld.units,
@@ -317,8 +297,11 @@ void main() {
         if (idleCivilians.isEmpty) return;
         final idleCivilian = idleCivilians.first;
 
-        String? removePlayerId;
-        int? removeIndex;
+        RemovePendingWorkOrderRequestedEvent? removeEvent;
+        final bus = AppEventBus.create();
+        bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
+          removeEvent = e;
+        });
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
           target: 'explore',
@@ -332,13 +315,10 @@ void main() {
         );
         await tester.pumpWidget(
           buildPanel(
+            bus: bus,
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             currentOrders: ordersWithOne,
-            onRemoveWorkOrder: (pid, idx) {
-              removePlayerId = pid;
-              removeIndex = idx;
-            },
           ),
         );
         await tester.pumpAndSettle();
@@ -350,15 +330,20 @@ void main() {
         await tester.tap(find.text('Yes'));
         await tester.pumpAndSettle();
 
-        expect(removePlayerId, humanPlayerIdWithUnits);
-        expect(removeIndex, 0);
+        expect(removeEvent, isNotNull);
+        expect(removeEvent!.playerId, humanPlayerIdWithUnits);
+        expect(removeEvent!.index, 0);
       },
     );
 
     testWidgets(
-      'tap Cancel then No dismisses dialog without invoking callback',
+      'tap Cancel then No dismisses dialog without RemovePendingWorkOrder event',
       (WidgetTester tester) async {
-        var cancelCalled = false;
+        RemovePendingWorkOrderRequestedEvent? removeEvent;
+        final bus = AppEventBus.create();
+        bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
+          removeEvent = e;
+        });
         final units = [
           ...game.worldState.oldWorld.units,
           ...game.worldState.newWorld.units,
@@ -386,10 +371,10 @@ void main() {
         );
         await tester.pumpWidget(
           buildPanel(
+            bus: bus,
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             currentOrders: ordersWithOne,
-            onRemoveWorkOrder: (_, __) => cancelCalled = true,
           ),
         );
         await tester.pumpAndSettle();
@@ -399,7 +384,7 @@ void main() {
         await tester.tap(find.text('No'));
         await tester.pumpAndSettle();
 
-        expect(cancelCalled, isFalse);
+        expect(removeEvent, isNull);
       },
     );
 
