@@ -72,6 +72,29 @@ void main() {
         expect(nodeIds.contains(e.id2), isTrue);
       }
     });
+
+    test(
+      'default init scale: 60 OW provinces and 4 continents (GameSetupConfig)',
+      () {
+        final t = generateTopology(TopologyGeneratorParams(
+          numProvinces: 60,
+          numContinents: 4,
+          regionId: 'oldWorld',
+          seed: 42,
+        ));
+        final provinceNodes =
+            t.nodes.where((n) => n.type == TopologyNodeType.province).toList();
+        expect(provinceNodes.length, 60);
+        final seaZones =
+            t.nodes.where((n) => n.type == TopologyNodeType.seaZone).toList();
+        expect(seaZones, isNotEmpty);
+        expect(t.nodes.every((n) => n.regionId == 'oldWorld'), isTrue);
+        for (final n in provinceNodes) {
+          final degree = t.edges.where((e) => e.id1 == n.id || e.id2 == n.id).length;
+          expect(degree, greaterThan(0), reason: '${n.id} should have ≥1 edge');
+        }
+      },
+    );
   });
 }
 
