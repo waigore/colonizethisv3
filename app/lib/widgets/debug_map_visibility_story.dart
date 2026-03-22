@@ -68,6 +68,7 @@ class DebugMapVisibilityStory extends StatefulWidget {
 
 class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
   CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  bool _showProvinceNames = true;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +106,20 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
                     });
                   },
                 ),
+                CtChoiceChip(
+                  label: const Text('Province names'),
+                  selected: _showProvinceNames,
+                  onSelected: (_) {
+                    setState(() => _showProvinceNames = true);
+                  },
+                ),
+                CtChoiceChip(
+                  label: const Text('No province names'),
+                  selected: !_showProvinceNames,
+                  onSelected: (_) {
+                    setState(() => _showProvinceNames = false);
+                  },
+                ),
               ],
             ),
           ),
@@ -114,6 +129,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
               showPoliticalOverlay: widget.showPoliticalOverlay,
               cellSizePx: 28,
               visibilityMode: _visibilityMode,
+              showProvinceNamesLayer: _showProvinceNames,
               onProvinceSelected: (id) {},
             ),
           ),

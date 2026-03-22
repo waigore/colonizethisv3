@@ -16,6 +16,7 @@ class GameMapCanvasStack extends StatelessWidget {
     required this.region,
     required this.baseLayerDisplayMode,
     required this.showBordersLayer,
+    required this.showProvinceNamesLayer,
     required this.humanPlayerId,
     required this.selectedDetailId,
     required this.displayId,
@@ -38,6 +39,7 @@ class GameMapCanvasStack extends StatelessWidget {
   final RegionMapViewData region;
   final BaseLayerDisplayMode baseLayerDisplayMode;
   final bool showBordersLayer;
+  final bool showProvinceNamesLayer;
   final String humanPlayerId;
   final String? selectedDetailId;
   final String displayId;
@@ -69,6 +71,7 @@ class GameMapCanvasStack extends StatelessWidget {
                   region: region,
                   cellSizePx: 24,
                   showBordersLayer: showBordersLayer,
+                  showProvinceNamesLayer: showProvinceNamesLayer,
                   visibilityMode: CtMapVisibilityMode.playerConstrained,
                   baseLayerDisplayMode: baseLayerDisplayMode,
                   onProvinceSelected: onProvinceSelected,

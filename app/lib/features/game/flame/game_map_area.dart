@@ -249,6 +249,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
     final showBorders = ref.watch(mapBordersVisibleProvider);
+    final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
@@ -290,6 +291,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   region: _currentRegion,
                   baseLayerDisplayMode: _baseLayerDisplayMode,
                   showBordersLayer: showBorders,
+                  showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
                   selectedDetailId: _selectedDetailId,
                   displayId: _displayId,
@@ -334,18 +336,43 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 final bordersVisible = ref.watch(
                                   mapBordersVisibleProvider,
                                 );
-                                return SwitchListTile(
-                                  title: Text(l10n.map_displayOptions_showBorders),
-                                  value: bordersVisible,
-                                  onChanged: (value) {
-                                    ref
-                                            .read(
-                                              mapBordersVisibleProvider
-                                                  .notifier,
-                                            )
-                                            .state =
-                                        value;
-                                  },
+                                final namesVisible = ref.watch(
+                                  mapProvinceNamesVisibleProvider,
+                                );
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SwitchListTile(
+                                      title: Text(
+                                        l10n.map_displayOptions_showBorders,
+                                      ),
+                                      value: bordersVisible,
+                                      onChanged: (value) {
+                                        ref
+                                                .read(
+                                                  mapBordersVisibleProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            value;
+                                      },
+                                    ),
+                                    SwitchListTile(
+                                      title: Text(
+                                        l10n.map_displayOptions_showProvinceNames,
+                                      ),
+                                      value: namesVisible,
+                                      onChanged: (value) {
+                                        ref
+                                                .read(
+                                                  mapProvinceNamesVisibleProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            value;
+                                      },
+                                    ),
+                                  ],
                                 );
                               },
                             ),

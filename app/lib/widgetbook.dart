@@ -788,6 +788,7 @@ class _CivilianPanelWithMapStoryState
   String? _centerOnTileKey;
   ({Unit unit, String workTarget})? _workTargetSelection;
   CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  bool _showProvinceNames = true;
   Set<String>? _cachedValidTileKeys;
   String? _cachedWorkTargetSelection;
 
@@ -976,6 +977,16 @@ class _CivilianPanelWithMapStoryState
                         _visibilityMode = CtMapVisibilityMode.playerConstrained,
                   ),
                 ),
+                CtChoiceChip(
+                  label: const Text('Province names'),
+                  selected: _showProvinceNames,
+                  onSelected: (_) => setState(() => _showProvinceNames = true),
+                ),
+                CtChoiceChip(
+                  label: const Text('No province names'),
+                  selected: !_showProvinceNames,
+                  onSelected: (_) => setState(() => _showProvinceNames = false),
+                ),
               ],
             ),
           ),
@@ -984,6 +995,7 @@ class _CivilianPanelWithMapStoryState
               region: region,
               cellSizePx: 24,
               visibilityMode: _visibilityMode,
+              showProvinceNamesLayer: _showProvinceNames,
               onProvinceSelected: (_) {},
               highlightedTileKey: _highlightedTileKey,
               centerOnTileKey: _centerOnTileKey,
@@ -1100,6 +1112,7 @@ class _MilitaryPanelWithMapStoryState
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
+  bool _showProvinceNames = true;
 
   void _onLocateTile(String tileKey, String regionId) {
     setState(() {
@@ -1152,6 +1165,19 @@ class _MilitaryPanelWithMapStoryState
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Province names'),
+                        selected: _showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = true),
+                      ),
+                      ChoiceChip(
+                        label: const Text('No names'),
+                        selected: !_showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = false),
+                      ),
                     ],
                   ),
                 ),
@@ -1159,6 +1185,7 @@ class _MilitaryPanelWithMapStoryState
                   child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
+                    showProvinceNamesLayer: _showProvinceNames,
                     onProvinceSelected: (_) {},
                     highlightedTileKey: _highlightedTileKey,
                     centerOnTileKey: _centerOnTileKey,
@@ -1194,6 +1221,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   int _regionIndex = 0;
   String? _highlightedTileKey;
   String? _centerOnTileKey;
+  bool _showProvinceNames = true;
   late Game _game;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
@@ -1266,6 +1294,19 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Province names'),
+                        selected: _showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = true),
+                      ),
+                      ChoiceChip(
+                        label: const Text('No names'),
+                        selected: !_showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = false),
+                      ),
                     ],
                   ),
                 ),
@@ -1273,6 +1314,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
                   child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
+                    showProvinceNamesLayer: _showProvinceNames,
                     onProvinceSelected: (_) {},
                     highlightedTileKey: _highlightedTileKey,
                     centerOnTileKey: _centerOnTileKey,
@@ -1312,6 +1354,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   String? _hoveredTileKey;
   String? _highlightedTileKey;
   CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  bool _showProvinceNames = true;
 
   String get _displayId {
     if (_hoveredTileKey != null) {
@@ -1382,6 +1425,19 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         });
                       },
                     ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Province names'),
+                      selected: _showProvinceNames,
+                      onSelected: (_) =>
+                          setState(() => _showProvinceNames = true),
+                    ),
+                    ChoiceChip(
+                      label: const Text('No names'),
+                      selected: !_showProvinceNames,
+                      onSelected: (_) =>
+                          setState(() => _showProvinceNames = false),
+                    ),
                   ],
                 ),
               ),
@@ -1393,6 +1449,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         region: region,
                         cellSizePx: 28,
                         visibilityMode: _visibilityMode,
+                        showProvinceNamesLayer: _showProvinceNames,
                         onProvinceSelected: (id) =>
                             setState(() => _selectedId = id),
                         onProvinceHovered: (id) =>
