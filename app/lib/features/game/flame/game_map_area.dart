@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
@@ -42,10 +45,30 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
+  StreamSubscription<ct_models.AppEvent>? _busSubscription;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainResourcesImprovements;
+
+  @override
+  void initState() {
+    super.initState();
+    final bus = ref.read(appEventBusProvider);
+    _busSubscription = bus.stream.listen((event) {
+      if (event is ct_models.OpenProvinceDetailPanelEvent) {
+        setState(() {
+          // Town icon tap will be handled by the province panel provider
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _busSubscription?.cancel();
+    super.dispose();
+  }
 
   String get _humanPlayerId =>
       widget.game.players
@@ -240,8 +263,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
-    final humanPlayerView =
-        buildPlayerView(widget.game, mapTopology, _humanPlayerId);
+    final humanPlayerView = buildPlayerView(
+      widget.game,
+      mapTopology,
+      _humanPlayerId,
+    );
     final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
@@ -296,6 +322,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           _cachedValidTileKeys = null;
                         })
                       : null,
+                  bus: ref.read(appEventBusProvider),
                 ),
                 Positioned(
                   left: 0,

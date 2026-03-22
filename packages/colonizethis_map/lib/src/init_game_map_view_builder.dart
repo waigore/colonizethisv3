@@ -278,6 +278,56 @@ RegionMapViewData _buildRegionViewData({
     );
   });
 
+  // Determine coastal provinces from topology edges (P<->S connections).
+  // A province is coastal if it has an edge to any sea zone.
+  final coastalProvinceIds = <String>{};
+  for (final edge in topology.edges) {
+    final id1IsProvince = edge.id1.startsWith('p');
+    final id2IsProvince = edge.id2.startsWith('p');
+    final id1IsSea = edge.id1.startsWith('sea');
+    final id2IsSea = edge.id2.startsWith('sea');
+    // P<->S edge: one is province, other is sea zone
+    if ((id1IsProvince && id2IsSea) || (id1IsSea && id2IsProvince)) {
+      // Extract province id (id starts with 'p' for province, 'sea' for sea zone)
+      final provinceId = id1IsProvince ? edge.id1 : edge.id2;
+      coastalProvinceIds.add(provinceId);
+    }
+  }
+
+  // Town markers: one per province with a town, at the town's tile position.
+  final towns = <TownMarkerView>[];
+  final portProvinceIds = ports.map((p) => p.provinceId).toSet();
+  for (final p in provinces) {
+    final townTileKey = p.townTileKey;
+    if (townTileKey == null || townTileKey.isEmpty) {
+      continue;
+    }
+    final parts = townTileKey.split('|');
+    if (parts.length < 4) {
+      continue;
+    }
+    final regId = parts[0];
+    if (regId != regionId) {
+      continue;
+    }
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) {
+      continue;
+    }
+    towns.add(
+      TownMarkerView(
+        x: x,
+        y: y,
+        provinceId: p.id,
+        isCoastal:
+            coastalProvinceIds.contains(p.id) &&
+            !portProvinceIds.contains(p.id),
+        isPort: portProvinceIds.contains(p.id),
+      ),
+    );
+  }
+
   // Sea zone id → representative tile (x,y) for warp zone markers.
   final seaZoneToTile = <String, (int x, int y)>{};
   for (var y = 0; y < tileMap.height; y++) {
@@ -341,5 +391,6 @@ RegionMapViewData _buildRegionViewData({
     terrainColors: terrainColors,
     unitMarkers: unitMarkers,
     warpMarkers: warpMarkers,
+    townMarkers: towns,
   );
 }

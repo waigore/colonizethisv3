@@ -1,4 +1,5 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -32,6 +33,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required Set<String>? validTileKeys,
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
+    required void Function(String provinceId)? onTownIconTapped,
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
@@ -48,7 +50,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
        secondaryHighlightTileKey = secondaryHighlightTileKey,
        validTileKeys = validTileKeys,
        onTileSelected = onTileSelected,
-       onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+       onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled,
+       onTownIconTapped = onTownIconTapped;
 
   RegionMapViewData region;
   final double cellSizePx;
@@ -67,6 +70,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   Set<String>? validTileKeys;
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
+  void Function(String provinceId)? onTownIconTapped;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -104,6 +108,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         }
       },
       validTileKeys: validTileKeys,
+      onTownIconTapped: onTownIconTapped,
     )..position = Vector2.zero();
     await world.add(_mapComponent);
     _mapLoaded = true;
@@ -367,6 +372,7 @@ class CtRegionMap extends StatefulWidget {
     this.validTileKeys,
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
+    this.bus,
   });
 
   final RegionMapViewData region;
@@ -389,6 +395,10 @@ class CtRegionMap extends StatefulWidget {
   final Set<String>? validTileKeys;
   final void Function(String tileKey)? onTileSelected;
   final VoidCallback? onWorkTargetSelectionCancelled;
+
+  /// Optional event bus for emitting town icon tap events.
+  /// When provided, tapping a town/port icon emits OpenProvinceDetailPanelEvent.
+  final AppEventBus? bus;
 
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
@@ -469,6 +479,11 @@ class _CtRegionMapState extends State<CtRegionMap> {
       validTileKeys: widget.validTileKeys,
       onTileSelected: widget.onTileSelected,
       onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
+      onTownIconTapped: widget.bus != null
+          ? (provinceId) {
+              widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
+            }
+          : null,
     );
   }
 
