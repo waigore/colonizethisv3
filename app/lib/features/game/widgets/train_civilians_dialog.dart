@@ -31,7 +31,25 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
   @override
   void initState() {
     super.initState();
-    _counts = {for (final e in CivilianEconomyCatalog.all) e.id: 0};
+    _counts = _initialCountsFromOrders();
+  }
+
+  /// Counts pending train-at-capital civilian builds from [widget.currentOrders].
+  Map<String, int> _initialCountsFromOrders() {
+    final next = {for (final e in CivilianEconomyCatalog.all) e.id: 0};
+    final capital = _player?.capitalProvinceId;
+    if (capital == null) return next;
+    final civilianIds = CivilianEconomyCatalog.byId.keys.toSet();
+    final list =
+        widget.currentOrders.buildUnitOrdersByPlayerId[widget.humanPlayerId] ??
+        const <BuildUnitOrder>[];
+    for (final o in list) {
+      if (o.isMilitary) continue;
+      if (!civilianIds.contains(o.unitType)) continue;
+      if (o.spawnProvinceId != capital) continue;
+      next[o.unitType] = (next[o.unitType] ?? 0) + 1;
+    }
+    return next;
   }
 
   Player? get _player {
@@ -141,84 +159,89 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Train Civilians',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    _applyOrders();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          if (!_hasCapital)
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          _applyOrders();
+        }
+      },
+      child: CtDialogShell(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No capital set — cannot train units',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-            )
-          else ...[
-            _ResourceBar(
-              treasury: _treasury,
-              paperStockpile: _paperStockpile,
-              deficitHint: _deficitHint,
-            ),
-            const Divider(height: 1),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  children: [
-                    for (final econ in CivilianEconomyCatalog.all)
-                      _UnitTypeRow(
-                        econ: econ,
-                        count: _counts[econ.id] ?? 0,
-                        isLocked: _isLocked(econ.id),
-                        techRequiredLabel: _techRequiredLabel(econ.id),
-                        canIncrement: _canAffordIncrement(econ.id),
-                        canDecrement: (_counts[econ.id] ?? 0) > 0,
-                        onIncrement: () => _increment(econ.id),
-                        onDecrement: () => _decrement(econ.id),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CtNinePatchButton(
-                    onPressed: _reset,
-                    child: const Text('Reset'),
+                  Expanded(
+                    child: Text(
+                      'Train Civilians',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
+            const Divider(height: 1),
+            if (!_hasCapital)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No capital set — cannot train units',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              )
+            else ...[
+              _ResourceBar(
+                treasury: _treasury,
+                paperStockpile: _paperStockpile,
+                deficitHint: _deficitHint,
+              ),
+              const Divider(height: 1),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    children: [
+                      for (final econ in CivilianEconomyCatalog.all)
+                        _UnitTypeRow(
+                          econ: econ,
+                          count: _counts[econ.id] ?? 0,
+                          isLocked: _isLocked(econ.id),
+                          techRequiredLabel: _techRequiredLabel(econ.id),
+                          canIncrement: _canAffordIncrement(econ.id),
+                          canDecrement: (_counts[econ.id] ?? 0) > 0,
+                          onIncrement: () => _increment(econ.id),
+                          onDecrement: () => _decrement(econ.id),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CtNinePatchButton(
+                      onPressed: _reset,
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
