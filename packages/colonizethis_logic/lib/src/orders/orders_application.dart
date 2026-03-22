@@ -180,7 +180,7 @@ void _runBuildPhase(_BuildWorkState state) {
         id: _buildUnitId(player.id, order),
         type: order.unitType,
         ownerId: player.id,
-        provinceId: spawnProvinceId,
+        locationProvinceId: spawnProvinceId,
         tileKey: category == BuildUnitCategory.civilian
             ? firstTileInSpawn
             : null,

@@ -868,8 +868,8 @@ _applyCrossRegionOwnProvinceMoves(
           ? _firstTileFor(destRegion, destFullId)
           : null;
       final movedUnit = isCivilian && firstTile != null
-          ? unit.copyWith(provinceId: destFullId, tileKey: firstTile)
-          : unit.copyWith(provinceId: destFullId);
+          ? unit.copyWith(locationProvinceId: destFullId, tileKey: firstTile)
+          : unit.copyWith(locationProvinceId: destFullId);
 
       unitsById[unit.id] = movedUnit;
       unitRegionById[unit.id] = destRegion;

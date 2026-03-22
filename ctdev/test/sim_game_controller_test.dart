@@ -37,12 +37,12 @@ void main() {
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -121,12 +121,12 @@ void main() {
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),

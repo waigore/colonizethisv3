@@ -28,18 +28,18 @@ void main() {
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
               Province(id: 'oldWorld|P3', regionId: 'oldWorld', ownerId: 'p3'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P2',
+                locationProvinceId: 'oldWorld|P2',
               ),
             ],
           ),
@@ -71,7 +71,7 @@ void main() {
       for (final mo in moveOrders) {
         final unit = game.worldState.oldWorld.units
             .firstWhere((u) => u.id == mo.unitId);
-        final fromLocal = ProvinceId.localIdFrom(unit.provinceId);
+        final fromLocal = ProvinceId.localIdFrom(unit.locationProvinceId);
         final toLocal = ProvinceId.localIdFrom(mo.destinationProvinceId);
         final isAdjacent = topology.edges.any(
           (e) =>
@@ -103,12 +103,12 @@ void main() {
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),

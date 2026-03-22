@@ -274,9 +274,9 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'att',
-                provinceId: 'P1',
+                locationProvinceId: 'P1',
               ),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -322,13 +322,13 @@ void main() {
                   id: 'u1',
                   type: 'pikemen',
                   ownerId: 'att',
-                  provinceId: 'P1',
+                  locationProvinceId: 'P1',
                 ),
                 Unit(
                   id: 'u2',
                   type: 'pikemen',
                   ownerId: 'def',
-                  provinceId: 'P1',
+                  locationProvinceId: 'P1',
                 ),
               ],
             ),
@@ -396,9 +396,9 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'att',
-                provinceId: 'P1',
+                locationProvinceId: 'P1',
               ),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -520,12 +520,12 @@ void main() {
                   fortLevel: 2,
                 ),
               ],
-              units: const [
+              units: [
                 Unit(
                   id: 'u1',
                   type: 'pikemen',
                   ownerId: 'def',
-                  provinceId: provinceId,
+                  locationProvinceId: provinceId,
                 ),
               ],
             ),
@@ -576,18 +576,18 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: ow, ownerId: 'def'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'att',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'def',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
             ],
           ),
@@ -664,18 +664,18 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: nw, ownerId: 'def'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'att',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'def',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
             ],
           ),

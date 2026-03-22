@@ -21,7 +21,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
 
       final world = WorldState(
@@ -83,7 +83,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
         );
         // No visibility for p1: source province unknown → game raises.
         final world = WorldState(
@@ -133,7 +133,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p2|0|0',
         );
         final world = WorldState(
@@ -197,7 +197,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       // No visibility: p1 unknown, so explore not suggested.
       final world = WorldState(
@@ -239,7 +239,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       // p1 only revealed (not fogged) — prospect requires fogged or better.
       final world = WorldState(
@@ -289,7 +289,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       const tileKey = 'oldWorld|p1|0|0';
       final world = WorldState(
@@ -346,7 +346,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -384,7 +384,7 @@ void main() {
         expect(o.unitId, 'u1');
         final u = view.ownUnitsById[o.unitId];
         expect(u, isNotNull);
-        expect(u!.provinceId, 'oldWorld|p1');
+        expect(u!.locationProvinceId, 'oldWorld|p1');
       }
     });
 
@@ -407,7 +407,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileNoResource,
         );
         final world = WorldState(
@@ -476,7 +476,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileP1,
         );
         final world = WorldState(
@@ -543,14 +543,14 @@ void main() {
           id: 'b1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final world = WorldState(
@@ -626,14 +626,14 @@ void main() {
           id: 'b1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final world = WorldState(
@@ -919,7 +919,7 @@ void main() {
         id: 'u1',
         type: 'Spy',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -981,7 +981,7 @@ void main() {
           id: 'u1',
           type: 'Merchant',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
         );
         final world = WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -1255,7 +1255,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1328,7 +1328,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
         final game = Game(
@@ -1371,7 +1371,7 @@ void main() {
         id: 'u1',
         type: 'Colonist',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1430,7 +1430,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: tileWithResource,
       );
       final game = Game(
@@ -1507,7 +1507,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1589,7 +1589,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: landTile,
       );
       final game = Game(
@@ -1669,7 +1669,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: provinceId,
+          locationProvinceId: provinceId,
           tileKey: grassTile,
         );
         final world = WorldState(
@@ -1743,7 +1743,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: provinceId,
+          locationProvinceId: provinceId,
           tileKey: ironTile,
         );
         final world = WorldState(
@@ -1812,7 +1812,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
 
       final world = WorldState(
@@ -1898,7 +1898,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: playerId,
-        provinceId: '$ow|spy_loc',
+        locationProvinceId: '$ow|spy_loc',
         tileKey: 'oldWorld|spy_loc|0|0',
       );
 
@@ -1981,7 +1981,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
 
@@ -2082,7 +2082,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
 

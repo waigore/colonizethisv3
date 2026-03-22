@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
@@ -21,6 +22,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.showBordersLayer,
     required this.showProvinceNamesLayer,
     required this.humanPlayerId,
+    required this.playerView,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
@@ -35,6 +37,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool showBordersLayer;
   final bool showProvinceNamesLayer;
   final String humanPlayerId;
+  final PlayerView playerView;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
 
@@ -80,6 +83,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   game: game,
                   region: region,
                   humanPlayerId: humanPlayerId,
+                  playerView: playerView,
                 ),
             ],
           ),

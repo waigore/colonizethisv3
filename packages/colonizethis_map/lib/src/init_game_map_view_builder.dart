@@ -5,6 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'combine_region_topologies.dart';
 import 'init_game_map_view_data.dart';
 import 'tile_map_visualization_shared.dart';
 
@@ -60,9 +61,14 @@ InitGameMapViewData buildInitGameMapViewData({
   );
 
   _log.i('buildInitGameMapViewData end');
+  final combinedTopology = combineRegionTopologies(
+    topologyByRegion: topologyByRegion,
+    warpLinks: warpLinks ?? const [],
+  );
   return InitGameMapViewData(
     oldWorld: owRegion,
     newWorld: nwRegion,
+    combinedTopology: combinedTopology,
     seed: seed,
     configSummary: configSummary,
   );
@@ -235,7 +241,7 @@ RegionMapViewData _buildRegionViewData({
       ? game.worldState.oldWorld.units
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
-    final tile = provinceToTile[u.provinceId];
+    final tile = provinceToTile[u.locationProvinceId];
     if (tile != null) {
       unitMarkers.add(
         UnitMarkerView(x: tile.$1, y: tile.$2, ownerFactionId: u.ownerId),

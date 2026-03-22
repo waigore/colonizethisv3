@@ -18,13 +18,13 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'att',
-                provinceId: 'P1',
+                locationProvinceId: 'P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'pikemen',
                 ownerId: 'def',
-                provinceId: 'P1',
+                locationProvinceId: 'P1',
               ),
             ],
           ),
@@ -73,7 +73,7 @@ void main() {
                 id: 'u2',
                 type: 'pikemen',
                 ownerId: 'def',
-                provinceId: 'P1',
+                locationProvinceId: 'P1',
               ),
             ],
           ),
@@ -108,8 +108,8 @@ void main() {
           oldWorld: RegionData(
             provinces: const [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'def')],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', provinceId: 'P1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'P1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', locationProvinceId: 'P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -141,8 +141,8 @@ void main() {
           oldWorld: RegionData(
             provinces: const [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'def')],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', provinceId: 'P1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'P1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', locationProvinceId: 'P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -178,8 +178,8 @@ void main() {
               Province(id: 'newWorld|N1', regionId: nw, ownerId: 'def'),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', provinceId: 'newWorld|N1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', provinceId: 'newWorld|N1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'att', locationProvinceId: 'newWorld|N1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'newWorld|N1'),
             ],
           ),
         ),

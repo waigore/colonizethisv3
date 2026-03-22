@@ -239,6 +239,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final showBorders = ref.watch(mapBordersVisibleProvider);
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final mapTopology = widget.mapViewData.combinedTopology;
+    final humanPlayerView =
+        buildPlayerView(widget.game, mapTopology, _humanPlayerId);
     final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
@@ -281,6 +284,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   showBordersLayer: showBorders,
                   showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
+                  playerView: humanPlayerView,
                   centerOnTileKey: _centerOnTileKey,
                   validTileKeysForSelection: _validTileKeysForSelection,
                   onTileSelectedForWork: _workTargetSelection != null
@@ -417,6 +421,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             game: widget.game,
             region: _currentRegion,
             humanPlayerId: _humanPlayerId,
+            playerView: humanPlayerView,
           ),
       ],
     );

@@ -22,10 +22,10 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 - **Open / update:** User taps/clicks a tile → provider records `selectedTileKey`, sets `overlayOpen` → panel shows that province/sea zone; **Tile** section uses the same tile key.
 - **Close:** User uses the overlay close control → `overlayOpen` false; `selectedTileKey` may remain for a later reopen. Map **orange selection** follows provider: implementation may clear or keep selection when closed; tile tap while closed should be able to **reopen** with that tile selected.
-- **Switch province/tile:** Tap another tile → new `selectedTileKey` → panel updates (including province-scoped sections for the new tile’s province).
+- **Switch province/tile:** Tap another tile → new `selectedTileKey` → panel updates (including province-scoped sections for the new tile's province).
 - **Hover:** Pointer hover updates **only** map hover visuals (and optional `onProvinceHovered` / tooltips). It does **not** update `selectedTileKey` or the Tile section.
-- **Touch / mobile:** There is **no** “tap-as-hover” for **panel** content. Only **tap** commits selection for the overlay.
-- **Data context:** Human player view (visibility, prospecting, etc.).
+- **Touch / mobile:** There is **no** "tap-as-hover" for **panel** content. Only **tap** commits selection for the overlay.
+- **Data context:** `RegionMapViewData` and human player for cell visibility and prospecting. **[PlayerView](../program/player-view.md)** (`buildPlayerView` from `GameMapArea` with combined topology) gates foreign civilian lines and the Tile section's civilian count (`foreignCivilianVisibleToPlayer` in colonizethis_logic).
 
 ---
 
@@ -59,15 +59,19 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 ## Style / implementation
 
-Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles (UXD 02). Overlay widget receives **`displayId`** and **`selectedTileKey`** from parents; it does **not** import `mapProvincePanelProvider`.
+Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles (UXD 02). Overlay widget receives **`displayId`**, **`selectedTileKey`**, and **`playerView`** from parents; it does **not** import `mapProvincePanelProvider`.
 
 ---
 
 ## Province overlay content
 
-**Tile:** From **`selectedTileKey`** only. Empty: “Click a tile to see details.” Else: coordinates, terrain, resource (— if none), **Prospected** (prospectable & not prospected → no; not prospectable → —), improvement, roads/rail, civilian count. `???` when unrevealed per player view.
+**Tile:** From **`selectedTileKey`** only. Empty: “Click a tile to see details.” Else: coordinates, terrain, resource (— if none), **Prospected** (prospectable & not prospected → no; not prospectable → —), improvement, roads/rail, **civilian count** (fog-aware: same rules as Civilian — `foreignCivilianVisibleToPlayer`; enemy Spies never). `???` when `CellViewData.visibility` is unrevealed or province is fully unrevealed.
 
-**Political / Economic / Military / Civilian / Naval:** Owner, resources, prospects, improvements, units, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
+**Military:** In-province military units (`Unit.locationProvinceId`); group by **owner**, then **type counts** per owner.
+
+**Civilian:** Own units — full lines (type, id, status). Other players — only if `foreignCivilianVisibleToPlayer` allows (tile visibility ≠ unknown; not enemy Spy).
+
+**Political / Economic / Naval:** Owner, resources, prospects, improvements, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
 
 **Sea zone:** Political + Naval (fleets in zone).
 
@@ -91,4 +95,5 @@ Map stories use `onMapTileTappedForDetail` and passed-in keys from demo/override
 
 - **Map widget:** [map-widget.md](map-widget.md) — `onMapTileTappedForDetail`, `selectedTileKey`, `secondaryHighlightTileKey`.
 - **Provider:** `mapProvincePanelProvider` in app; see TDD for app state if split.
+- **PlayerView:** `GameMapArea` builds with `buildPlayerView` + combined topology and passes through `GameMapCanvasStack` → `GameMapProvinceDetailSidePanel` / `GameMapNarrowDetailOverlaySlot` into `ProvinceSeaZoneDetailOverlay`.
 - **Ships in port:** colonizethis_logic helpers as before.

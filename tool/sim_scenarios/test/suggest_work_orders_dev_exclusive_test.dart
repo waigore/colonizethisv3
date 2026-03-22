@@ -25,14 +25,14 @@ void main() {
         id: 'b1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: tileA,
       );
       final b2 = Unit(
         id: 'b2',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: tileA,
       );
       final world = WorldState(

@@ -19,7 +19,7 @@ void main() {
                 id: 'b1',
                 type: 'Builder',
                 ownerId: playerId,
-                provinceId: 'oldWorld|p1',
+                locationProvinceId: 'oldWorld|p1',
                 status: UnitStatus.working,
                 currentWork: CurrentWork(
                   workTarget: 'build_improvement',

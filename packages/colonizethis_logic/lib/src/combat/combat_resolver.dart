@@ -164,7 +164,7 @@ Game resolveBattleContext(
               id: id,
               type: type,
               ownerId: provinceOwnerId,
-              provinceId: ctx.provinceId,
+              locationProvinceId: ctx.provinceId,
               medals: 0,
             );
             unitsById[id] = stubUnit;
@@ -250,7 +250,7 @@ Game resolveBattleContext(
   if (ownerId != defenderFactionId) {
     final victorId = ownerId;
     finalUnits = finalUnits.where((u) {
-      if (u.provinceId != ctx.provinceId) return true;
+      if (u.locationProvinceId != ctx.provinceId) return true;
       // Military units remain; civilians of non-victor factions are removed.
       if (canUnitInitiateCombat(u.type)) return true;
       return u.ownerId == victorId;

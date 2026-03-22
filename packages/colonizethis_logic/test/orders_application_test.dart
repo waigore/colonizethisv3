@@ -236,7 +236,7 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: RegionData(
           provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-          units: const [],
+          units: [],
         ),
         newWorld: const RegionData(),
         fleets: [
@@ -442,7 +442,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -478,7 +478,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -521,7 +521,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: CurrentWork(
@@ -559,7 +559,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -599,7 +599,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -641,7 +641,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -698,7 +698,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -760,7 +760,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -797,7 +797,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -835,7 +835,7 @@ void main() {
         id: 'u1',
         type: 'Rail Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -887,7 +887,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -929,7 +929,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -971,7 +971,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1013,7 +1013,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1052,7 +1052,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final cost = workOrderCostBuildImprovement(0);
@@ -1102,7 +1102,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: 'p1',
-        provinceId: targetProvinceId,
+        locationProvinceId: targetProvinceId,
         tileKey: targetTileKey,
       );
       final game = Game(
@@ -1166,7 +1166,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1225,7 +1225,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceSmall,
+        locationProvinceId: provinceSmall,
         tileKey: tileSmall1,
       );
 
@@ -1284,7 +1284,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final cost = workOrderCostBuildRoad;
@@ -1332,7 +1332,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final cost = workOrderMaterialCost('build_port');
@@ -1385,7 +1385,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1422,7 +1422,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1471,7 +1471,7 @@ void main() {
         id: 'merchant1',
         type: 'Merchant',
         ownerId: 'p1',
-        provinceId: minorProvinceId,
+        locationProvinceId: minorProvinceId,
         tileKey: tileKeyMinor,
       );
       final game = Game(
@@ -1538,7 +1538,7 @@ void main() {
         id: 'merchant1',
         type: 'Merchant',
         ownerId: 'p1',
-        provinceId: minorProvinceId,
+        locationProvinceId: minorProvinceId,
         tileKey: tileKeyMinor,
       );
       final game = Game(
@@ -1598,7 +1598,7 @@ void main() {
         id: 'merchant1',
         type: 'Merchant',
         ownerId: 'p1',
-        provinceId: minorProvinceId,
+        locationProvinceId: minorProvinceId,
         tileKey: tileKeyMinor,
       );
       final game = Game(
@@ -1674,13 +1674,13 @@ void main() {
                   id: 'merchant1',
                   type: 'Merchant',
                   ownerId: 'p1',
-                  provinceId: minorProvinceId,
+                  locationProvinceId: minorProvinceId,
                   tileKey: tileKeyMinor),
               Unit(
                   id: 'merchant2',
                   type: 'Merchant',
                   ownerId: 'p2',
-                  provinceId: minorProvinceId,
+                  locationProvinceId: minorProvinceId,
                   tileKey: tileKeyMinor),
             ],
           ),
@@ -1752,7 +1752,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1801,7 +1801,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final cost = workOrderCostBuildRoad;
@@ -1854,7 +1854,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final cost = workOrderCostBuildFort(0);
@@ -1905,7 +1905,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1951,7 +1951,7 @@ void main() {
         id: 'u1',
         type: 'Engineer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -1997,7 +1997,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -2041,7 +2041,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: 'p1',
-        provinceId: p2Capital,
+        locationProvinceId: p2Capital,
         tileKey: capTileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -2102,7 +2102,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: 'p1',
-        provinceId: provId,
+        locationProvinceId: provId,
         tileKey: tileKeyP1,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
@@ -2116,7 +2116,7 @@ void main() {
         id: 'spy2',
         type: 'Spy',
         ownerId: 'p2',
-        provinceId: provId,
+        locationProvinceId: provId,
         tileKey: tileKeyP1,
       );
       final game = Game(
@@ -2609,7 +2609,7 @@ void main() {
       final next = applyBuildAndWorkOrders(gameWithStock, orders);
       expect(next.worldState.oldWorld.units, isEmpty);
       expect(next.worldState.newWorld.units.length, 1);
-      expect(next.worldState.newWorld.units.single.provinceId, provinceId);
+      expect(next.worldState.newWorld.units.single.locationProvinceId, provinceId);
     });
   });
 
@@ -2621,7 +2621,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -2647,7 +2647,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
         status: UnitStatus.working,
         currentWork: CurrentWork(

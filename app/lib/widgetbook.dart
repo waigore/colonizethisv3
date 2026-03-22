@@ -668,6 +668,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               displayId: sampleProvinceIdForOverlay,
               selectedTileKey: sampleTileKeyForProvinceOverlay,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -687,6 +688,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               displayId: sampleSeaZoneIdForOverlay,
               selectedTileKey: null,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -706,6 +708,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 displayId: sampleProvinceIdForOverlay,
                 selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               );
             },
@@ -1407,6 +1410,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   Widget build(BuildContext context) {
     final initResult = getDebugInitGameResult();
     final game = initResult.game;
+    final playerView =
+        buildPlayerView(game, initResult.combinedTopology, 'gp1');
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
     final displayId = _displayIdFromTile(_selectedTileKey) ?? widget.selectedId;
@@ -1495,6 +1500,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                             displayId: displayId,
                             selectedTileKey: _selectedTileKey,
                             humanPlayerId: 'gp1',
+                            playerView: playerView,
                             onHighlightTile: (k) =>
                                 setState(() => _secondaryHighlightTileKey = k),
                             onClose: () => setState(() {
