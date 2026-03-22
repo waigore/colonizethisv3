@@ -4,6 +4,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('runInitGame', () {
@@ -172,6 +173,41 @@ void main() {
       expect(result.game, isNotNull);
     });
 
+    test(
+      'default config: 60 OW, 6 GPs, 3 minors × min 3 provinces; init succeeds and GPs are P–P connected',
+      () {
+        final config = GameSetupConfig.defaultConfig;
+        expect(config.numProvincesOldWorld, 60);
+        expect(config.greatPowerCount, 6);
+        expect(config.minorNationCount, 3);
+        expect(config.minProvincesPerMinor, 3);
+
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
+        final game = result.game;
+        expect(game.worldState.oldWorld.provinces.length, 60);
+        expect(game.players.length, 6);
+        expect(game.minorNations.length, 3);
+
+        final topo = result.topologyByRegion[kRegionOldWorld]!;
+        final nbr = _provincePpNeighboursForInitGameTest(topo);
+        final owners = <String, String>{
+          for (final p in game.worldState.oldWorld.provinces)
+            if (p.ownerId != null)
+              ProvinceId.localIdFrom(p.id): p.ownerId!,
+        };
+        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+          expect(
+            gpProvincesAreLandConnected(gpId, owners, nbr),
+            isTrue,
+            reason: '$gpId OW territory must be one P–P component',
+          );
+        }
+      },
+    );
+
     test('throws ArgumentError when OW provinces fewer than Great Powers', () {
       // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
       // (either "provinces" or "sea-bound provinces" check). Accept either message.
@@ -194,5 +230,25 @@ void main() {
       );
     });
   });
+}
+
+Map<String, Set<String>> _provincePpNeighboursForInitGameTest(
+  MapTopology topology,
+) {
+  final provinces = {
+    for (final n in topology.nodes)
+      if (n.type == TopologyNodeType.province) n.id,
+  };
+  final neighbours = <String, Set<String>>{
+    for (final id in provinces) id: <String>{},
+  };
+  for (final edge in topology.edges) {
+    final a = edge.id1;
+    final b = edge.id2;
+    if (!provinces.contains(a) || !provinces.contains(b)) continue;
+    neighbours[a]!.add(b);
+    neighbours[b]!.add(a);
+  }
+  return neighbours;
 }
 

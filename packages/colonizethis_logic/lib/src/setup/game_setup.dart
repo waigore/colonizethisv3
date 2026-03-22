@@ -9,6 +9,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
+import 'gp_land_connectivity_repair.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
@@ -50,6 +51,10 @@ GameSetupResult createGameFromGeneratedMaps({
   required MapTopology topologyNewWorld,
   required String gameId,
   int? namingSeed,
+
+  /// Base for salted assignment perturbation on OW reassignment retries.
+  /// Defaults to [namingSeed] if set, else [GameSetupConfig.seed].
+  int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
   _log.i('logic: game setup start gameId=$gameId');
@@ -96,15 +101,57 @@ GameSetupResult createGameFromGeneratedMaps({
   // - Great Powers: each GP locked to one P–P landmass (connected component); multiple
   //   GPs may share a landmass when gpCount exceeds landmass count. Sea-bound seeds per landmass.
   // - Minor Nations: contiguous clusters on remaining OW provinces.
+  // - GP land connectivity repair + reassignment on same map: gp_land_connectivity_repair.dart
   // - Tribes: contiguous clusters on NW provinces.
-  final owOwner = _assignOldWorldOwnershipContiguous(
-    topologyOldWorld: topologyOldWorld,
-    provinceIds: owProvinceIds,
-    seaBoundProvinceIds: seaBoundOW,
-    gpIds: gpIds,
-    minorIds: minorIds,
-    minProvincesPerMinor: config.minProvincesPerMinor,
-  );
+  final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
+  final owLandmassIds = _landmassIdsFromNeighbours(owNeighbours);
+  final owProvincesSorted = owProvinceIds.toList()..sort();
+  final seaBoundOwSet = seaBoundOW.toSet();
+  final perturbBase =
+      assignmentPerturbationBase ?? namingSeed ?? config.seed;
+
+  Map<String, String> owOwner = {};
+  var owAssignmentOk = false;
+  for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
+    final assignmentRandom =
+        attempt == 0 ? null : Random(Object.hash(0x47504f77, perturbBase, attempt));
+    try {
+      owOwner = _assignOldWorldOwnershipContiguous(
+        neighbours: owNeighbours,
+        provinceIds: owProvinceIds,
+        seaBoundProvinceIds: seaBoundOW,
+        gpIds: gpIds,
+        minorIds: minorIds,
+        minProvincesPerMinor: config.minProvincesPerMinor,
+        assignmentRandom: assignmentRandom,
+      );
+    } on StateError catch (e, st) {
+      _log.w('logic: OW assignment attempt $attempt failed: $e');
+      _log.d('logic: stack $st');
+      continue;
+    }
+    final ownersRepair = Map<String, String>.from(owOwner);
+    final repaired = repairGpLandOwnershipMutating(
+      owners: ownersRepair,
+      gpIdsSorted: gpIds,
+      neighbours: owNeighbours,
+      landmassIds: owLandmassIds,
+      seaBoundLocalIds: seaBoundOwSet,
+      allProvinceIdsSorted: owProvincesSorted,
+    );
+    if (repaired) {
+      owOwner = ownersRepair;
+      owAssignmentOk = true;
+      break;
+    }
+  }
+  if (!owAssignmentOk) {
+    throw GameSetupConnectivityFailure(
+      'Old World GP land connectivity could not be satisfied after '
+      '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
+      '$kGpLandConnectivityRepairRounds repair round(s) each.',
+    );
+  }
 
   final nwOwner = _assignNewWorldOwnershipContiguous(
     topologyNewWorld: topologyNewWorld,
@@ -1211,14 +1258,14 @@ int _largestFeasibleGpProvinceBudgetByPacking({
 }
 
 Map<String, String> _assignOldWorldOwnershipContiguous({
-  required MapTopology topologyOldWorld,
+  required Map<String, Set<String>> neighbours,
   required List<String> provinceIds,
   required List<String> seaBoundProvinceIds,
   required List<String> gpIds,
   required List<String> minorIds,
   required int minProvincesPerMinor,
+  Random? assignmentRandom,
 }) {
-  final neighbours = _provinceNeighboursFromTopology(topologyOldWorld);
   final landmassIds = _landmassIdsFromNeighbours(neighbours);
 
   final gpCount = gpIds.length;
@@ -1308,6 +1355,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     seaBoundProvinceIds: seaBoundProvinceIds,
     landmassIds: landmassIds,
     gpLandmassAssignments: gpLandmassAssignments,
+    seedShuffleRandom: assignmentRandom,
   );
 
   final gpAvailable = provinceIds.toSet();
@@ -1322,6 +1370,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     targetPerFaction: targetPerGp,
     available: gpAvailable,
     maxTotal: gpProvinceBudget,
+    neighborShuffleRandom: assignmentRandom,
   );
 
   for (final gpId in gpIds) {
@@ -1343,6 +1392,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   final owners = Map<String, String>.from(gpOwners);
   if (minorCount > 0 && gpAvailable.isNotEmpty) {
     final remainingForMinors = gpAvailable.toList()..sort();
+    if (assignmentRandom != null) remainingForMinors.shuffle(assignmentRandom);
     final targetPerMinor = computeFairTargets(
       minorIds,
       remainingForMinors.length,
@@ -1359,6 +1409,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
       seeds: minorSeeds,
       targetPerFaction: targetPerMinor,
       available: gpAvailable,
+      neighborShuffleRandom: assignmentRandom,
     );
     owners.addAll(minorOwners);
   }
@@ -1374,6 +1425,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   required List<String> seaBoundProvinceIds,
   required Map<String, int> landmassIds,
   required Map<String, int> gpLandmassAssignments,
+  Random? seedShuffleRandom,
 }) {
   final gpCount = gpIdsInAssignmentOrder.length;
 
@@ -1385,6 +1437,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   }
   for (final list in seaBoundByLandmass.values) {
     list.sort();
+    if (seedShuffleRandom != null) list.shuffle(seedShuffleRandom);
   }
 
   final gpSeeds = <String, String>{};

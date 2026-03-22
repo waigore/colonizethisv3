@@ -161,6 +161,7 @@ InitGameResult runInitGame({
     topologyNewWorld: topoNW,
     gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
     namingSeed: effectiveSeed,
+    assignmentPerturbationBase: effectiveSeed,
     warpLinks: warpLinks,
   );
 

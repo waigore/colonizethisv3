@@ -57,7 +57,7 @@ The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovemen
 | Parameter | Default | Layer |
 |-----------|---------|-------|
 | Great Power count | 6 | Base, Scenario |
-| Minor Nation count | 6 | Base, Scenario |
+| Minor Nation count | 3 | Base, Scenario |
 | Tribe count | 10 | Base, Scenario |
 | Min provinces per Minor | 3 | Base, Scenario |
 | Old World provinces | ≈60 | Base, Scenario |

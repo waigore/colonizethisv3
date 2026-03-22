@@ -1,6 +1,21 @@
 /// Generic BFS territory assignment for province ownership.
 /// Used by game_setup to assign Great Powers, Minor Nations, and Tribes.
 
+import 'dart:math';
+
+/// True if [provinceId] shares a P–P edge with a province owned by [factionId].
+bool provinceTouchesFaction(
+  String provinceId,
+  String factionId,
+  Map<String, String> owners,
+  Map<String, Set<String>> neighbours,
+) {
+  for (final n in neighbours[provinceId] ?? const <String>{}) {
+    if (owners[n] == factionId) return true;
+  }
+  return false;
+}
+
 /// Assigns provinces to factions using fair multi-source BFS growth.
 ///
 /// [neighbours] is the province adjacency graph.
@@ -12,6 +27,7 @@
 /// [targetPerFaction] maps factionId -> target province count.
 /// [available] is the set of provinces to assign from. Modified in place.
 /// [maxTotal] caps the total number of provinces to assign (defaults to [available].length).
+/// [neighborShuffleRandom] when non-null shuffles neighbor visit order (deterministic reassignment).
 ///
 /// Returns a map of provinceId -> factionId for all assigned provinces.
 Map<String, String> assignTerritoriesByBfsGrowth({
@@ -23,6 +39,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
   required Map<String, int> targetPerFaction,
   required Set<String> available,
   int? maxTotal,
+  Random? neighborShuffleRandom,
 }) {
   final owners = <String, String>{};
   final total = maxTotal ?? available.length;
@@ -60,7 +77,11 @@ Map<String, String> assignTerritoriesByBfsGrowth({
 
       while (queue.isNotEmpty && !expanded && totalAssigned < total) {
         final from = queue.removeAt(0);
-        for (final nb in neighbours[from] ?? const <String>{}) {
+        final nbrOrder = (neighbours[from] ?? const <String>{}).toList()..sort();
+        if (neighborShuffleRandom != null) {
+          nbrOrder.shuffle(neighborShuffleRandom);
+        }
+        for (final nb in nbrOrder) {
           if (!available.contains(nb)) continue;
           // Check landmass constraint (same landmass as neighbor)
           if (landmassIds != null && landmassIds[nb] != landmassIds[from]) {
@@ -92,6 +113,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
       if (underTarget.isNotEmpty) {
         // When factionLandmassIds is provided, only consider provinces on the faction's assigned landmass
         final sorted = available.toList()..sort();
+        if (neighborShuffleRandom != null) sorted.shuffle(neighborShuffleRandom);
         for (final factionId in underTarget) {
           if (assignedCount[factionId]! >= targetPerFaction[factionId]!) {
             continue;
@@ -102,10 +124,30 @@ Map<String, String> assignTerritoriesByBfsGrowth({
             final allowedLandmass = factionLandmassIds[factionId];
             if (allowedLandmass != null) {
               for (final p in sorted) {
-                if (landmassIds?[p] == allowedLandmass) {
+                if (landmassIds?[p] != allowedLandmass) continue;
+                if (provinceTouchesFaction(
+                  p,
+                  factionId,
+                  owners,
+                  neighbours,
+                )                ) {
                   seed = p;
                   break;
                 }
+              }
+              if (seed == null) {
+                for (final p in sorted) {
+                  if (landmassIds?[p] == allowedLandmass) {
+                    seed = p;
+                    break;
+                  }
+                }
+              }
+              if (seed == null) {
+                throw StateError(
+                  'assignTerritoriesByBfsGrowth: faction $factionId has no '
+                  'province on landmass $allowedLandmass',
+                );
               }
             } else {
               seed = sorted.isNotEmpty ? sorted.first : null;
@@ -113,7 +155,8 @@ Map<String, String> assignTerritoriesByBfsGrowth({
           } else {
             seed = sorted.isNotEmpty ? sorted.first : null;
           }
-          if (seed == null || sorted.isEmpty || totalAssigned >= total) break;
+          if (sorted.isEmpty || totalAssigned >= total) break;
+          if (seed == null) continue;
           if (!available.remove(seed)) continue;
           owners[seed] = factionId;
           queues[factionId]!.add(seed);
@@ -129,6 +172,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
   // still respecting the total cap and faction landmass constraints.
   if (available.isNotEmpty && totalAssigned < total) {
     final remaining = available.toList()..sort();
+    if (neighborShuffleRandom != null) remaining.shuffle(neighborShuffleRandom);
     while (remaining.isNotEmpty && totalAssigned < total) {
       final provinceId = remaining.removeAt(0);
       if (!available.remove(provinceId)) continue;
@@ -140,10 +184,27 @@ Map<String, String> assignTerritoriesByBfsGrowth({
         String? bestFaction;
         for (final fid in factionIds) {
           final allowedLandmass = factionLandmassIds[fid];
-          if (allowedLandmass != null && allowedLandmass != provinceLandmass) continue;
+          if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
+            continue;
+          }
+          if (!provinceTouchesFaction(provinceId, fid, owners, neighbours)) {
+            continue;
+          }
           if (assignedCount[fid]! < minCount) {
             minCount = assignedCount[fid]!;
             bestFaction = fid;
+          }
+        }
+        if (bestFaction == null) {
+          for (final fid in factionIds) {
+            final allowedLandmass = factionLandmassIds[fid];
+            if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
+              continue;
+            }
+            if (assignedCount[fid]! < minCount) {
+              minCount = assignedCount[fid]!;
+              bestFaction = fid;
+            }
           }
         }
         if (bestFaction == null) {

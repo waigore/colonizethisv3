@@ -230,7 +230,7 @@ class GameFactory {
               ?.cast<String>() ??
           GameSetupConfig.defaultConfig.selectedGreatPowerIds,
       continentCount: json['continentCount'] as int? ?? 4,
-      minorNationCount: json['minorNationCount'] as int? ?? 6,
+      minorNationCount: json['minorNationCount'] as int? ?? 3,
       tribeCount: json['tribeCount'] as int? ?? 10,
       numProvincesOldWorld: json['numProvincesOldWorld'] as int? ?? 60,
       numProvincesNewWorld: json['numProvincesNewWorld'] as int? ?? 80,
