@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_assets.dart';
+import 'strict_asset_icon.dart';
+
 class ResourceIcon extends StatelessWidget {
   const ResourceIcon({super.key, required this.commodityId, this.size = 16});
 
@@ -50,11 +53,10 @@ class ResourceIcon extends StatelessWidget {
     if (iconPath == null) {
       return SizedBox(width: size, height: size);
     }
-    return Image.asset(
-      'assets/images/$iconPath',
+    return StrictAssetIcon(
+      assetPath: '$kAppIconAssetPrefix$iconPath',
       width: size,
       height: size,
-      errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
     );
   }
 }
@@ -86,11 +88,10 @@ class WorkerIcon extends StatelessWidget {
     if (iconPath == null) {
       return SizedBox(width: size, height: size);
     }
-    return Image.asset(
-      'assets/images/$iconPath',
+    return StrictAssetIcon(
+      assetPath: '$kAppIconAssetPrefix$iconPath',
       width: size,
       height: size,
-      errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
     );
   }
 }

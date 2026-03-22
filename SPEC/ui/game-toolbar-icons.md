@@ -24,7 +24,9 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 | `home_capital` | Home to Capital | Flag/pole icon for centering on capital |32×32 |
 | `map_options` | Map Display Options | Gear/cog icon for map display settings | 32×32 |
 
-**File naming:** `ui_icon_<icon_id>.png` in `app/assets/images/`. Example: `ui_icon_diplomacy.png`.
+**File naming:** `ui_icon_<icon_id>.png` in `app/assets/icons/`. Example: `ui_icon_diplomacy.png`. List `assets/icons/` in `pubspec.yaml` under `flutter: assets:` (directory entry is enough).
+
+**Loading (app):** Paths use `kAppIconAssetPrefix` (`assets/icons/`, `lib/config/app_assets.dart`). In-game and overlays use `StrictAssetIcon` (`lib/widgets/strict_asset_icon.dart`): missing or invalid PNGs throw `FlutterError` when the asset resolves. Flame `ResourceIconCache` loads `ui_icon_com_<resource_id>.png` from the same prefix and rethrows on any load/decode failure.
 
 **Style lock:** Must match the color palette and pixel style from `ui_main_menu_button.png` (per [main-menu.md](main-menu.md) § Color palette):
 - Frame: deep reddish-brown `#3E1F1A`–`#5A332C`
@@ -49,10 +51,10 @@ Use `pixellab_create_map_object` to generate toolbar icons. This tool creates pi
 
 ### Step 1: Check existing assets
 
-Before generating, check `app/assets/images/` for existing icons. Only generate missing or intentionally replaced assets.
+Before generating, check `app/assets/icons/` for existing icons. Only generate missing or intentionally replaced assets.
 
 ```bash
-ls app/assets/images/ui_icon_*.png 2>/dev/null || echo "No icons found"
+ls app/assets/icons/ui_icon_*.png 2>/dev/null || echo "No icons found"
 ```
 
 ### Step 2: Generate each icon
@@ -80,7 +82,7 @@ Call `pixellab_create_map_object` with the following parameters:
 After each generation completes, download using the returned URL:
 
 ```bash
-curl --fail -o app/assets/images/ui_icon_<icon_id>.png "https://api.pixellab.ai/mcp/map-objects/<object_id>/download"
+curl --fail -o app/assets/icons/ui_icon_<icon_id>.png "https://api.pixellab.ai/mcp/map-objects/<object_id>/download"
 ```
 
 **Important:** Map objects are stored for 8 hours only. Download immediately after generation.
@@ -90,7 +92,7 @@ curl --fail -o app/assets/images/ui_icon_<icon_id>.png "https://api.pixellab.ai/
 Check file integrity and size:
 
 ```bash
-file app/assets/images/ui_icon_*.png
+file app/assets/icons/ui_icon_*.png
 ```
 
 Expected output: `PNG image data, 32 x 32, 8-bit/color RGBA, non-interlaced`
@@ -258,25 +260,26 @@ This uses the existing button as a style reference for color palette and pixel s
 
 ## Implementation in Flutter
 
-After icons are generated and placed in `app/assets/images/`:
+After icons are generated and placed in `app/assets/icons/`:
 
-1. Add to `pubspec.yaml` under `flutter:assets:`
+1. Ensure `pubspec.yaml` lists the icons directory under `flutter: assets:`:
    ```yaml
    flutter:
      assets:
-       - assets/images/ui_icon_diplomacy.png
-       - assets/images/ui_icon_civilian_units.png
-       - assets/images/ui_icon_military_units.png
-       - assets/images/ui_icon_technology.png
+       - assets/icons/
    ```
 
-2. Update `game_screen.dart` to use `Image.asset` instead of `Icon`:
+2. Use `StrictAssetIcon` with `kAppIconAssetPrefix` instead of bare `Image.asset`:
    ```dart
    // Before (Material icon)
    Icon(Icons.handshake_outlined, size: 20)
    
-   // After (pixel-art icon)
-   Image.asset('assets/images/ui_icon_diplomacy.png', width: 20, height: 20)
+   // After (pixel-art icon; fails fast if asset missing)
+   StrictAssetIcon(
+     assetPath: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
+     width: 20,
+     height: 20,
+   )
    ```
 
 3. Update button layouts as needed. Example:
@@ -286,7 +289,11 @@ After icons are generated and placed in `app/assets/images/`:
      child: Row(
        mainAxisSize: MainAxisSize.min,
        children: [
-         Image.asset('assets/images/ui_icon_diplomacy.png', width: 20, height: 20),
+         StrictAssetIcon(
+           assetPath: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
+           width: 20,
+           height: 20,
+         ),
          const SizedBox(width: 8),
          const Text('Diplomacy'),
        ],
@@ -300,7 +307,7 @@ After icons are generated and placed in `app/assets/images/`:
 
 To regenerate an icon:
 
-1. Delete the existing file: `rm app/assets/images/ui_icon_<icon_id>.png`
+1. Delete the existing file: `rm app/assets/icons/ui_icon_<icon_id>.png`
 2. Call `pixellab_create_map_object` with the same prompt (or adjust)
 3. Download the new icon
 4. Verify integrity

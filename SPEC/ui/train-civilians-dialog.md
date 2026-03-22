@@ -136,7 +136,7 @@ On dialog `didPop` / `Navigator.of(context).pop()`:
 ## Lock Icon Asset
 
 - **Asset ID:** `ui_icon_lock`
-- **Path:** `assets/images/ui_icon_lock.png`
+- **Path:** `assets/icons/ui_icon_lock.png` (bundle path; use `StrictAssetIcon` + `kAppIconAssetPrefix` in app code per [game-toolbar-icons.md](game-toolbar-icons.md))
 - **Size:** 32×32
 - **Style:** Pixel-art padlock, single color outline, medium shading, high top-down
 - **Generation:** Use `pixellab_create_map_object` with style matching to `ui_main_menu_button.png`
