@@ -9,7 +9,7 @@ on:
 permissions:
   pull-requests: read
 
-# Must match matrix shard count and merge_app_lcov_shards.sh invocation below.
+# Must match matrix shard list, app_tests_shard job name literal, and merge script below.
 env:
   APP_TEST_TOTAL_SHARDS: "2"
 
@@ -89,7 +89,8 @@ jobs:
           retention-days: 2
 
   app_tests_shard:
-    name: App tests (shard ${{ matrix.shard }}/${{ env.APP_TEST_TOTAL_SHARDS }})
+    # job.name cannot use env.* (GitHub limitation); keep "2" in sync with APP_TEST_TOTAL_SHARDS and matrix.shard.
+    name: App tests (shard ${{ matrix.shard }}/2)
     needs: [changes, app_tests_cache]
     if: needs.changes.outputs.tests == 'true'
     runs-on: ubuntu-latest
