@@ -2,14 +2,16 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/routes.dart';
-import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/games_provider.dart';
+import '../../../config/app_assets.dart';
+import '../../../config/routes.dart';
+import '../../../providers/app_event_bus_provider.dart';
+import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/strict_asset_icon.dart';
 
 /// Side menu ("Production", "Units", etc.) for the in-game shell.
 class GameSideMenu extends ConsumerWidget {
@@ -53,7 +55,7 @@ class GameSideMenu extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(iconAsset, width: 20, height: 20),
+            StrictAssetIcon(assetPath: iconAsset, width: 20, height: 20),
             const SizedBox(width: 8),
             Text(label),
           ],
@@ -71,7 +73,7 @@ class GameSideMenu extends ConsumerWidget {
     return [
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_production.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_production.png',
         label: 'Production',
         onPressed: () {
           onClose();
@@ -85,7 +87,7 @@ class GameSideMenu extends ConsumerWidget {
       ),
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_civilian_units.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',
         label: 'Civilian Units',
         onPressed: () {
           onClose();
@@ -100,7 +102,7 @@ class GameSideMenu extends ConsumerWidget {
       ),
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_military_units.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_military_units.png',
         label: 'Military Units',
         onPressed: () {
           onClose();
@@ -114,7 +116,7 @@ class GameSideMenu extends ConsumerWidget {
       ),
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_naval_units.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_naval_units.png',
         label: 'Naval Units',
         onPressed: () {
           onClose();
@@ -128,7 +130,7 @@ class GameSideMenu extends ConsumerWidget {
       ),
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_diplomacy.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
         label: 'Diplomacy',
         onPressed: () {
           onClose();
@@ -146,7 +148,7 @@ class GameSideMenu extends ConsumerWidget {
       ),
       _empireButton(
         context,
-        iconAsset: 'assets/images/ui_icon_technology.png',
+        iconAsset: '${kAppIconAssetPrefix}ui_icon_technology.png',
         label: 'Technology',
         onPressed: () {
           onClose();

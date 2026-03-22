@@ -743,7 +743,7 @@ class StateVerifier {
       final regionData = _getRegionData(game, regionId);
       if (regionData != null) {
         for (final unit in regionData.units) {
-          if (unit.provinceId == provinceId) {
+          if (unit.locationProvinceId == provinceId) {
             units.add(unit);
           }
         }
@@ -753,13 +753,13 @@ class StateVerifier {
 
     // If no region, check both oldWorld and newWorld units
     for (final unit in game.worldState.oldWorld.units) {
-      if (unit.provinceId == provinceId) {
+      if (unit.locationProvinceId == provinceId) {
         units.add(unit);
       }
     }
 
     for (final unit in game.worldState.newWorld.units) {
-      if (unit.provinceId == provinceId) {
+      if (unit.locationProvinceId == provinceId) {
         units.add(unit);
       }
     }

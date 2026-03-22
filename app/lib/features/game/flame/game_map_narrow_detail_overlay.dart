@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
@@ -13,12 +14,14 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.game,
     required this.region,
     required this.humanPlayerId,
+    required this.playerView,
     super.key,
   });
 
   final ct_models.Game game;
   final RegionMapViewData region;
   final String humanPlayerId;
+  final PlayerView playerView;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,6 +42,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         displayId: displayId,
         selectedTileKey: panel.selectedTileKey,
         humanPlayerId: humanPlayerId,
+        playerView: playerView,
         onHighlightTile: (k) => ref
             .read(mapProvincePanelProvider.notifier)
             .setSecondaryHighlight(k),

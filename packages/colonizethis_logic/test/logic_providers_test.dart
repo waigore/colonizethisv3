@@ -35,8 +35,8 @@ void main() {
             provinces: const [
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
-            units: const [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'oldWorld|P1'),
+            units: [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', locationProvinceId: 'oldWorld|P1'),
             ],
           ),
           newWorld: const RegionData(),

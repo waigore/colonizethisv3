@@ -6,7 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+    show
+        demoGameForOverlay,
+        demoHumanPlayerViewForOverlay,
+        demoRegionForOverlay,
+        sampleProvinceIdForOverlay,
+        sampleSeaZoneIdForOverlay,
+        sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
 void main() {
@@ -41,6 +48,7 @@ void main() {
             displayId: displayId,
             selectedTileKey: selectedTileKey,
             humanPlayerId: game.players.first.id,
+            playerView: demoHumanPlayerViewForOverlay,
             onHighlightTile: onHighlightTile,
             onClose: onClose,
           ),
@@ -140,6 +148,7 @@ void main() {
                 displayId: sampleProvinceIdForOverlay,
                 selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               ),
             ),
@@ -169,6 +178,7 @@ void main() {
                 displayId: sampleProvinceIdForOverlay,
                 selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               ),
             ),
@@ -238,6 +248,7 @@ void main() {
                 displayId: provinceId,
                 selectedTileKey: selectedTileKey,
                 humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               ),
             ),
@@ -298,6 +309,7 @@ void main() {
                 displayId: provinceId,
                 selectedTileKey: null,
                 humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               ),
             ),
@@ -341,6 +353,7 @@ void main() {
                             displayId: sampleProvinceIdForOverlay,
                             selectedTileKey: selectedTk,
                             humanPlayerId: game.players.first.id,
+                            playerView: demoHumanPlayerViewForOverlay,
                             onClose: () => setState(() {
                               overlayOpen = false;
                             }),
@@ -403,6 +416,7 @@ void main() {
                               : '',
                           selectedTileKey: selectedTileKey,
                           humanPlayerId: demoGameForOverlay.players.first.id,
+                          playerView: demoHumanPlayerViewForOverlay,
                           onClose: () => setState(() {
                             overlayOpen = false;
                           }),

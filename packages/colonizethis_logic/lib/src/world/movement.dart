@@ -133,11 +133,11 @@ RegionData applyMoveOrdersToRegion(
           : null;
       if (isCivilian && firstTileInDest != null) {
         unitsById[unit.id] = unit.copyWith(
-          provinceId: destFullId,
+          locationProvinceId: destFullId,
           tileKey: firstTileInDest,
         );
       } else {
-        unitsById[unit.id] = unit.copyWith(provinceId: destFullId);
+        unitsById[unit.id] = unit.copyWith(locationProvinceId: destFullId);
       }
     }
   }

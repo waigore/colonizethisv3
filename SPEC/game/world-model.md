@@ -31,7 +31,7 @@ Each province **contains** terrain tiles (terrain type, optional resource, impro
 | **Province** | Land region. Id, region id, **owner** (faction id). Optional **townTileKey** (tile key of province's town for extraction). Tiles; neighbours from topology. |
 | **SeaZone** | Water region. Id, region id. Adjacency from topology. |
 | **Tile map** | Per-region 2D grid; cells → province or sea zone. |
-| **Unit** | Military or civilian. Owner, type. Location: civilian = tileKey; military = province id; naval = fleet/sea zone. |
+| **Unit** | Military or civilian. Owner, type. **Canonical placement** is `locationProvinceId`: when `tileKey` is non-empty, it is derived from the tile key (`regionId|localId`); otherwise the stored province applies (e.g. military without a tile). The model exposes only `locationProvinceId` (no separate public “raw” province field). **JSON:** the wire key remains `provinceId` for saves; it always reads/writes the **canonical** `locationProvinceId` (load normalizes drift for tile-based units). Naval uses fleet/sea zone as elsewhere in rules. |
 | **Player** | Great Power. Id, name, stockpile, capitalProvinceId, capitalTile. Orders and victory-eligible. See [factions.md](factions.md). |
 | **Orders** | Per–Great Power orders (movement, build). May be stub. |
 
@@ -41,7 +41,7 @@ Models: data and serialization only; no game logic.
 
 ## Relations and Containment (brief)
 
-**Game** → one WorldState, many Players/Minor Nations/Tribes, optional turnTimeMapping. **Player** → Stockpile, WorkerPool. **WorldState** → region blobs (provinces, units). **Province** → owner, tiles, neighbours. **Unit** → owner; location by kind (tileKey, provinceId, fleet). **Orders** → keyed by Great Power. Topology/tile maps: static; loaded at game creation. Config: Base → difficulty → scenario; stored with game.
+**Game** → one WorldState, many Players/Minor Nations/Tribes, optional turnTimeMapping. **Player** → Stockpile, WorkerPool. **WorldState** → region blobs (provinces, units). **Province** → owner, tiles, neighbours. **Unit** → owner; canonical location `locationProvinceId` (tile-first when `tileKey` set); JSON `provinceId` is that canonical value. **Orders** → keyed by Great Power. Topology/tile maps: static; loaded at game creation. Config: Base → difficulty → scenario; stored with game.
 
 ---
 

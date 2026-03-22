@@ -848,7 +848,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
           id: unitId,
           type: unitType,
           ownerId: player.id,
-          provinceId: capitalProvinceId,
+          locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
           tileKey: firstTileInCapital,
         );
@@ -909,7 +909,7 @@ Game _addStartingMilitaryAndNaval({
           id: unitId,
           type: regimentTypeId,
           ownerId: player.id,
-          provinceId: capitalProvinceId,
+          locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
         );
         if (regionId == kRegionOldWorld) {

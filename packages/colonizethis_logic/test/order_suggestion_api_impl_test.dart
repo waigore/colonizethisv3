@@ -35,7 +35,7 @@ void main() {
                 id: 'u1',
                 type: 'inf',
                 ownerId: 'gp1',
-                provinceId: '$ow|p1',
+                locationProvinceId: '$ow|p1',
               ),
             ],
           ),

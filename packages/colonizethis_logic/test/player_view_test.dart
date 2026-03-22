@@ -30,13 +30,13 @@ void main() {
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       final u2 = Unit(
         id: 'u2',
         type: 'inf',
         ownerId: 'gp2',
-        provinceId: '$ow|p2',
+        locationProvinceId: '$ow|p2',
       );
 
       final world = WorldState(
@@ -185,7 +185,7 @@ void main() {
                 id: 'spy1',
                 type: 'Spy',
                 ownerId: 'gp1',
-                provinceId: '$ow|p2',
+                locationProvinceId: '$ow|p2',
                 tileKey: '$ow|p2|0|0',
               ),
             ],
@@ -220,7 +220,7 @@ void main() {
                 id: 'spy1',
                 type: 'Spy',
                 ownerId: 'gp1',
-                provinceId: '$ow|p2',
+                locationProvinceId: '$ow|p2',
                 tileKey: tileKeyP2,
               ),
             ],

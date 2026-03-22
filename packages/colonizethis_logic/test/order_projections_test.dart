@@ -62,7 +62,7 @@ void main() {
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -106,7 +106,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -141,12 +141,12 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
             provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            units: const [],
+            units: [],
           ),
           newWorld: RegionData(
             provinces: [Province(id: '$nw|N1', regionId: nw, ownerId: 'p1')],
             units: [
-              Unit(id: 'u1', type: 'Regiment', ownerId: 'p1', provinceId: '$nw|N1'),
+              Unit(id: 'u1', type: 'Regiment', ownerId: 'p1', locationProvinceId: '$nw|N1'),
             ],
           ),
         ),
@@ -178,7 +178,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -219,7 +219,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -260,7 +260,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -304,7 +304,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),

@@ -130,11 +130,11 @@ void main() {
       });
 
       test('maps unit tileKey to symbol when units exist', () {
-        const unit = Unit(
+        final unit = Unit(
           id: 'u1',
           ownerId: 'gp1',
           type: 'Builder',
-          provinceId: 'oldWorld|p1',
+          locationProvinceId: 'oldWorld|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
         final oldWorldWithUnit = RegionData(

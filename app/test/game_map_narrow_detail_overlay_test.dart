@@ -1,5 +1,10 @@
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+    show
+        demoGameForOverlay,
+        demoHumanPlayerViewForOverlay,
+        demoRegionForOverlay,
+        sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -35,6 +40,7 @@ void main() {
                 game: game,
                 region: region,
                 humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
               ),
             ),
           ),
@@ -86,6 +92,7 @@ void main() {
                 game: game,
                 region: region,
                 humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
               ),
             ),
           ),
