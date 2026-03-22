@@ -39,7 +39,7 @@ void main() {
           turnNumber: 5,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       expect(received.first, isA<AppCombatResultEvent>());
@@ -66,7 +66,7 @@ void main() {
           turnNumber: 5,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, isEmpty);
     });
@@ -84,7 +84,7 @@ void main() {
           turnNumber: 7,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       expect(received.first.provinceId, 'newWorld|3');
@@ -106,7 +106,7 @@ void main() {
           turnNumber: 3,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       final evt = received.first;
@@ -128,7 +128,7 @@ void main() {
           turnNumber: 10,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       final evt = received.first;
@@ -149,7 +149,7 @@ void main() {
           turnNumber: 50,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       final evt = received.first;
@@ -170,7 +170,7 @@ void main() {
           reasonCode: 'insufficient_treasury',
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
       final evt = received.first;
@@ -204,7 +204,7 @@ void main() {
           turnNumber: 1,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(3));
       expect(received[0], isA<AppResearchCompleteEvent>());
@@ -212,7 +212,7 @@ void main() {
       expect(received[2], isA<AppCombatResultEvent>());
     });
 
-    test('dispose after stop is safe', () async {
+    test('dispose after stop is safe', () {
       bridge.start();
       bridge.stop();
       expect(() => bridge.dispose(), returnsNormally);
@@ -233,7 +233,7 @@ void main() {
           turnNumber: 5,
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(received, hasLength(1));
     });

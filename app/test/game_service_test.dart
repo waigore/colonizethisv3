@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -51,9 +53,12 @@ void main() {
 
   late Box<dynamic> box;
   late GameSaveAdapter adapter;
+  Directory? hiveDir;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_service');
+    final dir = await Directory.systemTemp.createTemp('ct_game_service_test_');
+    hiveDir = dir;
+    Hive.init(dir.path);
     box = await Hive.openBox<dynamic>(HiveBoxNames.games);
     adapter = GameSaveAdapter();
   });
@@ -61,6 +66,14 @@ void main() {
   tearDownAll(() async {
     await box.clear();
     await box.close();
+    final dir = hiveDir;
+    if (dir != null && dir.existsSync()) {
+      try {
+        await dir.delete(recursive: true);
+      } on Object {
+        // Best-effort: temp cleanup should not fail the suite on locked files.
+      }
+    }
   });
 
   group('GameService event emission', () {
@@ -85,8 +98,7 @@ void main() {
           ),
         );
 
-        await Future.delayed(Duration.zero);
-
+        await pumpEventQueue();
         expect(received, hasLength(1));
       },
     );
@@ -117,8 +129,7 @@ void main() {
 
         final result = service.runTurnResolution(game);
 
-        await Future.delayed(Duration.zero);
-
+        await pumpEventQueue();
         expect(result, isA<TurnResolutionPendingOvertures>());
         expect(received, hasLength(1));
         final event = received.first as OvertureRequiredEvent;
@@ -131,7 +142,7 @@ void main() {
 
     test(
       'runTurnResolution with null eventBus does not throw when result is pending',
-      () async {
+      () {
         final service = _PendingOverturesGameService(box, adapter);
         service.eventBus = null;
 

@@ -152,7 +152,9 @@ jobs:
             (
               cd app
               flutter gen-l10n
-              flutter test --coverage --reporter=compact
+              # -j 1: one flutter_tester process at a time (avoids OOM / segfaults on ubuntu runners).
+              # --no-track-widget-creation: less inspector overhead; fewer CI crashes in heavy suites.
+              flutter test --coverage --reporter=compact -j 1 --no-track-widget-creation
             )
           fi
 

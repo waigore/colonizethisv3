@@ -23,7 +23,7 @@ void main() {
       final events = <AppEvent>[];
       bus.on<AppEvent>().listen(events.add);
       bus.emit(const OpenDialogEvent('test'));
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
       expect(events, hasLength(1));
       expect(events.first, isA<OpenDialogEvent>());
     });
@@ -37,7 +37,7 @@ void main() {
       bus.emit(const OpenDialogEvent('a'));
       bus.emit(const NavigateToRouteEvent('/home'));
       bus.emit(const OpenDialogEvent('b'));
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(dialogEvents, hasLength(2));
       expect(navEvents, hasLength(1));
@@ -51,13 +51,13 @@ void main() {
       bus.on<AppEvent>().listen(listener2.add);
 
       bus.emit(const PopNavigationEvent());
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(listener1, hasLength(1));
       expect(listener2, hasLength(1));
     });
 
-    test('dispose prevents further events', () async {
+    test('dispose prevents further events', () {
       final events = <AppEvent>[];
       bus.on<AppEvent>().listen((e) => events.add(e));
       bus.dispose();
@@ -73,7 +73,7 @@ void main() {
 
       bus.emit(const OpenDialogEvent('test'));
       bus.emit(const ShowSnackBarEvent(message: 'hello'));
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(uiActions, hasLength(1));
       expect(uiSystem, hasLength(1));
@@ -84,7 +84,7 @@ void main() {
       bus.dialogueEvents.listen(events.add);
 
       bus.emit(const OpenDialogEvent('test'));
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
       expect(events, isEmpty);
 
       bus.emit(
@@ -95,7 +95,7 @@ void main() {
           era: 'early',
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
       expect(events, hasLength(1));
     });
 
@@ -110,7 +110,7 @@ void main() {
           toMood: 'angry',
         ),
       );
-      await Future.delayed(Duration.zero);
+      await pumpEventQueue();
       expect(events, hasLength(1));
     });
   });
