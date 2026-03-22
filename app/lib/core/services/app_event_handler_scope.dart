@@ -28,6 +28,45 @@ const String newGameLeaderSelectionDialogId = 'new_game_leader_selection';
 
 final _log = Logger();
 
+/// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
+/// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
+Orders _mergeTrainCivilianOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+}) {
+  Player? player;
+  for (final p in game.players) {
+    if (p.id == humanPlayerId) {
+      player = p;
+      break;
+    }
+  }
+  final capital = player?.capitalProvinceId;
+  final civilianUnitIds = CivilianEconomyCatalog.byId.keys.toSet();
+  final existingList =
+      current.buildUnitOrdersByPlayerId[humanPlayerId] ?? const <BuildUnitOrder>[];
+  final kept = <BuildUnitOrder>[];
+  for (final order in existingList) {
+    final isDialogManaged =
+        !order.isMilitary &&
+        civilianUnitIds.contains(order.unitType) &&
+        capital != null &&
+        order.spawnProvinceId == capital;
+    if (isDialogManaged) {
+      continue;
+    }
+    kept.add(order);
+  }
+  return current.copyWith(
+    buildUnitOrdersByPlayerId: {
+      ...current.buildUnitOrdersByPlayerId,
+      humanPlayerId: [...kept, ...newFromDialog],
+    },
+  );
+}
+
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.
 /// SPEC/program/app-event-bus.md (handler); SPEC/program/app-ui-wiring.md (dialog registration).
 class AppEventHandlerScope extends ConsumerStatefulWidget {
@@ -109,12 +148,12 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             currentOrders: orders,
             onOrdersChanged: (newOrders) {
               final o = container.read(currentOrdersProvider);
-              final existing = o.buildUnitOrdersByPlayerId[humanPlayerId] ?? [];
-              container.read(currentOrdersProvider.notifier).state = o.copyWith(
-                buildUnitOrdersByPlayerId: {
-                  ...o.buildUnitOrdersByPlayerId,
-                  humanPlayerId: [...existing, ...newOrders],
-                },
+              container.read(currentOrdersProvider.notifier).state =
+                  _mergeTrainCivilianOrdersForPlayer(
+                current: o,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                newFromDialog: newOrders,
               );
             },
           );

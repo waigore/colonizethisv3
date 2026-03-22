@@ -125,6 +125,44 @@ void main() {
       expect(minusButtons, findsNWidgets(CivilianEconomyCatalog.all.length));
     });
 
+    testWidgets(
+      'AC: Steppers reflect existing train-at-capital civilian build orders',
+      (WidgetTester tester) async {
+        final richGame = gameWithResources(treasury: 10000, paper: 100);
+        final player = getPlayer(humanPlayerId);
+        final capital =
+            player.capitalProvinceId ?? player.capitalTile?.provinceId;
+        expect(capital, isNotNull, reason: 'debug game needs capital');
+        final cap = capital!;
+        final orders = Orders(
+          buildUnitOrdersByPlayerId: {
+            humanPlayerId: [
+              BuildUnitOrder(
+                unitType: 'Builder',
+                isMilitary: false,
+                spawnProvinceId: cap,
+              ),
+              BuildUnitOrder(
+                unitType: 'Builder',
+                isMilitary: false,
+                spawnProvinceId: cap,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildDialog(
+            game: richGame,
+            humanPlayerId: humanPlayerId,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('2'), findsWidgets);
+      },
+    );
+
     testWidgets('AC: Tapping + increments the count', (
       WidgetTester tester,
     ) async {
