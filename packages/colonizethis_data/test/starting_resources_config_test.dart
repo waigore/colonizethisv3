@@ -7,6 +7,10 @@ void main() {
       expect(StartingResourcesConfig.defaultConfig.initialImprovementSlots, 5);
     });
 
+    test('default initialPaper is 2 per ruleset-config', () {
+      expect(StartingResourcesConfig.defaultConfig.initialPaper, 2);
+    });
+
     test('default startingCivilianUnits has Explorer, Builder, Engineer', () {
       final units = StartingResourcesConfig.defaultConfig.startingCivilianUnits;
       expect(units['Explorer'], 2);

@@ -1,5 +1,5 @@
 // App events: typed event bus for UI↔UI, UI↔game logic, game logic→UI.
-// SPEC/program/game-events.md, SPEC/program/app-event-bus.md (pending).
+// Coupling / wiring rules: SPEC/program/app-ui-wiring.md. Bus architecture: SPEC/program/app-event-bus.md.
 //
 // Three event domains:
 //  1. GameEvent    — game occurrences from colonizethis_logic (consumed, not defined here)
@@ -9,7 +9,7 @@
 // Note: GameEvent lives in colonizethis_logic to avoid circular deps.
 // DialogueEvent and PortraitMoodEvent live here in colonizethis_models.
 //
-// Panel requests: prefer typed subclasses below (SPEC/program/app-event-bus.md).
+// Panel requests: prefer typed subclasses below (SPEC/program/app-ui-wiring.md).
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'game.dart';
@@ -86,20 +86,17 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
   final void Function()? onResume;
 }
 
-/// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod;
-/// callbacks bridge map/shell behavior (locate, work orders, target pick).
+/// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod.
+/// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
+/// closures on this event — see SPEC/program/app-event-bus.md.
 class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   OpenCivilianUnitsPanelEvent({
     required this.onLocateUnit,
-    required this.onRemoveWorkOrder,
-    required this.onCancelUnitWork,
     required this.onStartWorkTargetSelection,
     this.onPanelDismissed,
   });
 
   final void Function(Unit unit) onLocateUnit;
-  final void Function(String playerId, int index) onRemoveWorkOrder;
-  final void Function(String unitId) onCancelUnitWork;
   final void Function(Unit unit, String workTarget) onStartWorkTargetSelection;
 
   /// Invoked when the bottom sheet route is popped (any reason).
@@ -117,16 +114,14 @@ class OpenMilitaryUnitsPanelEvent extends UIActionEvent {
   final void Function()? onPanelDismissed;
 }
 
-/// Naval units bottom sheet.
+/// Naval units bottom sheet. Fleet mutations emit [NavalFleetsUpdatedEvent] from the panel.
 class OpenNavalUnitsPanelEvent extends UIActionEvent {
   OpenNavalUnitsPanelEvent({
     required this.onLocateFleet,
-    required this.onFleetsChanged,
     this.onPanelDismissed,
   });
 
   final void Function(String tileKey, String regionId) onLocateFleet;
-  final void Function(Game game) onFleetsChanged;
   final void Function()? onPanelDismissed;
 }
 
@@ -147,6 +142,57 @@ class StartTargetSelectionEvent extends UIActionEvent {
 /// Cancel any active target-selection mode.
 class CancelTargetSelectionEvent extends UIActionEvent {
   const CancelTargetSelectionEvent();
+}
+
+/// Emitted by GrantOrSubsidyDialog when user submits the amount form.
+/// Carries the data needed to show a final confirmation dialog.
+class GrantOrSubsidySubmittedEvent extends UIActionEvent {
+  const GrantOrSubsidySubmittedEvent({
+    required this.targetFactionId,
+    required this.amount,
+    required this.isSubsidy,
+  });
+  final String targetFactionId;
+  final int amount;
+  final bool isSubsidy;
+}
+
+// ---------------------------------------------------------------------------
+// SessionCommandEvent — applied by long-lived shell listeners, not AppEventHandler.
+// ---------------------------------------------------------------------------
+
+/// Session-scoped commands: listeners use a stable [ProviderScope] ref (e.g.
+/// [AppEventHandlerScope]). **Do not** capture [WidgetRef] from widgets that
+/// unmount when opening panels (side menus, sheets). SPEC/program/app-event-bus.md.
+sealed class SessionCommandEvent extends AppEvent {
+  const SessionCommandEvent();
+}
+
+/// Remove pending civilian work order at [index] for [playerId] in current-turn
+/// draft. Shell listener applies the canonical mutation from colonizethis_logic.
+class RemovePendingWorkOrderRequestedEvent extends SessionCommandEvent {
+  RemovePendingWorkOrderRequestedEvent({
+    required this.playerId,
+    required this.index,
+  });
+
+  final String playerId;
+  final int index;
+}
+
+/// Clear in-progress civilian work for [unitId] (no refund). Shell listener
+/// applies the canonical mutation from colonizethis_logic and persists game.
+class CancelInProgressCivilianWorkRequestedEvent extends SessionCommandEvent {
+  CancelInProgressCivilianWorkRequestedEvent({required this.unitId});
+
+  final String unitId;
+}
+
+/// Naval panel produced an updated [game] (split/combine). Handler updates session game.
+class NavalFleetsUpdatedEvent extends SessionCommandEvent {
+  NavalFleetsUpdatedEvent({required this.game});
+
+  final Game game;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,4 +274,91 @@ class SaveGameCompleteEvent extends GameToUIEvent {
 class NewGameCreatedEvent extends GameToUIEvent {
   const NewGameCreatedEvent({required this.gameId});
   final String gameId;
+}
+
+// ---------------------------------------------------------------------------
+// App-prefixed GameEvent mirrors — forwarded from logic layer via GameEventBridge.
+// SPEC/program/game-event-bridge.md
+// ---------------------------------------------------------------------------
+
+/// Combat resolved in a province. Mirrors colonizethis_logic CombatResultEvent.
+class AppCombatResultEvent extends GameToUIEvent {
+  const AppCombatResultEvent({
+    required this.provinceId,
+    required this.attackerId,
+    required this.defenderId,
+    required this.winnerId,
+    required this.turnNumber,
+    this.casualties = const {},
+  });
+  final String provinceId;
+  final String attackerId;
+  final String defenderId;
+  final String winnerId;
+  final int turnNumber;
+  final Map<String, int> casualties;
+}
+
+/// Province ownership changed. Mirrors colonizethis_logic ProvinceCapturedEvent.
+class AppProvinceCapturedEvent extends GameToUIEvent {
+  const AppProvinceCapturedEvent({
+    required this.provinceId,
+    required this.previousOwnerId,
+    required this.newOwnerId,
+    required this.turnNumber,
+  });
+  final String provinceId;
+  final String? previousOwnerId;
+  final String newOwnerId;
+  final int turnNumber;
+}
+
+/// Diplomatic relationship changed. Mirrors colonizethis_logic DiplomacyChangeEvent.
+class AppDiplomacyChangeEvent extends GameToUIEvent {
+  const AppDiplomacyChangeEvent({
+    required this.actorId,
+    required this.targetId,
+    required this.changeType,
+    required this.turnNumber,
+  });
+  final String actorId;
+  final String targetId;
+  final String changeType;
+  final int turnNumber;
+}
+
+/// Technology research completed. Mirrors colonizethis_logic ResearchCompleteEvent.
+class AppResearchCompleteEvent extends GameToUIEvent {
+  const AppResearchCompleteEvent({
+    required this.playerId,
+    required this.techId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String techId;
+  final int turnNumber;
+}
+
+/// Victory condition set. Mirrors colonizethis_logic VictorySetEvent.
+class AppVictorySetEvent extends GameToUIEvent {
+  const AppVictorySetEvent({
+    required this.winnerPlayerId,
+    required this.victoryType,
+    required this.turnNumber,
+  });
+  final String winnerPlayerId;
+  final String victoryType;
+  final int turnNumber;
+}
+
+/// Order rejected during validation. Mirrors colonizethis_logic OrderRejectedEvent.
+class AppOrderRejectedEvent extends GameToUIEvent {
+  const AppOrderRejectedEvent({
+    required this.playerId,
+    required this.orderSummary,
+    required this.reasonCode,
+  });
+  final String playerId;
+  final String orderSummary;
+  final String reasonCode;
 }

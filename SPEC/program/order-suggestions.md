@@ -28,7 +28,7 @@ For every suggested order `o`, appending it to the current list and validating v
 ## Rules
 
 - **Province / tile identity:** Province ids and tile keys in suggested orders (destination province, targetTileKey, spawn province, fleet/sea zone ids) use the **prefixed** form and resolution rules per [world-model-identity.md](../game/world-model-identity.md) (same as [orders.md](orders.md)).
-- **Work orders (`suggestWorkOrders`):** AI suggestions default to the unit's current province for simplicity. This is an AI heuristic, not a validation constraint.
+- **Work orders (`suggestWorkOrders`):** For civilian **workers** (Builder, Engineer, Rail Builder), candidate work targets use the same tile scope as validation: any **player-controlled** tile (owned province or `purchasedTilesByTileKey`) that passes visibility and the order engine, not only tiles in the unit’s current province (see [civilian-units.md](../game/civilian-units.md): civilians may act on a tile other than their current tile). Explorers, Spies, and Merchants keep their existing province- or rules-specific enumeration. **Performance:** `suggestWorkOrders` may cache, per invocation, the pre-filtered + visibility-sorted tile list keyed by `workTarget` so each distinct work target is computed once per call; per-unit acceptance still runs the order engine over that list until the first valid tile is found.
 - **Work order tile selection (`getValidWorkOrderTileKeysWithVisibility`):** For UI tile selection, candidates include tiles in all owned provinces and purchased tiles per the work-target-specific rules above.
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). Undiscovered factions are **never** valid diplomatic targets for order suggestions.
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
@@ -45,6 +45,14 @@ For every suggested order `o`, appending it to the current list and validating v
 - Minimal AIPlanner (see [ai-planner.md](ai-planner.md))
 - Sim-game default AI (see [sim-game-default-ai.md](sim-game-default-ai.md))
 - Full AI (see [ai-systems-impl.md](ai-systems-impl.md))
+- **Flutter app (`colonizethis_app`):** Riverpod providers (e.g. `availableWorkTargetsProvider`, optional `devExclusiveReservedWorkTileKeysProvider`) **delegate** to `colonizethis_logic` only. They **must not** reimplement Builder/Engineer/Merchant per-tile exclusivity or reservation rules. Reservations combine in-map `currentWork` and pending dev-exclusive work orders per [orders.md](orders.md) § WorkOrder per-tile exclusivity.
+
+### Dev-exclusive tile reservations (logic package)
+
+- **Given** a `Game`, current-turn `Orders`, and a Great Power `playerId`, **the system** builds the set of `targetTileKey` values reserved for that player: tiles with in-progress dev work (Builder/Engineer/Merchant `currentWork`) plus `targetTileKey` of each pending work order whose target is dev-exclusive (`build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `purchase_land`).
+- **When** `suggestWorkOrders` evaluates a dev-exclusive target for a unit, **the system** skips candidate tiles in that reserved set (full set, including other units’ pending orders) before order-engine validation.
+- **When** `getValidWorkOrderTileKeys` / `getValidWorkOrderTileKeysWithVisibility` lists tiles for **one** unit’s tile picker, **the system** may omit that unit’s **own** pending orders from the reserved set so tiles already selected in the draft order list remain visible for that unit only; other units still treat those tiles as reserved.
+- **Then** a second Builder of the same player does not receive an available `build_improvement` suggestion on a tile already targeted by the first Builder’s pending order until that order is removed.
 
 ---
 

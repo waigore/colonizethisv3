@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'route_paths.dart';
 import '../features/debug_log/debug_log_viewer_screen.dart';
 import '../features/game/flame/game_screen.dart';
+import '../features/game/widgets/diplomacy_detail_screen.dart';
+import '../features/game/widgets/diplomacy_panel.dart' show FactionKind;
 import '../features/game/widgets/diplomacy_screen.dart';
 import '../features/game/widgets/production_screen.dart';
 import '../features/game/widgets/technology_screen.dart';
@@ -12,33 +15,35 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 class Routes {
   Routes._();
 
-  static const String shell = '/';
-  static const String game = '/game';
-  static const String debugLog = '/debug-log';
-  static const String production = '/game/production';
-  static const String diplomacy = '/game/diplomacy';
-  static const String technology = '/game/technology';
+  static const String shell = RoutePaths.shell;
+  static const String game = RoutePaths.game;
+  static const String debugLog = RoutePaths.debugLog;
+  static const String production = RoutePaths.production;
+  static const String diplomacy = RoutePaths.diplomacy;
+  static const String diplomacyDetail = RoutePaths.diplomacyDetail;
+  static const String technology = RoutePaths.technology;
 
   static Route<dynamic>? generate(RouteSettings settings) {
     switch (settings.name) {
-      case shell:
+      case RoutePaths.shell:
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const ShellScreen(),
         );
-      case game:
+      case RoutePaths.game:
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const GameScreen(),
         );
-      case debugLog:
+      case RoutePaths.debugLog:
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const DebugLogViewerScreen(),
         );
-      case production:
-      case diplomacy:
-      case technology:
+      case RoutePaths.production:
+      case RoutePaths.diplomacy:
+      case RoutePaths.diplomacyDetail:
+      case RoutePaths.technology:
         return _buildGameRoute(settings);
       default:
         return null;
@@ -53,13 +58,13 @@ class Routes {
     final humanPlayerId = args['humanPlayerId'] as String;
 
     switch (settings.name) {
-      case production:
+      case RoutePaths.production:
         final player = game.players.firstWhere((p) => p.id == humanPlayerId);
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => ProductionScreen(game: game, player: player),
         );
-      case diplomacy:
+      case RoutePaths.diplomacy:
         final topology = args['topology'] as MapTopology;
         final currentOrders =
             args['currentOrders'] as Orders? ?? const Orders();
@@ -73,14 +78,23 @@ class Routes {
             onOrdersChanged: (newOrders) {},
           ),
         );
-      case technology:
+      case RoutePaths.diplomacyDetail:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => DiplomacyDetailScreen(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            factionId: args['factionId'] as String,
+            factionDisplayName: args['factionDisplayName'] as String,
+            kind: args['kind'] as FactionKind,
+            relation: args['relation'] as DiplomacyRelation?,
+          ),
+        );
+      case RoutePaths.technology:
         final player = game.players.firstWhere((p) => p.id == humanPlayerId);
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => TechnologyScreen(
-            game: game,
-            player: player,
-          ),
+          builder: (_) => TechnologyScreen(game: game, player: player),
         );
       default:
         return null;

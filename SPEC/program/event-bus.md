@@ -92,6 +92,8 @@ TurnResolutionResult resolveTurnForGame({
 
 Internal emission calls `eventBus?.publish(event)` instead of `onGameEvent?.call(event)`.
 
+**Downstream bridge:** `SPEC/program/game-event-bridge.md` describes how app-layer wires `GameEventBus` to `AppEventBus` so Flutter UI can subscribe to game events.
+
 ### Backward Compatibility
 
 For existing callers that use callbacks, provide a **wrapper**:

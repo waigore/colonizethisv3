@@ -22,7 +22,6 @@ class GameSideMenu extends ConsumerWidget {
     required this.onLocateCivilianUnit,
     required this.onLocateMilitaryTile,
     required this.onLocateNavalFleet,
-    required this.onCancelUnitWork,
     required this.onStartWorkTargetSelection,
     super.key,
   });
@@ -36,7 +35,6 @@ class GameSideMenu extends ConsumerWidget {
   final void Function(ct_models.Unit unit) onLocateCivilianUnit;
   final void Function(String tileKey, String regionId) onLocateMilitaryTile;
   final void Function(String tileKey, String regionId) onLocateNavalFleet;
-  final void Function(String unitId) onCancelUnitWork;
   final void Function(ct_models.Unit unit, String workTarget)
   onStartWorkTargetSelection;
 
@@ -94,19 +92,6 @@ class GameSideMenu extends ConsumerWidget {
           bus.emit(
             ct_models.OpenCivilianUnitsPanelEvent(
               onLocateUnit: onLocateCivilianUnit,
-              onRemoveWorkOrder: (playerId, index) {
-                final o = ref.read(currentOrdersProvider);
-                final list = List<ct_models.WorkOrder>.from(
-                  o.workOrdersByPlayerId[playerId] ?? [],
-                )..removeAt(index);
-                ref.read(currentOrdersProvider.notifier).state = o.copyWith(
-                  workOrdersByPlayerId: {
-                    ...o.workOrdersByPlayerId,
-                    playerId: list,
-                  },
-                );
-              },
-              onCancelUnitWork: onCancelUnitWork,
               onStartWorkTargetSelection: onStartWorkTargetSelection,
               onPanelDismissed: onPanelDismissed,
             ),
@@ -136,9 +121,6 @@ class GameSideMenu extends ConsumerWidget {
           bus.emit(
             ct_models.OpenNavalUnitsPanelEvent(
               onLocateFleet: onLocateNavalFleet,
-              onFleetsChanged: (newGame) {
-                ref.read(currentGameProvider.notifier).state = newGame;
-              },
               onPanelDismissed: onPanelDismissed,
             ),
           );

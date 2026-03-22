@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
+import 'quick_battle_emplaced_builder.dart';
 
 /// Builds QuickBattleInput from Game and BattleContext. SPEC/program/quick-battle-resolution.
 /// Uses simple auto-deploy: all units in CENTER FRONT.
@@ -23,17 +24,16 @@ QuickBattleInput buildQuickBattleInput(
     QuickBattleGroup(
       lane: QuickBattleLane.center,
       line: QuickBattleLine.front,
-      unitIds:
-          ctx.defenderUnitIds.where((id) => unitsById.containsKey(id)).toList(),
+      unitIds: ctx.defenderUnitIds
+          .where((id) => unitsById.containsKey(id))
+          .toList(),
       cohesion: quickBattleMaxCohesion,
     ),
   ];
 
   final allAttackerIds = <String>[];
   for (final att in ctx.attackers) {
-    allAttackerIds.addAll(
-      att.unitIds.where((id) => unitsById.containsKey(id)),
-    );
+    allAttackerIds.addAll(att.unitIds.where((id) => unitsById.containsKey(id)));
   }
   final attGroups = [
     QuickBattleGroup(
@@ -44,9 +44,12 @@ QuickBattleInput buildQuickBattleInput(
     ),
   ];
 
-  final attackerLeaderMult =
-      leaderBonusForFaction(game, ctx.attackers.first.factionId);
+  final attackerLeaderMult = leaderBonusForFaction(
+    game,
+    ctx.attackers.first.factionId,
+  );
   final defenderLeaderMult = leaderBonusForFaction(game, ctx.defenderFactionId);
+  final emplacedGuns = buildQuickBattleEmplacedGuns(game, ctx);
 
   return QuickBattleInput(
     attackerFactionId: ctx.attackers.first.factionId,
@@ -62,6 +65,7 @@ QuickBattleInput buildQuickBattleInput(
       laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
     ),
     fortLevel: ctx.fortLevel,
+    emplacedGuns: emplacedGuns,
     provinceTerrain: ctx.terrain,
     seed: seed,
     maxRounds: quickBattleMaxRounds,

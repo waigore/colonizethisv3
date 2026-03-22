@@ -355,12 +355,7 @@ double medalMultiplierFor(int medals) {
 }
 
 /// Difficulty level for combat modifiers.
-enum DifficultyLevel {
-  introductory,
-  normal,
-  hard,
-  impossible,
-}
+enum DifficultyLevel { introductory, normal, hard, impossible }
 
 /// Terrain modifier: multiplier applied to attacker or defender strength.
 /// Key: terrain id (plains, forest, hills, mountain, swamp, desert).
@@ -384,6 +379,39 @@ const List<double> fortEmplacedStrength = [0.0, 3.0, 4.0, 5.0];
 /// Number of emplaced guns per fort level.
 const List<int> fortGunCount = [0, 1, 2, 3];
 
+/// Max HP per virtual emplaced gun by fort level (index 0 unused). SPEC/game/siege-mechanics.md, quick-battle-resolution.md.
+const List<int> emplacedVirtualGunMaxHpByFortLevel = [0, 6, 8, 10];
+
+/// Tech ids for emplaced quality (Royal → Heavy → Siege). SPEC/game/tech-tree-military.md.
+const String kTechHeavyEmplacedArtillery = 'heavy_emplaced_artillery';
+const String kTechEmplacedSiegeGuns = 'emplaced_siege_guns';
+
+/// Strength multiplier on virtual emplaced guns from emplaced-quality tech tier.
+double emplacedVirtualGunTierMultiplier(Map<String, bool>? techUnlocked) {
+  final m = techUnlocked;
+  if (m != null && m[kTechEmplacedSiegeGuns] == true) return 1.30;
+  if (m != null && m[kTechHeavyEmplacedArtillery] == true) return 1.15;
+  return 1.0;
+}
+
+/// RNG of same-era heavy artillery regiment (baseline for +1 emplaced RNG). [militaryLevel] is 1–4.
+int heavyArtilleryBaselineRngForMilitaryLevel(int militaryLevel) {
+  final era = militaryLevel.clamp(1, 4);
+  for (final r in regimentCatalog) {
+    if (r.category == RegimentCategory.heavyArtillery && r.era == era) {
+      return r.rng;
+    }
+  }
+  return 10;
+}
+
+/// Resolved emplaced gun RNG: baseline + 1 per GDD.
+int emplacedVirtualGunRngForMilitaryLevel(int militaryLevel) =>
+    heavyArtilleryBaselineRngForMilitaryLevel(militaryLevel) + 1;
+
+/// Per-point RNG above heavy-artillery baseline scales Quick Battle scalar strength (stub until FPN/FPM/RNG wired).
+const double kEmplacedRngStrengthWeight = 0.04;
+
 /// Wall HP per fort level (0 = no wall). Damage to defenders is applied after wall soaks this much.
 /// SPEC/game/siege-mechanics.md (Wall Strength: Light / Medium / Heavy).
 const List<double> wallHpByFortLevel = [0.0, 10.0, 20.0, 30.0];
@@ -406,5 +434,6 @@ const double initiativeGeneralMedalWeight = 10.0;
 /// Base regiments per side; +1 per general medal (added in resolver).
 const int deploymentLimitBase = 10;
 const int deploymentLimitWithNationalism = 12;
+
 /// Tech id that raises base deployment to [deploymentLimitWithNationalism]. SPEC/game/tech-tree-diplomacy-civilian.md.
 const String kTechIdNationalism = 'nationalism';
