@@ -853,6 +853,7 @@ class _CivilianPanelWithMapStoryState
         unitId: _workTargetSelection!.unit.id,
         workTarget: _workTargetSelection!.workTarget,
         currentOrders: _orders,
+        tileMapByRegion: result.tileMapByRegion,
       );
     } else {
       valid = getValidWorkOrderTileKeys(
@@ -862,6 +863,7 @@ class _CivilianPanelWithMapStoryState
         _workTargetSelection!.unit.id,
         _workTargetSelection!.workTarget,
         _orders,
+        tileMapByRegion: result.tileMapByRegion,
       );
     }
 
