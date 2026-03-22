@@ -1,5 +1,5 @@
 // App event bus: typed, centralized stream for all app events.
-// SPEC/program/app-event-bus.md (pending).
+// SPEC/program/app-event-bus.md.
 //
 // Usage:
 //   // In your service/component:

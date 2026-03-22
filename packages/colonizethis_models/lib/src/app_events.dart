@@ -1,5 +1,5 @@
 // App events: typed event bus for UI↔UI, UI↔game logic, game logic→UI.
-// SPEC/program/game-events.md, SPEC/program/app-event-bus.md (pending).
+// Coupling / wiring rules: SPEC/program/app-ui-wiring.md. Bus architecture: SPEC/program/app-event-bus.md.
 //
 // Three event domains:
 //  1. GameEvent    — game occurrences from colonizethis_logic (consumed, not defined here)
@@ -9,7 +9,7 @@
 // Note: GameEvent lives in colonizethis_logic to avoid circular deps.
 // DialogueEvent and PortraitMoodEvent live here in colonizethis_models.
 //
-// Panel requests: prefer typed subclasses below (SPEC/program/app-event-bus.md).
+// Panel requests: prefer typed subclasses below (SPEC/program/app-ui-wiring.md).
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'game.dart';
@@ -274,4 +274,91 @@ class SaveGameCompleteEvent extends GameToUIEvent {
 class NewGameCreatedEvent extends GameToUIEvent {
   const NewGameCreatedEvent({required this.gameId});
   final String gameId;
+}
+
+// ---------------------------------------------------------------------------
+// App-prefixed GameEvent mirrors — forwarded from logic layer via GameEventBridge.
+// SPEC/program/game-event-bridge.md
+// ---------------------------------------------------------------------------
+
+/// Combat resolved in a province. Mirrors colonizethis_logic CombatResultEvent.
+class AppCombatResultEvent extends GameToUIEvent {
+  const AppCombatResultEvent({
+    required this.provinceId,
+    required this.attackerId,
+    required this.defenderId,
+    required this.winnerId,
+    required this.turnNumber,
+    this.casualties = const {},
+  });
+  final String provinceId;
+  final String attackerId;
+  final String defenderId;
+  final String winnerId;
+  final int turnNumber;
+  final Map<String, int> casualties;
+}
+
+/// Province ownership changed. Mirrors colonizethis_logic ProvinceCapturedEvent.
+class AppProvinceCapturedEvent extends GameToUIEvent {
+  const AppProvinceCapturedEvent({
+    required this.provinceId,
+    required this.previousOwnerId,
+    required this.newOwnerId,
+    required this.turnNumber,
+  });
+  final String provinceId;
+  final String? previousOwnerId;
+  final String newOwnerId;
+  final int turnNumber;
+}
+
+/// Diplomatic relationship changed. Mirrors colonizethis_logic DiplomacyChangeEvent.
+class AppDiplomacyChangeEvent extends GameToUIEvent {
+  const AppDiplomacyChangeEvent({
+    required this.actorId,
+    required this.targetId,
+    required this.changeType,
+    required this.turnNumber,
+  });
+  final String actorId;
+  final String targetId;
+  final String changeType;
+  final int turnNumber;
+}
+
+/// Technology research completed. Mirrors colonizethis_logic ResearchCompleteEvent.
+class AppResearchCompleteEvent extends GameToUIEvent {
+  const AppResearchCompleteEvent({
+    required this.playerId,
+    required this.techId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String techId;
+  final int turnNumber;
+}
+
+/// Victory condition set. Mirrors colonizethis_logic VictorySetEvent.
+class AppVictorySetEvent extends GameToUIEvent {
+  const AppVictorySetEvent({
+    required this.winnerPlayerId,
+    required this.victoryType,
+    required this.turnNumber,
+  });
+  final String winnerPlayerId;
+  final String victoryType;
+  final int turnNumber;
+}
+
+/// Order rejected during validation. Mirrors colonizethis_logic OrderRejectedEvent.
+class AppOrderRejectedEvent extends GameToUIEvent {
+  const AppOrderRejectedEvent({
+    required this.playerId,
+    required this.orderSummary,
+    required this.reasonCode,
+  });
+  final String playerId;
+  final String orderSummary;
+  final String reasonCode;
 }

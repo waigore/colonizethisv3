@@ -9,6 +9,21 @@ import 'conflict_detection.dart';
 
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
 /// Deterministic for given seed; output feeds same casualty/flip pipeline as auto-resolve.
+///
+/// ## Siege — defender damage split (virtual emplaced guns)
+///
+/// When [QuickBattleInput.emplacedGuns] is non-empty, the aggregate emplaced lump
+/// (`fortGunCount × fortEmplacedStrength`) is **not** applied (no double-count).
+///
+/// Each round, after computing [defLossFraction] from the strength ratio, defender
+/// losses are split:
+/// - **Gun HP:** `gunHpLoss = min(sumAliveGunHp, max(0, round(defLossFraction * sumAliveGunHp)))`.
+///   Each point removes 1 HP from virtual guns in **round-robin** over guns sorted by [QuickBattleEmplacedGun.id].
+/// - **Regiments:** `regFrac = regimentCount > 0 ? (defLossFraction * regimentCount / (sumAliveGunHp + regimentCount)).clamp(0, 1) : 0`,
+///   then `_pickCasualties(defGroups, regFrac, rng)`.
+///
+/// Determinism: RNG order is unchanged for a given seed (CP rolls and shuffles happen in the same
+/// sequence as before; gun damage uses no extra randomness).
 
 /// Resolves a Quick Battle to completion. Uses [roundActions] if provided; otherwise
 /// applies default deterministic actions (Volley Fire each round) for AI/simulation.
@@ -21,13 +36,25 @@ QuickBattleResult resolveQuickBattle(
   var defGroups = _copyGroups(input.defenderDeployment.groups);
   final attCasualties = <String>[];
   final defCasualties = <String>[];
+  final useVirtualEmplaced = input.emplacedGuns.isNotEmpty;
+  final mutableGuns = useVirtualEmplaced
+      ? input.emplacedGuns
+            .map(
+              (g) => _MutableEmplacedGun(
+                id: g.id,
+                maxHp: g.maxHp,
+                hp: g.hp,
+                attackStrength: g.attackStrength,
+                defenseStrength: g.defenseStrength,
+              ),
+            )
+            .toList()
+      : <_MutableEmplacedGun>[];
 
   for (var round = 1; round <= input.maxRounds; round++) {
-    // Determine command points for this round (2–3 per side per spec).
     final attCp = _rollCommandPoints(rng);
     final defCp = _rollCommandPoints(rng);
 
-    // Default: Volley Fire for both sides if no actions provided.
     final rawAttActs = roundActions != null && round <= roundActions.length
         ? roundActions[round - 1].actions
         : const [QuickBattleAction.volleyFire];
@@ -38,29 +65,32 @@ QuickBattleResult resolveQuickBattle(
     final attActs = _limitActionsByCp(rawAttActs, attCp);
     final defActs = _limitActionsByCp(rawDefActs, defCp);
 
-    // Compute per-side action modifiers (offense/defense and casualty effects).
     final attMods = _aggregateActionModifiers(attActs);
     final defMods = _aggregateActionModifiers(defActs);
 
-    // Compute effective strengths per side from groups and terrain.
     var attStr =
         _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
-            attMods.offenseModifier *
-            input.attackerLeaderMultiplier;
+        attMods.offenseModifier *
+        input.attackerLeaderMultiplier;
     var defStr =
         _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
-            defMods.offenseModifier *
-            input.defenderLeaderMultiplier;
+        defMods.offenseModifier *
+        input.defenderLeaderMultiplier;
 
-    // Apply terrain and fort modifiers (same as combat_resolver).
     final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
     var effAtt = attStr * terrainMod.$1;
     var effDef = defStr * terrainMod.$2;
     if (input.fortLevel >= 1 && input.fortLevel <= 3) {
       final reduction = fortDamageReduction[input.fortLevel];
       effAtt *= (1.0 - reduction);
-      final emplaced = fortGunCount[input.fortLevel] * fortEmplacedStrength[input.fortLevel];
-      effDef += emplaced;
+      if (useVirtualEmplaced) {
+        effDef += _aliveGunStrengthSum(mutableGuns);
+      } else {
+        final emplaced =
+            fortGunCount[input.fortLevel] *
+            fortEmplacedStrength[input.fortLevel];
+        effDef += emplaced;
+      }
     }
 
     var effAttForRatio = effAtt;
@@ -69,7 +99,6 @@ QuickBattleResult resolveQuickBattle(
       effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
     }
 
-    // Round casualties using strength ratio (deterministic from seed).
     final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
     var attLossFraction = 0.4;
     var defLossFraction = 0.4;
@@ -81,78 +110,199 @@ QuickBattleResult resolveQuickBattle(
       defLossFraction = 0.15;
     }
 
-    // Apply action-based casualty modifiers.
     defLossFraction =
-        (defLossFraction * attMods.casualtiesDealtModifier * defMods.casualtiesTakenModifier)
+        (defLossFraction *
+                attMods.casualtiesDealtModifier *
+                defMods.casualtiesTakenModifier)
             .clamp(0.0, 1.0);
     attLossFraction =
-        (attLossFraction * defMods.casualtiesDealtModifier * attMods.casualtiesTakenModifier)
+        (attLossFraction *
+                defMods.casualtiesDealtModifier *
+                attMods.casualtiesTakenModifier)
             .clamp(0.0, 1.0);
 
-    final defLoss = _pickCasualties(defGroups, defLossFraction, rng);
+    final rCount = _totalUnitCount(defGroups);
+    final List<String> defLoss;
+    if (useVirtualEmplaced) {
+      final gPool = _sumAliveGunHp(mutableGuns);
+      final totalSlots = gPool + rCount;
+      final gunHpLoss = totalSlots > 0 && gPool > 0
+          ? min(gPool, max(0, (defLossFraction * gPool).round()))
+          : 0;
+      _applyRoundRobinGunHpDamage(mutableGuns, gunHpLoss);
+      final regFrac = rCount > 0 && totalSlots > 0
+          ? (defLossFraction * rCount / totalSlots).clamp(0.0, 1.0)
+          : 0.0;
+      defLoss = _pickCasualties(defGroups, regFrac, rng);
+    } else {
+      defLoss = _pickCasualties(defGroups, defLossFraction, rng);
+    }
     defCasualties.addAll(defLoss);
     defGroups = _removeCasualties(defGroups, defLoss);
     final attLoss = _pickCasualties(attGroups, attLossFraction, rng);
     attCasualties.addAll(attLoss);
     attGroups = _removeCasualties(attGroups, attLoss);
 
-    // Simple cohesion model: side taking heavier losses loses cohesion.
     if (defLoss.length > attLoss.length && defLoss.isNotEmpty) {
       defGroups = _degradeCohesion(defGroups);
     } else if (attLoss.length > defLoss.length && attLoss.isNotEmpty) {
       attGroups = _degradeCohesion(attGroups);
     }
 
-    // Early exit if one side eliminated.
     if (_totalUnitCount(defGroups) <= 0) {
-      return QuickBattleResult(
+      return _finishResult(
         winner: QuickBattleWinner.attacker,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
         provinceFlips: true,
+        input: input,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
       );
     }
     if (_totalUnitCount(attGroups) <= 0) {
-      return QuickBattleResult(
+      return _finishResult(
         winner: QuickBattleWinner.defender,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
         provinceFlips: false,
+        input: input,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
       );
     }
   }
 
-  // After max rounds: decide by remaining strength (leader multipliers already applied in-round).
-  final finalAttStr = _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
+  final finalAttStr =
+      _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
       input.attackerLeaderMultiplier;
-  final finalDefStr = _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
+  var finalDefStr =
+      _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
       input.defenderLeaderMultiplier;
+  if (useVirtualEmplaced) {
+    finalDefStr += _aliveGunStrengthSum(mutableGuns);
+  }
+
   if (finalAttStr > finalDefStr * 1.2) {
-    return QuickBattleResult(
+    return _finishResult(
       winner: QuickBattleWinner.attacker,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
       provinceFlips: true,
+      input: input,
+      mutableGuns: mutableGuns,
+      useVirtualEmplaced: useVirtualEmplaced,
     );
   }
   if (finalDefStr > finalAttStr * 1.2) {
-    return QuickBattleResult(
+    return _finishResult(
       winner: QuickBattleWinner.defender,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
       provinceFlips: false,
+      input: input,
+      mutableGuns: mutableGuns,
+      useVirtualEmplaced: useVirtualEmplaced,
     );
   }
-  return QuickBattleResult(
+  return _finishResult(
     winner: QuickBattleWinner.mutualExhaustion,
     attackerCasualties: attCasualties,
     defenderCasualties: defCasualties,
     provinceFlips: false,
+    input: input,
+    mutableGuns: mutableGuns,
+    useVirtualEmplaced: useVirtualEmplaced,
   );
 }
 
-List<QuickBattleGroup> _copyGroups(List<QuickBattleGroup> groups) =>
-    groups.map((g) => g.copyWith(unitIds: List<String>.from(g.unitIds))).toList();
+class _MutableEmplacedGun {
+  _MutableEmplacedGun({
+    required this.id,
+    required this.maxHp,
+    required this.hp,
+    required this.attackStrength,
+    required this.defenseStrength,
+  });
+
+  final String id;
+  final int maxHp;
+  int hp;
+  final double attackStrength;
+  final double defenseStrength;
+}
+
+QuickBattleResult _finishResult({
+  required QuickBattleWinner winner,
+  required List<String> attackerCasualties,
+  required List<String> defenderCasualties,
+  required bool provinceFlips,
+  required QuickBattleInput input,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  final outcomes = useVirtualEmplaced
+      ? mutableGuns
+            .map(
+              (g) => QuickBattleEmplacedGunOutcome(
+                id: g.id,
+                hp: g.hp.clamp(0, g.maxHp),
+                destroyed: g.hp <= 0,
+              ),
+            )
+            .toList()
+      : const <QuickBattleEmplacedGunOutcome>[];
+  final downgrade =
+      useVirtualEmplaced &&
+      input.emplacedGuns.isNotEmpty &&
+      mutableGuns.isNotEmpty &&
+      mutableGuns.every((g) => g.hp <= 0);
+  return QuickBattleResult(
+    winner: winner,
+    attackerCasualties: attackerCasualties,
+    defenderCasualties: defenderCasualties,
+    provinceFlips: provinceFlips,
+    fortDowngradeFromDestroyedEmplaced: downgrade,
+    emplacedGunOutcomes: outcomes,
+  );
+}
+
+double _aliveGunStrengthSum(List<_MutableEmplacedGun> guns) {
+  var s = 0.0;
+  for (final g in guns) {
+    if (g.hp > 0) {
+      s += g.attackStrength + g.defenseStrength;
+    }
+  }
+  return s;
+}
+
+int _sumAliveGunHp(List<_MutableEmplacedGun> guns) {
+  var s = 0;
+  for (final g in guns) {
+    if (g.hp > 0) s += g.hp;
+  }
+  return s;
+}
+
+void _applyRoundRobinGunHpDamage(List<_MutableEmplacedGun> guns, int amount) {
+  if (amount <= 0) return;
+  var remaining = amount;
+  var turn = 0;
+  while (remaining > 0) {
+    final alive = guns.where((g) => g.hp > 0).toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    if (alive.isEmpty) break;
+    final target = alive[turn % alive.length];
+    target.hp -= 1;
+    remaining--;
+    turn++;
+  }
+}
+
+List<QuickBattleGroup> _copyGroups(List<QuickBattleGroup> groups) => groups
+    .map((g) => g.copyWith(unitIds: List<String>.from(g.unitIds)))
+    .toList();
 
 int _rollCommandPoints(Random rng) {
   final span = quickBattleCpPerRoundMax - quickBattleCpPerRoundMin;
@@ -227,7 +377,6 @@ _ActionModifiers _aggregateActionModifiers(List<QuickBattleAction> actions) {
     }
   }
 
-  // Clamp to reasonable ranges.
   offense = offense.clamp(0.5, 1.5);
   dealt = dealt.clamp(0.5, 1.5);
   taken = taken.clamp(0.5, 1.5);
@@ -290,9 +439,11 @@ List<QuickBattleGroup> _removeCasualties(
 ) {
   final casualtySet = casualties.toSet();
   return groups
-      .map((g) => g.copyWith(
-            unitIds: g.unitIds.where((id) => !casualtySet.contains(id)).toList(),
-          ))
+      .map(
+        (g) => g.copyWith(
+          unitIds: g.unitIds.where((id) => !casualtySet.contains(id)).toList(),
+        ),
+      )
       .where((g) => g.unitIds.isNotEmpty)
       .toList();
 }
@@ -323,8 +474,9 @@ Game applyQuickBattleResultToGame(
     ...result.attackerCasualties,
     ...result.defenderCasualties,
   };
-  final survivingUnits =
-      region.units.where((u) => !casualtySet.contains(u.id)).toList();
+  final survivingUnits = region.units
+      .where((u) => !casualtySet.contains(u.id))
+      .toList();
 
   var provinces = region.provinces;
   if (result.provinceFlips &&
@@ -338,10 +490,16 @@ Game applyQuickBattleResultToGame(
     }
   }
 
-  final newRegion = RegionData(
-    provinces: provinces,
-    units: survivingUnits,
-  );
+  if (result.fortDowngradeFromDestroyedEmplaced) {
+    final idx = provinces.indexWhere((p) => p.id == ctx.provinceId);
+    if (idx >= 0) {
+      final p = provinces[idx];
+      final newLevel = (p.fortLevel - 1).clamp(0, 3);
+      provinces = List.from(provinces)..[idx] = p.copyWith(fortLevel: newLevel);
+    }
+  }
+
+  final newRegion = RegionData(provinces: provinces, units: survivingUnits);
   WorldState newWorldState;
   if (ctx.regionId == kRegionOldWorld) {
     newWorldState = game.worldState.copyWith(oldWorld: newRegion);
@@ -349,8 +507,6 @@ Game applyQuickBattleResultToGame(
     newWorldState = game.worldState.copyWith(newWorld: newRegion);
   }
 
-  // When Quick Battle flips a province, clear Spy timers for (attacker, that province)
-  // so that own provinces never decay via Spy timers.
   if (result.provinceFlips &&
       result.winner == QuickBattleWinner.attacker &&
       ctx.attackers.isNotEmpty) {

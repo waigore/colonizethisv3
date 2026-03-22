@@ -1,10 +1,13 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -55,6 +58,10 @@ void main() {
   late Box<dynamic> gamesBox;
   late _DummyGameService dummyService;
 
+  setUp(() {
+    AppEventBus.reset();
+  });
+
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_shell_screen');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
@@ -66,13 +73,17 @@ void main() {
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith((ref) => dummyService),
+        appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
       ],
-      child: MaterialApp(
-        initialRoute: Routes.shell,
-        routes: {
-          Routes.shell: (_) => const ShellScreen(),
-          Routes.game: (_) => const Scaffold(body: Text('In game')),
-        },
+      child: AppEventHandlerScope(
+        child: MaterialApp(
+          navigatorKey: appNavigatorKey,
+          initialRoute: Routes.shell,
+          routes: {
+            Routes.shell: (_) => const ShellScreen(),
+            Routes.game: (_) => const Scaffold(body: Text('In game')),
+          },
+        ),
       ),
     );
   }

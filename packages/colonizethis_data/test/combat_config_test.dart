@@ -40,6 +40,39 @@ void main() {
       expect(fortEmplacedStrength.length, 4);
       expect(fortGunCount.length, 4);
       expect(wallHpByFortLevel.length, 4);
+      expect(emplacedVirtualGunMaxHpByFortLevel.length, 4);
+    });
+
+    test(
+      'heavyArtilleryBaselineRngForMilitaryLevel matches era heavy piece',
+      () {
+        expect(heavyArtilleryBaselineRngForMilitaryLevel(1), 5); // culverin
+        expect(
+          heavyArtilleryBaselineRngForMilitaryLevel(2),
+          8,
+        ); // royal_artillery
+        expect(
+          heavyArtilleryBaselineRngForMilitaryLevel(3),
+          10,
+        ); // heavy_artillery
+        expect(heavyArtilleryBaselineRngForMilitaryLevel(4), 12); // siege_guns
+      },
+    );
+
+    test('emplacedVirtualGunTierMultiplier', () {
+      expect(emplacedVirtualGunTierMultiplier(null), 1.0);
+      expect(emplacedVirtualGunTierMultiplier({}), 1.0);
+      expect(
+        emplacedVirtualGunTierMultiplier({kTechHeavyEmplacedArtillery: true}),
+        1.15,
+      );
+      expect(
+        emplacedVirtualGunTierMultiplier({
+          kTechHeavyEmplacedArtillery: true,
+          kTechEmplacedSiegeGuns: true,
+        }),
+        1.30,
+      );
     });
 
     test('fort damage reduction matches SPEC/game/siege-mechanics.md', () {
