@@ -30,7 +30,7 @@ class MoveValidator {
     final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
         ? Unit.requireRegionIdFromTileKey(unit.tileKey)
         : ProvinceId.regionIdFrom(
-            resolveToFullProvinceId(game.worldState, unit.provinceId));
+            resolveToFullProvinceId(game.worldState, unit.locationProvinceId));
     final destFullId =
         resolveToFullProvinceId(game.worldState, order.destinationProvinceId);
     final destRegion = ProvinceId.regionIdFrom(destFullId);

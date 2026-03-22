@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
@@ -13,6 +14,7 @@ class GameMapNarrowDetailOverlay extends StatelessWidget {
     required this.selectedId,
     required this.displayId,
     required this.humanPlayerId,
+    required this.playerView,
     required this.hoveredTileKey,
     required this.onHighlightTile,
     required this.onClose,
@@ -24,6 +26,7 @@ class GameMapNarrowDetailOverlay extends StatelessWidget {
   final String selectedId;
   final String displayId;
   final String humanPlayerId;
+  final PlayerView playerView;
   final String? hoveredTileKey;
   final void Function(String?) onHighlightTile;
   final VoidCallback onClose;
@@ -38,6 +41,7 @@ class GameMapNarrowDetailOverlay extends StatelessWidget {
         selectedId: selectedId,
         displayId: displayId,
         humanPlayerId: humanPlayerId,
+        playerView: playerView,
         hoveredTileKey: hoveredTileKey,
         onHighlightTile: onHighlightTile,
         onClose: onClose,

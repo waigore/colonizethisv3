@@ -668,6 +668,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               selectedId: sampleProvinceIdForOverlay,
               displayId: sampleProvinceIdForOverlay,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -687,6 +688,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               selectedId: sampleSeaZoneIdForOverlay,
               displayId: sampleSeaZoneIdForOverlay,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -706,6 +708,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 selectedId: sampleProvinceIdForOverlay,
                 displayId: sampleProvinceIdForOverlay,
                 humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               );
             },
@@ -1384,6 +1387,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   Widget build(BuildContext context) {
     final initResult = getDebugInitGameResult();
     final game = initResult.game;
+    final playerView =
+        buildPlayerView(game, initResult.combinedTopology, 'gp1');
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
     return LayoutBuilder(
@@ -1471,6 +1476,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                             selectedId: _selectedId,
                             displayId: _displayId,
                             humanPlayerId: 'gp1',
+                            playerView: playerView,
                             hoveredTileKey: _hoveredTileKey,
                             onHighlightTile: (k) =>
                                 setState(() => _highlightedTileKey = k),

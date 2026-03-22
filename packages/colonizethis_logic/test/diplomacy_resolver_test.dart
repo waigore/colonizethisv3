@@ -254,7 +254,7 @@ void main() {
               Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
               Province(id: '$ow|m2', regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -315,7 +315,7 @@ void main() {
             provinces: const [
               Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
@@ -391,7 +391,7 @@ void main() {
             provinces: [
               Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -1272,7 +1272,7 @@ void main() {
             provinces: const [
               Province(id: minorProvId, regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           purchasedTilesByTileKey: const {
@@ -1340,7 +1340,7 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           purchasedTilesByTileKey: const {
@@ -1395,7 +1395,7 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: nw, ownerId: 'tribe1'),
             ],
-            units: const [],
+            units: [],
           ),
           purchasedTilesByTileKey: const {
             tileKey: 'gp1',

@@ -6,7 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
-    show InitGameMapViewData, MapTopology, RegionMapViewData;
+    show InitGameMapViewData, RegionMapViewData;
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
@@ -251,6 +251,10 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final showBorders = ref.watch(mapBordersVisibleProvider);
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
+    final mapTopology = mapData?.combinedTopology ?? const MapTopology();
+    final humanPlayerView =
+        buildPlayerView(widget.game, mapTopology, _humanPlayerId);
     final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
@@ -293,6 +297,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   showBordersLayer: showBorders,
                   showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
+                  playerView: humanPlayerView,
                   selectedDetailId: _selectedDetailId,
                   displayId: _displayId,
                   hoveredTileKey: _hoveredTileKey,
@@ -444,6 +449,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             selectedId: _selectedDetailId!,
             displayId: _displayId,
             humanPlayerId: _humanPlayerId,
+            playerView: humanPlayerView,
             hoveredTileKey: _hoveredTileKey,
             onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
             onClose: () => setState(() {

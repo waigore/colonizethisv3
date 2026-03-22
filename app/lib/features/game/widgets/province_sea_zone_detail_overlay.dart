@@ -19,6 +19,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     required this.selectedId,
     required this.displayId,
     required this.humanPlayerId,
+    required this.playerView,
     this.hoveredTileKey,
     this.onHighlightTile,
     this.onClose,
@@ -26,6 +27,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   final Game game;
   final RegionMapViewData region;
+  /// Human player's fog / visibility projection for foreign civilian gating.
+  final PlayerView playerView;
   /// Pinned selection (click-to-toggle close).
   final String selectedId;
   /// Province or sea zone id to display (hovered when overlay open, else selected).
@@ -62,6 +65,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             region: region,
             provinceId: displayId,
             humanPlayerId: humanPlayerId,
+            playerView: playerView,
             hoveredTileKey: hoveredTileKey,
             onHighlightTile: onHighlightTile,
           );
@@ -163,6 +167,7 @@ _OverlayContent _provinceContent({
   required RegionMapViewData region,
   required String provinceId,
   required String humanPlayerId,
+  required PlayerView playerView,
   String? hoveredTileKey,
   void Function(String?)? onHighlightTile,
 }) {
@@ -231,9 +236,19 @@ _OverlayContent _provinceContent({
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
-  final units = regionData.units.where((u) => u.provinceId == provinceId).toList();
+  final units =
+      regionData.units.where((u) => u.locationProvinceId == provinceId).toList();
   final military = units.where((u) => isMilitaryUnit(u.type)).toList();
   final civilian = units.where((u) => !isMilitaryUnit(u.type)).toList();
+  final visibleCivilianCount = civilian
+      .where(
+        (u) => foreignCivilianVisibleToPlayer(
+          unit: u,
+          viewerPlayerId: humanPlayerId,
+          view: playerView,
+        ),
+      )
+      .length;
   final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
   final tileKeys = game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ?? [];
   final resourceByTile = game.worldState.resourceByTileKey;
@@ -275,7 +290,7 @@ _OverlayContent _provinceContent({
     region: region,
     provinceId: provinceId,
     humanPlayerId: humanPlayerId,
-    civilianCount: civilian.length,
+    civilianCount: visibleCivilianCount,
     hoveredTileKey: hoveredTileKey,
   );
   final political = _buildPoliticalSection(
@@ -290,8 +305,10 @@ _OverlayContent _provinceContent({
     region: region,
     onHighlightTile: onHighlightTile,
   );
-  final militarySection = _buildMilitarySection(military);
-  final civilianSection = _buildCivilianSection(civilian);
+  final militarySection =
+      _buildMilitarySectionByOwner(game, military, humanPlayerId);
+  final civilianSection =
+      _buildCivilianSectionFiltered(game, civilian, humanPlayerId, playerView);
   final naval = _buildNavalSection(game, fleetsInPort);
 
   const tabLabels = [
@@ -553,34 +570,83 @@ Widget _buildEconomicSection({
   ));
 }
 
-Widget _buildMilitarySection(List<Unit> units) {
-  final byType = <String, int>{};
-  for (final u in units) {
-    byType[u.type] = (byType[u.type] ?? 0) + 1;
+Widget _buildMilitarySectionByOwner(
+  Game game,
+  List<Unit> military,
+  String humanPlayerId,
+) {
+  if (military.isEmpty) {
+    return _buildSection('Military', const Text('—'));
   }
-  return _buildSection('Military', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      if (units.isEmpty)
-        const Text('—')
-      else
-        ...byType.entries.map((e) => Text('${e.key}: ${e.value}')),
-    ],
-  ));
+  final byOwner = <String, List<Unit>>{};
+  for (final u in military) {
+    byOwner.putIfAbsent(u.ownerId, () => []).add(u);
+  }
+  final ownerIds = byOwner.keys.toList()
+    ..sort((a, b) {
+      if (a == humanPlayerId) return -1;
+      if (b == humanPlayerId) return 1;
+      return _ownerName(game, a).compareTo(_ownerName(game, b));
+    });
+  return _buildSection(
+    'Military',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: ownerIds.map((oid) {
+        final list = byOwner[oid]!;
+        final byType = <String, int>{};
+        for (final u in list) {
+          byType[u.type] = (byType[u.type] ?? 0) + 1;
+        }
+        final name = _ownerName(game, oid);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              ...byType.entries.map((e) => Text('  ${e.key}: ${e.value}')),
+            ],
+          ),
+        );
+      }).toList(),
+    ),
+  );
 }
 
-Widget _buildCivilianSection(List<Unit> units) {
-  return _buildSection('Civilian', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      if (units.isEmpty)
-        const Text('—')
-      else
-        ...units.map((u) => Text('${u.type} (${u.id}): ${u.status.name}')),
-    ],
-  ));
+Widget _buildCivilianSectionFiltered(
+  Game game,
+  List<Unit> civilian,
+  String humanPlayerId,
+  PlayerView playerView,
+) {
+  final visible = civilian
+      .where(
+        (u) => foreignCivilianVisibleToPlayer(
+          unit: u,
+          viewerPlayerId: humanPlayerId,
+          view: playerView,
+        ),
+      )
+      .toList();
+  if (visible.isEmpty) {
+    return _buildSection('Civilian', const Text('—'));
+  }
+  return _buildSection(
+    'Civilian',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: visible.map((u) {
+        if (u.ownerId == humanPlayerId) {
+          return Text('${u.type} (${u.id}): ${u.status.name}');
+        }
+        final o = _ownerName(game, u.ownerId);
+        return Text('$o — ${u.type} (${u.id}): ${u.status.name}');
+      }).toList(),
+    ),
+  );
 }
 
 Widget _buildNavalSection(Game game, List<Fleet> fleets) {

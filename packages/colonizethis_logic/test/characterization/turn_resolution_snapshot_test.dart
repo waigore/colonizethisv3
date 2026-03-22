@@ -43,14 +43,14 @@ void main() {
                 id: 'inf1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 medals: 2,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P3',
+                locationProvinceId: '$ow|P3',
               ),
             ],
           ),
@@ -108,7 +108,7 @@ void main() {
           .where((u) => u.id == 'inf1')
           .firstOrNull;
       expect(movedUnit, isNotNull);
-      expect(movedUnit!.provinceId, '$ow|P2');
+      expect(movedUnit!.locationProvinceId, '$ow|P2');
 
       // Extraction applied (grain added to stockpile, then consumption deducted)
       final p1 = next.playerById('p1')!;
@@ -214,21 +214,21 @@ void main() {
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|A',
+                locationProvinceId: '$ow|A',
                 medals: 3,
               ),
               Unit(
                 id: 'att2',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|A',
+                locationProvinceId: '$ow|A',
                 medals: 2,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|B',
+                locationProvinceId: '$ow|B',
               ),
             ],
           ),

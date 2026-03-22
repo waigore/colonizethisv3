@@ -1,23 +1,38 @@
 import 'current_work.dart';
 
+/// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
+String _storedProvinceIdForTileAndLocation(String? tileKey, String locationHint) {
+  if (tileKey != null && tileKey.isNotEmpty) {
+    final derived = Unit.provinceIdFromTileKey(tileKey);
+    if (derived != null) return derived;
+  }
+  return locationHint;
+}
+
 /// Military or civilian unit. SPEC/game/world-model.
 /// Phase 3: medals (0–4) for military experience per SPEC/game/military-units.md.
+///
+/// Canonical placement is [locationProvinceId] (tile-first). JSON key `provinceId`
+/// always reads/writes that canonical value.
 class Unit {
-  const Unit({
+  Unit({
     required this.id,
     required this.type,
     required this.ownerId,
-    required this.provinceId,
+    required String locationProvinceId,
     this.status = UnitStatus.idle,
     this.medals = 0,
     this.tileKey,
     this.currentWork,
-  });
+  }) : _storedProvinceId = _storedProvinceIdForTileAndLocation(
+          tileKey,
+          locationProvinceId,
+        );
 
   final String id;
   final String type;
   final String ownerId;
-  final String provinceId;
+  final String _storedProvinceId;
   final UnitStatus status;
   /// Experience medals (0–4); multiplies FPN/FPM in combat. SPEC/game/military-units.md.
   final int medals;
@@ -61,11 +76,11 @@ class Unit {
     return r;
   }
 
-  /// Effective province id for this unit: from tileKey for civilians, from provinceId for military/naval.
+  /// Canonical province id: derived from [tileKey] when set, else stored placement (military / no tile).
   String get locationProvinceId =>
       (tileKey != null && tileKey!.isNotEmpty)
-          ? (provinceIdFromTileKey(tileKey) ?? provinceId)
-          : provinceId;
+          ? (provinceIdFromTileKey(tileKey) ?? _storedProvinceId)
+          : _storedProvinceId;
 
   /// Multi-turn work in progress. SPEC/program/development-resolution.md.
   final CurrentWork? currentWork;
@@ -74,7 +89,7 @@ class Unit {
         'id': id,
         'type': type,
         'ownerId': ownerId,
-        'provinceId': provinceId,
+        'provinceId': locationProvinceId,
         'status': status.name,
         if (medals != 0) 'medals': medals,
         if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
@@ -83,14 +98,20 @@ class Unit {
 
   static Unit fromJson(Map<String, dynamic> json) {
     final cw = json['currentWork'];
+    final tileKey = json['tileKey'] as String?;
+    final rawProvince = json['provinceId'] as String;
+    final normalizedStored = _storedProvinceIdForTileAndLocation(
+      tileKey,
+      rawProvince,
+    );
     return Unit(
       id: json['id'] as String,
       type: json['type'] as String,
       ownerId: json['ownerId'] as String,
-      provinceId: json['provinceId'] as String,
+      locationProvinceId: normalizedStored,
       status: _statusFromJson(json['status'] as String?),
       medals: (json['medals'] as int?) ?? 0,
-      tileKey: json['tileKey'] as String?,
+      tileKey: tileKey,
       currentWork: cw is Map<String, dynamic>
           ? CurrentWork.fromJson(cw)
           : cw is Map
@@ -105,21 +126,26 @@ class Unit {
     String? id,
     String? type,
     String? ownerId,
-    String? provinceId,
+    String? locationProvinceId,
     UnitStatus? status,
     int? medals,
     String? tileKey,
     CurrentWork? currentWork,
     bool clearCurrentWork = false,
   }) {
+    final nextTile = tileKey ?? this.tileKey;
+    final canonicalHint = locationProvinceId ??
+        ((nextTile != null && nextTile.isNotEmpty)
+            ? (Unit.provinceIdFromTileKey(nextTile) ?? _storedProvinceId)
+            : _storedProvinceId);
     return Unit(
       id: id ?? this.id,
       type: type ?? this.type,
       ownerId: ownerId ?? this.ownerId,
-      provinceId: provinceId ?? this.provinceId,
+      locationProvinceId: canonicalHint,
       status: status ?? this.status,
       medals: medals ?? this.medals,
-      tileKey: tileKey ?? this.tileKey,
+      tileKey: nextTile,
       currentWork:
           clearCurrentWork ? null : (currentWork ?? this.currentWork),
     );
@@ -133,7 +159,7 @@ class Unit {
           id == other.id &&
           type == other.type &&
           ownerId == other.ownerId &&
-          provinceId == other.provinceId &&
+          _storedProvinceId == other._storedProvinceId &&
           status == other.status &&
           medals == other.medals &&
           tileKey == other.tileKey &&
@@ -144,7 +170,7 @@ class Unit {
         id,
         type,
         ownerId,
-        provinceId,
+        _storedProvinceId,
         status,
         medals,
         tileKey,

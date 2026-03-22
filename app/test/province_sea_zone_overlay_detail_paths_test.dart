@@ -2,6 +2,7 @@
 // Covers SPEC/ui/province-sea-zone-detail-overlay.md conditional content.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,9 @@ void main() {
     String? hoveredTileKey,
     VoidCallback? onClose,
   }) {
+    final init = getDebugInitGameResult();
+    final playerView =
+        buildPlayerView(game, init.combinedTopology, humanPlayerId);
     return MaterialApp(
       home: Scaffold(
         body: ProvinceSeaZoneDetailOverlay(
@@ -32,6 +36,7 @@ void main() {
           selectedId: selectedId,
           displayId: displayId,
           humanPlayerId: humanPlayerId,
+          playerView: playerView,
           hoveredTileKey: hoveredTileKey,
           onClose: onClose,
         ),

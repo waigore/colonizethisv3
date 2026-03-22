@@ -20,7 +20,7 @@ When the user taps/clicks a tile on the map widget, the in-game shell displays a
 - **Tap-as-hover (touch/mobile):** On touch-only/mobile viewports where pointer hover is not available, tapping a tile acts as “hover” for the purposes of the Tile section and province display:
   - The map widget drives `onTileHovered` / `onProvinceHovered` for the tapped tile/province.
   - The overlay treats the last tapped tile as the current “hovered” tile, so the Tile section and province header update accordingly while the overlay stays open.
-- **Data context:** All data is from the human player's view (visibility, prospecting, etc.).
+- **Data context:** Province/economic content follows `RegionMapViewData` and the human player. Foreign civilian lines and the Tile section’s civilian count use **[PlayerView](../program/player-view.md)** (`buildPlayerView`, wired from `GameMapArea`); see Civilian / Tile below.
 
 ---
 
@@ -51,7 +51,7 @@ When the user hovers a tile on the map (with overlay open), this section shows t
 - **Prospected:** Yes/no for the human player.
 - **Improvement:** Improvement name and level (e.g. Farm L2) or —.
 - **Road / railroad:** Road level (none, primitive, improved, port or railroad).
-- **Civilian units (province):** Count of civilian units in the tile’s province.
+- **Civilian units (province):** Count of **visible** civilian units in the tile’s province (same visibility rules as the Civilian section: own units always; others only if `foreignCivilianVisibleToPlayer` / fog rules apply; enemy Spies never).
 
 #### Visibility and obfuscation (player-constrained views)
 
@@ -79,11 +79,11 @@ When the map widget is in **player-constrained visibility mode** and the overlay
 
 ### Military
 
-- **Regiments present:** Units in the province where `unitRoleForType(u.type) == UnitRole.military`. Show type and count (or list).
+- **Regiments present:** Military units (`unitRoleForType(u.type) == UnitRole.military`) whose **canonical** province matches the displayed province (`Unit.locationProvinceId`). Group by **owning faction**, then show **per-type counts** under each owner (not a flat global list).
 
 ### Civilian
 
-- **Civilian units present:** Units in the province that are not military (Explorer, Builder, Engineer, etc.). Show unit type, id, and **status** (idle, working, done; from `Unit.status` and `currentWork` if present).
+- **Civilian units present:** Non-military units in the province (filter by `locationProvinceId`). **Human player’s units:** list type, id, and **status** (idle, working, done; from `Unit.status` and `currentWork`). **Other players’ units:** show only when the unit has a `tileKey` and that tile’s visibility for the human player is not `unknown`, and the unit is **not** an enemy **Spy** (see `foreignCivilianVisibleToPlayer` in colonizethis_logic). Otherwise omit from the list.
 
 ### Naval
 
@@ -142,5 +142,6 @@ When the overlay lists tile coordinates (e.g. improvements built/available), hov
 ## Integration
 
 - **Map widget:** [map-widget.md](map-widget.md). Uses `onProvinceSelected`; selection may be province or sea zone (regionCellId). Map widget supports `highlightedTileKey` for coordinate hover.
+- **PlayerView:** The in-game map shell (`GameMapArea`) builds `PlayerView` with `buildPlayerView` and the game service’s `combinedTopology`, and passes it through `GameMapCanvasStack` / `GameMapNarrowDetailOverlay` into `ProvinceSeaZoneDetailOverlay` for fog-aware civilian display.
 - **Ships in port:** Helper in colonizethis_logic returns fleets that are in port at a province (attachment: `inPortAtProvinceId` equals that province).
 - **Catalog:** Register overlay component in app widget catalog when implemented.

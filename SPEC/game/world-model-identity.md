@@ -14,6 +14,8 @@ In a multi-region world, **province lookup must always use regionId + provinceId
 
 All province ids stored in game state (e.g. Province id, Unit province location, Player capital, order fields) use a **prefixed** form: `regionId|localId` (e.g. `oldWorld|p1`, `newWorld|nw1`). This makes every province id globally unique and prevents a province from being resolved in the wrong region.
 
+**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair legacy drift between `tileKey` and an old `provinceId` on load.
+
 ---
 
 ## Tile Key Format

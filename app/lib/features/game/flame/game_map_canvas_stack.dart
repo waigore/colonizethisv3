@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
@@ -18,6 +19,7 @@ class GameMapCanvasStack extends StatelessWidget {
     required this.showBordersLayer,
     required this.showProvinceNamesLayer,
     required this.humanPlayerId,
+    required this.playerView,
     required this.selectedDetailId,
     required this.displayId,
     required this.hoveredTileKey,
@@ -41,6 +43,7 @@ class GameMapCanvasStack extends StatelessWidget {
   final bool showBordersLayer;
   final bool showProvinceNamesLayer;
   final String humanPlayerId;
+  final PlayerView playerView;
   final String? selectedDetailId;
   final String displayId;
   final String? hoveredTileKey;
@@ -94,6 +97,7 @@ class GameMapCanvasStack extends StatelessWidget {
                     selectedId: selectedDetailId!,
                     displayId: displayId,
                     humanPlayerId: humanPlayerId,
+                    playerView: playerView,
                     hoveredTileKey: hoveredTileKey,
                     onHighlightTile: (k) => onHighlightTile(k),
                     onClose: onCloseDetailOverlay,

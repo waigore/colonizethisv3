@@ -113,11 +113,11 @@ void main() {
       final view = _view(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'explore'),
@@ -129,11 +129,11 @@ void main() {
       final view = _view(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'prospect'),
@@ -154,11 +154,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_improvement'),
@@ -170,11 +170,11 @@ void main() {
       final view = _view(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fullyVisible},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       expect(workOrderVisibilityOk(view, unit, 'unknown_work'), isFalse);
@@ -193,11 +193,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'Spy',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'counter_spy'),
@@ -219,11 +219,11 @@ void main() {
         },
         visibilityByTile: {'$r|$p|0|0': VisibilityLevel.fogged},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_fort'),
@@ -243,11 +243,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'engineer',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p2',
+        locationProvinceId: 'oldWorld|p2',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_road', 'oldWorld|p2|1|1'),

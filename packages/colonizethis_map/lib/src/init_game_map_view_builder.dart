@@ -235,7 +235,7 @@ RegionMapViewData _buildRegionViewData({
       ? game.worldState.oldWorld.units
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
-    final tile = provinceToTile[u.provinceId];
+    final tile = provinceToTile[u.locationProvinceId];
     if (tile != null) {
       unitMarkers.add(
         UnitMarkerView(x: tile.$1, y: tile.$2, ownerFactionId: u.ownerId),

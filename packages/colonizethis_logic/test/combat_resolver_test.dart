@@ -10,14 +10,14 @@ void main() {
           id: 'a1',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 3,
         ),
         Unit(
           id: 'a2',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 2,
         ),
       ];
@@ -26,7 +26,7 @@ void main() {
           id: 'd1',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       ];
@@ -48,7 +48,7 @@ void main() {
           id: 'a1',
           type: 'peasant_levies',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       ];
@@ -57,14 +57,14 @@ void main() {
           id: 'd1',
           type: 'grenadiers',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 3,
         ),
         Unit(
           id: 'd2',
           type: 'grenadiers',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 2,
         ),
       ];
@@ -86,7 +86,7 @@ void main() {
           id: 'a1',
           type: 'pikemen',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       ];
@@ -95,7 +95,7 @@ void main() {
           id: 'd1',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       ];
@@ -125,7 +125,7 @@ void main() {
           id: 'a1',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 2,
         ),
       ];
@@ -134,7 +134,7 @@ void main() {
           id: 'd1',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       ];
@@ -177,13 +177,13 @@ void main() {
             id: 'a1',
             type: 'grenadiers',
             ownerId: 'att',
-            provinceId: 'p',
+            locationProvinceId: 'p',
             medals: 2),
         Unit(
             id: 'a2',
             type: 'grenadiers',
             ownerId: 'att',
-            provinceId: 'p',
+            locationProvinceId: 'p',
             medals: 1),
       ];
       final defenderUnits = [
@@ -191,7 +191,7 @@ void main() {
             id: 'd1',
             type: 'peasant_levies',
             ownerId: 'def',
-            provinceId: 'p',
+            locationProvinceId: 'p',
             medals: 0),
       ];
       final game = Game(
@@ -246,24 +246,24 @@ void main() {
             provinces: const [
               Province(id: 'N1', regionId: 'newWorld', ownerId: 'def'),
             ],
-            units: const [
+            units: [
               Unit(
                   id: 'd1',
                   type: 'peasant_levies',
                   ownerId: 'def',
-                  provinceId: 'N1',
+                  locationProvinceId: 'N1',
                   medals: 0),
               Unit(
                   id: 'a1',
                   type: 'grenadiers',
                   ownerId: 'att',
-                  provinceId: 'N1',
+                  locationProvinceId: 'N1',
                   medals: 3),
               Unit(
                   id: 'a2',
                   type: 'grenadiers',
                   ownerId: 'att',
-                  provinceId: 'N1',
+                  locationProvinceId: 'N1',
                   medals: 2),
             ],
           ),
@@ -304,7 +304,7 @@ void main() {
           id: 'a$i',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 1,
         ),
       );
@@ -314,7 +314,7 @@ void main() {
           id: 'd$i',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       );
@@ -375,7 +375,7 @@ void main() {
           id: 'a$i',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'p',
           medals: 0,
         ),
       );
@@ -384,7 +384,7 @@ void main() {
             id: 'd1',
             type: 'peasant_levies',
             ownerId: 'def',
-            provinceId: 'p',
+            locationProvinceId: 'p',
             medals: 0),
       ];
       final game = Game(
@@ -448,18 +448,18 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: ow, ownerId: 'def'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'att',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'def',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
             ],
           ),
@@ -530,18 +530,18 @@ void main() {
             provinces: const [
               Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'gp2',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'minor1',
-                provinceId: provinceId,
+                locationProvinceId: provinceId,
               ),
             ],
           ),

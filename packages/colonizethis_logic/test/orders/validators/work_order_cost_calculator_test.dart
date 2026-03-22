@@ -30,7 +30,7 @@ void main() {
             provinces: [
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -61,7 +61,7 @@ void main() {
                   ownerId: 'p1',
                   fortLevel: 1),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),

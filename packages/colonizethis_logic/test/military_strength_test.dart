@@ -36,20 +36,20 @@ void main() {
             units: [
               // Grenadiers: FPN=10, FPM=8, era=3, medals=2 -> multiplier=1.2
               // Strength = (10+8) * 1.2 = 21.6
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 2,
               ),
               // Musketeers: FPN=7, FPM=2, era=2, medals=0 -> multiplier=1.0
               // Strength = (7+2) * 1.0 = 9.0
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
             ],
@@ -77,11 +77,11 @@ void main() {
           oldWorld: RegionData(
             units: [
               // Peasant levies: era=1, effectiveEra=1 (minor level) -> no downgrade
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'peasant_levies',
                 ownerId: 'minor1',
-                provinceId: 'p1',
+                locationProvinceId: 'p1',
                 medals: 0,
               ),
             ],
@@ -113,11 +113,11 @@ void main() {
           oldWorld: RegionData(
             units: [
               // Cossacks: era=2, effectiveEra=1 (tribe level) -> should downgrade
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'cossacks',
                 ownerId: 'tribe1',
-                provinceId: 'p1',
+                locationProvinceId: 'p1',
                 medals: 0,
               ),
             ],
@@ -149,11 +149,11 @@ void main() {
           oldWorld: RegionData(
             units: [
               // Grenadiers: era=3, GP uses era 4 so no downgrade
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
             ],
@@ -182,18 +182,18 @@ void main() {
           oldWorld: RegionData(
             units: [
               // Unknown type should be skipped
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'unknown_unit_type',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
             ],
@@ -219,22 +219,22 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             units: [
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
             ],
           ),
           newWorld: RegionData(
             units: [
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'new_york',
+                locationProvinceId: 'new_york',
                 medals: 0,
               ),
             ],
@@ -259,18 +259,18 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             units: [
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 0,
               ),
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: 'prussia',
-                provinceId: 'berlin',
+                locationProvinceId: 'berlin',
                 medals: 0,
               ),
             ],
@@ -303,51 +303,51 @@ void main() {
           oldWorld: RegionData(
             units: [
               // 0 medals: multiplier 1.0
-              const Unit(
+              Unit(
                 id: 'u0',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p0',
+                locationProvinceId: 'p0',
                 medals: 0,
               ),
               // 1 medal: multiplier 1.1
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p1',
+                locationProvinceId: 'p1',
                 medals: 1,
               ),
               // 2 medals: multiplier 1.2
-              const Unit(
+              Unit(
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p2',
+                locationProvinceId: 'p2',
                 medals: 2,
               ),
               // 3 medals: multiplier 1.3
-              const Unit(
+              Unit(
                 id: 'u3',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p3',
+                locationProvinceId: 'p3',
                 medals: 3,
               ),
               // 4 medals: multiplier 1.4
-              const Unit(
+              Unit(
                 id: 'u4',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p4',
+                locationProvinceId: 'p4',
                 medals: 4,
               ),
               // 5+ medals: clamped to 4, multiplier 1.4
-              const Unit(
+              Unit(
                 id: 'u5',
                 type: 'musketeers',
                 ownerId: 'france',
-                provinceId: 'p5',
+                locationProvinceId: 'p5',
                 medals: 10,
               ),
             ],
@@ -380,11 +380,11 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             units: [
-              const Unit(
+              Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'france',
-                provinceId: 'paris',
+                locationProvinceId: 'paris',
                 medals: 3,
               ),
             ],
@@ -429,18 +429,18 @@ void main() {
   group('aggregateStrength', () {
     test('aggregates strength for a list of units', () {
       final units = [
-        const Unit(
+        Unit(
           id: 'u1',
           type: 'musketeers',
           ownerId: 'france',
-          provinceId: 'p1',
+          locationProvinceId: 'p1',
           medals: 0,
         ),
-        const Unit(
+        Unit(
           id: 'u2',
           type: 'grenadiers',
           ownerId: 'france',
-          provinceId: 'p2',
+          locationProvinceId: 'p2',
           medals: 0,
         ),
       ];
@@ -455,11 +455,11 @@ void main() {
     test('downgrades units when era exceeds effective era', () {
       final units = [
         // Grenadiers era=3, effectiveEra=1 -> should downgrade to era 1 equivalent
-        const Unit(
+        Unit(
           id: 'u1',
           type: 'grenadiers',
           ownerId: 'france',
-          provinceId: 'p1',
+          locationProvinceId: 'p1',
           medals: 0,
         ),
       ];
