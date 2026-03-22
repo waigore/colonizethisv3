@@ -213,12 +213,12 @@ void main() {
                 ownerId: 'gp2',
               ),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'Army',
                 ownerId: 'gp1',
-                provinceId: 'oldWorld|p1',
+                locationProvinceId: 'oldWorld|p1',
                 status: UnitStatus.idle,
               ),
             ],

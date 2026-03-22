@@ -174,9 +174,9 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
         .toList();
     final byProvince = <String, List<Unit>>{};
     for (final u in militaryUnits) {
-      final fullProvinceId = u.provinceId.contains('|')
-          ? u.provinceId
-          : '$regionId|${u.provinceId}';
+      final loc = u.locationProvinceId;
+      final fullProvinceId =
+          loc.contains('|') ? loc : '$regionId|$loc';
       byProvince.putIfAbsent(fullProvinceId, () => []).add(u);
     }
 

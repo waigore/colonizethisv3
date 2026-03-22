@@ -137,12 +137,12 @@ void main() {
               provinces: const [
                 Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
               ],
-              units: const [
+              units: [
                 Unit(
                   id: 'explorer1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P2',
+                  locationProvinceId: '$ow|P2',
                 ),
               ],
             ),

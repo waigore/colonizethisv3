@@ -68,19 +68,22 @@ String regionIdForUnit(PlayerView view, Unit unit) {
   if (unit.tileKey != null && unit.tileKey!.isNotEmpty) {
     return Unit.requireRegionIdFromTileKey(unit.tileKey);
   }
-  if (ProvinceId.isPrefixed(unit.provinceId)) {
-    return ProvinceId.regionIdFrom(unit.provinceId);
+  if (ProvinceId.isPrefixed(unit.locationProvinceId)) {
+    return ProvinceId.regionIdFrom(unit.locationProvinceId);
   }
   for (final key in view.provincesById.keys) {
-    if (key == unit.provinceId || key.endsWith('|${unit.provinceId}')) {
+    if (key == unit.locationProvinceId ||
+        key.endsWith('|${unit.locationProvinceId}')) {
       return ProvinceId.regionIdFrom(key);
     }
   }
   for (final tileKey in view.visibilityByTile.keys) {
     final parts = tileKey.split('|');
-    if (parts.length == 4 && parts[1] == unit.provinceId) return parts[0];
+    if (parts.length == 4 && parts[1] == unit.locationProvinceId) {
+      return parts[0];
+    }
   }
-  return ProvinceId.regionIdFrom(unit.provinceId);
+  return ProvinceId.regionIdFrom(unit.locationProvinceId);
 }
 
 /// Work order: true iff the unit's province (and [targetTileKey] when applicable) meets

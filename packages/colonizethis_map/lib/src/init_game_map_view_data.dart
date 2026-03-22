@@ -186,12 +186,16 @@ class InitGameMapViewData {
   const InitGameMapViewData({
     required this.oldWorld,
     required this.newWorld,
+    required this.combinedTopology,
     this.seed,
     this.configSummary,
   });
 
   final RegionMapViewData oldWorld;
   final RegionMapViewData newWorld;
+
+  /// OW + NW nodes/edges with prefixed ids, plus warp links (same shape as persisted map data).
+  final MapTopology combinedTopology;
 
   /// Optional RNG seed used for map generation.
   final int? seed;

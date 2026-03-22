@@ -51,7 +51,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
     final unitsByProvince = <String, List<Unit>>{};
     for (final u in region.units) {
-      unitsByProvince.putIfAbsent(u.provinceId, () => []).add(u);
+      unitsByProvince.putIfAbsent(u.locationProvinceId, () => []).add(u);
     }
 
     final movedIntoByFaction = <String, Set<String>>{};

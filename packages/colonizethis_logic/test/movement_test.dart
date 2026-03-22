@@ -97,12 +97,12 @@ void main() {
           Province(id: 'P1', regionId: 'oldWorld', ownerId: 'player1'),
           Province(id: 'P2', regionId: 'oldWorld', ownerId: 'player2'),
         ],
-        units: const [
+        units: [
           Unit(
             id: 'u1',
             type: 'Regiment',
             ownerId: 'player1',
-            provinceId: 'P1',
+            locationProvinceId: 'P1',
           ),
         ],
       );
@@ -114,7 +114,7 @@ void main() {
       };
 
       final updated = applyMoveOrdersToRegion(region, topology, orders);
-      expect(updated.units.single.provinceId, 'P2');
+      expect(updated.units.single.locationProvinceId, 'P2');
     });
 
     test('civilian unit move sets tileKey when tileKeysByRegionAndProvince provided', () {
@@ -135,12 +135,12 @@ void main() {
           Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
           Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
         ],
-        units: const [
+        units: [
           Unit(
             id: 'u1',
             type: 'Merchant',
             ownerId: 'p1',
-            provinceId: 'oldWorld|P1',
+            locationProvinceId: 'oldWorld|P1',
             tileKey: 'oldWorld|P1|0|0',
           ),
         ],
@@ -159,7 +159,7 @@ void main() {
           regionId: {destFullId: [destTileKey]},
         },
       );
-      expect(updated.units.single.provinceId, destFullId);
+      expect(updated.units.single.locationProvinceId, destFullId);
       expect(updated.units.single.tileKey, destTileKey);
     });
 
@@ -179,12 +179,12 @@ void main() {
           Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
           Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
         ],
-        units: const [
+        units: [
           Unit(
             id: 'u1',
             type: 'Regiment',
             ownerId: 'p1',
-            provinceId: 'oldWorld|P1',
+            locationProvinceId: 'oldWorld|P1',
           ),
         ],
       );
@@ -199,7 +199,7 @@ void main() {
         orders,
         regionId: regionId,
       );
-      expect(updated.units.single.provinceId, 'oldWorld|P1');
+      expect(updated.units.single.locationProvinceId, 'oldWorld|P1');
     });
 
     test('uses prefixed province id and region-scoped tiles for multi-region civilian move', () {
@@ -225,12 +225,12 @@ void main() {
           Province(id: 'p1', regionId: ow, ownerId: 'p1'),
           Province(id: 'p2', regionId: ow, ownerId: 'p1'),
         ],
-        units: const [
+        units: [
           Unit(
             id: 'u1',
             type: 'Merchant',
             ownerId: 'p1',
-            provinceId: 'oldWorld|p1',
+            locationProvinceId: 'oldWorld|p1',
             tileKey: 'oldWorld|p1|0|0',
           ),
         ],
@@ -250,7 +250,7 @@ void main() {
           nw: {nwDestFullId: [nwDestTile]},
         },
       );
-      expect(updated.units.single.provinceId, owDestFullId);
+      expect(updated.units.single.locationProvinceId, owDestFullId);
       expect(updated.units.single.tileKey, owDestTile);
     });
 
@@ -274,12 +274,12 @@ void main() {
           Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
           Province(id: 'P3', regionId: regionId, ownerId: 'p1'),
         ],
-        units: const [
+        units: [
           Unit(
             id: 'u1',
             type: 'Regiment',
             ownerId: 'p1',
-            provinceId: 'oldWorld|P1',
+            locationProvinceId: 'oldWorld|P1',
           ),
         ],
       );
@@ -297,7 +297,7 @@ void main() {
         regionId: regionId,
         isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
       );
-      expect(updated.units.single.provinceId, destFullId);
+      expect(updated.units.single.locationProvinceId, destFullId);
     });
   });
 }

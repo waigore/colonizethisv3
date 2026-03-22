@@ -57,7 +57,7 @@ class PlayerView {
 
   Iterable<Unit> unitsInProvince(String regionId, String provinceId) {
     final fullId = toFullProvinceId(regionId, provinceId);
-    return ownUnits.where((u) => u.provinceId == fullId);
+    return ownUnits.where((u) => u.locationProvinceId == fullId);
   }
 
   VisibilityLevel visibilityForTile(String tileKey) =>
@@ -176,6 +176,22 @@ bool hasRevealedResourceForPlayer(Game game, String playerId, String resourceId)
     if (needProspect && !prospected.contains(tileKey)) continue;
     return true;
   }
-  return false;
+    return false;
+  }
+
+/// Whether [unit] should appear in another player's province UI for civilians.
+///
+/// The owner's units always count. Enemy [Spy] units never count. Other factions'
+/// units require a [Unit.tileKey] and tile visibility other than [VisibilityLevel.unknown].
+bool foreignCivilianVisibleToPlayer({
+  required Unit unit,
+  required String viewerPlayerId,
+  required PlayerView view,
+}) {
+  if (unit.ownerId == viewerPlayerId) return true;
+  if (isSpyUnit(unit.type)) return false;
+  final tk = unit.tileKey;
+  if (tk == null || tk.isEmpty) return false;
+  return view.visibilityForTile(tk) != VisibilityLevel.unknown;
 }
 

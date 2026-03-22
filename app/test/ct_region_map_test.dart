@@ -68,6 +68,9 @@ void main() {
     void Function(String)? onProvinceSelected,
     void Function(String?)? onProvinceHovered,
     void Function(String?)? onTileHovered,
+    void Function(String)? onMapTileTappedForDetail,
+    String? selectedTileKey,
+    String? secondaryHighlightTileKey,
     VoidCallback? onRegionViewChanged,
   }) {
     return MaterialApp(
@@ -87,6 +90,9 @@ void main() {
               onProvinceSelected: onProvinceSelected,
               onProvinceHovered: onProvinceHovered,
               onTileHovered: onTileHovered,
+              onMapTileTappedForDetail: onMapTileTappedForDetail,
+              selectedTileKey: selectedTileKey,
+              secondaryHighlightTileKey: secondaryHighlightTileKey,
               onRegionViewChanged: onRegionViewChanged,
             ),
           ),
@@ -532,16 +538,16 @@ void main() {
     );
 
     testWidgets(
-      'tap invokes onTileHovered with tapped tile key so overlay shows tile on mobile',
+      'tap invokes onMapTileTappedForDetail with full tile key',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
         String? selectedId;
-        String? hoveredTileKey;
+        String? detailTileKey;
         await tester.pumpWidget(
           _buildCtRegionMap(
             region: region,
             onProvinceSelected: (id) => selectedId = id,
-            onTileHovered: (key) => hoveredTileKey = key,
+            onMapTileTappedForDetail: (tk) => detailTileKey = tk,
           ),
         );
         await tester.pump();
@@ -552,8 +558,8 @@ void main() {
         await tester.pump();
 
         expect(selectedId, isNotNull);
-        expect(hoveredTileKey, isNotNull);
-        final parts = hoveredTileKey!.split('|');
+        expect(detailTileKey, isNotNull);
+        final parts = detailTileKey!.split('|');
         expect(parts.length, 4);
         expect(parts[0], region.regionId);
         expect(parts[1], selectedId!.split('|').last);
@@ -564,7 +570,7 @@ void main() {
     );
 
     testWidgets(
-      'tap also drives hover selector on mobile (no crash path)',
+      'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
         String? hoveredTileKey;
@@ -581,10 +587,7 @@ void main() {
         await tester.tap(mapFinder);
         await tester.pump();
 
-        // The game wrapper translates tap into a world-position tap; as long as
-        // we get a hovered tile key back, the Flame component has updated its
-        // internal hover state for the tapped tile (selector + glow).
-        expect(hoveredTileKey, isNotNull);
+        expect(hoveredTileKey, isNull);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

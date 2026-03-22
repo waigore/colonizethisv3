@@ -64,12 +64,12 @@ void main() {
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -100,12 +100,12 @@ void main() {
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
               Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'minor1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -157,12 +157,12 @@ void main() {
               // Unowned neighbor so movement is rules-legal and not blocked by diplomacy.
               Province(id: '$ow|P2', regionId: ow),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -226,8 +226,8 @@ void main() {
             provinces: const [
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
-            units: const [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'oldWorld|P1'),
+            units: [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', locationProvinceId: 'oldWorld|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -283,8 +283,8 @@ void main() {
             provinces: const [
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
-            units: const [
-              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', provinceId: 'oldWorld|P1'),
+            units: [
+              Unit(id: 'u1', type: 'grenadiers', ownerId: 'gp1', locationProvinceId: 'oldWorld|P1'),
             ],
           ),
           newWorld: const RegionData(),

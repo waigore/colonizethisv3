@@ -1,16 +1,15 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/map_province_panel_provider.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
-/// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
-class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
-  const GameMapNarrowDetailOverlaySlot({
+/// Wide-layout province / sea zone panel; reads [mapProvincePanelProvider] only.
+class GameMapProvinceDetailSidePanel extends ConsumerWidget {
+  const GameMapProvinceDetailSidePanel({
     required this.game,
     required this.region,
     required this.humanPlayerId,
@@ -35,7 +34,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.33,
+      width: 320,
       child: ProvinceSeaZoneDetailOverlay(
         game: game,
         region: region,

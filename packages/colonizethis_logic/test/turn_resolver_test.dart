@@ -62,7 +62,7 @@ void main() {
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -100,7 +100,7 @@ void main() {
       // Turn number advanced.
       expect(next.worldState.turnState.turnNumber, 1);
       // Unit moved to P2.
-      expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
+      expect(next.worldState.oldWorld.units.single.locationProvinceId, 'oldWorld|P2');
       // Extraction applied to player stockpile.
       expect(
         next.players.single.stockpile.quantityOf('grain'),
@@ -134,7 +134,7 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -142,7 +142,7 @@ void main() {
             provinces: [
               Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           playerVisibilityByTile: const {
             'p1': {
@@ -175,7 +175,7 @@ void main() {
       // Unit moved from Old World to New World in a single movement phase.
       expect(next.worldState.oldWorld.units, isEmpty);
       expect(next.worldState.newWorld.units.single.id, 'u1');
-      expect(next.worldState.newWorld.units.single.provinceId, '$nw|P2');
+      expect(next.worldState.newWorld.units.single.locationProvinceId, '$nw|P2');
     });
 
     test('civilian move within own provinces across regions is instantaneous and sets tileKey', () {
@@ -208,7 +208,7 @@ void main() {
                 id: 'c1',
                 type: 'Merchant',
                 ownerId: 'p1',
-                provinceId: owProv,
+                locationProvinceId: owProv,
                 tileKey: '$ow|P1|0|0',
               ),
             ],
@@ -217,7 +217,7 @@ void main() {
             provinces: [
               Province(id: nwProv, regionId: nw, ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           tileKeysByRegionAndProvince: {
             nw: {
@@ -254,7 +254,7 @@ void main() {
       expect(next.worldState.oldWorld.units, isEmpty);
       final moved = next.worldState.newWorld.units.single;
       expect(moved.id, 'c1');
-      expect(moved.provinceId, nwProv);
+      expect(moved.locationProvinceId, nwProv);
       expect(moved.tileKey, nwTile);
     });
 
@@ -274,7 +274,7 @@ void main() {
             provinces: const [
               Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -323,12 +323,12 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P2'),
+                  locationProvinceId: '$ow|P2'),
               Unit(
                   id: 'u2',
                   type: 'pikemen',
                   ownerId: 'p2',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -583,14 +583,14 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 medals: 2,
               ),
               Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -676,13 +676,13 @@ void main() {
                   id: 'u1',
                   type: 'grenadiers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1',
+                  locationProvinceId: '$ow|P1',
                   medals: 2),
               Unit(
                   id: 'u2',
                   type: 'peasant_levies',
                   ownerId: 'p2',
-                  provinceId: '$ow|P2'),
+                  locationProvinceId: '$ow|P2'),
             ],
           ),
           newWorld: const RegionData(),
@@ -761,14 +761,14 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 medals: 2,
               ),
               Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -842,13 +842,13 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -916,13 +916,13 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -1001,12 +1001,12 @@ void main() {
                   id: 'u1',
                   type: 'peasant_levies',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
               Unit(
                   id: 'u2',
                   type: 'grenadiers',
                   ownerId: 'p2',
-                  provinceId: '$ow|P2',
+                  locationProvinceId: '$ow|P2',
                   medals: 2),
             ],
           ),
@@ -1182,7 +1182,7 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -1210,7 +1210,7 @@ void main() {
       ));
 
       expect(next.worldState.turnState.turnNumber, 1);
-      expect(next.worldState.oldWorld.units.single.provinceId, 'oldWorld|P2');
+      expect(next.worldState.oldWorld.units.single.locationProvinceId, 'oldWorld|P2');
     });
 
     test(
@@ -1240,7 +1240,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -1270,7 +1270,7 @@ void main() {
       ));
       expect(next.worldState.turnState.turnNumber, 1);
       expect(next.worldState.oldWorld.units.length, 1);
-      expect(next.worldState.oldWorld.units.single.provinceId, '$ow|P2');
+      expect(next.worldState.oldWorld.units.single.locationProvinceId, '$ow|P2');
     });
 
     test('movement phase applies naval mission order', () {
@@ -1798,7 +1798,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: 'p1',
-        provinceId: provinceId,
+        locationProvinceId: provinceId,
         tileKey: tileKey,
       );
       final game = Game(
@@ -2145,7 +2145,7 @@ void main() {
                 id: 'explorer1',
                 type: 'Explorer',
                 ownerId: 'p1',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -2204,7 +2204,7 @@ void main() {
                 id: 'explorer1',
                 type: 'Explorer',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -2276,7 +2276,7 @@ void main() {
               Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
@@ -2336,7 +2336,7 @@ void main() {
               Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
@@ -2413,7 +2413,7 @@ void main() {
                 id: 'spy1',
                 type: 'Spy',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 tileKey: tileKeyP1,
               ),
             ],
@@ -2517,7 +2517,7 @@ void main() {
                 id: 'spy1',
                 type: 'Spy',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 tileKey: tileKeyP1,
               ),
             ],
@@ -2578,7 +2578,7 @@ void main() {
             provinces: [
               Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {

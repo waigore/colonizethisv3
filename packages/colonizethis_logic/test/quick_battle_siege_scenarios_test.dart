@@ -206,7 +206,7 @@ void main() {
                     id: 'att-$i',
                     type: 'pikemen',
                     ownerId: 'att',
-                    provinceId: provinceId,
+                    locationProvinceId: provinceId,
                   ),
                 ),
                 ...List.generate(
@@ -215,7 +215,7 @@ void main() {
                     id: 'def-$i',
                     type: 'pikemen',
                     ownerId: 'def',
-                    provinceId: provinceId,
+                    locationProvinceId: provinceId,
                   ),
                 ),
               ],

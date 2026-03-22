@@ -269,7 +269,7 @@ void main() {
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'pl1',
-                provinceId: 'p1',
+                locationProvinceId: 'oldWorld|p1',
                 medals: 3,
               ),
             ],

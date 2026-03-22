@@ -192,7 +192,7 @@ List<Unit> _parseUnits(
       id: '${prefix}_${battleId}_$i',
       type: type,
       ownerId: prefix,
-      provinceId: 'prov',
+      locationProvinceId: 'oldWorld|prov',
       medals: medals.clamp(0, 4),
     ));
   }
