@@ -9,18 +9,17 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:flutter/material.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
-/// When [hoveredTileKey] is set, overlay shows that tile's info and uses its province for content;
-/// otherwise shows [displayId]. Hover updates content immediately when overlay is open.
+/// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
+/// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   const ProvinceSeaZoneDetailOverlay({
     super.key,
     required this.game,
     required this.region,
-    required this.selectedId,
     required this.displayId,
+    required this.selectedTileKey,
     required this.humanPlayerId,
     required this.playerView,
-    this.hoveredTileKey,
     this.onHighlightTile,
     this.onClose,
   });
@@ -29,13 +28,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final RegionMapViewData region;
   /// Human player's fog / visibility projection for foreign civilian gating.
   final PlayerView playerView;
-  /// Pinned selection (click-to-toggle close).
-  final String selectedId;
-  /// Province or sea zone id to display (hovered when overlay open, else selected).
   final String displayId;
+  final String? selectedTileKey;
   final String humanPlayerId;
-  /// When set, tile section shows this tile's coords, terrain, resources, prospected, improvements, roads, civilian units.
-  final String? hoveredTileKey;
   final void Function(String? tileKey)? onHighlightTile;
   final VoidCallback? onClose;
 
@@ -58,7 +53,6 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             game: game,
             region: region,
             seaZoneId: displayId,
-            hoveredTileKey: hoveredTileKey,
           )
         : _provinceContent(
             game: game,
@@ -66,15 +60,30 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             provinceId: displayId,
             humanPlayerId: humanPlayerId,
             playerView: playerView,
-            hoveredTileKey: hoveredTileKey,
+            selectedTileKey: selectedTileKey,
             onHighlightTile: onHighlightTile,
           );
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Desktop: full height of side panel; mobile: max one-third screen (SPEC).
-        final maxHeight = isNarrow
-            ? MediaQuery.sizeOf(context).height * 0.33
-            : constraints.maxHeight;
+        // Narrow full-width (mobile): cap at one-third screen (SPEC). Narrow
+        // side rail (width < screen): use parent height. Parent already capped
+        // to ≤ one-third (bottom slot): honor that height.
+        final mqSize = MediaQuery.sizeOf(context);
+        final thirdScreen = mqSize.height * 0.33;
+        final isFullWidthNarrow =
+            isNarrow && (constraints.maxWidth >= mqSize.width - 8);
+        final double maxHeight;
+        if (!isNarrow) {
+          maxHeight = constraints.maxHeight;
+        } else if (!constraints.maxHeight.isFinite) {
+          maxHeight = thirdScreen;
+        } else if (constraints.maxHeight <= thirdScreen + 1) {
+          maxHeight = constraints.maxHeight;
+        } else if (isFullWidthNarrow) {
+          maxHeight = thirdScreen;
+        } else {
+          maxHeight = constraints.maxHeight;
+        }
         return Padding(
           padding: const EdgeInsets.all(8),
           child: ConstrainedBox(
@@ -103,7 +112,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
                     child: isNarrow
                         ? CtTabStrip(
                             tabLabels: content.tabLabels,
-                            tabViews: content.tabViews,
+                            tabViews: content.tabViews
+                                .map(
+                                  (w) => SingleChildScrollView(
+                                    physics: const ClampingScrollPhysics(),
+                                    child: w,
+                                  ),
+                                )
+                                .toList(),
                             contentPadding: const EdgeInsets.all(12),
                           )
                         : SingleChildScrollView(
@@ -168,7 +184,7 @@ _OverlayContent _provinceContent({
   required String provinceId,
   required String humanPlayerId,
   required PlayerView playerView,
-  String? hoveredTileKey,
+  String? selectedTileKey,
   void Function(String?)? onHighlightTile,
 }) {
   final parts = provinceId.split('|');
@@ -181,15 +197,17 @@ _OverlayContent _provinceContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isFullyUnrevealed) {
-    final placeholder = _buildSection(
-      'Tile',
-      const Text('???'),
-    );
+    final politicalObs = _buildSection('Political', const Text('???'));
+    final tileObs = _buildSection('Tile', const Text('???'));
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: const [
         Text('Political', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Tile', style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 4),
         Text('???'),
         SizedBox(height: 12),
@@ -211,16 +229,16 @@ _OverlayContent _provinceContent({
       ],
     );
     const tabLabels = [
-      'Tile',
       'Political',
+      'Tile',
       'Economic',
       'Military',
       'Civilian',
       'Naval',
     ];
     final tabViews = [
-      placeholder,
-      const _ObfuscatedSection(),
+      politicalObs,
+      tileObs,
       const _ObfuscatedSection(),
       const _ObfuscatedSection(),
       const _ObfuscatedSection(),
@@ -291,7 +309,7 @@ _OverlayContent _provinceContent({
     provinceId: provinceId,
     humanPlayerId: humanPlayerId,
     civilianCount: visibleCivilianCount,
-    hoveredTileKey: hoveredTileKey,
+    selectedTileKey: selectedTileKey,
   );
   final political = _buildPoliticalSection(
     name: province?.displayName ?? provinceId,
@@ -312,16 +330,16 @@ _OverlayContent _provinceContent({
   final naval = _buildNavalSection(game, fleetsInPort);
 
   const tabLabels = [
-    'Tile',
     'Political',
+    'Tile',
     'Economic',
     'Military',
     'Civilian',
     'Naval',
   ];
   final tabViews = [
-    tileSection,
     political,
+    tileSection,
     economic,
     militarySection,
     civilianSection,
@@ -331,8 +349,8 @@ _OverlayContent _provinceContent({
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      tileSection,
       political,
+      tileSection,
       economic,
       militarySection,
       civilianSection,
@@ -348,12 +366,15 @@ Widget _buildTileSection({
   required String provinceId,
   required String humanPlayerId,
   required int civilianCount,
-  String? hoveredTileKey,
+  String? selectedTileKey,
 }) {
-  if (hoveredTileKey == null) {
-    return _buildSection('Tile', const Text('Hover a tile to see details.'));
+  if (selectedTileKey == null) {
+    return _buildSection(
+      'Tile',
+      const Text('Click a tile to see details.'),
+    );
   }
-  final parts = hoveredTileKey.split('|');
+  final parts = selectedTileKey.split('|');
   if (parts.length < 4 || parts[0] != region.regionId) {
     return _buildSection('Tile', const Text('—'));
   }
@@ -384,11 +405,25 @@ Widget _buildTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
+  const mineralResources = {
+    'iron',
+    'copper',
+    'tin',
+    'coal',
+    'silver',
+    'gold',
+    'gems',
+    'diamonds',
+  };
   final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
-  final resource = resourceByTile[hoveredTileKey] ?? cell.resourceId ?? '—';
-  final isProspected = prospected.contains(hoveredTileKey);
-  final impLevel = tileState.improvementLevel(hoveredTileKey);
-  final roadLevel = cell.isSea ? null : tileState.roadLevel(hoveredTileKey);
+  final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
+  final resource = resourceRaw ?? '—';
+  final prospectable =
+      resourceRaw != null && mineralResources.contains(resourceRaw);
+  final prospectedLabel =
+      !prospectable ? '—' : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
+  final impLevel = tileState.improvementLevel(selectedTileKey);
+  final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
   final roadLabel = roadLevel == null
       ? '—'
       : switch (roadLevel) {
@@ -409,7 +444,7 @@ Widget _buildTileSection({
       Text('Coordinates: ($x, $y)'),
       Text('Terrain: $terrainStr'),
       Text('Resource: $resource'),
-      Text('Prospected: ${isProspected ? 'yes' : 'no'}'),
+      Text('Prospected: $prospectedLabel'),
       Text('Improvement: ${improvementName != null ? '$improvementName L$impLevel' : '—'}'),
       Text('Road / railroad: $roadLabel'),
       Text('Civilian units (province): $civilianCount'),
@@ -421,7 +456,6 @@ _OverlayContent _seaZoneContent({
   required Game game,
   required RegionMapViewData region,
   required String seaZoneId,
-  String? hoveredTileKey,
 }) {
   final parts = seaZoneId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : 'oldWorld';
