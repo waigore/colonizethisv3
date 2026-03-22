@@ -38,6 +38,7 @@ void main() {
           const TopologyEdge(id1: 'p4', id2: 'p8'),
           const TopologyEdge(id1: 'p5', id2: 'p9'),
           const TopologyEdge(id1: 'p6', id2: 'p10'),
+          const TopologyEdge(id1: 'p7', id2: 'sea1'),
         ],
       );
       final owTileMap = TileMapResult(width: 6, height: 2, grid: owGrid);

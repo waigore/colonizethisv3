@@ -271,6 +271,7 @@ void main() {
         final owEdges = <TopologyEdge>[
           const TopologyEdge(id1: 'p1', id2: 'sea1'),
           const TopologyEdge(id1: 'p2', id2: 'sea1'),
+          const TopologyEdge(id1: 'p12', id2: 'sea1'),
           for (var i = 1; i < 12; i++)
             TopologyEdge(id1: 'p$i', id2: 'p${i + 1}'),
         ];
@@ -472,6 +473,7 @@ void main() {
       final owEdges = <TopologyEdge>[
         const TopologyEdge(id1: 'p1', id2: 'sea1'),
         const TopologyEdge(id1: 'p2', id2: 'sea1'),
+        const TopologyEdge(id1: 'p24', id2: 'sea1'),
         for (var i = 1; i < 24; i++) TopologyEdge(id1: 'p$i', id2: 'p${i + 1}'),
       ];
       final owTopology = MapTopology(nodes: owNodes, edges: owEdges);
@@ -1311,6 +1313,9 @@ void main() {
         // Three disconnected land components (e.g. three continents). Four GPs
         // must share landmasses; each GP must still own provinces on only one
         // component (regression: one-GP-per-landmass left some GPs unconstrained).
+        // Continent A needs nine land provinces so fair GP targets (3+3+3+3) can
+        // pack: three GPs on A plus one on B; with only eight on A the greedy
+        // packer drops the GP budget to 11 and repair often exhausts.
         TopologyNode p(String id) => TopologyNode(
               id: id,
               regionId: 'oldWorld',
@@ -1341,6 +1346,7 @@ void main() {
           p('pa6'),
           p('pa7'),
           p('pa8'),
+          p('pa9'),
           p('pb1'),
           p('pb2'),
           p('pb3'),
@@ -1357,7 +1363,9 @@ void main() {
         final owEdges = <TopologyEdge>[
           const TopologyEdge(id1: 'pa1', id2: 'sea_a'),
           const TopologyEdge(id1: 'pa2', id2: 'sea_a'),
-          for (var i = 1; i < 8; i++)
+          const TopologyEdge(id1: 'pa3', id2: 'sea_a'),
+          const TopologyEdge(id1: 'pa9', id2: 'sea_a'),
+          for (var i = 1; i < 9; i++)
             TopologyEdge(id1: 'pa$i', id2: 'pa${i + 1}'),
           const TopologyEdge(id1: 'pb1', id2: 'sea_b'),
           for (var i = 1; i < 4; i++)
@@ -1371,7 +1379,7 @@ void main() {
         // Each province column has sea immediately to its right so every
         // sea-bound province has a coastal tile (capital port placement).
         final owGrid = <List<String>>[
-          for (var i = 0; i < 8; i++)
+          for (var i = 0; i < 9; i++)
             [
               'pa${i + 1}',
               'sea_a',
@@ -1381,7 +1389,7 @@ void main() {
               'sea_c',
             ],
         ];
-        final owTileMap = TileMapResult(width: 6, height: 8, grid: owGrid);
+        final owTileMap = TileMapResult(width: 6, height: 9, grid: owGrid);
 
         final nwGrid = [
           ['nw1', 'sea1'],
@@ -1411,11 +1419,11 @@ void main() {
             'portugal',
           ],
           continentCount: 3,
-          minorNationCount: 0,
+          minorNationCount: 2,
           tribeCount: 1,
-          numProvincesOldWorld: 16,
+          numProvincesOldWorld: 17,
           numProvincesNewWorld: 1,
-          minProvincesPerMinor: 0,
+          minProvincesPerMinor: 2,
           seed: 42,
         );
 
@@ -1436,6 +1444,21 @@ void main() {
           return '?';
         }
 
+        final owPpNeighbours = _provincePpNeighboursForTest(owTopology);
+        final ownersLocal = <String, String>{
+          for (final p in result.game.worldState.oldWorld.provinces)
+            if (p.ownerId != null)
+              ProvinceId.localIdFrom(p.id): p.ownerId!,
+        };
+        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4']) {
+          expect(
+            gpProvincesAreLandConnected(gpId, ownersLocal, owPpNeighbours),
+            isTrue,
+            reason:
+                '$gpId must have a single P–P connected OW territory (no island provinces)',
+          );
+        }
+
         for (final player in result.game.players) {
           final owned = result.game.worldState.oldWorld.provinces
               .where((p) => p.ownerId == player.id)
@@ -1454,4 +1477,23 @@ void main() {
       },
     );
   });
+}
+
+/// P–P adjacency only (mirrors game_setup private helper) for setup tests.
+Map<String, Set<String>> _provincePpNeighboursForTest(MapTopology topology) {
+  final provinces = {
+    for (final n in topology.nodes)
+      if (n.type == TopologyNodeType.province) n.id,
+  };
+  final neighbours = <String, Set<String>>{
+    for (final id in provinces) id: <String>{},
+  };
+  for (final edge in topology.edges) {
+    final a = edge.id1;
+    final b = edge.id2;
+    if (!provinces.contains(a) || !provinces.contains(b)) continue;
+    neighbours[a]!.add(b);
+    neighbours[b]!.add(a);
+  }
+  return neighbours;
 }
