@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
+import 'town_icon_cache.dart';
 
 final _log = gameLogger();
 
@@ -107,6 +108,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.selectedTileKey,
     this.secondaryHighlightTileKey,
     this.validTileKeys,
+    this.onTownIconTapped,
   });
 
   RegionMapViewData region;
@@ -127,6 +129,7 @@ class CtRegionMapComponent extends PositionComponent {
   String? selectedTileKey;
   String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
+  void Function(String provinceId)? onTownIconTapped;
 
   int? _hoveredTileX;
   int? _hoveredTileY;
@@ -141,13 +144,18 @@ class CtRegionMapComponent extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await Future.wait([terrainTilesetCache.load(), resourceIconCache.load()]);
+    await Future.wait([
+      terrainTilesetCache.load(),
+      resourceIconCache.load(),
+      townIconCache.load(),
+    ]);
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
       'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
-      'ResourceIconCache loaded: ${resourceIconCache.isLoaded}',
+      'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
+      'TownIconCache loaded: ${townIconCache.isLoaded}',
     );
     size = Vector2(region.width * cellSize, region.height * cellSize);
   }
@@ -219,9 +227,25 @@ class CtRegionMapComponent extends PositionComponent {
       return;
     }
     // Not in work target mode: allow province selection.
+    // Check if tap is on a town icon first.
+    final tappedTown = _getTownAtTile(x, y);
+    if (tappedTown != null) {
+      final provinceId = '${region.regionId}|${tappedTown.provinceId}';
+      onTownIconTapped?.call(provinceId);
+      return;
+    }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
     onProvinceSelected?.call(provinceId);
+  }
+
+  TownMarkerView? _getTownAtTile(int x, int y) {
+    for (final town in region.townMarkers) {
+      if (town.x == x && town.y == y) {
+        return town;
+      }
+    }
+    return null;
   }
 
   @override
@@ -242,7 +266,7 @@ class CtRegionMapComponent extends PositionComponent {
       _paintProvinceNames(canvas);
     }
     _paintCapitals(canvas);
-    _paintPorts(canvas);
+    _paintTowns(canvas);
     _paintWarpZones(canvas);
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
@@ -1043,21 +1067,52 @@ class CtRegionMapComponent extends PositionComponent {
     }
   }
 
-  void _paintPorts(Canvas canvas) {
-    final fill = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0xFF00648C);
-    final stroke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = Colors.black;
-    const half = 4.0;
-    for (final port in region.portMarkers) {
-      final cx = port.x * cellSize + cellSize / 2;
-      final cy = port.y * cellSize + cellSize / 2;
-      final rect = Rect.fromLTWH(cx - half, cy - half, half * 2, half * 2);
-      canvas.drawRect(rect, fill);
-      canvas.drawRect(rect, stroke);
+  void _paintTowns(Canvas canvas) {
+    if (!townIconCache.isLoaded) return;
+
+    for (final town in region.townMarkers) {
+      final cell = region.cellAt(town.x, town.y);
+
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
+        if (cell.visibility == TileVisibility.unrevealed) {
+          continue;
+        }
+      }
+
+      String iconId;
+      if (town.isPort) {
+        iconId = 'port';
+      } else if (town.isCoastal) {
+        iconId = 'town_coastal';
+      } else {
+        iconId = 'town_inland';
+      }
+      final icon = townIconCache.getIcon(iconId);
+      if (icon == null) continue;
+
+      final cx = town.x * cellSize + cellSize / 2;
+      final cy = town.y * cellSize + cellSize / 2;
+      final halfIcon = TownIconCache.iconSize / 2;
+
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        TownIconCache.iconSize,
+        TownIconCache.iconSize,
+      );
+      final dstRect = Rect.fromLTWH(
+        cx - halfIcon,
+        cy - halfIcon,
+        TownIconCache.iconSize,
+        TownIconCache.iconSize,
+      );
+
+      var paint = Paint();
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.fogged) {
+        paint.color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity);
+      }
+      canvas.drawImageRect(icon, srcRect, dstRect, paint);
     }
   }
 
