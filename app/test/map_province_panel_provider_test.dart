@@ -1,7 +1,10 @@
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('MapProvincePanelNotifier', () {
     test('reportMapTileTapped opens overlay and sets selection', () {
       final n = MapProvincePanelNotifier();
