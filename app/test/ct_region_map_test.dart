@@ -678,7 +678,7 @@ void main() {
 
         // Verify all resource icon assets exist and are non-empty
         for (final resourceId in kResourceIconIds) {
-          final path = 'assets/images/ui_icon_com_$resourceId.png';
+          final path = 'assets/icons/ui_icon_com_$resourceId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -699,7 +699,7 @@ void main() {
         var loadedCount = 0;
         await tester.runAsync(() async {
           for (final resourceId in kResourceIconIds) {
-            final path = 'assets/images/ui_icon_com_$resourceId.png';
+            final path = 'assets/icons/ui_icon_com_$resourceId.png';
             try {
               final data = await rootBundle.load(path);
               if (data.lengthInBytes > 0) {

@@ -7,8 +7,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/strict_asset_icon.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 class TechNodePosition {
@@ -38,14 +40,14 @@ const Map<String, Color> _categoryColors = {
 
 /// Category icon map. SPEC/ui/tech-tree-widget.md: one icon per category.
 const Map<String, String> _categoryIcons = {
-  'gathering': 'assets/images/ui_icon_tech_gathering.png',
-  'new-world': 'assets/images/ui_icon_tech_new_world.png',
-  'transport': 'assets/images/ui_icon_tech_transport.png',
-  'labour': 'assets/images/ui_icon_tech_labour.png',
-  'civilian': 'assets/images/ui_icon_tech_civilian.png',
-  'diplomacy': 'assets/images/ui_icon_tech_diplomacy.png',
-  'naval': 'assets/images/ui_icon_tech_naval.png',
-  'military': 'assets/images/ui_icon_tech_military.png',
+  'gathering': '${kAppIconAssetPrefix}ui_icon_tech_gathering.png',
+  'new-world': '${kAppIconAssetPrefix}ui_icon_tech_new_world.png',
+  'transport': '${kAppIconAssetPrefix}ui_icon_tech_transport.png',
+  'labour': '${kAppIconAssetPrefix}ui_icon_tech_labour.png',
+  'civilian': '${kAppIconAssetPrefix}ui_icon_tech_civilian.png',
+  'diplomacy': '${kAppIconAssetPrefix}ui_icon_tech_diplomacy.png',
+  'naval': '${kAppIconAssetPrefix}ui_icon_tech_naval.png',
+  'military': '${kAppIconAssetPrefix}ui_icon_tech_military.png',
 };
 
 const double _nodeWidth = 100;
@@ -537,12 +539,10 @@ class _TechNode extends StatelessWidget {
                   if (_categoryIcons.containsKey(tech.category))
                     Padding(
                       padding: const EdgeInsets.only(right: 3),
-                      child: Image.asset(
-                        _categoryIcons[tech.category]!,
+                      child: StrictAssetIcon(
+                        assetPath: _categoryIcons[tech.category]!,
                         width: 16,
                         height: 16,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox(width: 16, height: 16),
                       ),
                     ),
                   Flexible(

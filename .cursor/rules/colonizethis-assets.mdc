@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Asset Structure
 
-- **Dirs:** `assets/images/` (sprites, UI; optional `sprites/`, `ui/`); `assets/audio/` (e.g. `music/`, `sfx/`); `assets/data/` (e.g. rulesets).
+- **Dirs:** `assets/images/` (sprites, UI chrome not using `ui_icon_` prefix, terrain); `assets/icons/` (`ui_icon_*.png` toolbar, commodity, tech category, lock, etc.); `assets/audio/` (e.g. `music/`, `sfx/`); `assets/data/` (e.g. rulesets).
 - **Naming:** Snake_case; optional domain prefix (`unit_`, `terrain_`, `ui_`). Example: `unit_swordmaster_idle.png`.
 - **pubspec.yaml:** List dirs under `flutter: assets:`; don’t commit large binaries; `.gitignore` generated/temp as needed.
 - **Flame:** Load in `onLoad()` via Flame APIs; cache and reuse — never load same asset every frame.

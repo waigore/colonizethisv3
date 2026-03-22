@@ -8,7 +8,7 @@ The production panel lets the player allocate production by setting **desired ou
 
 ## Resource and Worker Icons
 
-Asset filenames and style for commodities and workers appear in [game-toolbar-icons.md](game-toolbar-icons.md) § Resource & Worker Icons (Production Panel). **Usage:** (1) **Available** — icon before each commodity/worker line; (2) **Allocation** — icon before the **output** commodity name on each recipe row (input materials are listed by name in parentheses).
+Asset filenames and style for commodities and workers appear in [game-toolbar-icons.md](game-toolbar-icons.md) § Resource & Worker Icons (Production Panel); bundle paths are `assets/icons/<filename>` with `StrictAssetIcon` / `ResourceIconCache` per that spec. **Usage:** (1) **Available** — icon before each commodity/worker line; (2) **Allocation** — icon before the **output** commodity name on each recipe row (input materials are listed by name in parentheses).
 
 ## Layout
 

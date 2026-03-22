@@ -30,7 +30,7 @@ Each tech node displays a **category icon** to the left of its label. Icons are 
 | naval | `ui_icon_tech_naval.png` | Ship/anchor icon |
 | military | `ui_icon_tech_military.png` | Crossed swords or shield |
 
-**File naming:** `ui_icon_tech_<category>.png` in `app/assets/images/`.
+**File naming:** `ui_icon_tech_<category>.png` in `app/assets/icons/` (same directory as other `ui_icon_*.png` files; see [game-toolbar-icons.md](game-toolbar-icons.md)).
 
 **Size:** 32×32, matching toolbar icons per [game-toolbar-icons.md](game-toolbar-icons.md).
 
@@ -38,18 +38,18 @@ Each tech node displays a **category icon** to the left of its label. Icons are 
 
 ### Implementation
 
-The widget reads `tech.category` and looks up the icon path via a static map:
+The widget reads `tech.category` and looks up the icon path via a static map (`kAppIconAssetPrefix` is `assets/icons/` from `lib/config/app_assets.dart`). Render with `StrictAssetIcon` so a missing or invalid file throws `FlutterError` (no silent placeholder).
 
 ```dart
 static const Map<String, String> _categoryIcons = {
-  'gathering': 'assets/images/ui_icon_tech_gathering.png',
-  'new-world': 'assets/images/ui_icon_tech_new_world.png',
-  'transport': 'assets/images/ui_icon_tech_transport.png',
-  'labour': 'assets/images/ui_icon_tech_labour.png',
-  'civilian': 'assets/images/ui_icon_tech_civilian.png',
-  'diplomacy': 'assets/images/ui_icon_tech_diplomacy.png',
-  'naval': 'assets/images/ui_icon_tech_naval.png',
-  'military': 'assets/images/ui_icon_tech_military.png',
+  'gathering': '${kAppIconAssetPrefix}ui_icon_tech_gathering.png',
+  'new-world': '${kAppIconAssetPrefix}ui_icon_tech_new_world.png',
+  'transport': '${kAppIconAssetPrefix}ui_icon_tech_transport.png',
+  'labour': '${kAppIconAssetPrefix}ui_icon_tech_labour.png',
+  'civilian': '${kAppIconAssetPrefix}ui_icon_tech_civilian.png',
+  'diplomacy': '${kAppIconAssetPrefix}ui_icon_tech_diplomacy.png',
+  'naval': '${kAppIconAssetPrefix}ui_icon_tech_naval.png',
+  'military': '${kAppIconAssetPrefix}ui_icon_tech_military.png',
 };
 ```
 

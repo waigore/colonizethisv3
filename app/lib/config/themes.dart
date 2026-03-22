@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// App themes. Phase 6: pixel-art canon and styling per UXD apply to existing UIs (03a–03m).
-/// Asset pipeline: assets/images/; load in Flame/Flutter via rootBundle or Flame cache.
+/// Asset pipeline: `assets/images/` (terrain, nine-patch, main menu art); `assets/icons/` (`ui_icon_*.png`); load via rootBundle or Flame cache.
 class AppThemes {
   AppThemes._();
 

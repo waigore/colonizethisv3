@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/app_assets.dart';
+import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 
 /// Top-left corner buttons for the in-game map.
@@ -30,8 +32,8 @@ class GameMapCornerControls extends StatelessWidget {
               onTap: onCycleBaseLayerDisplayMode,
               child: Padding(
                 padding: const EdgeInsets.all(6),
-                child: Image.asset(
-                  'assets/images/ui_icon_layer_toggle.png',
+                child: StrictAssetIcon(
+                  assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
                   width: 20,
                   height: 20,
                 ),
@@ -49,8 +51,8 @@ class GameMapCornerControls extends StatelessWidget {
               onTap: onCenterOnHomeCapital,
               child: Padding(
                 padding: const EdgeInsets.all(6),
-                child: Image.asset(
-                  'assets/images/ui_icon_home_capital.png',
+                child: StrictAssetIcon(
+                  assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
                   width: 20,
                   height: 20,
                 ),
@@ -68,8 +70,8 @@ class GameMapCornerControls extends StatelessWidget {
               onTap: onOpenMapDisplayOptions,
               child: Padding(
                 padding: const EdgeInsets.all(6),
-                child: Image.asset(
-                  'assets/images/ui_icon_map_options.png',
+                child: StrictAssetIcon(
+                  assetPath: '${kAppIconAssetPrefix}ui_icon_map_options.png',
                   width: 20,
                   height: 20,
                 ),
