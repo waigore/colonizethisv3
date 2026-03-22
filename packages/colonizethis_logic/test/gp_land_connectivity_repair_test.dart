@@ -1,5 +1,6 @@
+import 'package:colonizethis_test/test.dart';
+
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('gpProvincesAreLandConnected', () {
