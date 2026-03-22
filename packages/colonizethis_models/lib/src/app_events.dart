@@ -86,20 +86,17 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
   final void Function()? onResume;
 }
 
-/// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod;
-/// callbacks bridge map/shell behavior (locate, work orders, target pick).
+/// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod.
+/// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
+/// closures on this event — see SPEC/program/app-event-bus.md.
 class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   OpenCivilianUnitsPanelEvent({
     required this.onLocateUnit,
-    required this.onRemoveWorkOrder,
-    required this.onCancelUnitWork,
     required this.onStartWorkTargetSelection,
     this.onPanelDismissed,
   });
 
   final void Function(Unit unit) onLocateUnit;
-  final void Function(String playerId, int index) onRemoveWorkOrder;
-  final void Function(String unitId) onCancelUnitWork;
   final void Function(Unit unit, String workTarget) onStartWorkTargetSelection;
 
   /// Invoked when the bottom sheet route is popped (any reason).
@@ -117,16 +114,14 @@ class OpenMilitaryUnitsPanelEvent extends UIActionEvent {
   final void Function()? onPanelDismissed;
 }
 
-/// Naval units bottom sheet.
+/// Naval units bottom sheet. Fleet mutations emit [NavalFleetsUpdatedEvent] from the panel.
 class OpenNavalUnitsPanelEvent extends UIActionEvent {
   OpenNavalUnitsPanelEvent({
     required this.onLocateFleet,
-    required this.onFleetsChanged,
     this.onPanelDismissed,
   });
 
   final void Function(String tileKey, String regionId) onLocateFleet;
-  final void Function(Game game) onFleetsChanged;
   final void Function()? onPanelDismissed;
 }
 
@@ -160,6 +155,44 @@ class GrantOrSubsidySubmittedEvent extends UIActionEvent {
   final String targetFactionId;
   final int amount;
   final bool isSubsidy;
+}
+
+// ---------------------------------------------------------------------------
+// SessionCommandEvent — applied by long-lived shell listeners, not AppEventHandler.
+// ---------------------------------------------------------------------------
+
+/// Session-scoped commands: listeners use a stable [ProviderScope] ref (e.g.
+/// [AppEventHandlerScope]). **Do not** capture [WidgetRef] from widgets that
+/// unmount when opening panels (side menus, sheets). SPEC/program/app-event-bus.md.
+sealed class SessionCommandEvent extends AppEvent {
+  const SessionCommandEvent();
+}
+
+/// Remove pending civilian work order at [index] for [playerId] in current-turn
+/// draft. Shell listener applies the canonical mutation from colonizethis_logic.
+class RemovePendingWorkOrderRequestedEvent extends SessionCommandEvent {
+  RemovePendingWorkOrderRequestedEvent({
+    required this.playerId,
+    required this.index,
+  });
+
+  final String playerId;
+  final int index;
+}
+
+/// Clear in-progress civilian work for [unitId] (no refund). Shell listener
+/// applies the canonical mutation from colonizethis_logic and persists game.
+class CancelInProgressCivilianWorkRequestedEvent extends SessionCommandEvent {
+  CancelInProgressCivilianWorkRequestedEvent({required this.unitId});
+
+  final String unitId;
+}
+
+/// Naval panel produced an updated [game] (split/combine). Handler updates session game.
+class NavalFleetsUpdatedEvent extends SessionCommandEvent {
+  NavalFleetsUpdatedEvent({required this.game});
+
+  final Game game;
 }
 
 // ---------------------------------------------------------------------------

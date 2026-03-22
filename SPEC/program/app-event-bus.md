@@ -10,6 +10,13 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 ---
 
+## Principles
+
+- **Stable handlers, not ephemeral refs:** Panels, side menus, and routes that close before an async action completes must not capture `WidgetRef` or other context that becomes invalid on dispose. Emit a typed **command event** (e.g. `SessionCommandEvent`); a **long-lived** shell listener (e.g. `AppEventHandlerScope`) applies mutations using a stable ref.
+- **No coupling on sibling mount state:** Do not assume another widget is still mounted when handling user actions. The emitter publishes intent; the subscriber owns session state and may outlive any single panel.
+
+---
+
 ## Architecture
 
 ```
@@ -45,6 +52,7 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 
 - **`UIActionEvent`** — dialogs, navigation, panels, target selection, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
+- **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**.
 - **`UISystemEvent`** — snackbar, overlay, notify.
 - **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
 
@@ -64,6 +72,7 @@ class AppEventBus {
   Stream<UIActionEvent>  get uiActionEvents;
   Stream<UISystemEvent>  get uiSystemEvents;
   Stream<GameToUIEvent>  get gameToUIEvents;
+  Stream<SessionCommandEvent> get sessionCommandEvents;
   Stream<DialogueEvent>  get dialogueEvents;
   Stream<PortraitMoodEvent> get portraitMoodEvents;
 
@@ -113,6 +122,17 @@ class AppEventHandler {
 - **`OvertureRequiredEvent`** when `runTurnResolution` or `resumeOvertureDecisions` returns **`TurnResolutionPendingOvertures`**
 
 When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnForGame`** / **`resumeTurnResolutionWithOvertureDecisions`** so **`GameEventBridge`** can subscribe and map logic **`GameEvent`** instances to **`GameToUIEvent`** on the app bus. **Full bridge:** **SPEC/program/game-event-bridge.md**.
+
+**Typed panels** (shell **`AppEventHandler`**): full **`Ref` / callback rules** in **[app-ui-wiring.md](app-ui-wiring.md)**.
+
+| Event | Opened by | Handler builds |
+|-------|-----------|----------------|
+| `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
+| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`) |
+| `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
+| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`) |
+
+**Civilian / naval work and fleets:** `CivilianUnitsPanel` emits `RemovePendingWorkOrderRequestedEvent` and `CancelInProgressCivilianWorkRequestedEvent`; `NavalUnitsPanel` emits `NavalFleetsUpdatedEvent` after split/combine. `AppEventHandlerScope` subscribes and updates `currentOrdersProvider` / `currentGameProvider` using `colonizethis_logic` (`removePendingWorkOrderAt`, `clearUnitCurrentWork`). Panels do not receive Riverpod `ref` for those mutations.
 
 **Consumption:** No single shell subscriber. Each screen that must react listens (e.g. **`GameToUIBusListener`**) and reloads **`currentGameProvider`** when **`gameId`** matches.
 

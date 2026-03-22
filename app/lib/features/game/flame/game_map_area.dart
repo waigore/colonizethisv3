@@ -227,14 +227,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  void _cancelUnitWork(String unitId) {
-    final game = ref.read(currentGameProvider);
-    if (game == null) return;
-    final newGame = clearUnitCurrentWork(game, unitId);
-    ref.read(currentGameProvider.notifier).state = newGame;
-    ref.read(gameServiceProvider).saveGame(newGame);
-  }
-
   Future<void> _onNextTurn() async {
     final game = ref.read(currentGameProvider);
     if (game == null) return;
@@ -402,7 +394,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     onLocateCivilianUnit: _onLocateCivilianUnit,
                     onLocateMilitaryTile: _onLocateMilitaryTile,
                     onLocateNavalFleet: _onLocateNavalFleet,
-                    onCancelUnitWork: _cancelUnitWork,
                     onStartWorkTargetSelection: (unit, workTarget) {
                       setState(() {
                         _workTargetSelection = (

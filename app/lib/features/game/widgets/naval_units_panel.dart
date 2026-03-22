@@ -423,14 +423,14 @@ class NavalUnitsPanel extends StatefulWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    required this.bus,
     this.onLocateFleet,
-    this.onFleetsChanged,
   });
 
   final Game game;
   final String humanPlayerId;
+  final AppEventBus bus;
   final void Function(String tileKey, String regionId)? onLocateFleet;
-  final void Function(Game newGame)? onFleetsChanged;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -514,7 +514,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
 
     _cancelCombine();
-    widget.onFleetsChanged?.call(newGame);
+    widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
   void _cancelCombine() {
@@ -582,7 +582,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       worldState: widget.game.worldState.copyWith(fleets: updatedFleets),
     );
 
-    widget.onFleetsChanged?.call(newGame);
+    widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
   @override

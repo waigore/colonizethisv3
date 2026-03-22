@@ -99,8 +99,6 @@ class CivilianUnitsPanel extends StatelessWidget {
     this.availableWorkTargets = const {},
     this.onLocateUnit,
     this.onAddWorkOrder,
-    this.onRemoveWorkOrder,
-    this.onCancelUnitWork,
     this.onStartWorkTargetSelection,
   });
 
@@ -117,8 +115,6 @@ class CivilianUnitsPanel extends StatelessWidget {
   /// Called when the user taps a unit row; [unit] has non-null [Unit.tileKey].
   final void Function(Unit unit)? onLocateUnit;
   final void Function(WorkOrder order)? onAddWorkOrder;
-  final void Function(String playerId, int index)? onRemoveWorkOrder;
-  final void Function(String unitId)? onCancelUnitWork;
 
   /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
@@ -188,8 +184,6 @@ class CivilianUnitsPanel extends StatelessWidget {
                                     ? () => onLocateUnit!(u)
                                     : null,
                                 onAddWorkOrder: onAddWorkOrder,
-                                onRemoveWorkOrder: onRemoveWorkOrder,
-                                onCancelUnitWork: onCancelUnitWork,
                                 onStartWorkTargetSelection:
                                     onStartWorkTargetSelection,
                               ),
@@ -209,8 +203,6 @@ class CivilianUnitsPanel extends StatelessWidget {
                                     ? () => onLocateUnit!(u)
                                     : null,
                                 onAddWorkOrder: onAddWorkOrder,
-                                onRemoveWorkOrder: onRemoveWorkOrder,
-                                onCancelUnitWork: onCancelUnitWork,
                                 onStartWorkTargetSelection:
                                     onStartWorkTargetSelection,
                               ),
@@ -271,8 +263,6 @@ class _UnitRow extends StatelessWidget {
     required this.bus,
     this.onTap,
     this.onAddWorkOrder,
-    this.onRemoveWorkOrder,
-    this.onCancelUnitWork,
     this.onStartWorkTargetSelection,
   });
 
@@ -284,8 +274,6 @@ class _UnitRow extends StatelessWidget {
   final AppEventBus bus;
   final VoidCallback? onTap;
   final void Function(WorkOrder order)? onAddWorkOrder;
-  final void Function(String playerId, int index)? onRemoveWorkOrder;
-  final void Function(String unitId)? onCancelUnitWork;
   final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
   List<WorkOrder> get _pendingForPlayer =>
@@ -416,10 +404,15 @@ class _UnitRow extends StatelessWidget {
     final confirmed = await completer.future;
     if (!confirmed || !context.mounted) return;
     final idx = _pendingIndex;
-    if (idx != null && onRemoveWorkOrder != null) {
-      onRemoveWorkOrder!(humanPlayerId, idx);
-    } else if (unit.currentWork != null && onCancelUnitWork != null) {
-      onCancelUnitWork!(unit.id);
+    if (idx != null) {
+      bus.emit(
+        RemovePendingWorkOrderRequestedEvent(
+          playerId: humanPlayerId,
+          index: idx,
+        ),
+      );
+    } else if (unit.currentWork != null) {
+      bus.emit(CancelInProgressCivilianWorkRequestedEvent(unitId: unit.id));
     }
   }
 
@@ -451,8 +444,7 @@ class _UnitRow extends StatelessWidget {
               onPressed: () => _showOrderMenu(context),
               child: const Text('Assign'),
             ),
-          if (_hasWork &&
-              (onRemoveWorkOrder != null || onCancelUnitWork != null))
+          if (_hasWork)
             CtNinePatchButton(
               onPressed: () => _confirmCancel(context),
               child: const Text('Cancel'),
