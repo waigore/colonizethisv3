@@ -11,7 +11,7 @@ final gameSaveAdapterProvider = Provider<GameSaveAdapter>(
   (ref) => GameSaveAdapter(),
 );
 
-final gameEventBridgeProvider = Provider<GameEventBridge?>((ref) {
+final gameEventBridgeProvider = Provider<GameEventBridge>((ref) {
   final appBus = ref.watch(appEventBusProvider);
   final logicBus = DefaultGameEventBus();
   final bridge = GameEventBridge(logicBus: logicBus, appBus: appBus);
@@ -28,6 +28,6 @@ final gameServiceProvider = Provider<GameService>((ref) {
 
   final service = GameService(box, adapter);
   service.eventBus = bus;
-  service.logicEventBus = bridge?.logicBus;
+  service.logicEventBus = bridge.logicBus;
   return service;
 });
