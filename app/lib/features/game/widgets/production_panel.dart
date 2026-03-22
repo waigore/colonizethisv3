@@ -336,7 +336,7 @@ class _AllocationSubpanel extends StatelessWidget {
     final labourInsufficient = totalRequiredLabour > effectiveLabour;
 
     return CtPanel(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -369,6 +369,14 @@ class _AllocationSubpanel extends StatelessWidget {
                   : maxAchievable
                         .clamp(1, kProductionAllocationSliderCap)
                         .toDouble();
+              final comfortHeadroom = recipeAllocationComfortHeadroomActive(
+                recipe: recipe,
+                desiredOutput: desired,
+                maxDesiredOutput: maxAchievable,
+                stockpile: player.stockpile,
+                desiredOutputByRecipe: desiredOutputByRecipe,
+                effectiveLabour: effectiveLabour,
+              );
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -407,6 +415,7 @@ class _AllocationSubpanel extends StatelessWidget {
                                     1,
                                     kProductionAllocationSliderCap,
                                   ),
+                            comfortHeadroomActive: comfortHeadroom,
                             onChanged: (v) {
                               final next = Map<String, int>.from(
                                 desiredOutputByRecipe,
