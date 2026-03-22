@@ -27,7 +27,10 @@ class GameService {
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
 
-  /// Optional app-level event bus for GameToUIEvent emission (TurnResolutionComplete, OvertureRequired, etc.).
+  /// Optional app-level bus for [GameToUIEvent] (turn complete, new game, overtures, etc.).
+  /// When set, those events are emitted from turn resolution and [createNewGame].
+  /// Logic-layer [GameEvent] still uses [runTurnResolution] / [resumeOvertureDecisions]
+  /// `onGameEvent` when provided. SPEC/program/app-event-bus.md.
   AppEventBus? eventBus;
 
   /// Optional logic-level event bus for GameEvent forwarding to AppEventBus via GameEventBridge.

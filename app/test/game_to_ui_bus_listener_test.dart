@@ -1,4 +1,4 @@
-// SPEC/program/app-event-bus.md — GameToUI per-screen subscription.
+// SPEC/program/app-event-bus.md — GameToUI per-screen subscription (architecture).
 
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';

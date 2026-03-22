@@ -1,27 +1,13 @@
 /// Quick Battle models. SPEC/game/quick-battle.md, quick-battle-resolution.md.
 
 /// Lane position. LEFT, CENTER, RIGHT, RESERVE.
-enum QuickBattleLane {
-  left,
-  center,
-  right,
-  reserve,
-}
+enum QuickBattleLane { left, center, right, reserve }
 
 /// Line position. FRONT, SUPPORT (non-reserve lanes only).
-enum QuickBattleLine {
-  front,
-  support,
-}
+enum QuickBattleLine { front, support }
 
 /// Lane terrain tag. Modifies combat strength per quick-battle-resolution.
-enum QuickBattleLaneTerrain {
-  open,
-  hill,
-  woods,
-  town,
-  swamp,
-}
+enum QuickBattleLaneTerrain { open, hill, woods, town, swamp }
 
 /// CP-based action. SPEC/game/quick-battle.md.
 enum QuickBattleAction {
@@ -59,20 +45,19 @@ class QuickBattleGroup {
     QuickBattleLine? line,
     List<String>? unitIds,
     int? cohesion,
-  }) =>
-      QuickBattleGroup(
-        lane: lane ?? this.lane,
-        line: line ?? this.line,
-        unitIds: unitIds ?? this.unitIds,
-        cohesion: cohesion ?? this.cohesion,
-      );
+  }) => QuickBattleGroup(
+    lane: lane ?? this.lane,
+    line: line ?? this.line,
+    unitIds: unitIds ?? this.unitIds,
+    cohesion: cohesion ?? this.cohesion,
+  );
 
   Map<String, dynamic> toJson() => {
-        'lane': lane.name,
-        'line': line.name,
-        'unitIds': unitIds,
-        'cohesion': cohesion,
-      };
+    'lane': lane.name,
+    'line': line.name,
+    'unitIds': unitIds,
+    'cohesion': cohesion,
+  };
 
   static QuickBattleGroup fromJson(Map<String, dynamic> json) =>
       QuickBattleGroup(
@@ -91,6 +76,83 @@ class QuickBattleGroup {
       );
 }
 
+/// Virtual emplaced fort gun at Quick Battle input build time. Not a [Unit] in WorldState.
+/// SPEC/program/quick-battle-resolution.md, SPEC/game/quick-battle.md.
+class QuickBattleEmplacedGun {
+  const QuickBattleEmplacedGun({
+    required this.id,
+    required this.maxHp,
+    required this.hp,
+    required this.attackStrength,
+    required this.defenseStrength,
+    required this.rng,
+  });
+
+  final String id;
+  final int maxHp;
+  final int hp;
+  final double attackStrength;
+  final double defenseStrength;
+  final int rng;
+
+  QuickBattleEmplacedGun copyWith({
+    String? id,
+    int? maxHp,
+    int? hp,
+    double? attackStrength,
+    double? defenseStrength,
+    int? rng,
+  }) => QuickBattleEmplacedGun(
+    id: id ?? this.id,
+    maxHp: maxHp ?? this.maxHp,
+    hp: hp ?? this.hp,
+    attackStrength: attackStrength ?? this.attackStrength,
+    defenseStrength: defenseStrength ?? this.defenseStrength,
+    rng: rng ?? this.rng,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'maxHp': maxHp,
+    'hp': hp,
+    'attackStrength': attackStrength,
+    'defenseStrength': defenseStrength,
+    'rng': rng,
+  };
+
+  static QuickBattleEmplacedGun fromJson(Map<String, dynamic> json) =>
+      QuickBattleEmplacedGun(
+        id: json['id'] as String,
+        maxHp: json['maxHp'] as int,
+        hp: json['hp'] as int,
+        attackStrength: (json['attackStrength'] as num).toDouble(),
+        defenseStrength: (json['defenseStrength'] as num).toDouble(),
+        rng: json['rng'] as int,
+      );
+}
+
+/// Per-gun state after Quick Battle (for determinism AC / replay).
+class QuickBattleEmplacedGunOutcome {
+  const QuickBattleEmplacedGunOutcome({
+    required this.id,
+    required this.hp,
+    required this.destroyed,
+  });
+
+  final String id;
+  final int hp;
+  final bool destroyed;
+
+  Map<String, dynamic> toJson() => {'id': id, 'hp': hp, 'destroyed': destroyed};
+
+  static QuickBattleEmplacedGunOutcome fromJson(Map<String, dynamic> json) =>
+      QuickBattleEmplacedGunOutcome(
+        id: json['id'] as String,
+        hp: json['hp'] as int,
+        destroyed: json['destroyed'] as bool? ?? false,
+      );
+}
+
 /// Deployment for one side (attacker or defender).
 class QuickBattleDeployment {
   const QuickBattleDeployment({
@@ -104,23 +166,25 @@ class QuickBattleDeployment {
   QuickBattleDeployment copyWith({
     List<QuickBattleGroup>? groups,
     Map<String, QuickBattleLaneTerrain>? laneTerrain,
-  }) =>
-      QuickBattleDeployment(
-        groups: groups ?? this.groups,
-        laneTerrain: laneTerrain ?? this.laneTerrain,
-      );
+  }) => QuickBattleDeployment(
+    groups: groups ?? this.groups,
+    laneTerrain: laneTerrain ?? this.laneTerrain,
+  );
 
   Map<String, dynamic> toJson() => {
-        'groups': groups.map((g) => g.toJson()).toList(),
-        'laneTerrain': laneTerrain.map((k, v) => MapEntry(k, v.name)),
-      };
+    'groups': groups.map((g) => g.toJson()).toList(),
+    'laneTerrain': laneTerrain.map((k, v) => MapEntry(k, v.name)),
+  };
 
   static QuickBattleDeployment fromJson(Map<String, dynamic> json) {
     final groupsList = json['groups'] as List<dynamic>? ?? [];
     final terrainRaw = json['laneTerrain'] as Map<dynamic, dynamic>? ?? {};
     return QuickBattleDeployment(
       groups: groupsList
-          .map((e) => QuickBattleGroup.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) =>
+                QuickBattleGroup.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList(),
       laneTerrain: terrainRaw.map(
         (k, v) => MapEntry(
@@ -146,6 +210,7 @@ class QuickBattleInput {
     required this.attackerDeployment,
     required this.defenderDeployment,
     this.fortLevel = 0,
+    this.emplacedGuns = const [],
     this.provinceTerrain = 'plains',
     this.seed = 0,
     this.maxRounds = 3,
@@ -160,28 +225,34 @@ class QuickBattleInput {
   final QuickBattleDeployment attackerDeployment;
   final QuickBattleDeployment defenderDeployment;
   final int fortLevel;
+
+  /// Virtual emplaced guns (siege). Empty when [fortLevel] == 0 or no fort.
+  final List<QuickBattleEmplacedGun> emplacedGuns;
   final String provinceTerrain;
   final int seed;
   final int maxRounds;
+
   /// Leader combat bonus multiplier for attacker side. SPEC/game/leader-bonuses.md.
   final double attackerLeaderMultiplier;
+
   /// Leader combat bonus multiplier for defender side. SPEC/game/leader-bonuses.md.
   final double defenderLeaderMultiplier;
 
   Map<String, dynamic> toJson() => {
-        'attackerFactionId': attackerFactionId,
-        'defenderFactionId': defenderFactionId,
-        'provinceId': provinceId,
-        'regionId': regionId,
-        'attackerDeployment': attackerDeployment.toJson(),
-        'defenderDeployment': defenderDeployment.toJson(),
-        'fortLevel': fortLevel,
-        'provinceTerrain': provinceTerrain,
-        'seed': seed,
-        'maxRounds': maxRounds,
-        'attackerLeaderMultiplier': attackerLeaderMultiplier,
-        'defenderLeaderMultiplier': defenderLeaderMultiplier,
-      };
+    'attackerFactionId': attackerFactionId,
+    'defenderFactionId': defenderFactionId,
+    'provinceId': provinceId,
+    'regionId': regionId,
+    'attackerDeployment': attackerDeployment.toJson(),
+    'defenderDeployment': defenderDeployment.toJson(),
+    'fortLevel': fortLevel,
+    'emplacedGuns': emplacedGuns.map((g) => g.toJson()).toList(),
+    'provinceTerrain': provinceTerrain,
+    'seed': seed,
+    'maxRounds': maxRounds,
+    'attackerLeaderMultiplier': attackerLeaderMultiplier,
+    'defenderLeaderMultiplier': defenderLeaderMultiplier,
+  };
 
   static QuickBattleInput fromJson(Map<String, dynamic> json) =>
       QuickBattleInput(
@@ -196,6 +267,13 @@ class QuickBattleInput {
           Map<String, dynamic>.from(json['defenderDeployment'] as Map),
         ),
         fortLevel: json['fortLevel'] as int? ?? 0,
+        emplacedGuns: (json['emplacedGuns'] as List<dynamic>? ?? [])
+            .map(
+              (e) => QuickBattleEmplacedGun.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList(),
         provinceTerrain: json['provinceTerrain'] as String? ?? 'plains',
         seed: json['seed'] as int? ?? 0,
         maxRounds: json['maxRounds'] as int? ?? 3,
@@ -207,11 +285,7 @@ class QuickBattleInput {
 }
 
 /// Result of Quick Battle. Consumable by combat pipeline.
-enum QuickBattleWinner {
-  attacker,
-  defender,
-  mutualExhaustion,
-}
+enum QuickBattleWinner { attacker, defender, mutualExhaustion }
 
 class QuickBattleResult {
   const QuickBattleResult({
@@ -221,6 +295,8 @@ class QuickBattleResult {
     required this.provinceFlips,
     this.attackerRouts = false,
     this.defenderRouts = false,
+    this.fortDowngradeFromDestroyedEmplaced = false,
+    this.emplacedGunOutcomes = const [],
   });
 
   final QuickBattleWinner winner;
@@ -230,14 +306,20 @@ class QuickBattleResult {
   final bool attackerRouts;
   final bool defenderRouts;
 
+  /// True iff all virtual emplaced guns were destroyed (siege Quick Battle).
+  final bool fortDowngradeFromDestroyedEmplaced;
+  final List<QuickBattleEmplacedGunOutcome> emplacedGunOutcomes;
+
   Map<String, dynamic> toJson() => {
-        'winner': winner.name,
-        'attackerCasualties': attackerCasualties,
-        'defenderCasualties': defenderCasualties,
-        'provinceFlips': provinceFlips,
-        'attackerRouts': attackerRouts,
-        'defenderRouts': defenderRouts,
-      };
+    'winner': winner.name,
+    'attackerCasualties': attackerCasualties,
+    'defenderCasualties': defenderCasualties,
+    'provinceFlips': provinceFlips,
+    'attackerRouts': attackerRouts,
+    'defenderRouts': defenderRouts,
+    'fortDowngradeFromDestroyedEmplaced': fortDowngradeFromDestroyedEmplaced,
+    'emplacedGunOutcomes': emplacedGunOutcomes.map((o) => o.toJson()).toList(),
+  };
 
   static QuickBattleResult fromJson(Map<String, dynamic> json) =>
       QuickBattleResult(
@@ -254,5 +336,15 @@ class QuickBattleResult {
         provinceFlips: json['provinceFlips'] as bool? ?? false,
         attackerRouts: json['attackerRouts'] as bool? ?? false,
         defenderRouts: json['defenderRouts'] as bool? ?? false,
+        fortDowngradeFromDestroyedEmplaced:
+            json['fortDowngradeFromDestroyedEmplaced'] as bool? ?? false,
+        emplacedGunOutcomes:
+            (json['emplacedGunOutcomes'] as List<dynamic>? ?? [])
+                .map(
+                  (e) => QuickBattleEmplacedGunOutcome.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList(),
       );
 }
