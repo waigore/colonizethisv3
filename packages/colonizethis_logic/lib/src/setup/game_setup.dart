@@ -1087,6 +1087,129 @@ Game _assignCapitalsForFactions({
   return game;
 }
 
+/// Upper bound on how many OW provinces all Great Powers can own together when each GP
+/// is confined to one P–P landmass and each GP needs a sea-bound seed on that landmass.
+/// Uses the union of landmasses that receive at least one GP; spreading GPs across
+/// separate landmasses maximizes that union (see SPEC/game/game-setup.md).
+int _maxFeasibleGpProvinceBudgetOnLandmasses({
+  required Map<int, int> landmassSizes,
+  required Map<int, int> seaBoundCountByLandmass,
+  required int gpCount,
+}) {
+  final eligible =
+      landmassSizes.keys
+          .where((lm) => (seaBoundCountByLandmass[lm] ?? 0) >= 1)
+          .toList()
+        ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+
+  if (eligible.isEmpty) {
+    return 0;
+  }
+
+  final totalSeaSlots = eligible.fold<int>(
+    0,
+    (sum, lm) => sum + (seaBoundCountByLandmass[lm] ?? 0),
+  );
+  if (totalSeaSlots < gpCount) {
+    return 0;
+  }
+
+  if (gpCount <= eligible.length) {
+    return eligible
+        .take(gpCount)
+        .fold<int>(0, (sum, lm) => sum + landmassSizes[lm]!);
+  }
+
+  return eligible.fold<int>(0, (sum, lm) => sum + landmassSizes[lm]!);
+}
+
+/// Result of greedy GP→landmass assignment (largest-targets first).
+typedef _GpLandmassPackResult = ({
+  Map<String, int> gpLandmassAssignments,
+  Map<String, int> targetPerGp,
+  List<String> sortedGpIds,
+});
+
+/// Tries to place each GP on one landmass with sea-cap and per-landmass target sums.
+_GpLandmassPackResult? _tryPackGpsOntoLandmassesGreedy({
+  required List<String> gpIds,
+  required int gpProvinceBudget,
+  required Map<int, int> landmassSizes,
+  required List<int> sortedLandmasses,
+  required Map<int, int> seaBoundCountByLandmass,
+}) {
+  final targetPerGp = computeFairTargets(gpIds, gpProvinceBudget);
+  final gpLandmassAssignments = <String, int>{};
+  final targetUsedOnLandmass = <int, int>{
+    for (final lm in landmassSizes.keys) lm: 0,
+  };
+  final gpCountOnLandmass = <int, int>{
+    for (final lm in landmassSizes.keys) lm: 0,
+  };
+
+  final sortedGpIds = gpIds.toList()
+    ..sort((a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!));
+
+  for (final gpId in sortedGpIds) {
+    final target = targetPerGp[gpId]!;
+    int? bestLm;
+    var bestSlack = 1 << 30;
+    for (final lm in sortedLandmasses) {
+      final seaCap = seaBoundCountByLandmass[lm] ?? 0;
+      if (gpCountOnLandmass[lm]! >= seaCap) continue;
+      if (targetUsedOnLandmass[lm]! + target > landmassSizes[lm]!) continue;
+      final slack = landmassSizes[lm]! - (targetUsedOnLandmass[lm]! + target);
+      if (slack < bestSlack) {
+        bestSlack = slack;
+        bestLm = lm;
+      }
+    }
+    if (bestLm == null) {
+      return null;
+    }
+    gpLandmassAssignments[gpId] = bestLm;
+    targetUsedOnLandmass[bestLm] = targetUsedOnLandmass[bestLm]! + target;
+    gpCountOnLandmass[bestLm] = gpCountOnLandmass[bestLm]! + 1;
+  }
+
+  return (
+    gpLandmassAssignments: gpLandmassAssignments,
+    targetPerGp: targetPerGp,
+    sortedGpIds: sortedGpIds,
+  );
+}
+
+/// Largest budget in [gpCount, cap] for which [computeFairTargets] + greedy packing succeeds.
+int _largestFeasibleGpProvinceBudgetByPacking({
+  required List<String> gpIds,
+  required int gpCount,
+  required int cap,
+  required Map<int, int> landmassSizes,
+  required List<int> sortedLandmasses,
+  required Map<int, int> seaBoundCountByLandmass,
+}) {
+  var lo = gpCount;
+  var hi = cap;
+  var best = gpCount - 1;
+  while (lo <= hi) {
+    final mid = (lo + hi) ~/ 2;
+    final pack = _tryPackGpsOntoLandmassesGreedy(
+      gpIds: gpIds,
+      gpProvinceBudget: mid,
+      landmassSizes: landmassSizes,
+      sortedLandmasses: sortedLandmasses,
+      seaBoundCountByLandmass: seaBoundCountByLandmass,
+    );
+    if (pack != null) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
 Map<String, String> _assignOldWorldOwnershipContiguous({
   required MapTopology topologyOldWorld,
   required List<String> provinceIds,
@@ -1130,47 +1253,54 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     seaBoundCountByLandmass[lm] = (seaBoundCountByLandmass[lm] ?? 0) + 1;
   }
 
-  // Assign each GP to exactly one landmass. Multiple GPs may share a landmass when
-  // gpCount > landmassCount (e.g. 6 GPs on 4 continents). Constraints per landmass L:
-  // sum of GP targets on L ≤ |provinces on L|, and (# GPs on L) ≤ (# sea-bound on L).
-  final targetPerGp = computeFairTargets(gpIds, availableForGps);
-  final gpLandmassAssignments = <String, int>{};
-  final targetUsedOnLandmass = <int, int>{
-    for (final lm in landmassSizes.keys) lm: 0,
-  };
-  final gpCountOnLandmass = <int, int>{
-    for (final lm in landmassSizes.keys) lm: 0,
-  };
-
-  final sortedGpIds = gpIds.toList()
-    ..sort(
-      (a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!),
-    ); // Larger targets first
-  for (final gpId in sortedGpIds) {
-    final target = targetPerGp[gpId]!;
-    int? bestLm;
-    var bestSlack = 1 << 30;
-    for (final lm in sortedLandmasses) {
-      final seaCap = seaBoundCountByLandmass[lm] ?? 0;
-      if (gpCountOnLandmass[lm]! >= seaCap) continue;
-      if (targetUsedOnLandmass[lm]! + target > landmassSizes[lm]!) continue;
-      final slack = landmassSizes[lm]! - (targetUsedOnLandmass[lm]! + target);
-      if (slack < bestSlack) {
-        bestSlack = slack;
-        bestLm = lm;
-      }
-    }
-    if (bestLm == null) {
-      throw ArgumentError(
-        'Old World GP landmass assignment failed for $gpId (target $target provinces): '
-        'no landmass has both a free sea-bound seed slot and room for that target count. '
-        'Landmass sizes: $landmassSizes, sea-bound per landmass: $seaBoundCountByLandmass',
-      );
-    }
-    gpLandmassAssignments[gpId] = bestLm;
-    targetUsedOnLandmass[bestLm] = targetUsedOnLandmass[bestLm]! + target;
-    gpCountOnLandmass[bestLm] = gpCountOnLandmass[bestLm]! + 1;
+  final maxGpProvincesByTopology = _maxFeasibleGpProvinceBudgetOnLandmasses(
+    landmassSizes: landmassSizes,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+    gpCount: gpCount,
+  );
+  if (maxGpProvincesByTopology < gpCount) {
+    throw ArgumentError(
+      'Old World GP assignment infeasible: topology allows at most '
+      '$maxGpProvincesByTopology province(s) for $gpCount Great Power(s) under the '
+      'one-landmass-per-GP rule (sea-bound slots per landmass: $seaBoundCountByLandmass)',
+    );
   }
+
+  final cap = min(availableForGps, maxGpProvincesByTopology);
+  // Fair targets must pack into landmasses: sum of targets per landmass ≤ |L|, and
+  // (# GPs on L) ≤ sea-bound slots on L. Union-only caps are insufficient when
+  // gpCount > landmassCount (e.g. three GPs on two continents).
+  final gpProvinceBudget = _largestFeasibleGpProvinceBudgetByPacking(
+    gpIds: gpIds,
+    gpCount: gpCount,
+    cap: cap,
+    landmassSizes: landmassSizes,
+    sortedLandmasses: sortedLandmasses,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+  );
+  if (gpProvinceBudget < gpCount) {
+    throw ArgumentError(
+      'Old World GP landmass packing failed: no feasible fair target budget for '
+      '$gpCount Great Power(s) within cap $cap. Landmass sizes: $landmassSizes, '
+      'sea-bound per landmass: $seaBoundCountByLandmass',
+    );
+  }
+
+  final pack = _tryPackGpsOntoLandmassesGreedy(
+    gpIds: gpIds,
+    gpProvinceBudget: gpProvinceBudget,
+    landmassSizes: landmassSizes,
+    sortedLandmasses: sortedLandmasses,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+  );
+  if (pack == null) {
+    throw StateError(
+      'logic: GP landmass pack unexpectedly null at budget $gpProvinceBudget',
+    );
+  }
+  final gpLandmassAssignments = pack.gpLandmassAssignments;
+  final targetPerGp = pack.targetPerGp;
+  final sortedGpIds = pack.sortedGpIds;
 
   // Seed selection for Great Powers: one sea-bound province per GP, from their assigned landmass
   final gpSeeds = _selectGpSeedsForLandmass(
@@ -1191,7 +1321,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     seeds: gpSeeds,
     targetPerFaction: targetPerGp,
     available: gpAvailable,
-    maxTotal: availableForGps,
+    maxTotal: gpProvinceBudget,
   );
 
   for (final gpId in gpIds) {
