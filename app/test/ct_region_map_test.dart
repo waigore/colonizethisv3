@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -192,20 +193,14 @@ void main() {
 
         // Borders on.
         await tester.pumpWidget(
-          _buildCtRegionMap(
-            region: region,
-            showBordersLayer: true,
-          ),
+          _buildCtRegionMap(region: region, showBordersLayer: true),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
 
         // Borders off.
         await tester.pumpWidget(
-          _buildCtRegionMap(
-            region: region,
-            showBordersLayer: false,
-          ),
+          _buildCtRegionMap(region: region, showBordersLayer: false),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
@@ -301,8 +296,9 @@ void main() {
 
         // Move mouse over the center of the map.
         final center = tester.getCenter(mapFinder);
-        final gesture =
-            await tester.createGesture(kind: PointerDeviceKind.mouse);
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
         await gesture.addPointer();
         await gesture.moveTo(center);
         await tester.pump();
@@ -916,6 +912,67 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+  });
+
+  group('Town icon cache', () {
+    testWidgets(
+      'required town icon asset files are present in test asset bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        for (final iconId in kTownIconIds) {
+          final path = 'assets/icons/ui_icon_com_$iconId.png';
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Town icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'town icon assets load successfully via rootBundle',
+      (WidgetTester tester) async {
+        var loadedCount = 0;
+        await tester.runAsync(() async {
+          for (final iconId in kTownIconIds) {
+            final path = 'assets/icons/ui_icon_com_$iconId.png';
+            try {
+              final data = await rootBundle.load(path);
+              if (data.lengthInBytes > 0) {
+                loadedCount++;
+              }
+            } catch (e) {
+              // Icon asset failed to load
+            }
+          }
+        });
+
+        expect(
+          loadedCount,
+          equals(kTownIconIds.length),
+          reason:
+              'Expected all ${kTownIconIds.length} town icon assets to load, but only $loadedCount loaded',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'town markers exist in Old World region data',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        expect(
+          region.townMarkers.isNotEmpty,
+          isTrue,
+          reason: 'Old World region should have town markers',
+        );
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
