@@ -1,5 +1,6 @@
 // AppEventHandler: wires AppEventBus events to actual Navigator / showDialog calls.
 // Lives at the shell level; dispatches UIActionEvent and UISystemEvent to Flutter APIs.
+// SPEC/program/app-event-bus.md (architecture); SPEC/program/app-ui-wiring.md (dialog IDs / wiring).
 //
 // Usage (in main or shell setup):
 //   final handler = AppEventHandler(

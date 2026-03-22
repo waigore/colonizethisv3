@@ -10,7 +10,7 @@ import '../providers/games_provider.dart';
 
 /// Subscribes to [TurnResolutionCompleteEvent] for [gameId] and reloads
 /// [currentGameProvider] from [GameService] when the active game matches.
-/// SPEC/program/app-event-bus.md — empire screens subscribe individually.
+/// SPEC/program/app-event-bus.md (GameToUI) — empire screens subscribe individually.
 class GameToUIBusListener extends ConsumerStatefulWidget {
   const GameToUIBusListener({
     super.key,

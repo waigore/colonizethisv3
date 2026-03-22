@@ -1,5 +1,5 @@
 // App events: typed event bus for UI↔UI, UI↔game logic, game logic→UI.
-// SPEC/program/game-events.md, SPEC/program/app-event-bus.md (pending).
+// Coupling / wiring rules: SPEC/program/app-ui-wiring.md. Bus architecture: SPEC/program/app-event-bus.md.
 //
 // Three event domains:
 //  1. GameEvent    — game occurrences from colonizethis_logic (consumed, not defined here)
@@ -9,7 +9,7 @@
 // Note: GameEvent lives in colonizethis_logic to avoid circular deps.
 // DialogueEvent and PortraitMoodEvent live here in colonizethis_models.
 //
-// Panel requests: prefer typed subclasses below (SPEC/program/app-event-bus.md).
+// Panel requests: prefer typed subclasses below (SPEC/program/app-ui-wiring.md).
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'game.dart';

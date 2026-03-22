@@ -1,5 +1,5 @@
 // App event bus provider. Riverpod provider wrapping AppEventBus singleton.
-// SPEC/program/app-event-bus.md.
+// SPEC/program/app-event-bus.md (architecture).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

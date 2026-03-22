@@ -28,7 +28,7 @@ class GameService {
   final GameSaveAdapter _adapter;
 
   /// Optional event bus to emit game events to. When set, GameToUIEvent variants
-  /// are emitted alongside the raw GameEvent callbacks.
+  /// are emitted alongside the raw GameEvent callbacks. SPEC/program/app-event-bus.md.
   AppEventBus? eventBus;
 
   /// In-memory cache: game id -> map data for resolveTurnForGame and map rendering.
