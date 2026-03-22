@@ -242,3 +242,90 @@ class NewGameCreatedEvent extends GameToUIEvent {
   const NewGameCreatedEvent({required this.gameId});
   final String gameId;
 }
+
+// ---------------------------------------------------------------------------
+// App-prefixed GameEvent mirrors — forwarded from logic layer via GameEventBridge.
+// SPEC/program/game-event-bridge.md
+// ---------------------------------------------------------------------------
+
+/// Combat resolved in a province. Mirrors colonizethis_logic CombatResultEvent.
+class AppCombatResultEvent extends GameToUIEvent {
+  const AppCombatResultEvent({
+    required this.provinceId,
+    required this.attackerId,
+    required this.defenderId,
+    required this.winnerId,
+    required this.turnNumber,
+    this.casualties = const {},
+  });
+  final String provinceId;
+  final String attackerId;
+  final String defenderId;
+  final String winnerId;
+  final int turnNumber;
+  final Map<String, int> casualties;
+}
+
+/// Province ownership changed. Mirrors colonizethis_logic ProvinceCapturedEvent.
+class AppProvinceCapturedEvent extends GameToUIEvent {
+  const AppProvinceCapturedEvent({
+    required this.provinceId,
+    required this.previousOwnerId,
+    required this.newOwnerId,
+    required this.turnNumber,
+  });
+  final String provinceId;
+  final String? previousOwnerId;
+  final String newOwnerId;
+  final int turnNumber;
+}
+
+/// Diplomatic relationship changed. Mirrors colonizethis_logic DiplomacyChangeEvent.
+class AppDiplomacyChangeEvent extends GameToUIEvent {
+  const AppDiplomacyChangeEvent({
+    required this.actorId,
+    required this.targetId,
+    required this.changeType,
+    required this.turnNumber,
+  });
+  final String actorId;
+  final String targetId;
+  final String changeType;
+  final int turnNumber;
+}
+
+/// Technology research completed. Mirrors colonizethis_logic ResearchCompleteEvent.
+class AppResearchCompleteEvent extends GameToUIEvent {
+  const AppResearchCompleteEvent({
+    required this.playerId,
+    required this.techId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String techId;
+  final int turnNumber;
+}
+
+/// Victory condition set. Mirrors colonizethis_logic VictorySetEvent.
+class AppVictorySetEvent extends GameToUIEvent {
+  const AppVictorySetEvent({
+    required this.winnerPlayerId,
+    required this.victoryType,
+    required this.turnNumber,
+  });
+  final String winnerPlayerId;
+  final String victoryType;
+  final int turnNumber;
+}
+
+/// Order rejected during validation. Mirrors colonizethis_logic OrderRejectedEvent.
+class AppOrderRejectedEvent extends GameToUIEvent {
+  const AppOrderRejectedEvent({
+    required this.playerId,
+    required this.orderSummary,
+    required this.reasonCode,
+  });
+  final String playerId;
+  final String orderSummary;
+  final String reasonCode;
+}

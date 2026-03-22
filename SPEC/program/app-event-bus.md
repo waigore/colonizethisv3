@@ -42,16 +42,11 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 ## Event hierarchy
 
-Defined in **`colonizethis_models`** (`app_events.dart`, exports). Summary:
+Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 
-```
-AppEvent (sealed)
-├── UIActionEvent        — UI requests (dialogs, nav, panels, target selection, …)
-├── UISystemEvent        — Snackbar, overlay, notify
-└── GameToUIEvent        — TurnResolutionCompleteEvent, OvertureRequiredEvent, …
-```
-
-Full list of subclasses: source and **[app-ui-wiring.md](app-ui-wiring.md)** (dialog IDs / typed panels).
+- **`UIActionEvent`** — dialogs, navigation, panels, target selection, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
+- **`UISystemEvent`** — snackbar, overlay, notify.
+- **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
 
 ---
 
@@ -102,8 +97,8 @@ class AppEventHandler {
 }
 ```
 
-**DialogBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`  
-**PanelBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
+- **DialogBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
+- **PanelBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 
 **Registration:** `app/lib/core/services/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
 
@@ -111,10 +106,13 @@ class AppEventHandler {
 
 ## Game logic → UI bridge
 
-**`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`**. When set, it emits:
+**`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
 
 - **`TurnResolutionCompleteEvent`** after `runTurnResolution` / `resumeOvertureDecisions` completes with **`TurnResolutionComplete`**
 - **`NewGameCreatedEvent`** after **`createNewGame()`** saves
+- **`OvertureRequiredEvent`** when `runTurnResolution` or `resumeOvertureDecisions` returns **`TurnResolutionPendingOvertures`**
+
+When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnForGame`** / **`resumeTurnResolutionWithOvertureDecisions`** so **`GameEventBridge`** can subscribe and map logic **`GameEvent`** instances to **`GameToUIEvent`** on the app bus. **Full bridge:** **SPEC/program/game-event-bridge.md**.
 
 **Consumption:** No single shell subscriber. Each screen that must react listens (e.g. **`GameToUIBusListener`**) and reloads **`currentGameProvider`** when **`gameId`** matches.
 
@@ -147,11 +145,19 @@ class AppEventHandler {
 - Given **`GameService.eventBus`** is non-null, When **`runTurnResolution`** completes with **`TurnResolutionComplete`**, Then the service emits **`TurnResolutionCompleteEvent`** with matching **`gameId`** and **`turnNumber`**.
 - Given **`GameService.eventBus`** is null, When **`runTurnResolution`** completes with **`TurnResolutionComplete`**, Then no **`TurnResolutionCompleteEvent`** is emitted.
 
+### GameEventBridge (SPEC/program/game-event-bridge.md)
+
+- Given a `GameEventBridge` started with a `DefaultGameEventBus` as logicBus and `AppEventBus` as appBus, When the logic bus publishes `CombatResultEvent`, Then `AppEventBus` receives exactly one `AppCombatResultEvent` with matching fields.
+- Given a `GameEventBridge` started, When the logic bus publishes `ProvinceCapturedEvent`, `DiplomacyChangeEvent`, `ResearchCompleteEvent`, `VictorySetEvent`, or `OrderRejectedEvent`, Then `AppEventBus` receives the corresponding `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppVictorySetEvent`, or `AppOrderRejectedEvent`.
+- Given a `GameEventBridge` started, When `stop()` is called, Then subsequent events on the logic bus are not forwarded.
+- Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingOvertures`, Then `AppEventBus` has emitted `OvertureRequiredEvent` before the result is returned.
+
 ### Automated tests (must pass in CI)
 
-- **`app/test/app_event_bus_test.dart`** — delivery, filtering, **`dispose`**, equality for **`UIActionEvent`** / **`UISystemEvent`** / **`GameToUIEvent`**.
+- **`app/test/app_event_bus_test.dart`** — delivery, filtering, **`dispose`**, equality for **`UIActionEvent`** / **`UISystemEvent`** / **`GameToUIEvent`** (including new **`GameToUIEvent`** subtypes where applicable).
 - **`app/test/app_event_handler_test.dart`** — **`OpenDialogEvent`**, **`NavigateToRouteEvent`**, **`ConfirmDialogEvent`**, **`OpenPanelEvent`**, **`OpenPauseMenuPanelEvent`**, **`PopNavigationEvent`**, snackbar/overlay callbacks.
 - **`app/test/game_to_ui_bus_listener_test.dart`** — **`TurnResolutionCompleteEvent`** → provider reload.
+- **`app/test/game_event_bridge_test.dart`** — bridge forwarding of **`GameEvent`** → **`GameToUIEvent`** mappings.
 
 Panel/widget coupling ACs: **[app-ui-wiring.md](app-ui-wiring.md)**.
 
@@ -164,4 +170,5 @@ Panel/widget coupling ACs: **[app-ui-wiring.md](app-ui-wiring.md)**.
 - Dialog/panel builders registered at shell init; unknown dialog/panel IDs log a warning.
 - Emission is fire-and-forget; **`ConfirmDialogEvent`** uses **`onResult`** / **`result()`** for the bool outcome.
 - Province ids in game events: **prefixed** (`regionId|localId`).
-- **Cross-cutting UI coupling** ( **`Ref` / context / `Navigator` chains**, panel **`onXxx` orchestration**): **[app-ui-wiring.md](app-ui-wiring.md)**.
+- **`GameEventBridge`** (app layer) maps logic-layer **`GameEvent`** → app-layer **`GameToUIEvent`**; the two hierarchies stay separate to avoid circular deps.
+- **Cross-cutting UI coupling** (**`Ref` / context / `Navigator` chains**, panel **`onXxx` orchestration**): **[app-ui-wiring.md](app-ui-wiring.md)**.
