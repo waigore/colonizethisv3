@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 class _EventHandlingWrapper extends StatefulWidget {
@@ -215,6 +216,10 @@ void main() {
             reason: 'All items should be disabled when no available targets',
           );
         }
+
+        final scaffoldCtx = tester.element(find.byType(Scaffold));
+        Navigator.of(scaffoldCtx, rootNavigator: true).pop();
+        await tester.pumpAndSettle();
       },
     );
 
@@ -277,11 +282,15 @@ void main() {
         // Menu opens but all items are disabled since no available targets provided
         expect(find.textContaining('Assign work'), findsOneWidget);
         // Note: selectedUnit/selectedTarget remain null because items are disabled
+
+        final scaffoldCtx = tester.element(find.byType(Scaffold));
+        Navigator.of(scaffoldCtx, rootNavigator: true).pop();
+        await tester.pumpAndSettle();
       },
     );
 
     testWidgets(
-      'tap Cancel shows confirm dialog; tap Yes emits RemovePendingWorkOrderRequestedEvent',
+      'Cancel on pending row shows confirm dialog; Yes emits RemovePendingWorkOrderRequestedEvent',
       (WidgetTester tester) async {
         final units = [
           ...game.worldState.oldWorld.units,
@@ -323,7 +332,26 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Cancel').first);
+        // Scope to the row with our pending order — avoid `.first` on "Cancel"
+        // (debug game may show multiple Cancel buttons; first may be off-stage / obscured).
+        final pendingRow = find.ancestor(
+          of: find.textContaining('(pending)'),
+          matching: find.byType(ListTile),
+        );
+        expect(pendingRow, findsOneWidget);
+        // Tap the nine-patch control (InkWell), not the Text center — avoids
+        // hit-test misses when the label sits off the interactive region.
+        final cancelOnPendingRow = find.descendant(
+          of: pendingRow,
+          matching: find.byType(CtNinePatchButton),
+        );
+        expect(cancelOnPendingRow, findsOneWidget);
+        await tester.ensureVisible(cancelOnPendingRow);
+        // CtNinePatchButton + Flame nine-patch often fail widget hit tests at the
+        // label center; invoke the callback to assert confirm + bus emission.
+        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        expect(cancelBtn.onPressed, isNotNull);
+        cancelBtn.onPressed!();
         await tester.pumpAndSettle();
 
         expect(find.text('Cancel work order?'), findsOneWidget);
@@ -337,7 +365,7 @@ void main() {
     );
 
     testWidgets(
-      'tap Cancel then No dismisses dialog without RemovePendingWorkOrder event',
+      'Cancel on pending row then No dismisses dialog without RemovePendingWorkOrder event',
       (WidgetTester tester) async {
         RemovePendingWorkOrderRequestedEvent? removeEvent;
         final bus = AppEventBus.create();
@@ -379,7 +407,20 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Cancel').first);
+        final pendingRow = find.ancestor(
+          of: find.textContaining('(pending)'),
+          matching: find.byType(ListTile),
+        );
+        expect(pendingRow, findsOneWidget);
+        final cancelOnPendingRow = find.descendant(
+          of: pendingRow,
+          matching: find.byType(CtNinePatchButton),
+        );
+        expect(cancelOnPendingRow, findsOneWidget);
+        await tester.ensureVisible(cancelOnPendingRow);
+        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        expect(cancelBtn.onPressed, isNotNull);
+        cancelBtn.onPressed!();
         await tester.pumpAndSettle();
         await tester.tap(find.text('No'));
         await tester.pumpAndSettle();
