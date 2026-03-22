@@ -2,20 +2,6 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
-  static String displayIdFromHover({
-    required String? hoveredTileKey,
-    required String? hoveredDetailId,
-    required String? selectedDetailId,
-  }) {
-    if (hoveredTileKey != null) {
-      final parts = hoveredTileKey.split('|');
-      if (parts.length >= 2) {
-        return '${parts[0]}|${parts[1]}';
-      }
-    }
-    return hoveredDetailId ?? selectedDetailId ?? '';
-  }
-
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;
     return 0; // oldWorld (default)

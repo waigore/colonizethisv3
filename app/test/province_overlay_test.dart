@@ -26,7 +26,8 @@ void main() {
 
   group('ProvinceSeaZoneDetailOverlay', () {
     Widget buildOverlay({
-      required String selectedId,
+      required String displayId,
+      String? selectedTileKey,
       void Function(String?)? onHighlightTile,
       VoidCallback? onClose,
     }) {
@@ -37,8 +38,8 @@ void main() {
           body: ProvinceSeaZoneDetailOverlay(
             game: game,
             region: region,
-            selectedId: selectedId,
-            displayId: selectedId,
+            displayId: displayId,
+            selectedTileKey: selectedTileKey,
             humanPlayerId: game.players.first.id,
             onHighlightTile: onHighlightTile,
             onClose: onClose,
@@ -49,7 +50,10 @@ void main() {
 
     testWidgets('AC: Standalone province overlay displays Political, Economic, Military, Civilian, Naval',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildOverlay(selectedId: sampleProvinceIdForOverlay));
+      await tester.pumpWidget(buildOverlay(
+        displayId: sampleProvinceIdForOverlay,
+        selectedTileKey: sampleTileKeyForProvinceOverlay,
+      ));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
@@ -71,7 +75,10 @@ void main() {
         (c) => !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
       );
       final game = demoGameForOverlay;
-      await tester.pumpWidget(buildOverlay(selectedId: selectedId));
+      await tester.pumpWidget(buildOverlay(
+        displayId: selectedId,
+        selectedTileKey: sampleTileKeyForProvinceOverlay,
+      ));
       await tester.pumpAndSettle();
 
       final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
@@ -94,7 +101,7 @@ void main() {
 
     testWidgets('AC: Sea zone overlay displays Political and Naval',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildOverlay(selectedId: sampleSeaZoneIdForOverlay));
+      await tester.pumpWidget(buildOverlay(displayId: sampleSeaZoneIdForOverlay));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
@@ -106,7 +113,8 @@ void main() {
     testWidgets('AC: Close button invokes onClose', (WidgetTester tester) async {
       var closed = false;
       await tester.pumpWidget(buildOverlay(
-        selectedId: sampleProvinceIdForOverlay,
+        displayId: sampleProvinceIdForOverlay,
+        selectedTileKey: sampleTileKeyForProvinceOverlay,
         onClose: () => closed = true,
       ));
       await tester.pumpAndSettle();
@@ -129,8 +137,8 @@ void main() {
               body: ProvinceSeaZoneDetailOverlay(
                 game: demoGameForOverlay,
                 region: demoRegionForOverlay,
-                selectedId: sampleProvinceIdForOverlay,
                 displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
@@ -158,8 +166,8 @@ void main() {
               body: ProvinceSeaZoneDetailOverlay(
                 game: demoGameForOverlay,
                 region: demoRegionForOverlay,
-                selectedId: sampleProvinceIdForOverlay,
                 displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
@@ -216,8 +224,10 @@ void main() {
         );
 
         final hoveredCell = region.cells.first;
-        final hoveredTileKey =
+        final selectedTileKey =
             '${region.regionId}|${hoveredCell.regionCellId}|${hoveredCell.x}|${hoveredCell.y}';
+        final provinceId =
+            '${region.regionId}|${hoveredCell.regionCellId}';
 
         await tester.pumpWidget(
           MaterialApp(
@@ -225,12 +235,9 @@ void main() {
               body: ProvinceSeaZoneDetailOverlay(
                 game: demoGameForOverlay,
                 region: region,
-                selectedId:
-                    '${region.regionId}|${hoveredCell.regionCellId}',
-                displayId:
-                    '${region.regionId}|${hoveredCell.regionCellId}',
+                displayId: provinceId,
+                selectedTileKey: selectedTileKey,
                 humanPlayerId: demoGameForOverlay.players.first.id,
-                hoveredTileKey: hoveredTileKey,
                 onClose: () {},
               ),
             ),
@@ -288,8 +295,8 @@ void main() {
               body: ProvinceSeaZoneDetailOverlay(
                 game: demoGameForOverlay,
                 region: region,
-                selectedId: provinceId,
                 displayId: provinceId,
+                selectedTileKey: null,
                 humanPlayerId: demoGameForOverlay.players.first.id,
                 onClose: () {},
               ),
@@ -305,10 +312,11 @@ void main() {
 
   group('ProvinceSeaZoneDetailOverlay with map', () {
     testWidgets(
-      'AC: Map and overlay appear side by side when province selected; closing overlay clears map highlight (orange cursor)',
+      'AC: Map orange selection may persist after overlay closes',
       (WidgetTester tester) async {
         final game = demoGameForOverlay;
-        String? highlightedTileKey = 'oldWorld|p0|0|0';
+        final selectedTk = sampleTileKeyForProvinceOverlay;
+        var overlayOpen = true;
 
         await tester.pumpWidget(
           MaterialApp(
@@ -321,23 +329,23 @@ void main() {
                         child: CtRegionMap(
                           region: demoRegionForOverlay,
                           cellSizePx: 28,
-                          onProvinceSelected: (_) {},
-                          highlightedTileKey: highlightedTileKey,
+                          selectedTileKey: selectedTk,
                         ),
                       ),
-                      SizedBox(
-                        width: 320,
-                        child: ProvinceSeaZoneDetailOverlay(
-                          game: game,
-                          region: demoRegionForOverlay,
-                          selectedId: sampleProvinceIdForOverlay,
-                          displayId: sampleProvinceIdForOverlay,
-                          humanPlayerId: game.players.first.id,
-                          onClose: () => setState(() {
-                            highlightedTileKey = null;
-                          }),
+                      if (overlayOpen)
+                        SizedBox(
+                          width: 320,
+                          child: ProvinceSeaZoneDetailOverlay(
+                            game: game,
+                            region: demoRegionForOverlay,
+                            displayId: sampleProvinceIdForOverlay,
+                            selectedTileKey: selectedTk,
+                            humanPlayerId: game.players.first.id,
+                            onClose: () => setState(() {
+                              overlayOpen = false;
+                            }),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 );
@@ -349,19 +357,21 @@ void main() {
 
         expect(find.byType(CtRegionMap), findsOneWidget);
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-        expect(highlightedTileKey, isNotNull);
 
         await tester.tap(find.byKey(const Key('overlay_close')));
         await tester.pumpAndSettle();
 
-        expect(highlightedTileKey, isNull);
+        expect(overlayOpen, isFalse);
+        expect(selectedTk, isNotEmpty);
       },
     );
 
-    testWidgets('AC: Map tap invokes onProvinceSelected; overlay can show selection and stays open until closed',
+    testWidgets(
+        'AC: Map tap sets tile key and opens overlay; stays open until closed',
         (WidgetTester tester) async {
       final region = demoRegionForOverlay;
-      String? selectedId;
+      String? selectedTileKey;
+      var overlayOpen = false;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -375,21 +385,27 @@ void main() {
                       child: CtRegionMap(
                         region: region,
                         cellSizePx: 28,
-                        onProvinceSelected: (id) =>
-                            setState(() => selectedId = id),
-                        highlightedTileKey: null,
+                        selectedTileKey: selectedTileKey,
+                        onMapTileTappedForDetail: (tk) => setState(() {
+                          selectedTileKey = tk;
+                          overlayOpen = true;
+                        }),
                       ),
                     ),
-                    if (selectedId != null && selectedId!.isNotEmpty)
+                    if (overlayOpen && selectedTileKey != null)
                       SizedBox(
                         width: 320,
                         child: ProvinceSeaZoneDetailOverlay(
                           game: demoGameForOverlay,
                           region: demoRegionForOverlay,
-                          selectedId: selectedId!,
-                          displayId: selectedId!,
+                          displayId: selectedTileKey!.split('|').length >= 2
+                              ? '${selectedTileKey!.split('|')[0]}|${selectedTileKey!.split('|')[1]}'
+                              : '',
+                          selectedTileKey: selectedTileKey,
                           humanPlayerId: demoGameForOverlay.players.first.id,
-                          onClose: () => setState(() => selectedId = null),
+                          onClose: () => setState(() {
+                            overlayOpen = false;
+                          }),
                         ),
                       ),
                   ],
@@ -401,24 +417,22 @@ void main() {
       );
       await tester.pump();
 
-      expect(selectedId, isNull);
+      expect(overlayOpen, isFalse);
       final mapFinder = find.byType(CtRegionMap);
       await tester.tap(mapFinder);
       await tester.pump();
 
-      expect(selectedId, isNotNull);
-      expect(selectedId!, startsWith('${region.regionId}|'));
+      expect(selectedTileKey, isNotNull);
+      expect(overlayOpen, isTrue);
+      expect(selectedTileKey!, startsWith('${region.regionId}|'));
 
-      // Tapping the same province again should not hide the overlay; it remains
-      // visible until the close handler clears the selection. SPEC/ui/province-sea-zone-detail-overlay.md.
       await tester.tap(mapFinder);
       await tester.pump();
-      expect(selectedId, isNotNull);
+      expect(overlayOpen, isTrue);
 
-      // Close via the overlay and verify it clears selection.
       await tester.tap(find.byKey(const Key('overlay_close')));
       await tester.pump();
-      expect(selectedId, isNull);
+      expect(overlayOpen, isFalse);
     });
   });
 }

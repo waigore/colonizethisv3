@@ -13,6 +13,7 @@ import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 
 import 'game_screen_shared.dart';
@@ -37,10 +38,6 @@ class GameMapArea extends ConsumerStatefulWidget {
 
 class _GameMapAreaState extends ConsumerState<GameMapArea> {
   int _regionIndex = 0;
-  String? _selectedDetailId;
-  String? _hoveredDetailId;
-  String? _hoveredTileKey;
-  String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
@@ -116,8 +113,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     }
     final tileKey = capital.toTileKey();
     final regionId = capital.regionId;
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -133,29 +130,12 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
-  String get _displayId {
-    return GameMapAreaStateLogic.displayIdFromHover(
-      hoveredTileKey: _hoveredTileKey,
-      hoveredDetailId: _hoveredDetailId,
-      selectedDetailId: _selectedDetailId,
-    );
-  }
-
-  void _onProvinceSelected(String provinceId) {
-    // Province tap always selects/shows the overlay; it stays visible until
-    // explicitly dismissed via the overlay close button. SPEC/ui/province-sea-zone-detail-overlay.md.
-    setState(() {
-      _selectedDetailId = provinceId;
-    });
-  }
-
   void _onLocateCivilianUnit(ct_models.Unit unit) {
     final tileKey = unit.tileKey;
     if (tileKey == null) return;
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -170,8 +150,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   void _onLocateMilitaryTile(String tileKey, String regionId) {
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -186,8 +166,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   void _onLocateNavalFleet(String tileKey, String regionId) {
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -247,6 +227,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   @override
+  void didUpdateWidget(covariant GameMapArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game.id != widget.game.id) {
+      ref.read(mapProvincePanelProvider.notifier).reset();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final showBorders = ref.watch(mapBordersVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
@@ -291,16 +279,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   baseLayerDisplayMode: _baseLayerDisplayMode,
                   showBordersLayer: showBorders,
                   humanPlayerId: _humanPlayerId,
-                  selectedDetailId: _selectedDetailId,
-                  displayId: _displayId,
-                  hoveredTileKey: _hoveredTileKey,
-                  highlightedTileKey: _highlightedTileKey,
                   centerOnTileKey: _centerOnTileKey,
                   validTileKeysForSelection: _validTileKeysForSelection,
-                  onProvinceSelected: _onProvinceSelected,
-                  onProvinceHovered: (id) =>
-                      setState(() => _hoveredDetailId = id),
-                  onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   onTileSelectedForWork: _workTargetSelection != null
                       ? _onTileSelectedForWork
                       : null,
@@ -310,12 +290,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           _cachedValidTileKeys = null;
                         })
                       : null,
-                  onHighlightTile: (k) =>
-                      setState(() => _highlightedTileKey = k),
-                  onCloseDetailOverlay: () => setState(() {
-                    _selectedDetailId = null;
-                    _highlightedTileKey = null;
-                  }),
                 ),
                 Positioned(
                   left: 0,
@@ -390,8 +364,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     humanPlayerId: _humanPlayerId,
                     sideMenuOpen: _sideMenuOpen,
                     onClose: () => setState(() => _sideMenuOpen = false),
-                    onPanelDismissed: () =>
-                        setState(() => _highlightedTileKey = null),
+                    onPanelDismissed: () => ref
+                        .read(mapProvincePanelProvider.notifier)
+                        .setSecondaryHighlight(null),
                     onLocateCivilianUnit: _onLocateCivilianUnit,
                     onLocateMilitaryTile: _onLocateMilitaryTile,
                     onLocateNavalFleet: _onLocateNavalFleet,
@@ -410,19 +385,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             ),
           ),
         ),
-        if (isNarrow && _selectedDetailId != null)
-          GameMapNarrowDetailOverlay(
+        if (isNarrow)
+          GameMapNarrowDetailOverlaySlot(
             game: widget.game,
             region: _currentRegion,
-            selectedId: _selectedDetailId!,
-            displayId: _displayId,
             humanPlayerId: _humanPlayerId,
-            hoveredTileKey: _hoveredTileKey,
-            onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
-            onClose: () => setState(() {
-              _selectedDetailId = null;
-              _highlightedTileKey = null;
-            }),
           ),
       ],
     );

@@ -3,45 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
+import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 
 void main() {
   suppressLogsForTests();
   group('GameMapAreaStateLogic', () {
-    group('displayIdFromHover', () {
-      test('uses hoveredTileKey province when provided', () {
-        final displayId = GameMapAreaStateLogic.displayIdFromHover(
-          hoveredTileKey: 'oldWorld|p1|10|20',
-          hoveredDetailId: 'ignored',
-          selectedDetailId: 'oldWorld|p1',
+    group('displayProvinceOrSeaIdFromTileKey', () {
+      test('extracts region and province from full tile key', () {
+        expect(
+          displayProvinceOrSeaIdFromTileKey('oldWorld|p1|10|20'),
+          'oldWorld|p1',
         );
-        expect(displayId, 'oldWorld|p1');
       });
 
-      test('falls back to hoveredDetailId when hoveredTileKey parts < 2', () {
-        final displayId = GameMapAreaStateLogic.displayIdFromHover(
-          hoveredTileKey: 'badKey',
-          hoveredDetailId: 'oldWorld|p1',
-          selectedDetailId: 'newWorld|p2',
-        );
-        expect(displayId, 'oldWorld|p1');
-      });
-
-      test('falls back to selectedDetailId when hover detail is null', () {
-        final displayId = GameMapAreaStateLogic.displayIdFromHover(
-          hoveredTileKey: null,
-          hoveredDetailId: null,
-          selectedDetailId: 'newWorld|p2',
-        );
-        expect(displayId, 'newWorld|p2');
-      });
-
-      test('returns empty string when all inputs are null', () {
-        final displayId = GameMapAreaStateLogic.displayIdFromHover(
-          hoveredTileKey: null,
-          hoveredDetailId: null,
-          selectedDetailId: null,
-        );
-        expect(displayId, '');
+      test('returns null for short keys', () {
+        expect(displayProvinceOrSeaIdFromTileKey('badKey'), isNull);
+        expect(displayProvinceOrSeaIdFromTileKey(null), isNull);
       });
     });
 
