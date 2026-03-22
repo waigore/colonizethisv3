@@ -93,7 +93,8 @@ GameSetupResult createGameFromGeneratedMaps({
   final tribeIds = List.generate(tribeCount, (i) => 'tribe${i + 1}');
 
   // Province assignment per SPEC/program/game-setup-pipeline.md:
-  // - Great Powers: contiguous land clusters on OW, seeded from sea-bound provinces; cross-landmass only when no unassigned neighbours remain.
+  // - Great Powers: each GP locked to one P–P landmass (connected component); multiple
+  //   GPs may share a landmass when gpCount exceeds landmass count. Sea-bound seeds per landmass.
   // - Minor Nations: contiguous clusters on remaining OW provinces.
   // - Tribes: contiguous clusters on NW provinces.
   final owOwner = _assignOldWorldOwnershipContiguous(
@@ -847,7 +848,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
           id: unitId,
           type: unitType,
           ownerId: player.id,
-          provinceId: capitalProvinceId,
+          locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
           tileKey: firstTileInCapital,
         );
@@ -908,7 +909,7 @@ Game _addStartingMilitaryAndNaval({
           id: unitId,
           type: regimentTypeId,
           ownerId: player.id,
-          provinceId: capitalProvinceId,
+          locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
         );
         if (regionId == kRegionOldWorld) {
@@ -1086,6 +1087,129 @@ Game _assignCapitalsForFactions({
   return game;
 }
 
+/// Upper bound on how many OW provinces all Great Powers can own together when each GP
+/// is confined to one P–P landmass and each GP needs a sea-bound seed on that landmass.
+/// Uses the union of landmasses that receive at least one GP; spreading GPs across
+/// separate landmasses maximizes that union (see SPEC/game/game-setup.md).
+int _maxFeasibleGpProvinceBudgetOnLandmasses({
+  required Map<int, int> landmassSizes,
+  required Map<int, int> seaBoundCountByLandmass,
+  required int gpCount,
+}) {
+  final eligible =
+      landmassSizes.keys
+          .where((lm) => (seaBoundCountByLandmass[lm] ?? 0) >= 1)
+          .toList()
+        ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+
+  if (eligible.isEmpty) {
+    return 0;
+  }
+
+  final totalSeaSlots = eligible.fold<int>(
+    0,
+    (sum, lm) => sum + (seaBoundCountByLandmass[lm] ?? 0),
+  );
+  if (totalSeaSlots < gpCount) {
+    return 0;
+  }
+
+  if (gpCount <= eligible.length) {
+    return eligible
+        .take(gpCount)
+        .fold<int>(0, (sum, lm) => sum + landmassSizes[lm]!);
+  }
+
+  return eligible.fold<int>(0, (sum, lm) => sum + landmassSizes[lm]!);
+}
+
+/// Result of greedy GP→landmass assignment (largest-targets first).
+typedef _GpLandmassPackResult = ({
+  Map<String, int> gpLandmassAssignments,
+  Map<String, int> targetPerGp,
+  List<String> sortedGpIds,
+});
+
+/// Tries to place each GP on one landmass with sea-cap and per-landmass target sums.
+_GpLandmassPackResult? _tryPackGpsOntoLandmassesGreedy({
+  required List<String> gpIds,
+  required int gpProvinceBudget,
+  required Map<int, int> landmassSizes,
+  required List<int> sortedLandmasses,
+  required Map<int, int> seaBoundCountByLandmass,
+}) {
+  final targetPerGp = computeFairTargets(gpIds, gpProvinceBudget);
+  final gpLandmassAssignments = <String, int>{};
+  final targetUsedOnLandmass = <int, int>{
+    for (final lm in landmassSizes.keys) lm: 0,
+  };
+  final gpCountOnLandmass = <int, int>{
+    for (final lm in landmassSizes.keys) lm: 0,
+  };
+
+  final sortedGpIds = gpIds.toList()
+    ..sort((a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!));
+
+  for (final gpId in sortedGpIds) {
+    final target = targetPerGp[gpId]!;
+    int? bestLm;
+    var bestSlack = 1 << 30;
+    for (final lm in sortedLandmasses) {
+      final seaCap = seaBoundCountByLandmass[lm] ?? 0;
+      if (gpCountOnLandmass[lm]! >= seaCap) continue;
+      if (targetUsedOnLandmass[lm]! + target > landmassSizes[lm]!) continue;
+      final slack = landmassSizes[lm]! - (targetUsedOnLandmass[lm]! + target);
+      if (slack < bestSlack) {
+        bestSlack = slack;
+        bestLm = lm;
+      }
+    }
+    if (bestLm == null) {
+      return null;
+    }
+    gpLandmassAssignments[gpId] = bestLm;
+    targetUsedOnLandmass[bestLm] = targetUsedOnLandmass[bestLm]! + target;
+    gpCountOnLandmass[bestLm] = gpCountOnLandmass[bestLm]! + 1;
+  }
+
+  return (
+    gpLandmassAssignments: gpLandmassAssignments,
+    targetPerGp: targetPerGp,
+    sortedGpIds: sortedGpIds,
+  );
+}
+
+/// Largest budget in [gpCount, cap] for which [computeFairTargets] + greedy packing succeeds.
+int _largestFeasibleGpProvinceBudgetByPacking({
+  required List<String> gpIds,
+  required int gpCount,
+  required int cap,
+  required Map<int, int> landmassSizes,
+  required List<int> sortedLandmasses,
+  required Map<int, int> seaBoundCountByLandmass,
+}) {
+  var lo = gpCount;
+  var hi = cap;
+  var best = gpCount - 1;
+  while (lo <= hi) {
+    final mid = (lo + hi) ~/ 2;
+    final pack = _tryPackGpsOntoLandmassesGreedy(
+      gpIds: gpIds,
+      gpProvinceBudget: mid,
+      landmassSizes: landmassSizes,
+      sortedLandmasses: sortedLandmasses,
+      seaBoundCountByLandmass: seaBoundCountByLandmass,
+    );
+    if (pack != null) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
 Map<String, String> _assignOldWorldOwnershipContiguous({
   required MapTopology topologyOldWorld,
   required List<String> provinceIds,
@@ -1122,51 +1246,65 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   final sortedLandmasses = landmassSizes.keys.toList()
     ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
 
-  // Assign each GP to a specific landmass based on fair distribution
-  // Each GP gets a landmass that can support their target province count
-  final targetPerGp = computeFairTargets(gpIds, availableForGps);
-  final gpLandmassAssignments = <String, int>{};
-  final usedLandmasses = <int>{};
-
-  // First pass: assign GPs to landmasses that can fully support their target
-  final sortedGpIds = gpIds.toList()
-    ..sort(
-      (a, b) => targetPerGp[b]!.compareTo(targetPerGp[a]!),
-    ); // Larger targets first
-  for (final gpId in sortedGpIds) {
-    final target = targetPerGp[gpId]!;
-    int? assignedLandmass;
-
-    // Try to find a landmass that can support this GP's target
-    for (final lm in sortedLandmasses) {
-      if (usedLandmasses.contains(lm)) continue;
-      final lmSize = landmassSizes[lm]!;
-      // Check if this landmass can support the GP (with some buffer for flexibility)
-      if (lmSize >= target) {
-        assignedLandmass = lm;
-        break;
-      }
-    }
-
-    // If no landmass can fully support the target, pick the largest available
-    if (assignedLandmass == null) {
-      for (final lm in sortedLandmasses) {
-        if (!usedLandmasses.contains(lm)) {
-          assignedLandmass = lm;
-          break;
-        }
-      }
-    }
-
-    if (assignedLandmass != null) {
-      gpLandmassAssignments[gpId] = assignedLandmass;
-      usedLandmasses.add(assignedLandmass);
-    }
+  // Sea-bound slots per landmass (each GP needs one sea-bound seed on its landmass).
+  final seaBoundCountByLandmass = <int, int>{};
+  for (final pid in seaBoundProvinceIds) {
+    final lm = landmassIds[pid]!;
+    seaBoundCountByLandmass[lm] = (seaBoundCountByLandmass[lm] ?? 0) + 1;
   }
+
+  final maxGpProvincesByTopology = _maxFeasibleGpProvinceBudgetOnLandmasses(
+    landmassSizes: landmassSizes,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+    gpCount: gpCount,
+  );
+  if (maxGpProvincesByTopology < gpCount) {
+    throw ArgumentError(
+      'Old World GP assignment infeasible: topology allows at most '
+      '$maxGpProvincesByTopology province(s) for $gpCount Great Power(s) under the '
+      'one-landmass-per-GP rule (sea-bound slots per landmass: $seaBoundCountByLandmass)',
+    );
+  }
+
+  final cap = min(availableForGps, maxGpProvincesByTopology);
+  // Fair targets must pack into landmasses: sum of targets per landmass ≤ |L|, and
+  // (# GPs on L) ≤ sea-bound slots on L. Union-only caps are insufficient when
+  // gpCount > landmassCount (e.g. three GPs on two continents).
+  final gpProvinceBudget = _largestFeasibleGpProvinceBudgetByPacking(
+    gpIds: gpIds,
+    gpCount: gpCount,
+    cap: cap,
+    landmassSizes: landmassSizes,
+    sortedLandmasses: sortedLandmasses,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+  );
+  if (gpProvinceBudget < gpCount) {
+    throw ArgumentError(
+      'Old World GP landmass packing failed: no feasible fair target budget for '
+      '$gpCount Great Power(s) within cap $cap. Landmass sizes: $landmassSizes, '
+      'sea-bound per landmass: $seaBoundCountByLandmass',
+    );
+  }
+
+  final pack = _tryPackGpsOntoLandmassesGreedy(
+    gpIds: gpIds,
+    gpProvinceBudget: gpProvinceBudget,
+    landmassSizes: landmassSizes,
+    sortedLandmasses: sortedLandmasses,
+    seaBoundCountByLandmass: seaBoundCountByLandmass,
+  );
+  if (pack == null) {
+    throw StateError(
+      'logic: GP landmass pack unexpectedly null at budget $gpProvinceBudget',
+    );
+  }
+  final gpLandmassAssignments = pack.gpLandmassAssignments;
+  final targetPerGp = pack.targetPerGp;
+  final sortedGpIds = pack.sortedGpIds;
 
   // Seed selection for Great Powers: one sea-bound province per GP, from their assigned landmass
   final gpSeeds = _selectGpSeedsForLandmass(
-    gpIds: gpIds,
+    gpIdsInAssignmentOrder: sortedGpIds,
     seaBoundProvinceIds: seaBoundProvinceIds,
     landmassIds: landmassIds,
     gpLandmassAssignments: gpLandmassAssignments,
@@ -1183,8 +1321,23 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     seeds: gpSeeds,
     targetPerFaction: targetPerGp,
     available: gpAvailable,
-    maxTotal: availableForGps,
+    maxTotal: gpProvinceBudget,
   );
+
+  for (final gpId in gpIds) {
+    final expectedLm = gpLandmassAssignments[gpId];
+    if (expectedLm == null) continue;
+    for (final e in gpOwners.entries) {
+      if (e.value != gpId) continue;
+      final pidLm = landmassIds[e.key];
+      if (pidLm != expectedLm) {
+        throw StateError(
+          'GP $gpId violates one-continent rule: province ${e.key} is on '
+          'landmass $pidLm but GP is assigned to $expectedLm',
+        );
+      }
+    }
+  }
 
   // Remaining provinces go to minors.
   final owners = Map<String, String>.from(gpOwners);
@@ -1214,58 +1367,48 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
 }
 
 /// Selects GP seeds: one sea-bound province per GP, from their assigned landmass.
+/// [gpIdsInAssignmentOrder] must match the order used when building [gpLandmassAssignments]
+/// so sea-bound consumption is deterministic.
 Map<String, String> _selectGpSeedsForLandmass({
-  required List<String> gpIds,
+  required List<String> gpIdsInAssignmentOrder,
   required List<String> seaBoundProvinceIds,
   required Map<String, int> landmassIds,
   required Map<String, int> gpLandmassAssignments,
 }) {
-  final gpCount = gpIds.length;
+  final gpCount = gpIdsInAssignmentOrder.length;
 
-  // Group sea-bound provinces by landmass
+  // Group sea-bound provinces by landmass (sorted lists; we remove from front).
   final seaBoundByLandmass = <int, List<String>>{};
   for (final pid in seaBoundProvinceIds) {
     final lm = landmassIds[pid]!;
     seaBoundByLandmass.putIfAbsent(lm, () => <String>[]).add(pid);
   }
+  for (final list in seaBoundByLandmass.values) {
+    list.sort();
+  }
 
   final gpSeeds = <String, String>{};
-  final usedSeaBound = <String>{};
 
-  // For each GP, find a sea-bound province on their assigned landmass
-  for (final gpId in gpIds) {
+  for (final gpId in gpIdsInAssignmentOrder) {
     final assignedLandmass = gpLandmassAssignments[gpId];
-    if (assignedLandmass == null) continue;
-
+    if (assignedLandmass == null) {
+      throw ArgumentError(
+        'Great Power $gpId has no landmass assignment; cannot pick sea-bound seed',
+      );
+    }
     final seaBoundOnLandmass = seaBoundByLandmass[assignedLandmass];
-    if (seaBoundOnLandmass == null || seaBoundOnLandmass.isEmpty) continue;
-
-    // Pick the first available sea-bound province on this landmass
-    seaBoundOnLandmass.sort();
+    if (seaBoundOnLandmass == null || seaBoundOnLandmass.isEmpty) {
+      throw ArgumentError(
+        'No sea-bound province left on landmass $assignedLandmass for Great Power $gpId',
+      );
+    }
     final seedProv = seaBoundOnLandmass.removeAt(0);
     gpSeeds[seedProv] = gpId;
-    usedSeaBound.add(seedProv);
   }
 
-  // If we couldn't find seeds for all GPs from their assigned landmasses,
-  // try to find any remaining sea-bound province
-  if (gpSeeds.length < gpCount) {
-    final remainingSeaBound =
-        seaBoundProvinceIds.where((p) => !usedSeaBound.contains(p)).toList()
-          ..sort();
-    var gpIndex = 0;
-    for (final gpId in gpIds) {
-      if (gpSeeds.containsValue(gpId)) continue;
-      if (gpIndex >= remainingSeaBound.length) break;
-      final seedProv = remainingSeaBound[gpIndex++];
-      gpSeeds[seedProv] = gpId;
-      usedSeaBound.add(seedProv);
-    }
-  }
-
-  if (gpSeeds.length < gpCount) {
+  if (gpSeeds.length != gpCount) {
     throw ArgumentError(
-      'Not enough sea-bound provinces to seed all Great Powers contiguously: '
+      'Not enough sea-bound provinces to seed all Great Powers on their landmasses: '
       'have ${gpSeeds.length}, need $gpCount',
     );
   }

@@ -21,7 +21,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
 
       final world = WorldState(
@@ -83,7 +83,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
         );
         // No visibility for p1: source province unknown → game raises.
         final world = WorldState(
@@ -133,7 +133,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p2|0|0',
         );
         final world = WorldState(
@@ -197,7 +197,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       // No visibility: p1 unknown, so explore not suggested.
       final world = WorldState(
@@ -239,7 +239,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       // p1 only revealed (not fogged) — prospect requires fogged or better.
       final world = WorldState(
@@ -289,7 +289,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       const tileKey = 'oldWorld|p1|0|0';
       final world = WorldState(
@@ -299,6 +299,7 @@ void main() {
         playerVisibilityByTile: const {
           playerId: {tileKey: 'fogged'},
         },
+        resourceByTileKey: const {tileKey: 'iron'},
         tileKeysByRegionAndProvince: {
           ow: {
             '$ow|p1': [tileKey],
@@ -345,7 +346,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -383,7 +384,7 @@ void main() {
         expect(o.unitId, 'u1');
         final u = view.ownUnitsById[o.unitId];
         expect(u, isNotNull);
-        expect(u!.provinceId, 'oldWorld|p1');
+        expect(u!.locationProvinceId, 'oldWorld|p1');
       }
     });
 
@@ -406,7 +407,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileNoResource,
         );
         final world = WorldState(
@@ -475,7 +476,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileP1,
         );
         final world = WorldState(
@@ -542,14 +543,14 @@ void main() {
           id: 'b1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final world = WorldState(
@@ -625,14 +626,14 @@ void main() {
           id: 'b1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final world = WorldState(
@@ -918,7 +919,7 @@ void main() {
         id: 'u1',
         type: 'Spy',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -980,7 +981,7 @@ void main() {
           id: 'u1',
           type: 'Merchant',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
         );
         final world = WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
@@ -1254,7 +1255,7 @@ void main() {
         id: 'u1',
         type: 'Explorer',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1327,7 +1328,7 @@ void main() {
           id: 'u1',
           type: 'Explorer',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
         final game = Game(
@@ -1370,7 +1371,7 @@ void main() {
         id: 'u1',
         type: 'Colonist',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1429,7 +1430,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: tileWithResource,
       );
       final game = Game(
@@ -1506,7 +1507,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       final game = Game(
@@ -1588,7 +1589,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
         tileKey: landTile,
       );
       final game = Game(
@@ -1648,6 +1649,146 @@ void main() {
       expect(valid.contains('$ow|$seaZoneId|0|0'), isFalse);
     });
 
+    test(
+      'getValidWorkOrderTileKeysWithVisibility prospect excludes non-mineral '
+      'and already prospected',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const grassTile = 'oldWorld|p1|0|0';
+        const ironTile = 'oldWorld|p1|1|0';
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
+        final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
+        final unit = Unit(
+          id: 'u1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provinceId,
+          tileKey: grassTile,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [p1], units: [unit]),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            playerId: {
+              grassTile: 'fogged',
+              ironTile: 'fogged',
+            },
+          },
+          resourceByTileKey: const {
+            grassTile: 'grain',
+            ironTile: 'iron',
+          },
+          playerProspectedTiles: const {
+            playerId: {ironTile},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [grassTile, ironTile],
+            },
+          },
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: world,
+          players: [player],
+          tribes: [tribe],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final valid = getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: view,
+          unitId: 'u1',
+          workTarget: 'prospect',
+          currentOrders: const Orders(),
+        );
+        expect(valid.contains(grassTile), isFalse);
+        expect(valid.contains(ironTile), isFalse);
+      },
+    );
+
+    test(
+      'getValidWorkOrderTileKeysWithVisibility prospect includes eligible tile',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const ironTile = 'oldWorld|p1|0|0';
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
+        final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
+        final unit = Unit(
+          id: 'u1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provinceId,
+          tileKey: ironTile,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [p1], units: [unit]),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            playerId: {ironTile: 'fogged'},
+          },
+          resourceByTileKey: const {ironTile: 'iron'},
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [ironTile],
+            },
+          },
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: world,
+          players: [player],
+          tribes: [tribe],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final valid = getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: view,
+          unitId: 'u1',
+          workTarget: 'prospect',
+          currentOrders: const Orders(),
+        );
+        expect(valid, contains(ironTile));
+      },
+    );
+
     test('suggestMoveOrders excludes moves to other Great Power provinces', () {
       const playerId = 'gp1';
       const otherGpId = 'gp2';
@@ -1671,7 +1812,7 @@ void main() {
         id: 'u1',
         type: 'Builder',
         ownerId: playerId,
-        provinceId: '$ow|p1',
+        locationProvinceId: '$ow|p1',
       );
 
       final world = WorldState(
@@ -1757,7 +1898,7 @@ void main() {
         id: 'spy1',
         type: 'Spy',
         ownerId: playerId,
-        provinceId: '$ow|spy_loc',
+        locationProvinceId: '$ow|spy_loc',
         tileKey: 'oldWorld|spy_loc|0|0',
       );
 
@@ -1840,7 +1981,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
 
@@ -1941,7 +2082,7 @@ void main() {
           id: 'u1',
           type: 'Builder',
           ownerId: playerId,
-          provinceId: '$ow|p1',
+          locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
         );
 

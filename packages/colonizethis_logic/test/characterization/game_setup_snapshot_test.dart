@@ -183,7 +183,7 @@ void main() {
         expect(playerUnits, isNotEmpty,
             reason: '${p.id} must have starting units');
         for (final u in playerUnits) {
-          expect(u.provinceId, p.capitalProvinceId,
+          expect(u.locationProvinceId, p.capitalProvinceId,
               reason:
                   'Unit ${u.id} must be in capital ${p.capitalProvinceId}');
         }

@@ -17,7 +17,7 @@
 | 5 | diplomacy | Diplomacy | Opens Diplomacy screen |
 | 6 | technology | Technology | Opens Technology screen |
 
-Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) (`ui_icon_<id>.png`, 32×32; display at 20×20 in buttons). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
+Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32; display at 20×20 in buttons). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 
 ---
 
@@ -45,7 +45,7 @@ See [in-game-shell-narrow.md](in-game-shell-narrow.md) for full side menu specif
 ## Styling
 
 - All empire buttons use **CtNinePatchButton** with pixel-art icon + label.
-- Icon: `Image.asset('assets/images/ui_icon_<id>.png', width: 20, height: 20)`; 8 dp gap; then `Text(label)`.
+- Icon: `StrictAssetIcon(assetPath: '${kAppIconAssetPrefix}ui_icon_<id>.png', width: 20, height: 20)` (`lib/widgets/strict_asset_icon.dart`, `kAppIconAssetPrefix` in `lib/config/app_assets.dart`); 8 dp gap; then `Text(label)`. Missing or invalid assets throw `FlutterError`.
 - Same visual style in side menu at all viewport sizes. No Material buttons.
 
 ---

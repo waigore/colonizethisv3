@@ -58,7 +58,7 @@ void main() {
                   id: 'u1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1',
+                  locationProvinceId: '$ow|P1',
                   tileKey: 'oldWorld|P1|0|0'),
             ],
           ),
@@ -104,7 +104,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -189,7 +189,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -256,7 +256,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -313,7 +313,7 @@ void main() {
                   id: 'u1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -366,7 +366,7 @@ void main() {
                   id: 'u1',
                   type: 'pikemen',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -420,7 +420,7 @@ void main() {
                   id: 'u1',
                   type: 'pikemen',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -485,7 +485,7 @@ void main() {
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -539,7 +539,7 @@ void main() {
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -583,7 +583,7 @@ void main() {
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -626,7 +626,7 @@ void main() {
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1',
+                  locationProvinceId: '$ow|P1',
                   tileKey: 'oldWorld|P1|0|0'),
             ],
           ),
@@ -673,7 +673,7 @@ void main() {
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1',
+                  locationProvinceId: '$ow|P1',
                   tileKey: 'oldWorld|P1|0|0'),
             ],
           ),
@@ -698,6 +698,162 @@ void main() {
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
+    });
+
+    test('work order prospect rejected when tile is not mineral-eligible', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      const tileKey = 'oldWorld|P1|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'Explorer',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: tileKey),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKey: 'grain'},
+          playerVisibilityByTile: const {
+            'p1': {tileKey: 'fogged'},
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+      );
+
+      final engine = OrderEngine();
+      engine.addWorkOrder(
+          'p1',
+          const WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey));
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.length, 1);
+      expect(results[0].status, OrderValidationStatus.rejected);
+      expect(results[0].reason, contains('mineral-eligible'));
+    });
+
+    test('work order prospect rejected when tile already prospected', () {
+      const ow = 'oldWorld';
+      const tileKey = 'oldWorld|P1|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'Explorer',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: tileKey),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKey: 'iron'},
+          playerProspectedTiles: const {
+            'p1': {tileKey},
+          },
+          playerVisibilityByTile: const {
+            'p1': {tileKey: 'fogged'},
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+      );
+
+      final engine = OrderEngine();
+      engine.addWorkOrder(
+          'p1',
+          const WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey));
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.length, 1);
+      expect(results[0].status, OrderValidationStatus.rejected);
+      expect(results[0].reason, contains('already prospected'));
+    });
+
+    test('work order prospect accepted when mineral-eligible and visibility ok',
+        () {
+      const ow = 'oldWorld';
+      const tileKey = 'oldWorld|P1|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: [
+              Unit(
+                  id: 'u1',
+                  type: 'Explorer',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: tileKey),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKey: 'iron'},
+          playerVisibilityByTile: const {
+            'p1': {tileKey: 'fogged'},
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+      );
+
+      final engine = OrderEngine();
+      engine.addWorkOrder(
+          'p1',
+          const WorkOrder(
+              unitId: 'u1',
+              target: 'prospect',
+              targetTileKey: tileKey));
+      final results =
+          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      expect(results.length, 1);
+      expect(results[0].status, OrderValidationStatus.accepted);
     });
 
     test('move order rejected when destination not adjacent and not own province', () {
@@ -731,7 +887,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -787,7 +943,7 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -834,14 +990,14 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: RegionData(
             provinces: [
               Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           playerVisibilityByTile: const {
             'p1': {
@@ -888,14 +1044,14 @@ void main() {
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1'),
+                  locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: RegionData(
             provinces: [
               Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
             ],
-            units: const [],
+            units: [],
           ),
           playerVisibilityByTile: const {
             'p1': {
@@ -940,7 +1096,7 @@ void main() {
                   id: 'u1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: '$ow|P1',
+                  locationProvinceId: '$ow|P1',
                   tileKey: 'oldWorld|P1|0|0'),
             ],
           ),
@@ -1451,7 +1607,7 @@ void main() {
                     id: 'merchant1',
                     type: 'Merchant',
                     ownerId: 'p1',
-                    provinceId: minorProvinceId,
+                    locationProvinceId: minorProvinceId,
                     tileKey: tileKey),
               ],
             ),
@@ -1657,19 +1813,19 @@ void main() {
               provinces: const [
                 Province(id: provinceId, regionId: ow, ownerId: 'p1'),
               ],
-              units: const [
+              units: [
                 Unit(
                   id: 'builder1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: provinceId,
+                  locationProvinceId: provinceId,
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'engineer1',
                   type: 'Engineer',
                   ownerId: 'p1',
-                  provinceId: provinceId,
+                  locationProvinceId: provinceId,
                   tileKey: tileKey,
                 ),
               ],
@@ -1839,7 +1995,7 @@ void main() {
                     id: 'builder1',
                     type: 'Builder',
                     ownerId: 'p1',
-                    provinceId: provinceId,
+                    locationProvinceId: provinceId,
                     tileKey: tileKey),
               ],
             ),
@@ -1964,7 +2120,7 @@ void main() {
                   id: 'builder1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: provinceId,
+                  locationProvinceId: provinceId,
                   tileKey: tileKey,
                 ),
               ],
@@ -2042,7 +2198,7 @@ void main() {
                   id: 'builder1',
                   type: 'Builder',
                   ownerId: 'p1',
-                  provinceId: provinceId,
+                  locationProvinceId: provinceId,
                   tileKey: tileKey,
                 ),
               ],
@@ -2127,7 +2283,7 @@ void main() {
                     id: 'eng1',
                     type: 'Engineer',
                     ownerId: 'p1',
-                    provinceId: provinceId,
+                    locationProvinceId: provinceId,
                     tileKey: tileKey),
               ],
             ),
@@ -2176,7 +2332,7 @@ void main() {
                     id: 'eng1',
                     type: 'Engineer',
                     ownerId: 'p1',
-                    provinceId: provinceId,
+                    locationProvinceId: provinceId,
                     tileKey: tileKey),
               ],
             ),

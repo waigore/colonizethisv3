@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -6,13 +8,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
-    show InitGameMapViewData, MapTopology, RegionMapViewData;
+    show InitGameMapViewData, RegionMapViewData;
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 
 import 'game_screen_shared.dart';
@@ -37,18 +41,34 @@ class GameMapArea extends ConsumerStatefulWidget {
 
 class _GameMapAreaState extends ConsumerState<GameMapArea> {
   int _regionIndex = 0;
-  String? _selectedDetailId;
-  String? _hoveredDetailId;
-  String? _hoveredTileKey;
-  String? _highlightedTileKey;
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
+  StreamSubscription<ct_models.AppEvent>? _busSubscription;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainResourcesImprovements;
+
+  @override
+  void initState() {
+    super.initState();
+    final bus = ref.read(appEventBusProvider);
+    _busSubscription = bus.stream.listen((event) {
+      if (event is ct_models.OpenProvinceDetailPanelEvent) {
+        setState(() {
+          // Town icon tap will be handled by the province panel provider
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _busSubscription?.cancel();
+    super.dispose();
+  }
 
   String get _humanPlayerId =>
       widget.game.players
@@ -86,6 +106,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       unitId: _workTargetSelection!.unit.id,
       workTarget: _workTargetSelection!.workTarget,
       currentOrders: orders,
+      tileMapByRegion: mapData?.tileMapByRegion,
     );
     _cachedValidTileKeys = valid
         .where((k) => k.startsWith('$_currentRegionId|'))
@@ -115,8 +136,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     }
     final tileKey = capital.toTileKey();
     final regionId = capital.regionId;
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -132,29 +153,12 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  /// Province/sea zone to show in overlay (hover when overlay open, else selection). Prefixed id.
-  String get _displayId {
-    return GameMapAreaStateLogic.displayIdFromHover(
-      hoveredTileKey: _hoveredTileKey,
-      hoveredDetailId: _hoveredDetailId,
-      selectedDetailId: _selectedDetailId,
-    );
-  }
-
-  void _onProvinceSelected(String provinceId) {
-    // Province tap always selects/shows the overlay; it stays visible until
-    // explicitly dismissed via the overlay close button. SPEC/ui/province-sea-zone-detail-overlay.md.
-    setState(() {
-      _selectedDetailId = provinceId;
-    });
-  }
-
   void _onLocateCivilianUnit(ct_models.Unit unit) {
     final tileKey = unit.tileKey;
     if (tileKey == null) return;
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -169,8 +173,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   void _onLocateMilitaryTile(String tileKey, String regionId) {
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -185,8 +189,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   void _onLocateNavalFleet(String tileKey, String regionId) {
+    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -246,9 +250,24 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   }
 
   @override
+  void didUpdateWidget(covariant GameMapArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game.id != widget.game.id) {
+      ref.read(mapProvincePanelProvider.notifier).reset();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final showBorders = ref.watch(mapBordersVisibleProvider);
+    final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final mapTopology = widget.mapViewData.combinedTopology;
+    final humanPlayerView = buildPlayerView(
+      widget.game,
+      mapTopology,
+      _humanPlayerId,
+    );
     final l10n = appL10n(context);
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
@@ -289,17 +308,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   region: _currentRegion,
                   baseLayerDisplayMode: _baseLayerDisplayMode,
                   showBordersLayer: showBorders,
+                  showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
-                  selectedDetailId: _selectedDetailId,
-                  displayId: _displayId,
-                  hoveredTileKey: _hoveredTileKey,
-                  highlightedTileKey: _highlightedTileKey,
+                  playerView: humanPlayerView,
                   centerOnTileKey: _centerOnTileKey,
                   validTileKeysForSelection: _validTileKeysForSelection,
-                  onProvinceSelected: _onProvinceSelected,
-                  onProvinceHovered: (id) =>
-                      setState(() => _hoveredDetailId = id),
-                  onTileHovered: (key) => setState(() => _hoveredTileKey = key),
                   onTileSelectedForWork: _workTargetSelection != null
                       ? _onTileSelectedForWork
                       : null,
@@ -309,12 +322,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           _cachedValidTileKeys = null;
                         })
                       : null,
-                  onHighlightTile: (k) =>
-                      setState(() => _highlightedTileKey = k),
-                  onCloseDetailOverlay: () => setState(() {
-                    _selectedDetailId = null;
-                    _highlightedTileKey = null;
-                  }),
+                  bus: ref.read(appEventBusProvider),
                 ),
                 Positioned(
                   left: 0,
@@ -333,18 +341,43 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 final bordersVisible = ref.watch(
                                   mapBordersVisibleProvider,
                                 );
-                                return SwitchListTile(
-                                  title: Text(l10n.map_displayOptions_showBorders),
-                                  value: bordersVisible,
-                                  onChanged: (value) {
-                                    ref
-                                            .read(
-                                              mapBordersVisibleProvider
-                                                  .notifier,
-                                            )
-                                            .state =
-                                        value;
-                                  },
+                                final namesVisible = ref.watch(
+                                  mapProvinceNamesVisibleProvider,
+                                );
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SwitchListTile(
+                                      title: Text(
+                                        l10n.map_displayOptions_showBorders,
+                                      ),
+                                      value: bordersVisible,
+                                      onChanged: (value) {
+                                        ref
+                                                .read(
+                                                  mapBordersVisibleProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            value;
+                                      },
+                                    ),
+                                    SwitchListTile(
+                                      title: Text(
+                                        l10n.map_displayOptions_showProvinceNames,
+                                      ),
+                                      value: namesVisible,
+                                      onChanged: (value) {
+                                        ref
+                                                .read(
+                                                  mapProvinceNamesVisibleProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            value;
+                                      },
+                                    ),
+                                  ],
                                 );
                               },
                             ),
@@ -389,8 +422,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     humanPlayerId: _humanPlayerId,
                     sideMenuOpen: _sideMenuOpen,
                     onClose: () => setState(() => _sideMenuOpen = false),
-                    onPanelDismissed: () =>
-                        setState(() => _highlightedTileKey = null),
+                    onPanelDismissed: () => ref
+                        .read(mapProvincePanelProvider.notifier)
+                        .setSecondaryHighlight(null),
                     onLocateCivilianUnit: _onLocateCivilianUnit,
                     onLocateMilitaryTile: _onLocateMilitaryTile,
                     onLocateNavalFleet: _onLocateNavalFleet,
@@ -409,19 +443,12 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             ),
           ),
         ),
-        if (isNarrow && _selectedDetailId != null)
-          GameMapNarrowDetailOverlay(
+        if (isNarrow)
+          GameMapNarrowDetailOverlaySlot(
             game: widget.game,
             region: _currentRegion,
-            selectedId: _selectedDetailId!,
-            displayId: _displayId,
             humanPlayerId: _humanPlayerId,
-            hoveredTileKey: _hoveredTileKey,
-            onHighlightTile: (k) => setState(() => _highlightedTileKey = k),
-            onClose: () => setState(() {
-              _selectedDetailId = null;
-              _highlightedTileKey = null;
-            }),
+            playerView: humanPlayerView,
           ),
       ],
     );

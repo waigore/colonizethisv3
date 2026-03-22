@@ -22,6 +22,7 @@
 | **Base (tile)** | Terrain, resources, improvements, towns, capitals. | Optional per-sublayer if needed; at minimum base is always on. |
 | **Borders** | Province and sea-zone boundaries (topology edges P–P, P–S, S–S). | Yes. User can turn the borders layer on/off. |
 | **Political** | Political borders (ownership differences between adjacent land provinces). Drawn on top of base and borders. | Yes. User can turn political overlay on/off. |
+| **Province names** | Land province labels: `CellViewData.provinceDisplayName` (same string as the Political section in the province detail overlay), with fallback to local province id when missing. One label per land province per region. Position: centroid of that province’s **land** tiles in the region (tile centers averaged). **Not** drawn for sea zones. **Player-constrained visibility:** only tiles that are not `unrevealed` participate in the centroid and get a label; if no qualifying tiles, no label. **Screen space:** text and backing plate use roughly **constant logical pixel size** regardless of map zoom (inverse scale in world space). Style: short label on a semi-transparent rectangular plate; neighbor overlap is acceptable. Rendered after province/political border strokes and before capitals/ports. | Yes. Independent of borders and political overlay toggles. |
 
 Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData` / game + tile maps per [map-visualization.md](../program/map-visualization.md)). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
 
@@ -47,7 +48,7 @@ Resources are displayed as 32×32 pixel-art icons rendered on tiles, centered wi
 
 ### Asset Files
 
-Resource icons are stored in `app/assets/images/` with naming convention `ui_icon_com_<resource_id>.png`:
+Resource icons are stored in `app/assets/icons/` with naming convention `ui_icon_com_<resource_id>.png`:
 
 | Resource ID | Icon File | Resource ID | Icon File |
 |-------------|-----------|-------------|-----------|
@@ -121,12 +122,23 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 | Callback | Purpose |
 |----------|---------|
 | **onProvinceSelected** | Invoked when the user taps/clicks a province (e.g. with prefixed province id). Province details (what to show, where) are defined by the parent/screen; the map widget only reports selection. |
+| **onMapTileTappedForDetail** | Optional. Invoked when the user **taps/clicks** a tile for the **province/sea zone detail** flow with full tile key `regionId|provinceId|x|y`. The **embedding shell** (not the reusable map) connects this to shared UI state (e.g. Riverpod `mapProvincePanelProvider`). The map widget does **not** import the detail overlay. See [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). |
 | **onRegionViewChanged** | Optional: viewport or zoom level changed (e.g. for syncing with sidebar or URL). |
 | **onProvinceHovered** | Optional: invoked when hover enters or leaves a province (prefixed province id, or null when leaving). Enables e.g. tooltips. |
 | **onTileSelected** | Optional. When the map is in **work target selection mode** (see below), invoked when the user taps/clicks a tile with the tile key `regionId|provinceId|x|y`. Used by the Civilian Units panel assign flow. |
 | **validTileKeys** | Optional. When non-null and non-empty, the map is in work target selection mode: tiles whose key is in this set are drawn with a **subtle glow** (e.g. soft overlay or outline) so the user sees which tiles are valid targets. Tap on a valid tile invokes **onTileSelected** with that tile key; tap on an invalid tile or empty area does not invoke onTileSelected (parent may treat as cancel/back-out). |
 
-Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget only supports selection via these callbacks.
+**Constructor / props (driven by parent):** **`selectedTileKey`** — full tile key for the **orange** selection outline (detail panel’s selected tile). **`secondaryHighlightTileKey`** — optional second outline (e.g. cyan) for list/locate; distinct from selection. Parents set these from shared state (e.g. Riverpod); the map does not read panel widgets.
+
+Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget reports taps via callbacks and paints outlines from passed-in keys.
+
+---
+
+## Province / sea zone detail panel (decoupling)
+
+- **No cross-imports:** The Flame map component tree and `CtRegionMap` MUST NOT import `ProvinceSeaZoneDetailOverlay` or any province-panel-only module. The detail overlay MUST NOT import the Flame map game class.
+- **Bridge:** In the app, **`mapProvincePanelProvider`** holds `overlayOpen`, `selectedTileKey`, `secondaryHighlightTileKey`. A **Consumer** host (e.g. game map canvas stack) wires `onMapTileTappedForDetail` → `reportMapTileTapped`, and passes `selectedTileKey` / `secondaryHighlightTileKey` from `ref.watch` into the map widget. Side and narrow panel slots are separate Consumers that read the same provider and build the overlay. This satisfies “Riverpod-only” wiring between map and panel; `AppEventBus` is optional for other concerns.
+- **Behavior:** **Tap** drives detail selection and panel content. **Hover** drives the animated hover selector and province/sea glow only — it does **not** update the detail panel’s selected tile. Full rules: [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md).
 
 ---
 
@@ -150,9 +162,7 @@ Details of what “province details” shows are **not** defined in this spec; t
 - **Selector:** When the pointer hovers over a tile, the widget shows a selector on that tile (e.g. a simple square outline). The selector has a **subtle bouncing animation** (e.g. scale or position) so it is clearly visible and responsive.
 - **Province border highlight:** The province (or sea zone) that contains the hovered tile is highlighted: its borders **glow** and use a **subtle animation** (e.g. opacity or stroke pulse). This applies to both land provinces and sea zones.
 - **Optional callback:** The widget may expose **onProvinceHovered**(prefixed province id, or null when hover leaves) so the parent can show tooltips or other feedback.
-- **Tap-as-hover on touch:** On touch-only/mobile viewports where pointer hover is not available, **tapping a tile** must drive the same hover visuals and tile/province callbacks as pointer hover:
-  - The hover selector and province-border glow move to the tapped tile (subject to visibility rules below) and remain there until another tile is hovered/tapped or the map loses focus.
-  - The map widget invokes **onTileHovered** and **onProvinceHovered** for the tapped tile/province in the same way it would for a hover event, so overlays such as the Province/Sea Zone Detail overlay can treat the tapped tile as the “current hovered tile” on mobile.
+- **Tap-as-hover on touch (map visuals only):** On touch-only/mobile viewports where pointer hover is not available, **tapping a tile** drives the same **hover** visuals and **onTileHovered** / **onProvinceHovered** as pointer hover (selector + province glow). The **province/sea zone detail panel** does **not** use hover or tap-as-hover for its Tile section — only **onMapTileTappedForDetail** (and provider state) updates that panel.
 
 ---
 
@@ -186,7 +196,7 @@ Hover, selection, and overlay behavior:
 
 - Hover selector and province-border glow only apply to tiles that are not `unrevealed`.
 - Province selection callbacks (`onProvinceSelected`, `onProvinceHovered`) **are invoked** for taps/clicks on tiles whose visibility is `visible`, `fogged`, or `unrevealed`; it is the responsibility of the overlay (see `SPEC/ui/province-sea-zone-detail-overlay.md`) to obfuscate data for fully unrevealed provinces/tiles.
-- On touch devices, tapping a tile that is not `unrevealed` also updates the **hover selector** and hover callbacks as described in the Hover section so that the visual cursor and overlay stay in sync even without pointer hover.
+- On touch devices, tapping a tile that is not `unrevealed` also updates the **hover selector** and hover callbacks as in the Hover section. The **detail overlay** stays in sync only when the shell also handles **onMapTileTappedForDetail** / provider selection — not via hover callbacks alone.
 
 ---
 
@@ -281,7 +291,10 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 
 - **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
 - **Given** the borders layer is enabled, **when** the map renders province and sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line) and other province/sea-zone borders are rendered subtly (not solid black).
-- **Given** the borders layer is disabled, **when** the map renders the region, **then** province and sea-zone boundary strokes are not drawn while hover selectors, hover glows, capitals, ports, and warp zone indicators remain visible.
+- **Given** the borders layer is disabled, **when** the map renders the region, **then** province and sea-zone boundary strokes are not drawn while hover selectors, hover glows, capitals, ports, warp zone indicators, and (if enabled) province name labels remain visible.
+- **Given** the province names layer is enabled, **when** the map renders land provinces, **then** each land province has at most one label at the centroid of its land tiles (subject to visibility rules above), using `provinceDisplayName` with local-id fallback, on a semi-transparent plate, with roughly constant on-screen size across zoom levels.
+- **Given** the province names layer is disabled, **when** the map renders, **then** no province name labels are drawn.
+- **Given** the province names layer is enabled and the borders layer is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on borders).
 - **Given** the political overlay is enabled while the borders layer is enabled, **when** two adjacent land tiles belong to different owning factions, **then** a thicker political border stroke is drawn between them on top of the province/sea-zone boundary stroke.
 - **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the borders layer setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
@@ -289,7 +302,7 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation; when hover leaves, the highlight is removed.
-- **Given** a touch/mobile viewport where pointer hover is not available, **when** the user taps a non-`unrevealed` tile, **then** the widget both invokes province/tile selection callbacks and updates the hover selector and province-border glow as if the tile were hovered.
+- **Given** a touch/mobile viewport where pointer hover is not available, **when** the user taps a non-`unrevealed` tile, **then** the widget updates the hover selector and province-border glow and invokes hover-related callbacks as if the tile were hovered; **when** the host wires **onMapTileTappedForDetail**, **then** that callback also runs for the detail panel flow (provider), independent of hover.
 - **Given** the component is implemented with Flame, **then** it is possible to drive per-tile or per-asset animations from external events or timers.
 - **Given** the Widgetbook map widget story is configured with an initialized game whose `Game.players` list is non-empty, **when** the user enables player-constrained visibility mode in the story controls, **then** the widget builds its map view using the first player's (`game.players.first`) player view and applies per-tile visibility from that view.
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **full**, **when** the widget renders tiles, **then** tiles whose visibility is `visible`, `fogged`, or `unrevealed` are all drawn as fully visible (no gray or black masking is applied based on visibility).
@@ -305,7 +318,7 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports) is drawn and no resource icons or improvement/road labels are drawn on tiles.
 - **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
 - **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource icons, and improvement/road labels are all drawn per cell where present.
-- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/images/ui_icon_com_<resource_id>.png` and rendered at native 32×32 resolution (never upscaled).
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/ui_icon_com_<resource_id>.png` and rendered at native 32×32 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
 - **Given** a map widget rendering a tile with a resource on a **32px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
 - **Given** a map widget rendering a tile with a resource on a **larger than 32px cell** (e.g. 64px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-32) at native 32×32 resolution.
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
@@ -316,5 +329,5 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 ## Integration
 
 - **Data:** Uses shared view models and game state (e.g. `RegionMapViewData`, Game, topology, tile maps). See [map-visualization.md](../program/map-visualization.md), [player-view.md](../program/player-view.md) for visibility when needed. `RegionMapViewData` / `CellViewData` are the source of truth for what is rendered; the map widget does not perform its own world simulation.
-- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks. The reusable map widget is exposed to Flutter as a `CtRegionMap`-style wrapper that embeds a Flame `GameWidget` and internal Flame game/component tree.
+- **Flame/Flutter:** Flame for the map canvas and animations; Flutter for shell and overlays. Per [repo-and-packages.md](../program/repo-and-packages.md): Flame owns game canvas and in-game pixel-art UI; communicate via state and callbacks. The reusable map widget is exposed to Flutter as a `CtRegionMap`-style wrapper that embeds a Flame `GameWidget` and internal Flame game/component tree. Province detail UI is wired only through **Riverpod** (or bus) at the shell — see **Province / sea zone detail panel** above and [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md).
 - **Catalog:** Once implemented, register in app widget catalog (e.g. CtRegionMap or similar; category: game/map, Flame component).

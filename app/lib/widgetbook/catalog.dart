@@ -667,9 +667,10 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
             child: ProvinceSeaZoneDetailOverlay(
               game: game,
               region: region,
-              selectedId: sampleProvinceIdForOverlay,
               displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -686,9 +687,10 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
             child: ProvinceSeaZoneDetailOverlay(
               game: game,
               region: region,
-              selectedId: sampleSeaZoneIdForOverlay,
               displayId: sampleSeaZoneIdForOverlay,
+              selectedTileKey: null,
               humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
               onClose: () {},
             ),
           );
@@ -705,9 +707,10 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               return ProvinceSeaZoneDetailOverlay(
                 game: game,
                 region: region,
-                selectedId: sampleProvinceIdForOverlay,
                 displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
                 humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
                 onClose: () {},
               );
             },
@@ -786,10 +789,11 @@ class _CivilianPanelWithMapStoryState
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
   Orders _orders = const Orders();
   int _regionIndex = 0;
-  String? _highlightedTileKey;
+  String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;
   ({Unit unit, String workTarget})? _workTargetSelection;
   CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  bool _showProvinceNames = true;
   Set<String>? _cachedValidTileKeys;
   String? _cachedWorkTargetSelection;
 
@@ -855,6 +859,7 @@ class _CivilianPanelWithMapStoryState
         unitId: _workTargetSelection!.unit.id,
         workTarget: _workTargetSelection!.workTarget,
         currentOrders: _orders,
+        tileMapByRegion: result.tileMapByRegion,
       );
     } else {
       valid = getValidWorkOrderTileKeys(
@@ -864,6 +869,7 @@ class _CivilianPanelWithMapStoryState
         _workTargetSelection!.unit.id,
         _workTargetSelection!.workTarget,
         _orders,
+        tileMapByRegion: result.tileMapByRegion,
       );
     }
 
@@ -880,7 +886,7 @@ class _CivilianPanelWithMapStoryState
     if (tileKey == null) return;
     final regionId = Unit.regionIdFromTileKey(tileKey);
     setState(() {
-      _highlightedTileKey = tileKey;
+      _secondaryHighlightTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -976,6 +982,16 @@ class _CivilianPanelWithMapStoryState
                         _visibilityMode = CtMapVisibilityMode.playerConstrained,
                   ),
                 ),
+                CtChoiceChip(
+                  label: const Text('Province names'),
+                  selected: _showProvinceNames,
+                  onSelected: (_) => setState(() => _showProvinceNames = true),
+                ),
+                CtChoiceChip(
+                  label: const Text('No province names'),
+                  selected: !_showProvinceNames,
+                  onSelected: (_) => setState(() => _showProvinceNames = false),
+                ),
               ],
             ),
           ),
@@ -984,8 +1000,9 @@ class _CivilianPanelWithMapStoryState
               region: region,
               cellSizePx: 24,
               visibilityMode: _visibilityMode,
+              showProvinceNamesLayer: _showProvinceNames,
               onProvinceSelected: (_) {},
-              highlightedTileKey: _highlightedTileKey,
+              secondaryHighlightTileKey: _secondaryHighlightTileKey,
               centerOnTileKey: _centerOnTileKey,
               validTileKeys: _validTileKeys,
               onTileSelected: _workTargetSelection != null
@@ -1098,12 +1115,13 @@ class _MilitaryPanelWithMapStory extends StatefulWidget {
 class _MilitaryPanelWithMapStoryState
     extends State<_MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
-  String? _highlightedTileKey;
+  String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;
+  bool _showProvinceNames = true;
 
   void _onLocateTile(String tileKey, String regionId) {
     setState(() {
-      _highlightedTileKey = tileKey;
+      _secondaryHighlightTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -1152,6 +1170,19 @@ class _MilitaryPanelWithMapStoryState
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Province names'),
+                        selected: _showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = true),
+                      ),
+                      ChoiceChip(
+                        label: const Text('No names'),
+                        selected: !_showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = false),
+                      ),
                     ],
                   ),
                 ),
@@ -1159,8 +1190,9 @@ class _MilitaryPanelWithMapStoryState
                   child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
+                    showProvinceNamesLayer: _showProvinceNames,
                     onProvinceSelected: (_) {},
-                    highlightedTileKey: _highlightedTileKey,
+                    secondaryHighlightTileKey: _secondaryHighlightTileKey,
                     centerOnTileKey: _centerOnTileKey,
                   ),
                 ),
@@ -1192,8 +1224,9 @@ class _NavalPanelWithMapStory extends StatefulWidget {
 
 class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   int _regionIndex = 0;
-  String? _highlightedTileKey;
+  String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;
+  bool _showProvinceNames = true;
   late Game _game;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
@@ -1218,7 +1251,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
 
   void _onLocateFleet(String tileKey, String regionId) {
     setState(() {
-      _highlightedTileKey = tileKey;
+      _secondaryHighlightTileKey = tileKey;
       _centerOnTileKey = tileKey;
       if (regionId == 'newWorld') {
         _regionIndex = 1;
@@ -1266,6 +1299,19 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Province names'),
+                        selected: _showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = true),
+                      ),
+                      ChoiceChip(
+                        label: const Text('No names'),
+                        selected: !_showProvinceNames,
+                        onSelected: (_) =>
+                            setState(() => _showProvinceNames = false),
+                      ),
                     ],
                   ),
                 ),
@@ -1273,8 +1319,9 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
                   child: CtRegionMap(
                     region: region,
                     cellSizePx: 24,
+                    showProvinceNamesLayer: _showProvinceNames,
                     onProvinceSelected: (_) {},
-                    highlightedTileKey: _highlightedTileKey,
+                    secondaryHighlightTileKey: _secondaryHighlightTileKey,
                     centerOnTileKey: _centerOnTileKey,
                   ),
                 ),
@@ -1307,33 +1354,57 @@ class _MapWithOverlayStory extends StatefulWidget {
 }
 
 class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
-  late String _selectedId;
-  String? _hoveredDetailId;
-  String? _hoveredTileKey;
-  String? _highlightedTileKey;
+  late String? _selectedTileKey;
+  String? _secondaryHighlightTileKey;
+  var _overlayOpen = true;
   CtMapVisibilityMode _visibilityMode = CtMapVisibilityMode.full;
+  bool _showProvinceNames = true;
 
-  String get _displayId {
-    if (_hoveredTileKey != null) {
-      final parts = _hoveredTileKey!.split('|');
-      if (parts.length >= 2) {
-        return '${parts[0]}|${parts[1]}';
-      }
-    }
-    return _hoveredDetailId ?? _selectedId;
+  String? _displayIdFromTile(String? tileKey) {
+    if (tileKey == null) return null;
+    final parts = tileKey.split('|');
+    if (parts.length < 4) return null;
+    return '${parts[0]}|${parts[1]}';
   }
 
   @override
   void initState() {
     super.initState();
-    _selectedId = widget.selectedId;
+    final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
+    final region = mapViewData.oldWorld;
+    final game = getDebugInitGameResult().game;
+    final tiles =
+        game.worldState.tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
+    if (tiles != null && tiles.isNotEmpty) {
+      _selectedTileKey = tiles.first;
+    } else {
+      final cell = region.cells.firstWhere(
+        (c) => '${region.regionId}|${c.regionCellId}' == widget.selectedId,
+      );
+      _selectedTileKey =
+          '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
+    }
   }
 
   @override
   void didUpdateWidget(covariant _MapWithOverlayStory oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedId != widget.selectedId) {
-      _selectedId = widget.selectedId;
+      final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
+      final region = mapViewData.oldWorld;
+      final game = getDebugInitGameResult().game;
+      final tiles =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
+      if (tiles != null && tiles.isNotEmpty) {
+        _selectedTileKey = tiles.first;
+      } else {
+        final cell = region.cells.firstWhere(
+          (c) => '${region.regionId}|${c.regionCellId}' == widget.selectedId,
+        );
+        _selectedTileKey =
+            '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
+      }
+      _overlayOpen = true;
     }
   }
 
@@ -1341,8 +1412,11 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   Widget build(BuildContext context) {
     final initResult = getDebugInitGameResult();
     final game = initResult.game;
+    final playerView =
+        buildPlayerView(game, initResult.combinedTopology, 'gp1');
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
+    final displayId = _displayIdFromTile(_selectedTileKey) ?? widget.selectedId;
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalHeight = constraints.maxHeight > 0
@@ -1382,6 +1456,19 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         });
                       },
                     ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Province names'),
+                      selected: _showProvinceNames,
+                      onSelected: (_) =>
+                          setState(() => _showProvinceNames = true),
+                    ),
+                    ChoiceChip(
+                      label: const Text('No names'),
+                      selected: !_showProvinceNames,
+                      onSelected: (_) =>
+                          setState(() => _showProvinceNames = false),
+                    ),
                   ],
                 ),
               ),
@@ -1393,16 +1480,17 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         region: region,
                         cellSizePx: 28,
                         visibilityMode: _visibilityMode,
-                        onProvinceSelected: (id) =>
-                            setState(() => _selectedId = id),
-                        onProvinceHovered: (id) =>
-                            setState(() => _hoveredDetailId = id),
-                        onTileHovered: (key) =>
-                            setState(() => _hoveredTileKey = key),
-                        highlightedTileKey: _highlightedTileKey,
+                        showProvinceNamesLayer: _showProvinceNames,
+                        onProvinceSelected: null,
+                        onMapTileTappedForDetail: (tk) => setState(() {
+                          _selectedTileKey = tk;
+                          _overlayOpen = true;
+                        }),
+                        selectedTileKey: _selectedTileKey,
+                        secondaryHighlightTileKey: _secondaryHighlightTileKey,
                       ),
                     ),
-                    if (_selectedId.isNotEmpty)
+                    if (_overlayOpen && _selectedTileKey != null)
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: SizedBox(
@@ -1411,13 +1499,15 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                           child: ProvinceSeaZoneDetailOverlay(
                             game: game,
                             region: region,
-                            selectedId: _selectedId,
-                            displayId: _displayId,
+                            displayId: displayId,
+                            selectedTileKey: _selectedTileKey,
                             humanPlayerId: 'gp1',
-                            hoveredTileKey: _hoveredTileKey,
+                            playerView: playerView,
                             onHighlightTile: (k) =>
-                                setState(() => _highlightedTileKey = k),
-                            onClose: () => setState(() => _selectedId = ''),
+                                setState(() => _secondaryHighlightTileKey = k),
+                            onClose: () => setState(() {
+                              _overlayOpen = false;
+                            }),
                           ),
                         ),
                       ),

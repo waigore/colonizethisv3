@@ -147,12 +147,12 @@ void main() {
               Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
               Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: null),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'inf',
                 ownerId: 'gp1',
-                provinceId: 'oldWorld|p1',
+                locationProvinceId: 'oldWorld|p1',
                 tileKey: 'oldWorld|p1|0|0',
               ),
             ],

@@ -13,7 +13,7 @@ void main() {
           id: 'a1',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'oldWorld|p',
           medals: 1,
         ),
       ];
@@ -22,7 +22,7 @@ void main() {
           id: 'd1',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'oldWorld|p',
           medals: 0,
         ),
       ];

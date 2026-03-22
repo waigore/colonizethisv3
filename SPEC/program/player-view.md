@@ -10,6 +10,7 @@
 
 - AI planners (strategic and tactical).
 - Order suggestion APIs.
+- **Province / sea zone detail overlay:** `foreignCivilianVisibleToPlayer` uses `PlayerView` tile visibility to decide whether non-owned civilian units appear in the Civilian section and tile civilian count ([province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md)).
 - Debug tooling that wants to reason from a player's perspective.
 
 AI and suggestion code must treat `PlayerView` as the **source of truth** for map and opponent information; it may not read hidden data directly from `Game`.

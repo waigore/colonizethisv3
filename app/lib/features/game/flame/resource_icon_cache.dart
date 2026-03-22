@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/services.dart';
 
+import '../../../config/app_assets.dart';
+
 final _log = gameLogger();
 
 /// Resource IDs for which icons exist (excludes commodities without tile resources).
@@ -59,32 +61,25 @@ class ResourceIconCache {
       _isLoaded = true;
       _log.i('Loaded ${_icons.length} resource icons');
     } catch (e, stackTrace) {
-      _log.e('Failed to load resource icons', error: e, stackTrace: stackTrace);
+      _icons.clear();
       _isLoaded = false;
+      _log.e('Failed to load resource icons', error: e, stackTrace: stackTrace);
+      rethrow;
     } finally {
       _isLoading = false;
     }
   }
 
   Future<void> _loadIcon(String resourceId) async {
-    final pngPath = 'assets/images/ui_icon_com_$resourceId.png';
-
-    try {
-      final imageData = await rootBundle.load(pngPath);
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(
-        imageData.buffer.asUint8List(),
-        completer.complete,
-      );
-      final image = await completer.future;
-      _icons[resourceId] = image;
-    } catch (e, stackTrace) {
-      _log.w(
-        'Failed to load resource icon (non-fatal): $resourceId',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
+    final pngPath = '${kAppIconAssetPrefix}ui_icon_com_$resourceId.png';
+    final imageData = await rootBundle.load(pngPath);
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromList(
+      imageData.buffer.asUint8List(),
+      completer.complete,
+    );
+    final image = await completer.future;
+    _icons[resourceId] = image;
   }
 
   /// Returns the icon image for the given resource ID, or null if not loaded.

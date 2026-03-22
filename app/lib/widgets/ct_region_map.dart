@@ -1,4 +1,5 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -18,46 +19,58 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required double cellSizePx,
     required bool showPoliticalOverlay,
     required bool showBordersLayer,
+    required bool showProvinceNamesLayer,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainResourcesImprovements,
     required void Function(String provinceId)? onProvinceSelected,
+    void Function(String tileKey)? onMapTileTappedForDetail,
     required VoidCallback? onRegionViewChanged,
     required void Function(String? provinceId)? onProvinceHovered,
     required void Function(String? tileKey)? onTileHovered,
-    required String? highlightedTileKey,
+    required String? selectedTileKey,
+    required String? secondaryHighlightTileKey,
     required Set<String>? validTileKeys,
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
+    required void Function(String provinceId)? onTownIconTapped,
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
        showBordersLayer = showBordersLayer,
+       showProvinceNamesLayer = showProvinceNamesLayer,
        visibilityMode = visibilityMode,
        baseLayerDisplayMode = baseLayerDisplayMode,
        onProvinceSelected = onProvinceSelected,
+       onMapTileTappedForDetail = onMapTileTappedForDetail,
        onRegionViewChanged = onRegionViewChanged,
        onProvinceHovered = onProvinceHovered,
        onTileHovered = onTileHovered,
-       highlightedTileKey = highlightedTileKey,
+       selectedTileKey = selectedTileKey,
+       secondaryHighlightTileKey = secondaryHighlightTileKey,
        validTileKeys = validTileKeys,
        onTileSelected = onTileSelected,
-       onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+       onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled,
+       onTownIconTapped = onTownIconTapped;
 
   RegionMapViewData region;
   final double cellSizePx;
   bool showPoliticalOverlay;
   bool showBordersLayer;
+  bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
+  void Function(String tileKey)? onMapTileTappedForDetail;
   VoidCallback? onRegionViewChanged;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
-  String? highlightedTileKey;
+  String? selectedTileKey;
+  String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
+  void Function(String provinceId)? onTownIconTapped;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -73,11 +86,15 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       cellSize: cellSizePx,
       showPoliticalOverlay: showPoliticalOverlay,
       showBordersLayer: showBordersLayer,
+      showProvinceNamesLayer: showProvinceNamesLayer,
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
+      onMapTileTappedForDetail: onMapTileTappedForDetail,
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
+      selectedTileKey: selectedTileKey,
+      secondaryHighlightTileKey: secondaryHighlightTileKey,
       onTileTapped: (tileKey) {
         // Tap handler for work target selection mode.
         if (onTileSelected != null && validTileKeys != null) {
@@ -90,8 +107,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
           }
         }
       },
-      highlightedTileKey: highlightedTileKey,
       validTileKeys: validTileKeys,
+      onTownIconTapped: onTownIconTapped,
     )..position = Vector2.zero();
     await world.add(_mapComponent);
     _mapLoaded = true;
@@ -102,15 +119,26 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
   }
 
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_mapLoaded) {
+      _mapComponent.cameraZoom = camera.viewfinder.zoom;
+    }
+  }
+
   /// Update map configuration without recreating the game.
   void updateProps({
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
     bool? showBordersLayer,
+    bool? showProvinceNamesLayer,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
-    String? highlightedTileKey,
-    bool clearHighlightedTileKey = false,
+    String? selectedTileKey,
+    String? secondaryHighlightTileKey,
+    bool clearSelectedTileKey = false,
+    bool clearSecondaryHighlightTileKey = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
@@ -125,17 +153,24 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (showBordersLayer != null) {
       this.showBordersLayer = showBordersLayer;
     }
+    if (showProvinceNamesLayer != null) {
+      this.showProvinceNamesLayer = showProvinceNamesLayer;
+    }
     if (visibilityMode != null) {
       this.visibilityMode = visibilityMode;
     }
     if (baseLayerDisplayMode != null) {
       this.baseLayerDisplayMode = baseLayerDisplayMode;
     }
-    if (clearHighlightedTileKey) {
-      this.highlightedTileKey = null;
+    if (clearSelectedTileKey) {
+      this.selectedTileKey = null;
+    } else if (selectedTileKey != null) {
+      this.selectedTileKey = selectedTileKey;
     }
-    if (highlightedTileKey != null) {
-      this.highlightedTileKey = highlightedTileKey;
+    if (clearSecondaryHighlightTileKey) {
+      this.secondaryHighlightTileKey = null;
+    } else if (secondaryHighlightTileKey != null) {
+      this.secondaryHighlightTileKey = secondaryHighlightTileKey;
     }
     if (clearValidTileKeys) {
       this.validTileKeys = null;
@@ -152,9 +187,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..cellSize = cellSizePx
         ..showPoliticalOverlay = this.showPoliticalOverlay
         ..showBordersLayer = this.showBordersLayer
+        ..showProvinceNamesLayer = this.showProvinceNamesLayer
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
-        ..highlightedTileKey = this.highlightedTileKey
+        ..selectedTileKey = this.selectedTileKey
+        ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
         ..validTileKeys = this.validTileKeys;
     }
   }
@@ -320,37 +357,48 @@ class CtRegionMap extends StatefulWidget {
     required this.region,
     this.showPoliticalOverlay = true,
     this.showBordersLayer = true,
+    this.showProvinceNamesLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
     this.baseLayerDisplayMode,
     this.onProvinceSelected,
+    this.onMapTileTappedForDetail,
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
-    this.highlightedTileKey,
+    this.selectedTileKey,
+    this.secondaryHighlightTileKey,
     this.centerOnTileKey,
     this.validTileKeys,
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
+    this.bus,
   });
 
   final RegionMapViewData region;
   final bool showPoliticalOverlay;
   final bool showBordersLayer;
+  final bool showProvinceNamesLayer;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
 
   /// When null, full letters (terrain + resources + improvements) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
+  final void Function(String tileKey)? onMapTileTappedForDetail;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
-  final String? highlightedTileKey;
+  final String? selectedTileKey;
+  final String? secondaryHighlightTileKey;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
   final void Function(String tileKey)? onTileSelected;
   final VoidCallback? onWorkTargetSelectionCancelled;
+
+  /// Optional event bus for emitting town icon tap events.
+  /// When provided, tapping a town/port icon emits OpenProvinceDetailPanelEvent.
+  final AppEventBus? bus;
 
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
@@ -371,10 +419,13 @@ class _CtRegionMapState extends State<CtRegionMap> {
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
         widget.showBordersLayer != oldWidget.showBordersLayer ||
+        widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
-        widget.highlightedTileKey != oldWidget.highlightedTileKey ||
+        widget.selectedTileKey != oldWidget.selectedTileKey ||
+        widget.secondaryHighlightTileKey !=
+            oldWidget.secondaryHighlightTileKey ||
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled) {
@@ -382,12 +433,16 @@ class _CtRegionMapState extends State<CtRegionMap> {
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
         showBordersLayer: widget.showBordersLayer,
+        showProvinceNamesLayer: widget.showProvinceNamesLayer,
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainResourcesImprovements,
-        highlightedTileKey: widget.highlightedTileKey,
-        clearHighlightedTileKey: widget.highlightedTileKey == null,
+        selectedTileKey: widget.selectedTileKey,
+        clearSelectedTileKey: widget.selectedTileKey == null,
+        secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
+        clearSecondaryHighlightTileKey:
+            widget.secondaryHighlightTileKey == null,
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
@@ -409,18 +464,26 @@ class _CtRegionMapState extends State<CtRegionMap> {
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
       showBordersLayer: widget.showBordersLayer,
+      showProvinceNamesLayer: widget.showProvinceNamesLayer,
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:
           widget.baseLayerDisplayMode ??
           BaseLayerDisplayMode.terrainResourcesImprovements,
       onProvinceSelected: widget.onProvinceSelected,
+      onMapTileTappedForDetail: widget.onMapTileTappedForDetail,
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,
       onTileHovered: widget.onTileHovered,
-      highlightedTileKey: widget.highlightedTileKey,
+      selectedTileKey: widget.selectedTileKey,
+      secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
       validTileKeys: widget.validTileKeys,
       onTileSelected: widget.onTileSelected,
       onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
+      onTownIconTapped: widget.bus != null
+          ? (provinceId) {
+              widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
+            }
+          : null,
     );
   }
 

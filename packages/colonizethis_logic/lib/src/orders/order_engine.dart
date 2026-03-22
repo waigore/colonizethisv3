@@ -152,11 +152,17 @@ class OrderEngine {
     T order,
     Map<String, List<T>> Function(Orders) getter,
     Orders Function(Orders, Map<String, List<T>>) updater,
-    String orderLabel,
-  ) {
+    String orderLabel, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     _appendOrder(playerId, order, getter, updater);
     _log.d('logic: validating orders with context player=$playerId');
-    final results = validatePlayerOrdersWithContext(game, topology, playerId);
+    final results = validatePlayerOrdersWithContext(
+      game,
+      topology,
+      playerId,
+      tileMapByRegion: tileMapByRegion,
+    );
     if (results.isEmpty) {
       return OrderValidationResult.accepted();
     }
@@ -277,8 +283,9 @@ class OrderEngine {
     MapTopology topology,
     String playerId,
     T order,
-    _OrderSlot<T> slot,
-  ) {
+    _OrderSlot<T> slot, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     return _addOrderWithContext(
       game,
       topology,
@@ -287,6 +294,7 @@ class OrderEngine {
       slot.getter,
       slot.updater,
       slot.label,
+      tileMapByRegion: tileMapByRegion,
     );
   }
 
@@ -301,8 +309,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    MoveOrder order,
-  ) => _addOrderWithContextSlot(game, topology, playerId, order, _moveSlot);
+    MoveOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _moveSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) =>
       _addOrder(playerId, order, _buildSlot);
@@ -311,8 +328,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    BuildUnitOrder order,
-  ) => _addOrderWithContextSlot(game, topology, playerId, order, _buildSlot);
+    BuildUnitOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _buildSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   OrderValidationResult addWorkOrder(String playerId, WorkOrder order) =>
       _addOrder(playerId, order, _workSlot);
@@ -321,8 +347,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    WorkOrder order,
-  ) => _addOrderWithContextSlot(game, topology, playerId, order, _workSlot);
+    WorkOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _workSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   OrderValidationResult addDiplomaticOrder(
     String playerId,
@@ -333,14 +368,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    DiplomaticOrder order,
-  ) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _diplomaticSlot,
-  );
+    DiplomaticOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _diplomaticSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   OrderValidationResult addNavalMoveOrder(
     String playerId,
@@ -351,9 +389,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    NavalMoveOrder order,
-  ) =>
-      _addOrderWithContextSlot(game, topology, playerId, order, _navalMoveSlot);
+    NavalMoveOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _navalMoveSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   OrderValidationResult addNavalMissionOrder(
     String playerId,
@@ -364,14 +410,17 @@ class OrderEngine {
     Game game,
     MapTopology topology,
     String playerId,
-    NavalMissionOrder order,
-  ) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _navalMissionSlot,
-  );
+    NavalMissionOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _navalMissionSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   void removeMoveOrder(String playerId, int index) =>
       _removeOrderAtSlot(playerId, index, _moveSlot);
@@ -386,8 +435,9 @@ class OrderEngine {
   List<OrderValidationResult> validatePlayerOrdersWithContext(
     Game game,
     MapTopology topology,
-    String playerId,
-  ) {
+    String playerId, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     final results = <OrderValidationResult>[];
     final player = game.playerById(playerId);
     if (player == null) return results;
@@ -454,6 +504,7 @@ class OrderEngine {
       devExclusiveTiles: devExclusiveTiles,
       stockpile: stockpile,
       treasury: treasury,
+      tileMapByRegion: tileMapByRegion,
     );
     rejected = _appendValidationResults(
       results,

@@ -51,7 +51,7 @@ void main() {
               Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
               Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           fleets: [

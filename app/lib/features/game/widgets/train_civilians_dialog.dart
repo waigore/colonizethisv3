@@ -4,8 +4,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/strict_asset_icon.dart';
 
 class TrainCiviliansDialog extends StatefulWidget {
   const TrainCiviliansDialog({
@@ -336,8 +338,8 @@ class _UnitTypeRow extends StatelessWidget {
             Row(
               children: [
                 if (isLocked)
-                  Image.asset(
-                    'assets/images/ui_icon_lock.png',
+                  StrictAssetIcon(
+                    assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
                     width: 20,
                     height: 20,
                   ),

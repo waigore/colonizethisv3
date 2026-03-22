@@ -152,6 +152,7 @@ void main() {
 
         expect(find.text('Map display options'), findsOneWidget);
         expect(find.text('Show borders'), findsOneWidget);
+        expect(find.text('Show province names'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
@@ -173,7 +174,10 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final showBordersFinder = find.byType(SwitchListTile);
+        final showBordersFinder = find.widgetWithText(
+          SwitchListTile,
+          'Show borders',
+        );
         expect(showBordersFinder, findsOneWidget);
 
         // Toggle off.
@@ -191,10 +195,46 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final switchTile = tester.widget<SwitchListTile>(
-          showBordersFinder.first,
-        );
+        final switchTile = tester.widget<SwitchListTile>(showBordersFinder);
         expect(switchTile.value, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: toggling Show province names in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final showNamesFinder = find.widgetWithText(
+          SwitchListTile,
+          'Show province names',
+        );
+        expect(showNamesFinder, findsOneWidget);
+
+        await tester.tap(showNamesFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(find.text('Close'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final namesTile = tester.widget<SwitchListTile>(showNamesFinder);
+        expect(namesTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

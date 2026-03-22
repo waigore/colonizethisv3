@@ -6,7 +6,7 @@ Unit _unit(String id, String type, {int medals = 0}) => Unit(
       id: id,
       type: type,
       ownerId: 'owner',
-      provinceId: 'p',
+      locationProvinceId: 'p',
       medals: medals,
     );
 

@@ -153,6 +153,8 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     game: game,
     topology: topology,
     eventBus: eventBus,
+    onGameEvent: onGameEvent,
+    tileMapByRegion: tileMapByRegion,
   );
   return resolveTurnForGame(
     game: game,
@@ -446,6 +448,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
   required MapTopology topology,
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final original = engine.orders;
   final moveByPlayer = <String, List<MoveOrder>>{};
@@ -476,6 +479,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
       game,
       topology,
       playerId,
+      tileMapByRegion: tileMapByRegion,
     );
     final idxBox = [0];
 
@@ -864,8 +868,8 @@ _applyCrossRegionOwnProvinceMoves(
           ? _firstTileFor(destRegion, destFullId)
           : null;
       final movedUnit = isCivilian && firstTile != null
-          ? unit.copyWith(provinceId: destFullId, tileKey: firstTile)
-          : unit.copyWith(provinceId: destFullId);
+          ? unit.copyWith(locationProvinceId: destFullId, tileKey: firstTile)
+          : unit.copyWith(locationProvinceId: destFullId);
 
       unitsById[unit.id] = movedUnit;
       unitRegionById[unit.id] = destRegion;

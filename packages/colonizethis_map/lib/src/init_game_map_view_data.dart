@@ -115,6 +115,30 @@ class PortMarkerView {
   /// Optional key or label describing the seaboard/port grouping.
   final String? seaboardKey;
 }
+
+/// Town marker location for a province's town.
+class TownMarkerView {
+  const TownMarkerView({
+    required this.x,
+    required this.y,
+    required this.provinceId,
+    required this.isCoastal,
+    required this.isPort,
+  });
+
+  final int x;
+  final int y;
+
+  /// Province id (local id, e.g. 'p12').
+  final String provinceId;
+
+  /// True if this province is coastal (touches sea) but is not a port.
+  final bool isCoastal;
+
+  /// True if this province is a port (trade hub with port access).
+  final bool isPort;
+}
+
 /// Warp zone marker location for a sea zone that links to another region.
 class WarpMarkerView {
   const WarpMarkerView({
@@ -132,7 +156,6 @@ class WarpMarkerView {
   final String otherSeaZoneId;
 }
 
-
 /// View data for a single region (Old World or New World).
 class RegionMapViewData {
   const RegionMapViewData({
@@ -147,6 +170,7 @@ class RegionMapViewData {
     required this.terrainColors,
     this.unitMarkers = const [],
     this.warpMarkers = const [],
+    this.townMarkers = const [],
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -167,6 +191,7 @@ class RegionMapViewData {
   final List<CapitalMarkerView> capitalMarkers;
   final List<PortMarkerView> portMarkers;
   final List<WarpMarkerView> warpMarkers;
+  final List<TownMarkerView> townMarkers;
 
   /// Faction id -> RGB color used for ownership fills and legend.
   final Map<String, Rgb> factionColors;
@@ -186,6 +211,7 @@ class InitGameMapViewData {
   const InitGameMapViewData({
     required this.oldWorld,
     required this.newWorld,
+    required this.combinedTopology,
     this.seed,
     this.configSummary,
   });
@@ -193,10 +219,12 @@ class InitGameMapViewData {
   final RegionMapViewData oldWorld;
   final RegionMapViewData newWorld;
 
+  /// OW + NW nodes/edges with prefixed ids, plus warp links (same shape as persisted map data).
+  final MapTopology combinedTopology;
+
   /// Optional RNG seed used for map generation.
   final int? seed;
 
   /// Optional short summary of the GameSetupConfig used.
   final String? configSummary;
 }
-

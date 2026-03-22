@@ -10,14 +10,15 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Config:** Load Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, and target province counts per region from the active ruleset or scenario.
 
-**World Generation:** Generate procedural maps for Old World and New World (one per region). Fewer continents than Great Power count so provinces are shared across GPs per continent. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
+**World Generation:** Generate procedural maps for Old World and New World (one per region). Procedural **continent count** shapes land layout; it does not override GP assignment rules below. When continent count is less than Great Power count, multiple GPs **share** one continent (same P–P component) for their starting territory. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
 
-**GP Assignment:** Assign Old World provinces to Great Powers as contiguous land clusters with fair split (same or similar count per GP), using only OW provinces not reserved for Minor Nations. Contiguity defined by P–P edges in topology:
+**GP Assignment:** Assign Old World provinces to Great Powers with a **fair split** (same or similar province count per GP), using only OW provinces not reserved for Minor Nations.
 
-- Prefer a single landmass cluster per GP wherever possible.
-- Expand each GP's cluster by walking unassigned neighbour provinces; only start new clusters on another landmass when no unassigned neighbours remain.
-- Split across continents is a last resort.
-- Each GP must receive at least one sea-bound province (P–S edge); this becomes its capital province for auto-choice.
+**One continent per Great Power (hard rule):** **Continent** = P–P connected land component in [map-topology.md](map-topology.md). Each GP’s OW provinces at end of GP Assignment lie in **one** component only (player phrasing “one continent per GP”).
+
+- **Multiple GPs per continent:** If GP count exceeds OW continent count, several GPs share a continent; each GP still has **one** continent only.
+- **Seeds:** Each GP gets ≥1 **sea-bound** province (P–S) **on that continent** for BFS seed and capital auto-choice.
+- **Feasibility:** If targets, minor reservation, and sea-bound slots cannot be satisfied without violating the rule, setup **fails** with a clear error (no cross-continent GP fallback).
 
 **Minor Nation Assignment:** Assign remaining OW provinces to Minor Nations as contiguous clusters per minor. Per-minor count from even split of remaining OW total (within ±1); every minor receives at least one province. Capital assigned at setup (any owned province; sea-bound not required).
 
@@ -63,3 +64,11 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Given world generation has completed successfully and Great Power, Minor Nation, and Tribe counts are known  
   When the System runs the GP Assignment, Minor Nation Assignment, Tribe Assignment, and Faction & Initial State phases  
   Then the System assigns contiguous clusters of Old World provinces to Great Powers and Minor Nations and New World provinces to Tribes as described in this document, ensures that each Great Power has at least one sea-bound province, sets up faction records and ownership, invokes the capital-choice phase per [capital-choice-phase.md](capital-choice-phase.md), applies naming per [naming.md](naming.md), and creates an initial `Game` and `WorldState` that satisfy all invariants in [world-model.md](world-model.md) and [world-model-identity.md](world-model-identity.md).
+
+- Given GP Assignment has completed for the Old World  
+  When ownership is checked against P–P continents per [map-topology.md](map-topology.md)  
+  Then each Great Power’s provinces occupy **one** continent only; if GP count exceeds continent count, multiple GPs may share a continent but no GP spans two.
+
+- Given fair targets, minor reservation, and sea-bound seeds cannot all be satisfied per the one-continent-per-GP rule  
+  When the System runs GP Assignment  
+  Then setup **fails** with an explicit error (no silent cross-continent assignment).

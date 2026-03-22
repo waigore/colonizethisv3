@@ -256,7 +256,7 @@ class ScenarioRunner {
             id: unitId,
             type: type,
             ownerId: placement.playerId,
-            provinceId: fullProvinceId,
+            locationProvinceId: fullProvinceId,
             status: UnitStatus.idle,
             medals: 0,
           );

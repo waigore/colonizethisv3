@@ -29,7 +29,7 @@ For every suggested order `o`, appending it to the current list and validating v
 
 - **Province / tile identity:** Province ids and tile keys in suggested orders (destination province, targetTileKey, spawn province, fleet/sea zone ids) use the **prefixed** form and resolution rules per [world-model-identity.md](../game/world-model-identity.md) (same as [orders.md](orders.md)).
 - **Work orders (`suggestWorkOrders`):** For civilian **workers** (Builder, Engineer, Rail Builder), candidate work targets use the same tile scope as validation: any **player-controlled** tile (owned province or `purchasedTilesByTileKey`) that passes visibility and the order engine, not only tiles in the unit’s current province (see [civilian-units.md](../game/civilian-units.md): civilians may act on a tile other than their current tile). Explorers, Spies, and Merchants keep their existing province- or rules-specific enumeration. **Performance:** `suggestWorkOrders` may cache, per invocation, the pre-filtered + visibility-sorted tile list keyed by `workTarget` so each distinct work target is computed once per call; per-unit acceptance still runs the order engine over that list until the first valid tile is found.
-- **Work order tile selection (`getValidWorkOrderTileKeysWithVisibility`):** For UI tile selection, candidates include tiles in all owned provinces and purchased tiles per the work-target-specific rules above.
+- **Work order tile selection (`getValidWorkOrderTileKeysWithVisibility`):** For UI tile selection, apply the work-target-specific pre-filter table (e.g. `build_improvement`: owned or purchased tiles with a resource; `prospect`: land tiles that are mineral-eligible and not yet prospected — then visibility and order engine). Not every work target is limited to owned/purchased tiles.
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). Undiscovered factions are **never** valid diplomatic targets for order suggestions.
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
 - **Build orders:** `suggestBuildOrders` returns affordable, valid build-unit orders for both **military (regiment)** and **naval (ship)** unit types. Each candidate is validated (treasury, stockpile, tech, capital) via the order engine. Ordering is deterministic (e.g. by unit type id).
@@ -77,8 +77,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required String unitId,
   required String workTarget,
   required Orders currentOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
 });
 ```
+
+When `tileMapByRegion` is non-null (app shell, ctterm, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same terrain-aware eligibility as work application. When null, eligibility falls back to mineral resource ids on `resourceByTileKey` only.
 
 **Pre-filtering by work target type:**
 
@@ -87,7 +90,7 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 | Work target | Province scope | Tile requirements |
 |-------------|----------------|-------------------|
 | `explore` | Any visible province | Any tile in the province (province-level work) |
-| `prospect` | Any visible province | Tile must be mineral-eligible terrain (swamp, hills, mountain, desert) |
+| `prospect` | Land provinces (prefixed province id) | Tile must be mineral-eligible (terrain from tile maps when provided, else mineral resource on tile per `isMineralEligibleTile`); tile must **not** already appear in `WorldState.playerProspectedTiles[playerId]` |
 | `build_improvement` | Owned or purchased tiles | Tile must have a resource (`resourceByTileKey` non-empty); tile controlled by player |
 | `upgrade_town` | Owned provinces only | Province's town tile only |
 | `build_road` | Owned or purchased tiles | Any tile controlled by player |
@@ -116,6 +119,12 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 **Consumers:**
 - App UI (civilian units panel for work assignment).
 - ctterm (TUI work order assignment).
+
+**Acceptance criteria (prospect tile picker and validation)**
+
+- Given a Great Power player and a `prospect` work order candidate tile, when that tile is not mineral-eligible per game rules, then the system rejects the work order with a reason indicating the tile is not mineral-eligible for prospecting.
+- Given a Great Power player and a `prospect` work order candidate tile that is already in `playerProspectedTiles` for that player, when the order engine validates the order, then the system rejects the work order with a reason indicating the tile is already prospected.
+- Given `getValidWorkOrderTileKeysWithVisibility` is called for an Explorer with work target `prospect` and a non-null `tileMapByRegion`, when the player’s `PlayerView` marks a tile at least fogged, the tile is mineral-eligible, and the tile is not in `playerProspectedTiles` for that player, then the returned set may include that tile (subject to remaining order-engine rules). When the tile is already prospected or not mineral-eligible, then the returned set does not include that tile.
 
 **Notes:**
 - When `view` is `null` or visibility data is unavailable, falls back to full map iteration (same as `getValidWorkOrderTileKeys`).

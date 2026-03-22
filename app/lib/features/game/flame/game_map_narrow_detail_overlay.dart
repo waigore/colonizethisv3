@@ -1,48 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
+import '../../../../providers/map_province_panel_provider.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
-/// Narrow-layout (bottom sheet) province/sea zone detail overlay.
-class GameMapNarrowDetailOverlay extends StatelessWidget {
-  const GameMapNarrowDetailOverlay({
+/// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
+class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
+  const GameMapNarrowDetailOverlaySlot({
     required this.game,
     required this.region,
-    required this.selectedId,
-    required this.displayId,
     required this.humanPlayerId,
-    required this.hoveredTileKey,
-    required this.onHighlightTile,
-    required this.onClose,
+    required this.playerView,
     super.key,
   });
 
   final ct_models.Game game;
   final RegionMapViewData region;
-  final String selectedId;
-  final String displayId;
   final String humanPlayerId;
-  final String? hoveredTileKey;
-  final void Function(String?) onHighlightTile;
-  final VoidCallback onClose;
+  final PlayerView playerView;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final panel = ref.watch(mapProvincePanelProvider);
+    if (!panel.overlayOpen) {
+      return const SizedBox.shrink();
+    }
+    final displayId =
+        displayProvinceOrSeaIdFromTileKey(panel.selectedTileKey) ?? '';
+    if (displayId.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.33,
       child: ProvinceSeaZoneDetailOverlay(
         game: game,
         region: region,
-        selectedId: selectedId,
         displayId: displayId,
+        selectedTileKey: panel.selectedTileKey,
         humanPlayerId: humanPlayerId,
-        hoveredTileKey: hoveredTileKey,
-        onHighlightTile: onHighlightTile,
-        onClose: onClose,
+        playerView: playerView,
+        onHighlightTile: (k) => ref
+            .read(mapProvincePanelProvider.notifier)
+            .setSecondaryHighlight(k),
+        onClose: () =>
+            ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
       ),
     );
   }
 }
-
