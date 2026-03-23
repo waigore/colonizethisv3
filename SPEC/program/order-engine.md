@@ -32,6 +32,8 @@ Move and work-order validation are delegated to dedicated components for single-
 
 **Build validation (naval):** Build orders for naval units are validated for treasury, stockpile, and the **unlocking tech** for that ship type when applicable (see [tech-tree-naval.md](../game/tech-tree-naval.md)); starting ships such as Carrack have no prerequisite. OrderEngine validates before accepting.
 
+**Build validation (spawn province):** Build orders resolve an effective spawn province before affordability checks. For civilian/military, `spawnProvinceId` is optional and falls back to player's capital if empty/invalid/not owned by the player. For naval, spawn always resolves to capital home fleet and `spawnProvinceId` is ignored. If no capital exists, build is rejected.
+
 ---
 
 ## Per-Player Scope

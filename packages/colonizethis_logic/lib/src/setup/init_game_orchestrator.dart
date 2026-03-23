@@ -1,4 +1,5 @@
-// init_game orchestration. SPEC/program/init-game-tool.md.
+// init_game orchestration. SPEC/program/init-game-tool.md, game-setup-pipeline.md
+// (effective seed, OW vs NW tile-map seeds).
 
 import 'dart:typed_data';
 
