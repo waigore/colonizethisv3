@@ -243,6 +243,9 @@ class GameService {
     const total = newGameSetupProgressStepCount;
     Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
 
+    // Let any pending frame (e.g. progress modal paint) run before step 0 work.
+    await yieldUi();
+
     onProgress?.call(0, total);
     await yieldUi();
     final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
