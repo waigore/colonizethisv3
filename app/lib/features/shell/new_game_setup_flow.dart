@@ -12,11 +12,11 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 final _log = appLogger('shell');
 
@@ -98,10 +98,8 @@ Future<_NewGameOutcome?> _showNewGameProgressDialog({
     context: ctx,
     barrierDismissible: false,
     useRootNavigator: true,
-    builder: (dialogCtx) => _NewGameSetupProgressDialog(
-      config: config,
-      service: service,
-    ),
+    builder: (dialogCtx) =>
+        _NewGameSetupProgressDialog(config: config, service: service),
   );
 }
 
@@ -184,7 +182,8 @@ class _NewGameSetupProgressDialog extends StatefulWidget {
       _NewGameSetupProgressDialogState();
 }
 
-class _NewGameSetupProgressDialogState extends State<_NewGameSetupProgressDialog> {
+class _NewGameSetupProgressDialogState
+    extends State<_NewGameSetupProgressDialog> {
   var _stepIndex = 0;
 
   @override
@@ -249,10 +248,7 @@ class _NewGameSetupProgressDialogState extends State<_NewGameSetupProgressDialog
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              _stepLabel(context, _stepIndex),
-              textAlign: TextAlign.center,
-            ),
+            Text(_stepLabel(context, _stepIndex), textAlign: TextAlign.center),
           ],
         ),
       ),

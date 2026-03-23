@@ -130,7 +130,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
                   factionId,
                   owners,
                   neighbours,
-                )) {
+                )                ) {
                   seed = p;
                   break;
                 }
