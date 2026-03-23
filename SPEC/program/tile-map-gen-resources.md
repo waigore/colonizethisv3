@@ -28,7 +28,7 @@ Assign resources and provinces to land, subdivide sea zones, infer topology.
 
 ## Topology inference
 
-After all passes: `MapTopology inferTopologyFromTileMap(TileMapResult result, String regionId, String seaZoneId)`. Unique region ids from grid. **Node type:** s+digits → sea zone; p+digits → province. Edges from `TileMapResult.adjacentRegionPairs()`.
+After all passes: `MapTopology inferTopologyFromTileMap(TileMapResult result, String regionId)`. Unique region ids from grid. **Node type:** s+digits → sea zone; p+digits → province. Edges from `TileMapResult.adjacentRegionPairs()`.
 
 ---
 
