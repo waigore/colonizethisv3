@@ -3,7 +3,11 @@ import 'dart:io';
 import 'package:colonizethis_test/test.dart';
 import 'package:sim_scenarios/scenario_runner.dart';
 
-File _scenarioFile(String name) => File('tool/sim_scenarios/scenarios/$name');
+File _scenarioFile(String name) {
+  final fromToolDir = File('scenarios/$name');
+  if (fromToolDir.existsSync()) return fromToolDir;
+  return File('tool/sim_scenarios/scenarios/$name');
+}
 
 void main() {
   group('naval behavior scenarios (json)', () {
