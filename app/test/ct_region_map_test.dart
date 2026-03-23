@@ -79,7 +79,7 @@ void main() {
     double height = 320,
     double cellSizePx = 24,
     bool showPoliticalOverlay = true,
-    bool showBordersLayer = true,
+    bool showProvinceOverlay = true,
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? centerOnTileKey,
@@ -102,7 +102,7 @@ void main() {
               region: region,
               cellSizePx: cellSizePx,
               showPoliticalOverlay: showPoliticalOverlay,
-              showBordersLayer: showBordersLayer,
+              showProvinceOverlay: showProvinceOverlay,
               visibilityMode: visibilityMode,
               playerViewForResources: playerViewForResources,
               baseLayerDisplayMode: baseLayerDisplayMode,
@@ -219,7 +219,7 @@ void main() {
           _buildCtRegionMap(
             region: region,
             showPoliticalOverlay: false,
-            showBordersLayer: false,
+            showProvinceOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             playerViewForResources: ctRegionMapTestPlayerView,
           ),
@@ -232,20 +232,20 @@ void main() {
     );
 
     testWidgets(
-      'honors borders layer visibility flag without throwing',
+      'honors province overlay visibility flag without throwing',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
 
-        // Borders on.
+        // Province overlay on.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showBordersLayer: true),
+          _buildCtRegionMap(region: region, showProvinceOverlay: true),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
 
-        // Borders off.
+        // Province overlay off.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showBordersLayer: false),
+          _buildCtRegionMap(region: region, showProvinceOverlay: false),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
@@ -665,6 +665,7 @@ void main() {
           capitalMarkers: base.capitalMarkers,
           portMarkers: base.portMarkers,
           factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
           terrainColors: base.terrainColors,
           unitMarkers: base.unitMarkers,
         );
@@ -875,6 +876,7 @@ void main() {
           capitalMarkers: base.capitalMarkers,
           portMarkers: base.portMarkers,
           factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
           terrainColors: base.terrainColors,
           unitMarkers: base.unitMarkers,
         );
