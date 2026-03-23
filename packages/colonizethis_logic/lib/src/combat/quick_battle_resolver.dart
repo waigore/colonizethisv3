@@ -1,11 +1,14 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/fog_resolution.dart';
 import 'conflict_detection.dart';
+
+final _qbLog = logicLogger();
 
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
 /// Deterministic for given seed; output feeds same casualty/flip pipeline as auto-resolve.
@@ -31,6 +34,10 @@ QuickBattleResult resolveQuickBattle(
   QuickBattleInput input, {
   List<QuickBattleRoundActions>? roundActions,
 }) {
+  _qbLog.d(
+    'logic: quick_battle start province=${input.provinceId} '
+    'seed=${input.seed} rounds=${input.maxRounds}',
+  );
   final rng = Random(input.seed);
   var attGroups = _copyGroups(input.attackerDeployment.groups);
   var defGroups = _copyGroups(input.defenderDeployment.groups);
@@ -55,12 +62,17 @@ QuickBattleResult resolveQuickBattle(
     final attCp = _rollCommandPoints(rng);
     final defCp = _rollCommandPoints(rng);
 
-    final rawAttActs = roundActions != null && round <= roundActions.length
-        ? roundActions[round - 1].actions
-        : const [QuickBattleAction.volleyFire];
-    final rawDefActs = roundActions != null && round <= roundActions.length
-        ? roundActions[round - 1].actions
-        : const [QuickBattleAction.volleyFire];
+    final rActions = roundActions != null && round <= roundActions.length
+        ? roundActions[round - 1]
+        : null;
+    final rawAttActs =
+        rActions?.attackerActions ??
+        rActions?.actions ??
+        const [QuickBattleAction.volleyFire];
+    final rawDefActs =
+        rActions?.defenderActions ??
+        rActions?.actions ??
+        const [QuickBattleAction.volleyFire];
 
     final attActs = _limitActionsByCp(rawAttActs, attCp);
     final defActs = _limitActionsByCp(rawDefActs, defCp);
@@ -68,80 +80,108 @@ QuickBattleResult resolveQuickBattle(
     final attMods = _aggregateActionModifiers(attActs);
     final defMods = _aggregateActionModifiers(defActs);
 
-    var attStr =
-        _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
-        attMods.offenseModifier *
-        input.attackerLeaderMultiplier;
-    var defStr =
-        _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
-        defMods.offenseModifier *
-        input.defenderLeaderMultiplier;
-
-    final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
-    var effAtt = attStr * terrainMod.$1;
-    var effDef = defStr * terrainMod.$2;
-    if (input.fortLevel >= 1 && input.fortLevel <= 3) {
-      final reduction = fortDamageReduction[input.fortLevel];
-      effAtt *= (1.0 - reduction);
-      if (useVirtualEmplaced) {
-        effDef += _aliveGunStrengthSum(mutableGuns);
-      } else {
-        final emplaced =
-            fortGunCount[input.fortLevel] *
-            fortEmplacedStrength[input.fortLevel];
-        effDef += emplaced;
-      }
-    }
-
-    var effAttForRatio = effAtt;
-    if (input.fortLevel >= 1 && input.fortLevel <= 3) {
-      final wallHp = wallHpByFortLevel[input.fortLevel];
-      effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
-    }
-
-    final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
-    var attLossFraction = 0.4;
-    var defLossFraction = 0.4;
-    if (ratio >= 1.5) {
-      defLossFraction = 0.85;
-      attLossFraction = 0.15;
-    } else if (ratio <= 0.67) {
-      attLossFraction = 0.85;
-      defLossFraction = 0.15;
-    }
-
-    defLossFraction =
-        (defLossFraction *
-                attMods.casualtiesDealtModifier *
-                defMods.casualtiesTakenModifier)
-            .clamp(0.0, 1.0);
-    attLossFraction =
-        (attLossFraction *
-                defMods.casualtiesDealtModifier *
-                attMods.casualtiesTakenModifier)
-            .clamp(0.0, 1.0);
-
-    final rCount = _totalUnitCount(defGroups);
+    final attackerActsFirst = _attackerActsFirst(input);
     final List<String> defLoss;
-    if (useVirtualEmplaced) {
-      final gPool = _sumAliveGunHp(mutableGuns);
-      final totalSlots = gPool + rCount;
-      final gunHpLoss = totalSlots > 0 && gPool > 0
-          ? min(gPool, max(0, (defLossFraction * gPool).round()))
-          : 0;
-      _applyRoundRobinGunHpDamage(mutableGuns, gunHpLoss);
-      final regFrac = rCount > 0 && totalSlots > 0
-          ? (defLossFraction * rCount / totalSlots).clamp(0.0, 1.0)
-          : 0.0;
-      defLoss = _pickCasualties(defGroups, regFrac, rng);
+    final List<String> attLoss;
+    if (attackerActsFirst) {
+      final defLossFraction = _defenderLossFractionFromAttackerStrike(
+        input: input,
+        attGroups: attGroups,
+        defGroups: defGroups,
+        attMods: attMods,
+        defMods: defMods,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      defLoss = _pickDefenderLosses(
+        groups: defGroups,
+        fraction: defLossFraction,
+        rng: rng,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      defCasualties.addAll(defLoss);
+      defGroups = _removeCasualties(defGroups, defLoss);
+
+      if (_totalUnitCount(defGroups) <= 0) {
+        final result = _finishResult(
+          winner: QuickBattleWinner.attacker,
+          attackerCasualties: attCasualties,
+          defenderCasualties: defCasualties,
+          provinceFlips: true,
+          input: input,
+          mutableGuns: mutableGuns,
+          useVirtualEmplaced: useVirtualEmplaced,
+        );
+        _qbLog.d(
+          'logic: quick_battle end winner=${result.winner.name} '
+          'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+        );
+        return result;
+      }
+
+      final attLossFraction = _attackerLossFractionFromDefenderStrike(
+        input: input,
+        attGroups: attGroups,
+        defGroups: defGroups,
+        attMods: attMods,
+        defMods: defMods,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      attLoss = _pickCasualties(attGroups, attLossFraction, rng);
+      attCasualties.addAll(attLoss);
+      attGroups = _removeCasualties(attGroups, attLoss);
     } else {
-      defLoss = _pickCasualties(defGroups, defLossFraction, rng);
+      final attLossFraction = _attackerLossFractionFromDefenderStrike(
+        input: input,
+        attGroups: attGroups,
+        defGroups: defGroups,
+        attMods: attMods,
+        defMods: defMods,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      attLoss = _pickCasualties(attGroups, attLossFraction, rng);
+      attCasualties.addAll(attLoss);
+      attGroups = _removeCasualties(attGroups, attLoss);
+
+      if (_totalUnitCount(attGroups) <= 0) {
+        final result = _finishResult(
+          winner: QuickBattleWinner.defender,
+          attackerCasualties: attCasualties,
+          defenderCasualties: defCasualties,
+          provinceFlips: false,
+          input: input,
+          mutableGuns: mutableGuns,
+          useVirtualEmplaced: useVirtualEmplaced,
+        );
+        _qbLog.d(
+          'logic: quick_battle end winner=${result.winner.name} '
+          'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+        );
+        return result;
+      }
+
+      final defLossFraction = _defenderLossFractionFromAttackerStrike(
+        input: input,
+        attGroups: attGroups,
+        defGroups: defGroups,
+        attMods: attMods,
+        defMods: defMods,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      defLoss = _pickDefenderLosses(
+        groups: defGroups,
+        fraction: defLossFraction,
+        rng: rng,
+        mutableGuns: mutableGuns,
+        useVirtualEmplaced: useVirtualEmplaced,
+      );
+      defCasualties.addAll(defLoss);
+      defGroups = _removeCasualties(defGroups, defLoss);
     }
-    defCasualties.addAll(defLoss);
-    defGroups = _removeCasualties(defGroups, defLoss);
-    final attLoss = _pickCasualties(attGroups, attLossFraction, rng);
-    attCasualties.addAll(attLoss);
-    attGroups = _removeCasualties(attGroups, attLoss);
 
     if (defLoss.length > attLoss.length && defLoss.isNotEmpty) {
       defGroups = _degradeCohesion(defGroups);
@@ -150,7 +190,7 @@ QuickBattleResult resolveQuickBattle(
     }
 
     if (_totalUnitCount(defGroups) <= 0) {
-      return _finishResult(
+      final result = _finishResult(
         winner: QuickBattleWinner.attacker,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
@@ -159,9 +199,14 @@ QuickBattleResult resolveQuickBattle(
         mutableGuns: mutableGuns,
         useVirtualEmplaced: useVirtualEmplaced,
       );
+      _qbLog.d(
+        'logic: quick_battle end winner=${result.winner.name} '
+        'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+      );
+      return result;
     }
     if (_totalUnitCount(attGroups) <= 0) {
-      return _finishResult(
+      final result = _finishResult(
         winner: QuickBattleWinner.defender,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
@@ -170,6 +215,11 @@ QuickBattleResult resolveQuickBattle(
         mutableGuns: mutableGuns,
         useVirtualEmplaced: useVirtualEmplaced,
       );
+      _qbLog.d(
+        'logic: quick_battle end winner=${result.winner.name} '
+        'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+      );
+      return result;
     }
   }
 
@@ -184,7 +234,7 @@ QuickBattleResult resolveQuickBattle(
   }
 
   if (finalAttStr > finalDefStr * 1.2) {
-    return _finishResult(
+    final result = _finishResult(
       winner: QuickBattleWinner.attacker,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
@@ -193,9 +243,14 @@ QuickBattleResult resolveQuickBattle(
       mutableGuns: mutableGuns,
       useVirtualEmplaced: useVirtualEmplaced,
     );
+    _qbLog.d(
+      'logic: quick_battle end winner=${result.winner.name} '
+      'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+    );
+    return result;
   }
   if (finalDefStr > finalAttStr * 1.2) {
-    return _finishResult(
+    final result = _finishResult(
       winner: QuickBattleWinner.defender,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
@@ -204,8 +259,13 @@ QuickBattleResult resolveQuickBattle(
       mutableGuns: mutableGuns,
       useVirtualEmplaced: useVirtualEmplaced,
     );
+    _qbLog.d(
+      'logic: quick_battle end winner=${result.winner.name} '
+      'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+    );
+    return result;
   }
-  return _finishResult(
+  final result = _finishResult(
     winner: QuickBattleWinner.mutualExhaustion,
     attackerCasualties: attCasualties,
     defenderCasualties: defCasualties,
@@ -214,6 +274,11 @@ QuickBattleResult resolveQuickBattle(
     mutableGuns: mutableGuns,
     useVirtualEmplaced: useVirtualEmplaced,
   );
+  _qbLog.d(
+    'logic: quick_battle end winner=${result.winner.name} '
+    'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
+  );
+  return result;
 }
 
 class _MutableEmplacedGun {
@@ -460,6 +525,147 @@ List<QuickBattleGroup> _degradeCohesion(List<QuickBattleGroup> groups) {
 
 int _totalUnitCount(List<QuickBattleGroup> groups) =>
     groups.fold(0, (s, g) => s + g.unitIds.length);
+
+bool _attackerActsFirst(QuickBattleInput input) {
+  final attackerInitiative =
+      input.attackerCavalryShare * initiativeCavalryShareWeight +
+      input.attackerGeneralMedals * initiativeGeneralMedalWeight;
+  final defenderInitiative =
+      input.defenderCavalryShare * initiativeCavalryShareWeight +
+      input.defenderGeneralMedals * initiativeGeneralMedalWeight;
+  if (attackerInitiative != defenderInitiative) {
+    return attackerInitiative > defenderInitiative;
+  }
+  return input.attackerFactionId.compareTo(input.defenderFactionId) < 0;
+}
+
+double _defenderLossFractionFromAttackerStrike({
+  required QuickBattleInput input,
+  required List<QuickBattleGroup> attGroups,
+  required List<QuickBattleGroup> defGroups,
+  required _ActionModifiers attMods,
+  required _ActionModifiers defMods,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  final effAtt = _attackerEffectiveStrength(
+    input: input,
+    attGroups: attGroups,
+    attMods: attMods,
+  );
+  final effDef = _defenderEffectiveStrength(
+    input: input,
+    defGroups: defGroups,
+    defMods: defMods,
+    mutableGuns: mutableGuns,
+    useVirtualEmplaced: useVirtualEmplaced,
+  );
+  final wallHp = input.fortLevel >= 1 && input.fortLevel <= 3
+      ? wallHpByFortLevel[input.fortLevel]
+      : 0.0;
+  final effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+  final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
+  return (_targetLossFraction(ratio) *
+          attMods.casualtiesDealtModifier *
+          defMods.casualtiesTakenModifier)
+      .clamp(0.0, 1.0);
+}
+
+double _attackerLossFractionFromDefenderStrike({
+  required QuickBattleInput input,
+  required List<QuickBattleGroup> attGroups,
+  required List<QuickBattleGroup> defGroups,
+  required _ActionModifiers attMods,
+  required _ActionModifiers defMods,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  final effAtt = _attackerEffectiveStrength(
+    input: input,
+    attGroups: attGroups,
+    attMods: attMods,
+  );
+  final effDef = _defenderEffectiveStrength(
+    input: input,
+    defGroups: defGroups,
+    defMods: defMods,
+    mutableGuns: mutableGuns,
+    useVirtualEmplaced: useVirtualEmplaced,
+  );
+  final ratio = effAtt > 0 ? effDef / effAtt : 10.0;
+  return (_targetLossFraction(ratio) *
+          defMods.casualtiesDealtModifier *
+          attMods.casualtiesTakenModifier)
+      .clamp(0.0, 1.0);
+}
+
+double _targetLossFraction(double strikerToTargetRatio) {
+  if (strikerToTargetRatio >= 1.5) return 0.85;
+  if (strikerToTargetRatio <= 0.67) return 0.15;
+  return 0.4;
+}
+
+double _attackerEffectiveStrength({
+  required QuickBattleInput input,
+  required List<QuickBattleGroup> attGroups,
+  required _ActionModifiers attMods,
+}) {
+  final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
+  var effAtt =
+      _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
+      attMods.offenseModifier *
+      input.attackerLeaderMultiplier *
+      terrainMod.$1;
+  if (input.fortLevel >= 1 && input.fortLevel <= 3) {
+    effAtt *= (1.0 - fortDamageReduction[input.fortLevel]);
+  }
+  return effAtt;
+}
+
+double _defenderEffectiveStrength({
+  required QuickBattleInput input,
+  required List<QuickBattleGroup> defGroups,
+  required _ActionModifiers defMods,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  final terrainMod = terrainModifiers[input.provinceTerrain] ?? (1.0, 1.0);
+  var effDef =
+      _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
+      defMods.offenseModifier *
+      input.defenderLeaderMultiplier *
+      terrainMod.$2;
+  if (input.fortLevel >= 1 && input.fortLevel <= 3) {
+    if (useVirtualEmplaced) {
+      effDef += _aliveGunStrengthSum(mutableGuns);
+    } else {
+      effDef +=
+          fortGunCount[input.fortLevel] * fortEmplacedStrength[input.fortLevel];
+    }
+  }
+  return effDef;
+}
+
+List<String> _pickDefenderLosses({
+  required List<QuickBattleGroup> groups,
+  required double fraction,
+  required Random rng,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  if (!useVirtualEmplaced) return _pickCasualties(groups, fraction, rng);
+  final regimentCount = _totalUnitCount(groups);
+  final gunHpPool = _sumAliveGunHp(mutableGuns);
+  final totalSlots = regimentCount + gunHpPool;
+  final gunHpLoss = totalSlots > 0 && gunHpPool > 0
+      ? min(gunHpPool, max(0, (fraction * gunHpPool).round()))
+      : 0;
+  _applyRoundRobinGunHpDamage(mutableGuns, gunHpLoss);
+  final regFrac = regimentCount > 0 && totalSlots > 0
+      ? (fraction * regimentCount / totalSlots).clamp(0.0, 1.0)
+      : 0.0;
+  return _pickCasualties(groups, regFrac, rng);
+}
 
 /// Applies QuickBattleResult to Game: remove casualties, flip province if winner is attacker.
 Game applyQuickBattleResultToGame(

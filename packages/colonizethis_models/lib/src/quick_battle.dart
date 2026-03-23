@@ -21,9 +21,20 @@ enum QuickBattleAction {
 /// Actions chosen by one side for a round. Cost: volleyFire/defend/maneuver 1 CP;
 /// fallBack/assault 2 CP.
 class QuickBattleRoundActions {
-  const QuickBattleRoundActions({this.actions = const []});
+  const QuickBattleRoundActions({
+    this.actions = const [],
+    this.attackerActions,
+    this.defenderActions,
+  });
 
+  /// Backward-compatible action list for both sides.
   final List<QuickBattleAction> actions;
+
+  /// Optional side-specific attacker actions for the round.
+  final List<QuickBattleAction>? attackerActions;
+
+  /// Optional side-specific defender actions for the round.
+  final List<QuickBattleAction>? defenderActions;
 }
 
 /// One battalion group (lane + line) with unit refs and cohesion.
@@ -216,6 +227,10 @@ class QuickBattleInput {
     this.maxRounds = 3,
     this.attackerLeaderMultiplier = 1.0,
     this.defenderLeaderMultiplier = 1.0,
+    this.attackerCavalryShare = 0.0,
+    this.defenderCavalryShare = 0.0,
+    this.attackerGeneralMedals = 0,
+    this.defenderGeneralMedals = 0,
   });
 
   final String attackerFactionId;
@@ -238,6 +253,14 @@ class QuickBattleInput {
   /// Leader combat bonus multiplier for defender side. SPEC/game/leader-bonuses.md.
   final double defenderLeaderMultiplier;
 
+  /// Initiative input from combat formula: cavalry units share in [0.0, 1.0].
+  final double attackerCavalryShare;
+  final double defenderCavalryShare;
+
+  /// Initiative input from combat formula: medals contribution.
+  final int attackerGeneralMedals;
+  final int defenderGeneralMedals;
+
   Map<String, dynamic> toJson() => {
     'attackerFactionId': attackerFactionId,
     'defenderFactionId': defenderFactionId,
@@ -252,6 +275,10 @@ class QuickBattleInput {
     'maxRounds': maxRounds,
     'attackerLeaderMultiplier': attackerLeaderMultiplier,
     'defenderLeaderMultiplier': defenderLeaderMultiplier,
+    'attackerCavalryShare': attackerCavalryShare,
+    'defenderCavalryShare': defenderCavalryShare,
+    'attackerGeneralMedals': attackerGeneralMedals,
+    'defenderGeneralMedals': defenderGeneralMedals,
   };
 
   static QuickBattleInput fromJson(Map<String, dynamic> json) =>
@@ -281,6 +308,12 @@ class QuickBattleInput {
             (json['attackerLeaderMultiplier'] as num?)?.toDouble() ?? 1.0,
         defenderLeaderMultiplier:
             (json['defenderLeaderMultiplier'] as num?)?.toDouble() ?? 1.0,
+        attackerCavalryShare:
+            (json['attackerCavalryShare'] as num?)?.toDouble() ?? 0.0,
+        defenderCavalryShare:
+            (json['defenderCavalryShare'] as num?)?.toDouble() ?? 0.0,
+        attackerGeneralMedals: json['attackerGeneralMedals'] as int? ?? 0,
+        defenderGeneralMedals: json['defenderGeneralMedals'] as int? ?? 0,
       );
 }
 

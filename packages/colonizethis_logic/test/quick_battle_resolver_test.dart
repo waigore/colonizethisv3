@@ -115,8 +115,14 @@ void main() {
       final result = resolveQuickBattle(
         input,
         roundActions: [
-          QuickBattleRoundActions(actions: [QuickBattleAction.volleyFire]),
-          QuickBattleRoundActions(actions: [QuickBattleAction.volleyFire]),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.volleyFire],
+            defenderActions: [QuickBattleAction.volleyFire],
+          ),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.volleyFire],
+            defenderActions: [QuickBattleAction.volleyFire],
+          ),
         ],
       );
       expect(result.attackerCasualties, isNotNull);
@@ -257,6 +263,92 @@ void main() {
         greaterThan(0),
       );
     });
+
+    test('initiative ordering is deterministic and affects sequencing', () {
+      final inputAttFirst = QuickBattleInput(
+        attackerFactionId: 'att',
+        defenderFactionId: 'def',
+        provinceId: 'p-order',
+        regionId: 'oldWorld',
+        attackerDeployment: QuickBattleDeployment(
+          groups: const [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'],
+              cohesion: 3,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: const [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'],
+              cohesion: 3,
+            ),
+          ],
+          laneTerrain: const {'center_front': QuickBattleLaneTerrain.open},
+        ),
+        attackerCavalryShare: 1.0,
+        defenderCavalryShare: 0.0,
+        seed: 123,
+      );
+
+      final resultAttFirst = resolveQuickBattle(
+        inputAttFirst,
+        roundActions: const [
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+        ],
+      );
+
+      final inputDefFirst = QuickBattleInput(
+        attackerFactionId: 'att',
+        defenderFactionId: 'def',
+        provinceId: 'p-order',
+        regionId: 'oldWorld',
+        attackerDeployment: inputAttFirst.attackerDeployment,
+        defenderDeployment: inputAttFirst.defenderDeployment,
+        attackerCavalryShare: 0.0,
+        defenderCavalryShare: 1.0,
+        seed: 123,
+      );
+      final resultDefFirst = resolveQuickBattle(
+        inputDefFirst,
+        roundActions: const [
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+          QuickBattleRoundActions(
+            attackerActions: [QuickBattleAction.assaultCharge],
+            defenderActions: [QuickBattleAction.defendEntrench],
+          ),
+        ],
+      );
+
+      expect(
+        resultAttFirst.attackerCasualties.length,
+        isNot(resultDefFirst.attackerCasualties.length),
+      );
+    });
   });
 
   group('buildQuickBattleInput', () {
@@ -276,7 +368,12 @@ void main() {
                 ownerId: 'att',
                 locationProvinceId: 'P1',
               ),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
+              Unit(
+                id: 'u2',
+                type: 'pikemen',
+                ownerId: 'def',
+                locationProvinceId: 'P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -304,6 +401,8 @@ void main() {
       expect(input.provinceId, 'P1');
       expect(input.attackerDeployment.groups.single.unitIds, ['u1']);
       expect(input.defenderDeployment.groups.single.unitIds, ['u2']);
+      expect(input.attackerGeneralMedals, 0);
+      expect(input.defenderGeneralMedals, 0);
     });
 
     test(
@@ -398,7 +497,12 @@ void main() {
                 ownerId: 'att',
                 locationProvinceId: 'P1',
               ),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'def', locationProvinceId: 'P1'),
+              Unit(
+                id: 'u2',
+                type: 'pikemen',
+                ownerId: 'def',
+                locationProvinceId: 'P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
