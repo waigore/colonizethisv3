@@ -8,7 +8,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Phase order:** Config → World Generation → GP Assignment → Minor Nation Assignment → **GP land connectivity repair (Old World)** (optional; see below) → Tribe Assignment → Faction & Initial State → Capital-Choice Phase.
 
-**Config:** Load Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, and **`enforceFairGpOldWorldAssignment`** (bool, default **false**) from the active ruleset or scenario or setup UI. When **false**, the System skips GP land connectivity repair and assignment retries after Minor Nation Assignment (single assignment pass; faster). When **true**, the System runs repair and retries as specified in **GP land connectivity repair** below.
+**Config:** Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, map seed semantics, and **`enforceFairGpOldWorldAssignment`** (bool, default **false**) are authoritative for a run once resolved into `GameSetupConfig` (colonizethis_data). **MVP:** There is no Base → Difficulty → Scenario JSON merge yet; values come from **program defaults** (`GameSetupConfig` fields) plus **CLI/API overrides** (see [init-game-tool.md](../program/init-game-tool.md) JSON keys and flags). Full ruleset-backed resolution is specified in [ruleset-config.md](ruleset-config.md) and tracked with ruleset-loader work (e.g. #57 / #58). When **`enforceFairGpOldWorldAssignment`** is **false**, the System skips GP land connectivity repair and assignment retries after Minor Nation Assignment (single assignment pass; faster). When **true**, the System runs repair and retries as specified in **GP land connectivity repair** below.
 
 **World Generation:** Generate procedural maps for Old World and New World (one per region). Procedural **continent count** shapes land layout; it does not override GP assignment rules below. When continent count is less than Great Power count, multiple GPs **share** one continent (same P–P component) for their starting territory. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
 
@@ -28,21 +28,21 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game. Province and capital ids use the prefixed format and lookup rules in [world-model-identity.md](world-model-identity.md).
 
-**Capital-Choice Phase:** Runs **during** setup (after province assignment): each GP's capital is auto-chosen (sea-bound province + tile); a future UI may let GPs confirm or override. Minor Nations and Tribes do not participate; their capitals are assigned at setup.
+**Capital-Choice Phase:** Runs **during** setup (after province assignment): each GP's capital is **auto-chosen** (sea-bound province + tile) per [capital-choice-phase.md](capital-choice-phase.md). **MVP:** There is **no** in-game UI for Great Powers to confirm or override capital after auto-choice; that UI is deferred. Minor Nations and Tribes do not participate; their capitals are assigned at setup.
 
 ## Configurable Values
 
 | Parameter | Default | Source |
 |---|---|---|
-| Great Power count | 6 | Ruleset / scenario |
-| Continent count | 3–4 | Ruleset / scenario |
-| Minor Nation count | 3 | Ruleset / scenario |
-| Tribe count | ~10 | Ruleset / scenario |
-| Min provinces per Minor Nation | 3 | Ruleset / scenario |
-| Old World province count | ~60 | Ruleset / scenario |
-| New World province count | ~80 | Ruleset / scenario |
-| Map seed | 0 (= time-based) | Ruleset / scenario |
-| Enforce fair GP OW assignment | false | Ruleset / scenario / setup UI (`enforceFairGpOldWorldAssignment`) |
+| Great Power count | 6 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| Continent count | 3–4 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| Minor Nation count | 3 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| Tribe count | ~10 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| Min provinces per Minor Nation | 3 | MVP: `GameSetupConfig`; future: ruleset merge |
+| Old World province count | ~60 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| New World province count | ~80 | MVP: `GameSetupConfig` / CLI; future: ruleset merge |
+| Map seed | 0 (= time-based) | MVP: `GameSetupConfig` / CLI `--seed`; future: ruleset merge |
+| Enforce fair GP OW assignment | false | MVP: `GameSetupConfig` / CLI; future: ruleset / UI |
 
 ## Interactions
 
@@ -51,14 +51,23 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Capital auto-choice and capital-choice phase: [capital-choice-phase.md](capital-choice-phase.md)
 - Ruleset configuration: [ruleset-config.md](ruleset-config.md)
 - Province naming: [naming.md](naming.md)
+- CLI / JSON setup overrides (MVP): [init-game-tool.md](../program/init-game-tool.md)
 
 ---
 
 ## Acceptance Criteria
 
-- Given a ruleset or scenario defines Great Power count, continent count, Minor Nation count, Tribe count, and target province counts per region  
+- Given the setup run uses only MVP configuration (a `GameSetupConfig` built from program defaults and optional CLI/API JSON per [init-game-tool.md](../program/init-game-tool.md), with no ruleset JSON merge)  
   When the System runs the Config phase of game setup  
-  Then the System loads these values, validates that they are non-negative integers within sensible bounds, and either proceeds with world generation using them or surfaces a clear configuration error if validation fails.
+  Then the System treats that `GameSetupConfig` as authoritative for Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, map seed, and `enforceFairGpOldWorldAssignment`, validates non-negative integers and sensible bounds where applicable, and either proceeds with world generation or surfaces a clear configuration error if validation fails.
+
+- Given a future implementation supplies Base → Difficulty → Scenario merge per [ruleset-config.md](ruleset-config.md)  
+  When the System runs the Config phase of game setup  
+  Then the System populates `GameSetupConfig` (or equivalent) from that merge and applies the same validation rules as in the MVP case above.
+
+- Given setup reaches the Capital-Choice Phase for Great Powers  
+  When the System assigns each Great Power capital  
+  Then the System performs **auto-choice only** per [capital-choice-phase.md](capital-choice-phase.md) and does **not** present an MVP UI for the player to confirm or override that capital (deferred to a future UI).
 
 - Given Old World and New World province counts and continent count are loaded and the tile-map generation and topology specs in [tile-map-and-generation.md](tile-map-and-generation.md) and [map-topology.md](map-topology.md) are implemented  
   When the System runs the World Generation phase  
