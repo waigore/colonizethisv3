@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../economy/build_cost.dart';
+import 'build_spawn_province.dart';
 import 'orders_application_helpers.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
@@ -167,7 +168,12 @@ void _runBuildPhase(_BuildWorkState state) {
         continue;
       }
 
-      final spawnProvinceId = order.spawnProvinceId;
+      final spawnProvinceId = resolveBuildSpawnProvinceId(
+        player: player,
+        worldState: state.game.worldState,
+        order: order,
+      );
+      if (spawnProvinceId == null) continue;
       final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
       final tileKeysByRegion =
           state.game.worldState.tileKeysByRegionAndProvince;
@@ -177,7 +183,7 @@ void _runBuildPhase(_BuildWorkState state) {
           : null;
 
       final newUnit = Unit(
-        id: _buildUnitId(player.id, order),
+        id: _buildUnitId(player.id, order, spawnProvinceId),
         type: order.unitType,
         ownerId: player.id,
         locationProvinceId: spawnProvinceId,
@@ -970,8 +976,12 @@ void _runWorkPhase(
   }
 }
 
-String _buildUnitId(String playerId, BuildUnitOrder order) {
-  return '${playerId}_${order.unitType}_${order.spawnProvinceId}';
+String _buildUnitId(
+  String playerId,
+  BuildUnitOrder order,
+  String spawnProvinceId,
+) {
+  return '${playerId}_${order.unitType}_$spawnProvinceId';
 }
 
 /// Propagates road transport level to adjacent capital/port tiles.
