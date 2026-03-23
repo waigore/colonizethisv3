@@ -1,6 +1,6 @@
 ---
 description: TUI (ctterm) source of truth, Nocterm usage, and TUI-specific conventions.
-globs: "SPEC/tui/**", "ctterm/**"
+globs: "SPEC/tui/**,ctterm/**"
 alwaysApply: false
 ---
 
