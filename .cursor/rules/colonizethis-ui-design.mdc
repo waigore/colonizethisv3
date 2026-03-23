@@ -6,12 +6,15 @@ alwaysApply: false
 
 # UI Design
 
+Scope: UI spec/process rules (wireframes, behavior contracts, component interaction boundaries).
+
 UI specs in `SPEC/ui/` derive from GDD/TDD (spec-required rule).
 
-- **Implementing UI:** Widgetbook story per new/changed component/screen; register in **widget catalog** (Ct-prefix, name, category, path/story). Keep catalog up to date for reuse.
-- **Mobile:** When designing screens, consider how layouts will appear on mobile from the start; see [SPEC/ui/mobile-adaptation.md](../SPEC/ui/mobile-adaptation.md). Provide at least one mobile viewport use case per screen; add a **mobile-only mockup** in Widgetbook when the mobile layout differs meaningfully (e.g. stacked vs row) so the mobile design can be reviewed in isolation.
+- **Implementing UI:** Add/update Widgetbook stories for new or changed components/screens and keep the widget catalog registration current.
+- **Mobile:** Design for mobile from the start (see `SPEC/ui/mobile-adaptation.md`). Include at least one mobile viewport use case per screen; add a mobile-only Widgetbook mockup when the mobile layout differs meaningfully.
 - **Wireframe:** Every UI spec has a wireframe; positions, layout, hierarchy visible to reviewers. Prefer UXD 07 schema (canvas, regions, positions, hierarchy).
-- **Components:** Define which components each screen uses (UXD 03, UXD 07). Use catalog; prefer reuse; new components: name, category, props, register. Reusable where pattern appears 2+ times.
+- **Components:** Specify which components each screen uses (UXD 03, UXD 07), including names and key props. Prefer existing components before adding new ones.
+- **Decoupling:** Keep UI components/panels decoupled. For cross-component or cross-screen coordination, use typed events via `SPEC/program/app-event-bus.md` or shared state via Riverpod; avoid direct panel-to-panel orchestration.
 - **Behavior:** Define inputs, outputs, callbacks, user-visible outcomes; document in spec or interaction manifest (UXD 07).
 - **Pixel art:** Spec must define required images and generation spec (e.g. PixelLab: subject, size, type). Record **exact prompts** and asset dimensions in spec. **Check assets first** — do not regenerate if suitable asset exists (UXD 04, 05, 07).
 - **Style:** Follow UXD 02 (pixel canon, 1x grid, no AA, 16th/17th c. aesthetic, palette, typography).
