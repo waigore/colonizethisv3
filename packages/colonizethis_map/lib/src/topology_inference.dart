@@ -7,7 +7,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 MapTopology inferTopologyFromTileMap(
   TileMapResult result,
   String regionId,
-  String seaZoneId,
 ) {
   final ids = <String>{};
   for (var y = 0; y < result.height; y++) {

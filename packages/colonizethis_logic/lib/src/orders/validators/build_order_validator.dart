@@ -1,25 +1,26 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/build_cost.dart';
+import '../build_spawn_province.dart';
 import '../order_validation_result.dart';
 
 /// Validates build unit orders for a single player in submission order.
 /// Mutates internal economy state (workers, stockpile, treasury) when an order
 /// is accepted. SPEC/program/orders.md § Build orders.
 class BuildOrderValidator {
+  final Game _game;
   final Player _player;
 
   WorkerPool _workers;
   Stockpile _stockpile;
   int _treasury;
 
-  BuildOrderValidator({
-    required Game game,
-    required Player player,
-  })  : _player = player,
-        _workers = player.workerPool,
-        _stockpile = player.stockpile,
-        _treasury = player.treasury;
+  BuildOrderValidator({required Game game, required Player player})
+    : _game = game,
+      _player = player,
+      _workers = player.workerPool,
+      _stockpile = player.stockpile,
+      _treasury = player.treasury;
 
   WorkerPool get workers => _workers;
   Stockpile get stockpile => _stockpile;
@@ -34,7 +35,12 @@ class BuildOrderValidator {
     return shortCircuitIfPreviousRejected(
       previousRejected: previousRejected,
       body: () {
-        if (_player.capitalProvinceId == null) {
+        final resolvedSpawnProvinceId = resolveBuildSpawnProvinceId(
+          player: _player,
+          worldState: _game.worldState,
+          order: o,
+        );
+        if (resolvedSpawnProvinceId == null) {
           return OrderValidationResult.rejected('No capital to spawn unit');
         }
 
