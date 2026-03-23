@@ -42,6 +42,22 @@ The top bar shows:
 
 ---
 
+## Android back confirm (exit to main menu)
+
+- **Scope:** Applies in any state where pressing Android system back from the in-game shell would leave the current game screen.
+- **Interception:** The in-game shell traps Android back before route pop, then decides whether to present confirmation.
+- **Dialog:** The app shows a pixel-art confirmation dialog using **CtDialogShell** and **CtNinePatchButton** (no Material `AlertDialog` / Material action buttons).
+- **Text:**
+  - Title: `Exit game?`
+  - Body: `Your current progress will be lost if not saved.`
+  - Actions: `Cancel` and `Exit`
+- **Actions:**
+  - `Cancel` dismisses the dialog and keeps the player on the in-game shell.
+  - `Exit` navigates to the main menu (`Routes.shell`), ending the in-game shell route.
+- **Dismissal:** Tapping outside the dialog (barrier area) dismisses the dialog and keeps the player in-game.
+
+---
+
 ## Province/sea zone detail overlay
 
 - **Wide viewport (≥ 600 dp):** Province detail appears as a side panel (width 320 dp) to the right of the map.
@@ -92,6 +108,10 @@ Side menu (when open, overlaid from left):
 - **Given** the side menu is **open**, **when** the user performs a keyboard action that would normally affect the map (e.g. map hotkeys), **then** the map does not react while the menu is open.
 - **Given** the side menu is **open**, **when** the user taps or clicks outside the menu (on the dimmed background), **then** the side menu closes and that tap/click is **not** forwarded to the map (no province selection or camera movement is triggered).
 - **Given** the side menu is **open**, **when** the user presses **Escape** (or the platform back key where applicable), **then** the side menu closes and focus/input returns to the in-game shell.
+- **Given** the in-game shell is visible and Android back would leave the game screen, **when** the user presses Android back, **then** the UI layer shows a pixel-art confirmation dialog with title `Exit game?`, body `Your current progress will be lost if not saved.`, and actions `Cancel` and `Exit`.
+- **Given** the exit confirmation dialog is visible, **when** the user taps `Cancel`, **then** the UI layer dismisses the dialog and remains on the in-game shell.
+- **Given** the exit confirmation dialog is visible, **when** the user taps outside the dialog, **then** the UI layer dismisses the dialog and remains on the in-game shell.
+- **Given** the exit confirmation dialog is visible, **when** the user taps `Exit`, **then** the UI layer navigates to the main menu route (`Routes.shell`).
 
 ---
 
