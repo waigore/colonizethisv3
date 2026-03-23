@@ -64,7 +64,7 @@ void main() {
   group('GameSetupScreen (SPEC/tui/screens/game-setup.md)', () {
     test('can be constructed with required callbacks', () {
       final screen = GameSetupScreen(
-        onStartGame: (gpIds, leaders) {},
+        onStartGame: (gpIds, leaders, _) {},
         onBack: () {},
       );
 
@@ -75,12 +75,14 @@ void main() {
     test('callbacks are invoked correctly', () {
       var startGpIds = <String>[];
       var startLeaders = <String, String>{};
+      var startFair = false;
       var backCount = 0;
 
       final screen = GameSetupScreen(
-        onStartGame: (gpIds, leaders) {
+        onStartGame: (gpIds, leaders, fair) {
           startGpIds = gpIds;
           startLeaders = leaders;
+          startFair = fair;
         },
         onBack: () => backCount++,
       );
@@ -88,9 +90,10 @@ void main() {
       screen.onBack();
       expect(backCount, 1);
 
-      screen.onStartGame(['gp1', 'gp2'], {'gp1': 'leader1'});
+      screen.onStartGame(['gp1', 'gp2'], {'gp1': 'leader1'}, true);
       expect(startGpIds, ['gp1', 'gp2']);
       expect(startLeaders['gp1'], 'leader1');
+      expect(startFair, isTrue);
     });
   });
 

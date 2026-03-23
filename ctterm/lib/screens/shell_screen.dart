@@ -86,8 +86,12 @@ class ShellScreen extends StatefulComponent {
   final void Function() onExit;
 
   /// Called with setup data before navigating to Generating World. When set, Game Setup uses it.
-  final void Function(List<String> orderedGpIdsForSlots,
-      Map<String, String> leaderVariantByGpId)? onPrepareNewGame;
+  /// [enforceFairGpOldWorldAssignment] maps to [GameSetupConfig.enforceFairGpOldWorldAssignment].
+  final void Function(
+    List<String> orderedGpIdsForSlots,
+    Map<String, String> leaderVariantByGpId,
+    bool enforceFairGpOldWorldAssignment,
+  )? onPrepareNewGame;
 
   /// When set, Generating World screen runs this instead of simulated progress (runs real init then navigates).
   final void Function()? runGeneration;
@@ -246,10 +250,14 @@ class _ShellScreenState extends State<ShellScreen> {
         );
       case CttermRoute.gameSetup:
         return GameSetupScreen(
-          onStartGame: (orderedGpIdsForSlots, leaderVariantByGpId) {
+          onStartGame:
+              (orderedGpIdsForSlots, leaderVariantByGpId, enforceFairGp) {
             _log.d('tui:nav: Game Setup complete -> generating world');
-            component.onPrepareNewGame
-                ?.call(orderedGpIdsForSlots, leaderVariantByGpId);
+            component.onPrepareNewGame?.call(
+              orderedGpIdsForSlots,
+              leaderVariantByGpId,
+              enforceFairGp,
+            );
             // App's onPrepareNewGame sets route to generatingWorld; no separate navigate needed.
           },
           onBack: () => component.onNavigate(CttermRoute.mainMenu),

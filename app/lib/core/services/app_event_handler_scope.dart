@@ -111,7 +111,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             naming: naming,
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
-            onConfirmed: (leaderVariantByGpId) {
+            onConfirmed: (leaderVariantByGpId, enforceFairGpOldWorldAssignment) {
               final navCtx = appNavigatorKey.currentContext;
               if (navCtx == null) {
                 _log.w(
@@ -131,6 +131,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                 minProvincesPerMinor: baseConfig.minProvincesPerMinor,
                 seed: baseConfig.seed,
                 startingResources: baseConfig.startingResources,
+                enforceFairGpOldWorldAssignment: enforceFairGpOldWorldAssignment,
               );
               unawaited(
                 runNewGameSetupAfterLeaderPick(
