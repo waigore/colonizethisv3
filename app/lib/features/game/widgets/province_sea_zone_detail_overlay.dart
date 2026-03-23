@@ -1,11 +1,19 @@
 // Province and sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        fleetsInPortAtProvince,
+        foreignCivilianVisibleToPlayer,
+        kProspectRequiredResourceIds,
+        PlayerView,
+        resourceIdVisibleInPlayerView,
+        VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
@@ -272,7 +280,6 @@ _OverlayContent _provinceContent({
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  const mineralResources = {'iron', 'copper', 'tin', 'coal', 'silver', 'gold', 'gems', 'diamonds'};
 
   final tilesToProspect = <String>[];
   final improvementsBuilt = <({String tileKey, int x, int y, String name, int level})>[];
@@ -281,12 +288,18 @@ _OverlayContent _provinceContent({
 
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    if (res != null) resources.add(res);
+    final visLevel = playerView.visibilityForTile(tk);
+    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
+    if (visibleRes != null) {
+      resources.add(visibleRes);
+    }
     final parts = tk.split('|');
     if (parts.length < 4) continue;
     final x = int.tryParse(parts[2]) ?? 0;
     final y = int.tryParse(parts[3]) ?? 0;
-    if (mineralResources.contains(res) && !prospected.contains(tk)) {
+    if (res != null &&
+        kProspectRequiredResourceIds.contains(res) &&
+        !prospected.contains(tk)) {
       tilesToProspect.add(tk);
     }
     final imp = tileState.improvementLevel(tk);
@@ -295,7 +308,11 @@ _OverlayContent _provinceContent({
         tileKey: tk,
         x: x,
         y: y,
-        name: _improvementNameForResource(res),
+        name: _improvementBaseNameForPlayer(
+          visLevel: visLevel,
+          rawResourceId: res,
+          visibleResourceId: visibleRes,
+        ),
         level: imp,
       ));
     } else if (res != null && imp < 4) {
@@ -308,6 +325,7 @@ _OverlayContent _provinceContent({
     region: region,
     provinceId: provinceId,
     humanPlayerId: humanPlayerId,
+    playerView: playerView,
     civilianCount: visibleCivilianCount,
     selectedTileKey: selectedTileKey,
   );
@@ -360,11 +378,50 @@ _OverlayContent _provinceContent({
   return _OverlayContent(tabLabels: tabLabels, tabViews: tabViews, sections: sections);
 }
 
+String _improvementBaseNameForPlayer({
+  required VisibilityLevel visLevel,
+  required String? rawResourceId,
+  required String? visibleResourceId,
+}) {
+  if (visibleResourceId != null) {
+    return _improvementNameForResource(visibleResourceId);
+  }
+  if (visLevel == VisibilityLevel.revealed) {
+    return 'Improvement';
+  }
+  if (rawResourceId != null &&
+      kProspectRequiredResourceIds.contains(rawResourceId)) {
+    return 'Mine';
+  }
+  if (rawResourceId != null) {
+    return _improvementNameForResource(rawResourceId);
+  }
+  return 'Improvement';
+}
+
+String _improvementLabelForTileDetail({
+  required int impLevel,
+  required VisibilityLevel visLevel,
+  required String? rawResourceId,
+  required String? visibleResourceId,
+}) {
+  if (impLevel <= 0) {
+    return '—';
+  }
+  final base = _improvementBaseNameForPlayer(
+    visLevel: visLevel,
+    rawResourceId: rawResourceId,
+    visibleResourceId: visibleResourceId,
+  );
+  return '$base L$impLevel';
+}
+
 Widget _buildTileSection({
   required Game game,
   required RegionMapViewData region,
   required String provinceId,
   required String humanPlayerId,
+  required PlayerView playerView,
   required int civilianCount,
   String? selectedTileKey,
 }) {
@@ -405,21 +462,14 @@ Widget _buildTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  const mineralResources = {
-    'iron',
-    'copper',
-    'tin',
-    'coal',
-    'silver',
-    'gold',
-    'gems',
-    'diamonds',
-  };
   final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
-  final resource = resourceRaw ?? '—';
-  final prospectable =
-      resourceRaw != null && mineralResources.contains(resourceRaw);
+  final visLevel = playerView.visibilityForTile(selectedTileKey);
+  final resourceVisible =
+      resourceIdVisibleInPlayerView(playerView, selectedTileKey, resourceRaw);
+  final resourceLabel = resourceVisible ?? '—';
+  final prospectable = resourceRaw != null &&
+      kProspectRequiredResourceIds.contains(resourceRaw);
   final prospectedLabel =
       !prospectable ? '—' : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
   final impLevel = tileState.improvementLevel(selectedTileKey);
@@ -433,9 +483,12 @@ Widget _buildTileSection({
           4 => 'port or railroad',
           _ => 'level $roadLevel',
         };
-  final improvementName = impLevel > 0 && resource != '—'
-      ? _improvementNameForResource(resource)
-      : null;
+  final improvementLine = _improvementLabelForTileDetail(
+    impLevel: impLevel,
+    visLevel: visLevel,
+    rawResourceId: resourceRaw,
+    visibleResourceId: resourceVisible,
+  );
 
   return _buildSection('Tile', Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,9 +496,18 @@ Widget _buildTileSection({
     children: [
       Text('Coordinates: ($x, $y)'),
       Text('Terrain: $terrainStr'),
-      Text('Resource: $resource'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text('Resource: '),
+          if (resourceVisible != null)
+            ResourceLabelInline(commodityId: resourceVisible)
+          else
+            Text(resourceLabel),
+        ],
+      ),
       Text('Prospected: $prospectedLabel'),
-      Text('Improvement: ${improvementName != null ? '$improvementName L$impLevel' : '—'}'),
+      Text('Improvement: $improvementLine'),
       Text('Road / railroad: $roadLabel'),
       Text('Civilian units (province): $civilianCount'),
     ],
@@ -556,11 +618,30 @@ Widget _buildEconomicSection({
   required RegionMapViewData region,
   void Function(String?)? onHighlightTile,
 }) {
+  final sortedResourceIds = [...resources]..sort();
   return _buildSection('Economic', Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text('Resources: ${resources.isEmpty ? "—" : resources.join(", ")}'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Resources: '),
+          Expanded(
+            child: sortedResourceIds.isEmpty
+                ? const Text('—')
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: sortedResourceIds
+                        .map(
+                          (id) => ResourceLabelInline(commodityId: id),
+                        )
+                        .toList(),
+                  ),
+          ),
+        ],
+      ),
       Text('Tiles to prospect: ${tilesToProspect.length}'),
       if (tilesToProspect.isNotEmpty)
         Wrap(

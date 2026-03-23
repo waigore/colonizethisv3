@@ -28,6 +28,7 @@ Future<void> main(List<String> arguments) async {
   int? numProvincesOldWorld;
   int? numProvincesNewWorld;
   String? prussiaLeaderOverride;
+  var enforceFairGpFromCli = false;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -104,6 +105,8 @@ Future<void> main(List<String> arguments) async {
       prussiaLeaderOverride = arguments[++i].trim();
     } else if (arg.startsWith('--prussia-leader=')) {
       prussiaLeaderOverride = arg.substring('--prussia-leader='.length).trim();
+    } else if (arg == '--enforce-fair-gp-assignment') {
+      enforceFairGpFromCli = true;
     }
   }
 
@@ -141,6 +144,9 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld: (json['numProvincesOldWorld'] as num?)?.toInt() ?? config.numProvincesOldWorld,
       numProvincesNewWorld: (json['numProvincesNewWorld'] as num?)?.toInt() ?? config.numProvincesNewWorld,
       seed: (json['seed'] as num?)?.toInt() ?? config.seed,
+      enforceFairGpOldWorldAssignment: json['enforceFairGpOldWorldAssignment'] is bool
+          ? json['enforceFairGpOldWorldAssignment'] as bool
+          : config.enforceFairGpOldWorldAssignment,
     );
   }
 
@@ -154,6 +160,7 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld: config.numProvincesOldWorld,
       numProvincesNewWorld: config.numProvincesNewWorld,
       seed: seedOverride,
+      enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
     );
   }
   if (greatPowersOverride != null ||
@@ -187,6 +194,23 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld: numProvincesOldWorld ?? config.numProvincesOldWorld,
       numProvincesNewWorld: numProvincesNewWorld ?? config.numProvincesNewWorld,
       seed: config.seed,
+      enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+    );
+  }
+
+  if (enforceFairGpFromCli) {
+    config = GameSetupConfig(
+      selectedGreatPowerIds: config.selectedGreatPowerIds,
+      leaderVariantByGpId: config.leaderVariantByGpId,
+      continentCount: config.continentCount,
+      minorNationCount: config.minorNationCount,
+      tribeCount: config.tribeCount,
+      numProvincesOldWorld: config.numProvincesOldWorld,
+      numProvincesNewWorld: config.numProvincesNewWorld,
+      minProvincesPerMinor: config.minProvincesPerMinor,
+      seed: config.seed,
+      startingResources: config.startingResources,
+      enforceFairGpOldWorldAssignment: true,
     );
   }
 
@@ -264,4 +288,5 @@ void _printUsage() {
   print('  --tribe-count N         Override config');
   print('  --num-provinces-old-world N  Override config');
   print('  --num-provinces-new-world N  Override config');
+  print('  --enforce-fair-gp-assignment  Run GP OW connectivity repair + retries (slower)');
 }

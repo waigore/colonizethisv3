@@ -11,6 +11,7 @@ import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
@@ -114,9 +115,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // Dialog should appear with Start and Cancel buttons.
-    expect(find.text('Start'), findsOneWidget);
+    final startButton = find.ancestor(
+      of: find.text('Start'),
+      matching: find.byType(CtNinePatchButton),
+    );
+    expect(startButton, findsOneWidget);
 
-    await tester.tap(find.text('Start'));
+    await tester.ensureVisible(startButton);
+    await tester.tap(startButton);
     await tester.pumpAndSettle();
 
     expect(find.text('In game'), findsOneWidget);

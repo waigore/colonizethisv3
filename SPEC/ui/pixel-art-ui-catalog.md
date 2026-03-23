@@ -37,6 +37,13 @@ Any new UI component must either:
 
 ---
 
+## Commodity / resource labels
+
+- Whenever the UI shows a **resource or commodity** by id or human-readable name (lists, province overlay, production, tooltips, etc.), show the **pixel commodity icon** (`ResourceIcon` / `ResourceLabelInline` in app widgets) **immediately to the left** of the text, with a small gap (e.g. 4 logical px). If no icon asset exists for that id, keep the reserved icon width (empty box) so layout stays aligned.
+- Do not show resource/commodity names as plain text-only rows in new shell UI unless the spec explicitly exempts that surface.
+
+---
+
 ## References
 
 - [buttons-nine-patch.md](buttons-nine-patch.md)

@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show PlayerView, resourceIdVisibleInPlayerView;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
@@ -14,6 +16,9 @@ final _log = gameLogger();
 
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
+
+/// GP land ownership tint (province overlay). SPEC/ui/map-widget.md: alpha 0.10–0.20.
+const double _gpOwnershipTintAlpha = 0.15;
 
 /// Political border stroke colors.
 /// These are intentionally subtle so they don't overpower the terrain art.
@@ -76,6 +81,21 @@ enum CtMapVisibilityMode {
   playerConstrained,
 }
 
+/// [CtMapVisibilityMode.playerConstrained] requires [playerViewForResources].
+void assertCtMapPlayerViewRequired({
+  required CtMapVisibilityMode visibilityMode,
+  required PlayerView? playerViewForResources,
+}) {
+  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      playerViewForResources == null) {
+    throw StateError(
+      'CtMapVisibilityMode.playerConstrained requires a non-null '
+      'PlayerView (pass playerViewForResources), e.g. '
+      'buildPlayerView(game, topology, humanPlayerId).',
+    );
+  }
+}
+
 /// Base layer display mode: which tile letters are drawn. SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
   /// Terrain only; no resource or improvement/road letters.
@@ -95,7 +115,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.region,
     required this.cellSize,
     required this.showPoliticalOverlay,
-    required this.showBordersLayer,
+    required this.showProvinceOverlay,
     required this.showProvinceNamesLayer,
     required this.visibilityMode,
     this.baseLayerDisplayMode =
@@ -109,14 +129,20 @@ class CtRegionMapComponent extends PositionComponent {
     this.secondaryHighlightTileKey,
     this.validTileKeys,
     this.onTownIconTapped,
+    this.playerViewForResources,
   });
 
   RegionMapViewData region;
   double cellSize;
   bool showPoliticalOverlay;
-  bool showBordersLayer;
+  bool showProvinceOverlay;
   bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
+
+  /// When [visibilityMode] is [CtMapVisibilityMode.playerConstrained], gates
+  /// resource icons by fog + prospecting (SPEC/game/fog-and-exploration.md).
+  /// Must be non-null in that mode; see [assertCtMapPlayerViewRequired].
+  PlayerView? playerViewForResources;
 
   /// Camera zoom from Flame viewfinder; used to keep label size constant on screen.
   double cameraZoom = 1.0;
@@ -143,6 +169,10 @@ class CtRegionMapComponent extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
+    assertCtMapPlayerViewRequired(
+      visibilityMode: visibilityMode,
+      playerViewForResources: playerViewForResources,
+    );
     await super.onLoad();
     await Future.wait([
       terrainTilesetCache.load(),
@@ -232,7 +262,6 @@ class CtRegionMapComponent extends PositionComponent {
     if (tappedTown != null) {
       final provinceId = '${region.regionId}|${tappedTown.provinceId}';
       onTownIconTapped?.call(provinceId);
-      return;
     }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
@@ -252,14 +281,17 @@ class CtRegionMapComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     _paintTiles(canvas);
+    if (showProvinceOverlay) {
+      _paintGreatPowerLandOwnershipTint(canvas);
+    }
     _paintOverlay(canvas);
-    if (showBordersLayer) {
+    if (showProvinceOverlay) {
       _paintProvinceBorders(canvas);
     }
     if (_hoveredProvinceId != null) {
       _paintHoveredProvinceGlow(canvas);
     }
-    if (showPoliticalOverlay && showBordersLayer) {
+    if (showPoliticalOverlay && showProvinceOverlay) {
       _paintFactionBorders(canvas);
     }
     if (showProvinceNamesLayer) {
@@ -827,6 +859,23 @@ class CtRegionMapComponent extends PositionComponent {
     return region.cellAt(x, y);
   }
 
+  String? _resourceIdForMapIcon(CellViewData cell) {
+    final raw = cell.resourceId;
+    if (raw == null) return null;
+    if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+      return raw;
+    }
+    final view = playerViewForResources;
+    if (view == null) {
+      throw StateError(
+        'CtRegionMapComponent: playerConstrained requires playerViewForResources',
+      );
+    }
+    final tileKey =
+        '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
+    return resourceIdVisibleInPlayerView(view, tileKey, raw);
+  }
+
   void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
@@ -847,24 +896,29 @@ class CtRegionMapComponent extends PositionComponent {
       final cy = cell.y * cellSize + cellSize / 2;
 
       // Draw resource icon if present and mode includes resources.
-      if (showResources && cell.resourceId != null) {
-        final icon = resourceIconCache.getIcon(cell.resourceId);
+      final resourceForIcon = _resourceIdForMapIcon(cell);
+      if (showResources && resourceForIcon != null) {
+        final icon = resourceIconCache.getIcon(resourceForIcon);
         if (icon != null) {
           final iconSize = ResourceIconCache.iconSize;
           final tileLeft = cell.x * cellSize;
           final tileTop = cell.y * cellSize;
 
           // Resource icons are always 32x32, never upscaled.
-          // For tiles <= 32px: center horizontally, position in lower half.
-          // For tiles > 32px: position in bottom-left corner.
+          // For tiles > 32px: bottom-left corner (SPEC/ui/map-widget.md).
+          // For tiles == 32px: centered in the cell (icon fills the tile).
+          // For tiles < 32px: center horizontally; bottom-align so the icon
+          // sits in the lower part of the cell (extends upward if needed).
           final double iconX;
           final double iconY;
-          if (cellSize <= iconSize) {
-            iconX = tileLeft + (cellSize - iconSize) / 2;
-            iconY = tileTop + cellSize / 2;
-          } else {
+          if (cellSize > iconSize) {
             iconX = tileLeft;
             iconY = tileTop + cellSize - iconSize;
+          } else {
+            iconX = tileLeft + (cellSize - iconSize) / 2;
+            iconY = cellSize < iconSize
+                ? tileTop + cellSize - iconSize
+                : tileTop + (cellSize - iconSize) / 2;
           }
 
           final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
@@ -969,6 +1023,40 @@ class CtRegionMapComponent extends PositionComponent {
       ..strokeWidth = 2.0
       ..color = color;
     canvas.drawRect(rect, paint);
+  }
+
+  /// Semi-transparent tint on GP-owned land; province overlay. SPEC/ui/map-widget.md.
+  void _paintGreatPowerLandOwnershipTint(Canvas canvas) {
+    final gpIds = region.greatPowerFactionIds;
+    if (gpIds.isEmpty) return;
+
+    final honorUnrevealed =
+        visibilityMode == CtMapVisibilityMode.playerConstrained;
+
+    for (final cell in region.cells) {
+      if (!shouldApplyGreatPowerOwnershipTint(
+        cell: cell,
+        greatPowerFactionIds: gpIds,
+        honorUnrevealedTiles: honorUnrevealed,
+      )) {
+        continue;
+      }
+      final owner = cell.ownerFactionId!;
+      final rgb = region.factionColors[owner];
+      if (rgb == null) continue;
+
+      final left = cell.x * cellSize;
+      final top = cell.y * cellSize;
+      final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
+      final paint = Paint()
+        ..color = Color.fromRGBO(
+          rgb.$1,
+          rgb.$2,
+          rgb.$3,
+          _gpOwnershipTintAlpha,
+        );
+      canvas.drawRect(rect, paint);
+    }
   }
 
   void _paintProvinceBorders(Canvas canvas) {

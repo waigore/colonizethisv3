@@ -1,4 +1,6 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' show Player;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +16,21 @@ import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
+
+  /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].
+  const ctRegionMapTestPlayerView = PlayerView(
+    playerId: 'ct_region_map_test',
+    player: Player(
+      id: 'ct_region_map_test',
+      displayName: 'Test',
+      isHuman: false,
+    ),
+    ownUnitsById: {},
+    provincesById: {},
+    visibilityByTile: {},
+    prospectedTiles: {},
+    diplomacyByOtherId: {},
+  );
 
   group('debug init Old World region', () {
     test('returns region with correct dimensions and cell count', () {
@@ -62,7 +79,7 @@ void main() {
     double height = 320,
     double cellSizePx = 24,
     bool showPoliticalOverlay = true,
-    bool showBordersLayer = true,
+    bool showProvinceOverlay = true,
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? centerOnTileKey,
@@ -73,6 +90,7 @@ void main() {
     String? selectedTileKey,
     String? secondaryHighlightTileKey,
     VoidCallback? onRegionViewChanged,
+    PlayerView? playerViewForResources,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -84,8 +102,9 @@ void main() {
               region: region,
               cellSizePx: cellSizePx,
               showPoliticalOverlay: showPoliticalOverlay,
-              showBordersLayer: showBordersLayer,
+              showProvinceOverlay: showProvinceOverlay,
               visibilityMode: visibilityMode,
+              playerViewForResources: playerViewForResources,
               baseLayerDisplayMode: baseLayerDisplayMode,
               centerOnTileKey: centerOnTileKey,
               onProvinceSelected: onProvinceSelected,
@@ -103,6 +122,31 @@ void main() {
   }
 
   group('CtRegionMap (Flame map widget)', () {
+    testWidgets(
+      'throws StateError when playerConstrained without playerViewForResources',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 400,
+                  height: 320,
+                  child: CtRegionMap(
+                    region: region,
+                    visibilityMode: CtMapVisibilityMode.playerConstrained,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        expect(tester.takeException(), isA<StateError>());
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
     testWidgets(
       'required Wang tileset asset files are present in test asset bundle',
       (WidgetTester tester) async {
@@ -175,8 +219,9 @@ void main() {
           _buildCtRegionMap(
             region: region,
             showPoliticalOverlay: false,
-            showBordersLayer: false,
+            showProvinceOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
           ),
         );
         await tester.pump();
@@ -187,20 +232,20 @@ void main() {
     );
 
     testWidgets(
-      'honors borders layer visibility flag without throwing',
+      'honors province overlay visibility flag without throwing',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
 
-        // Borders on.
+        // Province overlay on.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showBordersLayer: true),
+          _buildCtRegionMap(region: region, showProvinceOverlay: true),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
 
-        // Borders off.
+        // Province overlay off.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showBordersLayer: false),
+          _buildCtRegionMap(region: region, showProvinceOverlay: false),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
@@ -349,6 +394,7 @@ void main() {
             region: region,
             showPoliticalOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
           ),
         );
@@ -566,6 +612,70 @@ void main() {
     );
 
     testWidgets(
+      'tap on a town tile still invokes map tile and province selection callbacks',
+      (WidgetTester tester) async {
+        final base = _oldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'pTown',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+              provinceDisplayName: 'Town Province',
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 0,
+              y: 0,
+              provinceId: 'pTown',
+              isCoastal: false,
+              isPort: false,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+        const townTileKey = 'oldWorld|pTown|0|0';
+        String? selectedId;
+        String? detailTileKey;
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onProvinceSelected: (id) => selectedId = id,
+            onMapTileTappedForDetail: (tk) => detailTileKey = tk,
+            width: 64,
+            height: 64,
+            cellSizePx: 32,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedId, equals('oldWorld|pTown'));
+        expect(detailTileKey, equals(townTileKey));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
@@ -619,6 +729,7 @@ void main() {
           capitalMarkers: base.capitalMarkers,
           portMarkers: base.portMarkers,
           factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
           terrainColors: base.terrainColors,
           unitMarkers: base.unitMarkers,
         );
@@ -628,6 +739,7 @@ void main() {
           _buildCtRegionMap(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             onProvinceSelected: (id) => selectedId = id,
           ),
         );
@@ -828,6 +940,7 @@ void main() {
           capitalMarkers: base.capitalMarkers,
           portMarkers: base.portMarkers,
           factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
           terrainColors: base.terrainColors,
           unitMarkers: base.unitMarkers,
         );
@@ -836,6 +949,7 @@ void main() {
           _buildCtRegionMap(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
         );

@@ -9,18 +9,25 @@ import 'debug_init_game.dart';
 /// Builds InitGameMapViewData for the debug init game result, enriching it with
 /// per-tile visibility derived from the first player's PlayerView. Used by map
 /// Widgetbook stories to support full vs player-constrained visibility modes.
-InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
+
+/// [PlayerView] for the first great power in the debug init game; null if none.
+PlayerView? debugPlayerViewForFirstPlayer() {
   final result = getDebugInitGameResult();
   final game = result.game;
   if (game.players.isEmpty) {
-    return result.mapViewData;
+    return null;
   }
   final playerId = game.players.first.id;
-  final view = buildPlayerView(
-    game,
-    result.combinedTopology,
-    playerId,
-  );
+  return buildPlayerView(game, result.combinedTopology, playerId);
+}
+
+InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
+  final result = getDebugInitGameResult();
+  final view = debugPlayerViewForFirstPlayer();
+  if (view == null) {
+    return result.mapViewData;
+  }
+  final game = result.game;
 
   final visibilityByTile = <String, TileVisibility>{};
   view.visibilityByTile.forEach((tileKey, level) {
@@ -129,6 +136,10 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
               showPoliticalOverlay: widget.showPoliticalOverlay,
               cellSizePx: 28,
               visibilityMode: _visibilityMode,
+              playerViewForResources: _visibilityMode ==
+                      CtMapVisibilityMode.playerConstrained
+                  ? debugPlayerViewForFirstPlayer()
+                  : null,
               showProvinceNamesLayer: _showProvinceNames,
               onProvinceSelected: (id) {},
             ),

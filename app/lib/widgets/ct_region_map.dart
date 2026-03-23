@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/events.dart';
@@ -10,7 +11,10 @@ import 'package:flutter/services.dart';
 import '../features/game/flame/region_map_component.dart';
 
 export '../features/game/flame/region_map_component.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode;
+    show
+        assertCtMapPlayerViewRequired,
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode;
 
 /// FlameGame host for the region map, with basic tap/drag/pinch wiring.
 class _CtRegionMapGame extends FlameGame with TapDetector {
@@ -18,7 +22,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required RegionMapViewData region,
     required double cellSizePx,
     required bool showPoliticalOverlay,
-    required bool showBordersLayer,
+    required bool showProvinceOverlay,
     required bool showProvinceNamesLayer,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
@@ -34,10 +38,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
     required void Function(String provinceId)? onTownIconTapped,
+    this.playerViewForResources,
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
-       showBordersLayer = showBordersLayer,
+       showProvinceOverlay = showProvinceOverlay,
        showProvinceNamesLayer = showProvinceNamesLayer,
        visibilityMode = visibilityMode,
        baseLayerDisplayMode = baseLayerDisplayMode,
@@ -56,7 +61,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   RegionMapViewData region;
   final double cellSizePx;
   bool showPoliticalOverlay;
-  bool showBordersLayer;
+  bool showProvinceOverlay;
   bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
@@ -71,6 +76,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
   void Function(String provinceId)? onTownIconTapped;
+  PlayerView? playerViewForResources;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -85,7 +91,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       region: region,
       cellSize: cellSizePx,
       showPoliticalOverlay: showPoliticalOverlay,
-      showBordersLayer: showBordersLayer,
+      showProvinceOverlay: showProvinceOverlay,
       showProvinceNamesLayer: showProvinceNamesLayer,
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
@@ -109,6 +115,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       },
       validTileKeys: validTileKeys,
       onTownIconTapped: onTownIconTapped,
+      playerViewForResources: playerViewForResources,
     )..position = Vector2.zero();
     await world.add(_mapComponent);
     _mapLoaded = true;
@@ -131,7 +138,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void updateProps({
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
-    bool? showBordersLayer,
+    bool? showProvinceOverlay,
     bool? showProvinceNamesLayer,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
@@ -143,6 +150,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
+    required PlayerView? playerViewForResources,
   }) {
     if (region != null) {
       this.region = region;
@@ -150,8 +158,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (showPoliticalOverlay != null) {
       this.showPoliticalOverlay = showPoliticalOverlay;
     }
-    if (showBordersLayer != null) {
-      this.showBordersLayer = showBordersLayer;
+    if (showProvinceOverlay != null) {
+      this.showProvinceOverlay = showProvinceOverlay;
     }
     if (showProvinceNamesLayer != null) {
       this.showProvinceNamesLayer = showProvinceNamesLayer;
@@ -180,19 +188,26 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     // Update callbacks (these may change when parent widget rebuilds).
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+    this.playerViewForResources = playerViewForResources;
+
+    assertCtMapPlayerViewRequired(
+      visibilityMode: this.visibilityMode,
+      playerViewForResources: this.playerViewForResources,
+    );
 
     if (_mapLoaded) {
       _mapComponent
         ..region = this.region
         ..cellSize = cellSizePx
         ..showPoliticalOverlay = this.showPoliticalOverlay
-        ..showBordersLayer = this.showBordersLayer
+        ..showProvinceOverlay = this.showProvinceOverlay
         ..showProvinceNamesLayer = this.showProvinceNamesLayer
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
         ..selectedTileKey = this.selectedTileKey
         ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
-        ..validTileKeys = this.validTileKeys;
+        ..validTileKeys = this.validTileKeys
+        ..playerViewForResources = this.playerViewForResources;
     }
   }
 
@@ -356,7 +371,7 @@ class CtRegionMap extends StatefulWidget {
     super.key,
     required this.region,
     this.showPoliticalOverlay = true,
-    this.showBordersLayer = true,
+    this.showProvinceOverlay = true,
     this.showProvinceNamesLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
@@ -373,11 +388,12 @@ class CtRegionMap extends StatefulWidget {
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
     this.bus,
+    this.playerViewForResources,
   });
 
   final RegionMapViewData region;
   final bool showPoliticalOverlay;
-  final bool showBordersLayer;
+  final bool showProvinceOverlay;
   final bool showProvinceNamesLayer;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
@@ -400,6 +416,9 @@ class CtRegionMap extends StatefulWidget {
   /// When provided, tapping a town/port icon emits OpenProvinceDetailPanelEvent.
   final AppEventBus? bus;
 
+  /// Required when [visibilityMode] is [CtMapVisibilityMode.playerConstrained].
+  final PlayerView? playerViewForResources;
+
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
 }
@@ -418,7 +437,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
     super.didUpdateWidget(oldWidget);
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
-        widget.showBordersLayer != oldWidget.showBordersLayer ||
+        widget.showProvinceOverlay != oldWidget.showProvinceOverlay ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
@@ -428,11 +447,12 @@ class _CtRegionMapState extends State<CtRegionMap> {
             oldWidget.secondaryHighlightTileKey ||
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
-            oldWidget.onWorkTargetSelectionCancelled) {
+            oldWidget.onWorkTargetSelectionCancelled ||
+        widget.playerViewForResources != oldWidget.playerViewForResources) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
-        showBordersLayer: widget.showBordersLayer,
+        showProvinceOverlay: widget.showProvinceOverlay,
         showProvinceNamesLayer: widget.showProvinceNamesLayer,
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
@@ -448,6 +468,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
+        playerViewForResources: widget.playerViewForResources,
       );
     }
     if (widget.centerOnTileKey != null &&
@@ -463,7 +484,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       region: widget.region,
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
-      showBordersLayer: widget.showBordersLayer,
+      showProvinceOverlay: widget.showProvinceOverlay,
       showProvinceNamesLayer: widget.showProvinceNamesLayer,
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:
@@ -484,11 +505,16 @@ class _CtRegionMapState extends State<CtRegionMap> {
               widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
             }
           : null,
+      playerViewForResources: widget.playerViewForResources,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    assertCtMapPlayerViewRequired(
+      visibilityMode: widget.visibilityMode,
+      playerViewForResources: widget.playerViewForResources,
+    );
     return Focus(
       autofocus: true,
       child: CallbackShortcuts(

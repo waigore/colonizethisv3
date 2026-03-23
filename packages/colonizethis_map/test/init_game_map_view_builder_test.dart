@@ -86,6 +86,8 @@ void main() {
       expect(viewData.oldWorld.cells[1].regionCellId, 's1');
       expect(viewData.oldWorld.cells[1].isSea, true);
       expect(viewData.oldWorld.factionColors, isNotEmpty);
+      expect(viewData.oldWorld.greatPowerFactionIds, {'gp1'});
+      expect(viewData.newWorld.greatPowerFactionIds, {'gp1'});
       expect(viewData.newWorld.cells.length, 4);
     });
 

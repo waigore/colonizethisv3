@@ -117,9 +117,9 @@
     "description": "Dialog title for map display options."
   },
 
-  "map_displayOptions_showBorders": "Show borders",
-  "@map_displayOptions_showBorders": {
-    "description": "Toggle label for showing map borders."
+  "map_displayOptions_showProvinceOverlay": "Show province overlay",
+  "@map_displayOptions_showProvinceOverlay": {
+    "description": "Toggle for province/sea boundaries plus Great Power land ownership tint on the map."
   },
 
   "map_displayOptions_showProvinceNames": "Show province names",
@@ -185,6 +185,11 @@
   "shell_leaderDialog_title": "New game — Leaders",
   "@shell_leaderDialog_title": {
     "description": "Title of the leader selection dialog in the new-game flow."
+  },
+
+  "shell_leaderDialog_enforceFairGpAssignment": "Enforce fair GP assignment (slower)",
+  "@shell_leaderDialog_enforceFairGpAssignment": {
+    "description": "Checkbox label: run Old World GP land connectivity repair and assignment retries per game-setup spec."
   },
 
   "shell_newGameProgress_title": "Creating game",

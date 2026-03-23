@@ -5,13 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-/// Global borders visibility for in-game Empire overview maps.
-/// Controls whether province and sea-zone boundary strokes are drawn.
+/// Global province overlay for in-game Empire overview maps (boundaries + GP land tint).
 /// Defaults to true at app start; updated via the Map display options dialog.
-final mapBordersVisibleProvider = StateProvider<bool>((ref) => true);
+/// SPEC/ui/map-widget.md, SPEC/ui/empire-overview.md.
+final mapProvinceOverlayVisibleProvider = StateProvider<bool>((ref) => true);
 
 /// Global land province name labels on in-game Empire overview maps.
-/// Independent of [mapBordersVisibleProvider]. Defaults to true at app start.
+/// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to true at app start.
 final mapProvinceNamesVisibleProvider = StateProvider<bool>((ref) => true);
 
 /// Map view data for the current game with player-constrained visibility.

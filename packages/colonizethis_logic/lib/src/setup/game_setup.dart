@@ -112,44 +112,57 @@ GameSetupResult createGameFromGeneratedMaps({
 
   Map<String, String> owOwner = {};
   var owAssignmentOk = false;
-  for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
-    final assignmentRandom =
-        attempt == 0 ? null : Random(Object.hash(0x47504f77, perturbBase, attempt));
-    try {
-      owOwner = _assignOldWorldOwnershipContiguous(
+  if (config.enforceFairGpOldWorldAssignment) {
+    for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
+      final assignmentRandom =
+          attempt == 0 ? null : Random(Object.hash(0x47504f77, perturbBase, attempt));
+      try {
+        owOwner = _assignOldWorldOwnershipContiguous(
+          neighbours: owNeighbours,
+          provinceIds: owProvinceIds,
+          seaBoundProvinceIds: seaBoundOW,
+          gpIds: gpIds,
+          minorIds: minorIds,
+          minProvincesPerMinor: config.minProvincesPerMinor,
+          assignmentRandom: assignmentRandom,
+        );
+      } on StateError catch (e, st) {
+        _log.w('logic: OW assignment attempt $attempt failed: $e');
+        _log.d('logic: stack $st');
+        continue;
+      }
+      final ownersRepair = Map<String, String>.from(owOwner);
+      final repaired = repairGpLandOwnershipMutating(
+        owners: ownersRepair,
+        gpIdsSorted: gpIds,
         neighbours: owNeighbours,
-        provinceIds: owProvinceIds,
-        seaBoundProvinceIds: seaBoundOW,
-        gpIds: gpIds,
-        minorIds: minorIds,
-        minProvincesPerMinor: config.minProvincesPerMinor,
-        assignmentRandom: assignmentRandom,
+        landmassIds: owLandmassIds,
+        seaBoundLocalIds: seaBoundOwSet,
+        allProvinceIdsSorted: owProvincesSorted,
       );
-    } on StateError catch (e, st) {
-      _log.w('logic: OW assignment attempt $attempt failed: $e');
-      _log.d('logic: stack $st');
-      continue;
+      if (repaired) {
+        owOwner = ownersRepair;
+        owAssignmentOk = true;
+        break;
+      }
     }
-    final ownersRepair = Map<String, String>.from(owOwner);
-    final repaired = repairGpLandOwnershipMutating(
-      owners: ownersRepair,
-      gpIdsSorted: gpIds,
+    if (!owAssignmentOk) {
+      throw GameSetupConnectivityFailure(
+        'Old World GP land connectivity could not be satisfied after '
+        '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
+        '$kGpLandConnectivityRepairRounds repair round(s) each.',
+      );
+    }
+  } else {
+    _log.i('logic: OW assignment fast path (no GP land connectivity repair)');
+    owOwner = _assignOldWorldOwnershipContiguous(
       neighbours: owNeighbours,
-      landmassIds: owLandmassIds,
-      seaBoundLocalIds: seaBoundOwSet,
-      allProvinceIdsSorted: owProvincesSorted,
-    );
-    if (repaired) {
-      owOwner = ownersRepair;
-      owAssignmentOk = true;
-      break;
-    }
-  }
-  if (!owAssignmentOk) {
-    throw GameSetupConnectivityFailure(
-      'Old World GP land connectivity could not be satisfied after '
-      '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
-      '$kGpLandConnectivityRepairRounds repair round(s) each.',
+      provinceIds: owProvinceIds,
+      seaBoundProvinceIds: seaBoundOW,
+      gpIds: gpIds,
+      minorIds: minorIds,
+      minProvincesPerMinor: config.minProvincesPerMinor,
+      assignmentRandom: null,
     );
   }
 

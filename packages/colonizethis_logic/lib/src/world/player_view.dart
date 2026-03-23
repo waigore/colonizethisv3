@@ -154,9 +154,53 @@ PlayerView buildPlayerView(
 
 /// Resources that require prospecting before the player "knows" them.
 /// SPEC/game/fog-and-exploration.md: iron, copper, tin, coal, silver, gold, gems, diamonds.
-const Set<String> _prospectRequiredResourceIds = {
+const Set<String> kProspectRequiredResourceIds = {
   'iron', 'copper', 'tin', 'coal', 'silver', 'gold', 'gems', 'diamonds',
 };
+
+/// Resource commodity id to show in UI for the given visibility and
+/// prospection state, or null to show no resource.
+///
+/// [authoritativeResourceId] is ground truth from the tile map /
+/// [WorldState.resourceByTileKey]. SPEC/game/fog-and-exploration.md.
+String? resourceIdVisibleToPlayer({
+  required String? authoritativeResourceId,
+  required VisibilityLevel visibility,
+  required bool tileProspectedByPlayer,
+}) {
+  final id = authoritativeResourceId;
+  if (id == null || id.isEmpty) return null;
+
+  switch (visibility) {
+    case VisibilityLevel.unknown:
+      return null;
+    case VisibilityLevel.revealed:
+      return null;
+    case VisibilityLevel.fogged:
+      if (kProspectRequiredResourceIds.contains(id)) {
+        return tileProspectedByPlayer ? id : null;
+      }
+      return id;
+    case VisibilityLevel.fullyVisible:
+      if (kProspectRequiredResourceIds.contains(id)) {
+        return tileProspectedByPlayer ? id : null;
+      }
+      return id;
+  }
+}
+
+/// Convenience wrapper using [PlayerView] visibility and prospected-tile set.
+String? resourceIdVisibleInPlayerView(
+  PlayerView view,
+  String tileKey,
+  String? authoritativeResourceId,
+) {
+  return resourceIdVisibleToPlayer(
+    authoritativeResourceId: authoritativeResourceId,
+    visibility: view.visibilityForTile(tileKey),
+    tileProspectedByPlayer: view.tileIsProspected(tileKey),
+  );
+}
 
 /// True if [playerId] has at least one revealed tile containing [resourceId].
 /// Revealed = visibility fully visible, fogged, or revealed. For prospect-required
@@ -166,7 +210,7 @@ bool hasRevealedResourceForPlayer(Game game, String playerId, String resourceId)
   final ws = game.worldState;
   final visibility = ws.playerVisibilityByTile[playerId] ?? const {};
   final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
-  final needProspect = _prospectRequiredResourceIds.contains(resourceId);
+  final needProspect = kProspectRequiredResourceIds.contains(resourceId);
 
   for (final e in ws.resourceByTileKey.entries) {
     if (e.value != resourceId) continue;
@@ -176,8 +220,8 @@ bool hasRevealedResourceForPlayer(Game game, String playerId, String resourceId)
     if (needProspect && !prospected.contains(tileKey)) continue;
     return true;
   }
-    return false;
-  }
+  return false;
+}
 
 /// Whether [unit] should appear in another player's province UI for civilians.
 ///

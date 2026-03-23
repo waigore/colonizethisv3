@@ -59,6 +59,8 @@ Future<void> runNewGameSetupAfterLeaderPick({
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
       seed: baseSeed + attemptIndex,
       startingResources: templateConfig.startingResources,
+      enforceFairGpOldWorldAssignment:
+          templateConfig.enforceFairGpOldWorldAssignment,
     );
 
     final outcome = await _showNewGameProgressDialog(

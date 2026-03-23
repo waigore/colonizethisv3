@@ -48,7 +48,7 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors. `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the province-overlay ownership tint to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model). `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
 
 ---
 

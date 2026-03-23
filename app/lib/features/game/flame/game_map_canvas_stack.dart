@@ -19,7 +19,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.game,
     required this.region,
     required this.baseLayerDisplayMode,
-    required this.showBordersLayer,
+    required this.showProvinceOverlay,
     required this.showProvinceNamesLayer,
     required this.humanPlayerId,
     required this.playerView,
@@ -35,7 +35,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final ct_models.Game game;
   final RegionMapViewData region;
   final BaseLayerDisplayMode baseLayerDisplayMode;
-  final bool showBordersLayer;
+  final bool showProvinceOverlay;
   final bool showProvinceNamesLayer;
   final String humanPlayerId;
   final PlayerView playerView;
@@ -59,9 +59,10 @@ class GameMapCanvasStack extends ConsumerWidget {
                 child: CtRegionMap(
                   region: region,
                   cellSizePx: 24,
-                  showBordersLayer: showBordersLayer,
+                  showProvinceOverlay: showProvinceOverlay,
                   showProvinceNamesLayer: showProvinceNamesLayer,
                   visibilityMode: CtMapVisibilityMode.playerConstrained,
+                  playerViewForResources: playerView,
                   baseLayerDisplayMode: baseLayerDisplayMode,
                   onProvinceSelected: null,
                   onMapTileTappedForDetail: inWorkTargetSelectionMode

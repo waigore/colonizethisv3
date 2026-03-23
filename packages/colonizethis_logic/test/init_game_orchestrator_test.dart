@@ -176,11 +176,25 @@ void main() {
     test(
       'default config: 60 OW, 6 GPs, 3 minors × min 3 provinces; init succeeds and GPs are P–P connected',
       () {
-        final config = GameSetupConfig.defaultConfig;
-        expect(config.numProvincesOldWorld, 60);
-        expect(config.greatPowerCount, 6);
-        expect(config.minorNationCount, 3);
-        expect(config.minProvincesPerMinor, 3);
+        final base = GameSetupConfig.defaultConfig;
+        expect(base.numProvincesOldWorld, 60);
+        expect(base.greatPowerCount, 6);
+        expect(base.minorNationCount, 3);
+        expect(base.minProvincesPerMinor, 3);
+
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: base.selectedGreatPowerIds,
+          leaderVariantByGpId: base.leaderVariantByGpId,
+          continentCount: base.continentCount,
+          minorNationCount: base.minorNationCount,
+          tribeCount: base.tribeCount,
+          numProvincesOldWorld: base.numProvincesOldWorld,
+          numProvincesNewWorld: base.numProvincesNewWorld,
+          minProvincesPerMinor: base.minProvincesPerMinor,
+          seed: base.seed,
+          startingResources: base.startingResources,
+          enforceFairGpOldWorldAssignment: true,
+        );
 
         final result = runInitGame(
           config: config,

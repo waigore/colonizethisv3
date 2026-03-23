@@ -18,6 +18,7 @@ class GameSetupConfig {
     this.minProvincesPerMinor = 3,
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
+    this.enforceFairGpOldWorldAssignment = false,
   }) : assert(
          selectedGreatPowerIds.isNotEmpty,
          'At least one Great Power required',
@@ -60,6 +61,11 @@ class GameSetupConfig {
   final int minProvincesPerMinor;
   final int seed;
   final StartingResourcesConfig startingResources;
+
+  /// When true, run GP Old World land connectivity repair and assignment retries
+  /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
+  /// repair (faster; a GP may own disconnected P–P components).
+  final bool enforceFairGpOldWorldAssignment;
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();

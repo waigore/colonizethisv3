@@ -229,6 +229,7 @@ void main() {
           capitalMarkers: baseRegion.capitalMarkers,
           portMarkers: baseRegion.portMarkers,
           factionColors: baseRegion.factionColors,
+          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
           terrainColors: baseRegion.terrainColors,
           unitMarkers: baseRegion.unitMarkers,
         );
@@ -293,6 +294,7 @@ void main() {
           capitalMarkers: baseRegion.capitalMarkers,
           portMarkers: baseRegion.portMarkers,
           factionColors: baseRegion.factionColors,
+          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
           terrainColors: baseRegion.terrainColors,
           unitMarkers: baseRegion.unitMarkers,
         );

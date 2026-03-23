@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 
@@ -320,6 +321,39 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.byType(ResourceIcon), findsOneWidget);
+    });
+
+    testWidgets('ResourceLabelInline shows icon and label text', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ResourceLabelInline(commodityId: 'grain', label: 'grain'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StrictAssetIcon), findsOneWidget);
+      expect(find.text('grain'), findsOneWidget);
+    });
+
+    testWidgets('ResourceLabelInline reserves space when commodity has no icon asset', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ResourceLabelInline(commodityId: 'no_ui_icon_commodity'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StrictAssetIcon), findsNothing);
+      expect(find.text('no_ui_icon_commodity'), findsOneWidget);
       expect(find.byType(ResourceIcon), findsOneWidget);
     });
   });

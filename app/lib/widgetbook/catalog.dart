@@ -1000,6 +1000,10 @@ class _CivilianPanelWithMapStoryState
               region: region,
               cellSizePx: 24,
               visibilityMode: _visibilityMode,
+              playerViewForResources: _visibilityMode ==
+                      CtMapVisibilityMode.playerConstrained
+                  ? debugPlayerViewForFirstPlayer()
+                  : null,
               showProvinceNamesLayer: _showProvinceNames,
               onProvinceSelected: (_) {},
               secondaryHighlightTileKey: _secondaryHighlightTileKey,
@@ -1480,6 +1484,10 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         region: region,
                         cellSizePx: 28,
                         visibilityMode: _visibilityMode,
+                        playerViewForResources: _visibilityMode ==
+                                CtMapVisibilityMode.playerConstrained
+                            ? playerView
+                            : null,
                         showProvinceNamesLayer: _showProvinceNames,
                         onProvinceSelected: null,
                         onMapTileTappedForDetail: (tk) => setState(() {

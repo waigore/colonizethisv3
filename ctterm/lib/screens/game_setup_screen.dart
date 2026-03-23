@@ -9,6 +9,9 @@ final log_pkg.Logger _log = log_pkg.Logger();
 /// Number of player slots: 1 human + 5 AI.
 const int _kNumSlots = 6;
 
+/// Focus index for "enforce fair GP assignment" row (between slots and Start).
+const int _kFocusFairAssignment = 6;
+
 /// Game Setup: six player slots with nation and leader selection.
 class GameSetupScreen extends StatefulComponent {
   const GameSetupScreen({
@@ -17,7 +20,11 @@ class GameSetupScreen extends StatefulComponent {
     required this.onBack,
   });
 
-  final void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId) onStartGame;
+  final void Function(
+    List<String> orderedGpIdsForSlots,
+    Map<String, String> leaderVariantByGpId,
+    bool enforceFairGpOldWorldAssignment,
+  ) onStartGame;
   final void Function() onBack;
 
   @override
@@ -25,8 +32,10 @@ class GameSetupScreen extends StatefulComponent {
 }
 
 class _GameSetupScreenState extends State<GameSetupScreen> {
-  /// Current focus: -1 = Start Game, -2 = Back, 0-5 = slot index.
+  /// Current focus: -1 = Start Game, -2 = Back, 0-5 = slot index, 6 = fair assignment.
   int _focusIndex = 0;
+
+  var _enforceFairGpOldWorldAssignment = false;
   
   /// For each slot: selected GP id (empty = none).
   late List<String> _orderedGpIdsBySlot;
@@ -114,13 +123,13 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     switch (c) {
       case 'arrowup':
         setState(() {
-          _focusIndex = (_focusIndex - 1).clamp(-2, _kNumSlots - 1);
+          _focusIndex = (_focusIndex - 1).clamp(-2, _kFocusFairAssignment);
           _dropdownFocus = 0;
         });
         break;
       case 'arrowdown':
         setState(() {
-          _focusIndex = (_focusIndex + 1).clamp(-2, _kNumSlots - 1);
+          _focusIndex = (_focusIndex + 1).clamp(-2, _kFocusFairAssignment);
           _dropdownFocus = 0;
         });
         break;
@@ -155,13 +164,23 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
           _doStartGame();
         } else if (_focusIndex == -2) {
           component.onBack();
+        } else if (_focusIndex == _kFocusFairAssignment) {
+          setState(
+            () => _enforceFairGpOldWorldAssignment =
+                !_enforceFairGpOldWorldAssignment,
+          );
         } else if (_focusIndex >= 0) {
           // Cycle through dropdown options
           _handleDropdownCycle();
         }
         break;
       case ' ':
-        if (_focusIndex >= 0) {
+        if (_focusIndex == _kFocusFairAssignment) {
+          setState(
+            () => _enforceFairGpOldWorldAssignment =
+                !_enforceFairGpOldWorldAssignment,
+          );
+        } else if (_focusIndex >= 0) {
           _handleDropdownCycle();
         }
         break;
@@ -224,7 +243,11 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       }
     }
     _log.i('tui:setup: start game with ${_orderedGpIdsBySlot.length} players');
-    component.onStartGame(List<String>.from(_orderedGpIdsBySlot), leaderMap);
+    component.onStartGame(
+      List<String>.from(_orderedGpIdsBySlot),
+      leaderMap,
+      _enforceFairGpOldWorldAssignment,
+    );
   }
 
   @override
@@ -273,6 +296,8 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
             const SizedBox(height: 1),
             // Player slots
             ...List.generate(_kNumSlots, (i) => _buildSlotRow(i)),
+            const SizedBox(height: 1),
+            _buildFairAssignmentRow(),
             const SizedBox(height: 1),
             // Buttons
             _buildButtonRow(),
@@ -327,6 +352,19 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
         style: TextStyle(
           color: isSelected ? Colors.cyan : null,
         ),
+      ),
+    );
+  }
+
+  Component _buildFairAssignmentRow() {
+    final focused = _focusIndex == _kFocusFairAssignment;
+    final prefix = focused ? '> ' : '  ';
+    final box = _enforceFairGpOldWorldAssignment ? '[x]' : '[ ]';
+    return Text(
+      '${prefix}Fair GP assignment (repair) $box  (toggle when focused)',
+      style: TextStyle(
+        color: focused ? Colors.cyan : null,
+        fontWeight: focused ? FontWeight.bold : null,
       ),
     );
   }
