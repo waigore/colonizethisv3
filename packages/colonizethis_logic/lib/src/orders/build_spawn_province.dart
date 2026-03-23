@@ -17,24 +17,24 @@ String? resolveBuildSpawnProvinceId({
   required BuildUnitOrder order,
 }) {
   final capitalProvinceId = player.capitalProvinceId;
-  if (capitalProvinceId == null || capitalProvinceId.isEmpty) {
-    return null;
-  }
+  final hasCapital =
+      capitalProvinceId != null && capitalProvinceId.trim().isNotEmpty;
 
   final isNavalBuild = ShipEconomyCatalog.byId.containsKey(order.unitType);
   if (isNavalBuild) {
-    return capitalProvinceId;
+    // Naval spawns are always capital-based.
+    return hasCapital ? capitalProvinceId : null;
   }
 
   final requested = order.spawnProvinceId.trim();
   if (requested.isEmpty) {
-    return capitalProvinceId;
+    return hasCapital ? capitalProvinceId : null;
   }
 
   final province = tryGetProvince(worldState, requested);
-  if (province == null || province.ownerId != player.id) {
-    return capitalProvinceId;
+  if (province != null && province.ownerId == player.id) {
+    return requested;
   }
 
-  return requested;
+  return hasCapital ? capitalProvinceId : null;
 }
