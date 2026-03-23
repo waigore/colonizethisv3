@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show PlayerView, resourceIdVisibleInPlayerView;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
@@ -76,6 +78,21 @@ enum CtMapVisibilityMode {
   playerConstrained,
 }
 
+/// [CtMapVisibilityMode.playerConstrained] requires [playerViewForResources].
+void assertCtMapPlayerViewRequired({
+  required CtMapVisibilityMode visibilityMode,
+  required PlayerView? playerViewForResources,
+}) {
+  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      playerViewForResources == null) {
+    throw StateError(
+      'CtMapVisibilityMode.playerConstrained requires a non-null '
+      'PlayerView (pass playerViewForResources), e.g. '
+      'buildPlayerView(game, topology, humanPlayerId).',
+    );
+  }
+}
+
 /// Base layer display mode: which tile letters are drawn. SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
   /// Terrain only; no resource or improvement/road letters.
@@ -109,6 +126,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.secondaryHighlightTileKey,
     this.validTileKeys,
     this.onTownIconTapped,
+    this.playerViewForResources,
   });
 
   RegionMapViewData region;
@@ -117,6 +135,11 @@ class CtRegionMapComponent extends PositionComponent {
   bool showBordersLayer;
   bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
+
+  /// When [visibilityMode] is [CtMapVisibilityMode.playerConstrained], gates
+  /// resource icons by fog + prospecting (SPEC/game/fog-and-exploration.md).
+  /// Must be non-null in that mode; see [assertCtMapPlayerViewRequired].
+  PlayerView? playerViewForResources;
 
   /// Camera zoom from Flame viewfinder; used to keep label size constant on screen.
   double cameraZoom = 1.0;
@@ -143,6 +166,10 @@ class CtRegionMapComponent extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
+    assertCtMapPlayerViewRequired(
+      visibilityMode: visibilityMode,
+      playerViewForResources: playerViewForResources,
+    );
     await super.onLoad();
     await Future.wait([
       terrainTilesetCache.load(),
@@ -827,6 +854,23 @@ class CtRegionMapComponent extends PositionComponent {
     return region.cellAt(x, y);
   }
 
+  String? _resourceIdForMapIcon(CellViewData cell) {
+    final raw = cell.resourceId;
+    if (raw == null) return null;
+    if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+      return raw;
+    }
+    final view = playerViewForResources;
+    if (view == null) {
+      throw StateError(
+        'CtRegionMapComponent: playerConstrained requires playerViewForResources',
+      );
+    }
+    final tileKey =
+        '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
+    return resourceIdVisibleInPlayerView(view, tileKey, raw);
+  }
+
   void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
@@ -847,8 +891,9 @@ class CtRegionMapComponent extends PositionComponent {
       final cy = cell.y * cellSize + cellSize / 2;
 
       // Draw resource icon if present and mode includes resources.
-      if (showResources && cell.resourceId != null) {
-        final icon = resourceIconCache.getIcon(cell.resourceId);
+      final resourceForIcon = _resourceIdForMapIcon(cell);
+      if (showResources && resourceForIcon != null) {
+        final icon = resourceIconCache.getIcon(resourceForIcon);
         if (icon != null) {
           final iconSize = ResourceIconCache.iconSize;
           final tileLeft = cell.x * cellSize;

@@ -62,6 +62,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   showBordersLayer: showBordersLayer,
                   showProvinceNamesLayer: showProvinceNamesLayer,
                   visibilityMode: CtMapVisibilityMode.playerConstrained,
+                  playerViewForResources: playerView,
                   baseLayerDisplayMode: baseLayerDisplayMode,
                   onProvinceSelected: null,
                   onMapTileTappedForDetail: inWorkTargetSelectionMode
