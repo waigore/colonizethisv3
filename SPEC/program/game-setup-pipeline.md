@@ -6,7 +6,7 @@ Orchestrates game creation from config through map generation, province/capital 
 
 ## Data Model
 
-- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`enforceFairGpOldWorldAssignment`** (bool, default **false**). When **true**, `createGameFromGeneratedMaps` runs GP land connectivity repair and assignment retries per [game-setup.md](../game/game-setup.md). When **false**, it uses one OW assignment pass without repair. Loaded from colonizethis_data (Base → Difficulty → Scenario merge per [ruleset-config.md](../game/ruleset-config.md)). (MVP: program-level only; Base → Difficulty → Scenario merge deferred until ruleset loader is implemented per ruleset-config.md / #57.)
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`enforceFairGpOldWorldAssignment`** (bool, default **false**). When **true**, `createGameFromGeneratedMaps` runs GP land connectivity repair and assignment retries per [game-setup.md](../game/game-setup.md). When **false**, it uses one OW assignment pass without repair. **MVP:** Values come from program defaults and optional CLI/API JSON per [init-game-tool.md](init-game-tool.md); there is **no** Base → Difficulty → Scenario JSON merge yet (deferred per [ruleset-config.md](../game/ruleset-config.md) / #57 / #58). **Future:** Same fields resolved from ruleset merge as in ruleset-config.
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`.
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData, tileMapByRegion, topologyByRegion, **warpLinks**, combinedTopology (or equivalent for cross-region sea paths). Warp links are produced in step 4 and consumed when building combined topology / connectivity.
@@ -28,7 +28,7 @@ Steps implement the phases from [game-setup.md](../game/game-setup.md):
    - Construct WorldState with RegionData and Province list (ownerId set).
    - Construct Game with Players, Minor Nations, Tribes.
    - **7a. GP colour mapping** — Map semantic GP ids (e.g. `england`) onto runtime Player ids (`gp1`, `gp2`, …). Re-key any colour overrides from semantic → runtime id so map builders and the running game consume GP colours by runtime Player id.
-   - **7b. Capital auto-choice** — (1) Run per-faction capital algorithm from [capital-choice-phase.md](../game/capital-choice-phase.md). Set `capitalProvinceId` and `capitalTile`; apply border-avoidance heuristic; place capital port (on capital tile if coastal, else on nearest coastal tile in province). (2) **Then** for each Great Power (and optionally Minor/Tribe) capital where a port was placed off-tile, compute shortest path on the province tile graph from port to capital and set road level on every tile along that path. Reference [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Capital Setup. **Implementation (DRY):** Use a shared capital-placement API used by both init and capital reassignment (Combat phase, see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Combat). Init and reassignment must call the same logic: choose province + tile (e.g. `pickCapitalForFaction`), then apply port/road (e.g. `applyCapitalPortAndRoad`), then apply road path from port to capital (shortest path on province tiles; set road level on each tile). Pathfinding and road placement in one place (e.g. capital_choice or shared setup module). Current code only sets road on capital and port tiles (stub); add pathfinding and set road level on every tile along the path (e.g. level 1).
+   - **7b. Capital auto-choice** — (1) Run per-faction capital algorithm from [capital-choice-phase.md](../game/capital-choice-phase.md). Set `capitalProvinceId` and `capitalTile`; apply border-avoidance heuristic; place capital port (on capital tile if coastal, else on nearest coastal tile in province). (2) **Then** for each Great Power (and optionally Minor/Tribe) capital where a port was placed off-tile, compute shortest path on the province tile graph from port to capital and set road level on every tile along that path. Reference [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Capital Setup. **Implementation (DRY):** Use a shared capital-placement API used by both init and capital reassignment (Combat phase, see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Combat). Init and reassignment must call the same logic: choose province + tile (e.g. `pickCapitalForFaction`), then apply port/road (e.g. `applyCapitalPortAndRoad`), then apply road path from port to capital (shortest path on province tiles; set road level on each tile). Pathfinding and road placement live in shared setup/capital modules. **MVP:** GP capital is auto-chosen only; no player confirm/override UI in this pipeline step (see [game-setup.md](../game/game-setup.md) § Capital-Choice Phase).
    - **7d. Province town assignment** — For each province, set the province's **town** tile: if the province is that faction's capital province, town = capital tile; else town = tile in that province with shortest path (on province tile graph) to (capital if same region, else a port in that province). Store in province (`townTileKey`) or in a region-level map (provinceId → townTileKey). Reference [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province.
    - **7c. Province naming** — Apply naming from active ruleset per [naming.md](../game/naming.md). Applies to all provinces owned at setup; provinces acquired later retain existing display name.
    - **7e. Turn-time mapping** — Set `Game.turnTimeMapping` from the resolved ruleset when present; otherwise default to GDD 01 (`TurnTimeMapping.gdd01`) for MVP. See [turn-time-mapping.md](../game/turn-time-mapping.md) and [ruleset-config.md](ruleset-config.md).
@@ -56,3 +56,31 @@ Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [in
 - Tile maps include full terrain and resource data for visualization and extraction.
 - Owned by colonizethis_logic (orchestration), colonizethis_map (generation), colonizethis_models (types).
 - Capital reassignment on loss is not part of init; it runs in the Combat phase of turn resolution (see [turn-resolution-phase-details.md](turn-resolution-phase-details.md)). Reassignment uses the same shared capital-placement API as init (DRY).
+
+## Acceptance criteria (program / tests)
+
+These criteria are implemented and covered by automated tests where noted.
+
+- Given `runInitGame` is called with `GameSetupConfig` whose `seed` field equals a non-zero integer `K`  
+  When initialization completes  
+  Then `result.game.globalGameSeed` equals `K` (colonizethis_logic `init_game_orchestrator_test.dart`).
+
+- Given `runInitGame` uses the default tile-map generator and `GameSetupConfig.seed` equals non-zero `K`  
+  When Old World and New World maps are generated  
+  Then Old World `TileMapParams.seed` equals `K` and New World `TileMapParams.seed` equals `K + 1` (same test file, injected generator).
+
+- Given `runInitGame` is called with `GameSetupConfig(seed: 0)`  
+  When initialization completes  
+  Then `result.game.globalGameSeed` is non-zero (time-derived effective seed; same test file).
+
+- Given `createGameFromGeneratedMaps` (or `runInitGame`) completes successfully  
+  When the caller reads `result.game.worldState.turnState`  
+  Then `turnState.phase` is `TurnPhase.orders` and `turnState.turnNumber` is `0` (`game_setup.dart` / orchestrator tests).
+
+- Given `InitGameOptions(renderPng: true)`  
+  When `runInitGame` completes  
+  Then `InitGameResult.mapPngBytes` is non-empty (`init_game_orchestrator_test.dart`).
+
+- Given the `init_game` CLI runs with `--output-markdown <file>`, `--output-map <file>`, `--output-game <dir>`, and **without** `--no-save`, using flags that yield a valid small game (e.g. reduced province counts)  
+  When the process exits with code `0`  
+  Then the markdown file contains `# Game Setup` and `## Faction Setup`, the map PNG file has length greater than zero, and the game directory contains at least one Hive artifact (`tool/init_game/test/cli_artifacts_test.dart`).

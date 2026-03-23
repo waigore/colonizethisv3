@@ -124,6 +124,92 @@ void main() {
       expect(result.game.globalGameSeed, isNonZero);
     });
 
+    test('non-zero seed: globalGameSeed matches config.seed', () {
+      const k = 900_001;
+      final base = GameSetupConfig.defaultConfig;
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: base.selectedGreatPowerIds,
+        leaderVariantByGpId: base.leaderVariantByGpId,
+        continentCount: base.continentCount,
+        minorNationCount: base.minorNationCount,
+        tribeCount: base.tribeCount,
+        numProvincesOldWorld: base.numProvincesOldWorld,
+        numProvincesNewWorld: base.numProvincesNewWorld,
+        minProvincesPerMinor: base.minProvincesPerMinor,
+        seed: k,
+        startingResources: base.startingResources,
+        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+      );
+      final result = runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      expect(result.game.globalGameSeed, k);
+    });
+
+    test('NW tile map uses effectiveSeed + 1 (OW uses effective seed)', () {
+      final seedsByRegion = <String, int>{};
+      TileMapRegionGenerator captureSeeds = ({
+        required TileMapParams params,
+        required int numProvinces,
+        required int numContinents,
+        required String regionId,
+        String seaZoneId = 's1',
+        ResourceRules? resourceRules,
+        void Function(String)? onLog,
+        void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
+            onLandSeedsPlaced,
+        void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+      }) {
+        seedsByRegion[regionId] = params.seed;
+        return defaultTileMapRegionGenerator(
+          params: params,
+          numProvinces: numProvinces,
+          numContinents: numContinents,
+          regionId: regionId,
+          seaZoneId: seaZoneId,
+          resourceRules: resourceRules,
+          onLog: onLog,
+          onLandSeedsPlaced: onLandSeedsPlaced,
+          onContinentSeedsPlaced: onContinentSeedsPlaced,
+        );
+      };
+
+      const k = 77_777;
+      final base = GameSetupConfig.defaultConfig;
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: base.selectedGreatPowerIds,
+        leaderVariantByGpId: base.leaderVariantByGpId,
+        continentCount: base.continentCount,
+        minorNationCount: base.minorNationCount,
+        tribeCount: base.tribeCount,
+        numProvincesOldWorld: base.numProvincesOldWorld,
+        numProvincesNewWorld: base.numProvincesNewWorld,
+        minProvincesPerMinor: base.minProvincesPerMinor,
+        seed: k,
+        startingResources: base.startingResources,
+        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+      );
+
+      runInitGame(
+        config: config,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        generateRegion: captureSeeds,
+      );
+
+      expect(seedsByRegion[kRegionOldWorld], k);
+      expect(seedsByRegion[kRegionNewWorld], k + 1);
+    });
+
+    test('after runInitGame worldState.turnState is orders at turn 0', () {
+      final result = runInitGame(
+        config: GameSetupConfig.defaultConfig,
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      expect(result.game.worldState.turnState.phase, TurnPhase.orders);
+      expect(result.game.worldState.turnState.turnNumber, 0);
+    });
+
     test('renderPng=true returns non-empty map PNG bytes', () {
       final config = GameSetupConfig.defaultConfig;
       final result = runInitGame(
