@@ -9,6 +9,7 @@ import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -48,6 +49,42 @@ void main() {
             data: MediaQueryData(size: Size(width, height)),
             child: const GameScreen(),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildShellToGameFlow({
+    required double width,
+    required double height,
+    TargetPlatform platform = TargetPlatform.android,
+  }) {
+    return ProviderScope(
+      overrides: [
+        currentGameProvider.overrideWith((ref) => debugResult.game),
+        mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
+        gameIdsWithIntroShownProvider.overrideWith(
+          (ref) => {debugResult.game.id},
+        ),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+      ],
+      child: AppEventHandlerScope(
+        child: MaterialApp(
+          navigatorKey: appNavigatorKey,
+          theme: AppThemes.colonial.copyWith(platform: platform),
+          routes: {
+            Routes.shell: (_) =>
+                const Scaffold(body: Center(child: Text('Main Menu'))),
+            Routes.game: (_) => MediaQuery(
+              data: MediaQueryData(size: Size(width, height)),
+              child: const GameScreen(),
+            ),
+          },
+          initialRoute: Routes.game,
         ),
       ),
     );
@@ -195,8 +232,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final switchTile =
-            tester.widget<SwitchListTile>(showProvinceOverlayFinder);
+        final switchTile = tester.widget<SwitchListTile>(
+          showProvinceOverlayFinder,
+        );
         expect(switchTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -405,6 +443,111 @@ void main() {
         // Overlay should be gone but we should still be on the Game screen shell.
         expect(find.textContaining('victory'), findsNothing);
         expect(find.byType(GameScreen), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+  });
+
+  group('GameScreen — Android back exit confirmation', () {
+    testWidgets(
+      'AC: pressing back shows pixel-style confirm dialog',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
+        await tester.pump();
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.text('Exit game?'), findsOneWidget);
+        expect(
+          find.text('Your current progress will be lost if not saved.'),
+          findsOneWidget,
+        );
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Exit'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: tapping Cancel dismisses dialog and stays on game',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
+        await tester.pump();
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.tap(find.text('Cancel'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.byType(CtDialogShell), findsNothing);
+        expect(find.byType(GameScreen), findsOneWidget);
+        expect(find.text('Main Menu'), findsNothing);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: tapping outside dialog dismisses and stays on game',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
+        await tester.pump();
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.tapAt(const Offset(4, 4));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.byType(CtDialogShell), findsNothing);
+        expect(find.byType(GameScreen), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: tapping Exit navigates to main menu route',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
+        await tester.pump();
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.tap(find.text('Exit'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.text('Main Menu'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: Android back (platform-configured) shows exit confirm before leaving game',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildShellToGameFlow(
+            width: 800,
+            height: 600,
+            platform: TargetPlatform.android,
+          ),
+        );
+        await tester.pump();
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.text('Exit game?'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Exit'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
