@@ -14,14 +14,14 @@ Resolver for the Quick Battle tactical mini-game — a bounded, per-round loop t
 - **Lanes and groups (per side):** for each lane (LEFT, CENTER, RIGHT, RESERVE) and line (FRONT, SUPPORT): unit references/composition, aggregated tactical stats (FPN, FPM, RNG, DEF, MVR), cohesion (0–3), lane terrain tag.
 - **Virtual emplaced guns (siege only):** when `fortLevel ≥ 1`, a list of **emplaced gun entities**: stable synthetic ids (deterministic from battle context + index), current **HP** (and max HP at spawn), **attack strength**, **defense strength**, **RNG** (including +1 vs heavy artillery baseline per GDD). These are **not** `Unit` ids from `WorldState`. Count = `fortLevel` mapping per [siege-mechanics.md](../game/siege-mechanics.md). Stats come from shared config / ruleset and defender tech at input build time. **Default placement:** defender `QuickBattleLane.center` + `QuickBattleLine.support` (behind the fort line); all virtual guns for that battle share this slot for targeting and damage allocation unless a future spec adds battery sub-slots.
 - **Control:** starting round (default 1), max rounds (default 3), Quick Battle seed (deterministic).
+- **Initiative inputs:** attacker and defender initiative terms needed for combat-ordering parity with combat resolver: cavalry share (0.0-1.0) and general medals (integer, default 0 when unavailable).
 
 **Output:**
 
-- Per-side casualties (by unit type; optionally per battalion group).
+- Per-side casualties (unit ids).
 - Battle outcome: `ATTACKER`, `DEFENDER`, or `MUTUAL_EXHAUSTION`.
 - `provinceFlips` boolean.
-- `attackerRouts` / `defenderRouts` booleans.
-- Final tactical state: surviving composition, cohesion, lane statuses (`INTACT`, `BROKEN`, `EMPTY`).
+- `attackerRouts` / `defenderRouts` booleans (default `false` in current phase).
 - **Siege extras:** per-emplaced-gun final HP or destroyed flags; **`fortDowngradeFromDestroyedEmplaced`** boolean (true iff all virtual emplaced guns reached destroyed state before battle end). Downstream applies `fortLevel` decrement when this flag is true per [combat-resolution.md](combat-resolution.md).
 
 ## Algorithm / Flow
@@ -32,12 +32,12 @@ Resolver for the Quick Battle tactical mini-game — a bounded, per-round loop t
    b. First side spends 2–3 CP on actions (from caller — UI or AI).
    c. Second side spends CP.
    d. **Resolution step:**
-      - Compute lane-level effective strength per side: base tactical stats × `(cohesion / 3)` × terrain modifier × stance/action modifier. Uses the same combat formula family as auto-resolve.
+      - Compute side-level effective strength from group count and cohesion (count-based): `unitCount × (cohesion / 3)` with action/province modifiers.
       - **Siege (`fortLevel ≥ 1`):** Include virtual emplaced guns in combat resolution: they contribute to defender **effective** strength using their attack/defense stats until destroyed; attacker damage allocation rules (which fraction of volley/assault hits the battery vs front-line groups) are **implementation-defined** in this module but **must** be documented in a single place and **deterministic** for a given seed. **Do not** also add the aggregate `fortGunCount × fortEmplacedStrength` lump to defender strength when virtual guns are present (no double-count).
       - Apply action effects (fire → casualties/disruption, defend → defensive bonus, maneuver → unit reassignment ± cohesion cost, fall back → reduced exposure at cohesion cost, assault → high attack potential with terrain risk). Action definitions in [quick-battle.md](../game/quick-battle.md) § Turn structure and actions.
       - Update cohesion per group; check lane/side collapse per [quick-battle.md](../game/quick-battle.md) § Outcome and integration.
    e. Increment `round`.
-3. Derive final casualties and outcome from accumulated damage and collapse state.
+3. Derive final casualties and outcome from accumulated damage and current-phase winner rules.
 4. Convert group-level damage into the standard casualty representation used by auto-resolve.
 
 The resolver does not decide actions; it applies actions provided by the caller.
@@ -54,6 +54,7 @@ The resolver does not decide actions; it applies actions provided by the caller.
 
 - **Province identity:** Battle context province id and any province lookup (e.g. applying casualties or province flip) follow [world-model-identity.md](../game/world-model-identity.md): use prefixed form (`regionId|localId`); never look up by province id alone.
 - Deterministic for a given seed.
+- Current phase simplifications are intentional and must be documented: OPEN-only lane terrain, CENTER/FRONT-only deployment, count-based strength, and no full lane-collapse engine.
 - Must use the same config sources as auto-resolve for shared numbers (fort counts, wall HP, tech-derived emplaced quality). Quick Battle siege may **replace** aggregate emplaced strength with virtual gun stats on that path only; auto-resolve remains aggregate until a future spec aligns it.
 - Does not depend on global singletons; all data supplied or derived from shared config.
 - Owned by colonizethis_logic.
@@ -66,7 +67,19 @@ The resolver does not decide actions; it applies actions provided by the caller.
 
 - Given the resolver has completed a Quick Battle run  
   When the caller inspects the resolver output  
-  Then the output conforms to the Data Model § Output: per-side casualties (by unit type or battalion group), battle outcome, provinceFlips boolean, attackerRouts/defenderRouts booleans, and final tactical state with lane statuses INTACT, BROKEN, or EMPTY.
+  Then the output conforms to the Data Model § Output: per-side casualty unit ids, battle outcome, provinceFlips boolean, and attackerRouts/defenderRouts booleans.
+
+- Given Quick Battle input with attacker cavalry share `A`, defender cavalry share `D`, attacker medals `GA`, defender medals `GD`, and config weights `W_cav`, `W_medal`  
+  When the resolver computes initiative in a round  
+  Then the resolver computes `A * W_cav + GA * W_medal` for attacker and `D * W_cav + GD * W_medal` for defender, acts with the higher score first, and tie-breaks deterministically by lexical `factionId`.
+
+- Given current-phase input built by `buildQuickBattleInput`  
+  When the resolver reads lane terrain and groups  
+  Then the resolver receives OPEN-only `center_front` terrain and CENTER/FRONT-only groups and resolves battle without requiring multi-lane placement.
+
+- Given a Quick Battle group with `unitCount` and cohesion integer `0..3`  
+  When the resolver computes current-phase effective strength  
+  Then the resolver computes group base strength as `unitCount * (cohesion / 3)` before applying action modifiers and province-level combat modifiers.
 
 - Given combat phase invokes Quick Battle as an alternative to auto-resolve for a province  
   When the resolver returns casualty lists and province-flip flag  
