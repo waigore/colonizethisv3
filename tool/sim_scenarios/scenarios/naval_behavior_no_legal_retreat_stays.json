@@ -1,0 +1,73 @@
+{
+  "name": "naval_behavior_no_legal_retreat_stays",
+  "description": "When every adjacent sea zone is hostile, surviving fleets remain in the battle sea zone.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "seed": 4244,
+      "greatPowers": ["england", "france", "spain"],
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "p2", "p3"],
+        ["sea1", "sea1", "sea1"],
+        ["sea2", "sea2", "sea2"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "p2", "regionId": "oldWorld", "type": "province" },
+        { "id": "p3", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" },
+        { "id": "sea2", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" },
+        { "id1": "p2", "id2": "sea1" },
+        { "id1": "p3", "id2": "sea1" },
+        { "id1": "sea1", "id2": "sea2" }
+      ]
+    }
+  },
+  "setup": {
+    "initialFleets": [
+      {
+        "id": "f1",
+        "ownerId": "gp1",
+        "regionId": "oldWorld",
+        "seaZoneId": "sea1",
+        "shipTypeIds": ["carrack", "carrack"],
+        "mission": "patrol"
+      },
+      {
+        "id": "f2",
+        "ownerId": "gp2",
+        "regionId": "oldWorld",
+        "seaZoneId": "sea1",
+        "shipTypeIds": ["fluyte", "fluyte"],
+        "mission": "blockade"
+      },
+      {
+        "id": "f3",
+        "ownerId": "gp3",
+        "regionId": "oldWorld",
+        "seaZoneId": "sea2",
+        "shipTypeIds": ["carrack"],
+        "mission": "patrol"
+      }
+    ]
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "declareWar", "targetFactionId": "gp2" },
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "declareWar", "targetFactionId": "gp3" },
+        { "player": "gp2", "type": "diplomatic", "diplomaticType": "declareWar", "targetFactionId": "gp3" }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "province": "oldWorld|p1", "owner": "gp1" }
+  ]
+}

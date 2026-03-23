@@ -1,0 +1,60 @@
+{
+  "name": "naval_behavior_preserve_mission",
+  "description": "Naval battle survivors keep their assigned mission after combat resolution.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "seed": 4242,
+      "greatPowers": ["england", "france", "spain"],
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "p2", "p3"],
+        ["sea1", "sea1", "sea1"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "p2", "regionId": "oldWorld", "type": "province" },
+        { "id": "p3", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" },
+        { "id1": "p2", "id2": "sea1" },
+        { "id1": "p3", "id2": "sea1" }
+      ]
+    }
+  },
+  "setup": {
+    "initialFleets": [
+      {
+        "id": "f1",
+        "ownerId": "gp1",
+        "regionId": "oldWorld",
+        "seaZoneId": "sea1",
+        "shipTypeIds": ["carrack", "carrack"],
+        "mission": "patrol"
+      },
+      {
+        "id": "f2",
+        "ownerId": "gp2",
+        "regionId": "oldWorld",
+        "seaZoneId": "sea1",
+        "shipTypeIds": ["fluyte", "fluyte"],
+        "mission": "blockade"
+      }
+    ]
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "declareWar", "targetFactionId": "gp2" }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "province": "oldWorld|p1", "owner": "gp1" }
+  ]
+}
