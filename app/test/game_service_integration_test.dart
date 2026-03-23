@@ -79,6 +79,48 @@ void main() {
       expect(reloaded!.worldState.turnState.turnNumber, updated.worldState.turnState.turnNumber);
       expect(reloaded.players.length, updated.players.length);
     });
+
+    test('createNewGameAsync reports coarse progress indices 0..4', () async {
+      final steps = <int>[];
+      final totals = <int>[];
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: const ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 2,
+      );
+      final game = await service.createNewGameAsync(
+        id: 'g_async_progress',
+        config: config,
+        onProgress: (i, t) {
+          steps.add(i);
+          totals.add(t);
+        },
+      );
+      expect(steps, [0, 1, 2, 3, 4]);
+      expect(totals, List.filled(5, GameService.newGameSetupProgressStepCount));
+      expect(game.players.length, 1);
+      expect(service.loadGame('g_async_progress'), isNotNull);
+    });
+
+    test('createNewGameAsync builds same worldState as createNewGame for same config', () async {
+      final config = GameSetupConfig(
+        seed: 9001,
+        selectedGreatPowerIds: const ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 2,
+      );
+      final syncGame = service.createNewGame(id: 'g_sync_world', config: config);
+      final asyncGame = await service.createNewGameAsync(id: 'g_async_world', config: config);
+      expect(asyncGame.worldState.oldWorld, syncGame.worldState.oldWorld);
+      expect(asyncGame.worldState.newWorld, syncGame.worldState.newWorld);
+      expect(asyncGame.players.length, syncGame.players.length);
+    });
   });
 }
 

@@ -185,6 +185,46 @@
   "shell_leaderDialog_title": "New game — Leaders",
   "@shell_leaderDialog_title": {
     "description": "Title of the leader selection dialog in the new-game flow."
+  },
+
+  "shell_newGameProgress_title": "Creating game",
+  "@shell_newGameProgress_title": {
+    "description": "Title of the modal shown while a new game is being generated."
+  },
+
+  "shell_newGameProgress_stepOldWorld": "Generating Old World map…",
+  "@shell_newGameProgress_stepOldWorld": {
+    "description": "Coarse progress step: Old World tile map."
+  },
+
+  "shell_newGameProgress_stepNewWorld": "Generating New World map…",
+  "@shell_newGameProgress_stepNewWorld": {
+    "description": "Coarse progress step: New World tile map."
+  },
+
+  "shell_newGameProgress_stepWarp": "Linking Old World and New World…",
+  "@shell_newGameProgress_stepWarp": {
+    "description": "Coarse progress step: warp zones between regions."
+  },
+
+  "shell_newGameProgress_stepBuildWorld": "Building world…",
+  "@shell_newGameProgress_stepBuildWorld": {
+    "description": "Coarse progress step: province assignment, capitals, units."
+  },
+
+  "shell_newGameProgress_stepSave": "Saving game…",
+  "@shell_newGameProgress_stepSave": {
+    "description": "Coarse progress step: persisting game and map data."
+  },
+
+  "shell_newGameError_title": "Could not create game",
+  "@shell_newGameError_title": {
+    "description": "Title of the error dialog when new-game setup fails."
+  },
+
+  "shell_newGameError_retry": "Retry",
+  "@shell_newGameError_retry": {
+    "description": "Button to retry new-game setup with a different random seed."
   }
 }
 

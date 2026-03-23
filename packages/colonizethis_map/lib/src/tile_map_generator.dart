@@ -713,6 +713,8 @@ class TileMapGenerator {
         ? resourceGrid.map((row) => row.toList()).toList()
         : null;
     final ocean = _oceanCells(g, seaZoneId);
+    // Upper bound so we cannot spin forever if sea-fraction preservation undoes a bridge.
+    final maxJoinIterationsPerContinent = params.width * params.height;
 
     final capState =
         (tg != null &&
@@ -729,7 +731,9 @@ class TileMapGenerator {
         : null;
 
     for (var c = 0; c < numContinents; c++) {
-      while (true) {
+      var joinIterations = 0;
+      while (joinIterations < maxJoinIterationsPerContinent) {
+        joinIterations++;
         final landCells = _landCellsForContinent(
           g,
           provinceToContinent,
@@ -744,6 +748,7 @@ class TileMapGenerator {
         final path = _shortestSeaPath(g, seaZoneId, compA, compB);
         if (path.isEmpty) break;
         final provinceId = _provinceIdAdjacentToSeaPath(g, compA, path);
+        final bridgeCells = path.toSet();
         for (final (x, y) in path) {
           g[y][x] = provinceId;
           if (tg != null &&
@@ -762,7 +767,29 @@ class TileMapGenerator {
             );
           }
         }
-        _preserveSeaFraction(g, tg, rg, seaZoneId, ocean, path.length);
+        // Do not convert bridge tiles back to sea: _preserveSeaFraction picks the
+        // most "coastal" land first, which matches the new corridor and would undo
+        // the join, leaving >1 component and an infinite loop.
+        _preserveSeaFraction(
+          g,
+          tg,
+          rg,
+          seaZoneId,
+          ocean,
+          path.length,
+          landCellsExcludedFromSeaRestore: bridgeCells,
+        );
+      }
+      if (joinIterations >= maxJoinIterationsPerContinent) {
+        final stillSplit = _connectedComponentsOfLand(
+          _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
+        );
+        if (stillSplit.length > 1) {
+          _log.w(
+            'map: join continents hit iteration cap with >1 land component for '
+            'continent index $c (width=${params.width} height=${params.height})',
+          );
+        }
       }
     }
     return (g, tg, rg, didJoin);
@@ -1074,12 +1101,16 @@ class TileMapGenerator {
     List<List<Resource?>>? resourceGrid,
     String seaZoneId,
     Set<(int x, int y)> ocean,
-    int count,
-  ) {
+    int count, {
+    Set<(int x, int y)>? landCellsExcludedFromSeaRestore,
+  }) {
     final coastal = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] == seaZoneId) continue;
+        if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
+          continue;
+        }
         final oceanNeighbours = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
             .where(
               (p) =>
