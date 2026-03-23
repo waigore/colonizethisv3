@@ -29,14 +29,18 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-tui.mdc` | `SPEC/tui/**`, `ctterm/**` | ctterm-specific behavior and constraints |
 | `colonizethis-acceptance-criteria.mdc` | `SPEC/ai/**`, `SPEC/game/**`, `SPEC/program/**`, `SPEC/ui/**` | Given–When–Then, testable AC quality |
 
+## Rule interaction
+
+Multiple context-specific rules may apply to a single file (e.g., a UI widget may match both `ui-design` and `component-structure`). All applicable rules are **additive**; when they conflict, the more specific rule takes precedence (e.g., testing rules override general code-review for test files).
+
 ## Quick reference
 
-1. Check/extend SPEC first; implement only spec-authorized behavior.
-2. Keep Flutter UI and Flame simulation concerns separated.
-3. Prefer reuse; keep screens thin and delegate logic to services/controllers/components.
-4. Coverage policy: **90% for logic/ai/map packages; 80% everywhere else**.
-5. Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`.
-6. Use `logger` for runtime logs; use `basic_logger_file` for file logging.
-7. For cross-panel UI orchestration, use `AppEventBus` (`SPEC/program/app-ui-wiring.md`, `SPEC/program/app-event-bus.md`).
+1. **SPEC-first**: Check/extend SPEC first; implement only spec-authorized behavior. See `colonizethis-spec-required.mdc`.
+2. **Separation of concerns**: Keep Flutter UI and Flame simulation concerns separated. See `colonizethis-core-principles.mdc`.
+3. **Thin screens**: Prefer reuse; keep screens thin and delegate logic to services/controllers/components. See `colonizethis-component-structure.mdc`.
+4. **Coverage policy**: **90% for logic/ai/map packages; 80% everywhere else**. See `colonizethis-testing.mdc`.
+5. **Widget tests**: Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`. See `colonizethis-testing.mdc`.
+6. **Logging**: Use `logger` for runtime logs; use `basic_logger_file` (defined in `colonizethis-logging-file.mdc`) for file logging.
+7. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md`, `SPEC/program/app-event-bus.md`, and `colonizethis-tui.mdc`.
 
 For complete details, read the relevant rule file(s) in `.cursor/rules/`.
