@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -118,9 +119,14 @@ void main() {
       expect(navalStrength([]), 0.0);
     });
 
-    test('returns positive value for known ship types', () {
-      final s = navalStrength(['carrack', 'fluyte']);
-      expect(s, greaterThan(0));
+    test('uses configured weighted formula including durability', () {
+      final carrack = NavalStatsCatalog.get('carrack');
+      final expected = carrack.firepower +
+          (carrack.range * 0.4) +
+          (carrack.armour * 0.15) +
+          (carrack.hull * (1 + carrack.armour / 10.0)) +
+          (carrack.movement * 0.1);
+      expect(navalStrength(['carrack']), closeTo(expected, 1e-9));
     });
   });
 
@@ -149,6 +155,30 @@ void main() {
       final result = resolveSeaBattle(battle, 0);
       expect(result.survivingShipTypeIdsSide1, isEmpty);
       expect(result.survivingShipTypeIdsSide2, isEmpty);
+    });
+
+    test('does not retreat when retreat is disallowed by topology/relation gate', () {
+      const battle = BattleContextSea(
+        seaZoneId: 'sea1',
+        side1: NavalBattleSide(
+          ownerId: 'p1',
+          shipTypeIds: ['carrack', 'carrack'],
+          mission: FleetMission.patrol,
+        ),
+        side2: NavalBattleSide(
+          ownerId: 'p2',
+          shipTypeIds: ['fluyte', 'fluyte'],
+          mission: FleetMission.blockade,
+        ),
+      );
+      final result = resolveSeaBattle(
+        battle,
+        42,
+        side1CanRetreat: false,
+        side2CanRetreat: false,
+      );
+      expect(result.side1Retreated, isFalse);
+      expect(result.side2Retreated, isFalse);
     });
   });
 
@@ -195,37 +225,81 @@ void main() {
       expect(updated.worldState.fleets.length, 1);
       expect(updated.worldState.fleets.single.ownerId, 'p1');
       expect(updated.worldState.fleets.single.shipTypeIds, ['carrack']);
+      expect(updated.worldState.fleets.single.mission, FleetMission.none);
+    });
+
+    test('preserves mission on recreated surviving fleets', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'p1',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['carrack'],
+              mission: FleetMission.patrol,
+            ),
+            Fleet(
+              id: 'f2',
+              ownerId: 'p2',
+              seaZoneId: 'sea1',
+              regionId: 'oldWorld',
+              shipTypeIds: ['fluyte'],
+              mission: FleetMission.blockade,
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+      );
+      const battle = BattleContextSea(
+        seaZoneId: 'sea1',
+        side1: NavalBattleSide(ownerId: 'p1', shipTypeIds: ['carrack'], mission: FleetMission.patrol),
+        side2: NavalBattleSide(ownerId: 'p2', shipTypeIds: ['fluyte'], mission: FleetMission.blockade),
+      );
+      const result = NavalBattleResult(
+        survivingShipTypeIdsSide1: ['carrack'],
+        survivingShipTypeIdsSide2: ['fluyte'],
+      );
+      final updated = applyNavalBattleResults(game, battle, result, 'oldWorld');
+      final p1 = updated.worldState.fleets.firstWhere((f) => f.ownerId == 'p1');
+      final p2 = updated.worldState.fleets.firstWhere((f) => f.ownerId == 'p2');
+      expect(p1.mission, FleetMission.patrol);
+      expect(p2.mission, FleetMission.blockade);
     });
   });
 
   group('navalInterceptProbability', () {
-    test('Patrol base is 0.3', () {
+    test('Patrol uses mission-factor * ratio', () {
+      // Ratio = 5/(5+5) = 0.5, patrol factor = 0.5 => 0.25
       expect(
-        navalInterceptProbability(interceptorStrength: 10, targetStrength: 10, isBlockade: false),
-        0.3,
+        navalInterceptProbability(interceptorScore: 5, targetFleeScore: 5, isBlockade: false),
+        0.25,
       );
     });
-    test('Blockade base is 0.5', () {
+
+    test('Blockade uses mission-factor * ratio', () {
+      // Ratio = 8/(8+2) = 0.8, blockade factor = 0.9 => 0.72
       expect(
-        navalInterceptProbability(interceptorStrength: 10, targetStrength: 10, isBlockade: true),
-        0.5,
+        navalInterceptProbability(interceptorScore: 8, targetFleeScore: 2, isBlockade: true),
+        closeTo(0.72, 1e-9),
       );
     });
-    test('superior force adds bonus', () {
-      final p = navalInterceptProbability(interceptorStrength: 20, targetStrength: 5, isBlockade: false);
-      expect(p, 0.3 + 0.1);
-    });
-    test('inferior force subtracts penalty', () {
-      final p = navalInterceptProbability(interceptorStrength: 5, targetStrength: 20, isBlockade: false);
-      expect(p, 0.3 - 0.1);
-    });
+
     test('result is clamped 0.05-0.85', () {
       expect(
-        navalInterceptProbability(interceptorStrength: 1, targetStrength: 100, isBlockade: false),
+        navalInterceptProbability(interceptorScore: 0, targetFleeScore: 100, isBlockade: false),
         greaterThanOrEqualTo(0.05),
       );
       expect(
-        navalInterceptProbability(interceptorStrength: 100, targetStrength: 1, isBlockade: true),
+        navalInterceptProbability(interceptorScore: 100, targetFleeScore: 0, isBlockade: true),
         lessThanOrEqualTo(0.85),
       );
     });

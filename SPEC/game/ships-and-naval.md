@@ -134,14 +134,19 @@ speedAdvantage = (ownAvgMV - enemyAvgMV) × 0.1 # +/- 0.2 typical
 enemyAggression = 0.1 if enemyMission == Patrol else 0.2 # Blockade harder to escape
 ```
 
+`existsFriendlyOrNeutralAdjacentZone()` means there is an adjacent sea zone with no hostile fleet present for the retreating side (hostility from diplomacy `atWar` relation).
+
 ## Naval Interception Probability
 
-Patrol vs blockade interception chances; how escorts reduce losses
+Patrol vs blockade interception chance:
 
-| Mission  | Base Intercept | Modifiers                                                     |
-| -------- | -------------- | ------------------------------------------------------------- |
-| Patrol   | 30%            | +10% if superior force, -10% if inferior                      |
-| Blockade | 50%            | +15% if superior force, target entering/leaving specific port |
+```
+fleetInterceptScore = Σ ship.interceptRating
+targetFleeScore = Σ ship.fleeRating
+ratio = fleetInterceptScore / (fleetInterceptScore + targetFleeScore)
+missionFactor = 0.5 for Patrol, 0.9 for Blockade
+interceptChance = clamp(missionFactor × ratio, 0.05, 0.85)
+```
 
 
 ---

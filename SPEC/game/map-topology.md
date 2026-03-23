@@ -49,7 +49,7 @@ Province ids and sea zone ids used in game state (e.g. unit location, ownership,
 
 ## Movement rule
 
-Armies move only from one province to an **adjacent** province (P<->P). Naval movement uses P<->S and optionally S<->S. Order validation uses the topology graph; see [SPEC/program/turn-resolution.md](../program/turn-resolution.md) and [SPEC/program/map-data.md](../program/map-data.md).
+Armies move only from one province to an **adjacent** province (P<->P). Naval movement uses P<->S and optionally S<->S. Order validation uses the topology graph. Land movement adjacency and region-scoped validation are specified in [SPEC/program/movement.md](../program/movement.md). See also [SPEC/program/turn-resolution.md](../program/turn-resolution.md) and [SPEC/program/map-data.md](../program/map-data.md).
 
 ---
 
@@ -61,4 +61,4 @@ Armies move only from one province to an **adjacent** province (P<->P). Naval mo
 - **Topology source:** Topology is inferred from the tile map (nodes = unique region ids from the grid, edges = adjacent region pairs). Format and ownership: [map-data.md](../program/map-data.md).
 - **Continents:** Continents are the connected components of the land subgraph (provinces and P–P edges only) **within a region**. Inference and continent derivation: [map-data.md](../program/map-data.md).
 - **Province and sea zone identity:** Province and sea zone ids in game state (unit location, ownership, order payloads) use prefixed form and region-scoped lookup per [world-model-identity.md](world-model-identity.md). Topology/map data may use local ids per region; resolution and game state use prefixed ids.
-- **Movement:** Armies move only between adjacent provinces (P–P). Naval movement uses P–S and S–S. Order validation uses the topology graph per [turn-resolution.md](../program/turn-resolution.md) and [map-data.md](../program/map-data.md).
+- **Movement:** Armies move only between adjacent provinces (P–P). Naval movement uses P–S and S–S. Land movement adjacency and region-scoped validation are defined in [movement.md](../program/movement.md). Order validation uses the topology graph per [turn-resolution.md](../program/turn-resolution.md) and [map-data.md](../program/map-data.md).
