@@ -900,16 +900,20 @@ class CtRegionMapComponent extends PositionComponent {
           final tileTop = cell.y * cellSize;
 
           // Resource icons are always 32x32, never upscaled.
-          // For tiles <= 32px: center horizontally, position in lower half.
-          // For tiles > 32px: position in bottom-left corner.
+          // For tiles > 32px: bottom-left corner (SPEC/ui/map-widget.md).
+          // For tiles == 32px: centered in the cell (icon fills the tile).
+          // For tiles < 32px: center horizontally; bottom-align so the icon
+          // sits in the lower part of the cell (extends upward if needed).
           final double iconX;
           final double iconY;
-          if (cellSize <= iconSize) {
-            iconX = tileLeft + (cellSize - iconSize) / 2;
-            iconY = tileTop + cellSize / 2;
-          } else {
+          if (cellSize > iconSize) {
             iconX = tileLeft;
             iconY = tileTop + cellSize - iconSize;
+          } else {
+            iconX = tileLeft + (cellSize - iconSize) / 2;
+            iconY = cellSize < iconSize
+                ? tileTop + cellSize - iconSize
+                : tileTop + (cellSize - iconSize) / 2;
           }
 
           final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
