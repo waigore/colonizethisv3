@@ -13,7 +13,7 @@ void main() {
           ['p2', 'p2', 's1'],
         ],
       );
-      final topology = inferTopologyFromTileMap(result, 'oldWorld', 's1');
+      final topology = inferTopologyFromTileMap(result, 'oldWorld');
       final provinceIds = topology.nodes
           .where((n) => n.type == TopologyNodeType.province)
           .map((n) => n.id)
@@ -36,7 +36,7 @@ void main() {
           ['p2', 'p2', 's1'],
         ],
       );
-      final topology = inferTopologyFromTileMap(result, 'oldWorld', 's1');
+      final topology = inferTopologyFromTileMap(result, 'oldWorld');
       final edgeSet = <String>{};
       for (final e in topology.edges) {
         final key = e.id1.compareTo(e.id2) < 0 ? '${e.id1}|${e.id2}' : '${e.id2}|${e.id1}';
