@@ -262,7 +262,6 @@ class CtRegionMapComponent extends PositionComponent {
     if (tappedTown != null) {
       final provinceId = '${region.regionId}|${tappedTown.provinceId}';
       onTownIconTapped?.call(provinceId);
-      return;
     }
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
