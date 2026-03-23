@@ -32,8 +32,10 @@ QuickBattleInput buildQuickBattleInput(
   ];
 
   final allAttackerIds = <String>[];
+  var attackerGeneralMedals = 0;
   for (final att in ctx.attackers) {
     allAttackerIds.addAll(att.unitIds.where((id) => unitsById.containsKey(id)));
+    attackerGeneralMedals += att.generalMedals;
   }
   final attGroups = [
     QuickBattleGroup(
@@ -50,6 +52,8 @@ QuickBattleInput buildQuickBattleInput(
   );
   final defenderLeaderMult = leaderBonusForFaction(game, ctx.defenderFactionId);
   final emplacedGuns = buildQuickBattleEmplacedGuns(game, ctx);
+  final attackerCavalryShare = _cavalryShare(allAttackerIds, unitsById);
+  final defenderCavalryShare = _cavalryShare(ctx.defenderUnitIds, unitsById);
 
   return QuickBattleInput(
     attackerFactionId: ctx.attackers.first.factionId,
@@ -71,5 +75,21 @@ QuickBattleInput buildQuickBattleInput(
     maxRounds: quickBattleMaxRounds,
     attackerLeaderMultiplier: attackerLeaderMult,
     defenderLeaderMultiplier: defenderLeaderMult,
+    attackerCavalryShare: attackerCavalryShare,
+    defenderCavalryShare: defenderCavalryShare,
+    attackerGeneralMedals: attackerGeneralMedals,
+    defenderGeneralMedals: 0,
   );
+}
+
+double _cavalryShare(List<String> unitIds, Map<String, Unit> unitsById) {
+  if (unitIds.isEmpty) return 0.0;
+  var cavalry = 0;
+  for (final id in unitIds) {
+    final unit = unitsById[id];
+    if (unit == null) continue;
+    final stats = regimentStatsById(unit.type);
+    if (stats != null && stats.isCavalry) cavalry++;
+  }
+  return cavalry / unitIds.length;
 }
