@@ -54,6 +54,7 @@ class ScenarioInit {
 class ScenarioSetup {
   const ScenarioSetup({
     this.units,
+    this.initialFleets,
     this.stockpileOverrides,
     this.initialWorkers,
     this.initialStockpile,
@@ -67,6 +68,7 @@ class ScenarioSetup {
   });
 
   final List<UnitPlacement>? units;
+  final List<FleetPlacement>? initialFleets;
   final Map<String, int>? stockpileOverrides;
 
   /// Player id → { peasants, apprentices, journeymen, masters }. SPEC/game/workers-and-population.md.
@@ -95,6 +97,26 @@ class ScenarioSetup {
 
   /// Tile key → player id. Overrides WorldState.purchasedTilesByTileKey for build_improvement on purchased foreign tiles. SPEC/game/civilian-units.md, SPEC/program/orders.md.
   final Map<String, String>? purchasedTilesByTileKey;
+}
+
+class FleetPlacement {
+  const FleetPlacement({
+    required this.id,
+    required this.ownerId,
+    required this.regionId,
+    required this.shipTypeIds,
+    this.seaZoneId,
+    this.inPortAtProvinceId,
+    this.mission = 'none',
+  });
+
+  final String id;
+  final String ownerId;
+  final String regionId;
+  final List<String> shipTypeIds;
+  final String? seaZoneId;
+  final String? inPortAtProvinceId;
+  final String mission;
 }
 
 /// One production assignment: recipe id and labour to assign. Converted to AssignedRecipe in runner.
@@ -504,6 +526,9 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     units: (json['units'] as List<dynamic>?)
         ?.map((u) => _parseUnitPlacement(u as Map<String, dynamic>))
         .toList(),
+    initialFleets: (json['initialFleets'] as List<dynamic>?)
+        ?.map((f) => _parseFleetPlacement(f as Map<String, dynamic>))
+        .toList(),
     stockpileOverrides: (json['stockpileOverrides'] as Map<String, dynamic>?)
         ?.map((k, v) => MapEntry(k, v.toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
@@ -516,6 +541,20 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     initialTreasury: _parseInitialTreasury(json['initialTreasury']),
     defaultCombatMode: json['defaultCombatMode'] as String?,
     purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(json['purchasedTilesByTileKey']),
+  );
+}
+
+FleetPlacement _parseFleetPlacement(Map<String, dynamic> json) {
+  return FleetPlacement(
+    id: json['id'] as String,
+    ownerId: json['ownerId'] as String,
+    regionId: json['regionId'] as String,
+    shipTypeIds: (json['shipTypeIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+    seaZoneId: json['seaZoneId'] as String?,
+    inPortAtProvinceId: json['inPortAtProvinceId'] as String?,
+    mission: json['mission'] as String? ?? 'none',
   );
 }
 

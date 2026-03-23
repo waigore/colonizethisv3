@@ -2,24 +2,16 @@
 // Interception and retreat: SPEC/game/ships-and-naval.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/naval.dart';
+final _log = logicLogger();
 
-/// Base interception chance for Patrol. SPEC/game/ships-and-naval.md.
-const double kNavalInterceptBasePatrol = 0.30;
+/// Mission factor for Patrol interception probability.
+const double kNavalInterceptMissionFactorPatrol = 0.50;
 
-/// Base interception chance for Blockade. SPEC/game/ships-and-naval.md.
-const double kNavalInterceptBaseBlockade = 0.50;
-
-/// Bonus when interceptor has superior force.
-const double kNavalInterceptSuperiorBonus = 0.10;
-
-/// Penalty when interceptor has inferior force.
-const double kNavalInterceptInferiorPenalty = 0.10;
-
-/// Blockade superior force bonus (higher than patrol).
-const double kNavalInterceptBlockadeSuperiorBonus = 0.15;
+/// Mission factor for Blockade interception probability.
+const double kNavalInterceptMissionFactorBlockade = 0.90;
 
 /// Retreat base chance. SPEC/game/ships-and-naval.md.
 const double kNavalRetreatBaseChance = 0.6;
@@ -104,20 +96,34 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
   return result;
 }
 
-/// Interception probability: base (Patrol 30%, Blockade 50%) + superior/inferior modifiers.
-/// SPEC/game/ships-and-naval.md. Clamped to [0.05, 0.85].
+double _fleetInterceptScore(List<String> shipTypeIds) {
+  var total = 0.0;
+  for (final id in shipTypeIds) {
+    total += NavalStatsCatalog.get(id).interceptRating;
+  }
+  return total;
+}
+
+double _fleetFleeScore(List<String> shipTypeIds) {
+  var total = 0.0;
+  for (final id in shipTypeIds) {
+    total += NavalStatsCatalog.get(id).fleeRating;
+  }
+  return total;
+}
+
+/// Interception probability from mission factor × (intercept / (intercept + flee)).
+/// Clamped to [0.05, 0.85].
 double navalInterceptProbability({
-  required double interceptorStrength,
-  required double targetStrength,
+  required double interceptorScore,
+  required double targetFleeScore,
   required bool isBlockade,
 }) {
-  double base = isBlockade ? kNavalInterceptBaseBlockade : kNavalInterceptBasePatrol;
-  if (interceptorStrength > targetStrength) {
-    base += isBlockade ? kNavalInterceptBlockadeSuperiorBonus : kNavalInterceptSuperiorBonus;
-  } else if (interceptorStrength < targetStrength) {
-    base -= kNavalInterceptInferiorPenalty;
-  }
-  return base.clamp(0.05, 0.85);
+  final denom = interceptorScore + targetFleeScore;
+  final ratio = denom <= 0 ? 0.0 : interceptorScore / denom;
+  final missionFactor =
+      isBlockade ? kNavalInterceptMissionFactorBlockade : kNavalInterceptMissionFactorPatrol;
+  return (missionFactor * ratio).clamp(0.05, 0.85);
 }
 
 /// Average movement (MV) for a list of ship types. Used for retreat speed advantage.
@@ -148,8 +154,10 @@ List<BattleContextSea> filterBattlesByInterception(
         f.isAtSea && f.seaZoneId == zone && f.ownerId == battle.side1.ownerId && movedFleetIds.contains(f.id));
     final owner2Moved = game.worldState.fleets.any((f) =>
         f.isAtSea && f.seaZoneId == zone && f.ownerId == battle.side2.ownerId && movedFleetIds.contains(f.id));
-    final str1 = navalStrength(battle.side1.shipTypeIds);
-    final str2 = navalStrength(battle.side2.shipTypeIds);
+    final side1InterceptScore = _fleetInterceptScore(battle.side1.shipTypeIds);
+    final side2InterceptScore = _fleetInterceptScore(battle.side2.shipTypeIds);
+    final side1FleeScore = _fleetFleeScore(battle.side1.shipTypeIds);
+    final side2FleeScore = _fleetFleeScore(battle.side2.shipTypeIds);
     final side2IsInterceptor = battle.side2.mission == FleetMission.patrol || battle.side2.mission == FleetMission.blockade;
     final side1IsInterceptor = battle.side1.mission == FleetMission.patrol || battle.side1.mission == FleetMission.blockade;
     bool rollIntercept = false;
@@ -157,15 +165,15 @@ List<BattleContextSea> filterBattlesByInterception(
     if (owner1Moved && side2IsInterceptor) {
       rollIntercept = true;
       pIntercept = navalInterceptProbability(
-        interceptorStrength: str2,
-        targetStrength: str1,
+        interceptorScore: side2InterceptScore,
+        targetFleeScore: side1FleeScore,
         isBlockade: battle.side2.mission == FleetMission.blockade,
       );
     } else if (owner2Moved && side1IsInterceptor) {
       rollIntercept = true;
       pIntercept = navalInterceptProbability(
-        interceptorStrength: str1,
-        targetStrength: str2,
+        interceptorScore: side1InterceptScore,
+        targetFleeScore: side2FleeScore,
         isBlockade: battle.side1.mission == FleetMission.blockade,
       );
     }
@@ -184,9 +192,22 @@ double navalStrength(List<String> shipTypeIds) {
   var total = 0.0;
   for (final typeId in shipTypeIds) {
     final s = NavalStatsCatalog.get(typeId);
-    total += s.firepower * (1 + s.range * 0.2) + (s.armour + s.hull) * 0.5;
+    final durability = s.hull * (1 + (s.armour / 10.0));
+    final shipStrength = s.firepower +
+        (s.range * 0.4) +
+        (s.armour * 0.15) +
+        durability +
+        (s.movement * 0.1);
+    total += shipStrength;
   }
   return total;
+}
+
+enum NavalBattleOutcome {
+  side1Victory,
+  side2Victory,
+  stalemate,
+  mutualDestruction,
 }
 
 /// Result of resolving one sea battle: updated fleet lists (sunk ships removed).
@@ -196,17 +217,24 @@ class NavalBattleResult {
     required this.survivingShipTypeIdsSide2,
     this.side1Retreated = false,
     this.side2Retreated = false,
+    this.outcome = NavalBattleOutcome.stalemate,
   });
 
   final List<String> survivingShipTypeIdsSide1;
   final List<String> survivingShipTypeIdsSide2;
   final bool side1Retreated;
   final bool side2Retreated;
+  final NavalBattleOutcome outcome;
 }
 
 /// Resolve one sea battle deterministically. Seed from game + zone for RNG.
 /// Applies retreat roll per SPEC/game/ships-and-naval.md (base 0.6 + speed advantage - enemy aggression).
-NavalBattleResult resolveSeaBattle(BattleContextSea battle, int seed) {
+NavalBattleResult resolveSeaBattle(
+  BattleContextSea battle,
+  int seed, {
+  bool side1CanRetreat = true,
+  bool side2CanRetreat = true,
+}) {
   final rng = _SeededRng(seed);
   final str1 = navalStrength(battle.side1.shipTypeIds);
   final str2 = navalStrength(battle.side2.shipTypeIds);
@@ -239,14 +267,29 @@ NavalBattleResult resolveSeaBattle(BattleContextSea battle, int seed) {
   final enemyAggression2 = battle.side1.mission == FleetMission.blockade ? kNavalRetreatEnemyBlockade : (battle.side1.mission == FleetMission.patrol ? kNavalRetreatEnemyPatrol : 0.0);
   final pRetreat1 = (kNavalRetreatBaseChance + speedAdvantage1 - enemyAggression1).clamp(0.1, 0.95);
   final pRetreat2 = (kNavalRetreatBaseChance + speedAdvantage2 - enemyAggression2).clamp(0.1, 0.95);
-  if (list1.isNotEmpty && rng.nextInt(100) < (pRetreat1 * 100).round()) side1Retreated = true;
-  if (list2.isNotEmpty && rng.nextInt(100) < (pRetreat2 * 100).round()) side2Retreated = true;
+  if (side1CanRetreat && list1.isNotEmpty && rng.nextInt(100) < (pRetreat1 * 100).round()) side1Retreated = true;
+  if (side2CanRetreat && list2.isNotEmpty && rng.nextInt(100) < (pRetreat2 * 100).round()) side2Retreated = true;
+
+  NavalBattleOutcome outcome = NavalBattleOutcome.stalemate;
+  if (list1.isEmpty && list2.isEmpty) {
+    outcome = NavalBattleOutcome.mutualDestruction;
+  } else if (list1.isEmpty && list2.isNotEmpty) {
+    outcome = NavalBattleOutcome.side2Victory;
+  } else if (list2.isEmpty && list1.isNotEmpty) {
+    outcome = NavalBattleOutcome.side1Victory;
+  }
+
+  _log.d(
+    'logic: naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
+    'outcome=${outcome.name} retreat1=$side1Retreated retreat2=$side2Retreated',
+  );
 
   return NavalBattleResult(
     survivingShipTypeIdsSide1: list1,
     survivingShipTypeIdsSide2: list2,
     side1Retreated: side1Retreated,
     side2Retreated: side2Retreated,
+    outcome: outcome,
   );
 }
 
@@ -261,13 +304,14 @@ class _SeededRng {
 }
 
 /// Apply naval battle results to game: replace all fleets of both sides in zone with surviving fleets.
-/// If [topology] is provided and a side retreated, that side's fleet is placed in an adjacent zone.
+/// If retreat destination is provided and side retreated, that side's fleet is placed in that zone.
 Game applyNavalBattleResults(
   Game game,
   BattleContextSea battle,
   NavalBattleResult result,
   String regionIdForZone, {
-  MapTopology? topology,
+  String? retreatDestinationSide1,
+  String? retreatDestinationSide2,
 }) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
   final zone = battle.seaZoneId;
@@ -278,16 +322,8 @@ Game applyNavalBattleResults(
 
   var zone1 = zone;
   var zone2 = zone;
-  if (topology != null) {
-    if (result.side1Retreated) {
-      final adj = firstAdjacentSeaZone(topology, zone);
-      if (adj != null) zone1 = adj;
-    }
-    if (result.side2Retreated) {
-      final adj = firstAdjacentSeaZone(topology, zone);
-      if (adj != null) zone2 = adj;
-    }
-  }
+  if (result.side1Retreated && retreatDestinationSide1 != null) zone1 = retreatDestinationSide1;
+  if (result.side2Retreated && retreatDestinationSide2 != null) zone2 = retreatDestinationSide2;
 
   if (result.survivingShipTypeIdsSide1.isNotEmpty) {
     fleets.add(Fleet(
@@ -297,6 +333,7 @@ Game applyNavalBattleResults(
       inPortAtProvinceId: null,
       regionId: regionIdForZone,
       shipTypeIds: result.survivingShipTypeIdsSide1,
+      mission: battle.side1.mission,
     ));
   }
   if (result.survivingShipTypeIdsSide2.isNotEmpty) {
@@ -307,6 +344,7 @@ Game applyNavalBattleResults(
       inPortAtProvinceId: null,
       regionId: regionIdForZone,
       shipTypeIds: result.survivingShipTypeIdsSide2,
+      mission: battle.side2.mission,
     ));
   }
   return game.copyWith(

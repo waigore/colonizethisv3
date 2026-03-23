@@ -210,6 +210,36 @@ void main() {
         expect(scenario.assertions[1].stockpileCommodity, 0);
       });
 
+      test('parses setup initialFleets', () {
+        final json = {
+          'name': 'fleet_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialFleets': [
+              {
+                'id': 'f1',
+                'ownerId': 'gp1',
+                'regionId': 'oldWorld',
+                'seaZoneId': 'sea1',
+                'shipTypeIds': ['carrack', 'fluyte'],
+                'mission': 'patrol',
+              },
+            ],
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+        expect(scenario.setup, isNotNull);
+        expect(scenario.setup!.initialFleets, isNotNull);
+        expect(scenario.setup!.initialFleets!.length, 1);
+        expect(scenario.setup!.initialFleets!.first.id, 'f1');
+        expect(scenario.setup!.initialFleets!.first.ownerId, 'gp1');
+        expect(scenario.setup!.initialFleets!.first.shipTypeIds, ['carrack', 'fluyte']);
+        expect(scenario.setup!.initialFleets!.first.mission, 'patrol');
+      });
+
       test('parses setup productionAssignments', () {
         final json = {
           'name': 'production_setup',
