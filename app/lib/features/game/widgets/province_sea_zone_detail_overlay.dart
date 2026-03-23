@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         fleetsInPortAtProvince,
         foreignCivilianVisibleToPlayer,
+        isProspectableTerrain,
+        isProspectableTerrainId,
         kProspectRequiredResourceIds,
         PlayerView,
         resourceIdVisibleInPlayerView,
@@ -468,8 +470,9 @@ Widget _buildTileSection({
   final resourceVisible =
       resourceIdVisibleInPlayerView(playerView, selectedTileKey, resourceRaw);
   final resourceLabel = resourceVisible ?? '—';
-  final prospectable = resourceRaw != null &&
-      kProspectRequiredResourceIds.contains(resourceRaw);
+  final prospectable = cell.terrainType != null
+      ? isProspectableTerrain(cell.terrainType!)
+      : isProspectableTerrainId(cell.terrainTypeId);
   final prospectedLabel =
       !prospectable ? '—' : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
   final impLevel = tileState.improvementLevel(selectedTileKey);
