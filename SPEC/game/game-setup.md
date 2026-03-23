@@ -86,3 +86,4 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Given the maximum Old World assignment attempt count is reached and after repair a Great Power still has disconnected owned provinces  
   When the System completes setup  
   Then setup **fails** with an explicit error identified as `gp_land_connectivity_exhausted`
+
