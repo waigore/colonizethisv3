@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,6 +28,20 @@ class _DummyGameService extends GameService {
 
   @override
   Game? loadGame(String gameId) => _loadedGame;
+
+  @override
+  Future<Game> createNewGameAsync({
+    String? id,
+    GameSetupConfig? config,
+    void Function(int stepIndex, int totalSteps)? onProgress,
+  }) async {
+    const total = GameService.newGameSetupProgressStepCount;
+    for (var i = 0; i < total; i++) {
+      onProgress?.call(i, total);
+      await Future<void>.delayed(Duration.zero);
+    }
+    return createNewGame(id: id, config: config);
+  }
 
   @override
   Game createNewGame({String? id, config}) {
