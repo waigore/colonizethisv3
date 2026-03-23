@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
+import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -97,7 +97,6 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       navigatorKey: appNavigatorKey,
       dialogBuilders: {
         newGameLeaderSelectionDialogId: (ctx, _) {
-          final container = ProviderScope.containerOf(ctx);
           final baseConfig = GameSetupConfig.defaultConfig;
           final naming = defaultNamingConfig;
           final initialSelections = <String, String>{};
@@ -113,7 +112,15 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
             onConfirmed: (leaderVariantByGpId) {
-              final config = GameSetupConfig(
+              final navCtx = appNavigatorKey.currentContext;
+              if (navCtx == null) {
+                _log.w(
+                  'shell: appNavigatorKey has no context; skipping new game setup',
+                );
+                return;
+              }
+              final rootContainer = ProviderScope.containerOf(navCtx);
+              final templateConfig = GameSetupConfig(
                 selectedGreatPowerIds: baseConfig.selectedGreatPowerIds,
                 leaderVariantByGpId: leaderVariantByGpId,
                 continentCount: baseConfig.continentCount,
@@ -125,12 +132,12 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                 seed: baseConfig.seed,
                 startingResources: baseConfig.startingResources,
               );
-              final service = container.read(gameServiceProvider);
-              final game = service.createNewGame(config: config);
-              container.read(currentGameProvider.notifier).state = game;
-              container.read(appEventBusProvider).emit(
-                    const NavigateToRouteEvent(Routes.game),
-                  );
+              unawaited(
+                runNewGameSetupAfterLeaderPick(
+                  container: rootContainer,
+                  templateConfig: templateConfig,
+                ),
+              );
             },
           );
         },

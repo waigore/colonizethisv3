@@ -853,6 +853,25 @@ void main() {
       });
       expect(hasBridge, isFalse);
     });
+
+    test(
+      'joinContinents completes for small multi-continent grids (regression: no hang)',
+      () {
+        for (final seed in [0, 7, 42, 99, 777]) {
+          final params = TileMapParams(
+            width: 20,
+            height: 18,
+            seed: seed,
+            seaFraction: 0.6,
+          );
+          TileMapGenerator(params: params).generate(
+            numProvinces: 6,
+            numContinents: 3,
+            regionId: 'oldWorld',
+          );
+        }
+      },
+    );
   });
 
   group('validateTileMapTopology', () {

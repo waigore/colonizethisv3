@@ -48,7 +48,7 @@ Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [in
 
 - **Phase:** Pre-game (before turn 0).
 - **Upstream:** colonizethis_data (config, ruleset merge), colonizethis_map (map generation).
-- **Downstream:** App (GameService.createNewGame), init_game CLI tool, ctdev debug views.
+- **Downstream:** App (`GameService.createNewGame`, `GameService.createNewGameAsync` with coarse progress per SPEC/ui/game-initializing.md), init_game CLI tool, ctdev debug views.
 
 ## Constraints
 
