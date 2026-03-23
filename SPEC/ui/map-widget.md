@@ -73,7 +73,8 @@ All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style ma
 
 - **Icon size:** Resource icons are always 32×32 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 32×32 resolution.
 - **Position:** Position depends on the tile cell size:
-  - **For tiles ≤32px:** Icon is centered horizontally within the tile cell; vertically positioned in the lower half of the cell to avoid overlapping terrain features.
+  - **For tiles &lt;32px:** Icon is centered horizontally; vertically **bottom-aligned** to the tile (top may extend above the cell) so the visible footprint sits toward the lower part of the cell.
+  - **For tiles exactly 32px:** Icon is **centered** in the cell (same width and height as the icon).
   - **For tiles >32px:** Icon is placed in the **bottom-left corner** of the tile cell (at x=0, y=tileSize-32). This ensures the icon remains visible and readable at native resolution without being obscured or requiring upscaling.
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
 
