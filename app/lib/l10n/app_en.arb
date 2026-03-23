@@ -71,6 +71,21 @@
     "description": "Title used for the main game screen shell."
   },
 
+  "game_exitConfirm_title": "Exit game?",
+  "@game_exitConfirm_title": {
+    "description": "Title of the dialog asking for confirmation before leaving the in-game shell."
+  },
+
+  "game_exitConfirm_body": "Your current progress will be lost if not saved.",
+  "@game_exitConfirm_body": {
+    "description": "Body text warning the player before exiting to main menu from in-game shell."
+  },
+
+  "game_exitConfirm_exit": "Exit",
+  "@game_exitConfirm_exit": {
+    "description": "Button label that confirms leaving the in-game shell and navigating to main menu."
+  },
+
   "game_nextTurnButton": "Next turn ({turn} / {year})",
   "@game_nextTurnButton": {
     "description": "Label for the Next Turn button showing current turn and year.",
