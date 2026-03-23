@@ -167,6 +167,7 @@ class RegionMapViewData {
     required this.capitalMarkers,
     required this.portMarkers,
     required this.factionColors,
+    required this.greatPowerFactionIds,
     required this.terrainColors,
     this.unitMarkers = const [],
     this.warpMarkers = const [],
@@ -195,6 +196,11 @@ class RegionMapViewData {
 
   /// Faction id -> RGB color used for ownership fills and legend.
   final Map<String, Rgb> factionColors;
+
+  /// Runtime ids of Great Powers (`Game.players`). Restricts province-overlay
+  /// ownership tint to GP-held land. SPEC/program/map-visualization.md,
+  /// SPEC/ui/map-widget.md.
+  final Set<String> greatPowerFactionIds;
 
   /// Terrain type -> RGB color used for terrain fills when needed.
   final Map<TerrainType, Rgb> terrainColors;

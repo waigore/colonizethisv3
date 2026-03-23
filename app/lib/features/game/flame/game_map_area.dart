@@ -259,7 +259,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   @override
   Widget build(BuildContext context) {
-    final showBorders = ref.watch(mapBordersVisibleProvider);
+    final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
@@ -307,7 +307,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   game: widget.game,
                   region: _currentRegion,
                   baseLayerDisplayMode: _baseLayerDisplayMode,
-                  showBordersLayer: showBorders,
+                  showProvinceOverlay: showProvinceOverlay,
                   showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
                   playerView: humanPlayerView,
@@ -338,8 +338,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             title: Text(l10n.map_displayOptions_title),
                             content: Consumer(
                               builder: (context, ref, _) {
-                                final bordersVisible = ref.watch(
-                                  mapBordersVisibleProvider,
+                                final provinceOverlayVisible = ref.watch(
+                                  mapProvinceOverlayVisibleProvider,
                                 );
                                 final namesVisible = ref.watch(
                                   mapProvinceNamesVisibleProvider,
@@ -349,13 +349,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                   children: [
                                     SwitchListTile(
                                       title: Text(
-                                        l10n.map_displayOptions_showBorders,
+                                        l10n.map_displayOptions_showProvinceOverlay,
                                       ),
-                                      value: bordersVisible,
+                                      value: provinceOverlayVisible,
                                       onChanged: (value) {
                                         ref
                                                 .read(
-                                                  mapBordersVisibleProvider
+                                                  mapProvinceOverlayVisibleProvider
                                                       .notifier,
                                                 )
                                                 .state =

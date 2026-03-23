@@ -117,9 +117,9 @@
     "description": "Dialog title for map display options."
   },
 
-  "map_displayOptions_showBorders": "Show borders",
-  "@map_displayOptions_showBorders": {
-    "description": "Toggle label for showing map borders."
+  "map_displayOptions_showProvinceOverlay": "Show province overlay",
+  "@map_displayOptions_showProvinceOverlay": {
+    "description": "Toggle for province/sea boundaries plus Great Power land ownership tint on the map."
   },
 
   "map_displayOptions_showProvinceNames": "Show province names",

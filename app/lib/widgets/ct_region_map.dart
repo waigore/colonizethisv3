@@ -22,7 +22,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required RegionMapViewData region,
     required double cellSizePx,
     required bool showPoliticalOverlay,
-    required bool showBordersLayer,
+    required bool showProvinceOverlay,
     required bool showProvinceNamesLayer,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
@@ -42,7 +42,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
-       showBordersLayer = showBordersLayer,
+       showProvinceOverlay = showProvinceOverlay,
        showProvinceNamesLayer = showProvinceNamesLayer,
        visibilityMode = visibilityMode,
        baseLayerDisplayMode = baseLayerDisplayMode,
@@ -61,7 +61,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   RegionMapViewData region;
   final double cellSizePx;
   bool showPoliticalOverlay;
-  bool showBordersLayer;
+  bool showProvinceOverlay;
   bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
   BaseLayerDisplayMode baseLayerDisplayMode;
@@ -91,7 +91,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       region: region,
       cellSize: cellSizePx,
       showPoliticalOverlay: showPoliticalOverlay,
-      showBordersLayer: showBordersLayer,
+      showProvinceOverlay: showProvinceOverlay,
       showProvinceNamesLayer: showProvinceNamesLayer,
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
@@ -138,7 +138,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void updateProps({
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
-    bool? showBordersLayer,
+    bool? showProvinceOverlay,
     bool? showProvinceNamesLayer,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
@@ -158,8 +158,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (showPoliticalOverlay != null) {
       this.showPoliticalOverlay = showPoliticalOverlay;
     }
-    if (showBordersLayer != null) {
-      this.showBordersLayer = showBordersLayer;
+    if (showProvinceOverlay != null) {
+      this.showProvinceOverlay = showProvinceOverlay;
     }
     if (showProvinceNamesLayer != null) {
       this.showProvinceNamesLayer = showProvinceNamesLayer;
@@ -200,7 +200,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..region = this.region
         ..cellSize = cellSizePx
         ..showPoliticalOverlay = this.showPoliticalOverlay
-        ..showBordersLayer = this.showBordersLayer
+        ..showProvinceOverlay = this.showProvinceOverlay
         ..showProvinceNamesLayer = this.showProvinceNamesLayer
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
@@ -371,7 +371,7 @@ class CtRegionMap extends StatefulWidget {
     super.key,
     required this.region,
     this.showPoliticalOverlay = true,
-    this.showBordersLayer = true,
+    this.showProvinceOverlay = true,
     this.showProvinceNamesLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
@@ -393,7 +393,7 @@ class CtRegionMap extends StatefulWidget {
 
   final RegionMapViewData region;
   final bool showPoliticalOverlay;
-  final bool showBordersLayer;
+  final bool showProvinceOverlay;
   final bool showProvinceNamesLayer;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
@@ -437,7 +437,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
     super.didUpdateWidget(oldWidget);
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
-        widget.showBordersLayer != oldWidget.showBordersLayer ||
+        widget.showProvinceOverlay != oldWidget.showProvinceOverlay ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
@@ -452,7 +452,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
-        showBordersLayer: widget.showBordersLayer,
+        showProvinceOverlay: widget.showProvinceOverlay,
         showProvinceNamesLayer: widget.showProvinceNamesLayer,
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
@@ -484,7 +484,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       region: widget.region,
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
-      showBordersLayer: widget.showBordersLayer,
+      showProvinceOverlay: widget.showProvinceOverlay,
       showProvinceNamesLayer: widget.showProvinceNamesLayer,
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:

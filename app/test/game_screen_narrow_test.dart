@@ -151,14 +151,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.text('Map display options'), findsOneWidget);
-        expect(find.text('Show borders'), findsOneWidget);
+        expect(find.text('Show province overlay'), findsOneWidget);
         expect(find.text('Show province names'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
-      'AC: toggling Show borders in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
+      'AC: toggling Show province overlay in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
@@ -174,14 +174,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final showBordersFinder = find.widgetWithText(
+        final showProvinceOverlayFinder = find.widgetWithText(
           SwitchListTile,
-          'Show borders',
+          'Show province overlay',
         );
-        expect(showBordersFinder, findsOneWidget);
+        expect(showProvinceOverlayFinder, findsOneWidget);
 
         // Toggle off.
-        await tester.tap(showBordersFinder);
+        await tester.tap(showProvinceOverlayFinder);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
@@ -195,7 +195,8 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final switchTile = tester.widget<SwitchListTile>(showBordersFinder);
+        final switchTile =
+            tester.widget<SwitchListTile>(showProvinceOverlayFinder);
         expect(switchTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),

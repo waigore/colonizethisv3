@@ -112,6 +112,7 @@ RegionMapViewData _buildRegionViewData({
   for (final p in game.players) {
     greatPowerIds.add(p.id);
   }
+  final greatPowerFactionIds = greatPowerIds.toSet();
   for (final m in game.minorNations) {
     minorNationIds.add(m.id);
   }
@@ -388,6 +389,7 @@ RegionMapViewData _buildRegionViewData({
     capitalMarkers: capitals,
     portMarkers: ports,
     factionColors: factionColors,
+    greatPowerFactionIds: greatPowerFactionIds,
     terrainColors: terrainColors,
     unitMarkers: unitMarkers,
     warpMarkers: warpMarkers,

@@ -29,6 +29,7 @@ RegionMapViewData _regionWithCells(List<CellViewData> cells, int w, int h) {
     capitalMarkers: const [],
     portMarkers: const [],
     factionColors: const {},
+    greatPowerFactionIds: const {'gp1'},
     terrainColors: const {},
   );
 }
