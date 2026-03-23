@@ -13,6 +13,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
@@ -495,7 +496,16 @@ Widget _buildTileSection({
     children: [
       Text('Coordinates: ($x, $y)'),
       Text('Terrain: $terrainStr'),
-      Text('Resource: $resourceLabel'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text('Resource: '),
+          if (resourceVisible != null)
+            ResourceLabelInline(commodityId: resourceVisible)
+          else
+            Text(resourceLabel),
+        ],
+      ),
       Text('Prospected: $prospectedLabel'),
       Text('Improvement: $improvementLine'),
       Text('Road / railroad: $roadLabel'),
@@ -608,11 +618,30 @@ Widget _buildEconomicSection({
   required RegionMapViewData region,
   void Function(String?)? onHighlightTile,
 }) {
+  final sortedResourceIds = [...resources]..sort();
   return _buildSection('Economic', Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text('Resources: ${resources.isEmpty ? "—" : resources.join(", ")}'),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Resources: '),
+          Expanded(
+            child: sortedResourceIds.isEmpty
+                ? const Text('—')
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: sortedResourceIds
+                        .map(
+                          (id) => ResourceLabelInline(commodityId: id),
+                        )
+                        .toList(),
+                  ),
+          ),
+        ],
+      ),
       Text('Tiles to prospect: ${tilesToProspect.length}'),
       if (tilesToProspect.isNotEmpty)
         Wrap(

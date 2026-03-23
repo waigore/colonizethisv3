@@ -65,13 +65,13 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 ## Province overlay content
 
-**Tile:** From **`selectedTileKey`** only. Empty: “Click a tile to see details.” Else: coordinates, terrain, resource (— if none), **Prospected** (prospectable & not prospected → no; not prospectable → —), improvement, roads/rail, **civilian count** (fog-aware: same rules as Civilian — `foreignCivilianVisibleToPlayer`; enemy Spies never). `???` when `CellViewData.visibility` is unrevealed or province is fully unrevealed.
+**Tile:** From **`selectedTileKey`** only. Empty: “Click a tile to see details.” Else: coordinates, terrain, **resource** with **commodity icon beside the visible id/name** (— if none; same rule as [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) commodity labels), **Prospected** (prospectable & not prospected → no; not prospectable → —), improvement, roads/rail, **civilian count** (fog-aware: same rules as Civilian — `foreignCivilianVisibleToPlayer`; enemy Spies never). `???` when `CellViewData.visibility` is unrevealed or province is fully unrevealed.
 
 **Military:** In-province military units (`Unit.locationProvinceId`); group by **owner**, then **type counts** per owner.
 
 **Civilian:** Own units — full lines (type, id, status). Other players — only if `foreignCivilianVisibleToPlayer` allows (tile visibility ≠ unknown; not enemy Spy).
 
-**Political / Economic / Naval:** Owner, resources, prospects, improvements, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
+**Political / Economic / Naval:** Owner, **province resources** listed with **icon + id** per commodity label rule (see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)), prospects, improvements, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
 
 **Sea zone:** Political + Naval (fleets in zone).
 

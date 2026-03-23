@@ -61,6 +61,34 @@ class ResourceIcon extends StatelessWidget {
   }
 }
 
+/// Pixel [ResourceIcon] immediately before the visible resource/commodity label.
+/// Use for any UI line or chip that names a resource id (see SPEC/ui/pixel-art-ui-catalog.md).
+class ResourceLabelInline extends StatelessWidget {
+  const ResourceLabelInline({
+    super.key,
+    required this.commodityId,
+    this.label,
+    this.iconSize = 16,
+  });
+
+  final String commodityId;
+  final String? label;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ResourceIcon(commodityId: commodityId, size: iconSize),
+        const SizedBox(width: 4),
+        Text(label ?? commodityId),
+      ],
+    );
+  }
+}
+
 class WorkerIcon extends StatelessWidget {
   const WorkerIcon({super.key, required this.workerType, this.size = 16});
 
