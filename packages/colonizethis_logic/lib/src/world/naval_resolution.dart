@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../combat/conflict_detection.dart';
 import '../combat/naval_combat_resolver.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
@@ -10,6 +10,50 @@ import '../dossier/event_dialogue.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
+
+final _log = logicLogger();
+
+Map<String, Set<String>> _atWarByFaction(Game game) {
+  final out = <String, Set<String>>{};
+  for (final rel in game.diplomacyRelations) {
+    if (rel.state != RelationState.atWar) continue;
+    out.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
+    out.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
+  }
+  return out;
+}
+
+List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
+  final out = <String>[];
+  for (final e in topology.edges) {
+    if (e.id1 == seaZoneId) {
+      out.add(e.id2);
+    } else if (e.id2 == seaZoneId) {
+      out.add(e.id1);
+    }
+  }
+  return out;
+}
+
+String? _firstFriendlyOrNeutralRetreatZone(
+  Game game,
+  MapTopology topology,
+  String fromSeaZoneId,
+  String ownerId,
+) {
+  final hostileByOwner = _atWarByFaction(game);
+  for (final adj in _adjacentSeaZones(topology, fromSeaZoneId)) {
+    final hostileOwnersPresent = game.worldState.fleets.any(
+      (fleet) =>
+          fleet.isAtSea &&
+          fleet.seaZoneId == adj &&
+          fleet.ownerId != ownerId &&
+          (hostileByOwner[ownerId]?.contains(fleet.ownerId) ?? false),
+    );
+    if (!hostileOwnersPresent) return adj;
+  }
+  return null;
+}
 
 Game applyNavalMissionOrders(
   Game game,
@@ -251,6 +295,7 @@ Game runNavalInterceptionCombatPhase(
   void Function(DialogueEvent)? onDialogue,
 }) {
   var battles = detectNavalConflicts(game);
+  _log.d('logic: naval phase detected battles=${battles.length}');
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
@@ -258,12 +303,30 @@ Game runNavalInterceptionCombatPhase(
   var seed = (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * 0x9E3779B1);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
+  _log.d('logic: naval phase after interception battles=${battles.length}');
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
   var battleIndex = 0;
   for (final battle in battles) {
-    final result = resolveSeaBattle(battle, seed);
+    final retreatZoneSide1 = _firstFriendlyOrNeutralRetreatZone(
+      state,
+      topology,
+      battle.seaZoneId,
+      battle.side1.ownerId,
+    );
+    final retreatZoneSide2 = _firstFriendlyOrNeutralRetreatZone(
+      state,
+      topology,
+      battle.seaZoneId,
+      battle.side2.ownerId,
+    );
+    final result = resolveSeaBattle(
+      battle,
+      seed,
+      side1CanRetreat: retreatZoneSide1 != null,
+      side2CanRetreat: retreatZoneSide2 != null,
+    );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
     final fleetsInZone =
@@ -276,7 +339,12 @@ Game runNavalInterceptionCombatPhase(
       battle,
       result,
       regionId,
-      topology: topology,
+      retreatDestinationSide1: retreatZoneSide1,
+      retreatDestinationSide2: retreatZoneSide2,
+    );
+    _log.d(
+      'logic: naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
+      'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );
 
     String? victorId;
