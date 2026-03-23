@@ -62,7 +62,7 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 | `quick_battle_result` | `QuickBattleResultDialog` | planned (or local if combat UI stays internal) |
 | `combat_mode_choice` | `CombatModeChoiceDialog` | same |
 
-**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), split fleet (`NavalUnitsPanel`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker.
+**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), split fleet (`NavalUnitsPanel`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
 
 ---
 

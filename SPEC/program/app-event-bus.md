@@ -118,7 +118,7 @@ class AppEventHandler {
 **`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
 
 - **`TurnResolutionCompleteEvent`** after `runTurnResolution` / `resumeOvertureDecisions` completes with **`TurnResolutionComplete`**
-- **`NewGameCreatedEvent`** after **`createNewGame()`** saves
+- **`NewGameCreatedEvent`** after a new game is created and saved (sync **`createNewGame()`** or async phased **`createNewGameAsync()`** used by the shell)
 - **`OvertureRequiredEvent`** when `runTurnResolution` or `resumeOvertureDecisions` returns **`TurnResolutionPendingOvertures`**
 
 When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnForGame`** / **`resumeTurnResolutionWithOvertureDecisions`** so **`GameEventBridge`** can subscribe and map logic **`GameEvent`** instances to **`GameToUIEvent`** on the app bus. **Full bridge:** **SPEC/program/game-event-bridge.md**.

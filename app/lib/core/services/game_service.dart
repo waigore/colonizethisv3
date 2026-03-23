@@ -200,12 +200,86 @@ class GameService {
     return requireTurnResolutionComplete(result);
   }
 
+  /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
+  static const int newGameSetupProgressStepCount = 5;
+
   /// Creates a new game via the full game-setup pipeline (map gen, province assignment, capital auto-choice).
   /// Uses [config] (defaults to GameSetupConfig.defaultConfig) and saves the game; map data is cached for nextTurn.
   Game createNewGame({String? id, GameSetupConfig? config}) {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+    final warpLinks = _generateWarpLinks(
+      cfg: cfg,
+      tileMapOW: tileMapOW,
+      topoOW: topoOW,
+      tileMapNW: tileMapNW,
+      topoNW: topoNW,
+    );
+    final result = createGameFromGeneratedMaps(
+      config: cfg,
+      tileMapOldWorld: tileMapOW,
+      topologyOldWorld: topoOW,
+      tileMapNewWorld: tileMapNW,
+      topologyNewWorld: topoNW,
+      gameId: gameId,
+      warpLinks: warpLinks,
+    );
+    _persistNewGame(gameId: gameId, result: result);
+    return result.game;
+  }
 
+  /// Same pipeline as [createNewGame], but yields between coarse steps so the UI isolate can paint.
+  /// [onProgress] is invoked with `(stepIndex, newGameSetupProgressStepCount)` before each major phase
+  /// (0 = Old World map … 4 = saving). SPEC/ui/game-initializing.md.
+  Future<Game> createNewGameAsync({
+    String? id,
+    GameSetupConfig? config,
+    void Function(int stepIndex, int totalSteps)? onProgress,
+  }) async {
+    final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
+    final cfg = config ?? GameSetupConfig.defaultConfig;
+    const total = newGameSetupProgressStepCount;
+    Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
+
+    onProgress?.call(0, total);
+    await yieldUi();
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
+
+    onProgress?.call(1, total);
+    await yieldUi();
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+
+    onProgress?.call(2, total);
+    await yieldUi();
+    final warpLinks = _generateWarpLinks(
+      cfg: cfg,
+      tileMapOW: tileMapOW,
+      topoOW: topoOW,
+      tileMapNW: tileMapNW,
+      topoNW: topoNW,
+    );
+
+    onProgress?.call(3, total);
+    await yieldUi();
+    final result = createGameFromGeneratedMaps(
+      config: cfg,
+      tileMapOldWorld: tileMapOW,
+      topologyOldWorld: topoOW,
+      tileMapNewWorld: tileMapNW,
+      topologyNewWorld: topoNW,
+      gameId: gameId,
+      warpLinks: warpLinks,
+    );
+
+    onProgress?.call(4, total);
+    await yieldUi();
+    _persistNewGame(gameId: gameId, result: result);
+    return result.game;
+  }
+
+  (TileMapResult, MapTopology) _generateTileMapOldWorld(GameSetupConfig cfg) {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
       seed: cfg.seed,
@@ -221,13 +295,20 @@ class GameService {
       seed: cfg.seed,
       seaFraction: 0.6,
     );
-    final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
+    return TileMapGenerator(params: paramsOW).generate(
       numProvinces: cfg.numProvincesOldWorld,
       numContinents: cfg.continentCount,
       regionId: 'oldWorld',
       resourceRules: ResourceRules.defaultRules,
     );
+  }
 
+  (TileMapResult, MapTopology) _generateTileMapNewWorld(GameSetupConfig cfg) {
+    final mapGenParams = MapGenerationParams(
+      numContinents: cfg.continentCount,
+      seed: cfg.seed,
+      seaFraction: 0.6,
+    );
     final sizeNW = computeGridSizeFromParams(
       cfg.numProvincesNewWorld,
       mapGenParams,
@@ -238,15 +319,22 @@ class GameService {
       seed: cfg.seed + 1,
       seaFraction: 0.6,
     );
-    final (tileMapNW, topoNW) = TileMapGenerator(params: paramsNW).generate(
+    return TileMapGenerator(params: paramsNW).generate(
       numProvinces: cfg.numProvincesNewWorld,
       numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
       regionId: 'newWorld',
       resourceRules: ResourceRules.defaultRules,
     );
+  }
 
-    // Generate warp zones between Old World and New World.
-    final warpLinks = generateWarpZones(
+  List<WarpLink> _generateWarpLinks({
+    required GameSetupConfig cfg,
+    required TileMapResult tileMapOW,
+    required MapTopology topoOW,
+    required TileMapResult tileMapNW,
+    required MapTopology topoNW,
+  }) {
+    return generateWarpZones(
       tileMapOldWorld: tileMapOW,
       topologyOldWorld: topoOW,
       tileMapNewWorld: tileMapNW,
@@ -255,17 +343,12 @@ class GameService {
       regionIdNew: 'newWorld',
       seed: cfg.seed,
     );
+  }
 
-    final result = createGameFromGeneratedMaps(
-      config: cfg,
-      tileMapOldWorld: tileMapOW,
-      topologyOldWorld: topoOW,
-      tileMapNewWorld: tileMapNW,
-      topologyNewWorld: topoNW,
-      gameId: gameId,
-      warpLinks: warpLinks,
-    );
-
+  void _persistNewGame({
+    required String gameId,
+    required GameSetupResult result,
+  }) {
     _mapCache[gameId] = _GameMapCache(
       combinedTopology: result.combinedTopology,
       tileMapByRegion: result.tileMapByRegion,
@@ -282,6 +365,5 @@ class GameService {
     );
     saveGame(result.game);
     eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
-    return result.game;
   }
 }
