@@ -12,7 +12,7 @@ The Game Setup screen is presentational and receives the following parameters. T
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `onStartGame` | `void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId)` | Invoked when user selects Start Game with all slots complete. Passes ordered list of 6 gpIds (slot 0 = human, 1–5 = AI) and leader map. |
+| `onStartGame` | `void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId, bool enforceFairGpOldWorldAssignment)` | Invoked when user selects Start Game with all slots complete. Passes ordered list of 6 gpIds (slot 0 = human, 1–5 = AI), leader map, and fair-assignment flag (`GameSetupConfig.enforceFairGpOldWorldAssignment` per [game-setup.md](../../game/game-setup.md)). |
 | `onBack` | callback | Invoked when user presses Back. |
 
 The screen uses `defaultNamingConfig` from `colonizethis_data` for nations and leaders.
@@ -32,7 +32,8 @@ The screen uses `defaultNamingConfig` from `colonizethis_data` for nations and l
 - **Start disabled until complete:** Given one or more slots have no nation or leader selected, Start Game remains disabled. When all six slots have both nation and leader selected, Start Game becomes enabled.
 - **No duplicate nations:** When the user opens the nation dropdown for any slot, only nations not already selected in another slot are listed.
 - **Leader follows nation:** When a slot's nation changes, the leader dropdown updates to that nation's leader variants and resets to the default leader for that nation.
-- **Start:** Given all six slots have nation and leader selected, when the user presses Start Game (or Enter), the widget invokes `onStartGame` with (1) ordered list of six gpIds (index 0 = human) and (2) map gpId → leaderVariantId.
+- **Fair assignment row:** Given the user navigates with arrow keys, when focus is on the fair-assignment row, then the user can toggle **enforce fair GP assignment** (repair + retries) with Space or Enter; default is off. When the user presses Start Game, the third argument to `onStartGame` is **true** iff that option is on.
+- **Start:** Given all six slots have nation and leader selected, when the user presses Start Game (or Enter) with focus on Start, the widget invokes `onStartGame` with (1) ordered list of six gpIds (index 0 = human), (2) map gpId → leaderVariantId, and (3) `enforceFairGpOldWorldAssignment`.
 - **Back:** When the user presses B or Escape, the widget invokes `onBack` once; the shell navigates to Main Menu.
  - **Auto-assign empty slots:** Given one or more slots have no nation selected and at least one Great Power is not yet assigned to any slot, when the user presses A, then the UI layer assigns to each empty slot, in top-to-bottom slot order, the first Great Power from the naming config that is not already assigned in another slot and sets that nation's leader to its default leader variant.
  - **Auto-assign when no GP available:** Given a slot has no nation selected and all Great Powers from the naming config are already assigned in other slots, when the user presses A, then the UI layer leaves that slot's nation and leader unselected.
@@ -53,7 +54,7 @@ The screen uses `defaultNamingConfig` from `colonizethis_data` for nations and l
 |  Player 3 (AI)   [Select nation    ▼]    |
 |                  [Select leader    ▼]    |
 |  ... (all six slots)                     |
-|                                          |
+|  Fair GP assignment (repair) [ ]         |
 |  [S] Start Game  (disabled until ready)  |
 |  [B] Back                                 |
 +------------------------------------------+

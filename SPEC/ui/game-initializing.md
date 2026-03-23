@@ -6,7 +6,7 @@
 
 ## Scope
 
-- **In scope:** Shell flow after the user confirms **Start** on the leader selection dialog (`new_game_leader_selection`): show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate).
+- **In scope:** Shell flow after the user confirms **Start** on the leader selection dialog (`new_game_leader_selection`): show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). The leader dialog includes an optional control (default off) that sets **`GameSetupConfig.enforceFairGpOldWorldAssignment`**: when on, the pipeline runs GP Old World connectivity repair and assignment retries per [game-setup.md](../game/game-setup.md); when off, setup uses the fast single-pass OW assignment (see [game-setup-pipeline.md](../program/game-setup-pipeline.md) step 6b).
 - **Also applies:** Any future full-screen Game Setup (`CtGameSetup`) path that uses the same app setup API should match the same progress and error behavior unless a separate spec says otherwise.
 - **Out of scope:** Cancel mid-setup; fine-grained per-tile progress.
 

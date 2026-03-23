@@ -24,7 +24,10 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
   final ResolvedNamingConfig naming;
   final Map<String, String> initialLeaderByGpId;
   final VoidCallback onCancel;
-  final void Function(Map<String, String> leaderVariantByGpId) onConfirmed;
+  final void Function(
+    Map<String, String> leaderVariantByGpId,
+    bool enforceFairGpOldWorldAssignment,
+  ) onConfirmed;
 
   @override
   State<NewGameLeaderSelectionDialog> createState() =>
@@ -34,6 +37,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
 class _NewGameLeaderSelectionDialogState
     extends State<NewGameLeaderSelectionDialog> {
   late Map<String, String> _leaderByGpId;
+  var _enforceFairGpOldWorldAssignment = false;
 
   @override
   void initState() {
@@ -87,6 +91,35 @@ class _NewGameLeaderSelectionDialogState
     }
 
     children.addAll([
+      const SizedBox(height: 12),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: _enforceFairGpOldWorldAssignment,
+            onChanged: (v) {
+              setState(() => _enforceFairGpOldWorldAssignment = v ?? false);
+            },
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(
+                  () => _enforceFairGpOldWorldAssignment =
+                      !_enforceFairGpOldWorldAssignment,
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  l10n.shell_leaderDialog_enforceFairGpAssignment,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       const SizedBox(height: 16),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -99,7 +132,10 @@ class _NewGameLeaderSelectionDialogState
           CtNinePatchButton(
             onPressed: () {
               Navigator.of(context).pop();
-              widget.onConfirmed(_leaderByGpId);
+              widget.onConfirmed(
+                _leaderByGpId,
+                _enforceFairGpOldWorldAssignment,
+              );
             },
             child: Text(l10n.common_start),
           ),

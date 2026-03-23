@@ -19,9 +19,11 @@ class _PendingNewGameConfig {
   const _PendingNewGameConfig({
     required this.orderedGpIdsForSlots,
     required this.leaderVariantByGpId,
+    required this.enforceFairGpOldWorldAssignment,
   });
   final List<String> orderedGpIdsForSlots;
   final Map<String, String> leaderVariantByGpId;
+  final bool enforceFairGpOldWorldAssignment;
 }
 
 /// Map data cached after new game creation for turn resolution (extraction, movement).
@@ -89,12 +91,17 @@ class _CttermAppState extends State<CttermApp> {
   }
 
   /// Stores setup data and navigates to Generating World. Called from Game Setup when user presses Start.
-  void _onPrepareNewGame(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId) {
+  void _onPrepareNewGame(
+    List<String> orderedGpIdsForSlots,
+    Map<String, String> leaderVariantByGpId,
+    bool enforceFairGpOldWorldAssignment,
+  ) {
     _log.d('tui:app: prepare new game with ${orderedGpIdsForSlots.length} players');
     setState(() {
       _pendingNewGameConfig = _PendingNewGameConfig(
         orderedGpIdsForSlots: orderedGpIdsForSlots,
         leaderVariantByGpId: leaderVariantByGpId,
+        enforceFairGpOldWorldAssignment: enforceFairGpOldWorldAssignment,
       );
       _route = CttermRoute.generatingWorld;
     });
@@ -118,6 +125,7 @@ class _CttermAppState extends State<CttermApp> {
       numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
       numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
       minProvincesPerMinor: GameSetupConfig.defaultConfig.minProvincesPerMinor,
+      enforceFairGpOldWorldAssignment: pending.enforceFairGpOldWorldAssignment,
     );
     try {
       _log.i('tui:app: running init game');
