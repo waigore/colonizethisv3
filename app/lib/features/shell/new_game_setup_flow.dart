@@ -12,6 +12,8 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -36,6 +38,10 @@ Future<void> runNewGameSetupAfterLeaderPick({
   required ProviderContainer container,
   required GameSetupConfig templateConfig,
 }) async {
+  // Leader dialog pops synchronously before this async function continues; yield so
+  // the route can close and the next frame can run before we push progress UI.
+  await Future<void>.delayed(Duration.zero);
+
   final baseSeed = templateConfig.seed;
   var attemptIndex = 0;
   final service = container.read(gameServiceProvider);
@@ -108,21 +114,39 @@ Future<bool> _showNewGameErrorDialog(Object error) async {
   final retry = await showDialog<bool>(
     context: ctx,
     useRootNavigator: true,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.shell_newGameError_title),
-      content: SingleChildScrollView(
-        child: SelectableText(error.toString()),
+    builder: (ctx) => CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.shell_newGameError_title,
+            style: Theme.of(ctx).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: SingleChildScrollView(
+              child: SelectableText(error.toString()),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.common_close),
+              ),
+              const SizedBox(width: 8),
+              CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.shell_newGameError_retry),
+              ),
+            ],
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(l10n.common_close),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(l10n.shell_newGameError_retry),
-        ),
-      ],
     ),
   );
   return retry ?? false;
@@ -166,7 +190,13 @@ class _NewGameSetupProgressDialogState extends State<_NewGameSetupProgressDialog
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_run()));
+    // Defer work by one extra frame so the modal route and nine-patch can paint
+    // before map generation runs on the UI isolate (SPEC/ui/game-initializing.md).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_run());
+      });
+    });
   }
 
   Future<void> _run() async {
@@ -195,20 +225,34 @@ class _NewGameSetupProgressDialogState extends State<_NewGameSetupProgressDialog
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final theme = Theme.of(context);
     return PopScope(
       canPop: false,
-      child: AlertDialog(
-        title: Text(l10n.shell_newGameProgress_title),
-        content: Column(
+      child: CtDialogShell(
+        maxWidth: 400,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(
-              height: 36,
-              width: 36,
-              child: CircularProgressIndicator(),
+            Text(
+              l10n.shell_newGameProgress_title,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 16),
-            Text(_stepLabel(context, _stepIndex)),
+            Text(
+              _stepLabel(context, _stepIndex),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
