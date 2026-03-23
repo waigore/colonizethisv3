@@ -8,7 +8,9 @@ void main() {
     test('add order and validate', () {
       final engine = OrderEngine();
       final result = engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
       expect(result.status, OrderValidationStatus.accepted);
       expect(engine.orders.moveOrdersByPlayerId['p1']?.length, 1);
     });
@@ -16,9 +18,13 @@ void main() {
     test('removeMoveOrder removes order at index', () {
       final engine = OrderEngine();
       engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
       engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|P3'));
+        'p1',
+        const MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|P3'),
+      );
       expect(engine.orders.moveOrdersByPlayerId['p1']!.length, 2);
       engine.removeMoveOrder('p1', 0);
       expect(engine.orders.moveOrdersByPlayerId['p1']!.length, 1);
@@ -28,12 +34,13 @@ void main() {
     test('removeBuildOrder removes order at index', () {
       final engine = OrderEngine();
       engine.addBuildOrder(
-          'p1',
-          BuildUnitOrder(
-            unitType: 'peasant_levies',
-            isMilitary: true,
-            spawnProvinceId: 'oldWorld|P1',
-          ));
+        'p1',
+        BuildUnitOrder(
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|P1',
+        ),
+      );
       expect(engine.orders.buildUnitOrdersByPlayerId['p1']!.length, 1);
       engine.removeBuildOrder('p1', 0);
       expect(engine.orders.buildUnitOrdersByPlayerId['p1'], isEmpty);
@@ -43,7 +50,7 @@ void main() {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province)
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -55,11 +62,12 @@ void main() {
             provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Builder',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  tileKey: 'oldWorld|P1|0|0'),
+                id: 'u1',
+                type: 'Builder',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -72,9 +80,10 @@ void main() {
         topology,
         'p1',
         const WorkOrder(
-            unitId: 'u1',
-            target: 'unknown_target',
-            targetTileKey: 'oldWorld|P1|0|0'),
+          unitId: 'u1',
+          target: 'unknown_target',
+          targetTileKey: 'oldWorld|P1|0|0',
+        ),
       );
       expect(result.status, OrderValidationStatus.rejected);
     });
@@ -84,9 +93,15 @@ void main() {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
           const TopologyNode(
-              id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -101,10 +116,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -119,17 +135,24 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
       engine.addMoveOrder(
-          'p1',
-          const MoveOrder(
-              unitId: 'u999', destinationProvinceId: 'oldWorld|P2'));
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P3'));
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u999', destinationProvinceId: 'oldWorld|P2'),
+      );
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P3'),
+      );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 3);
       expect(results[0].status, OrderValidationStatus.accepted);
       expect(results[1].status, OrderValidationStatus.rejected);
@@ -141,7 +164,10 @@ void main() {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: [],
       );
@@ -163,53 +189,67 @@ void main() {
       expect(effects.workerCount, isNotNull);
     });
 
-    test('projectedEffects returns unitLocations when engine has move order',
-        () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: [
-          const TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          const TopologyNode(
-              id: 'P2', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
+    test(
+      'projectedEffects returns unitLocations when engine has move order',
+      () {
+        const ow = 'oldWorld';
+        final topology = MapTopology(
+          nodes: [
+            const TopologyNode(
+              id: 'P1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            const TopologyNode(
+              id: 'P2',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+              ],
+              units: [
+                Unit(
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
           ),
-          newWorld: const RegionData(),
-        ),
-        players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-      );
-      final engine = OrderEngine();
-      engine.addMoveOrder(
-          'p1', const MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'));
-      final effects = engine.projectedEffects(game, topology, 'p1');
-      expect(effects.unitLocations, isNotNull);
-      expect(effects.unitLocations!['u1'], '$ow|P2');
-    });
+          players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final engine = OrderEngine();
+        engine.addMoveOrder(
+          'p1',
+          const MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+        );
+        final effects = engine.projectedEffects(game, topology, 'p1');
+        expect(effects.unitLocations, isNotNull);
+        expect(effects.unitLocations!['u1'], '$ow|P2');
+      },
+    );
 
     test('projectedEffects does not mutate passed-in game', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: [],
       );
@@ -236,9 +276,15 @@ void main() {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
           const TopologyNode(
-              id: 'P2', regionId: ow, type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -253,10 +299,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -293,9 +340,15 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -310,10 +363,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Builder',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'Builder',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -331,11 +385,16 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.single.status, OrderValidationStatus.rejected);
     });
 
@@ -345,9 +404,15 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -363,10 +428,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'pikemen',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'pikemen',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -386,88 +452,111 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.single.status, OrderValidationStatus.rejected);
       expect(results.single.reason, contains('declare war'));
     });
 
-    test('military may move into other GP province with same-turn declareWar', () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-            ],
-            units: [
-              Unit(
+    test(
+      'military may move into other GP province with same-turn declareWar',
+      () {
+        const ow = 'oldWorld';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P2',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
                   id: 'u1',
                   type: 'pikemen',
                   ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'revealed',
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'revealed',
+              },
             },
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: true),
-        ],
-        diplomacyRelations: const [],
-      );
-
-      final engine = OrderEngine();
-      engine
-        ..addDiplomaticOrder(
-          'p1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'p2',
           ),
-        )
-        ..addMoveOrder(
-          'p1',
-          const MoveOrder(
-              unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: true),
+          ],
+          diplomacyRelations: const [],
         );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.length, 2);
-      expect(results[0].status, OrderValidationStatus.accepted);
-      expect(results[1].status, OrderValidationStatus.accepted);
-    });
+        final engine = OrderEngine();
+        engine
+          ..addDiplomaticOrder(
+            'p1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
+          )
+          ..addMoveOrder(
+            'p1',
+            const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+          );
+
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.length, 2);
+        expect(results[0].status, OrderValidationStatus.accepted);
+        expect(results[1].status, OrderValidationStatus.accepted);
+      },
+    );
 
     test('explorer may move into tribal province', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -482,10 +571,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -496,20 +586,21 @@ void main() {
             },
           },
         ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-        ],
-        tribes: const [
-          Tribe(id: 'tribe1', displayName: 'Tribe 1'),
-        ],
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.single.status, OrderValidationStatus.accepted);
     });
 
@@ -518,9 +609,15 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -536,10 +633,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -548,10 +646,15 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
@@ -562,9 +665,15 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -580,10 +689,11 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -595,10 +705,15 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder('p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
@@ -609,7 +724,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [],
       );
@@ -618,16 +736,15 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-            ],
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  tileKey: 'oldWorld|P1|0|0'),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -638,13 +755,18 @@ void main() {
 
       final engine = OrderEngine();
       engine.addWorkOrder(
-          'p1',
-          const WorkOrder(
-              unitId: 'u1',
-              target: 'explore',
-              targetTileKey: 'oldWorld|P1|0|0'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'explore',
+          targetTileKey: 'oldWorld|P1|0|0',
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
@@ -655,7 +777,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [],
       );
@@ -670,11 +795,12 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  tileKey: 'oldWorld|P1|0|0'),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -688,13 +814,18 @@ void main() {
 
       final engine = OrderEngine();
       engine.addWorkOrder(
-          'p1',
-          const WorkOrder(
-              unitId: 'u1',
-              target: 'prospect',
-              targetTileKey: 'oldWorld|P1|0|0'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'prospect',
+          targetTileKey: 'oldWorld|P1|0|0',
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
@@ -705,7 +836,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [],
       );
@@ -720,11 +854,12 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  tileKey: tileKey),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: tileKey,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -739,13 +874,18 @@ void main() {
 
       final engine = OrderEngine();
       engine.addWorkOrder(
-          'p1',
-          const WorkOrder(
-              unitId: 'u1',
-              target: 'prospect',
-              targetTileKey: tileKey));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'prospect',
+          targetTileKey: tileKey,
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('mineral-eligible'));
@@ -757,7 +897,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [],
       );
@@ -771,11 +914,12 @@ void main() {
             ],
             units: [
               Unit(
-                  id: 'u1',
-                  type: 'Explorer',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  tileKey: tileKey),
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: tileKey,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -793,295 +937,237 @@ void main() {
 
       final engine = OrderEngine();
       engine.addWorkOrder(
-          'p1',
-          const WorkOrder(
-              unitId: 'u1',
-              target: 'prospect',
-              targetTileKey: tileKey));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'prospect',
+          targetTileKey: tileKey,
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('already prospected'));
     });
 
-    test('work order prospect accepted when mineral-eligible and visibility ok',
-        () {
-      const ow = 'oldWorld';
-      const tileKey = 'oldWorld|P1|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: const [],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
-            ],
-            units: [
-              Unit(
+    test(
+      'work order prospect accepted when mineral-eligible and visibility ok',
+      () {
+        const ow = 'oldWorld';
+        const tileKey = 'oldWorld|P1|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
+              ],
+              units: [
+                Unit(
                   id: 'u1',
                   type: 'Explorer',
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
-                  tileKey: tileKey),
-            ],
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'iron'},
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fogged'},
+            },
           ),
-          newWorld: const RegionData(),
-          resourceByTileKey: const {tileKey: 'iron'},
-          playerVisibilityByTile: const {
-            'p1': {tileKey: 'fogged'},
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-        tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
-      );
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        );
 
-      final engine = OrderEngine();
-      engine.addWorkOrder(
+        final engine = OrderEngine();
+        engine.addWorkOrder(
           'p1',
           const WorkOrder(
-              unitId: 'u1',
-              target: 'prospect',
-              targetTileKey: tileKey));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.length, 1);
-      expect(results[0].status, OrderValidationStatus.accepted);
-    });
+            unitId: 'u1',
+            target: 'prospect',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.length, 1);
+        expect(results[0].status, OrderValidationStatus.accepted);
+      },
+    );
 
-    test('move order rejected when destination not adjacent and not own province', () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P3', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: [
-          const TopologyEdge(id1: 'P1', id2: 'P2'),
-          const TopologyEdge(id1: 'P2', id2: 'P3'),
-        ],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P3', regionId: ow, ownerId: 'p2'),
-            ],
-            units: [
-              Unit(
+    test(
+      'move order rejected when destination not adjacent and not own province',
+      () {
+        const ow = 'oldWorld';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P3',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [
+            const TopologyEdge(id1: 'P1', id2: 'P2'),
+            const TopologyEdge(id1: 'P2', id2: 'P3'),
+          ],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P3', regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'fullyVisible',
-              'oldWorld|P3|0|0': 'fullyVisible',
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+                'oldWorld|P3|0|0': 'fullyVisible',
+              },
             },
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: true),
-        ],
-      );
-      final engine = OrderEngine();
-      engine.addMoveOrder(
-          'p1', MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.single.status, OrderValidationStatus.rejected);
-    });
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: true),
+          ],
+        );
+        final engine = OrderEngine();
+        engine.addMoveOrder(
+          'p1',
+          MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.single.status, OrderValidationStatus.rejected);
+      },
+    );
 
-    test('move order accepted when destination not adjacent but own province', () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P3', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: [
-          const TopologyEdge(id1: 'P1', id2: 'P2'),
-          const TopologyEdge(id1: 'P2', id2: 'P3'),
-        ],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P3', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
+    test(
+      'move order accepted when destination not adjacent but own province',
+      () {
+        const ow = 'oldWorld';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P3',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [
+            const TopologyEdge(id1: 'P1', id2: 'P2'),
+            const TopologyEdge(id1: 'P2', id2: 'P3'),
+          ],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P3', regionId: ow, ownerId: 'p1'),
+              ],
+              units: [
+                Unit(
                   id: 'u1',
                   type: 'musketeers',
                   ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'fullyVisible',
-              'oldWorld|P3|0|0': 'fullyVisible',
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+                'oldWorld|P3|0|0': 'fullyVisible',
+              },
             },
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-      );
-      final engine = OrderEngine();
-      engine.addMoveOrder(
-          'p1', MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.single.status, OrderValidationStatus.accepted);
-    });
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final engine = OrderEngine();
+        engine.addMoveOrder(
+          'p1',
+          MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.single.status, OrderValidationStatus.accepted);
+      },
+    );
 
     test('move order accepted for own province across regions', () {
       const ow = 'oldWorld';
       const nw = 'newWorld';
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: const [],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
-            ],
-            units: [],
-          ),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'newWorld|P2|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-      );
-
-      final engine = OrderEngine();
-      engine.addMoveOrder(
-        'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
-      );
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.single.status, OrderValidationStatus.accepted);
-    });
-
-    test('move order rejected when destination is foreign province across regions', () {
-      const ow = 'oldWorld';
-      const nw = 'newWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(
-              id: 'P2', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: const [],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1'),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
-            ],
-            units: [],
-          ),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'newWorld|P2|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: true),
-        ],
-      );
-
-      final engine = OrderEngine();
-      engine.addMoveOrder(
-        'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
-      );
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-      expect(results.single.status, OrderValidationStatus.rejected);
-    });
-
-    test('work order rejected for invalid target for unit type', () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-              id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: nw, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -1093,11 +1179,132 @@ void main() {
             provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             units: [
               Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [Province(id: '$nw|P2', regionId: nw, ownerId: 'p1')],
+            units: [],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'newWorld|P2|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+
+      final engine = OrderEngine();
+      engine.addMoveOrder(
+        'p1',
+        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
+      expect(results.single.status, OrderValidationStatus.accepted);
+    });
+
+    test(
+      'move order rejected when destination is foreign province across regions',
+      () {
+        const ow = 'oldWorld';
+        const nw = 'newWorld';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P2',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+              units: [
+                Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: 'musketeers',
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
-                  tileKey: 'oldWorld|P1|0|0'),
+                ),
+              ],
+            ),
+            newWorld: RegionData(
+              provinces: [Province(id: '$nw|P2', regionId: nw, ownerId: 'p2')],
+              units: [],
+            ),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'newWorld|P2|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: true),
+          ],
+        );
+
+        final engine = OrderEngine();
+        engine.addMoveOrder(
+          'p1',
+          const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.single.status, OrderValidationStatus.rejected);
+      },
+    );
+
+    test('work order rejected for invalid target for unit type', () {
+      const ow = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Builder',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -1109,13 +1316,18 @@ void main() {
       );
       final engine = OrderEngine();
       engine.addWorkOrder(
-          'p1',
-          WorkOrder(
-              unitId: 'u1',
-              target: 'unknown_target',
-              targetTileKey: 'oldWorld|P1|0|0'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        WorkOrder(
+          unitId: 'u1',
+          target: 'unknown_target',
+          targetTileKey: 'oldWorld|P1|0|0',
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.single.status, OrderValidationStatus.rejected);
       expect(results.single.reason, contains('Invalid work target'));
     });
@@ -1124,7 +1336,7 @@ void main() {
       final initial = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2')
+            const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
           ],
         },
       );
@@ -1134,12 +1346,16 @@ void main() {
       expect(orders1.moveOrdersByPlayerId['p1']!.length, 1);
       expect(orders2.moveOrdersByPlayerId['p1']!.length, 1);
       expect(
-          identical(orders1.moveOrdersByPlayerId, orders2.moveOrdersByPlayerId),
-          isFalse);
+        identical(orders1.moveOrdersByPlayerId, orders2.moveOrdersByPlayerId),
+        isFalse,
+      );
       expect(
-          identical(orders1.moveOrdersByPlayerId['p1'],
-              orders2.moveOrdersByPlayerId['p1']),
-          isFalse);
+        identical(
+          orders1.moveOrdersByPlayerId['p1'],
+          orders2.moveOrdersByPlayerId['p1'],
+        ),
+        isFalse,
+      );
     });
 
     test('naval move order rejected when fleet not found', () {
@@ -1148,13 +1364,17 @@ void main() {
         nodes: const [
           TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(
-              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea1',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
           TopologyNode(
-              id: 'sea2', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea2',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'sea1', id2: 'sea2'),
-        ],
+        edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
       );
       final game = Game(
         id: 'g1',
@@ -1168,11 +1388,17 @@ void main() {
       );
       final engine = OrderEngine();
       engine.addNavalMoveOrder(
-          'p1',
-          NavalMoveOrder(
-              fleetId: 'nonexistent_fleet', destinationSeaZoneId: 'sea2'));
-      final results =
-          engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        'p1',
+        NavalMoveOrder(
+          fleetId: 'nonexistent_fleet',
+          destinationSeaZoneId: 'sea2',
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
       expect(results.single.status, OrderValidationStatus.rejected);
       expect(results.single.reason, contains('Fleet not found'));
     });
@@ -1182,7 +1408,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea1',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: const [],
       );
@@ -1239,7 +1468,10 @@ void main() {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea1',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: const [],
       );
@@ -1290,60 +1522,68 @@ void main() {
       expect(result.status, OrderValidationStatus.accepted);
     });
 
-    test('projectedEffects returns treasuryDelta when orders affect treasury',
-        () {
-      const ow = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: const [],
-      );
-      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-      var stockpile = const Stockpile();
-      for (final e in econ.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(e.key, e.value + 1);
-      }
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            units: [],
+    test(
+      'projectedEffects returns treasuryDelta when orders affect treasury',
+      () {
+        const ow = 'oldWorld';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+        var stockpile = const Stockpile();
+        for (final e in econ.buildInputs.entries) {
+          stockpile = stockpile.applyDelta(e.key, e.value + 1);
+        }
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+              units: [],
+            ),
+            newWorld: const RegionData(),
           ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            stockpile: stockpile,
-            workerPool: const WorkerPool(peasants: 3),
-            treasury: econ.buildTreasuryCost + 100,
-          ),
-        ],
-      );
-      final engine = OrderEngine();
-      engine.addBuildOrder(
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              stockpile: stockpile,
+              workerPool: const WorkerPool(peasants: 3),
+              treasury: econ.buildTreasuryCost + 100,
+            ),
+          ],
+        );
+        final engine = OrderEngine();
+        engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
             unitType: 'peasant_levies',
-            isMilitary: buildUnitCategoryForUnitType('peasant_levies') ==
+            isMilitary:
+                buildUnitCategoryForUnitType('peasant_levies') ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
-          ));
-      final effects = engine.projectedEffects(game, topology, 'p1');
-      expect(effects.workerCount, isNotNull);
-      expect(effects.treasuryDelta, isNotNull);
-    });
+          ),
+        );
+        final effects = engine.projectedEffects(game, topology, 'p1');
+        expect(effects.workerCount, isNotNull);
+        expect(effects.treasuryDelta, isNotNull);
+      },
+    );
 
     group('validateBuild (civilian)', () {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province)
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -1373,15 +1613,20 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'UnknownTypeXyz',
-              isMilitary: buildUnitCategoryForUnitType('UnknownTypeXyz') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'UnknownTypeXyz',
+            isMilitary:
+                buildUnitCategoryForUnitType('UnknownTypeXyz') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
       });
 
@@ -1410,15 +1655,20 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'Builder',
-              isMilitary: buildUnitCategoryForUnitType('Builder') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'Builder',
+            isMilitary:
+                buildUnitCategoryForUnitType('Builder') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
       });
 
@@ -1447,15 +1697,20 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'Builder',
-              isMilitary: buildUnitCategoryForUnitType('Builder') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'Builder',
+            isMilitary:
+                buildUnitCategoryForUnitType('Builder') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
       });
 
@@ -1485,15 +1740,20 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'Merchant',
-              isMilitary: buildUnitCategoryForUnitType('Merchant') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'Merchant',
+            isMilitary:
+                buildUnitCategoryForUnitType('Merchant') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
       });
 
@@ -1522,15 +1782,20 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'Builder',
-              isMilitary: buildUnitCategoryForUnitType('Builder') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'Builder',
+            isMilitary:
+                buildUnitCategoryForUnitType('Builder') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.accepted);
       });
 
@@ -1560,17 +1825,123 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addBuildOrder(
-            'p1',
-            BuildUnitOrder(
-              unitType: 'Merchant',
-              isMilitary: buildUnitCategoryForUnitType('Merchant') ==
-                  BuildUnitCategory.military,
-              spawnProvinceId: '$ow|P1',
-            ));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          BuildUnitOrder(
+            unitType: 'Merchant',
+            isMilitary:
+                buildUnitCategoryForUnitType('Merchant') ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '$ow|P1',
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.accepted);
       });
+
+      test(
+        'accepts build when spawnProvinceId is empty (falls back to capital)',
+        () {
+          final game = Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                ],
+                units: [],
+              ),
+              newWorld: const RegionData(),
+            ),
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'P1',
+                isHuman: true,
+                capitalProvinceId: '$ow|P1',
+                stockpile: Stockpile().applyDelta(CommodityCatalog.paper.id, 5),
+                workerPool: const WorkerPool(peasants: 0),
+                treasury: 2000,
+              ),
+            ],
+          );
+          final engine = OrderEngine();
+          engine.addBuildOrder(
+            'p1',
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary:
+                  buildUnitCategoryForUnitType('Builder') ==
+                  BuildUnitCategory.military,
+              spawnProvinceId: '',
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
+
+      test(
+        'accepts build when spawnProvinceId is foreign (falls back to capital)',
+        () {
+          final game = Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+                ],
+                units: [],
+              ),
+              newWorld: const RegionData(),
+            ),
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'P1',
+                isHuman: true,
+                capitalProvinceId: '$ow|P1',
+                stockpile: Stockpile().applyDelta(CommodityCatalog.paper.id, 5),
+                workerPool: const WorkerPool(peasants: 0),
+                treasury: 2000,
+              ),
+            ],
+          );
+          final engine = OrderEngine();
+          engine.addBuildOrder(
+            'p1',
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary:
+                  buildUnitCategoryForUnitType('Builder') ==
+                  BuildUnitCategory.military,
+              spawnProvinceId: '$ow|P2',
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
     });
 
     group('validateWork (purchase_land)', () {
@@ -1604,11 +1975,12 @@ void main() {
               ],
               units: [
                 Unit(
-                    id: 'merchant1',
-                    type: 'Merchant',
-                    ownerId: 'p1',
-                    locationProvinceId: minorProvinceId,
-                    tileKey: tileKey),
+                  id: 'merchant1',
+                  type: 'Merchant',
+                  ownerId: 'p1',
+                  locationProvinceId: minorProvinceId,
+                  tileKey: tileKey,
+                ),
               ],
             ),
             newWorld: const RegionData(),
@@ -1619,8 +1991,8 @@ void main() {
             tileKeysByRegionAndProvince: {
               ow: {
                 minorProvinceId: [tileKey],
-                '$ow|P1': ['$ow|P1|0|0']
-              }
+                '$ow|P1': ['$ow|P1|0|0'],
+              },
             },
             playerProspectedTiles: playerProspectedTiles ?? const {},
             purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
@@ -1637,7 +2009,7 @@ void main() {
             ),
           ],
           minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Minor 1')
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
           overtureStates: overtureStates ?? [],
           diplomacyRelations: diplomacyRelations ?? [],
@@ -1648,13 +2020,18 @@ void main() {
         final game = _baseGame(treasury: 500);
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('embassy'));
       });
@@ -1664,27 +2041,34 @@ void main() {
           treasury: 500,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           diplomacyRelations: [
             const DiplomacyRelation(
-                factionId1: 'p1',
-                factionId2: 'minor1',
-                state: RelationState.atWar)
+              factionId1: 'p1',
+              factionId2: 'minor1',
+              state: RelationState.atWar,
+            ),
           ],
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('war'));
       });
@@ -1695,21 +2079,27 @@ void main() {
           treasury: cost - 1,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Insufficient treasury'));
       });
@@ -1719,22 +2109,28 @@ void main() {
           treasury: 500,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           resourceByTileKey: {},
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('no resource'));
       });
@@ -1744,221 +2140,269 @@ void main() {
           treasury: 500,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           resourceByTileKey: {tileKey: 'iron'},
           playerProspectedTiles: {}, // p1 has not prospected this tile
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('prospected'));
       });
 
       test(
-          'accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource',
-          () {
-        final game = _baseGame(
-          treasury: 500,
-          overtureStates: [
-            const OvertureState(
+        'accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource',
+        () {
+          final game = _baseGame(
+            treasury: 500,
+            overtureStates: [
+              const OvertureState(
                 gpId: 'p1',
                 targetId: 'minor1',
                 stage: OvertureStage.embassy,
-                sinceTurn: 0)
-          ],
-        );
-        final engine = OrderEngine();
-        engine.addWorkOrder(
+                sinceTurn: 0,
+              ),
+            ],
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
             'p1',
             const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-        expect(results.single.status, OrderValidationStatus.accepted);
-      });
-
-      test(
-          'rejects second Builder/Engineer/Merchant work order on same tile for same player (per-tile exclusivity)',
-          () {
-        const ow = 'oldWorld';
-        const provinceId = '$ow|P1';
-        const tileKey = '$ow|P1|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-                id: 'P1', regionId: ow, type: TopologyNodeType.province),
-          ],
-          edges: const [],
-        );
-
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState:
-                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [
-                Unit(
-                  id: 'builder1',
-                  type: 'Builder',
-                  ownerId: 'p1',
-                  locationProvinceId: provinceId,
-                  tileKey: tileKey,
-                ),
-                Unit(
-                  id: 'engineer1',
-                  type: 'Engineer',
-                  ownerId: 'p1',
-                  locationProvinceId: provinceId,
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: const {tileKey: 'grain'},
-            // Tile is fully visible so visibility is not the rejecting reason.
-            playerVisibilityByTile: const {
-              'p1': {tileKey: 'fullyVisible'},
-            },
-            tileKeysByRegionAndProvince: const {
-              ow: {provinceId: [tileKey]}
-            },
-          ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              capitalProvinceId: provinceId,
-              // Provide enough materials so material-cost validation passes and
-              // the first work order can be accepted.
-              stockpile: Stockpile()
-                  .applyDelta(CommodityCatalog.lumber.id, 10)
-                  .applyDelta(CommodityCatalog.castIron.id, 10),
-            ),
-          ],
-        );
-
-        final engine = OrderEngine();
-        engine
-          ..addWorkOrder(
-            'p1',
-            const WorkOrder(
-              unitId: 'builder1',
-              target: 'build_improvement',
-              targetTileKey: tileKey,
-            ),
-          )
-          ..addWorkOrder(
-            'p1',
-            const WorkOrder(
-              unitId: 'engineer1',
-              target: 'build_road',
+              unitId: 'merchant1',
+              target: 'purchase_land',
               targetTileKey: tileKey,
             ),
           );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
 
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+      test(
+        'rejects second Builder/Engineer/Merchant work order on same tile for same player (per-tile exclusivity)',
+        () {
+          const ow = 'oldWorld';
+          const provinceId = '$ow|P1';
+          const tileKey = '$ow|P1|0|0';
+          final topology = MapTopology(
+            nodes: const [
+              TopologyNode(
+                id: 'P1',
+                regionId: ow,
+                type: TopologyNodeType.province,
+              ),
+            ],
+            edges: const [],
+          );
 
-        expect(results.length, 2);
-        expect(results[0].status, OrderValidationStatus.accepted);
-        expect(results[1].status, OrderValidationStatus.rejected);
-        expect(results[1].reason,
-            contains('Tile already has development or purchase work'));
-      });
+          final game = Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: RegionData(
+                provinces: const [
+                  Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+                ],
+                units: [
+                  Unit(
+                    id: 'builder1',
+                    type: 'Builder',
+                    ownerId: 'p1',
+                    locationProvinceId: provinceId,
+                    tileKey: tileKey,
+                  ),
+                  Unit(
+                    id: 'engineer1',
+                    type: 'Engineer',
+                    ownerId: 'p1',
+                    locationProvinceId: provinceId,
+                    tileKey: tileKey,
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              resourceByTileKey: const {tileKey: 'grain'},
+              // Tile is fully visible so visibility is not the rejecting reason.
+              playerVisibilityByTile: const {
+                'p1': {tileKey: 'fullyVisible'},
+              },
+              tileKeysByRegionAndProvince: const {
+                ow: {
+                  provinceId: [tileKey],
+                },
+              },
+            ),
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'P1',
+                isHuman: true,
+                capitalProvinceId: provinceId,
+                // Provide enough materials so material-cost validation passes and
+                // the first work order can be accepted.
+                stockpile: Stockpile()
+                    .applyDelta(CommodityCatalog.lumber.id, 10)
+                    .applyDelta(CommodityCatalog.castIron.id, 10),
+              ),
+            ],
+          );
+
+          final engine = OrderEngine();
+          engine
+            ..addWorkOrder(
+              'p1',
+              const WorkOrder(
+                unitId: 'builder1',
+                target: 'build_improvement',
+                targetTileKey: tileKey,
+              ),
+            )
+            ..addWorkOrder(
+              'p1',
+              const WorkOrder(
+                unitId: 'engineer1',
+                target: 'build_road',
+                targetTileKey: tileKey,
+              ),
+            );
+
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+
+          expect(results.length, 2);
+          expect(results[0].status, OrderValidationStatus.accepted);
+          expect(results[1].status, OrderValidationStatus.rejected);
+          expect(
+            results[1].reason,
+            contains('Tile already has development or purchase work'),
+          );
+        },
+      );
 
       test('accepts purchase_land for mineral when prospected', () {
         final game = _baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           resourceByTileKey: {tileKey: 'iron'},
           playerProspectedTiles: {
-            'p1': {tileKey}
+            'p1': {tileKey},
           },
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.accepted);
       });
 
-      test('rejects purchase_land when tile already purchased by another GP',
-          () {
-        final game = _baseGame(
-          treasury: 500,
-          overtureStates: [
-            const OvertureState(
+      test(
+        'rejects purchase_land when tile already purchased by another GP',
+        () {
+          final game = _baseGame(
+            treasury: 500,
+            overtureStates: [
+              const OvertureState(
                 gpId: 'p1',
                 targetId: 'minor1',
                 stage: OvertureStage.embassy,
-                sinceTurn: 0)
-          ],
-          purchasedTilesByTileKey: {tileKey: 'p2'},
-        );
-        final engine = OrderEngine();
-        engine.addWorkOrder(
+                sinceTurn: 0,
+              ),
+            ],
+            purchasedTilesByTileKey: {tileKey: 'p2'},
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
             'p1',
             const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-        expect(results.single.status, OrderValidationStatus.rejected);
-        expect(results.single.reason,
-            contains('Tile already purchased by another power'));
-      });
+              unitId: 'merchant1',
+              target: 'purchase_land',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.rejected);
+          expect(
+            results.single.reason,
+            contains('Tile already purchased by another power'),
+          );
+        },
+      );
 
       test('rejects purchase_land when tile already owned by same player', () {
         final game = _baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
-                gpId: 'p1',
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-                sinceTurn: 0)
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
           ],
           purchasedTilesByTileKey: {tileKey: 'p1'},
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'merchant1',
-                target: 'purchase_land',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: 'purchase_land',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('You already own this tile'));
       });
@@ -1992,18 +2436,21 @@ void main() {
               ],
               units: [
                 Unit(
-                    id: 'builder1',
-                    type: 'Builder',
-                    ownerId: 'p1',
-                    locationProvinceId: provinceId,
-                    tileKey: tileKey),
+                  id: 'builder1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                ),
               ],
             ),
             newWorld: const RegionData(),
             resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
             tileState: tileState,
             tileKeysByRegionAndProvince: {
-              ow: {provinceId: [tileKey]},
+              ow: {
+                provinceId: [tileKey],
+              },
             },
             playerVisibilityByTile: const {
               'p1': {tileKey: 'fullyVisible'},
@@ -2015,9 +2462,11 @@ void main() {
               displayName: 'P1',
               isHuman: true,
               capitalProvinceId: provinceId,
-              stockpile: stockpile ??
-                  Stockpile().applyDelta(CommodityCatalog.lumber.id, 2).applyDelta(
-                      CommodityCatalog.castIron.id, 2),
+              stockpile:
+                  stockpile ??
+                  Stockpile()
+                      .applyDelta(CommodityCatalog.lumber.id, 2)
+                      .applyDelta(CommodityCatalog.castIron.id, 2),
               techUnlocked: techUnlocked ?? const {'circular_saw': true},
             ),
           ],
@@ -2028,13 +2477,18 @@ void main() {
         final game = _baseGame(resourceByTileKey: {});
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'builder1',
-                target: 'build_improvement',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'builder1',
+            target: 'build_improvement',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('no resource'));
       });
@@ -2042,20 +2496,26 @@ void main() {
       test('rejects build_improvement when improvement level already 4', () {
         final game = _baseGame(
           tileState: const TileMapState(
-              improvementByTile: {'oldWorld|P1|0|0': 4}),
+            improvementByTile: {'oldWorld|P1|0|0': 4},
+          ),
           stockpile: Stockpile()
               .applyDelta(CommodityCatalog.lumber.id, 20)
               .applyDelta(CommodityCatalog.castIron.id, 20),
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'builder1',
-                target: 'build_improvement',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'builder1',
+            target: 'build_improvement',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('maximum'));
       });
@@ -2065,42 +2525,56 @@ void main() {
         final game = _baseGame(
           techUnlocked: const {'saw_mill': true},
           tileState: const TileMapState(
-              improvementByTile: {'oldWorld|P1|0|0': 2}),
+            improvementByTile: {'oldWorld|P1|0|0': 2},
+          ),
           stockpile: Stockpile()
               .applyDelta(CommodityCatalog.lumber.id, 10)
               .applyDelta(CommodityCatalog.castIron.id, 10),
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'builder1',
-                target: 'build_improvement',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'builder1',
+            target: 'build_improvement',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Insufficient tech'));
         expect(results.single.reason, contains('cap 2'));
       });
 
-      test('accepts build_improvement when tile has resource, level < 4, tech cap allows', () {
-        final game = _baseGame(
-          resourceByTileKey: {tileKey: 'grain'},
-          tileState: const TileMapState(),
-          techUnlocked: const {'circular_saw': true},
-        );
-        final engine = OrderEngine();
-        engine.addWorkOrder(
+      test(
+        'accepts build_improvement when tile has resource, level < 4, tech cap allows',
+        () {
+          final game = _baseGame(
+            resourceByTileKey: {tileKey: 'grain'},
+            tileState: const TileMapState(),
+            techUnlocked: const {'circular_saw': true},
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
             'p1',
             const WorkOrder(
-                unitId: 'builder1',
-                target: 'build_improvement',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-        expect(results.single.status, OrderValidationStatus.accepted);
-      });
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
 
       test('rejects build_improvement in foreign, unpurchased province', () {
         final foreignProvinceId = '$ow|P2';
@@ -2108,8 +2582,7 @@ void main() {
         final game = Game(
           id: 'g1',
           worldState: WorldState(
-            turnState:
-                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
             oldWorld: RegionData(
               provinces: [
                 Province(id: provinceId, regionId: ow, ownerId: 'p1'),
@@ -2126,10 +2599,7 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
-            resourceByTileKey: {
-              tileKey: 'grain',
-              foreignTileKey: 'grain',
-            },
+            resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
             tileState: const TileMapState(),
             tileKeysByRegionAndProvince: {
               ow: {
@@ -2138,10 +2608,7 @@ void main() {
               },
             },
             playerVisibilityByTile: {
-              'p1': {
-                tileKey: 'fullyVisible',
-                foreignTileKey: 'fullyVisible',
-              },
+              'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
             },
           ),
           players: [
@@ -2155,11 +2622,7 @@ void main() {
                   .applyDelta(CommodityCatalog.castIron.id, 2),
               techUnlocked: const {'circular_saw': true},
             ),
-            const Player(
-              id: 'p2',
-              displayName: 'P2',
-              isHuman: false,
-            ),
+            const Player(id: 'p2', displayName: 'P2', isHuman: false),
           ],
         );
         final engine = OrderEngine();
@@ -2171,8 +2634,11 @@ void main() {
             targetTileKey: foreignTileKey,
           ),
         );
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(
           results.single.reason,
@@ -2180,80 +2646,78 @@ void main() {
         );
       });
 
-      test('accepts build_improvement on purchased tile in foreign province', () {
-        final foreignProvinceId = '$ow|P2';
-        final foreignTileKey = '$foreignProvinceId|0|0';
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState:
-                const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-                Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'builder1',
-                  type: 'Builder',
-                  ownerId: 'p1',
-                  locationProvinceId: provinceId,
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: {
-              tileKey: 'grain',
-              foreignTileKey: 'grain',
-            },
-            tileState: const TileMapState(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                provinceId: [tileKey],
-                foreignProvinceId: [foreignTileKey],
+      test(
+        'accepts build_improvement on purchased tile in foreign province',
+        () {
+          final foreignProvinceId = '$ow|P2';
+          final foreignTileKey = '$foreignProvinceId|0|0';
+          final game = Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+                  Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
+                ],
+                units: [
+                  Unit(
+                    id: 'builder1',
+                    type: 'Builder',
+                    ownerId: 'p1',
+                    locationProvinceId: provinceId,
+                    tileKey: tileKey,
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
+              tileState: const TileMapState(),
+              tileKeysByRegionAndProvince: {
+                ow: {
+                  provinceId: [tileKey],
+                  foreignProvinceId: [foreignTileKey],
+                },
               },
-            },
-            playerVisibilityByTile: {
-              'p1': {
-                tileKey: 'fullyVisible',
-                foreignTileKey: 'fullyVisible',
+              playerVisibilityByTile: {
+                'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
               },
-            },
-            purchasedTilesByTileKey: {foreignTileKey: 'p1'},
-          ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              capitalProvinceId: provinceId,
-              stockpile: Stockpile()
-                  .applyDelta(CommodityCatalog.lumber.id, 2)
-                  .applyDelta(CommodityCatalog.castIron.id, 2),
-              techUnlocked: const {'circular_saw': true},
+              purchasedTilesByTileKey: {foreignTileKey: 'p1'},
             ),
-            const Player(
-              id: 'p2',
-              displayName: 'P2',
-              isHuman: false,
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'P1',
+                isHuman: true,
+                capitalProvinceId: provinceId,
+                stockpile: Stockpile()
+                    .applyDelta(CommodityCatalog.lumber.id, 2)
+                    .applyDelta(CommodityCatalog.castIron.id, 2),
+                techUnlocked: const {'circular_saw': true},
+              ),
+              const Player(id: 'p2', displayName: 'P2', isHuman: false),
+            ],
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: foreignTileKey,
             ),
-          ],
-        );
-        final engine = OrderEngine();
-        engine.addWorkOrder(
-          'p1',
-          WorkOrder(
-            unitId: 'builder1',
-            target: 'build_improvement',
-            targetTileKey: foreignTileKey,
-          ),
-        );
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
-        expect(results.single.status, OrderValidationStatus.accepted);
-      });
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
     });
 
     group('validateWork (build_fort tech)', () {
@@ -2276,20 +2740,31 @@ void main() {
             oldWorld: RegionData(
               provinces: [
                 Province(
-                    id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 1),
+                  id: provinceId,
+                  regionId: ow,
+                  ownerId: 'p1',
+                  fortLevel: 1,
+                ),
               ],
               units: [
                 Unit(
-                    id: 'eng1',
-                    type: 'Engineer',
-                    ownerId: 'p1',
-                    locationProvinceId: provinceId,
-                    tileKey: tileKey),
+                  id: 'eng1',
+                  type: 'Engineer',
+                  ownerId: 'p1',
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                ),
               ],
             ),
             newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {ow: {provinceId: [tileKey]}},
-            playerVisibilityByTile: const {'p1': {tileKey: 'fullyVisible'}},
+            tileKeysByRegionAndProvince: {
+              ow: {
+                provinceId: [tileKey],
+              },
+            },
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fullyVisible'},
+            },
           ),
           players: [
             Player(
@@ -2306,13 +2781,18 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'eng1',
-                target: 'build_fort',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'eng1',
+            target: 'build_fort',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Mine Engineering'));
       });
@@ -2325,20 +2805,31 @@ void main() {
             oldWorld: RegionData(
               provinces: [
                 Province(
-                    id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 2),
+                  id: provinceId,
+                  regionId: ow,
+                  ownerId: 'p1',
+                  fortLevel: 2,
+                ),
               ],
               units: [
                 Unit(
-                    id: 'eng1',
-                    type: 'Engineer',
-                    ownerId: 'p1',
-                    locationProvinceId: provinceId,
-                    tileKey: tileKey),
+                  id: 'eng1',
+                  type: 'Engineer',
+                  ownerId: 'p1',
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                ),
               ],
             ),
             newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {ow: {provinceId: [tileKey]}},
-            playerVisibilityByTile: const {'p1': {tileKey: 'fullyVisible'}},
+            tileKeysByRegionAndProvince: {
+              ow: {
+                provinceId: [tileKey],
+              },
+            },
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fullyVisible'},
+            },
           ),
           players: [
             Player(
@@ -2355,13 +2846,18 @@ void main() {
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
-            'p1',
-            const WorkOrder(
-                unitId: 'eng1',
-                target: 'build_fort',
-                targetTileKey: tileKey));
-        final results =
-            engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+          'p1',
+          const WorkOrder(
+            unitId: 'eng1',
+            target: 'build_fort',
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Modern Forts'));
       });
@@ -2508,42 +3004,45 @@ void main() {
         expect(result.reason, contains('requires existing Trade Consulate'));
       });
 
-      test('establishOverture second order for same faction in same turn rejected',
-          () {
-        final game = _gpMinorBaseGame(
-          relationState: RelationState.atPeace,
-          overtureStage: OvertureStage.none,
-          treasury: overtureConsulateCost * 3,
-        );
-        final engine = OrderEngine();
-        final first = engine.addDiplomaticOrderWithContext(
-          game,
-          emptyTopology,
-          'gp1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'minor1',
-            overtureStage: OvertureStage.tradeConsulate,
-          ),
-        );
-        expect(first.status, OrderValidationStatus.accepted);
-        final second = engine.addDiplomaticOrderWithContext(
-          game,
-          emptyTopology,
-          'gp1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'minor1',
-            overtureStage: OvertureStage.tradeConsulate,
-          ),
-        );
-        expect(second.status, OrderValidationStatus.rejected);
-        expect(
-          second.reason,
-          contains(
-              'Already have an Establish Overture order for this faction this turn'),
-        );
-      });
+      test(
+        'establishOverture second order for same faction in same turn rejected',
+        () {
+          final game = _gpMinorBaseGame(
+            relationState: RelationState.atPeace,
+            overtureStage: OvertureStage.none,
+            treasury: overtureConsulateCost * 3,
+          );
+          final engine = OrderEngine();
+          final first = engine.addDiplomaticOrderWithContext(
+            game,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.tradeConsulate,
+            ),
+          );
+          expect(first.status, OrderValidationStatus.accepted);
+          final second = engine.addDiplomaticOrderWithContext(
+            game,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.tradeConsulate,
+            ),
+          );
+          expect(second.status, OrderValidationStatus.rejected);
+          expect(
+            second.reason,
+            contains(
+              'Already have an Establish Overture order for this faction this turn',
+            ),
+          );
+        },
+      );
 
       test('grantAid requires embassy and sufficient treasury', () {
         final game = _gpMinorBaseGame(
@@ -2585,44 +3084,46 @@ void main() {
         expect(insufficient.reason, contains('Insufficient treasury'));
       });
 
-      test('setSubsidy requires consulate or embassy and sufficient treasury',
-          () {
-        final gameNoOverture = _gpMinorBaseGame(
-          relationState: RelationState.atPeace,
-          overtureStage: OvertureStage.none,
-          treasury: 100,
-        );
-        final noConsulate = OrderEngine().addDiplomaticOrderWithContext(
-          gameNoOverture,
-          emptyTopology,
-          'gp1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.setSubsidy,
-            targetFactionId: 'minor1',
-            amount: 50,
-          ),
-        );
-        expect(noConsulate.status, OrderValidationStatus.rejected);
-        expect(noConsulate.reason, contains('Consulate or Embassy required'));
+      test(
+        'setSubsidy requires consulate or embassy and sufficient treasury',
+        () {
+          final gameNoOverture = _gpMinorBaseGame(
+            relationState: RelationState.atPeace,
+            overtureStage: OvertureStage.none,
+            treasury: 100,
+          );
+          final noConsulate = OrderEngine().addDiplomaticOrderWithContext(
+            gameNoOverture,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 50,
+            ),
+          );
+          expect(noConsulate.status, OrderValidationStatus.rejected);
+          expect(noConsulate.reason, contains('Consulate or Embassy required'));
 
-        final gameLowTreasury = _gpMinorBaseGame(
-          relationState: RelationState.atPeace,
-          overtureStage: OvertureStage.tradeConsulate,
-          treasury: 10,
-        );
-        final insufficient = OrderEngine().addDiplomaticOrderWithContext(
-          gameLowTreasury,
-          emptyTopology,
-          'gp1',
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.setSubsidy,
-            targetFactionId: 'minor1',
-            amount: 50,
-          ),
-        );
-        expect(insufficient.status, OrderValidationStatus.rejected);
-        expect(insufficient.reason, contains('Insufficient treasury'));
-      });
+          final gameLowTreasury = _gpMinorBaseGame(
+            relationState: RelationState.atPeace,
+            overtureStage: OvertureStage.tradeConsulate,
+            treasury: 10,
+          );
+          final insufficient = OrderEngine().addDiplomaticOrderWithContext(
+            gameLowTreasury,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 50,
+            ),
+          );
+          expect(insufficient.status, OrderValidationStatus.rejected);
+          expect(insufficient.reason, contains('Insufficient treasury'));
+        },
+      );
     });
   });
 }
