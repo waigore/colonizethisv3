@@ -150,6 +150,63 @@ void main() {
       expect(view.visibilityByTile['tileB'], VisibilityLevel.unknown);
     });
 
+    test('resourceIdVisibleToPlayer hides prospect minerals until prospected', () {
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'gold',
+          visibility: VisibilityLevel.fullyVisible,
+          tileProspectedByPlayer: false,
+        ),
+        isNull,
+      );
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'gold',
+          visibility: VisibilityLevel.fullyVisible,
+          tileProspectedByPlayer: true,
+        ),
+        'gold',
+      );
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'grain',
+          visibility: VisibilityLevel.fullyVisible,
+          tileProspectedByPlayer: false,
+        ),
+        'grain',
+      );
+    });
+
+    test('resourceIdVisibleToPlayer hides all resources when revealed', () {
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'grain',
+          visibility: VisibilityLevel.revealed,
+          tileProspectedByPlayer: false,
+        ),
+        isNull,
+      );
+    });
+
+    test('resourceIdVisibleToPlayer hides prospect minerals when fogged and not prospected', () {
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'iron',
+          visibility: VisibilityLevel.fogged,
+          tileProspectedByPlayer: false,
+        ),
+        isNull,
+      );
+      expect(
+        resourceIdVisibleToPlayer(
+          authoritativeResourceId: 'timber',
+          visibility: VisibilityLevel.fogged,
+          tileProspectedByPlayer: false,
+        ),
+        'timber',
+      );
+    });
+
     test('buildPlayerView throws when playerId not in game', () {
       final game = Game(
         id: 'g1',

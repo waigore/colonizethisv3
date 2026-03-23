@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/events.dart';
@@ -10,7 +11,10 @@ import 'package:flutter/services.dart';
 import '../features/game/flame/region_map_component.dart';
 
 export '../features/game/flame/region_map_component.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode;
+    show
+        assertCtMapPlayerViewRequired,
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode;
 
 /// FlameGame host for the region map, with basic tap/drag/pinch wiring.
 class _CtRegionMapGame extends FlameGame with TapDetector {
@@ -34,6 +38,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required void Function(String tileKey)? onTileSelected,
     required VoidCallback? onWorkTargetSelectionCancelled,
     required void Function(String provinceId)? onTownIconTapped,
+    this.playerViewForResources,
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
@@ -71,6 +76,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
   void Function(String provinceId)? onTownIconTapped;
+  PlayerView? playerViewForResources;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -109,6 +115,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       },
       validTileKeys: validTileKeys,
       onTownIconTapped: onTownIconTapped,
+      playerViewForResources: playerViewForResources,
     )..position = Vector2.zero();
     await world.add(_mapComponent);
     _mapLoaded = true;
@@ -143,6 +150,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
+    required PlayerView? playerViewForResources,
   }) {
     if (region != null) {
       this.region = region;
@@ -180,6 +188,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     // Update callbacks (these may change when parent widget rebuilds).
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+    this.playerViewForResources = playerViewForResources;
+
+    assertCtMapPlayerViewRequired(
+      visibilityMode: this.visibilityMode,
+      playerViewForResources: this.playerViewForResources,
+    );
 
     if (_mapLoaded) {
       _mapComponent
@@ -192,7 +206,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
         ..selectedTileKey = this.selectedTileKey
         ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
-        ..validTileKeys = this.validTileKeys;
+        ..validTileKeys = this.validTileKeys
+        ..playerViewForResources = this.playerViewForResources;
     }
   }
 
@@ -373,6 +388,7 @@ class CtRegionMap extends StatefulWidget {
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
     this.bus,
+    this.playerViewForResources,
   });
 
   final RegionMapViewData region;
@@ -399,6 +415,9 @@ class CtRegionMap extends StatefulWidget {
   /// Optional event bus for emitting town icon tap events.
   /// When provided, tapping a town/port icon emits OpenProvinceDetailPanelEvent.
   final AppEventBus? bus;
+
+  /// Required when [visibilityMode] is [CtMapVisibilityMode.playerConstrained].
+  final PlayerView? playerViewForResources;
 
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
@@ -428,7 +447,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
             oldWidget.secondaryHighlightTileKey ||
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
-            oldWidget.onWorkTargetSelectionCancelled) {
+            oldWidget.onWorkTargetSelectionCancelled ||
+        widget.playerViewForResources != oldWidget.playerViewForResources) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -448,6 +468,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
+        playerViewForResources: widget.playerViewForResources,
       );
     }
     if (widget.centerOnTileKey != null &&
@@ -484,11 +505,16 @@ class _CtRegionMapState extends State<CtRegionMap> {
               widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
             }
           : null,
+      playerViewForResources: widget.playerViewForResources,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    assertCtMapPlayerViewRequired(
+      visibilityMode: widget.visibilityMode,
+      playerViewForResources: widget.playerViewForResources,
+    );
     return Focus(
       autofocus: true,
       child: CallbackShortcuts(

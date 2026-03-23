@@ -128,7 +128,12 @@ class PlayerViewMapPainter extends CustomPainter {
         if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
           continue;
         }
-        final letter = resourceIdToLegendLetter(cell.resourceId);
+        final visRes = resourceIdVisibleInPlayerView(
+          playerView,
+          tileKeyForCell(region, cell),
+          cell.resourceId,
+        );
+        final letter = resourceIdToLegendLetter(visRes);
         if (letter == null) continue;
         final cx = cell.x * cellSize + cellSize / 2;
         final cy = cell.y * cellSize + cellSize / 2;

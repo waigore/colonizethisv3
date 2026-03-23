@@ -1,4 +1,6 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' show Player;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +16,21 @@ import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 void main() {
   suppressLogsForTests();
+
+  /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].
+  const ctRegionMapTestPlayerView = PlayerView(
+    playerId: 'ct_region_map_test',
+    player: Player(
+      id: 'ct_region_map_test',
+      displayName: 'Test',
+      isHuman: false,
+    ),
+    ownUnitsById: {},
+    provincesById: {},
+    visibilityByTile: {},
+    prospectedTiles: {},
+    diplomacyByOtherId: {},
+  );
 
   group('debug init Old World region', () {
     test('returns region with correct dimensions and cell count', () {
@@ -73,6 +90,7 @@ void main() {
     String? selectedTileKey,
     String? secondaryHighlightTileKey,
     VoidCallback? onRegionViewChanged,
+    PlayerView? playerViewForResources,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -86,6 +104,7 @@ void main() {
               showPoliticalOverlay: showPoliticalOverlay,
               showBordersLayer: showBordersLayer,
               visibilityMode: visibilityMode,
+              playerViewForResources: playerViewForResources,
               baseLayerDisplayMode: baseLayerDisplayMode,
               centerOnTileKey: centerOnTileKey,
               onProvinceSelected: onProvinceSelected,
@@ -103,6 +122,31 @@ void main() {
   }
 
   group('CtRegionMap (Flame map widget)', () {
+    testWidgets(
+      'throws StateError when playerConstrained without playerViewForResources',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 400,
+                  height: 320,
+                  child: CtRegionMap(
+                    region: region,
+                    visibilityMode: CtMapVisibilityMode.playerConstrained,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        expect(tester.takeException(), isA<StateError>());
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
     testWidgets(
       'required Wang tileset asset files are present in test asset bundle',
       (WidgetTester tester) async {
@@ -177,6 +221,7 @@ void main() {
             showPoliticalOverlay: false,
             showBordersLayer: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
           ),
         );
         await tester.pump();
@@ -349,6 +394,7 @@ void main() {
             region: region,
             showPoliticalOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
           ),
         );
@@ -628,6 +674,7 @@ void main() {
           _buildCtRegionMap(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             onProvinceSelected: (id) => selectedId = id,
           ),
         );
@@ -836,6 +883,7 @@ void main() {
           _buildCtRegionMap(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
         );
