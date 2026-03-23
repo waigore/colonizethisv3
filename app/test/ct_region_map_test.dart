@@ -612,6 +612,70 @@ void main() {
     );
 
     testWidgets(
+      'tap on a town tile still invokes map tile and province selection callbacks',
+      (WidgetTester tester) async {
+        final base = _oldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'pTown',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+              provinceDisplayName: 'Town Province',
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 0,
+              y: 0,
+              provinceId: 'pTown',
+              isCoastal: false,
+              isPort: false,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+        const townTileKey = 'oldWorld|pTown|0|0';
+        String? selectedId;
+        String? detailTileKey;
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            onProvinceSelected: (id) => selectedId = id,
+            onMapTileTappedForDetail: (tk) => detailTileKey = tk,
+            width: 64,
+            height: 64,
+            cellSizePx: 32,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedId, equals('oldWorld|pTown'));
+        expect(detailTileKey, equals(townTileKey));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         final region = _oldWorldRegion();
