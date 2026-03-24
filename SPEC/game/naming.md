@@ -26,6 +26,8 @@ Per active ruleset, naming config defines:
 
 All names are **ruleset-driven**; game logic only consumes resolved naming data.
 
+**MVP source note:** Until ruleset JSON load/merge is implemented (tracked in #57), game setup resolves naming from the program-level `defaultNamingConfig` in `colonizethis_data`. This is the temporary MVP source of truth for runtime naming data; see [ruleset-config.md](../program/ruleset-config.md).
+
 The **default** minor nation and tribe identities and province name pools are defined in **GDD 09b (Minor Nations)** and **GDD 09c (New World Tribes)**. The default ruleset exposes 6 minors (ids `minor1`–`minor6`) and 10 tribes (ids `tribe1`–`tribe10`) in GDD order.
 
 ---
