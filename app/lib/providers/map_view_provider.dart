@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-/// Global province overlay for in-game Empire overview maps (boundaries + GP land tint).
+/// Global province/sea boundary strokes on in-game Empire overview maps.
 /// Defaults to true at app start; updated via the Map display options dialog.
 /// SPEC/ui/map-widget.md, SPEC/ui/empire-overview.md.
 final mapProvinceOverlayVisibleProvider = StateProvider<bool>((ref) => true);
 
-/// Global land province name labels on in-game Empire overview maps.
+/// Great Power land ownership tint on in-game Empire overview maps.
 /// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to true at app start.
+final mapProvinceOwnershipTintVisibleProvider = StateProvider<bool>((ref) => true);
+
+/// Global land province name labels on in-game Empire overview maps.
+/// Independent of boundary and ownership-tint toggles. Defaults to true at app start.
 final mapProvinceNamesVisibleProvider = StateProvider<bool>((ref) => true);
 
 /// Map view data for the current game with player-constrained visibility.

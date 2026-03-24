@@ -8,6 +8,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import 'gp_ownership_tint_layer.dart';
 import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
@@ -16,9 +17,6 @@ final _log = gameLogger();
 
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
-
-/// GP land ownership tint (province overlay). SPEC/ui/map-widget.md: alpha 0.10–0.20.
-const double _gpOwnershipTintAlpha = 0.15;
 
 /// Political border stroke colors.
 /// These are intentionally subtle so they don't overpower the terrain art.
@@ -116,6 +114,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.cellSize,
     required this.showPoliticalOverlay,
     required this.showProvinceOverlay,
+    required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
     required this.visibilityMode,
     this.baseLayerDisplayMode =
@@ -136,6 +135,7 @@ class CtRegionMapComponent extends PositionComponent {
   double cellSize;
   bool showPoliticalOverlay;
   bool showProvinceOverlay;
+  bool showProvinceOwnershipTint;
   bool showProvinceNamesLayer;
   CtMapVisibilityMode visibilityMode;
 
@@ -281,7 +281,7 @@ class CtRegionMapComponent extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     _paintTiles(canvas);
-    if (showProvinceOverlay) {
+    if (showProvinceOwnershipTint) {
       _paintGreatPowerLandOwnershipTint(canvas);
     }
     _paintOverlay(canvas);
@@ -1025,38 +1025,15 @@ class CtRegionMapComponent extends PositionComponent {
     canvas.drawRect(rect, paint);
   }
 
-  /// Semi-transparent tint on GP-owned land; province overlay. SPEC/ui/map-widget.md.
+  /// Semi-transparent tint on GP-owned land. SPEC/ui/map-widget.md § Province ownership.
   void _paintGreatPowerLandOwnershipTint(Canvas canvas) {
-    final gpIds = region.greatPowerFactionIds;
-    if (gpIds.isEmpty) return;
-
-    final honorUnrevealed =
-        visibilityMode == CtMapVisibilityMode.playerConstrained;
-
-    for (final cell in region.cells) {
-      if (!shouldApplyGreatPowerOwnershipTint(
-        cell: cell,
-        greatPowerFactionIds: gpIds,
-        honorUnrevealedTiles: honorUnrevealed,
-      )) {
-        continue;
-      }
-      final owner = cell.ownerFactionId!;
-      final rgb = region.factionColors[owner];
-      if (rgb == null) continue;
-
-      final left = cell.x * cellSize;
-      final top = cell.y * cellSize;
-      final rect = Rect.fromLTWH(left, top, cellSize, cellSize);
-      final paint = Paint()
-        ..color = Color.fromRGBO(
-          rgb.$1,
-          rgb.$2,
-          rgb.$3,
-          _gpOwnershipTintAlpha,
-        );
-      canvas.drawRect(rect, paint);
-    }
+    paintGreatPowerOwnershipTintLayer(
+      canvas: canvas,
+      region: region,
+      cellSize: cellSize,
+      honorUnrevealedTiles:
+          visibilityMode == CtMapVisibilityMode.playerConstrained,
+    );
   }
 
   void _paintProvinceBorders(Canvas canvas) {

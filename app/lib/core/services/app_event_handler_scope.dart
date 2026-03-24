@@ -111,7 +111,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             naming: naming,
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
-            onConfirmed: (leaderVariantByGpId, enforceFairGpOldWorldAssignment) {
+            onConfirmed:
+                (orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment) {
               final navCtx = appNavigatorKey.currentContext;
               if (navCtx == null) {
                 _log.w(
@@ -121,7 +122,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
               }
               final rootContainer = ProviderScope.containerOf(navCtx);
               final templateConfig = GameSetupConfig(
-                selectedGreatPowerIds: baseConfig.selectedGreatPowerIds,
+                selectedGreatPowerIds: orderedGreatPowerIds,
                 leaderVariantByGpId: leaderVariantByGpId,
                 continentCount: baseConfig.continentCount,
                 minorNationCount: baseConfig.minorNationCount,

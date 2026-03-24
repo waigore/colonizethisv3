@@ -134,7 +134,12 @@
 
   "map_displayOptions_showProvinceOverlay": "Show province overlay",
   "@map_displayOptions_showProvinceOverlay": {
-    "description": "Toggle for province/sea boundaries plus Great Power land ownership tint on the map."
+    "description": "Toggle for province and sea-zone boundary strokes on the map (no ownership tint)."
+  },
+
+  "map_displayOptions_showProvinceOwnership": "Show province ownership",
+  "@map_displayOptions_showProvinceOwnership": {
+    "description": "Toggle for Great Power land ownership colour tint on the map."
   },
 
   "map_displayOptions_showProvinceNames": "Show province names",
@@ -177,9 +182,9 @@
     "description": "Label for the log level filter section in the debug log viewer."
   },
 
-  "shell_leaderDialog_intro": "Select leader for each Great Power (or keep default).",
+  "shell_leaderDialog_intro": "Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.",
   "@shell_leaderDialog_intro": {
-    "description": "Intro text for the leader selection dialog in the new-game flow."
+    "description": "Intro text for the new-game setup dialog (nations + leaders)."
   },
 
   "shell_leaderDialog_selectLeaderHint": "Select leader",
@@ -197,9 +202,34 @@
     "description": "Generic Start button label used when beginning a flow."
   },
 
-  "shell_leaderDialog_title": "New game — Leaders",
+  "shell_leaderDialog_title": "New game — Setup",
   "@shell_leaderDialog_title": {
-    "description": "Title of the leader selection dialog in the new-game flow."
+    "description": "Title of the new-game setup dialog (nations + leaders)."
+  },
+
+  "shell_newGame_selectNation": "Select nation",
+  "@shell_newGame_selectNation": {
+    "description": "Hint / picker title for the Great Power nation dropdown in the new-game setup dialog."
+  },
+
+  "shell_newGame_playerYou": "Player {slotNumber} (You)",
+  "@shell_newGame_playerYou": {
+    "description": "Slot label for the human player in the new-game setup dialog.",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+
+  "shell_newGame_playerAi": "Player {slotNumber} (AI)",
+  "@shell_newGame_playerAi": {
+    "description": "Slot label for an AI player in the new-game setup dialog.",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
   },
 
   "shell_leaderDialog_enforceFairGpAssignment": "Enforce fair GP assignment (slower)",

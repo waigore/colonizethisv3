@@ -412,5 +412,81 @@ void main() {
       expect(next.players.single.capitalProvinceId, 'oldWorld|p1');
       expect(next.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 4);
     });
+
+    test('classifyCapitalTile returns class A for coastal non-border tile', () {
+      final grid = [
+        ['p1', 'sea1'],
+        ['p1', 'p1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
+      );
+      final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
+      final tileClass = classifyCapitalTile(
+        x: 0,
+        y: 0,
+        tileMap: tileMap,
+        topology: topology,
+        localProvinceId: 'p1',
+      );
+      expect(tileClass, CapitalTileClass.a);
+    });
+
+    test('classifyCapitalTile returns class B for interior non-border tile', () {
+      final grid = [
+        ['sea1', 'sea1', 'sea1', 'sea1', 'sea1'],
+        ['sea1', 'p1', 'p1', 'p1', 'sea1'],
+        ['sea1', 'p1', 'p1', 'p1', 'sea1'],
+        ['sea1', 'p1', 'p1', 'p1', 'sea1'],
+        ['sea1', 'sea1', 'sea1', 'sea1', 'sea1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
+      );
+      final tileMap = TileMapResult(width: 5, height: 5, grid: grid);
+      final tileClass = classifyCapitalTile(
+        x: 2,
+        y: 2,
+        tileMap: tileMap,
+        topology: topology,
+        localProvinceId: 'p1',
+      );
+      expect(tileClass, CapitalTileClass.b);
+    });
+
+    test('classifyCapitalTile returns class C for tile bordering another province', () {
+      final grid = [
+        ['p1', 'p2'],
+        ['sea1', 'sea1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+        ],
+      );
+      final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
+      final tileClass = classifyCapitalTile(
+        x: 0,
+        y: 0,
+        tileMap: tileMap,
+        topology: topology,
+        localProvinceId: 'p1',
+      );
+      expect(tileClass, CapitalTileClass.c);
+    });
   });
 }

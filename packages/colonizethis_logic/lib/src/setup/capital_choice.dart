@@ -6,6 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// setCapital validates province is sea-bound, sets player capital, and
 /// auto-builds port (on capital if coastal, else nearest coastal tile) and road.
 
+/// Capital tile class per SPEC/game/capital-choice-phase:
+/// - A: coastal and not adjacent to another province
+/// - B: interior and not adjacent to another province
+/// - C: all remaining tiles
+enum CapitalTileClass { a, b, c }
+
 /// Returns true if [provinceId] has at least one P–S edge in [topology].
 bool isProvinceSeaBound(MapTopology topology, String provinceId) {
   for (final edge in topology.edges) {
@@ -71,16 +77,21 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
       if (tileMap.cell(x, y) != localProvinceId) continue;
-      final coastal = _isTileAdjacentToSea(x, y, tileMap, topology);
-      final adjacentOtherProvince =
-          _isTileAdjacentToOtherProvince(x, y, tileMap, provinceIds, localProvinceId);
+      final tileClass = classifyCapitalTile(
+        x: x,
+        y: y,
+        tileMap: tileMap,
+        topology: topology,
+        localProvinceId: localProvinceId,
+        provinceIds: provinceIds,
+      );
 
-      if (coastal && !adjacentOtherProvince) {
+      if (tileClass == CapitalTileClass.a) {
         if (classAx == null) {
           classAx = x;
           classAy = y;
         }
-      } else if (!coastal && !adjacentOtherProvince) {
+      } else if (tileClass == CapitalTileClass.b) {
         if (classBx == null) {
           classBx = x;
           classBy = y;
@@ -333,6 +344,34 @@ Game setCapitalForTribe({
     worldState: worldState,
     tribes: updatedTribes,
   );
+}
+
+/// Classifies a province tile according to capital-choice class A/B/C.
+CapitalTileClass classifyCapitalTile({
+  required int x,
+  required int y,
+  required TileMapResult tileMap,
+  required MapTopology topology,
+  required String localProvinceId,
+  Set<String>? provinceIds,
+}) {
+  final knownProvinceIds =
+      provinceIds ??
+      topology.nodes
+          .where((n) => n.type == TopologyNodeType.province)
+          .map((n) => n.id)
+          .toSet();
+  final coastal = _isTileAdjacentToSea(x, y, tileMap, topology);
+  final adjacentOtherProvince = _isTileAdjacentToOtherProvince(
+    x,
+    y,
+    tileMap,
+    knownProvinceIds,
+    localProvinceId,
+  );
+  if (coastal && !adjacentOtherProvince) return CapitalTileClass.a;
+  if (!coastal && !adjacentOtherProvince) return CapitalTileClass.b;
+  return CapitalTileClass.c;
 }
 
 Set<String> _seaZonesAdjacentToProvince(MapTopology topology, String provinceId) {
