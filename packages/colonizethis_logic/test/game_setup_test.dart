@@ -82,6 +82,12 @@ void main() {
         expect(result.game.id, 'test-game');
         expect(result.game.players.length, 1);
         expect(result.game.players.first.id, 'gp1');
+        expect(
+          result.game.greatPowerColorOverride,
+          equals({
+            'gp1': [180, 80, 80],
+          }),
+        );
         expect(result.game.players.first.capitalProvinceId, 'oldWorld|p1');
         expect(
           result.game.players.first.capitalTile?.provinceId,

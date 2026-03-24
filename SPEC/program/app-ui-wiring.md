@@ -55,7 +55,7 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
-| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` | `newGameLeaderSelectionDialogId` |
+| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
 
 | ID | Widget | Status |
 |----|--------|--------|
