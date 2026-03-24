@@ -25,9 +25,9 @@ Each Great Power has a **general cap**: the maximum (and minimum) number of gene
 Generals are **not** assigned to provinces or stacks by default. Assignment is **required and automated at combat time**:
 
 - **When attacking:** A faction that orders an attack (move into an enemy province) must commit one general to that attack. The system chooses **one general at random** from that faction’s generals who are not already committed to another battle this turn. That general is “assigned” to that attacking force for the **duration of that battle only**. This **caps the number of attacks** a faction can make in one turn: at most one attack per general (so at most general cap attacks per turn).
-- **When defending:** When a province owned by the faction is attacked, the system automatically assigns **one general at random** from that faction’s generals who are not already committed to another battle this turn. If the faction has **no uncommitted general**, the province **may still be defended**, but **without a general** (defender general medals = 0 for that battle).
+- **When defending:** When a province owned by the faction is attacked, the system automatically assigns **one general at random** from that faction’s generals who are not already committed to another battle this turn. If the faction has **no uncommitted general**, the province **may still be defended** and uses fallback `generalMedals` derived from leader combat multiplier: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
 
-**Defender general modeling:** Currently, defender generals are **not modeled** in combat resolution—defender general medals are treated as 0. This means the defender side does not receive +1 per defender general medal to the deployment limit, and no defender morale aura or initiative bonus is applied. When defender general state is added in a future phase, the defender side should symmetrically receive +1 per defender general medal to the deployment limit (matching attacker behavior).
+**Defender general modeling:** Defender generals are modeled in combat resolution symmetrically with attackers. Defender assigned medals (or fallback medals when no uncommitted general exists) apply to deployment limit, morale aura, and initiative effects.
 
 **Commitment lifetime:** A general is committed only for the duration of one battle. When that battle’s resolution completes, the generals assigned to that battle (attacker and defender) are **freed**. If there is a subsequent battle in the same turn (e.g. another province), the assignment process runs again and any general may be assigned, including one who was just in a previous battle.
 
@@ -46,7 +46,7 @@ Medal effects in combat (see [combat.md](combat.md) and [combat-resolution.md](.
 - **Morale aura:** Regiments on that side receive a strength bonus of **5% per general medal**, up to a maximum of **20%** (at 4 medals). These values are program-level constants; ruleset-configurable morale aura is deferred to a future phase.
 - **Initiative:** Army initiative uses `cavalryShare × W_cav + generalMedals × W_medal` for ordering multi-attacker chains.
 
-Defender without a general uses 0 general medals for deployment, morale, and initiative.
+Defender without an uncommitted general uses fallback medals derived from leader combat multiplier for deployment, morale, and initiative.
 
 **Quick Battle:** General medals (deployment limit, initiative, morale aura) apply the same way in Quick Battle as in auto-resolve; see [quick-battle.md](quick-battle.md).
 
@@ -111,9 +111,9 @@ Province ids use the prefixed form and lookup rules in [world-model-identity.md]
   When the player orders an attack (move into an enemy province)  
   Then the system selects one general at random from that faction’s G generals, commits that general to that attack for this turn, and allows the attack to proceed; the number of attacks that faction may order this turn is at most G.
 
-- Given a Great Power that has already committed all G of its generals to attacks or defenses this turn  
+- Given a Great Power that has already committed all G of its generals to attacks or defenses this turn and leader combat multiplier `L`  
   When an enemy attack targets another province owned by that faction  
-  Then the system allows the province to be defended with defender general medals equal to 0 (no general assigned to that defense).
+  Then the system allows the province to be defended with fallback defender general medals derived from `L` using this mapping: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
 
 - Given a province owned by a faction with at least one uncommitted general and under attack  
   When the system resolves the defender side for that battle  

@@ -26,11 +26,25 @@ For each province with units from multiple factions:
 
 ### 2. Initiative Ordering
 
-Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending; tie-break by faction id.
+Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending. For exact ties, use one deterministic RNG tie-break for the whole BattleContext (seeded from combat seed + context identity), not lexical faction id.
 
 ### 3. General assignment (per BattleContext)
 
-Before resolving a BattleContext, assign generals per [military-generals.md](../game/military-generals.md): for each attacking side, assign one uncommitted general at random (or none if the faction has no uncommitted general); for the defender, assign one uncommitted general at random (or none, in which case defender general medals = 0). Populate each side’s `generalMedals` from the assigned general’s medals. When the **entire** BattleContext resolution (full multi-attacker chain) completes, **free** all generals assigned to that battle so they may be assigned again in a subsequent BattleContext the same turn.
+Before resolving a BattleContext, assign generals per [military-generals.md](../game/military-generals.md): for each attacking side, assign one uncommitted general at random (or none if the faction has no uncommitted general); for the defender, assign one uncommitted general at random (or none if unavailable). Populate each side’s `generalMedals` from the assigned general’s medals.
+
+If a side has no uncommitted general, derive fallback `generalMedals` from leader combat multiplier (`leader-bonuses.md`) using this mapping:
+
+- multiplier `>= 1.25` => 4 medals
+- multiplier `>= 1.20` => 3 medals
+- multiplier `>= 1.15` => 2 medals
+- multiplier `>= 1.10` => 1 medal
+- else => 0 medals
+
+In multi-attacker chains, when the winner of engagement _n_ becomes defender in engagement _n+1_, reuse that winner side's assigned/fallback `generalMedals` for the carried defender role.
+
+When an engagement is won by a side with an assigned general record, increment that general's medals by exactly `+1` (cap at 4) and persist to game state immediately so later engagements in the same BattleContext observe updated medals. Medal gain is per engagement win, not per BattleContext aggregate.
+
+When the **entire** BattleContext resolution (full multi-attacker chain) completes, **free** all generals assigned to that battle so they may be assigned again in a subsequent BattleContext the same turn.
 
 ### 4. Deployment Limit (per side)
 
@@ -50,7 +64,7 @@ Steps:
 
 **Output:** EngagementResult.
 
-**Implementation note:** Conflict detection currently does not perform general assignment; when implemented, run the assignment step (§3) before resolution and pass resulting generalMedals into the resolver. Record which general commanded each side so medal gain can be applied to the winning general per military-generals.md. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
+**Implementation note:** Conflict detection currently does not perform general assignment; when implemented, run the assignment step (§3) before resolution and pass resulting generalMedals into the resolver. Record which general commanded each side so medal gain can be applied to the winning general per military-generals.md and this spec's per-engagement medal progression rule. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
 
 ### 6. Resolution Chain
 
