@@ -4,8 +4,11 @@ import 'starting_resources_config.dart';
 
 final _log = dataLogger();
 
-/// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md.
-/// Program-level config only (no JSON in MVP).
+/// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md,
+/// SPEC/program/game-setup-pipeline.md.
+///
+/// **MVP:** Program-level defaults and constructor/CLI fields only; no Base →
+/// Difficulty → Scenario JSON merge (see ruleset-config.md, GitHub #57 / #58).
 class GameSetupConfig {
   GameSetupConfig({
     this.selectedGreatPowerIds = _defaultSelectedGreatPowerIds,

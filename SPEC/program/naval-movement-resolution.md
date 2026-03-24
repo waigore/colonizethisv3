@@ -32,9 +32,8 @@ Only fleets **at sea** on Patrol or Blockade mission participate. For each such 
 2. `targetEvasionScore = Σ ship.fleeRating` (target fleet).
 3. `ratio = fleetInterceptScore / (fleetInterceptScore + targetEvasionScore)`.
 4. Mission factor: Patrol = 0.5, Blockade = 0.9.
-5. Apply tech/composition bonuses to `fleetInterceptScore` (e.g. +20% from privateering_companies).
-6. `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
-7. On success, create a BattleContextSea and invoke [naval-combat-resolution.md](naval-combat-resolution.md).
+5. `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
+6. On success, create a BattleContextSea and invoke [naval-combat-resolution.md](naval-combat-resolution.md).
 
 Exact numeric values in ruleset config; formula shape: mission factor × relative strength × tech/composition.
 

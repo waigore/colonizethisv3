@@ -287,6 +287,45 @@ void main() {
       );
     });
 
+    test('AppNavalCombatResultEvent equal for same fields', () {
+      expect(
+        const AppNavalCombatResultEvent(
+          seaZoneId: 's1',
+          side1OwnerId: 'gp1',
+          side2OwnerId: 'gp2',
+          outcomeName: 'draw',
+          turnNumber: 2,
+          winnerOwnerId: null,
+        ),
+        const AppNavalCombatResultEvent(
+          seaZoneId: 's1',
+          side1OwnerId: 'gp1',
+          side2OwnerId: 'gp2',
+          outcomeName: 'draw',
+          turnNumber: 2,
+          winnerOwnerId: null,
+        ),
+      );
+      expect(
+        const AppNavalCombatResultEvent(
+          seaZoneId: 's1',
+          side1OwnerId: 'gp1',
+          side2OwnerId: 'gp2',
+          outcomeName: 'draw',
+          turnNumber: 2,
+        ),
+        isNot(
+          const AppNavalCombatResultEvent(
+            seaZoneId: 's2',
+            side1OwnerId: 'gp1',
+            side2OwnerId: 'gp2',
+            outcomeName: 'draw',
+            turnNumber: 2,
+          ),
+        ),
+      );
+    });
+
     test('AppProvinceCapturedEvent equal for same fields', () {
       expect(
         const AppProvinceCapturedEvent(

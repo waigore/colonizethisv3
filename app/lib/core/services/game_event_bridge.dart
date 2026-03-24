@@ -39,6 +39,19 @@ class GameEventBridge {
             casualties: event.casualties,
           ),
         );
+      case NavalCombatResultEvent():
+        _appBus.emit(
+          AppNavalCombatResultEvent(
+            seaZoneId: event.seaZoneId,
+            side1OwnerId: event.side1OwnerId,
+            side2OwnerId: event.side2OwnerId,
+            outcomeName: event.outcomeName,
+            turnNumber: event.turnNumber,
+            winnerOwnerId: event.winnerOwnerId,
+            side1Retreated: event.side1Retreated,
+            side2Retreated: event.side2Retreated,
+          ),
+        );
       case ProvinceCapturedEvent():
         _appBus.emit(
           AppProvinceCapturedEvent(

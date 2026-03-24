@@ -25,6 +25,7 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | Logic `GameEvent` | App `GameToUIEvent` | Typical UI |
 |-------------------|---------------------|------------|
 | `CombatResultEvent` | `AppCombatResultEvent` | `NotifyEvent` |
+| `NavalCombatResultEvent` | `AppNavalCombatResultEvent` | `NotifyEvent` |
 | `ProvinceCapturedEvent` | `AppProvinceCapturedEvent` | `NotifyEvent` |
 | `DiplomacyChangeEvent` | `AppDiplomacyChangeEvent` | `NotifyEvent` |
 | `ResearchCompleteEvent` | `AppResearchCompleteEvent` | `NotifyEvent` |

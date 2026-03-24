@@ -22,6 +22,22 @@ class WorkerPool {
 
   static const empty = WorkerPool();
 
+  /// Labour per trained worker per turn (GDD Worker Tiers table).
+  static const int labourPerPeasantTurn = 1;
+  static const int labourPerApprenticeTurn = 4;
+  static const int labourPerJourneymanTurn = 6;
+  static const int labourPerMasterTurn = 8;
+
+  /// Raw labour supply per turn from all tiers (sum of tier × count).
+  ///
+  /// Does not apply luxury gating; see `effectiveLabourForWorkers` in
+  /// `colonizethis_logic` for production-time effective labour.
+  int get labourSupplyPerTurn =>
+      peasants * labourPerPeasantTurn +
+      apprentices * labourPerApprenticeTurn +
+      journeymen * labourPerJourneymanTurn +
+      masters * labourPerMasterTurn;
+
   WorkerPool copyWith({
     int? peasants,
     int? apprentices,

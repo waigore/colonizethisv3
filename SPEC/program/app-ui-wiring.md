@@ -55,14 +55,14 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
-| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` | `newGameLeaderSelectionDialogId` |
+| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
 
 | ID | Widget | Status |
 |----|--------|--------|
 | `quick_battle_result` | `QuickBattleResultDialog` | planned (or local if combat UI stays internal) |
 | `combat_mode_choice` | `CombatModeChoiceDialog` | same |
 
-**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), split fleet (`NavalUnitsPanel`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
+**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), split fleet (`NavalUnitsPanel`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
 
 ---
 

@@ -1,33 +1,35 @@
 # Quick Battle (one-province tactical combat)
 
-## Purpose and scope
+## Purpose and current phase scope
 
-Quick Battle is a **one-province attacker vs defender** tactical mini-game that replaces pure auto-resolve when players choose the Quick Battle mode. It offers a short, command-point-based, turn-by-turn system that preserves tactical combat stats and formulas while giving players meaningful tactical choices (terrain, maneuvers, focus fire, timing of assaults). Output is compatible with the existing combat casualty/flip pipeline.
+Quick Battle is a one-province attacker-vs-defender tactical resolver used by combat mode `quickBattle`. It must stay deterministic for a fixed seed and feed the same casualty/ownership pipeline as auto-resolve.
 
-Constraints:
+Current implementation scope (owner-confirmed decisions):
 
-- One attacking stack vs one defending stack in a single province.
-- At most **3 battle rounds**.
-- Each round, each side has **2–3 Command Points (CP)** to spend on actions.
-- System must be simple to operate but allow skilled players to trade better and occasionally win uphill fights.
+- One attacking side vs one defending side per battle context.
+- Maximum 3 rounds.
+- 2-3 Command Points (CP) per side each round.
+- Initiative ordering uses the combat initiative formula.
+- Terrain is OPEN-only for this phase.
+- Effective strength is intentionally count-based for this phase.
+- Multi-lane tactical deployment and full collapse model are deferred.
 
-## Battlefield layout and terrain
+## Battlefield layout
 
-Each side arrays units on a simplified battlefield inspired by early modern deployments:
+Quick Battle data model supports lanes/lines, but current deployment is intentionally simplified:
 
-- **Lanes per side:** `LEFT`, `CENTER`, `RIGHT`, and `RESERVE`.
-- **Lines per non-reserve lane:** `FRONT` and `SUPPORT`.
-- Each `(lane, line)` holds 0–N regiments; these are treated as a **battalion group** for Quick Battle.
+- Attacker groups: `CENTER + FRONT` only.
+- Defender groups: `CENTER + FRONT` only.
+- Initial cohesion: 3 for both sides.
 
-Province terrain provides a base context; each lane is tagged with a single terrain type (shared by both sides in that lane):
+Future expansion may enable `LEFT/RIGHT/RESERVE` and richer line management.
 
-- `OPEN` — baseline.
-- `HILL` — better defense and ranged fire; harder to charge uphill.
-- `WOODS` — better cover; worse ranged visibility; harder to maneuver.
-- `TOWN` — very strong defense; modest penalties to movement and some artillery fire.
-- `SWAMP` — very poor footing; bad for both attack and defense; hard to maneuver.
+## Terrain
 
-Lane terrain is used as a modifier on top of existing tactical stats (FPN, FPM, RNG, DEF, MVR).
+Current phase uses OPEN-only lane terrain (`QuickBattleLaneTerrain.open`) for both sides.
+
+- Province terrain still exists in battle context and may influence shared province-level combat modifiers.
+- Province-to-lane terrain mapping (HILL/WOODS/TOWN/SWAMP) is deferred.
 
 ## Emplaced fort artillery (virtual units)
 
@@ -39,46 +41,31 @@ When the battle is a **siege** (`fortLevel ≥ 1` per [siege-mechanics.md](siege
 
 **Integration:** When Quick Battle ends, if **every** virtual emplaced gun was destroyed, the combat pipeline **must** decrement province `fortLevel` by 1 (floor at 0) when applying results, regardless of whether the province flips. The Quick Battle resolver **must not** add a parallel lump-sum emplaced strength term for those same guns (no double-counting).
 
-## Cohesion (morale) model
+## Cohesion and effective strength
 
-Each battalion group (lane + line) has a **cohesion** value on a 0–3 integer scale:
+Each group has cohesion on a 0-3 integer scale. Current implementation uses cohesion as a multiplier.
 
-| Cohesion | State | Effect |
-|---|---|---|
-| 3 | Fresh | Full combat power |
-| 2 | Engaged | 75% combat power |
-| 1 | Shaken | 50% combat power |
-| 0 | Broken | No offensive strength; routed to RESERVE |
+Current phase formula:
 
-- Starts at 3 for all groups.
-- Cohesion declines when the group suffers significant casualties, maneuvers through bad ground under pressure, or a neighboring lane collapses.
-- At **0 cohesion** (per Imp2: "green bar empty"), the group is **broken**: it surrenders if surrounded, otherwise flees.
+- Group effective strength = `unitCount * (cohesion / 3) * laneModifier`.
+- Lane modifier is OPEN baseline for current phase behavior.
+- Side effective strength = sum of group effective strengths, then action modifiers and province-level combat modifiers are applied.
 
-**Battle morale index:** Sum of group cohesion across all lanes. Used to distinguish decisive wins from mutual exhaustion.
-
-**Effective combat power per group:** `basePower * (cohesion / 3)`, where `basePower = Σ (FPN_eff + FPM_eff) * medalMult` for regiments in that group, adjusted by terrain modifier for the lane.
-
-**Percentage adjustments to combat power**
-
-| Terrain | Attacker | Defender | Rationale                                     |
-| ------- | -------- | -------- | --------------------------------------------- |
-| OPEN    | 100%     | 100%     | Baseline                                      |
-| HILL    | 75%      | 120%     | Hard to attack uphill                         |
-| WOODS   | 80%      | 110%     | Cover benefits defense, impedes movement      |
-| TOWN    | 60%      | 130%     | Strong defensive positions                    |
-| SWAMP   | 70%      | 90%      | Bad for everyone, slightly worse for attacker |
+This count-based formula is intentional for now. Tactical-stat-based QB (`FPN/FPM` aggregation) is deferred.
 
 
 ## Turn structure and actions
 
-Quick Battle proceeds in at most **3 rounds**. In each round:
+Quick Battle proceeds in at most 3 rounds. In each round:
 
-1. Determine which side acts first (initiative, consistent with combat rules; ties may alternate).
-2. Side A receives **2–3 CP** and spends them on actions.
-3. Side B receives **2–3 CP** and spends them on actions.
-4. Resolve all fire, charges, maneuver consequences, casualties, cohesion changes, and possible lane collapses.
+1. Determine first-acting side using combat initiative score:
+   `initiative = cavalryShare * W_cav + generalMedals * W_medal`.
+   Tie-break is deterministic by `factionId` lexical order.
+2. First side receives 2-3 CP and spends actions.
+3. Second side receives 2-3 CP and spends actions.
+4. Resolve combat effects in initiative order, then update casualties and cohesion.
 
-Core actions (examples; exact numbers live in technical spec):
+Core actions (exact numeric modifiers in technical spec):
 
 - **Volley Fire (1 CP):** Front-line units (and eligible artillery/support) in a chosen lane fire at the opposing front-line group. Terrain and cohesion adjust hit chances and losses.
 - **Defend / Entrench (1 CP):** Set a lane to a defensive stance for the round, improving defense (especially in `HILL`, `WOODS`, `TOWN`) at the cost of maneuverability.
@@ -90,17 +77,11 @@ Players use CP to choose when to defend, when to trade space, when to concentrat
 
 ## Outcome and integration
 
-**Collapse conditions** (battle ends early):
+Current phase outcome does not use full lane-collapse rules. After up to 3 rounds:
 
-- **Attacker collapse:** CENTER broken AND at least one flank broken, OR total battle morale index ≤ 2.
-- **Defender collapse:** CENTER broken AND at least one flank broken, OR total battle morale index ≤ 2.
-- **Mutual exhaustion:** Both sides' battle morale index ≤ 4 at end of a round.
-
-After up to 3 rounds (or earlier if one side collapses), the Quick Battle produces:
-
-- Casualties per side (by unit type or equivalent granularity).
-- Updated status of key lanes and side morale (e.g. broken center vs intact battle line).
-- A single **battle result**: decisive attacker win, decisive defender hold, or mutual exhaustion.
+- If defender has no surviving units, winner is attacker and `provinceFlips = true`.
+- If attacker has no surviving units, winner is defender and `provinceFlips = false`.
+- Otherwise final strength ratio decides attacker/defender hold or mutual exhaustion.
 
 Quick Battle does **not** change the underlying combat formula for **map regiments**; it supplies structured inputs (lane-level strengths, modifiers, cohesion effects) into the resolution pipeline and receives standard outputs. **Siege Quick Battle** additionally runs the **virtual emplaced gun** model above, which replaces the aggregate emplaced defender bonus for that path only:
 
@@ -113,17 +94,21 @@ The game then applies casualties and province ownership changes using the same w
 
 ## Acceptance Criteria
 
-- Given a Quick Battle is initiated for a province with one attacking stack and one defending stack and the combat context includes terrain and lane assignments as described in this spec  
-  When the System sets up the Quick Battle battlefield  
-  Then the System assigns each side’s regiments to lanes and lines (`LEFT`, `CENTER`, `RIGHT`, `RESERVE` × `FRONT`/`SUPPORT`), tags each lane with a single terrain type from the allowed set (`OPEN`, `HILL`, `WOODS`, `TOWN`, `SWAMP`), and initializes each battalion group’s cohesion to 3 (Fresh).
+- Given one Quick Battle battle context with one attacker side and one defender side  
+  When the System builds Quick Battle input  
+  Then the System places all attacker units in `CENTER/FRONT`, all defender units in `CENTER/FRONT`, and sets each created group cohesion to integer `3`.
 
-- Given a Quick Battle round begins and both sides have defined tech, regiment stats, medal levels, and lane terrain  
-  When the System computes effective combat power for each battalion group and side for that round  
-  Then the System uses `basePower = Σ(FPN_eff + FPM_eff) × medalMult` for the regiments in each group, multiplies by the terrain and cohesion multipliers from the tables in this spec, and uses these adjusted values to resolve fire, charges, casualties, and cohesion changes for that round.
+- Given Quick Battle input built by the current phase input builder  
+  When the System sets lane terrain for attacker and defender deployments  
+  Then the System sets `center_front` to enum `open` for both sides and does not assign `hill`, `woods`, `town`, or `swamp`.
 
-- Given a Quick Battle proceeds for up to 3 rounds or until a collapse condition is met  
-  When the System checks outcome conditions at the end of each round  
-  Then the System ends the battle immediately when the attacker collapse, defender collapse, or mutual exhaustion conditions from this spec are satisfied, computes casualties per side and a final battle result (decisive attacker win, decisive defender hold, or mutual exhaustion), and passes these results into the same province-flip and casualty application pipeline used by auto-resolve.
+- Given a Quick Battle round with attacker cavalry share `A`, defender cavalry share `D`, attacker general medals `GA`, defender general medals `GD`, and config weights `W_cav`, `W_medal`  
+  When the System determines acting order  
+  Then the System computes `attackerInitiative = A * W_cav + GA * W_medal` and `defenderInitiative = D * W_cav + GD * W_medal`, and the side with the higher score acts first; if scores are equal, the lower lexical `factionId` acts first.
+
+- Given a Quick Battle group with `unitCount > 0` and cohesion integer range `0..3`  
+  When the System computes group effective strength in the current phase  
+  Then the System uses `unitCount * (cohesion / 3)` as the base group strength and applies action/province modifiers without requiring regiment tactical stats (`FPN`/`FPM`).
 
 - Given two Quick Battle runs with the same Quick Battle seed and identical battle context, lane composition, and initial cohesion  
   When the System runs the Quick Battle resolver for both  
@@ -132,14 +117,6 @@ The game then applies casualties and province ownership changes using the same w
 - Given a Quick Battle has completed with a decisive attacker win and the resolver returns provinceFlips true  
   When the combat pipeline applies the Quick Battle result to the game state  
   Then the System flips province ownership to the attacker and applies casualties using the same world-state update logic as auto-resolve; given a defender hold or mutual exhaustion result, the System does not flip province ownership.
-
-- Given the System computes lane-level effective combat power for a Quick Battle round  
-  When the System applies terrain modifiers for each lane  
-  Then the System uses the attacker and defender percentage adjustments from the Percentage adjustments to combat power table in this spec (OPEN 100% / 100%, HILL 75% / 120%, WOODS 80% / 110%, TOWN 60% / 130%, SWAMP 70% / 90%).
-
-- Given a Quick Battle round is about to begin and both sides have regiments and optional general medals  
-  When the System determines which side acts first in that round  
-  Then the System computes initiative consistent with [combat.md](combat.md) § Rules (Initiative) (cavalryShare × W_cav + generalMedals × W_medal) and uses that ordering (or tie-break by faction id) to decide first-acting side. General medals (deployment limit, initiative, morale aura) apply the same way as in auto-resolve per [military-generals.md](military-generals.md).
 
 - Given a siege Quick Battle (`fortLevel` 1, 2, or 3) is initialized for a province  
   When the System builds Quick Battle input  

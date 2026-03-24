@@ -13,13 +13,6 @@ bool isMineralEligibleTile(
   Map<String, TileMapResult>? tileMapByRegion,
   String tileKey,
 ) {
-  const mineralTerrains = {
-    TerrainType.swamp,
-    TerrainType.hills,
-    TerrainType.mountain,
-    TerrainType.desert,
-  };
-
   if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
     final parts = tileKey.split('|');
     if (parts.length == 4) {
@@ -30,7 +23,7 @@ bool isMineralEligibleTile(
       if (tileMap != null && x != null && y != null) {
         final terrain = tileMap.terrainAt(x, y);
         if (terrain != null) {
-          return mineralTerrains.contains(terrain);
+          return isProspectableTerrain(terrain);
         }
       }
     }

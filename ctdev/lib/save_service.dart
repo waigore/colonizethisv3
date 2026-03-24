@@ -43,6 +43,7 @@ Future<({
   Map<String, TileMapResult> tileMapByRegion,
   Map<String, MapTopology> topologyByRegion,
   MapTopology combinedTopology,
+  List<WarpLink>? warpLinks,
 })?> loadMapData(String gameId) async {
   final box = await _ensureBox();
   return _adapter.loadMapData(box, gameId);

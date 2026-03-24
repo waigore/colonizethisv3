@@ -664,8 +664,7 @@ List<AssignedRecipe> _defaultAssignments(
   Random rng,
 ) {
   // Simple baseline: distribute a fixed amount of labour to core recipes.
-  final totalLabour =
-      workers.peasants * 1 + workers.apprentices * 4 + workers.journeymen * 6;
+  final totalLabour = workers.labourSupplyPerTurn;
   if (totalLabour <= 0) return const [];
 
   final toFabric = (totalLabour * 0.4).round();

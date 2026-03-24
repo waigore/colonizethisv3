@@ -12,6 +12,7 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import '../../../widgets/game_to_ui_bus_listener.dart';
@@ -34,6 +35,60 @@ void _showPauseMenu(AppEventBus bus) {
       onResume: () => bus.emit(const ClosePanelEvent()),
     ),
   );
+}
+
+Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
+  final l10n = appL10n(context);
+  final shouldExit = await showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    useRootNavigator: true,
+    builder: (ctx) => CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.game_exitConfirm_title,
+            style: Theme.of(ctx).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.game_exitConfirm_body),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.common_cancel),
+              ),
+              const SizedBox(width: 8),
+              CtNinePatchButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.game_exitConfirm_exit),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+  return shouldExit ?? false;
+}
+
+void _navigateToMainMenu(BuildContext context) {
+  var foundShellRoute = false;
+  final navigator = Navigator.of(context);
+  navigator.popUntil((route) {
+    final matches = route.settings.name == Routes.shell;
+    if (matches) {
+      foundShellRoute = true;
+    }
+    return matches;
+  });
+  if (!foundShellRoute) {
+    navigator.pushNamedAndRemoveUntil(Routes.shell, (route) => false);
+  }
 }
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
@@ -145,9 +200,18 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    return CtScreenShell(
-      title: appL10n(context).game_screenTitle,
-      child: content,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || !context.mounted) return;
+        final shouldExit = await _showExitToMainMenuConfirmDialog(context);
+        if (!shouldExit || !context.mounted) return;
+        _navigateToMainMenu(context);
+      },
+      child: CtScreenShell(
+        title: appL10n(context).game_screenTitle,
+        child: content,
+      ),
     );
   }
 }

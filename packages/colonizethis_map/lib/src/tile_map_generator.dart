@@ -543,7 +543,7 @@ class TileMapGenerator {
       terrainGrid: terrainGrid,
       resourceGrid: resourceGrid,
     );
-    final topology = inferTopologyFromTileMap(result, regionId, seaZoneId);
+    final topology = inferTopologyFromTileMap(result, regionId);
     _log.i(
       'TileMapGenerator.generate end regionId=$regionId provinces=${topology.nodes.where((n) => n.type == TopologyNodeType.province).length}',
     );

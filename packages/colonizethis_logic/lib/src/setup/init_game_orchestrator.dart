@@ -1,4 +1,5 @@
-// init_game orchestration. SPEC/program/init-game-tool.md.
+// init_game orchestration. SPEC/program/init-game-tool.md, game-setup-pipeline.md
+// (effective seed, OW vs NW tile-map seeds).
 
 import 'dart:typed_data';
 
@@ -175,20 +176,36 @@ InitGameResult runInitGame({
     semanticToPlayerId[semanticId] = playerId;
   }
 
-  Map<String, (int r, int g, int b)>? effectiveGpColorOverride;
+  Map<String, (int r, int g, int b)>? toolGpColorTuples;
   final rawOverride = options.greatPowerColorOverride;
   if (rawOverride != null && rawOverride.isNotEmpty) {
-    effectiveGpColorOverride = <String, (int, int, int)>{};
+    toolGpColorTuples = <String, (int, int, int)>{};
     rawOverride.forEach((semanticId, rgb) {
       final playerId = semanticToPlayerId[semanticId];
       if (playerId != null) {
-        effectiveGpColorOverride![playerId] = rgb;
+        toolGpColorTuples![playerId] = rgb;
       }
     });
-    if (effectiveGpColorOverride.isEmpty) {
-      effectiveGpColorOverride = null;
+    if (toolGpColorTuples.isEmpty) {
+      toolGpColorTuples = null;
     }
   }
+
+  final mergedGpColorTuples = <String, (int r, int g, int b)>{};
+  final baseOverride = setupResult.game.greatPowerColorOverride;
+  if (baseOverride != null) {
+    baseOverride.forEach((playerId, rgb) {
+      if (rgb.length >= 3) {
+        mergedGpColorTuples[playerId] = (rgb[0], rgb[1], rgb[2]);
+      }
+    });
+  }
+  if (toolGpColorTuples != null) {
+    mergedGpColorTuples.addAll(toolGpColorTuples);
+  }
+  final mapColorTuples = mergedGpColorTuples.isEmpty
+      ? null
+      : mergedGpColorTuples;
 
   final mapViewData = buildInitGameMapViewData(
     game: setupResult.game,
@@ -198,7 +215,7 @@ InitGameResult runInitGame({
     seed: effectiveSeed,
     configSummary:
         'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
-    greatPowerColorOverride: effectiveGpColorOverride,
+    greatPowerColorOverride: mapColorTuples,
     warpLinks: warpLinks,
   );
 
@@ -210,9 +227,9 @@ InitGameResult runInitGame({
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
-  final gpColorOverrideList = effectiveGpColorOverride?.map(
-    (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
-  );
+  final gpColorOverrideList = mapColorTuples == null
+      ? null
+      : mapColorTuples.map((k, v) => MapEntry(k, [v.$1, v.$2, v.$3]));
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
@@ -233,7 +250,7 @@ InitGameResult runInitGame({
     topologyByRegion: setupResult.topologyByRegion,
     combinedTopology: setupResult.combinedTopology,
     warpLinks: setupResult.warpLinks,
-    greatPowerColorOverride: effectiveGpColorOverride,
+    greatPowerColorOverride: mapColorTuples,
   );
 }
 

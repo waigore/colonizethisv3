@@ -282,6 +282,25 @@ class ScenarioRunner {
         ),
       );
     }
+    if (setup.initialFleets != null && setup.initialFleets!.isNotEmpty) {
+      final fleets = setup.initialFleets!
+          .map((f) => Fleet(
+                id: f.id,
+                ownerId: f.ownerId,
+                seaZoneId: f.seaZoneId,
+                inPortAtProvinceId: f.inPortAtProvinceId,
+                regionId: f.regionId,
+                shipTypeIds: f.shipTypeIds,
+                mission: FleetMission.values.firstWhere(
+                  (m) => m.name == f.mission,
+                  orElse: () => FleetMission.none,
+                ),
+              ))
+          .toList();
+      game = game.copyWith(
+        worldState: game.worldState.copyWith(fleets: fleets),
+      );
+    }
     // Apply initialWorkers and initialStockpile (SPEC/game/workers-and-population.md).
     var players = game.players;
     if (setup.initialWorkers != null || setup.initialStockpile != null) {

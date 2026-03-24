@@ -6,11 +6,13 @@ alwaysApply: false
 
 # Component Structure
 
+Scope: code organization and extraction rules (folders, reuse thresholds, naming).
+
 **Folder layout:**
 - `lib/game/` — Flame game, world, camera. `lib/game/components/` — Flame components (optional: `units/`, `map/`, `ui/`).
 - `lib/widgets/` or `lib/ui/` — Shared Flutter widgets. `lib/screens/` or `lib/pages/` — Full screens.
 - `lib/state/` or `lib/providers/` — State (e.g. Riverpod). `lib/services/` — Save/load, API, audio. `lib/models/` — Domain models, DTOs.
 
-**Reuse:** Extract at 2+ places or when testable in isolation. Flame: small components, mixins (e.g. `Tappable`); keep rendering in components. Flutter: reusable widgets for loading/error/empty/list; thin screens. New Flutter widgets: catalog + Widgetbook (see UI design rule).
+**Reuse:** Extract at 2+ places or when testable in isolation. Flame: keep components small and rendering-local. Flutter: keep screens thin and favor reusable widgets for loading/error/empty/list patterns.
 
-**Naming:** Flame: `*Component` when clarifying. Flutter: `*Widget`, `*Screen`, `*Page` when clarifying.
+**Naming:** Flame: `*Component` when useful for clarity. Flutter: `*Widget`, `*Screen`, `*Page` when useful for clarity.

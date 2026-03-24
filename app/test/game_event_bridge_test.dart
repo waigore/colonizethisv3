@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/core/services/game_event_bridge.dart';
+import 'package:colonizethis_app/core/services/game_event_bridge.dart';
 
 void main() {
   suppressLogsForTests();
@@ -69,6 +69,37 @@ void main() {
       await pumpEventQueue();
 
       expect(received, isEmpty);
+    });
+
+    test('forwards NavalCombatResultEvent', () async {
+      final received = <AppNavalCombatResultEvent>[];
+      appBus.on<AppNavalCombatResultEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        NavalCombatResultEvent(
+          seaZoneId: 's3',
+          side1OwnerId: 'gp1',
+          side2OwnerId: 'gp2',
+          outcomeName: 'side1Victory',
+          turnNumber: 4,
+          winnerOwnerId: 'gp1',
+          side1Retreated: false,
+          side2Retreated: true,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      final evt = received.first;
+      expect(evt.seaZoneId, 's3');
+      expect(evt.side1OwnerId, 'gp1');
+      expect(evt.side2OwnerId, 'gp2');
+      expect(evt.outcomeName, 'side1Victory');
+      expect(evt.turnNumber, 4);
+      expect(evt.winnerOwnerId, 'gp1');
+      expect(evt.side1Retreated, isFalse);
+      expect(evt.side2Retreated, isTrue);
     });
 
     test('forwards ProvinceCapturedEvent', () async {

@@ -80,6 +80,7 @@ void main() {
     double cellSizePx = 24,
     bool showPoliticalOverlay = true,
     bool showProvinceOverlay = true,
+    bool showProvinceOwnershipTint = true,
     CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? centerOnTileKey,
@@ -103,6 +104,7 @@ void main() {
               cellSizePx: cellSizePx,
               showPoliticalOverlay: showPoliticalOverlay,
               showProvinceOverlay: showProvinceOverlay,
+              showProvinceOwnershipTint: showProvinceOwnershipTint,
               visibilityMode: visibilityMode,
               playerViewForResources: playerViewForResources,
               baseLayerDisplayMode: baseLayerDisplayMode,
@@ -246,6 +248,31 @@ void main() {
         // Province overlay off.
         await tester.pumpWidget(
           _buildCtRegionMap(region: region, showProvinceOverlay: false),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'honors province ownership tint flag without throwing',
+      (WidgetTester tester) async {
+        final region = _oldWorldRegion();
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showProvinceOwnershipTint: true,
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+
+        await tester.pumpWidget(
+          _buildCtRegionMap(
+            region: region,
+            showProvinceOwnershipTint: false,
+          ),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
