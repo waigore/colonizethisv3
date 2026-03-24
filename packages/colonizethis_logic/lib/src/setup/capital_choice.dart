@@ -101,7 +101,7 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
           classCx = x;
           classCy = y;
         }
-        if (coastal && classCCoastalX == null) {
+        if (_isTileAdjacentToSea(x, y, tileMap, topology) && classCCoastalX == null) {
           classCCoastalX = x;
           classCCoastalY = y;
         }
