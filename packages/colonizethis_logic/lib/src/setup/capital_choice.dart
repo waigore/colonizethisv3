@@ -71,6 +71,8 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   int? classBy;
   int? classCx;
   int? classCy;
+  int? classCCoastalX;
+  int? classCCoastalY;
 
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
@@ -99,6 +101,10 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
           classCx = x;
           classCy = y;
         }
+        if (_isTileAdjacentToSea(x, y, tileMap, topology) && classCCoastalX == null) {
+          classCCoastalX = x;
+          classCCoastalY = y;
+        }
       }
     }
   }
@@ -109,6 +115,15 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   if (classAx != null) {
     x = classAx;
     y = classAy;
+  } else if (requireSeaBound) {
+    if (classCCoastalX != null) {
+      x = classCCoastalX;
+      y = classCCoastalY;
+    } else {
+      throw ArgumentError(
+        'no_coastal_capital_tile_for_gp: No coastal tile found in sea-bound province $provinceId in region $regionId',
+      );
+    }
   } else if (classBx != null) {
     x = classBx;
     y = classBy;
