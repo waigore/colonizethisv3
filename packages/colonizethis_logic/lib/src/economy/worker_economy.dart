@@ -10,7 +10,8 @@ int effectiveLabourForWorkers({
   required WorkerPool workers,
   required Stockpile stockpile,
 }) {
-  final peasantsLabour = workers.peasants * 1;
+  final peasantsLabour =
+      workers.peasants * WorkerPool.labourPerPeasantTurn;
 
   final refinedSugar = stockpile.quantityOf(CommodityCatalog.refinedSugar.id);
   final cigars = stockpile.quantityOf(CommodityCatalog.cigars.id);
@@ -29,9 +30,9 @@ int effectiveLabourForWorkers({
       : (furHats < workers.masters ? furHats : workers.masters);
 
   return peasantsLabour +
-      apprenticesWithLuxury * 4 +
-      journeymenWithLuxury * 6 +
-      mastersWithLuxury * 8;
+      apprenticesWithLuxury * WorkerPool.labourPerApprenticeTurn +
+      journeymenWithLuxury * WorkerPool.labourPerJourneymanTurn +
+      mastersWithLuxury * WorkerPool.labourPerMasterTurn;
 }
 
 /// Consumes up to [required] food units (grain/meat) from [stockpile].
