@@ -1,10 +1,14 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('GpDefaultMapColorSwatch', () {
     testWidgets('uses greatPowerDefaultColorRgb for known id', (
       WidgetTester tester,

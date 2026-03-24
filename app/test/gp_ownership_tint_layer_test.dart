@@ -1,9 +1,11 @@
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/gp_ownership_tint_layer.dart';
 
@@ -47,6 +49,8 @@ Future<(int r, int g, int b, int a)> _pixelStraightRgba(
 }
 
 void main() {
+  suppressLogsForTests();
+
   group('paintGreatPowerOwnershipTintLayer', () {
     test('applies strong red tint over white on GP-owned land cell', () async {
       const cell = 24;
