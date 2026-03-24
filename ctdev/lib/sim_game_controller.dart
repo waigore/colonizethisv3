@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
+import 'package:meta/meta.dart';
 
 import 'ctdev_log.dart';
 
@@ -194,6 +195,12 @@ class SimGameController {
     for (var i = 0; i < turns; i++) {
       stepFullTurn();
     }
+  }
+
+  /// Resolves one turn from explicit [orders] (tests and scripted runs).
+  @visibleForTesting
+  void advanceTurnForTesting(Orders orders) {
+    _advanceOneTurnFromOrders(orders);
   }
 
   Orders _combineOrders(List<Orders> all) {
@@ -434,6 +441,60 @@ class SimGameController {
             playerName: player.displayName,
             orderType: 'diplomatic',
             summary: 'Diplomacy $typeLabel → $target$extra',
+            status: validation.status,
+            reason: validation.reason,
+          ),
+        );
+      }
+
+      // Research is not part of [OrderEngine.validatePlayerOrdersWithContext] results;
+      // resolution applies rules in the research phase. Log submissions for the Orders tab.
+      for (final o in research) {
+        final techLabel = o.techId.isEmpty
+            ? 'cancel slot'
+            : techDisplayName(o.techId);
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'research',
+            summary:
+                'Research slot ${o.slotIndex}: $techLabel (${o.funding.name})',
+            status: OrderValidationStatus.accepted,
+            reason: null,
+          ),
+        );
+      }
+
+      for (final o in naval) {
+        final dest = o.isDock
+            ? 'dock ${o.destinationPortProvinceId}'
+            : 'sea ${o.destinationSeaZoneId}';
+        final validation = nextResult();
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'naval_move',
+            summary: 'Naval move fleet ${o.fleetId} → $dest',
+            status: validation.status,
+            reason: validation.reason,
+          ),
+        );
+      }
+
+      for (final o in mission) {
+        final target = o.targetProvinceId ?? o.targetPortId ?? '—';
+        final validation = nextResult();
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'naval_mission',
+            summary: 'Naval mission fleet ${o.fleetId}: ${o.mission} ($target)',
             status: validation.status,
             reason: validation.reason,
           ),
