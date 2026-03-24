@@ -301,6 +301,8 @@ TurnResolutionResult resolveTurnForGame({
           topology,
           orders.navalMoveOrdersByPlayerId,
           onDialogue: onDialogue,
+          onGameEvent: onGameEvent,
+          eventBus: eventBus,
         );
         break;
       case TurnPhase.combat:

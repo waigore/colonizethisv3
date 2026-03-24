@@ -78,5 +78,21 @@ void main() {
       expect(e.orderSummary, 'Build road');
       expect(e.reasonCode, 'insufficient_treasury');
     });
+
+    test('NavalCombatResultEvent has required fields', () {
+      const e = NavalCombatResultEvent(
+        seaZoneId: 's2',
+        side1OwnerId: 'gp1',
+        side2OwnerId: 'gp2',
+        outcomeName: 'side1Victory',
+        turnNumber: 4,
+        winnerOwnerId: 'gp1',
+        side1Retreated: false,
+        side2Retreated: true,
+      );
+      expect(e.seaZoneId, 's2');
+      expect(e.winnerOwnerId, 'gp1');
+      expect(e.side2Retreated, isTrue);
+    });
   });
 }

@@ -3,9 +3,11 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'debug_map_painter.dart';
+import 'fleet_map_overlay.dart';
 
 /// Builds the tile key for a cell in a region. Format: regionId|provinceId|x|y.
 String tileKeyForCell(RegionMapViewData region, CellViewData cell) {
@@ -25,6 +27,7 @@ class PlayerViewMapPainter extends CustomPainter {
     this.geographicMode = false,
     this.showImprovements = false,
     this.showUnits = true,
+    this.fleets = const [],
   });
 
   final InitGameMapViewData viewData;
@@ -35,6 +38,7 @@ class PlayerViewMapPainter extends CustomPainter {
   final bool geographicMode;
   final bool showImprovements;
   final bool showUnits;
+  final List<Fleet> fleets;
 
   static const Color _unknownColor = Colors.black;
   static const Color _revealedColor = Color(0xFF606060);
@@ -52,7 +56,12 @@ class PlayerViewMapPainter extends CustomPainter {
     final gap = cellSize * 2;
     final owWidthPx = ow.width * cellSize;
 
-    _paintRegion(canvas, ow, cellSize, Size(owWidthPx, ow.height * cellSize));
+    _paintRegion(
+      canvas,
+      ow,
+      cellSize,
+      Size(owWidthPx, ow.height * cellSize),
+    );
     canvas.save();
     canvas.translate(owWidthPx + gap, 0);
     _paintRegion(
@@ -64,7 +73,12 @@ class PlayerViewMapPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _paintRegion(Canvas canvas, RegionMapViewData region, double cellSize, Size size) {
+  void _paintRegion(
+    Canvas canvas,
+    RegionMapViewData region,
+    double cellSize,
+    Size size,
+  ) {
     final fillPaint = Paint()..style = PaintingStyle.fill;
 
     for (final cell in region.cells) {
@@ -178,6 +192,18 @@ class PlayerViewMapPainter extends CustomPainter {
         const radius = 5.0;
         canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
         canvas.drawCircle(Offset(cx, cy), radius, strokePaint);
+      }
+    }
+
+    if (showUnits && fleets.isNotEmpty) {
+      final mine = fleets
+          .where(
+            (f) =>
+                f.regionId == region.regionId && f.ownerId == playerView.playerId,
+          )
+          .toList();
+      if (mine.isNotEmpty) {
+        paintFleetsForRegion(canvas, region, mine, cellSize);
       }
     }
 
@@ -344,6 +370,7 @@ class PlayerViewMapPainter extends CustomPainter {
         oldDelegate.showPorts != showPorts ||
         oldDelegate.geographicMode != geographicMode ||
         oldDelegate.showImprovements != showImprovements ||
-        oldDelegate.showUnits != showUnits;
+        oldDelegate.showUnits != showUnits ||
+        oldDelegate.fleets != fleets;
   }
 }

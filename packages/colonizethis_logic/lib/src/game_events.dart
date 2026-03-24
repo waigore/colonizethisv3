@@ -27,6 +27,32 @@ class CombatResultEvent extends GameEvent {
   final Map<String, int> casualties;
 }
 
+/// Naval battle resolved in a sea zone. SPEC/program/game-events.md.
+class NavalCombatResultEvent extends GameEvent {
+  const NavalCombatResultEvent({
+    required this.seaZoneId,
+    required this.side1OwnerId,
+    required this.side2OwnerId,
+    required this.outcomeName,
+    required this.turnNumber,
+    this.winnerOwnerId,
+    this.side1Retreated = false,
+    this.side2Retreated = false,
+  });
+
+  /// Sea zone local id (e.g. s3).
+  final String seaZoneId;
+  final String side1OwnerId;
+  final String side2OwnerId;
+  /// [NavalBattleOutcome] `.name` from resolver.
+  final String outcomeName;
+  final int turnNumber;
+  /// Set when [outcomeName] is a decisive victory for one side.
+  final String? winnerOwnerId;
+  final bool side1Retreated;
+  final bool side2Retreated;
+}
+
 /// Province ownership changed.
 class ProvinceCapturedEvent extends GameEvent {
   const ProvinceCapturedEvent({

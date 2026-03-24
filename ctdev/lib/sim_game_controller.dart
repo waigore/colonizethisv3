@@ -82,6 +82,7 @@ class SimGameController {
   /// When using full AI, economy plans per player for production phase. Cleared on resolve.
   final Map<String, EconomyPlan> _pendingEconomyPlansByPlayerId = {};
   final List<SimOrderHistoryEntry> _orderHistory = [];
+  final List<String> _lastTurnCombatSummaries = [];
 
   Game get game => _game;
   Map<String, Orders> get pendingOrdersByPlayerId =>
@@ -103,6 +104,40 @@ class SimGameController {
 
   List<SimOrderHistoryEntry> get orderHistory =>
       List.unmodifiable(_orderHistory);
+
+  /// Land + naval combat lines from the last resolved turn (Overview tab).
+  List<String> get lastTurnCombatSummaries =>
+      List.unmodifiable(_lastTurnCombatSummaries);
+
+  /// True when at least one GP has non-empty pending orders (for projections).
+  bool get hasPendingOrdersForProjection {
+    for (final p in _game.players) {
+      final o = _pendingOrdersByPlayerId[p.id];
+      if (o != null && !_isOrdersEffectivelyEmpty(o)) return true;
+    }
+    return false;
+  }
+
+  /// Dry-run effects for [playerId] from merged pending orders; null if no pending.
+  ProjectedEffects? projectedEffectsForPlayer(String playerId) {
+    if (!hasPendingOrdersForProjection) return null;
+    return projectOrderEffects(
+      game: _game,
+      orders: mergePendingOrdersForProjection(),
+      topology: _topology,
+      tileMapByRegion: _tileMapByRegion,
+      playerId: playerId,
+    );
+  }
+
+  /// Merges per-GP pending orders with empty [Orders] for GPs not yet filled.
+  Orders mergePendingOrdersForProjection() {
+    final list = <Orders>[
+      for (final p in _game.players)
+        _pendingOrdersByPlayerId[p.id] ?? const Orders(),
+    ];
+    return _combineOrders(list);
+  }
 
   bool get allPlayersHaveOrders {
     final ids = _game.players.map((p) => p.id).toList();
@@ -252,6 +287,7 @@ class SimGameController {
     Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   }) {
     _recordOrderHistory(orders);
+    _lastTurnCombatSummaries.clear();
     final before = _game;
     final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
       game: _game,
@@ -260,10 +296,27 @@ class SimGameController {
       tileMapByRegion: _tileMapByRegion,
       defaultAssignments: const [],
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      onGameEvent: _recordCombatGameEvent,
     ));
     _game = next;
     _recordTurnLog(before: before, after: next);
   }
+
+  void _recordCombatGameEvent(GameEvent event) {
+    final line = _combatEventUiLine(event);
+    if (line == null) return;
+    _lastTurnCombatSummaries.add(line);
+    Logger().i('ctdev: $line');
+  }
+
+  bool _isOrdersEffectivelyEmpty(Orders o) =>
+      o.moveOrdersByPlayerId.isEmpty &&
+      o.buildUnitOrdersByPlayerId.isEmpty &&
+      o.workOrdersByPlayerId.isEmpty &&
+      o.diplomaticOrdersByPlayerId.isEmpty &&
+      o.researchOrdersByPlayerId.isEmpty &&
+      o.navalMoveOrdersByPlayerId.isEmpty &&
+      o.navalMissionOrdersByPlayerId.isEmpty;
 
   void _recordOrderHistory(Orders orders) {
     if (orders.moveOrdersByPlayerId.isEmpty &&
@@ -536,5 +589,40 @@ class SimGameController {
         'ctdev: Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
       );
     }
+  }
+}
+
+String? _combatEventUiLine(GameEvent event) {
+  switch (event) {
+    case CombatResultEvent(
+        :final provinceId,
+        :final attackerId,
+        :final defenderId,
+        :final winnerId,
+        :final casualties,
+      ):
+      final cas = casualties.isEmpty ? '' : ' casualties=$casualties';
+      return 'Land combat $provinceId: $attackerId vs $defenderId → '
+          '$winnerId$cas';
+    case NavalCombatResultEvent(
+        :final seaZoneId,
+        :final side1OwnerId,
+        :final side2OwnerId,
+        :final outcomeName,
+        :final winnerOwnerId,
+        :final side1Retreated,
+        :final side2Retreated,
+      ):
+      final w = winnerOwnerId != null ? ' winner=$winnerOwnerId' : '';
+      final r = (side1Retreated || side2Retreated)
+          ? ' retreat=${[
+              if (side1Retreated) 'side1',
+              if (side2Retreated) 'side2',
+            ].join(',')}'
+          : '';
+      return 'Naval combat sea $seaZoneId: $side1OwnerId vs '
+          '$side2OwnerId → $outcomeName$w$r';
+    default:
+      return null;
   }
 }
