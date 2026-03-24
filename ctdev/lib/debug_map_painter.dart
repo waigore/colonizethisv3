@@ -2,7 +2,10 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+
+import 'fleet_map_overlay.dart';
 
 /// Visual scale factor applied to logical cellSize from RegionMapViewData.
 /// Default 0.25 so both regions fit side-by-side in a typical viewport; zoom min 0.25.
@@ -19,6 +22,7 @@ class RegionMapPainter extends CustomPainter {
     this.geographicMode = false,
     this.showImprovements = false,
     this.showUnits = false,
+    this.fleets = const [],
     this.selectedX,
     this.selectedY,
   });
@@ -31,6 +35,8 @@ class RegionMapPainter extends CustomPainter {
   final bool geographicMode;
   final bool showImprovements;
   final bool showUnits;
+  /// When [showUnits] is true, drawn as triangles (same toggle as armies).
+  final List<Fleet> fleets;
   final int? selectedX;
   final int? selectedY;
 
@@ -132,6 +138,10 @@ class RegionMapPainter extends CustomPainter {
         canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
         canvas.drawCircle(Offset(cx, cy), radius, strokePaint);
       }
+    }
+
+    if (showUnits && fleets.isNotEmpty) {
+      paintFleetsForRegion(canvas, region, fleets, cellSize);
     }
 
     // Improvements overlay: improvement level (0-4) and road level on land tiles.
@@ -276,6 +286,7 @@ class RegionMapPainter extends CustomPainter {
         oldDelegate.geographicMode != geographicMode ||
         oldDelegate.showImprovements != showImprovements ||
         oldDelegate.showUnits != showUnits ||
+        oldDelegate.fleets != fleets ||
         oldDelegate.selectedX != selectedX ||
         oldDelegate.selectedY != selectedY;
   }
@@ -290,6 +301,7 @@ class CombinedMapPainter extends CustomPainter {
     this.geographicMode = false,
     this.showImprovements = false,
     this.showUnits = false,
+    this.fleets = const [],
     this.selectedRegionId,
     this.selectedX,
     this.selectedY,
@@ -302,6 +314,7 @@ class CombinedMapPainter extends CustomPainter {
   final bool geographicMode;
   final bool showImprovements;
   final bool showUnits;
+  final List<Fleet> fleets;
   final String? selectedRegionId;
   final int? selectedX;
   final int? selectedY;
@@ -324,6 +337,7 @@ class CombinedMapPainter extends CustomPainter {
       geographicMode: geographicMode,
       showImprovements: showImprovements,
       showUnits: showUnits,
+      fleets: fleets,
       selectedX:
           selectedRegionId == ow.regionId ? selectedX : null,
       selectedY:
@@ -345,6 +359,7 @@ class CombinedMapPainter extends CustomPainter {
       geographicMode: geographicMode,
       showImprovements: showImprovements,
       showUnits: showUnits,
+      fleets: fleets,
       selectedX:
           selectedRegionId == nw.regionId ? selectedX : null,
       selectedY:
@@ -366,6 +381,7 @@ class CombinedMapPainter extends CustomPainter {
         oldDelegate.geographicMode != geographicMode ||
         oldDelegate.showImprovements != showImprovements ||
         oldDelegate.showUnits != showUnits ||
+        oldDelegate.fleets != fleets ||
         oldDelegate.selectedRegionId != selectedRegionId ||
         oldDelegate.selectedX != selectedX ||
         oldDelegate.selectedY != selectedY;

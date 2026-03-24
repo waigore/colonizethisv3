@@ -7,6 +7,8 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
+import '../event_bus/game_event_bus.dart';
+import '../game_events.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
@@ -293,6 +295,8 @@ Game runNavalInterceptionCombatPhase(
   MapTopology topology,
   Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
   void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  GameEventBus? eventBus,
 }) {
   var battles = detectNavalConflicts(game);
   _log.d('logic: naval phase detected battles=${battles.length}');
@@ -381,6 +385,30 @@ Game runNavalInterceptionCombatPhase(
         }
       }
     }
+
+    String? winnerOwnerId;
+    switch (result.outcome) {
+      case NavalBattleOutcome.side1Victory:
+        winnerOwnerId = battle.side1.ownerId;
+      case NavalBattleOutcome.side2Victory:
+        winnerOwnerId = battle.side2.ownerId;
+      case NavalBattleOutcome.stalemate:
+      case NavalBattleOutcome.mutualDestruction:
+        winnerOwnerId = null;
+    }
+    final navalEv = NavalCombatResultEvent(
+      seaZoneId: battle.seaZoneId,
+      side1OwnerId: battle.side1.ownerId,
+      side2OwnerId: battle.side2.ownerId,
+      outcomeName: result.outcome.name,
+      turnNumber: turn,
+      winnerOwnerId: winnerOwnerId,
+      side1Retreated: result.side1Retreated,
+      side2Retreated: result.side2Retreated,
+    );
+    eventBus?.publish(navalEv);
+    onGameEvent?.call(navalEv);
+
     battleIndex++;
   }
   return state;
