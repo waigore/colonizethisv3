@@ -432,6 +432,234 @@ void main() {
           reason:
               'deployment limit 12 with Nationalism: at most 12 participate');
     });
+
+    test('assigned winning general gains +1 medal immediately and persists', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
+            units: [
+              Unit(
+                id: 'a1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: 'p',
+              ),
+              Unit(
+                id: 'a2',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: 'p',
+              ),
+              Unit(
+                id: 'd1',
+                type: 'peasant_levies',
+                ownerId: 'def',
+                locationProvinceId: 'p',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+        generals: const [
+          General(id: 'g-att', ownerId: 'att', medals: 1),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2']),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final after = resolveBattleContext(game, ctx);
+      final updatedGeneral =
+          after.generals.firstWhere((g) => g.id == 'g-att');
+      expect(updatedGeneral.medals, 2);
+    });
+
+    test('leader fallback medals apply when no uncommitted general exists', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
+            units: [
+              Unit(
+                id: 'a1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: 'p',
+              ),
+              Unit(
+                id: 'd1',
+                type: 'grenadiers',
+                ownerId: 'def',
+                locationProvinceId: 'p',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'att',
+            displayName: 'Att',
+            isHuman: true,
+            leaderKey: 'napoleon',
+          ),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1']),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final after = resolveBattleContext(game, ctx);
+      // No assigned generals exist; fallback medals should not create new general records.
+      expect(after.generals, isEmpty);
+    });
+
+    test('general medals are capped at 4 on immediate engagement win', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 6),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def')
+            ],
+            units: [
+              Unit(
+                id: 'a1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: 'p',
+              ),
+              Unit(
+                id: 'a2',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: 'p',
+              ),
+              Unit(
+                id: 'd1',
+                type: 'peasant_levies',
+                ownerId: 'def',
+                locationProvinceId: 'p',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Att', isHuman: true),
+          Player(id: 'def', displayName: 'Def', isHuman: true),
+        ],
+        generals: const [
+          General(id: 'g-att', ownerId: 'att', medals: 4),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2']),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final after = resolveBattleContext(game, ctx);
+      final updatedGeneral =
+          after.generals.firstWhere((g) => g.id == 'g-att');
+      expect(updatedGeneral.medals, 4);
+    });
+
+    test('battle tie-break is deterministic for same seed and context', () {
+      final makeGame = () => Game(
+            id: 'g1',
+            globalGameSeed: 1234,
+            worldState: WorldState(
+              turnState:
+                  const TurnState(phase: TurnPhase.orders, turnNumber: 8),
+              oldWorld: RegionData(
+                provinces: const [
+                  Province(id: 'p', regionId: 'oldWorld', ownerId: 'def'),
+                ],
+                units: [
+                  Unit(
+                    id: 'a1',
+                    type: 'pikemen',
+                    ownerId: 'attA',
+                    locationProvinceId: 'p',
+                  ),
+                  Unit(
+                    id: 'a2',
+                    type: 'pikemen',
+                    ownerId: 'attB',
+                    locationProvinceId: 'p',
+                  ),
+                  Unit(
+                    id: 'd1',
+                    type: 'pikemen',
+                    ownerId: 'def',
+                    locationProvinceId: 'p',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+            ),
+            players: const [
+              Player(id: 'attA', displayName: 'A', isHuman: true),
+              Player(id: 'attB', displayName: 'B', isHuman: true),
+              Player(id: 'def', displayName: 'D', isHuman: true),
+            ],
+          );
+      const ctx = BattleContext(
+        provinceId: 'p',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['d1'],
+        attackers: [
+          AttackingSide(factionId: 'attA', unitIds: ['a1']),
+          AttackingSide(factionId: 'attB', unitIds: ['a2']),
+        ],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+
+      final r1 = resolveBattleContext(makeGame(), ctx);
+      final r2 = resolveBattleContext(makeGame(), ctx);
+      expect(r1.worldState.oldWorld.provinces, r2.worldState.oldWorld.provinces);
+      expect(r1.worldState.oldWorld.units, r2.worldState.oldWorld.units);
+      expect(r1.generals, r2.generals);
+    });
   });
 
   group('resolveBattleContext Spy timer interaction', () {

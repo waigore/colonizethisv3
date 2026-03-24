@@ -12,13 +12,13 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 **Battle Mode:** Field (fort level 0, terrain modifiers) or Siege (fort level ≥ 1; walls, emplaced artillery per [siege-mechanics.md](siege-mechanics.md)).
 
-**Initiative:** `initiative = cavalryShare × W_cav + generalMedals × W_medal`, where `cavalryShare = cavalry regiments / total regiments`.
+**Initiative:** `initiative = cavalryShare × W_cav + generalMedals × W_medal`, where `cavalryShare = cavalry regiments / total regiments`. If two attackers have equal initiative, tie-break with one deterministic RNG roll for the battle context (seeded by combat seed and battle context identity), not lexical faction id.
 
-**Multi-Attacker Chain:** Sort attackers by initiative descending (tie-break: faction id). Resolve sequentially: defender vs highest-initiative attacker; winner (no heal) vs next attacker; repeat until no attackers remain or defender eliminated.
+**Multi-Attacker Chain:** Sort attackers by initiative descending, using the deterministic battle-context RNG tie-break for exact initiative ties. Resolve sequentially: defender vs highest-initiative attacker; winner (no heal) vs next attacker; repeat until no attackers remain or defender eliminated.
 
 **Strength:** Per-regiment FPN + FPM (from [military-units.md](military-units.md)). Medals (0–4) multiply by 1.0–1.4. DEF durability = DEF / 9. Damaged units: firepower ∝ remaining / starting health. Side strength = `Σ (FPN_eff + FPM_eff) × medalMult`, adjusted by modifiers. **Current auto-resolve:** Strength aggregation uses (FPN + FPM) × medalMult only; DEF/9 and damaged-unit health scaling are deferred (no unit health field; casualty selection uses strength-weighted choice).
 
-**Modifiers:** Terrain (province type), fort (level 0–3; damage reduction + emplaced guns per [siege-mechanics.md](siege-mechanics.md)), difficulty (scales attacker/defender; deferred in auto-resolve until difficulty is wired from game config), general (+1 deployment per medal + initiative contribution), leader (per [leader-bonuses.md](leader-bonuses.md)), feeding coverage (see table below).
+**Modifiers:** Terrain (province type), fort (level 0–3; damage reduction + emplaced guns per [siege-mechanics.md](siege-mechanics.md)), difficulty (scales attacker/defender; deferred in auto-resolve until difficulty is wired from game config), general (+1 deployment per medal + initiative contribution), leader (per [leader-bonuses.md](leader-bonuses.md), including fallback medal derivation when no uncommitted general is available), feeding coverage (see table below).
 
 **Resolution:** Compare total attacker vs defender strength after modifiers. Deterministic output: winner + casualties per side.
 
@@ -34,11 +34,23 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 - Given one defender and two or more attacking factions each with at least one regiment in the same province  
   When the system resolves combat for that province  
-  Then the system computes initiative for each attacker as `initiative = cavalryShare × W_cav + generalMedals × W_medal`, breaks ties by ascending faction id, and orders the attackers from highest to lowest initiative for the multi-attacker chain.
+  Then the system computes initiative for each attacker as `initiative = cavalryShare × W_cav + generalMedals × W_medal`, and for exact initiative ties it uses one deterministic RNG tie-break for that battle context to order tied attackers for the multi-attacker chain.
 
 - Given a defender and an ordered list of attackers as defined above, each with at least one regiment remaining  
   When the system executes the multi-attacker chain for that province  
   Then the system first resolves a battle between the defender and the highest-initiative attacker, and for each subsequent attacker it resolves a new battle between the previous battle’s winner (without healing or regenerating regiments) and the next attacker in the ordered list until either all attackers are eliminated or the defender side is eliminated.
+
+- Given a side in combat has no uncommitted assignable general for a BattleContext  
+  When the system derives `generalMedals` for initiative and combat modifiers  
+  Then the system derives fallback medals from that side’s leader combat multiplier using this mapping: multiplier `>= 1.25` => 4 medals, `>= 1.20` => 3 medals, `>= 1.15` => 2 medals, `>= 1.10` => 1 medal, else 0 medals.
+
+- Given an engagement winner is carried forward as the defender in the next step of a multi-attacker chain  
+  When the system initializes the next engagement in that same BattleContext  
+  Then the system reuses the carried winner’s assigned or fallback `generalMedals` as the defender medals for that next engagement.
+
+- Given an engagement has a winning side with an assigned general record and current medals in range 0..4  
+  When the system finalizes that engagement result  
+  Then the system increments that winning general’s medals by exactly 1 and caps the stored value at 4, and persists the updated medals into game state for subsequent engagements and turns.
 
 - Given a defender and one or more attackers with regiment-level stats (FPN, FPM, medals, DEF) and combat modifiers (terrain, fort, difficulty, leaders, feeding coverage) defined in the active ruleset  
   When the system computes side strength for auto-resolve combat in that province  

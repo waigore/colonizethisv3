@@ -35,6 +35,18 @@ class AttackingSide {
   final String factionId;
   final List<String> unitIds;
   final int generalMedals;
+
+  AttackingSide copyWith({
+    String? factionId,
+    List<String>? unitIds,
+    int? generalMedals,
+  }) {
+    return AttackingSide(
+      factionId: factionId ?? this.factionId,
+      unitIds: unitIds ?? this.unitIds,
+      generalMedals: generalMedals ?? this.generalMedals,
+    );
+  }
 }
 
 /// Conflict detection after movement. SPEC/program/combat-resolution.md.
