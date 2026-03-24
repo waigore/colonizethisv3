@@ -189,6 +189,7 @@ void main() {
 
         expect(find.text('Map display options'), findsOneWidget);
         expect(find.text('Show province overlay'), findsOneWidget);
+        expect(find.text('Show province ownership'), findsOneWidget);
         expect(find.text('Show province names'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -236,6 +237,44 @@ void main() {
           showProvinceOverlayFinder,
         );
         expect(switchTile.value, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: toggling Show province ownership in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final ownershipFinder = find.widgetWithText(
+          SwitchListTile,
+          'Show province ownership',
+        );
+        expect(ownershipFinder, findsOneWidget);
+
+        await tester.tap(ownershipFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(find.text('Close'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
+        expect(ownershipTile.value, isFalse);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

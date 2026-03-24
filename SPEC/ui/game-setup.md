@@ -44,6 +44,30 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ---
 
+## Shell new game dialog (`NewGameLeaderSelectionDialog`)
+
+**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for MVP.
+
+| Element | Requirement |
+|--------|-------------|
+| Slots | Six rows: slot 0 = human (**Player 1 (You)**), slots 1–5 = AI (**Player 2–6 (AI)**). Each row: **slot label**, then **one horizontal row** with nation and leader pickers side-by-side (equal width, 8 dp gap) to save vertical space. |
+| Nation picker | Per slot, `CtDropdown` of Great Powers. **No duplicate nations** across slots (options exclude GPs taken in other slots; changing assignments follows the same exclusion rules as `CtGameSetup`). **Default map colour** (`greatPowerDefaultColorRgb` in colonizethis_data / GDD 09): small filled rectangle **left of the nation name** in the closed control and in each list row. |
+| Leader picker | Per slot (same row as nation), leaders for that slot’s nation only; changing nation resets leader to that nation’s default variant. |
+| Initial load | **Implicit default:** slot order starts as **`GameSetupConfig.defaultConfig.selectedGreatPowerIds`** (six distinct GPs). Leaders default to each nation’s default variant. **Start** is enabled when all slots have valid nations and leaders (true on open with default data). |
+| Fair assignment | Checkbox (default off) sets **`GameSetupConfig.enforceFairGpOldWorldAssignment`** on confirm, same semantics as before. |
+| Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment)`** to the shell; shell builds `GameSetupConfig` and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
+
+**Acceptance criteria (shell dialog).**
+
+- **Given** the user opened New Game from the main menu, **when** the dialog is shown, **then** six slot rows appear; each row shows the slot label and **nation + leader dropdowns on one line**; fair-assignment checkbox, Cancel, and Start; initial nations match the program default six GPs and leaders match defaults; nation pickers show the GP colour swatch beside each nation label.
+- **Given** the dialog is open, **when** the user changes a slot’s nation, **then** that slot’s leader list updates to that nation’s variants and the selected leader becomes that nation’s default unless the user picks another.
+- **Given** the dialog is open, **when** the user opens a nation dropdown, **then** only GPs not assigned to **other** slots are listed (plus the current slot’s nation).
+- **Given** the user taps Start, **when** the handler runs, **then** it receives the six gpIds in slot order and the leader map for those ids, and game initialization proceeds as in [game-initializing.md](game-initializing.md).
+
+**Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload) and shell integration (`app/test/shell_screen_test.dart`).
+
+---
+
 ## Wireframe
 
 Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).

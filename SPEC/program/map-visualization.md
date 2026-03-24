@@ -39,16 +39,16 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 **greatPowerColorOverride source and flow**
 
-- **Data model:** `Game.greatPowerColorOverride` (see [world-model.md](../game/world-model.md)) stores an optional map of GP semantic ids → RGB triples; when present, all map visualizers use it instead of GDD default GP colours.
-- **Init Game (ctdev):** The ctdev Init Game screen lets the user pick GP colours; selections are stored on `InitGameOptions.greatPowerColorOverride` and passed to `runInitGame` (see [ctdev-app-init-map.md](ctdev-app-init-map.md) and [init-game-tool.md](init-game-tool.md)). The init-game orchestrator persists this on `Game.greatPowerColorOverride` and passes a tuple-form override into `buildInitGameMapViewData`, which then feeds `game_world_state_map_visualizer`.
-- **Running game / load save (ctdev):** When ctdev loads a save, it reads `Game.greatPowerColorOverride` and converts it via `greatPowerColorOverrideFromGame` into the tuple map passed to `buildInitGameMapViewData` for both Init Game Map Debug and Running Game map views (see [ctdev-app.md](ctdev-app.md)).
-- **CLI behaviour:** CLI tools that call init-game without a ctdev front-end do not set `greatPowerColorOverride`; the visualizer sees `null` and falls back to the GDD default GP palette.
+- **Keys:** Runtime Great Power faction id (`Player.id`, e.g. `gp1`..`gpN`), **not** semantic id (`england`, …). Province `ownerId` and map tint lookups use these ids.
+- **Data model:** `Game.greatPowerColorOverride` (see [world-model.md](../game/world-model.md)) stores an optional map **player id → [r,g,b]**. `createGameFromGeneratedMaps` seeds it from `GameSetupConfig.selectedGreatPowerIds` slot order × `greatPowerDefaultColorRgb` (GDD 09) so in-game tint matches nation-picker swatches. When null/empty (legacy saves), `factionOwnershipColorMap` falls back to `regionPalette` by sorted player id — hues may not match semantic GDD colours.
+- **Init Game (ctdev):** The ctdev Init Game screen may pass semantic-keyed picks on `InitGameOptions.greatPowerColorOverride`; `runInitGame` maps them to runtime player ids and **merges** onto the seeded defaults, then persists the merged map on `Game` and passes tuple form into `buildInitGameMapViewData` (see [ctdev-app-init-map.md](ctdev-app-init-map.md), [init-game-tool.md](init-game-tool.md)).
+- **Running game / load save (ctdev):** When ctdev loads a save, it reads `Game.greatPowerColorOverride` and converts it via `greatPowerColorOverrideFromGame` into the tuple map passed to `buildInitGameMapViewData` (see [ctdev-app.md](ctdev-app.md)).
 
 ---
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the province-overlay ownership tint to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model). `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model). `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
 
 ---
 

@@ -13,6 +13,7 @@ class CtDropdown<T> extends StatelessWidget {
     this.hint,
     this.isExpanded = true,
     this.itemLabel,
+    this.itemLeading,
   });
 
   final T? value;
@@ -22,6 +23,10 @@ class CtDropdown<T> extends StatelessWidget {
   final bool isExpanded;
   final String Function(T value)? itemLabel;
 
+  /// Optional leading widget per value (e.g. GP map colour). Shown when the
+  /// value is selected and in each picker row when non-null.
+  final Widget? Function(BuildContext context, T value)? itemLeading;
+
   String _labelFor(T v) => itemLabel != null ? itemLabel!(v) : v.toString();
 
   @override
@@ -30,24 +35,33 @@ class CtDropdown<T> extends StatelessWidget {
         ? _labelFor(value as T)
         : (hint ?? 'Select');
 
-    Widget buttonChild = Text(
-      selected,
-      overflow: TextOverflow.ellipsis,
-    );
+    final Widget labelWidget = Text(selected, overflow: TextOverflow.ellipsis);
+
+    Widget? leading;
+    if (value != null && items.contains(value) && itemLeading != null) {
+      leading = itemLeading!(context, value as T);
+    }
+
+    Widget buttonChild = labelWidget;
 
     if (isExpanded) {
       buttonChild = Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text(
-              selected,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          if (leading != null) ...[leading, const SizedBox(width: 8)],
+          Expanded(child: labelWidget),
           const SizedBox(width: 8),
           const Icon(Icons.expand_more, size: 16),
+        ],
+      );
+    } else if (leading != null) {
+      buttonChild = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          leading,
+          const SizedBox(width: 8),
+          Flexible(child: labelWidget),
         ],
       );
     }
@@ -64,10 +78,7 @@ class CtDropdown<T> extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (hint != null) ...[
-                  Text(
-                    hint!,
-                    style: Theme.of(ctx).textTheme.titleMedium,
-                  ),
+                  Text(hint!, style: Theme.of(ctx).textTheme.titleMedium),
                   const SizedBox(height: 8),
                 ],
                 Expanded(
@@ -76,7 +87,7 @@ class CtDropdown<T> extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final v = items[index];
                       final label = _labelFor(v);
-                      final selected = v == value;
+                      final rowLeading = itemLeading?.call(context, v);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: CtNinePatchButton(
@@ -86,9 +97,19 @@ class CtDropdown<T> extends StatelessWidget {
                           enabled: true,
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(
-                              label,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                if (rowLeading != null) ...[
+                                  rowLeading,
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -108,4 +129,3 @@ class CtDropdown<T> extends StatelessWidget {
     );
   }
 }
-
