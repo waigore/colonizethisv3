@@ -49,6 +49,8 @@ Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects
 
 When projecting for a single player: merge that player's orders with empty or placeholder orders for other players so the dry-run can complete. Cross-player effects (combat, diplomacy) require merged orders from all players. For build/work-only feedback, per-player projection in isolation may suffice if the API supports it.
 
+**ctdev Running Game:** For each GP tab, `SimGameController` builds one merged `Orders` value: for every Great Power, use that GP’s entry in `pendingOrdersByPlayerId` if present, otherwise `Orders()` (all maps empty). Then call `projectOrderEffects(..., playerId: <viewed GP>)`. If no GP has any pending orders yet for the turn, the UI shows no projection (em dash).
+
 ---
 
 ## Determinism

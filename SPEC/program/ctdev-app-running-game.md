@@ -16,10 +16,10 @@ Reached via Start Game (Sim) from Init Game Map Debug. User may navigate back to
 
 | Tab | Content |
 |-----|---------|
-| **Map** | OW + NW. Sub-views: **Default** (ownership/geographic, capitals, ports); **Improvements** (per-tile improvement and transport level); **Units** (army markers per province per player). Fleet/navy state (locations, mission icons). |
-| **Game Overview** | Turn, year; owned province list per GP; military strength ([military-strength.md](military-strength.md)); diplomatic states. **Turn seed** `turnSeed[P, T]` per GP for reproducibility. |
-| **Orders (AI history)** | Per-turn, per-GP scrollable view: movement, build, work, diplomatic, naval orders; validation status (accepted/rejected + reason) per [order-engine.md](order-engine.md). Naval combat outcomes when applicable. |
-| **Player (GP) tabs** | One tab per GP. Per-player map via [player-view.md](player-view.md): Unknown (black), Revealed (grey), Fogged (ownership + grey stripes), Fully visible. Only viewing player's units. Below map: stockpiles, `techUnlocked` (stubs: `currentResearchTechId`, `researchableTechIds`); expected extraction/production ([order-projections.md](order-projections.md)); pending orders; available orders ([order-engine.md](order-engine.md)). |
+| **Map** | OW + NW. Sub-views: **Default** (ownership/geographic, capitals, ports); **Improvements** (per-tile improvement and transport level); **Units** (army markers per province per player **and** fleet markers: triangle + mission letter per [ships-and-naval.md](../game/ships-and-naval.md), same toggle as armies). |
+| **Game Overview** | Turn, year; owned province list per GP; military strength ([military-strength.md](military-strength.md)); **Diplomacy:** every row in `Game.diplomacyRelations` (faction display names, `RelationState`, `RelationLevel`, score). Undiscovered cross-region pairs are not stored as relations and do not appear. **Last turn combat:** land + naval summary lines from the most recent resolve (see Display and Logging). **Turn seed** `turnSeed[P, T]` per GP for reproducibility. |
+| **Orders (AI history)** | Per-turn, per-GP scrollable view: movement, build, work, diplomatic, research, naval move/mission orders; validation status (accepted/rejected + reason) per [order-engine.md](order-engine.md). Combat narratives: **Overview** and **Sim Log**, not this tab. |
+| **Player (GP) tabs** | One tab per GP. Per-player map via [player-view.md](player-view.md): Unknown (black), Revealed (grey), Fogged (ownership + grey stripes), Fully visible. Only viewing player's units **and** that player's fleets when **Units** is on. Below map: **Projected end of turn** via [order-projections.md](order-projections.md) (`projectOrderEffects`) when any GP has pending orders (empty `Orders` for GPs not yet filled this turn); stockpiles; `techUnlocked`; pending orders; available orders ([order-engine.md](order-engine.md)). |
 
 All tabs read from `SimGameController.game` and `pendingOrdersByPlayerId`; refresh on Next Player / Next Turn.
 
@@ -33,7 +33,7 @@ AI choice made on Init Map Debug before Start Game. **Player-by-player:** Next P
 
 ## Display and Logging
 
-After each resolved turn: map updates from `Game.worldState`; panel shows turn/year, land combat events (province, sides, winner, casualties, flips), naval combat events. Fast-forward 10 may compress to summary.
+After each resolved turn: map updates from `Game.worldState`. **Land combat:** `CombatResultEvent` from the Combat phase → one human-readable line per battle (province, attacker, defender, winner, optional casualties). **Naval combat:** `NavalCombatResultEvent` from the naval interception phase → one line per battle (sea zone, sides, outcome, optional winner, retreats). **Game Overview** repeats the same lines under **Last turn combat** for the turn just resolved. **In-memory Sim Log** receives these lines via `Logger().i('ctdev: …')` (info+), so they appear in the rolling UI log alongside other ctdev messages. Province ownership flips continue to be logged as today. Fast-forward 10 does not change event shape (one line per battle per turn).
 
 **In-memory Sim Log:** Last 10 lines at info+; cleared at start of each turn. Full detail in session log file ([ctdev-logging.md](ctdev-logging.md)).
 
