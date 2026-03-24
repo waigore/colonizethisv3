@@ -307,6 +307,28 @@ class AppCombatResultEvent extends GameToUIEvent {
   final Map<String, int> casualties;
 }
 
+/// Naval battle resolved in a sea zone. Mirrors colonizethis_logic NavalCombatResultEvent.
+class AppNavalCombatResultEvent extends GameToUIEvent {
+  const AppNavalCombatResultEvent({
+    required this.seaZoneId,
+    required this.side1OwnerId,
+    required this.side2OwnerId,
+    required this.outcomeName,
+    required this.turnNumber,
+    this.winnerOwnerId,
+    this.side1Retreated = false,
+    this.side2Retreated = false,
+  });
+  final String seaZoneId;
+  final String side1OwnerId;
+  final String side2OwnerId;
+  final String outcomeName;
+  final int turnNumber;
+  final String? winnerOwnerId;
+  final bool side1Retreated;
+  final bool side2Retreated;
+}
+
 /// Province ownership changed. Mirrors colonizethis_logic ProvinceCapturedEvent.
 class AppProvinceCapturedEvent extends GameToUIEvent {
   const AppProvinceCapturedEvent({
