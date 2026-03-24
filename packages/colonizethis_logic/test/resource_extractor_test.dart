@@ -109,6 +109,120 @@ void main() {
       expect(result['pl1']!.land['grain'], 1);
     });
 
+    test(
+      'effective extraction capped by player tech cap when improvement and '
+      'transport are high',
+      () {
+        final grid = [['p1']];
+        final tileMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: grid,
+          resourceGrid: [[Resource.grain]],
+        );
+        final tileState = TileMapState()
+            .setImprovement('oldWorld|p1|0|0', 4)
+            .setRoadLevel('oldWorld|p1|0|0', 4);
+        final player = Player(
+          id: 'pl1',
+          displayName: 'Spain',
+          isHuman: true,
+          capitalProvinceId: 'p1',
+          capitalTile: CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'p1',
+            x: 0,
+            y: 0,
+          ),
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+            oldWorld: RegionData(provinces: [
+              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            ]),
+            newWorld: const RegionData(),
+            tileState: tileState,
+          ),
+          players: [player],
+        );
+        final resultCap2 = computeExtraction(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap},
+          connectivityResult: {
+            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
+          },
+          techCapForPlayer: (_) => 2,
+        );
+        expect(resultCap2['pl1']!.land['grain'], 2);
+
+        final resultCap3 = computeExtraction(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap},
+          connectivityResult: {
+            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
+          },
+          techCapForPlayer: (_) => 3,
+        );
+        expect(resultCap3['pl1']!.land['grain'], 3);
+      },
+    );
+
+    test(
+      'tech cap from extractionCapForUnlocked matches turn_resolver wiring',
+      () {
+        final grid = [['p1']];
+        final tileMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: grid,
+          resourceGrid: [[Resource.grain]],
+        );
+        final tileState = TileMapState()
+            .setImprovement('oldWorld|p1|0|0', 4)
+            .setRoadLevel('oldWorld|p1|0|0', 4);
+        final player = Player(
+          id: 'pl1',
+          displayName: 'Spain',
+          isHuman: true,
+          capitalProvinceId: 'p1',
+          capitalTile: CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'p1',
+            x: 0,
+            y: 0,
+          ),
+          techUnlocked: {'saw_mill': true, 'seed_drill': true},
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+            oldWorld: RegionData(provinces: [
+              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            ]),
+            newWorld: const RegionData(),
+            tileState: tileState,
+          ),
+          players: [player],
+        );
+        final result = computeExtraction(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap},
+          connectivityResult: {
+            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
+          },
+          techCapForPlayer: (playerId) {
+            final p = game.playerById(playerId);
+            return extractionCapForUnlocked(p?.techUnlocked);
+          },
+        );
+        expect(extractionCapForUnlocked(player.techUnlocked), 3);
+        expect(result['pl1']!.land['grain'], 3);
+      },
+    );
+
     test('extracts wool and copper when present on tile map', () {
       final grid = [
         ['p1', 'p1'],
