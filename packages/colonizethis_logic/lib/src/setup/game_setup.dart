@@ -661,9 +661,12 @@ Game _applyNaming({
   final owById = {for (final p in owProvinces) p.id: p};
   final nwById = {for (final p in nwProvinces) p.id: p};
   final usedProvinceNames = <String>{};
+  var proceduralFallbackCount = 0;
 
-  String generateFallback(int seedOffset) =>
-      generateUniqueProvinceName(namingSeed + seedOffset, usedProvinceNames);
+  String generateFallback(int seedOffset) {
+    proceduralFallbackCount++;
+    return generateUniqueProvinceName(namingSeed + seedOffset, usedProvinceNames);
+  }
 
   // Helper: assign names to provinces from pool (random order). Capital gets capitalName; others get shuffled pool, wrap if needed.
   void assignProvinceNames({
@@ -760,10 +763,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = minor.capitalProvinceId;
     final capitalName = namingMinor.id.isEmpty
-        ? generateUniqueProvinceName(
-            namingSeed + minor.id.hashCode,
-            usedProvinceNames,
-          )
+        ? generateFallback(namingSeed + minor.id.hashCode)
         : (namingMinor.provinceNamePool.isNotEmpty
               ? namingMinor.provinceNamePool.first
               : namingMinor.displayName);
@@ -794,10 +794,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = tribe.capitalProvinceId;
     final capitalName = namingTribe.id.isEmpty
-        ? generateUniqueProvinceName(
-            namingSeed + tribe.id.hashCode,
-            usedProvinceNames,
-          )
+        ? generateFallback(namingSeed + tribe.id.hashCode)
         : (namingTribe.provinceNamePool.isNotEmpty
               ? namingTribe.provinceNamePool.first
               : namingTribe.displayName);
@@ -870,6 +867,15 @@ Game _applyNaming({
       units: game.worldState.newWorld.units,
     ),
   );
+
+  _log.i(
+    'logic: naming applied ow=${updatedWorld.oldWorld.provinces.length} '
+    'nw=${updatedWorld.newWorld.provinces.length} players=${game.players.length} '
+    'minors=${game.minorNations.length} tribes=${game.tribes.length}',
+  );
+  if (proceduralFallbackCount > 0) {
+    _log.d('logic: naming procedural fallback used count=$proceduralFallbackCount');
+  }
 
   return game.copyWith(
     worldState: updatedWorld,
