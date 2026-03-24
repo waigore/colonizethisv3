@@ -260,6 +260,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
     final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
+    final showProvinceOwnershipTint =
+        ref.watch(mapProvinceOwnershipTintVisibleProvider);
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
@@ -308,6 +310,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   region: _currentRegion,
                   baseLayerDisplayMode: _baseLayerDisplayMode,
                   showProvinceOverlay: showProvinceOverlay,
+                  showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNames,
                   humanPlayerId: _humanPlayerId,
                   playerView: humanPlayerView,
@@ -341,6 +344,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 final provinceOverlayVisible = ref.watch(
                                   mapProvinceOverlayVisibleProvider,
                                 );
+                                final ownershipTintVisible = ref.watch(
+                                  mapProvinceOwnershipTintVisibleProvider,
+                                );
                                 final namesVisible = ref.watch(
                                   mapProvinceNamesVisibleProvider,
                                 );
@@ -356,6 +362,21 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                         ref
                                                 .read(
                                                   mapProvinceOverlayVisibleProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            value;
+                                      },
+                                    ),
+                                    SwitchListTile(
+                                      title: Text(
+                                        l10n.map_displayOptions_showProvinceOwnership,
+                                      ),
+                                      value: ownershipTintVisible,
+                                      onChanged: (value) {
+                                        ref
+                                                .read(
+                                                  mapProvinceOwnershipTintVisibleProvider
                                                       .notifier,
                                                 )
                                                 .state =

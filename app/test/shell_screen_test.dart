@@ -12,6 +12,7 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
@@ -113,6 +114,9 @@ void main() {
 
     await tester.tap(find.text('New Game'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Player 1 (You)'), findsOneWidget);
+    expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
 
     // Dialog should appear with Start and Cancel buttons.
     final startButton = find.ancestor(

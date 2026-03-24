@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +20,112 @@ class _FakeGameService extends GameService {
   @override
   getMapData(String gameId) {
     return null;
+  }
+}
+
+/// Minimal OW/NW tile maps + topology for [mapViewDataProvider] integration tests.
+class _GameServiceWithMinimalMap extends GameService {
+  _GameServiceWithMinimalMap(Box<dynamic> box, GameSaveAdapter adapter)
+      : super(box, adapter);
+
+  static final Map<String, MapTopology> _topologyByRegion = {
+    'oldWorld': MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 's1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+    ),
+    'newWorld': MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p1',
+          regionId: 'newWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 's1',
+          regionId: 'newWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+    ),
+  };
+
+  static final Map<String, TileMapResult> _tileMapByRegion = {
+    'oldWorld': TileMapResult(
+      width: 2,
+      height: 2,
+      grid: [
+        ['p1', 's1'],
+        ['s1', 's1'],
+      ],
+    ),
+    'newWorld': TileMapResult(
+      width: 2,
+      height: 2,
+      grid: [
+        ['p1', 's1'],
+        ['s1', 's1'],
+      ],
+    ),
+  };
+
+  static final MapTopology _combinedTopology = MapTopology(
+    nodes: const [
+      TopologyNode(
+        id: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'oldWorld|s1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: 'newWorld|p1',
+        regionId: 'newWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'newWorld|s1',
+        regionId: 'newWorld',
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1'),
+      TopologyEdge(id1: 'newWorld|p1', id2: 'newWorld|s1'),
+    ],
+  );
+
+  @override
+  ({
+    MapTopology combinedTopology,
+    Map<String, TileMapResult> tileMapByRegion,
+    Map<String, MapTopology> topologyByRegion,
+    List<WarpLink>? warpLinks,
+  })?
+  getMapData(String gameId) {
+    if (gameId != 'g_map') {
+      return null;
+    }
+    return (
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+      warpLinks: null,
+    );
   }
 }
 
@@ -72,5 +179,68 @@ void main() {
     final mapView = container.read(mapViewDataProvider);
     expect(mapView, isNull);
   });
+
+  test(
+    'mapViewDataProvider applies Game.greatPowerColorOverride (player id keys) to faction colors',
+    () {
+      const portugalRgb = (90, 160, 90);
+      final game = Game(
+        id: 'g_map',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                displayName: 'OW P1',
+                ownerId: 'gp1',
+              ),
+            ],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'newWorld|p1',
+                regionId: 'newWorld',
+                displayName: 'NW P1',
+              ),
+            ],
+            units: const [],
+          ),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+        ],
+        minorNations: const [],
+        tribes: const [],
+        greatPowerColorOverride: {
+          'gp1': [portugalRgb.$1, portugalRgb.$2, portugalRgb.$3],
+        },
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          currentGameProvider.overrideWith((ref) => game),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => _GameServiceWithMinimalMap(gamesBox, GameSaveAdapter()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final mapView = container.read(mapViewDataProvider);
+      expect(mapView, isNotNull);
+      expect(mapView!.oldWorld.factionColors['gp1'], portugalRgb);
+      expect(mapView.newWorld.factionColors['gp1'], portugalRgb);
+    },
+  );
 }
 

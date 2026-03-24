@@ -107,15 +107,15 @@ GameSetupResult createGameFromGeneratedMaps({
   final owLandmassIds = _landmassIdsFromNeighbours(owNeighbours);
   final owProvincesSorted = owProvinceIds.toList()..sort();
   final seaBoundOwSet = seaBoundOW.toSet();
-  final perturbBase =
-      assignmentPerturbationBase ?? namingSeed ?? config.seed;
+  final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
 
   Map<String, String> owOwner = {};
   var owAssignmentOk = false;
   if (config.enforceFairGpOldWorldAssignment) {
     for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
-      final assignmentRandom =
-          attempt == 0 ? null : Random(Object.hash(0x47504f77, perturbBase, attempt));
+      final assignmentRandom = attempt == 0
+          ? null
+          : Random(Object.hash(0x47504f77, perturbBase, attempt));
       try {
         owOwner = _assignOldWorldOwnershipContiguous(
           neighbours: owNeighbours,
@@ -397,6 +397,25 @@ GameSetupResult createGameFromGeneratedMaps({
     topologyOldWorld: topologyOldWorld,
   );
 
+  // Map tint / UI swatches: runtime player ids (gp1..gpN) → GDD default RGB for
+  // the semantic Great Power in each setup slot (see greatPowerDefaultColorRgb).
+  // Province.ownerId uses gpN; without this, factionOwnershipColorMap misses
+  // greatPowerDefaultColorRgb[gpN] and falls back to regionPalette (wrong hues).
+  final defaultGpColorsByPlayerId = <String, List<int>>{};
+  for (var i = 0; i < gpIds.length; i++) {
+    if (i >= config.selectedGreatPowerIds.length) {
+      break;
+    }
+    final semanticId = config.selectedGreatPowerIds[i];
+    final rgb = greatPowerDefaultColorRgb[semanticId];
+    if (rgb != null) {
+      defaultGpColorsByPlayerId[gpIds[i]] = [rgb.$1, rgb.$2, rgb.$3];
+    }
+  }
+  if (defaultGpColorsByPlayerId.isNotEmpty) {
+    game = game.copyWith(greatPowerColorOverride: defaultGpColorsByPlayerId);
+  }
+
   final combinedTopology = buildCombinedTopology(
     topologyByRegion: topologyByRegion,
     warpLinks: links,
@@ -665,7 +684,10 @@ Game _applyNaming({
 
   String generateFallback(int seedOffset) {
     proceduralFallbackCount++;
-    return generateUniqueProvinceName(namingSeed + seedOffset, usedProvinceNames);
+    return generateUniqueProvinceName(
+      namingSeed + seedOffset,
+      usedProvinceNames,
+    );
   }
 
   // Helper: assign names to provinces from pool (random order). Capital gets capitalName; others get shuffled pool, wrap if needed.
@@ -874,7 +896,9 @@ Game _applyNaming({
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {
-    _log.d('logic: naming procedural fallback used count=$proceduralFallbackCount');
+    _log.d(
+      'logic: naming procedural fallback used count=$proceduralFallbackCount',
+    );
   }
 
   return game.copyWith(
