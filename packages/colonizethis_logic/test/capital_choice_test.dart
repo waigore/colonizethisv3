@@ -134,6 +134,61 @@ void main() {
       expect(tile.provinceId, 'p1');
     });
 
+    test('pickCapitalForFaction for GP uses coastal Class C when Class A is empty', () {
+      // p1 is sea-bound. (0,1) is Class B. (1,1) is Class C coastal (adjacent to sea and p2).
+      final grid = [
+        ['p1', 'p2', 'sea1'],
+        ['p1', 'p1', 'sea1'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+        ],
+      );
+      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
+      final (provinceId, tile) = pickCapitalForFaction(['p1'], 'oldWorld', topology, tileMap);
+      expect(provinceId, 'p1');
+      expect(tile.provinceId, 'p1');
+      expect(tile.x, 1);
+      expect(tile.y, 1);
+    });
+
+    test('pickCapitalForFaction for GP throws when no coastal tile exists', () {
+      // Contrived invalid map: province is marked sea-bound in topology but tile map has no coastal p1 tile.
+      final grid = [
+        ['p1', 'p1', 'p2'],
+        ['p1', 'p1', 'p2'],
+      ];
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+        ],
+      );
+      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
+      expect(
+        () => pickCapitalForFaction(['p1'], 'oldWorld', topology, tileMap),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message.toString(),
+            'message',
+            contains('no_coastal_capital_tile_for_gp'),
+          ),
+        ),
+      );
+    });
+
     test('setCapitalForMinorNation updates minor and WorldState port/road', () {
       final grid = [
         ['p1', 'sea1'],
