@@ -98,6 +98,7 @@ void main() {
             displayName: 'A',
             isHuman: false,
             capitalProvinceId: '$ow|p1',
+            workerPool: const WorkerPool(peasants: 1),
             treasury: 100,
             stockpile: stockpile,
           ),

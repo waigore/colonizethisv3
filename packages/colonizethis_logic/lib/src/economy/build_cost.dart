@@ -82,6 +82,9 @@ typedef _BuildDeductionPlan = ({
           (player.techUnlocked?[shipUnlockTech] != true)) {
         return (failReason: 'Insufficient tech', plan: null);
       }
+      if (workers.peasants <= 0) {
+        return (failReason: 'Insufficient resources', plan: null);
+      }
       if (treasury < shipEcon.buildTreasuryCost) {
         return (failReason: 'Insufficient treasury', plan: null);
       }
@@ -95,7 +98,7 @@ typedef _BuildDeductionPlan = ({
         plan: (
           treasuryCost: shipEcon.buildTreasuryCost,
           materialCosts: shipEcon.buildInputs,
-          subtractOnePeasant: false,
+          subtractOnePeasant: true,
         ),
       );
 
