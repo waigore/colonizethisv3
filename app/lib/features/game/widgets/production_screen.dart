@@ -43,7 +43,7 @@ class ProductionScreen extends ConsumerWidget {
         player: displayPlayer,
         desiredOutputByRecipe: desiredOutputByRecipe,
         onDesiredOutputChanged: (next) {
-          ref.read(productionDesiredOutputProvider.notifier).state = next;
+          ref.read(productionDesiredOutputProvider.notifier).replaceAll(next);
         },
       ),
     );
