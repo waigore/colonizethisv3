@@ -54,6 +54,7 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 | ID | Widget | Constant |
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
+| `train_military` | `TrainMilitaryDialog` | `trainMilitaryDialogId` |
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
 | `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
 
@@ -106,6 +107,7 @@ Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart
 
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
 - Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` directly for that action).
+- Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainMilitaryDialogId)` (panel does not call `showDialog` directly for that action).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps Grant Aid or Set Subsidy, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
 

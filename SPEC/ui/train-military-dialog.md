@@ -1,0 +1,108 @@
+# Train Military Dialog
+
+**SPEC/ui** — Modal dialog for queuing military regiment training orders. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Purpose
+
+The Train Military dialog lets the player queue military regiment build orders in a single modal flow. It mirrors the civilian training UX pattern: one row per trainable type, +/- steppers, optional reset, and order creation on dialog close. Trained regiments spawn at the player's capital province and appear after turn resolution (next turn from the player's perspective).
+
+---
+
+## Opening the dialog
+
+- **Trigger:** `Train` button in [military-units-panel.md](military-units-panel.md).
+- **Flow parity with civilian:** On tap, the military panel closes, then `OpenDialogEvent(trainMilitaryDialogId)` opens this modal.
+- **Presentation:** `CtDialogShell` modal with transparent backdrop.
+
+---
+
+## Layout
+
+- **Header:** `Train Military` title + close (`X`) button.
+- **Resource bar:** Shows available `Treasury`, `Peasants`, and regiment-input commodities (as applicable): `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`. Use existing resource/worker icons.
+- **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`, etc.) using military resource names.
+- **Rows:** One row per `RegimentEconomyCatalog.all` entry.
+  - regiment id label (text-only; no regiment icon requirement)
+  - cost summary: treasury + commodity requirements with icons
+  - locked state + `Requires: {tech}` when regiment unlocking tech is missing
+  - `[-] count [+]` stepper
+- **Footer:** `Reset` button that clears all row counts to `0`.
+
+---
+
+## Stepper and availability behavior
+
+- Count initializes from existing pending military build orders (dialog-managed set; see Order submission).
+- `+` increments by 1 only when adding one more unit remains affordable.
+- `-` decrements by 1, minimum 0.
+- Locked regiments: row subdued and steppers disabled.
+- `+` uses aggregate affordability across all currently selected regiment rows:
+  - treasury
+  - peasants (`workerPool.peasants`, 1 consumed per military regiment)
+  - commodity stockpile requirements for all selected rows
+
+---
+
+## Dynamic cost calculation
+
+On every stepper change:
+
+- `totalTreasuryCost = sum(count[regiment] * RegimentEconomy.buildTreasuryCost)`
+- `totalPeasantCost = sum(count[regiment])`
+- `totalCommodityCost[commodityId] = sum(count[regiment] * RegimentEconomy.buildInputs[commodityId])`
+
+Affordability requires all constraints:
+
+- `totalTreasuryCost <= Player.treasury`
+- `totalPeasantCost <= Player.workerPool.peasants`
+- `totalCommodityCost[c] <= Player.stockpile.quantityOf(c)` for each required commodity
+
+---
+
+## Tech lock display
+
+- Lock mapping source: `unlockingTechByRegimentId`.
+- Locked when unlocking tech exists and `Player.techUnlocked?[techId] != true`.
+- Lock label: `Requires: {techDisplayName(techId)}`.
+
+---
+
+## Order submission
+
+On dialog close (`didPop` / close button), create orders from current counts:
+
+1. Resolve `capitalProvinceId = Player.capitalProvinceId`.
+2. For each regiment type where `count > 0`, add `count` entries of:
+   - `BuildUnitOrder(unitType: regimentId, isMilitary: true, spawnProvinceId: capitalProvinceId)`
+3. Replace only the dialog-managed military orders in `currentOrders.buildUnitOrdersByPlayerId[humanPlayerId]`:
+   - replace set: orders with `isMilitary == true`, regiment `unitType` in `RegimentEconomyCatalog.byId`, and `spawnProvinceId == capitalProvinceId`
+   - keep all other build orders unchanged (civilian, naval, other military outside this managed set)
+
+If no capital exists, UI shows `No capital set — cannot train units`, steppers are disabled, and no orders are created.
+
+---
+
+## Integration
+
+- **Parent:** [military-units-panel.md](military-units-panel.md)
+- **Wiring:** Dialog opens via `AppEventBus` and is registered in app handler scope with id `train_military`.
+- **Model:** Uses `BuildUnitOrder` (`isMilitary: true`) and existing order merge semantics in app shell state.
+- **Timing:** Unit appears after turn resolution (next turn from the player view).
+
+---
+
+## Acceptance criteria
+
+- **Given** the Military Units panel is open, **when** the user taps `Train`, **then** the UI layer closes the panel and opens Train Military as a modal dialog via `OpenDialogEvent(trainMilitaryDialogId)`.
+
+- **Given** the Train Military dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and relevant military-input resources using existing resource/worker icon components.
+
+- **Given** the Train Military dialog is open, **when** the player increments regiment steppers, **then** the UI layer enables/disables each row's `+` based on aggregate affordability across treasury, peasants, and all required commodities.
+
+- **Given** the Train Military dialog is open, **when** the player lacks the unlocking tech for a regiment, **then** the row shows locked state with `Requires: {tech}` and disabled steppers.
+
+- **Given** the Train Military dialog opens with existing pending military train orders for the player's capital, **when** the dialog renders, **then** the steppers pre-populate with those existing counts.
+
+- **Given** the Train Military dialog is open and the user closes it, **when** there are non-zero selected counts, **then** the UI layer writes `BuildUnitOrder` entries with `isMilitary == true` and `spawnProvinceId == Player.capitalProvinceId`, replacing only dialog-managed military orders and leaving all other build orders unchanged.
