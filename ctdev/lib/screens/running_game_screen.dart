@@ -532,7 +532,13 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     const suggestionApi = DefaultOrderSuggestionAPI();
     final suggestedMoves = suggestionApi.suggestMoveOrders(view, game, topology, currentOrders);
     final suggestedBuilds = suggestionApi.suggestBuildOrders(view, game, topology, currentOrders);
-    final suggestedWorks = suggestionApi.suggestWorkOrders(view, game, topology, currentOrders);
+    final suggestedWorks = suggestionApi.suggestWorkOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: _controller.tileMapByRegion,
+    );
     final suggestedResearch = suggestionApi.suggestResearchOrders(view, game, topology, currentOrders);
 
     // Key by regionId|id so OW and NW can share province ids (e.g. p1).

@@ -97,7 +97,7 @@ A Builder may build an improvement on a tile only if: (a) the tile has a **resou
 
 ### Railroad Costs (Rail Builder)
 
-2 lumber + 2 cast iron per tile
+2 lumber + 2 steel per tile (authoritative values in `work_order_costs.dart` / ruleset config).
 
 ### Port Placement
 
@@ -176,9 +176,13 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
   When the system applies the work effect
   Then the tile's transport level is set to 1 (or 2 if the player has Road Construction tech)
 
-- Given a Rail Builder civilian unit completes a build_rail work order on a tile with existing road (transport level 1 or 2)
+- Given a Rail Builder civilian unit completes a build_rail work order on a land tile with transport level 1 or 2, per-tile terrain is available from the tile map, and the player has the transport technology required for that terrain per [tech-tree-transport.md](tech-tree-transport.md)
   When the system applies the work effect
-  Then the tile's transport level is set to 4 (railroad), requiring the Early Steam Engine tech
+  Then the tile's transport level is set to 4 (railroad) and 2 lumber and 2 steel are consumed for that work order per ruleset cost
+
+- Given a player submits a build_rail work order when the tile has transport level 0, or terrain data is missing for that tile, or the player lacks the rail tech required for that tile's terrain
+  When the system validates the work order at submit time
+  Then the system rejects the order with a clear reason
 
 - Given a player has multiple paths from a tile to the capital
   When the system computes transport level cap for that tile's extraction
