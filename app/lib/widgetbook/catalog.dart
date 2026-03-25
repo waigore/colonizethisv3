@@ -20,6 +20,7 @@ import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/widgets/technology_screen.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
+import '../features/game/widgets/train_military_dialog.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/debug_map_visibility_story.dart';
@@ -59,6 +60,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...productionPanelDirectories,
         ...civilianUnitsPanelDirectories,
         ...trainCiviliansDialogDirectories,
+        ...trainMilitaryDialogDirectories,
         ...militaryUnitsPanelDirectories,
         ...navalUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
@@ -565,7 +567,11 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
               : 'gp1';
           return ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: MilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+            child: MilitaryUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: AppEventBus.create(),
+            ),
           );
         },
       ),
@@ -1000,8 +1006,8 @@ class _CivilianPanelWithMapStoryState
               region: region,
               cellSizePx: 24,
               visibilityMode: _visibilityMode,
-              playerViewForResources: _visibilityMode ==
-                      CtMapVisibilityMode.playerConstrained
+              playerViewForResources:
+                  _visibilityMode == CtMapVisibilityMode.playerConstrained
                   ? debugPlayerViewForFirstPlayer()
                   : null,
               showProvinceNamesLayer: _showProvinceNames,
@@ -1208,6 +1214,7 @@ class _MilitaryPanelWithMapStoryState
             child: MilitaryUnitsPanel(
               game: game,
               humanPlayerId: humanPlayerId,
+              bus: AppEventBus.create(),
               onLocateTile: _onLocateTile,
             ),
           ),
@@ -1216,6 +1223,59 @@ class _MilitaryPanelWithMapStoryState
     );
   }
 }
+
+/// Train Military Dialog stories. SPEC/ui/train-military-dialog.md.
+List<WidgetbookNode> get trainMilitaryDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Train Military Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Standalone',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.firstWhere((p) => p.isHuman).id
+              : game.players.first.id;
+          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final richGame = game.copyWith(
+            players: [
+              player.copyWith(
+                treasury: 10000,
+                workerPool: player.workerPool.copyWith(peasants: 20),
+                stockpile: player.stockpile.merge(
+                  const Stockpile(
+                    quantities: {
+                      'fabric': 50,
+                      'castIron': 50,
+                      'lumber': 50,
+                      'horses': 50,
+                      'steel': 50,
+                      'bronze': 50,
+                    },
+                  ),
+                ),
+              ),
+              ...game.players.where((p) => p.id != humanPlayerId),
+            ],
+          );
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TrainMilitaryDialog(
+                  game: richGame,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: const Orders(),
+                  onOrdersChanged: (_) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
 
 /// Naval Units Panel + map in tandem. SPEC/ui/naval-units-panel.md.
 class _NavalPanelWithMapStory extends StatefulWidget {
@@ -1377,8 +1437,9 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
     final game = getDebugInitGameResult().game;
-    final tiles =
-        game.worldState.tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
+    final tiles = game
+        .worldState
+        .tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
     if (tiles != null && tiles.isNotEmpty) {
       _selectedTileKey = tiles.first;
     } else {
@@ -1397,8 +1458,9 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
       final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
       final region = mapViewData.oldWorld;
       final game = getDebugInitGameResult().game;
-      final tiles =
-          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
+      final tiles = game
+          .worldState
+          .tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
       if (tiles != null && tiles.isNotEmpty) {
         _selectedTileKey = tiles.first;
       } else {
@@ -1416,8 +1478,11 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   Widget build(BuildContext context) {
     final initResult = getDebugInitGameResult();
     final game = initResult.game;
-    final playerView =
-        buildPlayerView(game, initResult.combinedTopology, 'gp1');
+    final playerView = buildPlayerView(
+      game,
+      initResult.combinedTopology,
+      'gp1',
+    );
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
     final displayId = _displayIdFromTile(_selectedTileKey) ?? widget.selectedId;
@@ -1484,7 +1549,8 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                         region: region,
                         cellSizePx: 28,
                         visibilityMode: _visibilityMode,
-                        playerViewForResources: _visibilityMode ==
+                        playerViewForResources:
+                            _visibilityMode ==
                                 CtMapVisibilityMode.playerConstrained
                             ? playerView
                             : null,

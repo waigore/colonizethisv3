@@ -167,11 +167,7 @@ class AppEventHandler {
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
-      _log.e(
-        'ui:app_event: ConfirmDialog failed',
-        error: e,
-        stackTrace: st,
-      );
+      _log.e('ui:app_event: ConfirmDialog failed', error: e, stackTrace: st);
       event.result(false);
       return false;
     }
@@ -198,10 +194,7 @@ class AppEventHandler {
     await showModalBottomSheet<void>(
       context: nav.context,
       builder: (ctx) => PauseMenuPanel(
-        params: {
-          'onDebugLog': event.onDebugLog,
-          'onResume': event.onResume,
-        },
+        params: {'onDebugLog': event.onDebugLog, 'onResume': event.onResume},
       ),
     );
   }
@@ -262,9 +255,11 @@ class AppEventHandler {
             return const SizedBox.shrink();
           }
           final humanPlayerId = _humanPlayerId(game);
+          final bus = ref.watch(appEventBusProvider);
           return MilitaryUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
+            bus: bus,
             onLocateTile: event.onLocateTile,
           );
         },
