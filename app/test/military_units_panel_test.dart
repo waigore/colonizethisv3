@@ -27,6 +27,7 @@ void main() {
   Widget buildPanel({
     required Game game,
     required String humanPlayerId,
+    AppEventBus? bus,
     void Function(String tileKey, String regionId)? onLocateTile,
   }) {
     return MaterialApp(
@@ -34,6 +35,7 @@ void main() {
         body: MilitaryUnitsPanel(
           game: game,
           humanPlayerId: humanPlayerId,
+          bus: bus ?? AppEventBus.create(),
           onLocateTile: onLocateTile,
         ),
       ),

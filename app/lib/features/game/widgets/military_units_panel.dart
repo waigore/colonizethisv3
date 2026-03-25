@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/services/app_event_handler_scope.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
 /// Region id to display label. SPEC/ui/military-units-panel.md.
@@ -114,10 +116,7 @@ abstract class _LocationNode {
 }
 
 class _ProvinceLocationNode extends _LocationNode {
-  _ProvinceLocationNode({
-    required this.province,
-    required this.rows,
-  });
+  _ProvinceLocationNode({required this.province, required this.rows});
 
   final Province province;
   final List<_RegimentTypeRow> rows;
@@ -169,31 +168,32 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
 
     // Regiments in this region: group by full province id, then by type.
     final militaryUnits = regionData.units
-        .where((u) =>
-            u.ownerId == humanPlayerId && isMilitaryUnit(u.type))
+        .where((u) => u.ownerId == humanPlayerId && isMilitaryUnit(u.type))
         .toList();
     final byProvince = <String, List<Unit>>{};
     for (final u in militaryUnits) {
       final loc = u.locationProvinceId;
-      final fullProvinceId =
-          loc.contains('|') ? loc : '$regionId|$loc';
+      final fullProvinceId = loc.contains('|') ? loc : '$regionId|$loc';
       byProvince.putIfAbsent(fullProvinceId, () => []).add(u);
     }
 
     // Fleets in this region owned by player that are at sea (have seaZoneId).
     final fleetsInRegion = game.worldState.fleets
-        .where((f) =>
-            f.ownerId == humanPlayerId &&
-            f.regionId == regionId &&
-            f.shipTypeIds.isNotEmpty &&
-            f.isAtSea &&
-            f.seaZoneId != null)
+        .where(
+          (f) =>
+              f.ownerId == humanPlayerId &&
+              f.regionId == regionId &&
+              f.shipTypeIds.isNotEmpty &&
+              f.isAtSea &&
+              f.seaZoneId != null,
+        )
         .toList();
     final bySeaZone = <String, List<Fleet>>{};
     for (final f in fleetsInRegion) {
       final seaZoneId = f.seaZoneId!;
-      final zoneKey =
-          seaZoneId.contains('|') ? seaZoneId : '$regionId|$seaZoneId';
+      final zoneKey = seaZoneId.contains('|')
+          ? seaZoneId
+          : '$regionId|$seaZoneId';
       bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
     }
 
@@ -227,21 +227,23 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
         final status = list.any((u) => u.status == UnitStatus.working)
             ? UnitStatus.working
             : list.any((u) => u.status == UnitStatus.done)
-                ? UnitStatus.done
-                : UnitStatus.idle;
+            ? UnitStatus.done
+            : UnitStatus.idle;
         final statusLabel = switch (status) {
           UnitStatus.idle => 'Idle',
           UnitStatus.working => 'Working',
           UnitStatus.done => 'Done',
         };
-        rows.add(_RegimentTypeRow(
-          typeId: typeId,
-          count: list.length,
-          medalsSummary: medalsSummary,
-          statusLabel: statusLabel,
-          tileKey: tileKey,
-          regionId: regionId,
-        ));
+        rows.add(
+          _RegimentTypeRow(
+            typeId: typeId,
+            count: list.length,
+            medalsSummary: medalsSummary,
+            statusLabel: statusLabel,
+            tileKey: tileKey,
+            regionId: regionId,
+          ),
+        );
       }
       locations.add(_ProvinceLocationNode(province: province, rows: rows));
     }
@@ -264,19 +266,23 @@ List<({String regionId, List<_LocationNode> locations})> _buildMilitaryTree(
       final tileKey = tileKeyForSeaZoneLocation(game, regionId, zoneKey);
       final rows = <_ShipTypeRow>[];
       for (final typeId in shipTypeIds.keys.toList()..sort()) {
-        rows.add(_ShipTypeRow(
-          typeId: typeId,
-          count: shipTypeIds[typeId]!,
-          statusLabel: _missionLabel(mission ?? FleetMission.none),
-          tileKey: tileKey,
-          regionId: regionId,
-        ));
+        rows.add(
+          _ShipTypeRow(
+            typeId: typeId,
+            count: shipTypeIds[typeId]!,
+            statusLabel: _missionLabel(mission ?? FleetMission.none),
+            tileKey: tileKey,
+            regionId: regionId,
+          ),
+        );
       }
-      locations.add(_SeaZoneLocationNode(
-        seaZoneLabel: zoneLabel,
-        regionId: regionId,
-        rows: rows,
-      ));
+      locations.add(
+        _SeaZoneLocationNode(
+          seaZoneLabel: zoneLabel,
+          regionId: regionId,
+          rows: rows,
+        ),
+      );
     }
 
     if (locations.isNotEmpty) {
@@ -293,11 +299,13 @@ class MilitaryUnitsPanel extends StatelessWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    required this.bus,
     this.onLocateTile,
   });
 
   final Game game;
   final String humanPlayerId;
+  final AppEventBus bus;
 
   /// Called when the user taps a row. [tileKey] and [regionId] for highlight/center and tab switch.
   final void Function(String tileKey, String regionId)? onLocateTile;
@@ -327,6 +335,13 @@ class MilitaryUnitsPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
+                    CtNinePatchButton(
+                      onPressed: () {
+                        Navigator.of(context).maybePop();
+                        bus.emit(OpenDialogEvent(trainMilitaryDialogId));
+                      },
+                      child: const Text('Train'),
+                    ),
                   ],
                 ),
               ),
@@ -337,9 +352,7 @@ class MilitaryUnitsPanel extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                         children: [
                           for (final group in tree) ...[
-                            _RegionHeader(
-                              label: _regionLabel(group.regionId),
-                            ),
+                            _RegionHeader(label: _regionLabel(group.regionId)),
                             for (final loc in group.locations) ...[
                               _LocationHeader(
                                 label: loc.displayLabel,
@@ -349,24 +362,26 @@ class MilitaryUnitsPanel extends StatelessWidget {
                                 for (final row in loc.rows)
                                   _RegimentRow(
                                     row: row,
-                                    onTap: row.tileKey != null &&
+                                    onTap:
+                                        row.tileKey != null &&
                                             onLocateTile != null
                                         ? () => onLocateTile!(
-                                              row.tileKey!,
-                                              row.regionId,
-                                            )
+                                            row.tileKey!,
+                                            row.regionId,
+                                          )
                                         : null,
                                   ),
                               if (loc is _SeaZoneLocationNode)
                                 for (final row in loc.rows)
                                   _ShipRow(
                                     row: row,
-                                    onTap: row.tileKey != null &&
+                                    onTap:
+                                        row.tileKey != null &&
                                             onLocateTile != null
                                         ? () => onLocateTile!(
-                                              row.tileKey!,
-                                              row.regionId,
-                                            )
+                                            row.tileKey!,
+                                            row.regionId,
+                                          )
                                         : null,
                                   ),
                             ],
@@ -378,13 +393,11 @@ class MilitaryUnitsPanel extends StatelessWidget {
                         child: Center(
                           child: Text(
                             'No military units',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ),
@@ -410,18 +423,16 @@ class _RegionHeader extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
 
 class _LocationHeader extends StatelessWidget {
-  const _LocationHeader({
-    required this.label,
-    required this.regionLabel,
-  });
+  const _LocationHeader({required this.label, required this.regionLabel});
 
   final String label;
   final String regionLabel;
@@ -433,7 +444,8 @@ class _LocationHeader extends StatelessWidget {
       child: Text(
         '$label — $regionLabel',
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface),
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
     );
   }
@@ -452,7 +464,8 @@ class _RegimentRow extends StatelessWidget {
       child: ListTile(
         title: Text('${row.typeId}: ${row.count}'),
         subtitle: Text(
-            'Medals: ${row.medalsSummary} · Status: ${row.statusLabel}'),
+          'Medals: ${row.medalsSummary} · Status: ${row.statusLabel}',
+        ),
         dense: true,
         onTap: onTap,
       ),

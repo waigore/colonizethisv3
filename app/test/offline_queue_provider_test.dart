@@ -16,12 +16,12 @@ void main() {
 
       expect(container.read(offlineQueueProvider), isEmpty);
 
-      notifier.state = [...notifier.state, 'action-1', 'action-2'];
-      expect(container.read(offlineQueueProvider), ['action-1', 'action-2']);
+      notifier.enqueueAll(const ['action-1', 'action-2']);
+      expect(container.read(offlineQueueProvider), const ['action-1', 'action-2']);
 
       // Dequeue first element.
-      notifier.state = notifier.state.skip(1).toList();
-      expect(container.read(offlineQueueProvider), ['action-2']);
+      notifier.dropFirst();
+      expect(container.read(offlineQueueProvider), const ['action-2']);
     });
   });
 }
