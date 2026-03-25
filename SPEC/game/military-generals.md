@@ -61,6 +61,42 @@ Each regiment type has **training cost** and **food upkeep** defined in **progra
 
 Per-regiment values follow the same era/category progression as the tactical stats table in [military-units.md](military-units.md).
 
+### Regiment treasury cost scale (canonical)
+
+`buildTreasuryCost` for every regiment is defined as the Phase 5 baseline value multiplied by **100**. This scale is the source of truth for military `BuildUnitOrder` treasury validation and deduction.
+
+| regiment_id | build_treasury_cost |
+| --- | ---: |
+| peasant_levies | 2000 |
+| pikemen | 4000 |
+| arquebusiers | 5000 |
+| bowmen | 3000 |
+| squires | 6000 |
+| knights | 8000 |
+| culverin | 8000 |
+| calivermen | 7000 |
+| halberdiers | 7000 |
+| musketeers | 8000 |
+| cossacks | 9000 |
+| lancers | 10000 |
+| harquebusiers | 11000 |
+| horse_artillery | 11000 |
+| royal_artillery | 12000 |
+| skirmishers | 9000 |
+| regulars | 11000 |
+| grenadiers | 13000 |
+| hussars | 13000 |
+| cuirassiers | 15000 |
+| light_artillery | 14000 |
+| heavy_artillery | 16000 |
+| sharpshooters | 12000 |
+| rifle_infantry | 14000 |
+| guards | 18000 |
+| scouts | 15000 |
+| carbine_cavalry | 18000 |
+| field_artillery | 18000 |
+| siege_guns | 22000 |
+
 **Config source:** Regiment economy values (training cost, food upkeep) live in program-level config (`colonizethis_data/lib/src/regiment_economy.dart`) per [ruleset-config.md](../program/ruleset-config.md). Ruleset-configurable regiment economy is deferred to a future phase when the ruleset loader supports JSON merge.
 
 **Implementation:** Training cost (cash, materials, worker) is applied at build time when BuildUnitOrder (military) is resolved per [orders.md](../program/orders.md). Food upkeep is consumed during the Consumption phase per [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Consumption and [economy-models.md](../program/economy-models.md).
