@@ -135,8 +135,9 @@ class GameScreen extends ConsumerWidget {
                       const Orders();
                 } else if (result is TurnResolutionPendingOvertures) {
                   ref.read(currentGameProvider.notifier).state = result.game;
-                  ref.read(pendingOverturesProvider.notifier).state =
-                      result.pendingOvertures;
+                  ref
+                      .read(pendingOverturesProvider.notifier)
+                      .setPending(result.pendingOvertures);
                 }
               },
               child: Text(
@@ -163,9 +164,7 @@ class GameScreen extends ConsumerWidget {
     if (showIntro) {
       content = GameStartIntroOverlay(
         onDismissed: () {
-          ref
-              .read(gameIdsWithIntroShownProvider.notifier)
-              .update((set) => {...set, game.id});
+          ref.read(gameIdsWithIntroShownProvider.notifier).markShown(game.id);
         },
         child: content,
       );
@@ -186,14 +185,15 @@ class GameScreen extends ConsumerWidget {
             decisions,
             orders,
           );
-          ref.read(pendingOverturesProvider.notifier).state = null;
+          ref.read(pendingOverturesProvider.notifier).clear();
           if (result is TurnResolutionComplete) {
             ref.read(currentGameProvider.notifier).state = result.game;
             ref.read(currentOrdersProvider.notifier).state = const Orders();
           } else if (result is TurnResolutionPendingOvertures) {
             ref.read(currentGameProvider.notifier).state = result.game;
-            ref.read(pendingOverturesProvider.notifier).state =
-                result.pendingOvertures;
+            ref
+                .read(pendingOverturesProvider.notifier)
+                .setPending(result.pendingOvertures);
           }
         },
         child: content,
