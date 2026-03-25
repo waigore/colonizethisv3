@@ -17,7 +17,26 @@ final currentGameProvider = StateProvider<Game?>((ref) => null);
 
 /// Current-turn orders for the human player (work orders, move orders, etc.).
 /// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.
-final currentOrdersProvider = StateProvider<Orders>((ref) => const Orders());
+class CurrentOrdersNotifier extends Notifier<Orders> {
+  CurrentOrdersNotifier([this._initial = const Orders()]);
+
+  final Orders _initial;
+
+  @override
+  Orders build() => _initial;
+
+  void replaceAll(Orders next) {
+    state = next;
+  }
+
+  void clear() {
+    state = const Orders();
+  }
+}
+
+final currentOrdersProvider = NotifierProvider<CurrentOrdersNotifier, Orders>(
+  CurrentOrdersNotifier.new,
+);
 
 /// Available work targets per civilian unit (unitId → allowed target ids).
 ///

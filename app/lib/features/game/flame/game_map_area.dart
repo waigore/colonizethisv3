@@ -220,11 +220,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     ref
         .read(currentOrdersProvider.notifier)
-        .state = GameMapAreaStateLogic.addHumanWorkOrder(
+        .replaceAll(
+          GameMapAreaStateLogic.addHumanWorkOrder(
       orders: orders,
       humanPlayerId: _humanPlayerId,
       workOrder: workOrder,
-    );
+    ),
+        );
     setState(() {
       _workTargetSelection = null;
       _cachedValidTileKeys = null;
@@ -246,7 +248,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     final newGame = service.nextTurn(game, orders: orders);
     ref.read(currentGameProvider.notifier).state = newGame;
-    ref.read(currentOrdersProvider.notifier).state = const ct_models.Orders();
+    ref.read(currentOrdersProvider.notifier).clear();
   }
 
   @override
@@ -364,8 +366,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceOverlayVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -379,8 +380,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceOwnershipTintVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -394,8 +394,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceNamesVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                   ],
