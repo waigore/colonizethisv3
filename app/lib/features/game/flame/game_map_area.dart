@@ -364,8 +364,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceOverlayVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -379,8 +378,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceOwnershipTintVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -394,8 +392,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                                   mapProvinceNamesVisibleProvider
                                                       .notifier,
                                                 )
-                                                .state =
-                                            value;
+                                                .set(value);
                                       },
                                     ),
                                   ],
