@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 /// Stub provider for offline action queue (multiplayer). Phase 0: MVP has no backend.
 class OfflineQueueNotifier extends Notifier<List<Object?>> {
