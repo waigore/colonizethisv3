@@ -29,12 +29,19 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     _log.i(
       'logic: order suggestion API suggestWorkOrders player=${view.playerId}',
     );
-    return suggestion.suggestWorkOrders(view, game, topology, currentOrders);
+    return suggestion.suggestWorkOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
   }
 
   @override

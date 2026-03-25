@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
 import '../world/province_lookup.dart';
+import 'build_rail_work_rules.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
 import 'orders_application_helpers.dart';
@@ -159,8 +160,9 @@ List<WorkOrder> suggestWorkOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   _log.d(
     '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=${view.playerId}',
   );
@@ -240,6 +242,7 @@ List<WorkOrder> suggestWorkOrders(
               playerId,
               currentOrders,
               candidate,
+              tileMapByRegion: tileMapByRegion,
             )) {
               suggestions.add(candidate);
             }
@@ -260,7 +263,8 @@ List<WorkOrder> suggestWorkOrders(
         if (existingProspect == null ||
             !existingProspect.contains(prospectTarget)) {
           final prospected =
-              game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+              game.worldState.playerProspectedTiles[playerId] ??
+              const <String>{};
           String? prospectTileKey;
           for (final tk in tilesInProvince) {
             if (prospected.contains(tk)) continue;
@@ -280,6 +284,7 @@ List<WorkOrder> suggestWorkOrders(
               playerId,
               currentOrders,
               candidate,
+              tileMapByRegion: tileMapByRegion,
             )) {
               suggestions.add(candidate);
             }
@@ -303,6 +308,7 @@ List<WorkOrder> suggestWorkOrders(
                 game: game,
                 playerId: playerId,
                 workTarget: target,
+                tileMapByRegion: tileMapByRegion,
               );
               return _sortedVisibleWorkTargetCandidates(view, raw);
             },
@@ -325,6 +331,7 @@ List<WorkOrder> suggestWorkOrders(
               playerId,
               currentOrders,
               candidate,
+              tileMapByRegion: tileMapByRegion,
             )) {
               accepted = candidate;
               break;
@@ -360,6 +367,7 @@ List<WorkOrder> suggestWorkOrders(
             playerId,
             currentOrders,
             candidate,
+            tileMapByRegion: tileMapByRegion,
           )) {
             suggestions.add(candidate);
           }
@@ -384,6 +392,7 @@ List<WorkOrder> suggestWorkOrders(
               playerId,
               currentOrders,
               candidate,
+              tileMapByRegion: tileMapByRegion,
             )) {
               suggestions.add(candidate);
               break;
@@ -416,6 +425,7 @@ List<WorkOrder> suggestWorkOrders(
               playerId,
               currentOrders,
               candidate,
+              tileMapByRegion: tileMapByRegion,
             )) {
               suggestions.add(candidate);
               break;
@@ -808,13 +818,23 @@ Set<String> _preFilterWorkTargetTiles({
       break;
 
     case 'build_road':
-    case 'build_rail':
-      // Tiles in owned provinces or purchased tiles
       _addCandidateTilesForRoads(
         tileKeysByRegion: tileKeysByRegion,
         purchasedTiles: purchasedTiles,
         ownedProvinceIds: ownedProvinceIds,
         playerId: playerId,
+        result: result,
+      );
+      break;
+
+    case 'build_rail':
+      _addCandidateTilesForBuildRail(
+        game: game,
+        playerId: playerId,
+        tileKeysByRegion: tileKeysByRegion,
+        purchasedTiles: purchasedTiles,
+        ownedProvinceIds: ownedProvinceIds,
+        tileMapByRegion: tileMapByRegion,
         result: result,
       );
       break;
@@ -995,7 +1015,48 @@ void _addCandidateTilesForProspect({
   }
 }
 
-/// Adds candidate tiles for build_road/build_rail: owned or purchased tiles.
+/// Adds candidate tiles for `build_rail`: owned or purchased land tiles with
+/// road level 1–2, resolvable terrain, and tech that allows rail on that terrain.
+/// SPEC/program/order-suggestions.md, SPEC/game/tech-tree-transport.md.
+void _addCandidateTilesForBuildRail({
+  required Game game,
+  required String playerId,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> purchasedTiles,
+  required Set<String> ownedProvinceIds,
+  required Map<String, TileMapResult>? tileMapByRegion,
+  required Set<String> result,
+}) {
+  final player = game.players.where((p) => p.id == playerId).firstOrNull;
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = game.worldState.tileState;
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      final isOwnedProvince = ownedProvinceIds.contains(provinceId);
+      for (final tileKey in provinceEntry.value) {
+        final isPurchased = purchasedTiles[tileKey] == playerId;
+        if (!isOwnedProvince && !isPurchased) continue;
+        final roadLevel = tileState.roadLevel(tileKey);
+        if (roadLevel != 1 && roadLevel != 2) continue;
+        final terrain = terrainTypeForTileKey(tileMapByRegion, tileKey);
+        if (rejectionReasonForBuildRailOrder(
+              techUnlocked: tech,
+              roadLevel: roadLevel,
+              terrain: terrain,
+            ) !=
+            null) {
+          continue;
+        }
+        result.add(tileKey);
+      }
+    }
+  }
+}
+
+/// Adds candidate tiles for build_road: owned or purchased tiles.
 void _addCandidateTilesForRoads({
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, String> purchasedTiles,
@@ -1539,8 +1600,9 @@ abstract class OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  });
   List<BuildUnitOrder> suggestBuildOrders(
     PlayerView view,
     Game game,
