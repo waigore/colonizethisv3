@@ -130,11 +130,11 @@ class GameScreen extends ConsumerWidget {
                 final orders = ref.read(currentOrdersProvider);
                 final result = service.runTurnResolution(game, orders: orders);
                 if (result is TurnResolutionComplete) {
-                  ref.read(currentGameProvider.notifier).state = result.game;
+                  ref.read(currentGameProvider.notifier).setGame(result.game);
                   ref.read(currentOrdersProvider.notifier).state =
                       const Orders();
                 } else if (result is TurnResolutionPendingOvertures) {
-                  ref.read(currentGameProvider.notifier).state = result.game;
+                  ref.read(currentGameProvider.notifier).setGame(result.game);
                   ref.read(pendingOverturesProvider.notifier).state =
                       result.pendingOvertures;
                 }
@@ -188,10 +188,10 @@ class GameScreen extends ConsumerWidget {
           );
           ref.read(pendingOverturesProvider.notifier).state = null;
           if (result is TurnResolutionComplete) {
-            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(currentGameProvider.notifier).setGame(result.game);
             ref.read(currentOrdersProvider.notifier).state = const Orders();
           } else if (result is TurnResolutionPendingOvertures) {
-            ref.read(currentGameProvider.notifier).state = result.game;
+            ref.read(currentGameProvider.notifier).setGame(result.game);
             ref.read(pendingOverturesProvider.notifier).state =
                 result.pendingOvertures;
           }

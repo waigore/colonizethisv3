@@ -245,7 +245,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final service = ref.read(gameServiceProvider);
     final orders = ref.read(currentOrdersProvider);
     final newGame = service.nextTurn(game, orders: orders);
-    ref.read(currentGameProvider.notifier).state = newGame;
+    ref.read(currentGameProvider.notifier).setGame(newGame);
     ref.read(currentOrdersProvider.notifier).state = const ct_models.Orders();
   }
 

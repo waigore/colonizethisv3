@@ -27,7 +27,9 @@ void main() {
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => debugResult.game),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(debugResult.game),
+        ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
           (ref) => {debugResult.game.id},

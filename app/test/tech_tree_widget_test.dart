@@ -30,7 +30,7 @@ void main() {
   Widget _scopedTechnology(Game g, Widget child) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => g),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(g)),
         currentOrdersProvider.overrideWith((ref) => const Orders()),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
