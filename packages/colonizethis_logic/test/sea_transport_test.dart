@@ -51,13 +51,13 @@ void main() {
       );
     });
 
-    test('returns 0 when home fleet has only non-cargo ship types', () {
+    test('returns 0 when home fleet has only warship types (cargoHold 0)', () {
       final fleet = Fleet(
         id: 'fleet_p1',
         ownerId: 'p1',
         seaZoneId: 'sea1',
         regionId: 'oldWorld',
-        shipTypeIds: const ['galleon'],
+        shipTypeIds: const ['sloop'],
       );
       final game = Game(
         id: 'g1',

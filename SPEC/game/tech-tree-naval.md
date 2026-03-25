@@ -44,7 +44,7 @@
 
 - Given the naval tech table in this doc and the global tech catalog  
   When the System validates the catalog at startup  
-  Then the System ensures that each naval tech id is unique, that its prerequisites refer to techs present in the catalog, and that each ship type unlocked by these techs has a corresponding ship definition in the naval unit specs referenced by [ships-and-naval.md](ships-and-naval.md).
+  Then the System ensures that each naval tech id is unique, that its prerequisites refer to techs present in the catalog, and that each ship type unlocked by these techs has corresponding **build economy** and **naval stats** rows in the canonical tables under [ships-and-naval.md](ships-and-naval.md) (ship build economy and ship combat/cargo stats), with implementation catalogs matching those tables.
 
 - Given a player has unlocked a naval tech such as `superior_hull_design`, `improved_sail_design`, `convoying`, `large_hulls`, `clipper_ships`, `paddlewheels`, `merchant_steamships`, `advanced_hull_design`, `ship_of_the_line`, `privateering_companies`, or `advanced_iron_working`  
   When the System evaluates which ship types are buildable for that player during a build phase per [ships-and-naval.md](ships-and-naval.md)  
