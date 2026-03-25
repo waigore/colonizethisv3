@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// SPEC/game/ships-and-naval.md: every tech-unlocked ship + baseline carrack has
 /// economy and naval stats entries.
