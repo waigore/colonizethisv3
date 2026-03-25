@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -8,6 +9,8 @@ import '../world/unit_lookup.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
+
+final _combatLog = logicLogger();
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
@@ -151,6 +154,12 @@ Game resolveBattleContext(
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
+    _combatLog.d(
+      'logic: combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+      'attackerFactionId=${attacker.side.factionId} result=${outcome.result.name} '
+      'attCasualties=${outcome.attackerCasualties.length} '
+      'defCasualties=${outcome.defenderCasualties.length}',
+    );
 
     for (final id in outcome.attackerCasualties) {
       allCasualties.add(id);
@@ -232,6 +241,18 @@ Game resolveBattleContext(
     defenderFactionId: ctx.defenderFactionId,
     survivingAttackerFactionId: survivingAttackerFactionId,
     defenderUnitIds: defenderUnitIds,
+  );
+  var ownerAfter = '';
+  for (final p in post.region.provinces) {
+    if (p.id == ctx.provinceId) {
+      ownerAfter = p.ownerId ?? '';
+      break;
+    }
+  }
+  _combatLog.i(
+    'logic: combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+    'mode=autoResolve provinceFlipped=${post.provinceChangedOwner} '
+    'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',
   );
 
   var newWorldState = ctx.regionId == kRegionOldWorld

@@ -921,9 +921,13 @@ Game _runCombatPhase(
     for (final p in game.players) p.id: p.capitalProvinceId,
   };
   Game state = applyMinorMilitaryParity(game);
-  final battles = detectConflicts(state, orders);
-  final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   final turn = state.worldState.turnState.turnNumber;
+  _log.i('logic: combat conflict_detection start turn=$turn');
+  final battles = detectConflicts(state, orders);
+  _log.i(
+    'logic: combat conflict_detection end turn=$turn battleContexts=${battles.length}',
+  );
+  final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
   var battleIndex = 0;
   for (final ctx in battles) {
