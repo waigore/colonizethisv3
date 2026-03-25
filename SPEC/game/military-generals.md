@@ -135,6 +135,14 @@ Province ids use the prefixed form and lookup rules in [world-model-identity.md]
   When the system applies deployment limit and modifier rules  
   Then the system caps participating regiments per side to base (10, or 12 with Nationalism tech) + that side’s assigned general medals (or 0 if no general), and applies initiative and morale aura per [combat.md](combat.md) and [combat-resolution.md](../program/combat-resolution.md).
 
+- Given a faction id that owns one or more `General` records in game state (any such faction, not only a Great Power)  
+  When the Combat phase runs multiple land battles in one turn and that faction attacks more than once  
+  Then the system applies the phase ledger in [combat-resolution.md](../program/combat-resolution.md) §3 so a general who already commanded an attack this phase is not assigned as the attacking commander again that phase; if no unassigned general remains for another attack, the attacking side uses fallback medals only.
+
+- Given Quick Battle is selected for a land battle  
+  When the system builds Quick Battle input from the same `BattleContext` and phase ledger as auto-resolve would use  
+  Then attacker and defender general medal inputs match the assignment + fallback rules in [combat-resolution.md](../program/combat-resolution.md) §3, with the primary attacker defined as the first `BattleContext.attackers` entry.
+
 ---
 
 ## AC–scenario mapping

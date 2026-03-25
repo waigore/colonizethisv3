@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../combat/battle_general_assignment.dart';
 import '../combat/combat_mode_selection.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
@@ -927,6 +928,7 @@ Game _runCombatPhase(
   _log.i(
     'logic: combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
+  final combatGeneralLedger = CombatPhaseGeneralLedger();
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
   var battleIndex = 0;
@@ -947,6 +949,7 @@ Game _runCombatPhase(
       turn,
       battleIndex,
       seed,
+      combatGeneralLedger,
       onDialogue: onDialogue,
       onGameEvent: onGameEvent,
     );

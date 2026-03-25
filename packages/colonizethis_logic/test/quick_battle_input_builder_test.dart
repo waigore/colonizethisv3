@@ -202,5 +202,64 @@ void main() {
       expect(input.defenderDeployment.groups.first.unitIds, ['u2']);
       expect(input.attackerDeployment.groups.first.unitIds, ['u1']);
     });
+
+    test('passes attacker and defender medals from battle assignment', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'def'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'att',
+                locationProvinceId: 'P1',
+              ),
+              Unit(
+                id: 'u2',
+                type: 'pikemen',
+                ownerId: 'def',
+                locationProvinceId: 'P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'att', displayName: 'Attacker', isHuman: true),
+          Player(id: 'def', displayName: 'Defender', isHuman: true),
+        ],
+        generals: const [
+          General(id: 'ga', ownerId: 'att', medals: 3),
+          General(id: 'gd', ownerId: 'def', medals: 2),
+        ],
+      );
+      const ctx = BattleContext(
+        provinceId: 'P1',
+        regionId: 'oldWorld',
+        defenderFactionId: 'def',
+        defenderUnitIds: ['u2'],
+        attackers: [AttackingSide(factionId: 'att', unitIds: ['u1'])],
+        fortLevel: 0,
+        terrain: 'plains',
+      );
+      final assignment = assignGeneralsForBattleContext(
+        game: game,
+        ctx: ctx,
+        rng: battleAssignmentRng(game, ctx),
+        ledger: CombatPhaseGeneralLedger(),
+      );
+      final input = buildQuickBattleInput(
+        game,
+        ctx,
+        battleAssignment: assignment,
+      );
+      expect(input.attackerGeneralMedals, 3);
+      expect(input.defenderGeneralMedals, 2);
+    });
   });
 }

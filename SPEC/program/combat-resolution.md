@@ -30,9 +30,15 @@ Per BattleContext, compute initiative per attacking side per game/combat.md § R
 
 ### 3. General assignment (per BattleContext)
 
-Before resolving a BattleContext, assign generals per [military-generals.md](../game/military-generals.md): for each attacking side, assign one uncommitted general at random (or none if the faction has no uncommitted general); for the defender, assign one uncommitted general at random (or none if unavailable). Populate each side’s `generalMedals` from the assigned general’s medals.
+Before resolving a BattleContext, assign generals per [military-generals.md](../game/military-generals.md): for each attacking side, assign one eligible general at random (or fallback medals only if none); for the defender, assign one eligible general at random (or fallback if none). Populate each side’s `generalMedals` from the assigned general’s medals (or from fallback).
 
-If a side has no uncommitted general, derive fallback `generalMedals` from leader combat multiplier (`leader-bonuses.md`) using this mapping:
+**Combat phase ledger (turn-wide attack cap):** The Combat phase maintains a mutable **ledger** (not a global singleton), created once per phase and passed into each land battle. For each faction id that owns generals in `Game.generals`, the ledger records which general ids have **already commanded an attacking side** in a **completed** land battle this phase. When choosing an attacking general for a new `BattleContext`, exclude generals already listed for that faction in the ledger (and exclude generals already assigned to another role in the **same** `BattleContext`). If no general remains for the attacker, use fallback medals only (same mapping as below). This enforces **at most one attack per general per turn** from [military-generals.md](../game/military-generals.md). Defender assignment does **not** consume ledger entries; a general may defend again after a prior battle completes. **Any** faction id present as `General.ownerId` uses the same ledger rules (not only Great Powers).
+
+**Assignment RNG:** General assignment for auto-resolve and Quick Battle uses the same deterministic seed recipe: `hash(globalGameSeed, turnNumber, regionId, provinceId, defenderFactionId, attackers.length)` (program-level `Object.hash` or equivalent).
+
+**Quick Battle:** `buildQuickBattleInput` must use the same assignment + ledger + fallback rules as auto-resolve for that battle. **Primary attacker** for Quick Battle initiative and attacker medal inputs is the **first** entry in `BattleContext.attackers` (same as `QuickBattleInput.attackerFactionId`). Defender medal inputs use the defender assignment from the same pass.
+
+If a side has no assignable general (empty pool after exclusions), derive fallback `generalMedals` from leader combat multiplier (`leader-bonuses.md`) using this mapping:
 
 - multiplier `>= 1.25` => 4 medals
 - multiplier `>= 1.20` => 3 medals
@@ -44,7 +50,9 @@ In multi-attacker chains, when the winner of engagement _n_ becomes defender in 
 
 When an engagement is won by a side with an assigned general record, increment that general's medals by exactly `+1` (cap at 4) and persist to game state immediately so later engagements in the same BattleContext observe updated medals. Medal gain is per engagement win, not per BattleContext aggregate.
 
-When the **entire** BattleContext resolution (full multi-attacker chain) completes, **free** all generals assigned to that battle so they may be assigned again in a subsequent BattleContext the same turn.
+When the **entire** BattleContext resolution (full multi-attacker chain) completes, **free** in-battle commitment so generals may defend or (subject to the ledger) attack in a subsequent `BattleContext` the same turn. **Attack** commanders used in that completed battle are **recorded** on the phase ledger until the Combat phase ends.
+
+**After** each completed land battle (auto-resolve or Quick Battle), append each attacking side’s assigned `generalId` (when non-null) to the ledger for that attacker’s `factionId`.
 
 ### 4. Deployment Limit (per side)
 
@@ -64,7 +72,7 @@ Steps:
 
 **Output:** EngagementResult.
 
-**Implementation note:** Conflict detection currently does not perform general assignment; when implemented, run the assignment step (§3) before resolution and pass resulting generalMedals into the resolver. Record which general commanded each side so medal gain can be applied to the winning general per military-generals.md and this spec's per-engagement medal progression rule. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
+**Implementation note:** Conflict detection does **not** set `AttackingSide.generalMedals`; assignment runs in the resolver (§3) with the phase ledger. Record which general commanded each side so medal gain can be applied to the winning general per military-generals.md and this spec's per-engagement medal progression rule. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
 
 ### 6. Resolution Chain
 
@@ -108,7 +116,34 @@ Structured **land** combat logs (`logic: combat …`) are specified in [ctdev-lo
 
 ## Constraints
 
+- Per `BattleContext`, given the same `Game` snapshot, `BattleContext`, feeding coverage map, assignment RNG seed (§3), and **ledger state before this battle**, resolution is deterministic; the ledger is mutated after each completed land battle to enforce the turn-wide attack cap (orchestration lives in the Combat phase loop, not a global singleton).
 - Resolver is a pure function: same inputs (including seed) → same **returned** `Game` / world state. Emitting logs via the global Dart `logger` is allowed for observability and is not part of the functional output.
 - No global RNG access; callers provide explicit seed when randomness is needed.
 - Province battles are independent; processing order is deterministic (prefixed province id `regionId|localId`).
 - Results applied in a single pass after full chain resolution per BattleContext.
+
+## Acceptance criteria (program)
+
+- Given a Combat phase ledger is empty and a faction has general cap **G** with **G** distinct generals  
+  When the system resolves **G** sequential `BattleContext`s in that phase where that faction is the attacker in each  
+  Then each battle assigns a **different** general id to that faction’s attacking side (when generals exist and RNG selects them), and no general id appears twice in the ledger for that faction’s attacks in that phase.
+
+- Given one general **G1** for faction **F** and **G1** is already recorded on the phase ledger as having commanded an attack this phase  
+  When the system assigns generals for **another** attack by **F** in the same Combat phase  
+  Then the attacking side receives **fallback** leader-derived medals and no assigned attacking `generalId` (unless another general exists for **F**).
+
+- Given general **D** defended a completed battle earlier in the same Combat phase  
+  When the system assigns a defender for a later `BattleContext` involving the same faction  
+  Then **D** may be selected again (defender pool is not blocked by the attack ledger).
+
+- Given identical `Game` (including `globalGameSeed`), turn number, and `BattleContext`  
+  When the system runs general assignment for auto-resolve and for Quick Battle input build  
+  Then both use the same assignment RNG recipe and produce the same assigned general ids and medal counts for attacker (per attacking faction) and defender.
+
+- Given `buildQuickBattleInput` is called with a defender faction that has an assigned general with **M** medals (0 ≤ M ≤ 4) under §3 rules  
+  When the built `QuickBattleInput` is read  
+  Then `defenderGeneralMedals` equals **M** (or fallback count when no defender general is assigned).
+
+- Given `BattleContext.attackers` has a first entry for faction **A** with **M** attacker medals under §3 for that battle  
+  When `buildQuickBattleInput` runs for that context  
+  Then `attackerGeneralMedals` equals **M** for that primary attacker (first list entry), not a sum of `AttackingSide.generalMedals` from conflict detection alone.

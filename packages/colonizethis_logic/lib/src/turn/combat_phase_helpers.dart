@@ -4,6 +4,7 @@
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../combat/battle_general_assignment.dart';
 import '../combat/combat_resolver.dart';
 import '../combat/conflict_detection.dart';
 import '../combat/quick_battle_input_builder.dart';
@@ -23,7 +24,8 @@ Game runOneLandBattle(
   Map<String, double> feedingCoverageByPlayerId,
   int turn,
   int battleIndex,
-  int seed, {
+  int seed,
+  CombatPhaseGeneralLedger combatGeneralLedger, {
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
@@ -40,10 +42,21 @@ Game runOneLandBattle(
   Map<String, int> casualties = {};
 
   if (mode == CombatMode.quickBattle) {
-    final input = buildQuickBattleInput(state, ctx,
-        seed: state.worldState.turnState.turnNumber);
+    final assignment = assignGeneralsForBattleContext(
+      game: state,
+      ctx: ctx,
+      rng: battleAssignmentRng(state, ctx),
+      ledger: combatGeneralLedger,
+    );
+    final input = buildQuickBattleInput(
+      state,
+      ctx,
+      seed: state.worldState.turnState.turnNumber,
+      battleAssignment: assignment,
+    );
     final qbResult = resolveQuickBattle(input);
     state = applyQuickBattleResultToGame(state, ctx, qbResult);
+    recordAttackCommandersForResolvedBattle(ctx, assignment, combatGeneralLedger);
     final qbFlipped = qbResult.provinceFlips &&
         qbResult.winner == QuickBattleWinner.attacker &&
         ctx.attackers.isNotEmpty;
@@ -104,6 +117,7 @@ Game runOneLandBattle(
       state,
       ctx,
       feedingCoverageByPlayerId: feedingCoverageByPlayerId,
+      combatGeneralLedger: combatGeneralLedger,
     );
     final region = ctx.regionId == kRegionOldWorld
         ? state.worldState.oldWorld

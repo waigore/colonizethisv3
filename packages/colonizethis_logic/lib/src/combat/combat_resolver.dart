@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -6,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/fog_resolution.dart';
 import '../world/unit_lookup.dart';
+import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
@@ -43,7 +45,9 @@ Game resolveBattleContext(
   Game game,
   BattleContext ctx, {
   Map<String, double> feedingCoverageByPlayerId = const {},
+  CombatPhaseGeneralLedger? combatGeneralLedger,
 }) {
+  final ledger = combatGeneralLedger ?? CombatPhaseGeneralLedger();
   RegionData region;
   if (ctx.regionId == kRegionOldWorld) {
     region = game.worldState.oldWorld;
@@ -56,20 +60,12 @@ Game resolveBattleContext(
   var defenderFactionId = ctx.defenderFactionId;
   var provinceOwnerId = ctx.defenderFactionId;
   var generalsById = {for (final g in game.generals) g.id: g};
-  final battleRng = Random(
-    Object.hash(
-      game.globalGameSeed ?? 0,
-      game.worldState.turnState.turnNumber,
-      ctx.regionId,
-      ctx.provinceId,
-      ctx.defenderFactionId,
-      ctx.attackers.length,
-    ),
-  );
-  final generalAssignment = _assignGeneralsForBattleContext(
+  final battleRng = battleAssignmentRng(game, ctx);
+  final generalAssignment = assignGeneralsForBattleContext(
     game: game,
     ctx: ctx,
     rng: battleRng,
+    ledger: ledger,
   );
 
   final attackerSidesWithMedals = ctx.attackers.map((att) {
@@ -273,6 +269,8 @@ Game resolveBattleContext(
     );
   }
 
+  recordAttackCommandersForResolvedBattle(ctx, generalAssignment, ledger);
+
   return game.copyWith(
     worldState: newWorldState,
     generals: game.generals
@@ -398,28 +396,6 @@ void _sortAttackersByInitiative(
   });
 }
 
-class _AssignedGeneral {
-  const _AssignedGeneral({
-    required this.generalId,
-    required this.medals,
-  });
-
-  final String? generalId;
-  final int medals;
-}
-
-class _GeneralAssignment {
-  const _GeneralAssignment({
-    required this.attackerByFactionId,
-    required this.defenderGeneralId,
-    required this.defenderMedals,
-  });
-
-  final Map<String, _AssignedGeneral> attackerByFactionId;
-  final String? defenderGeneralId;
-  final int defenderMedals;
-}
-
 class _AttackingSideInBattle {
   const _AttackingSideInBattle({
     required this.side,
@@ -428,54 +404,6 @@ class _AttackingSideInBattle {
 
   final AttackingSide side;
   final String? assignedGeneralId;
-}
-
-_GeneralAssignment _assignGeneralsForBattleContext({
-  required Game game,
-  required BattleContext ctx,
-  required Random rng,
-}) {
-  final assignedGeneralIds = <String>{};
-
-  _AssignedGeneral assignForFaction(String factionId) {
-    final available = game.generals
-        .where(
-          (g) => g.ownerId == factionId && !assignedGeneralIds.contains(g.id),
-        )
-        .toList();
-    if (available.isEmpty) {
-      return _AssignedGeneral(
-        generalId: null,
-        medals: _fallbackGeneralMedalsFromLeader(game, factionId),
-      );
-    }
-    final selected = available[rng.nextInt(available.length)];
-    assignedGeneralIds.add(selected.id);
-    return _AssignedGeneral(
-      generalId: selected.id,
-      medals: selected.medals.clamp(0, 4),
-    );
-  }
-
-  final attackerByFactionId = <String, _AssignedGeneral>{};
-  for (final attacker in ctx.attackers) {
-    attackerByFactionId[attacker.factionId] = assignForFaction(attacker.factionId);
-  }
-  final defender = assignForFaction(ctx.defenderFactionId);
-  return _GeneralAssignment(
-    attackerByFactionId: attackerByFactionId,
-    defenderGeneralId: defender.generalId,
-    defenderMedals: defender.medals,
-  );
-}
-
-int _fallbackGeneralMedalsFromLeader(Game game, String factionId) {
-  final leaderMult = leaderBonusForFaction(game, factionId);
-  if (leaderMult >= 1.25) return 4;
-  if (leaderMult >= 1.20) return 3;
-  if (leaderMult >= 1.15) return 2;
-  if (leaderMult >= 1.10) return 1;
-  return 0;
 }
 
 void _incrementGeneralMedals({

@@ -22,7 +22,9 @@ export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
 
 // Combat
+export 'src/combat/battle_general_assignment.dart';
 export 'src/combat/combat_mode_selection.dart';
+export 'src/combat/leader_bonus_helpers.dart' show fallbackGeneralMedalsFromLeader;
 export 'src/combat/combat_resolver.dart';
 export 'src/combat/combat_resolver_probabilistic.dart';
 export 'src/combat/conflict_detection.dart';
