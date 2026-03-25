@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../combat/battle_general_assignment.dart';
 import '../combat/combat_mode_selection.dart';
 import '../orders/order_engine.dart';
 import '../orders/order_merge.dart';
@@ -922,6 +923,7 @@ Game _runCombatPhase(
   };
   Game state = applyMinorMilitaryParity(game);
   final battles = detectConflicts(state, orders);
+  final combatGeneralLedger = CombatPhaseGeneralLedger();
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   final turn = state.worldState.turnState.turnNumber;
   var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
@@ -943,6 +945,7 @@ Game _runCombatPhase(
       turn,
       battleIndex,
       seed,
+      combatGeneralLedger,
       onDialogue: onDialogue,
       onGameEvent: onGameEvent,
     );
