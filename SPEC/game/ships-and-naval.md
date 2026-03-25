@@ -39,6 +39,54 @@ Mission choice is per fleet and stored with the fleet state. **Naval combat occu
 
 Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine transport/trade capacity (home fleet); firepower (FRP), range (RNG), armour (ARM), hull (HULL), and movement (MV) determine naval combat and interception effectiveness.
 
+### Ship build economy (canonical)
+
+**Source of truth:** The tables below are the authoritative build costs for naval `BuildUnitOrder` validation and deduction. Implementation (`ShipEconomyCatalog` and related code) MUST match these values. Commodity ids use the [commodity-catalog.md](commodity-catalog.md) canonical strings (`lumber`, `fabric`, `castIron`, `coal`).
+
+**Scaling:** Costs increase with the **unlocking tech era** (1–4) from [tech-tree-naval.md](tech-tree-naval.md). Merchants emphasize **treasury + cargo** progression; warships emphasize **hulls and combat materials**. Steam-era hulls add **cast iron** and/or **coal**.
+
+**Frozen baseline (do not change without explicit design pass):** `carrack` and `fluyte` treasury and material rows match the original Phase 5 catalog.
+
+| ship_type_id | role | unlock era | build_treasury_cost | build_inputs |
+| --- | --- | ---: | ---: | --- |
+| carrack | merchant | (none — always buildable) | 80 | `lumber`×2, `fabric`×1 |
+| fluyte | merchant | 1 | 60 | `lumber`×1, `fabric`×1 |
+| sloop | warship | 1 | 55 | `lumber`×1, `fabric`×1 |
+| trader | merchant | 2 | 75 | `lumber`×2, `fabric`×2 |
+| galleon | merchant | 2 | 95 | `lumber`×3, `fabric`×2 |
+| indiaman | merchant | 2 | 110 | `lumber`×3, `fabric`×3 |
+| frigate | warship | 3 | 105 | `lumber`×2, `fabric`×2 |
+| raider | warship | 3 | 115 | `lumber`×2, `fabric`×1, `castIron`×2 |
+| ship_of_the_line | warship | 3 | 165 | `lumber`×5, `fabric`×3 |
+| clipper | merchant | 4 | 135 | `lumber`×3, `fabric`×3 |
+| merchant_steamship | merchant | 4 | 155 | `lumber`×2, `fabric`×2, `coal`×3 |
+| ironclad | warship | 4 | 210 | `lumber`×2, `fabric`×2, `castIron`×5 |
+
+Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tech catalog MUST have exactly one row in this table. `carrack` MUST NOT appear in `shipUnlockIds` (no unlocking tech).
+
+### Ship combat and cargo stats (canonical)
+
+**Source of truth:** The table below defines per-ship **FRP**, **RNG**, **ARM**, **HULL**, **MV**, **interceptRating**, **fleeRating**, and **cargoHold** for naval combat, interception, and home-fleet cargo (`NavalStatsCatalog` and related code MUST match). **Warships** use `cargoHold = 0` (they do not contribute merchant cargo capacity). **Merchants** use `cargoHold ≥ 1`.
+
+**Scaling:** Stats generally increase with unlock era; fast interceptors (sloop, frigate, raider) emphasize **interceptRating**, **fleeRating**, and **MV**; line ships emphasize **FRP**, **ARM**, and **HULL**.
+
+**Frozen baseline:** `carrack` and `fluyte` rows match the original Phase 5 catalog.
+
+| ship_type_id | role | FRP | RNG | ARM | HULL | MV | intercept_rating | flee_rating | cargo_hold |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| carrack | merchant | 2 | 1 | 1 | 2 | 2 | 1 | 2 | 3 |
+| fluyte | merchant | 1 | 1 | 1 | 1 | 2 | 1 | 3 | 4 |
+| sloop | warship | 2 | 2 | 1 | 2 | 3 | 4 | 4 | 0 |
+| trader | merchant | 1 | 1 | 1 | 2 | 2 | 1 | 3 | 5 |
+| galleon | merchant | 2 | 1 | 2 | 4 | 2 | 1 | 2 | 6 |
+| indiaman | merchant | 2 | 2 | 2 | 5 | 2 | 1 | 2 | 8 |
+| frigate | warship | 4 | 3 | 2 | 4 | 3 | 5 | 4 | 0 |
+| raider | warship | 3 | 2 | 2 | 3 | 4 | 6 | 5 | 0 |
+| ship_of_the_line | warship | 6 | 4 | 4 | 8 | 2 | 2 | 1 | 0 |
+| clipper | merchant | 1 | 2 | 1 | 3 | 4 | 2 | 4 | 7 |
+| merchant_steamship | merchant | 2 | 2 | 3 | 5 | 3 | 1 | 3 | 9 |
+| ironclad | warship | 5 | 3 | 8 | 6 | 3 | 2 | 2 | 0 |
+
 ---
 
 ## Ship Reveal Mechanic
@@ -214,10 +262,22 @@ raidEfficiency = 0.3 to 0.7 depending on relative strength
   When the System resolves overseas transport and trade for that turn  
   Then the System uses the interception probabilities and escort protection formulas in this document (including the definitions of `escortStrength` and `cargoStrength`) to determine whether cargo and civilian ships are lost, reduces delivered quantities and ship counts accordingly, and applies at most the documented maximum loss reduction from escorts.
 
+- Given the global tech catalog’s `shipUnlockIds` lists and the ship build economy table in this document  
+  When the System loads ship build data  
+  Then the System defines a build economy entry for every `ship_type_id` in that table, `carrack` has no unlocking tech (absent from `unlockingTechByShipId`), every id referenced in any `shipUnlockIds` array appears in the table with costs exactly as listed, and implementation values match the table.
+
+- Given the ship combat and cargo stats table in this document  
+  When the System resolves naval combat, interception scoring, or home-fleet cargo capacity  
+  Then the System uses the listed FRP, RNG, ARM, HULL, MV, intercept_rating, flee_rating, and cargo_hold for each `ship_type_id`, with warship `cargo_hold` equal to 0 for transport capacity sums.
+
+- Given a player owns a capital province adjacent to a sea zone, has treasury and stockpile sufficient for a non-`carrack` ship per the build economy table, and has the unlocking tech for that ship in `techUnlocked`  
+  When the player issues a valid naval `BuildUnitOrder` for that ship type during the build phase  
+  Then the System accepts the order, deducts treasury and commodities per the table, and adds the ship to the home fleet (subject to topology and capital rules elsewhere in this document).
+
 ---
 
 ## Testing Approach
 
-- **Unit tests:** Cover naval strength aggregation, retreat probability, interception probability, and the trade/transport interception formulas (including use of `escortStrength` and `cargoStrength`) with deterministic inputs and expected outputs.
+- **Unit tests:** Cover naval strength aggregation, retreat probability, interception probability, and the trade/transport interception formulas (including use of `escortStrength` and `cargoStrength`) with deterministic inputs and expected outputs. Cover alignment of `ShipEconomyCatalog` / `NavalStatsCatalog` with the canonical tables in this document (every tech-unlocked ship type plus `carrack`) and at least one sim scenario that builds a non-`carrack` ship when tech and resources are satisfied.
 - **Integration tests:** Use sim_game or focused scenarios to verify ship reveal on movement into a sea zone, mission handling (Move/Patrol/Blockade/Beachhead/Defend), one-turn beachhead lifecycle and its interaction with land invasions, and trade/transport raids during Extraction/Trade.
 - **Scenario tests:** Construct scenario data for edge cases (e.g. minimal escorts, overwhelming escorts, symmetric and asymmetric naval strength) to validate that interception and raid outcomes remain within documented clamps and respect war/peace conditions.
