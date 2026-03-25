@@ -896,7 +896,7 @@ void main() {
       expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
     });
 
-    test('build_rail completion sets road level to 4', () {
+    test('build_rail completion leaves road when tile has no road', () {
       final tileState = TileMapState().setRoadLevel(tileKey, 0);
       final unit = Unit(
         id: 'u1',
@@ -912,6 +912,16 @@ void main() {
           remainingTurns: 1,
         ),
       );
+      final railMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
       final game = Game(
         id: 'g',
         worldState: WorldState(
@@ -923,9 +933,74 @@ void main() {
           newWorld: const RegionData(),
           tileState: tileState,
         ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            techUnlocked: const {'early_steam_engine': true},
+          ),
+        ],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(
+        game,
+        _ordersToTriggerProcessWork(),
+        tileMapByRegion: {ow: railMap},
+      );
+      expect(next.worldState.tileState.roadLevel(tileKey), 0);
+    });
+
+    test('build_rail completion sets road level to 4 when valid', () {
+      final tileState = TileMapState().setRoadLevel(tileKey, 1);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Rail Builder',
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: 'build_rail',
+          tileKey: tileKey,
+          totalTurns: 1,
+          remainingTurns: 1,
+        ),
+      );
+      final railMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            techUnlocked: const {'early_steam_engine': true},
+          ),
+        ],
+      );
+      final next = applyBuildAndWorkOrders(
+        game,
+        _ordersToTriggerProcessWork(),
+        tileMapByRegion: {ow: railMap},
+      );
       expect(next.worldState.tileState.roadLevel(tileKey), 4);
     });
   });

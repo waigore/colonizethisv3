@@ -1,6 +1,6 @@
 import 'commodities.dart';
 
-/// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md.
+/// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md. Single source of truth for stockpile costs in order validation and application.
 /// Single source of truth for order engine validation and orders_application deduction.
 
 /// Material cost for a work order: commodity id -> quantity.
@@ -83,10 +83,10 @@ WorkOrderCost workOrderCostBuildFort(int currentFortLevel) {
   }
 }
 
-/// Material cost for build_rail. SPEC: 2 lumber + 2 cast iron (extraction-and-improvements says "2 lumber + 2 cast iron per tile").
+/// Material cost for build_rail. SPEC: 2 lumber + 2 steel per tile.
 WorkOrderCost get workOrderCostBuildRail => {
       CommodityCatalog.lumber.id: 2,
-      CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.steel.id: 2,
     };
 
 /// Material cost for upgrade_town. Per ruleset; use level-1 improvement cost as default.

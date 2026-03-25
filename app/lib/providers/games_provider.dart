@@ -35,7 +35,13 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   final view = buildPlayerView(game, topology, humanPlayerId);
 
-  final suggestions = suggestWorkOrders(view, game, topology, orders);
+  final suggestions = suggestWorkOrders(
+    view,
+    game,
+    topology,
+    orders,
+    tileMapByRegion: mapData?.tileMapByRegion,
+  );
 
   final byUnitId = <String, List<String>>{};
   for (final order in suggestions) {

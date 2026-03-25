@@ -96,7 +96,7 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 | `build_road` | Owned or purchased tiles | Any tile controlled by player |
 | `build_port` | Owned provinces only | Coastal or river tiles (adjacent to sea zone or river) |
 | `build_fort` | Owned provinces only | Province's town tile only |
-| `build_rail` | Owned or purchased tiles | Tile must have road level ≥ 1 and be controlled by player |
+| `build_rail` | Owned or purchased tiles | Transport level 1 or 2; per-tile terrain resolvable from tile map; player's unlocked tech must allow rail on that terrain per [tech-tree-transport.md](../game/tech-tree-transport.md); tile controlled by player |
 | `steal_tech` | Other GP capital provinces | Province must be another Great Power's capital |
 | `counter_spy` | Owned provinces only | Any tile in owned province |
 | `purchase_land` | Minor/Tribe provinces | Tile must have resource; tile not already purchased; player has embassy and is not at war |

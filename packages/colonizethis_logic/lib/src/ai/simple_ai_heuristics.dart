@@ -42,8 +42,9 @@ Orders generateOrdersWithSimpleHeuristics(
   Game game,
   MapTopology topology,
   String playerId,
-  int turnSeed,
-) {
+  int turnSeed, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
@@ -58,7 +59,13 @@ Orders generateOrdersWithSimpleHeuristics(
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
     final moveSuggestions = suggestMoveOrders(view, game, topology, current);
-    final workSuggestions = suggestWorkOrders(view, game, topology, current);
+    final workSuggestions = suggestWorkOrders(
+      view,
+      game,
+      topology,
+      current,
+      tileMapByRegion: tileMapByRegion,
+    );
     final buildSuggestions = suggestBuildOrders(view, game, topology, current);
     final researchSuggestions = suggestResearchOrders(
       view,

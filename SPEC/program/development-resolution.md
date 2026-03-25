@@ -47,7 +47,7 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
    - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md). "If applicable" means: when the target tile is adjacent (4-neighbour) to a tile that is either the player's capital or a port, the transport level is also applied to that adjacent tile (upgrade only, never downgrade).
    - `build_port`: create/update a `(provinceId, seaZoneId) → tileKey` mapping in `portsByProvinceSeaboard` and ensure the port tile has transport level 4.
    - `build_fort`: increase the province's `fortLevel` by 1 (up to max).
-   - `build_rail`: upgrade an existing road tile at `tileKey` to railroad (transport level 4).
+   - `build_rail`: upgrade a tile at `tileKey` with transport level 1 or 2 to railroad (transport level 4) when terrain is known and rail tech matches terrain per [tech-tree-transport.md](../game/tech-tree-transport.md).
    - `steal_tech`: roll 8% per turn (or on final turn); on success, grant random tech from (target GP techs − player techs) and clear work; on expiry, clear work.
    - `counter_spy`: ongoing; each turn, in that province, probability to kill one enemy Spy = min(30%, 5% × number of friendly Spies with counter_spy there); resolve kills then continue (no completion).
    - `purchase_land`: applied when order is accepted (single-turn): deduct treasury (15 × resource base price), record purchased tile for the GP; extraction/connectivity treat that tile as GP-owned for extraction.

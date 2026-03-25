@@ -37,6 +37,17 @@
 
 - **ctdev:** App lifecycle, init game submit, start sim (session id), turn steps, exceptions in turn handlers.
 - **logic:** Turn resolution (phases), order engine (validation, rejections), order suggestion API (all suggestion functions and results), movement, combat, naval, extraction, production, consumption, research, diplomacy, init game orchestration, game setup.
+
+### Land combat (`logic:`)
+
+During the Combat phase, **land** resolution emits grep-oriented lines (token `logic: combat`). **Naval** combat logging is unchanged unless separately specified.
+
+- **Conflict detection** (info): start and end of detection for the phase, including `turn` and `battleContexts` count. Emitted from turn combat orchestration (`_runCombatPhase`), not from standalone `detectConflicts` unit tests in isolation.
+- **Per battle** (info): `battle_start` with `turn`, `battleIndex`, prefixed `regionId` and `provinceId`, `defenderFactionId`, `attackerSides`, `attackerUnitsTotal`, and `mode` (`autoResolve` or `quickBattle`).
+- **Per engagement** (debug, auto-resolve only): each executed engagement logs `attackerFactionId`, `result` (`EngagementResult` enum name), and `attCasualties` / `defCasualties` **counts** only (no per-unit id lists at info).
+- **World application** (info): `battle_apply` with `regionId`, `provinceId`, `mode`, `provinceFlipped`, casualty counts as applicable, `ownerAfter` for the province when resolved, and for Quick Battle `winner` (`QuickBattleWinner` enum name).
+
+Message bodies use `key=value` segments separated by spaces where practical so logs are easy to filter (e.g. `rg 'logic: combat battle_apply'`).
 - **ai:** Order generation, planner, goals/candidates. Info = major decisions; debug = full evals (goal weights, candidate scores, perception snapshot, dossier, economy recipe scores).
 - **data:** Catalog/config lookups; fallbacks and defaults.
 - **map:** Map generation (tile map, topology), init game map view build, load savegame view build.
@@ -55,3 +66,15 @@ See [ctdev-app.md](ctdev-app.md) for UI behaviour (session ID display, Sim Log p
 - **Levels:** File at debug and above; in-memory Sim Log at info and above, last 10 lines, cleared at start of every turn (resolve/step).
 - **Exceptions:** Log calls use `error` and `stackTrace` where applicable; uncaught errors in `runZonedGuarded` logged with stack.
 - **Scope:** ctdev, logic, ai, data, map, save each log key operations (start/end of flows, rejections, errors) with the specified prefixes; no `print` for operational/diagnostic output in ctdev and in-scope flows (or document exemptions).
+
+### Land combat — acceptance criteria
+
+- **Given** a game state after Movement where at least one land `BattleContext` exists for the turn, **when** the system runs the Combat phase (`_runCombatPhase`), **then** the logger emits at **info** a line containing `logic: combat conflict_detection start` with `turn=<integer>` and a line containing `logic: combat conflict_detection end` with the same `turn` and `battleContexts=<non-negative integer>`.
+
+- **Given** a land `BattleContext` processed in that phase, **when** the system begins resolving that battle, **then** the logger emits at **info** a line containing `logic: combat battle_start` with `regionId=`, `provinceId=`, `defenderFactionId=`, `attackerSides=<integer>`, `attackerUnitsTotal=<integer>`, and `mode=autoResolve` or `mode=quickBattle`.
+
+- **Given** auto-resolve for a `BattleContext` with at least one executed engagement, **when** each engagement completes, **then** the logger emits at **debug** a line containing `logic: combat engagement` with `attackerFactionId=<string>`, `result=<EngagementResult enum name>`, `attCasualties=<integer>`, and `defCasualties=<integer>`.
+
+- **Given** auto-resolve completes for a `BattleContext`, **when** the system applies the result to world state, **then** the logger emits at **info** a line containing `logic: combat battle_apply` with `mode=autoResolve`, `provinceFlipped=true` or `provinceFlipped=false`, `casualtiesApplied=<integer>`, and `ownerAfter=<faction id string or empty if unknown>`.
+
+- **Given** Quick Battle completes for a `BattleContext`, **when** the system applies the result to world state, **then** the logger emits at **info** a line containing `logic: combat battle_apply` with `mode=quickBattle`, `winner=<QuickBattleWinner enum name>`, `provinceFlipped=true` or `provinceFlipped=false`, and per-side casualty **counts** (`attCasualties`, `defCasualties`).

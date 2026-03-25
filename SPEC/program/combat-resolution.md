@@ -104,6 +104,10 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 - Casualty selection: strength-weighted (weight ∝ 1 / (strength + 0.1)).
 - Deterministic given same seed.
 
+## Observability
+
+Structured **land** combat logs (`logic: combat …`) are specified in [ctdev-logging.md](ctdev-logging.md) § Land combat: conflict detection, `battle_start`, per-engagement (debug, auto-resolve), and `battle_apply`. Global logger emission does not change resolver return values or determinism of game state.
+
 ## Integration
 
 - **Phase:** Combat phase, after Movement.
@@ -113,6 +117,7 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 ## Constraints
 
 - Per `BattleContext`, given the same `Game` snapshot, `BattleContext`, feeding coverage map, assignment RNG seed (§3), and **ledger state before this battle**, resolution is deterministic; the ledger is mutated after each completed land battle to enforce the turn-wide attack cap (orchestration lives in the Combat phase loop, not a global singleton).
+- Resolver is a pure function: same inputs (including seed) → same **returned** `Game` / world state. Emitting logs via the global Dart `logger` is allowed for observability and is not part of the functional output.
 - No global RNG access; callers provide explicit seed when randomness is needed.
 - Province battles are independent; processing order is deterministic (prefixed province id `regionId|localId`).
 - Results applied in a single pass after full chain resolution per BattleContext.
