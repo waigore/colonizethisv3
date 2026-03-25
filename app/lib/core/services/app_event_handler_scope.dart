@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -19,6 +20,9 @@ import 'app_event_handler.dart';
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
 const String trainCiviliansDialogId = 'train_civilians';
+
+/// [OpenDialogEvent] id for [TrainMilitaryDialog]. SPEC/program/app-ui-wiring.md.
+const String trainMilitaryDialogId = 'train_military';
 
 /// [OpenDialogEvent] id for [GrantOrSubsidyDialog]. SPEC/program/app-ui-wiring.md.
 const String grantOrSubsidyDialogId = 'grant_or_subsidy';
@@ -46,12 +50,53 @@ Orders _mergeTrainCivilianOrdersForPlayer({
   final capital = player?.capitalProvinceId;
   final civilianUnitIds = CivilianEconomyCatalog.byId.keys.toSet();
   final existingList =
-      current.buildUnitOrdersByPlayerId[humanPlayerId] ?? const <BuildUnitOrder>[];
+      current.buildUnitOrdersByPlayerId[humanPlayerId] ??
+      const <BuildUnitOrder>[];
   final kept = <BuildUnitOrder>[];
   for (final order in existingList) {
     final isDialogManaged =
         !order.isMilitary &&
         civilianUnitIds.contains(order.unitType) &&
+        capital != null &&
+        order.spawnProvinceId == capital;
+    if (isDialogManaged) {
+      continue;
+    }
+    kept.add(order);
+  }
+  return current.copyWith(
+    buildUnitOrdersByPlayerId: {
+      ...current.buildUnitOrdersByPlayerId,
+      humanPlayerId: [...kept, ...newFromDialog],
+    },
+  );
+}
+
+/// Replaces pending train-at-capital military [BuildUnitOrder]s for [humanPlayerId];
+/// keeps civilian, naval, and other build orders. Matches [TrainMilitaryDialog] semantics.
+Orders _mergeTrainMilitaryOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+}) {
+  Player? player;
+  for (final p in game.players) {
+    if (p.id == humanPlayerId) {
+      player = p;
+      break;
+    }
+  }
+  final capital = player?.capitalProvinceId;
+  final regimentIds = RegimentEconomyCatalog.byId.keys.toSet();
+  final existingList =
+      current.buildUnitOrdersByPlayerId[humanPlayerId] ??
+      const <BuildUnitOrder>[];
+  final kept = <BuildUnitOrder>[];
+  for (final order in existingList) {
+    final isDialogManaged =
+        order.isMilitary &&
+        regimentIds.contains(order.unitType) &&
         capital != null &&
         order.spawnProvinceId == capital;
     if (isDialogManaged) {
@@ -112,35 +157,40 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
             onConfirmed:
-                (orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment) {
-              final navCtx = appNavigatorKey.currentContext;
-              if (navCtx == null) {
-                _log.w(
-                  'shell: appNavigatorKey has no context; skipping new game setup',
-                );
-                return;
-              }
-              final rootContainer = ProviderScope.containerOf(navCtx);
-              final templateConfig = GameSetupConfig(
-                selectedGreatPowerIds: orderedGreatPowerIds,
-                leaderVariantByGpId: leaderVariantByGpId,
-                continentCount: baseConfig.continentCount,
-                minorNationCount: baseConfig.minorNationCount,
-                tribeCount: baseConfig.tribeCount,
-                numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-                numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-                minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-                seed: baseConfig.seed,
-                startingResources: baseConfig.startingResources,
-                enforceFairGpOldWorldAssignment: enforceFairGpOldWorldAssignment,
-              );
-              unawaited(
-                runNewGameSetupAfterLeaderPick(
-                  container: rootContainer,
-                  templateConfig: templateConfig,
-                ),
-              );
-            },
+                (
+                  orderedGreatPowerIds,
+                  leaderVariantByGpId,
+                  enforceFairGpOldWorldAssignment,
+                ) {
+                  final navCtx = appNavigatorKey.currentContext;
+                  if (navCtx == null) {
+                    _log.w(
+                      'shell: appNavigatorKey has no context; skipping new game setup',
+                    );
+                    return;
+                  }
+                  final rootContainer = ProviderScope.containerOf(navCtx);
+                  final templateConfig = GameSetupConfig(
+                    selectedGreatPowerIds: orderedGreatPowerIds,
+                    leaderVariantByGpId: leaderVariantByGpId,
+                    continentCount: baseConfig.continentCount,
+                    minorNationCount: baseConfig.minorNationCount,
+                    tribeCount: baseConfig.tribeCount,
+                    numProvincesOldWorld: baseConfig.numProvincesOldWorld,
+                    numProvincesNewWorld: baseConfig.numProvincesNewWorld,
+                    minProvincesPerMinor: baseConfig.minProvincesPerMinor,
+                    seed: baseConfig.seed,
+                    startingResources: baseConfig.startingResources,
+                    enforceFairGpOldWorldAssignment:
+                        enforceFairGpOldWorldAssignment,
+                  );
+                  unawaited(
+                    runNewGameSetupAfterLeaderPick(
+                      container: rootContainer,
+                      templateConfig: templateConfig,
+                    ),
+                  );
+                },
           );
         },
         trainCiviliansDialogId: (ctx, _) {
@@ -157,14 +207,39 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             currentOrders: orders,
             onOrdersChanged: (newOrders) {
               final o = container.read(currentOrdersProvider);
-              container.read(currentOrdersProvider.notifier).replaceAll(
-                    _mergeTrainCivilianOrdersForPlayer(
+              container
+                  .read(currentOrdersProvider.notifier)
+                  .state = _mergeTrainCivilianOrdersForPlayer(
                 current: o,
                 game: game,
                 humanPlayerId: humanPlayerId,
                 newFromDialog: newOrders,
-              ),
-                  );
+              );
+            },
+          );
+        },
+        trainMilitaryDialogId: (ctx, _) {
+          final container = ProviderScope.containerOf(ctx);
+          final game = container.read(currentGameProvider);
+          if (game == null) {
+            return const SizedBox.shrink();
+          }
+          final humanPlayerId = _humanPlayerId(game);
+          final orders = container.read(currentOrdersProvider);
+          return TrainMilitaryDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: orders,
+            onOrdersChanged: (newOrders) {
+              final o = container.read(currentOrdersProvider);
+              container
+                  .read(currentOrdersProvider.notifier)
+                  .state = _mergeTrainMilitaryOrdersForPlayer(
+                current: o,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                newFromDialog: newOrders,
+              );
             },
           );
         },
@@ -194,12 +269,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
     _sessionCommandSubs.addAll([
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
-        final updated = removePendingWorkOrderAt(
-          current,
-          e.playerId,
-          e.index,
-        );
-        ref.read(currentOrdersProvider.notifier).replaceAll(updated);
+        final updated = removePendingWorkOrderAt(current, e.playerId, e.index);
+        ref.read(currentOrdersProvider.notifier).state = updated;
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         final game = ref.read(currentGameProvider);
