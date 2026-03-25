@@ -157,13 +157,14 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             currentOrders: orders,
             onOrdersChanged: (newOrders) {
               final o = container.read(currentOrdersProvider);
-              container.read(currentOrdersProvider.notifier).state =
-                  _mergeTrainCivilianOrdersForPlayer(
+              container.read(currentOrdersProvider.notifier).replaceAll(
+                    _mergeTrainCivilianOrdersForPlayer(
                 current: o,
                 game: game,
                 humanPlayerId: humanPlayerId,
                 newFromDialog: newOrders,
-              );
+              ),
+                  );
             },
           );
         },
@@ -198,7 +199,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
           e.playerId,
           e.index,
         );
-        ref.read(currentOrdersProvider.notifier).state = updated;
+        ref.read(currentOrdersProvider.notifier).replaceAll(updated);
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         final game = ref.read(currentGameProvider);

@@ -56,7 +56,7 @@ class TechnologyScreen extends ConsumerWidget {
                       player: displayPlayer,
                       currentOrders: currentOrders,
                       onOrdersChanged: (next) {
-                        ref.read(currentOrdersProvider.notifier).state = next;
+                        ref.read(currentOrdersProvider.notifier).replaceAll(next);
                       },
                     ),
                     _TreeTab(game: displayGame, player: displayPlayer),

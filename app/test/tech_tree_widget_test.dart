@@ -31,7 +31,9 @@ void main() {
     return ProviderScope(
       overrides: [
         currentGameProvider.overrideWith((ref) => g),
-        currentOrdersProvider.overrideWith((ref) => const Orders()),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
           ref.onDispose(bus.dispose);
