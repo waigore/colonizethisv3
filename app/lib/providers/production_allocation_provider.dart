@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 /// Desired output units per recipe (recipe id → units). Used by Production panel
 /// and passed to nextTurn as production assignments. SPEC/ui/production-panel.md.
