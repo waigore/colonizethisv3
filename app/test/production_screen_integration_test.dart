@@ -15,6 +15,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _SeededProductionDesiredOutputNotifier
+    extends ProductionDesiredOutputNotifier {
+  _SeededProductionDesiredOutputNotifier(this._initial);
+
+  final Map<String, int> _initial;
+
+  @override
+  Map<String, int> build() => _initial;
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -41,7 +51,11 @@ void main() {
         }),
         if (initialDesiredOutput != null)
           productionDesiredOutputProvider
-              .overrideWith((ref) => initialDesiredOutput),
+              .overrideWith(() {
+                return _SeededProductionDesiredOutputNotifier(
+                  initialDesiredOutput,
+                );
+              }),
       ],
       child: MaterialApp(
         home: MediaQuery(
