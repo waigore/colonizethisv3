@@ -69,7 +69,7 @@ void main() {
               return svc;
             }),
             appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           ],
           child: MaterialApp(
             home: GameToUIBusListener(

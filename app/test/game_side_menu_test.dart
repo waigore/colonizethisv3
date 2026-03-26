@@ -54,7 +54,7 @@ void main() {
             gameServiceProvider.overrideWith(
               (ref) => GameService(gamesBox, GameSaveAdapter()),
             ),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -119,7 +119,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
@@ -180,7 +180,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
@@ -242,7 +242,7 @@ void main() {
             gameServiceProvider.overrideWith(
               (ref) => GameService(gamesBox, GameSaveAdapter()),
             ),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -304,7 +304,7 @@ void main() {
             gameServiceProvider.overrideWith(
               (ref) => GameService(gamesBox, GameSaveAdapter()),
             ),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -364,7 +364,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
@@ -423,7 +423,7 @@ void main() {
             gameServiceProvider.overrideWith(
               (ref) => GameService(gamesBox, GameSaveAdapter()),
             ),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -477,7 +477,7 @@ void main() {
             gameServiceProvider.overrideWith(
               (ref) => GameService(gamesBox, GameSaveAdapter()),
             ),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -532,7 +532,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
@@ -592,7 +592,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
@@ -658,7 +658,7 @@ void main() {
           gameServiceProvider.overrideWith(
             (ref) => GameService(gamesBox, GameSaveAdapter()),
           ),
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),

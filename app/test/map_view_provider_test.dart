@@ -167,7 +167,7 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
-        currentGameProvider.overrideWith((ref) => game),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith(
           (ref) => _FakeGameService(gamesBox, GameSaveAdapter()),
@@ -227,7 +227,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
             (ref) => _GameServiceWithMinimalMap(gamesBox, GameSaveAdapter()),

@@ -276,11 +276,11 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final game = ref.read(currentGameProvider);
         if (game == null) return;
         final newGame = clearUnitCurrentWork(game, e.unitId);
-        ref.read(currentGameProvider.notifier).state = newGame;
+        ref.read(currentGameProvider.notifier).setGame(newGame);
         ref.read(gameServiceProvider).saveGame(newGame);
       }),
       bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-        ref.read(currentGameProvider.notifier).state = e.game;
+        ref.read(currentGameProvider.notifier).setGame(e.game);
       }),
     ]);
     _log.d(

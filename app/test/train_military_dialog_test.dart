@@ -172,7 +172,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          currentGameProvider.overrideWith((ref) => richGame),
+          currentGameProvider.overrideWith(
+            () => CurrentGameNotifier(richGame),
+          ),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),
