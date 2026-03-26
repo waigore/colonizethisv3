@@ -141,7 +141,9 @@ void main() {
   });
 
   group('suggestDiplomaticOrders', () {
-    test('returns declareWar candidates for other GPs when at peace', () {
+    test(
+      'returns alliance (single diplo per target) for other GP when at peace and not allied',
+      () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
       final game = Game(
@@ -166,8 +168,39 @@ void main() {
       );
       final view = buildPlayerView(game, topology, 'gp1');
       final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
-      final declareWar = list.where((o) => o.type == DiplomaticOrderType.declareWar).toList();
-      expect(declareWar.any((o) => o.targetFactionId == 'gp2'), isTrue);
+      final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList();
+      expect(toGp2, hasLength(1));
+      expect(toGp2.single.type, DiplomaticOrderType.alliance);
+    });
+
+    test('returns declareWar toward GP when at peace and already allied', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.allied,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList();
+      expect(toGp2, hasLength(1));
+      expect(toGp2.single.type, DiplomaticOrderType.declareWar);
     });
 
     test('does not suggest diplomatic orders for completely unknown factions', () {
@@ -300,7 +333,9 @@ void main() {
       );
     });
 
-    test('returns grantAid and setSubsidy when overture has embassy and treasury >= 100', () {
+    test(
+      'returns grantAid only when embassy and consulate both allow grant and subsidy (one per target)',
+      () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
       final game = Game(
@@ -317,21 +352,171 @@ void main() {
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
         ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            state: RelationState.atPeace,
+            level: RelationLevel.neutral,
+          ),
+        ],
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
             targetId: 'minor1',
-            stage: OvertureStage.embassy,
+            stage: OvertureStage.joinEmpire,
             sinceTurn: 0,
           ),
         ],
       );
       final view = buildPlayerView(game, topology, 'gp1');
       final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
-      final grantAid = list.where((o) => o.type == DiplomaticOrderType.grantAid).toList();
-      final setSubsidy = list.where((o) => o.type == DiplomaticOrderType.setSubsidy).toList();
-      expect(grantAid.any((o) => o.targetFactionId == 'minor1' && o.amount == 100), isTrue);
-      expect(setSubsidy.any((o) => o.targetFactionId == 'minor1' && o.amount == 100), isTrue);
+      final toMinor1 = list.where((o) => o.targetFactionId == 'minor1').toList();
+      expect(toMinor1, hasLength(1));
+      expect(toMinor1.single.type, DiplomaticOrderType.grantAid);
+      expect(toMinor1.single.amount, 100);
+    });
+
+    test('does not suggest toward target already in draft diplomatic orders', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final withPending = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.alliance,
+              targetFactionId: 'gp2',
+            ),
+          ],
+        },
+      );
+      final list = api.suggestDiplomaticOrders(view, game, topology, withPending);
+      expect(list.where((o) => o.targetFactionId == 'gp2'), isEmpty);
+    });
+
+    test('suggestDiplomaticOrders: each suggestion appendable and validates with context', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.allied,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final suggestions =
+          api.suggestDiplomaticOrders(view, game, topology, const Orders());
+      final targets = <String>{};
+      for (final o in suggestions) {
+        expect(targets.add(o.targetFactionId), isTrue,
+            reason: 'at most one suggestion per target');
+        final addResult = OrderEngine().addDiplomaticOrderWithContext(
+          game,
+          topology,
+          'gp1',
+          o,
+        );
+        expect(addResult.isAccepted, isTrue, reason: '${o.type} ${o.targetFactionId}');
+        final withOrder = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp1': [o],
+          },
+        );
+        final validateResults = OrderEngine(initialOrders: withOrder)
+            .validatePlayerOrdersWithContext(game, topology, 'gp1');
+        expect(validateResults, isNotEmpty);
+        expect(
+          validateResults.every((r) => r.isAccepted),
+          isTrue,
+          reason: 'validatePlayerOrdersWithContext for $o',
+        );
+      }
+    });
+
+    test('removing pending diplomatic order restores suggestions for that target', () {
+      const api = DefaultOrderSuggestionAPI();
+      const topology = MapTopology(nodes: [], edges: []);
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atPeace,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final pending = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.alliance,
+              targetFactionId: 'gp2',
+            ),
+          ],
+        },
+      );
+      expect(
+        api.suggestDiplomaticOrders(view, game, topology, pending)
+            .where((o) => o.targetFactionId == 'gp2'),
+        isEmpty,
+      );
+      final afterClear = api.suggestDiplomaticOrders(
+        view,
+        game,
+        topology,
+        const Orders(),
+      );
+      expect(
+        afterClear.where((o) => o.targetFactionId == 'gp2'),
+        isNotEmpty,
+      );
     });
   });
 }

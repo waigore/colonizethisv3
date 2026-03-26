@@ -116,8 +116,9 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
     _log.i(
       'logic: order suggestion API suggestDiplomaticOrders player=${view.playerId}',
     );
@@ -126,6 +127,7 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
+      tileMapByRegion: tileMapByRegion,
     );
   }
 }

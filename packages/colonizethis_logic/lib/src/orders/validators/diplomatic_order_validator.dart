@@ -1,6 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../order_validation_result.dart';
 
@@ -12,8 +11,8 @@ class DiplomaticOrderValidator {
 
   int _treasury;
 
-  /// Track establish-overture targets to enforce "at most one per target per turn".
-  final Set<String> _overtureTargetsThisTurn = <String>{};
+  /// At most one diplomatic order per target faction per submitting player per turn.
+  final Set<String> _diplomaticTargetsThisTurn = <String>{};
 
   DiplomaticOrderValidator({
     required Game game,
@@ -34,6 +33,13 @@ class DiplomaticOrderValidator {
         result: OrderValidationResult.accepted(),
         treasury: _treasury,
       );
+
+  ({OrderValidationResult result, int treasury}) _acceptRecordingTarget(
+    String targetId,
+  ) {
+    _diplomaticTargetsThisTurn.add(targetId);
+    return _accept();
+  }
 
   /// Validate a single [DiplomaticOrder], given whether a previous order
   /// for this player in this turn has already been rejected.
@@ -68,6 +74,12 @@ class DiplomaticOrderValidator {
       return _reject('Target faction not found');
     }
 
+    if (_diplomaticTargetsThisTurn.contains(targetId)) {
+      return _reject(
+        'Already have a diplomatic order for this faction this turn',
+      );
+    }
+
     final rel = getRelation(_game, _playerId, targetId);
     final atWar = rel?.atWar ?? false;
     final atPeace = rel == null || rel.atPeace;
@@ -77,7 +89,7 @@ class DiplomaticOrderValidator {
         if (!atPeace) {
           return _reject('Already at war with that faction');
         }
-        return _accept();
+        return _acceptRecordingTarget(targetId);
 
       case DiplomaticOrderType.offerPeace:
         if (!atWar) {
@@ -85,7 +97,7 @@ class DiplomaticOrderValidator {
             'Cannot offer peace when not at war with that faction',
           );
         }
-        return _accept();
+        return _acceptRecordingTarget(targetId);
 
       case DiplomaticOrderType.alliance:
         if (!isGreatPower(_game, targetId)) {
@@ -96,7 +108,7 @@ class DiplomaticOrderValidator {
             'Cannot form alliance while at war with that faction',
           );
         }
-        return _accept();
+        return _acceptRecordingTarget(targetId);
 
       case DiplomaticOrderType.establishOverture:
         final stage = order.overtureStage;
@@ -114,13 +126,6 @@ class DiplomaticOrderValidator {
         if (atWar) {
           return _reject(
             'Cannot establish overture while at war with that faction',
-          );
-        }
-
-        // Enforce at most one Establish Overture per (player, target) per turn.
-        if (_overtureTargetsThisTurn.contains(targetId)) {
-          return _reject(
-            'Already have an Establish Overture order for this faction this turn',
           );
         }
 
@@ -175,8 +180,7 @@ class DiplomaticOrderValidator {
           }
         }
 
-        _overtureTargetsThisTurn.add(targetId);
-        return _accept();
+        return _acceptRecordingTarget(targetId);
 
       case DiplomaticOrderType.grantAid:
         final amount = order.amount ?? 0;
@@ -191,7 +195,7 @@ class DiplomaticOrderValidator {
           return _reject('Insufficient treasury for GrantAid (need $amount)');
         }
         _treasury -= amount;
-        return _accept();
+        return _acceptRecordingTarget(targetId);
 
       case DiplomaticOrderType.setSubsidy:
         final amount = order.amount ?? 0;
@@ -208,7 +212,7 @@ class DiplomaticOrderValidator {
           );
         }
         _treasury -= amount;
-        return _accept();
+        return _acceptRecordingTarget(targetId);
     }
   }
 }

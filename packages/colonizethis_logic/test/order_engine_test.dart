@@ -3205,8 +3205,59 @@ void main() {
           expect(
             second.reason,
             contains(
-              'Already have an Establish Overture order for this faction this turn',
+              'Already have a diplomatic order for this faction this turn',
             ),
+          );
+        },
+      );
+
+      test(
+        'second diplomatic order to same target different type is rejected',
+        () {
+          final game = Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: const RegionData(),
+              newWorld: const RegionData(),
+            ),
+            players: const [
+              Player(id: 'gp1', displayName: 'A', isHuman: false),
+              Player(id: 'gp2', displayName: 'B', isHuman: false),
+            ],
+            diplomacyRelations: const [
+              DiplomacyRelation(
+                factionId1: 'gp1',
+                factionId2: 'gp2',
+                state: RelationState.atPeace,
+                level: RelationLevel.neutral,
+              ),
+            ],
+          );
+          final engine = OrderEngine();
+          final first = engine.addDiplomaticOrderWithContext(
+            game,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+          );
+          expect(first.status, OrderValidationStatus.accepted);
+          final second = engine.addDiplomaticOrderWithContext(
+            game,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.alliance,
+              targetFactionId: 'gp2',
+            ),
+          );
+          expect(second.status, OrderValidationStatus.rejected);
+          expect(
+            second.reason,
+            contains('Already have a diplomatic order for this faction this turn'),
           );
         },
       );
