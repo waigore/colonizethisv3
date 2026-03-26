@@ -199,7 +199,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _regionIndex = 0;
       }
     });
-    Navigator.of(context).maybePop();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _centerOnTileKey = null);
     });
