@@ -33,9 +33,11 @@ void main() {
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
           gameIdsWithIntroShownProvider.overrideWith(
-            (ref) => {game.id},
+            () => GameIdsWithIntroShownNotifier({game.id}),
           ),
-          pendingOverturesProvider.overrideWith((ref) => pending),
+          pendingOverturesProvider.overrideWith(
+            () => PendingOverturesNotifier(pending),
+          ),
         ],
         child: MaterialApp(
           theme: AppThemes.colonial,

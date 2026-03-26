@@ -32,7 +32,7 @@ void main() {
         ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
-          (ref) => {debugResult.game.id},
+          () => GameIdsWithIntroShownNotifier({debugResult.game.id}),
         ),
       ],
       child: MaterialApp(

@@ -37,7 +37,9 @@ void main() {
       overrides: [
         currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         mapViewDataProvider.overrideWith((ref) => mapViewData),
-        gameIdsWithIntroShownProvider.overrideWith((ref) => introShownIds),
+        gameIdsWithIntroShownProvider.overrideWith(
+          () => GameIdsWithIntroShownNotifier(introShownIds),
+        ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
           ref.onDispose(bus.dispose);

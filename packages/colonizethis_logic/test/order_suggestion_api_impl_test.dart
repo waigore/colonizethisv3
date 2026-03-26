@@ -79,6 +79,8 @@ void main() {
     test('suggestBuildOrders includes ship types when player can afford a ship', () {
       const api = DefaultOrderSuggestionAPI();
       const ow = 'oldWorld';
+      final affordableShipTreasury =
+          ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost;
       final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.lumber.id, 2)
           .applyDelta(CommodityCatalog.fabric.id, 2);
@@ -98,7 +100,7 @@ void main() {
             displayName: 'A',
             isHuman: false,
             capitalProvinceId: '$ow|p1',
-            treasury: 100,
+            treasury: affordableShipTreasury,
             stockpile: stockpile,
           ),
         ],

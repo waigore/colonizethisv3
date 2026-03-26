@@ -35,7 +35,7 @@ void main() {
         ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
-          (ref) => {debugResult.game.id},
+          () => GameIdsWithIntroShownNotifier({debugResult.game.id}),
         ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
@@ -68,7 +68,7 @@ void main() {
         ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
-          (ref) => {debugResult.game.id},
+          () => GameIdsWithIntroShownNotifier({debugResult.game.id}),
         ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
@@ -403,7 +403,9 @@ void main() {
         overrides: [
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           mapViewDataProvider.overrideWith((ref) => null),
-          gameIdsWithIntroShownProvider.overrideWith((ref) => {game.id}),
+          gameIdsWithIntroShownProvider.overrideWith(
+            () => GameIdsWithIntroShownNotifier({game.id}),
+          ),
           appEventBusProvider.overrideWith((ref) {
             final bus = AppEventBus.create();
             ref.onDispose(bus.dispose);
@@ -461,7 +463,7 @@ void main() {
                 (ref) => debugResult.mapViewData,
               ),
               gameIdsWithIntroShownProvider.overrideWith(
-                (ref) => {victoryGame.id},
+                () => GameIdsWithIntroShownNotifier({victoryGame.id}),
               ),
               appEventBusProvider.overrideWith((ref) {
                 final bus = AppEventBus.create();

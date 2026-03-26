@@ -83,7 +83,7 @@ void main() {
       for (final e in econ.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value);
       }
-      const treasuryStart = 500;
+      final treasuryStart = econ.buildTreasuryCost + 500;
       const order = BuildUnitOrder(
         unitType: 'peasant_levies',
         isMilitary: true,
@@ -113,7 +113,7 @@ void main() {
       for (final e in econ.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value);
       }
-      const treasuryStart = 500;
+      final treasuryStart = econ.buildTreasuryCost + 500;
       const order = BuildUnitOrder(
         unitType: 'carrack',
         isMilitary: false,
