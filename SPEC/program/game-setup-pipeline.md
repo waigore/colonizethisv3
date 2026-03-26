@@ -19,6 +19,7 @@ Steps implement the phases from [game-setup.md](../game/game-setup.md):
 1. **Load config** — Parse GameSetupConfig; compute effective seed.
 2. **Generate OW map** — Call colonizethis_map with province count, continent count, region id `oldWorld`, effective seed, and resource rules. Output: tile map with terrain/resources and inferred topology.
 3. **Generate NW map** — Same for `newWorld`; use deterministic seed offset (e.g. `effectiveSeed + 1`) and same resource rules.
+   - **Map diagnostics logging:** For each map generation call (OW and NW), The System emits one structured `map:` info line before generation passes that includes `regionId`, requested `numProvinces`, requested `numContinents`, derived grid `width`/`height`, `seed`, `seaFraction`, and mode toggles `joinContinents`, `skipFillLakes`, and `seedBeforeAssignment`. This line is diagnostic-only and does not alter map output.
 4. **Generate warp zones and link them** — On **each** map the generator aims for **one warp zone per map edge**, each using a **sea zone on the edge** (a sea zone that has at least one tile on the grid boundary of that map). If that is not possible (e.g. no sea zone on an edge), the **number of warp zones on each map must still be equal** so that every warp zone links to exactly one warp zone on each counterpart map. Create 1:1 links between regions (OW↔NW). Output: **warp links** (e.g. list of `(regionId, seaZoneId, otherRegionId, otherSeaZoneId)`). Stored with init result and used for cross-region sea-path reachability. See [map-topology.md](../game/map-topology.md) § Warp zones, [map-data.md](map-data.md).
 5. **GP assignment** — From OW **P–P** edges, derive continent ids (land subgraph components, [map-topology.md](../game/map-topology.md) § Continents). Reserve `minorCount × minProvincesPerMinor` for minors. **Before** BFS: assign each GP to **one** continent with capacity checks (targets summed per continent ≤ its province count; GPs per continent ≤ **sea-bound** provinces there for seeds). Multi-source BFS with strict per-GP continent map (`factionLandmassIds`); infeasible → clear error. [game-setup.md](../game/game-setup.md) § GP Assignment (one continent per GP).
 6. **Minor Nation assignment** — Assign remaining OW provinces to minors via BFS per [game-setup.md](../game/game-setup.md) § Minor Nation Assignment.
@@ -72,6 +73,10 @@ These criteria are implemented and covered by automated tests where noted.
 - Given `runInitGame` is called with `GameSetupConfig(seed: 0)`  
   When initialization completes  
   Then `result.game.globalGameSeed` is non-zero (time-derived effective seed; same test file).
+
+- Given The System starts one tile-map generation call for region `R` where `R` is either `oldWorld` or `newWorld`  
+  When `TileMapGenerator.generate` begins before pass-level work runs  
+  Then The System emits one `map:` info log line containing keys `regionId`, `numProvinces`, `numContinents`, `width`, `height`, `seed`, `seaFraction`, `joinContinents`, `skipFillLakes`, and `seedBeforeAssignment` with concrete values for that call.
 
 - Given `createGameFromGeneratedMaps` (or `runInitGame`) completes successfully  
   When the caller reads `result.game.worldState.turnState`  

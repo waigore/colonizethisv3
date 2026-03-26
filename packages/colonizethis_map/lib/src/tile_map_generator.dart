@@ -368,6 +368,19 @@ class TileMapGenerator {
     if (numContinents < 1) {
       throw ArgumentError('numContinents must be at least 1');
     }
+    _log.i(
+      'generation_params '
+      'regionId=$regionId '
+      'numProvinces=$numProvinces '
+      'numContinents=$numContinents '
+      'width=${params.width} '
+      'height=${params.height} '
+      'seed=${params.seed} '
+      'seaFraction=${params.seaFraction} '
+      'joinContinents=${params.joinContinents} '
+      'skipFillLakes=${params.skipFillLakes} '
+      'seedBeforeAssignment=${params.seedBeforeAssignment}',
+    );
     final provinceToContinent = buildProvinceToContinentMap(
       numProvinces,
       numContinents,
