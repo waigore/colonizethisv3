@@ -424,7 +424,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             currentOrdersProvider.overrideWith(
               () => CurrentOrdersNotifier(const Orders()),
             ),
@@ -463,7 +463,9 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              currentGameProvider.overrideWith((ref) => game),
+              currentGameProvider.overrideWith(
+                () => CurrentGameNotifier(game),
+              ),
               currentOrdersProvider.overrideWith(
                 () => CurrentOrdersNotifier(const Orders()),
               ),

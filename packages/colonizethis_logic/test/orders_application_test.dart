@@ -166,7 +166,7 @@ void main() {
           isHuman: true,
           capitalProvinceId: 'oldWorld|P1',
           stockpile: const Stockpile(),
-          workerPool: const WorkerPool(peasants: 0),
+          workerPool: const WorkerPool(peasants: 2),
           treasury: 100,
           techUnlocked: {'superior_hull_design': true},
         );
@@ -219,8 +219,70 @@ void main() {
           ),
           isTrue,
         );
+        expect(next.players.single.workerPool.peasants, 1);
       },
     );
+
+    test('rejects naval build when peasants are zero', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
+      );
+      final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+      var stockpile = const Stockpile();
+      for (final e in shipEcon.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final player = Player(
+        id: 'p1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|P1',
+        stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 0),
+        treasury: shipEcon.buildTreasuryCost + 10,
+        techUnlocked: {'superior_hull_design': true},
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: const RegionData(
+          provinces: [
+            Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
+          ],
+          units: [],
+        ),
+        newWorld: const RegionData(),
+      );
+      final game = Game(id: 'g', worldState: world, players: [player]);
+      final orders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'fluyte',
+              isMilitary:
+                  buildUnitCategoryForUnitType('fluyte') ==
+                  BuildUnitCategory.military,
+              spawnProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        },
+      );
+      final next = applyBuildAndWorkOrders(game, orders, topology: topology);
+      expect(next.worldState.fleets, isEmpty);
+      expect(next.players.single.workerPool.peasants, 0);
+      expect(next.players.single.treasury, player.treasury);
+    });
 
     test('second naval build adds ship to existing home fleet', () {
       const ow = 'oldWorld';
@@ -246,6 +308,7 @@ void main() {
         isHuman: true,
         capitalProvinceId: '$ow|P1',
         stockpile: stockpile,
+        workerPool: const WorkerPool(peasants: 2),
         treasury: shipEcon.buildTreasuryCost * 2 + 10,
         techUnlocked: {'superior_hull_design': true},
       );
@@ -286,6 +349,7 @@ void main() {
           .single;
       expect(p1Fleet.shipTypeIds.length, 2);
       expect(p1Fleet.shipTypeIds, contains('fluyte'));
+      expect(next.players.single.workerPool.peasants, 1);
     });
   });
 
@@ -2581,7 +2645,7 @@ void main() {
         isHuman: true,
         capitalProvinceId: 'oldWorld|P1',
         stockpile: stockpile,
-        workerPool: const WorkerPool(peasants: 0),
+        workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
         techUnlocked: {'superior_hull_design': true},
       );
@@ -2614,6 +2678,15 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders); // no topology
       expect(next.worldState.fleets, isEmpty);
+      final nextPlayer = next.players.single;
+      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
+      expect(nextPlayer.workerPool.peasants, 0);
+      for (final e in shipEcon.buildInputs.entries) {
+        expect(
+          nextPlayer.stockpile.quantityOf(e.key),
+          stockpile.quantityOf(e.key) - e.value,
+        );
+      }
     });
 
     test('ship build with capitalProvinceId null does not add fleet', () {
@@ -2643,7 +2716,7 @@ void main() {
         isHuman: true,
         capitalProvinceId: null, // no capital
         stockpile: stockpile,
-        workerPool: const WorkerPool(peasants: 0),
+        workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
         techUnlocked: {'superior_hull_design': true},
       );
@@ -2676,6 +2749,15 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders, topology: topology);
       expect(next.worldState.fleets, isEmpty);
+      final nextPlayer = next.players.single;
+      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
+      expect(nextPlayer.workerPool.peasants, 0);
+      for (final e in shipEcon.buildInputs.entries) {
+        expect(
+          nextPlayer.stockpile.quantityOf(e.key),
+          stockpile.quantityOf(e.key) - e.value,
+        );
+      }
     });
 
     test('ship build with capital not adjacent to sea does not add ship', () {
@@ -2705,7 +2787,7 @@ void main() {
         isHuman: true,
         capitalProvinceId: 'oldWorld|P1',
         stockpile: stockpile,
-        workerPool: const WorkerPool(peasants: 0),
+        workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
         techUnlocked: {'superior_hull_design': true},
       );
@@ -2738,6 +2820,15 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders, topology: topology);
       expect(next.worldState.fleets, isEmpty);
+      final nextPlayer = next.players.single;
+      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
+      expect(nextPlayer.workerPool.peasants, 0);
+      for (final e in shipEcon.buildInputs.entries) {
+        expect(
+          nextPlayer.stockpile.quantityOf(e.key),
+          stockpile.quantityOf(e.key) - e.value,
+        );
+      }
     });
   });
 

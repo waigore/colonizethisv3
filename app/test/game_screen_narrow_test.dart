@@ -30,7 +30,9 @@ void main() {
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => debugResult.game),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(debugResult.game),
+        ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
           () => GameIdsWithIntroShownNotifier({debugResult.game.id}),
@@ -61,7 +63,9 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => debugResult.game),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(debugResult.game),
+        ),
         mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
           () => GameIdsWithIntroShownNotifier({debugResult.game.id}),
@@ -397,7 +401,7 @@ void main() {
     Widget _buildGameScreenWithPauseMenu({required Game game}) {
       return ProviderScope(
         overrides: [
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           mapViewDataProvider.overrideWith((ref) => null),
           gameIdsWithIntroShownProvider.overrideWith(
             () => GameIdsWithIntroShownNotifier({game.id}),
@@ -452,7 +456,9 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              currentGameProvider.overrideWith((ref) => victoryGame),
+              currentGameProvider.overrideWith(
+                () => CurrentGameNotifier(victoryGame),
+              ),
               mapViewDataProvider.overrideWith(
                 (ref) => debugResult.mapViewData,
               ),

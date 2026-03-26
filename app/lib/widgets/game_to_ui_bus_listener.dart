@@ -50,7 +50,7 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
     if (reloaded == null || !mounted) {
       return;
     }
-    ref.read(currentGameProvider.notifier).state = reloaded;
+    ref.read(currentGameProvider.notifier).setGame(reloaded);
   }
 
   @override

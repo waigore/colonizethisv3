@@ -35,7 +35,7 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => game),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         mapViewDataProvider.overrideWith((ref) => mapViewData),
         gameIdsWithIntroShownProvider.overrideWith(
           () => GameIdsWithIntroShownNotifier(introShownIds),

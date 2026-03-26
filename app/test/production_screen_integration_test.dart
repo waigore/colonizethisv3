@@ -43,7 +43,7 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith((ref) => demoGame),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(demoGame)),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
           ref.onDispose(bus.dispose);

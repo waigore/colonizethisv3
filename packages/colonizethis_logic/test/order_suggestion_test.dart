@@ -733,6 +733,7 @@ void main() {
         displayName: 'GP',
         isHuman: false,
         capitalProvinceId: '$ow|p1',
+        workerPool: const WorkerPool(peasants: 1),
         treasury: affordableShipTreasury,
         stockpile: stockpile,
       );
