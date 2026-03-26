@@ -13,7 +13,26 @@ final gameListIdsProvider = FutureProvider<List<String>>((ref) async {
 });
 
 /// Currently loaded game, if any. Updated on load and after next turn.
-final currentGameProvider = StateProvider<Game?>((ref) => null);
+class CurrentGameNotifier extends Notifier<Game?> {
+  CurrentGameNotifier([this._initial]);
+
+  final Game? _initial;
+
+  @override
+  Game? build() => _initial;
+
+  void setGame(Game? game) {
+    state = game;
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
+final currentGameProvider = NotifierProvider<CurrentGameNotifier, Game?>(
+  CurrentGameNotifier.new,
+);
 
 /// Current-turn orders for the human player (work orders, move orders, etc.).
 /// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.

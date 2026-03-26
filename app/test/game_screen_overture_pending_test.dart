@@ -30,7 +30,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          currentGameProvider.overrideWith((ref) => game),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           mapViewDataProvider.overrideWith((ref) => debugResult.mapViewData),
           gameIdsWithIntroShownProvider.overrideWith(
             () => GameIdsWithIntroShownNotifier({game.id}),

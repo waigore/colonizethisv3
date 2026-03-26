@@ -51,7 +51,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container.read(currentGameProvider.notifier).state = game;
+    container.read(currentGameProvider.notifier).setGame(game);
 
     expect(container.read(mapViewDataProvider), isNotNull);
     expect(container.read(availableWorkTargetsProvider), isA<Map<String, List<String>>>());
@@ -73,7 +73,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container.read(currentGameProvider.notifier).state = allAi;
+    container.read(currentGameProvider.notifier).setGame(allAi);
 
     expect(container.read(mapViewDataProvider), isNotNull);
   });
