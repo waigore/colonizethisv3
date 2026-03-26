@@ -45,22 +45,24 @@ Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine
 
 **Scaling:** Costs increase with the **unlocking tech era** (1–4) from [tech-tree-naval.md](tech-tree-naval.md). Merchants emphasize **treasury + cargo** progression; warships emphasize **hulls and combat materials**. Steam-era hulls add **cast iron** and/or **coal**.
 
+**Treasury scale:** `build_treasury_cost` values are the prior Phase 5 baseline multiplied by **100**.
+
 **Frozen baseline (do not change without explicit design pass):** `carrack` and `fluyte` treasury and material rows match the original Phase 5 catalog.
 
 | ship_type_id | role | unlock era | build_treasury_cost | build_inputs |
 | --- | --- | ---: | ---: | --- |
-| carrack | merchant | (none — always buildable) | 80 | `lumber`×2, `fabric`×1 |
-| fluyte | merchant | 1 | 60 | `lumber`×1, `fabric`×1 |
-| sloop | warship | 1 | 55 | `lumber`×1, `fabric`×1 |
-| trader | merchant | 2 | 75 | `lumber`×2, `fabric`×2 |
-| galleon | merchant | 2 | 95 | `lumber`×3, `fabric`×2 |
-| indiaman | merchant | 2 | 110 | `lumber`×3, `fabric`×3 |
-| frigate | warship | 3 | 105 | `lumber`×2, `fabric`×2 |
-| raider | warship | 3 | 115 | `lumber`×2, `fabric`×1, `castIron`×2 |
-| ship_of_the_line | warship | 3 | 165 | `lumber`×5, `fabric`×3 |
-| clipper | merchant | 4 | 135 | `lumber`×3, `fabric`×3 |
-| merchant_steamship | merchant | 4 | 155 | `lumber`×2, `fabric`×2, `coal`×3 |
-| ironclad | warship | 4 | 210 | `lumber`×2, `fabric`×2, `castIron`×5 |
+| carrack | merchant | (none — always buildable) | 8000 | `lumber`×2, `fabric`×1 |
+| fluyte | merchant | 1 | 6000 | `lumber`×1, `fabric`×1 |
+| sloop | warship | 1 | 5500 | `lumber`×1, `fabric`×1 |
+| trader | merchant | 2 | 7500 | `lumber`×2, `fabric`×2 |
+| galleon | merchant | 2 | 9500 | `lumber`×3, `fabric`×2 |
+| indiaman | merchant | 2 | 11000 | `lumber`×3, `fabric`×3 |
+| frigate | warship | 3 | 10500 | `lumber`×2, `fabric`×2 |
+| raider | warship | 3 | 11500 | `lumber`×2, `fabric`×1, `castIron`×2 |
+| ship_of_the_line | warship | 3 | 16500 | `lumber`×5, `fabric`×3 |
+| clipper | merchant | 4 | 13500 | `lumber`×3, `fabric`×3 |
+| merchant_steamship | merchant | 4 | 15500 | `lumber`×2, `fabric`×2, `coal`×3 |
+| ironclad | warship | 4 | 21000 | `lumber`×2, `fabric`×2, `castIron`×5 |
 
 Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tech catalog MUST have exactly one row in this table. `carrack` MUST NOT appear in `shipUnlockIds` (no unlocking tech).
 

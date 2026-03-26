@@ -21,49 +21,49 @@ class ShipEconomyCatalog {
 
   static final ShipEconomyEntry carrack = ShipEconomyEntry(
     shipTypeId: 'carrack',
-    buildTreasuryCost: 80,
+    buildTreasuryCost: 8000,
     buildInputs: {CommodityCatalog.lumber.id: 2, CommodityCatalog.fabric.id: 1},
   );
 
   static final ShipEconomyEntry fluyte = ShipEconomyEntry(
     shipTypeId: 'fluyte',
-    buildTreasuryCost: 60,
+    buildTreasuryCost: 6000,
     buildInputs: {CommodityCatalog.lumber.id: 1, CommodityCatalog.fabric.id: 1},
   );
 
   static final ShipEconomyEntry sloop = ShipEconomyEntry(
     shipTypeId: 'sloop',
-    buildTreasuryCost: 55,
+    buildTreasuryCost: 5500,
     buildInputs: {CommodityCatalog.lumber.id: 1, CommodityCatalog.fabric.id: 1},
   );
 
   static final ShipEconomyEntry trader = ShipEconomyEntry(
     shipTypeId: 'trader',
-    buildTreasuryCost: 75,
+    buildTreasuryCost: 7500,
     buildInputs: {CommodityCatalog.lumber.id: 2, CommodityCatalog.fabric.id: 2},
   );
 
   static final ShipEconomyEntry galleon = ShipEconomyEntry(
     shipTypeId: 'galleon',
-    buildTreasuryCost: 95,
+    buildTreasuryCost: 9500,
     buildInputs: {CommodityCatalog.lumber.id: 3, CommodityCatalog.fabric.id: 2},
   );
 
   static final ShipEconomyEntry indiaman = ShipEconomyEntry(
     shipTypeId: 'indiaman',
-    buildTreasuryCost: 110,
+    buildTreasuryCost: 11000,
     buildInputs: {CommodityCatalog.lumber.id: 3, CommodityCatalog.fabric.id: 3},
   );
 
   static final ShipEconomyEntry frigate = ShipEconomyEntry(
     shipTypeId: 'frigate',
-    buildTreasuryCost: 105,
+    buildTreasuryCost: 10500,
     buildInputs: {CommodityCatalog.lumber.id: 2, CommodityCatalog.fabric.id: 2},
   );
 
   static final ShipEconomyEntry raider = ShipEconomyEntry(
     shipTypeId: 'raider',
-    buildTreasuryCost: 115,
+    buildTreasuryCost: 11500,
     buildInputs: {
       CommodityCatalog.lumber.id: 2,
       CommodityCatalog.fabric.id: 1,
@@ -73,19 +73,19 @@ class ShipEconomyCatalog {
 
   static final ShipEconomyEntry shipOfTheLine = ShipEconomyEntry(
     shipTypeId: 'ship_of_the_line',
-    buildTreasuryCost: 165,
+    buildTreasuryCost: 16500,
     buildInputs: {CommodityCatalog.lumber.id: 5, CommodityCatalog.fabric.id: 3},
   );
 
   static final ShipEconomyEntry clipper = ShipEconomyEntry(
     shipTypeId: 'clipper',
-    buildTreasuryCost: 135,
+    buildTreasuryCost: 13500,
     buildInputs: {CommodityCatalog.lumber.id: 3, CommodityCatalog.fabric.id: 3},
   );
 
   static final ShipEconomyEntry merchantSteamship = ShipEconomyEntry(
     shipTypeId: 'merchant_steamship',
-    buildTreasuryCost: 155,
+    buildTreasuryCost: 15500,
     buildInputs: {
       CommodityCatalog.lumber.id: 2,
       CommodityCatalog.fabric.id: 2,
@@ -95,7 +95,7 @@ class ShipEconomyCatalog {
 
   static final ShipEconomyEntry ironclad = ShipEconomyEntry(
     shipTypeId: 'ironclad',
-    buildTreasuryCost: 210,
+    buildTreasuryCost: 21000,
     buildInputs: {
       CommodityCatalog.lumber.id: 2,
       CommodityCatalog.fabric.id: 2,

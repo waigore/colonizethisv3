@@ -17,7 +17,26 @@ final currentGameProvider = StateProvider<Game?>((ref) => null);
 
 /// Current-turn orders for the human player (work orders, move orders, etc.).
 /// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.
-final currentOrdersProvider = StateProvider<Orders>((ref) => const Orders());
+class CurrentOrdersNotifier extends Notifier<Orders> {
+  CurrentOrdersNotifier([this._initial = const Orders()]);
+
+  final Orders _initial;
+
+  @override
+  Orders build() => _initial;
+
+  void replaceAll(Orders next) {
+    state = next;
+  }
+
+  void clear() {
+    state = const Orders();
+  }
+}
+
+final currentOrdersProvider = NotifierProvider<CurrentOrdersNotifier, Orders>(
+  CurrentOrdersNotifier.new,
+);
 
 /// Available work targets per civilian unit (unitId → allowed target ids).
 ///
@@ -70,10 +89,44 @@ final devExclusiveReservedWorkTileKeysProvider = Provider<Set<String>>((ref) {
 
 /// Set of game ids for which the game-start intro dialogue has been shown.
 /// SPEC/ai/dialogue-management.md § First dialogue emission point.
+class GameIdsWithIntroShownNotifier extends Notifier<Set<String>> {
+  GameIdsWithIntroShownNotifier([this._initial = const <String>{}]);
+
+  final Set<String> _initial;
+
+  @override
+  Set<String> build() => _initial;
+
+  void markShown(String gameId) {
+    state = {...state, gameId};
+  }
+}
+
 final gameIdsWithIntroShownProvider =
-    StateProvider<Set<String>>((ref) => {});
+    NotifierProvider<GameIdsWithIntroShownNotifier, Set<String>>(
+      GameIdsWithIntroShownNotifier.new,
+    );
 
 /// When non-null, turn resolution is suspended; user must accept/reject overtures.
 /// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
+class PendingOverturesNotifier extends Notifier<List<OvertureOffer>?> {
+  PendingOverturesNotifier([this._initial]);
+
+  final List<OvertureOffer>? _initial;
+
+  @override
+  List<OvertureOffer>? build() => _initial;
+
+  void setPending(List<OvertureOffer>? overtures) {
+    state = overtures;
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
 final pendingOverturesProvider =
-    StateProvider<List<OvertureOffer>?>((ref) => null);
+    NotifierProvider<PendingOverturesNotifier, List<OvertureOffer>?>(
+      PendingOverturesNotifier.new,
+    );

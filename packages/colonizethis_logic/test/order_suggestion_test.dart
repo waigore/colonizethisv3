@@ -723,6 +723,8 @@ void main() {
     test('suggestBuildOrders returns ship when affordable', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
+      final affordableShipTreasury =
+          ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost;
       final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.lumber.id, 2)
           .applyDelta(CommodityCatalog.fabric.id, 2);
@@ -732,7 +734,7 @@ void main() {
         isHuman: false,
         capitalProvinceId: '$ow|p1',
         workerPool: const WorkerPool(peasants: 1),
-        treasury: 100,
+        treasury: affordableShipTreasury,
         stockpile: stockpile,
       );
       final world = WorldState(
@@ -777,6 +779,8 @@ void main() {
       () {
         const playerId = 'gp1';
         const ow = 'oldWorld';
+        final affordableBothTreasury =
+            ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost + 1000;
         final stockpile = const Stockpile()
             .applyDelta(CommodityCatalog.lumber.id, 5)
             .applyDelta(CommodityCatalog.fabric.id, 5)
@@ -787,7 +791,7 @@ void main() {
           isHuman: false,
           capitalProvinceId: '$ow|p1',
           workerPool: const WorkerPool(peasants: 2, apprentices: 1),
-          treasury: 500,
+          treasury: affordableBothTreasury,
           stockpile: stockpile,
         );
         final world = WorldState(
