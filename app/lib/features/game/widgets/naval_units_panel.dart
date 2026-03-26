@@ -842,6 +842,16 @@ class _FleetExpansionTile extends StatelessWidget {
                   ),
                 ),
               ],
+              if (onTap != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Locate fleet',
+                  onPressed: onTap,
+                  icon: const Icon(Icons.my_location),
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ],
           ),
           subtitle: Text(
@@ -849,11 +859,6 @@ class _FleetExpansionTile extends StatelessWidget {
           ),
           dense: true,
           initiallyExpanded: isCombineMode,
-          onExpansionChanged: (expanded) {
-            if (!isCombineMode && onTap != null) {
-              onTap!();
-            }
-          },
           children: [
             if (row.shipCountsByType.isEmpty)
               const ListTile(title: Text('No ships in this fleet'), dense: true)
