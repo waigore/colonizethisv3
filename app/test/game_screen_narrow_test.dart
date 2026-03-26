@@ -4,10 +4,10 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
-import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -42,6 +42,9 @@ void main() {
           ref.onDispose(bus.dispose);
           return bus;
         }),
+        homeFleetCargoSummaryProvider.overrideWith(
+          (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+        ),
       ],
       child: AppEventHandlerScope(
         child: MaterialApp(
@@ -75,6 +78,9 @@ void main() {
           ref.onDispose(bus.dispose);
           return bus;
         }),
+        homeFleetCargoSummaryProvider.overrideWith(
+          (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+        ),
       ],
       child: AppEventHandlerScope(
         child: MaterialApp(
@@ -95,6 +101,27 @@ void main() {
   }
 
   group('GameScreen — SPEC/ui/in-game-shell-narrow.md', () {
+    testWidgets(
+      'AC: cargo hold indicator appears beside region tabs in used/capacity format (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final indicator = find.byKey(kCargoHoldIndicatorKey);
+        expect(indicator, findsOneWidget);
+
+        final formattedValue = find.descendant(
+          of: indicator,
+          matching: find.textContaining(RegExp(r'^\d+/\d+$')),
+        );
+        expect(formattedValue, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
     testWidgets(
       'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (wide viewport)',
       (WidgetTester tester) async {
@@ -411,6 +438,9 @@ void main() {
             ref.onDispose(bus.dispose);
             return bus;
           }),
+          homeFleetCargoSummaryProvider.overrideWith(
+            (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+          ),
         ],
         child: AppEventHandlerScope(
           child: MaterialApp(
@@ -470,6 +500,9 @@ void main() {
                 ref.onDispose(bus.dispose);
                 return bus;
               }),
+              homeFleetCargoSummaryProvider.overrideWith(
+                (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+              ),
             ],
             child: AppEventHandlerScope(
               child: MaterialApp(

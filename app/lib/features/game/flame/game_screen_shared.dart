@@ -12,3 +12,5 @@ const Key kHomeToCapitalButtonKey = Key('home_to_capital_button');
 /// Key for the map display options button (for tests). SPEC/ui/empire-overview.md § Map display options button and dialog.
 const Key kMapDisplayOptionsButtonKey = Key('map_display_options_button');
 
+/// Key for the cargo hold indicator row item. SPEC/ui/empire-overview.md.
+const Key kCargoHoldIndicatorKey = Key('cargo_hold_indicator');

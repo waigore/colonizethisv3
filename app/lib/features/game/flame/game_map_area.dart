@@ -18,6 +18,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/map_view_provider.dart';
+import '../../../../providers/home_fleet_cargo_provider.dart';
 
 import 'game_screen_shared.dart';
 import 'game_side_menu.dart';
@@ -222,10 +223,10 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         .read(currentOrdersProvider.notifier)
         .replaceAll(
           GameMapAreaStateLogic.addHumanWorkOrder(
-      orders: orders,
-      humanPlayerId: _humanPlayerId,
-      workOrder: workOrder,
-    ),
+            orders: orders,
+            humanPlayerId: _humanPlayerId,
+            workOrder: workOrder,
+          ),
         );
     setState(() {
       _workTargetSelection = null;
@@ -262,8 +263,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
     final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
-    final showProvinceOwnershipTint =
-        ref.watch(mapProvinceOwnershipTintVisibleProvider);
+    final showProvinceOwnershipTint = ref.watch(
+      mapProvinceOwnershipTintVisibleProvider,
+    );
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
@@ -280,6 +282,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         widget.game.turnTimeMapping,
       ),
     );
+    final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     return Column(
       children: [
         GameMapControls(
@@ -291,6 +294,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           onRegionIndexChanged: (i) =>
               setState(() => _regionIndex = i == 0 ? 0 : 1),
           nextTurnText: nextTurnText,
+          cargoUsed: cargoSummary.used,
+          cargoCapacity: cargoSummary.capacity,
         ),
         Expanded(
           child: Focus(
@@ -362,11 +367,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                       value: provinceOverlayVisible,
                                       onChanged: (value) {
                                         ref
-                                                .read(
-                                                  mapProvinceOverlayVisibleProvider
-                                                      .notifier,
-                                                )
-                                                .set(value);
+                                            .read(
+                                              mapProvinceOverlayVisibleProvider
+                                                  .notifier,
+                                            )
+                                            .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -376,11 +381,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                       value: ownershipTintVisible,
                                       onChanged: (value) {
                                         ref
-                                                .read(
-                                                  mapProvinceOwnershipTintVisibleProvider
-                                                      .notifier,
-                                                )
-                                                .set(value);
+                                            .read(
+                                              mapProvinceOwnershipTintVisibleProvider
+                                                  .notifier,
+                                            )
+                                            .set(value);
                                       },
                                     ),
                                     SwitchListTile(
@@ -390,11 +395,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                       value: namesVisible,
                                       onChanged: (value) {
                                         ref
-                                                .read(
-                                                  mapProvinceNamesVisibleProvider
-                                                      .notifier,
-                                                )
-                                                .set(value);
+                                            .read(
+                                              mapProvinceNamesVisibleProvider
+                                                  .notifier,
+                                            )
+                                            .set(value);
                                       },
                                     ),
                                   ],
