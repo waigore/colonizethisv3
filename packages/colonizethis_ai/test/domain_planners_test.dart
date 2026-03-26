@@ -84,8 +84,9 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) =>
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
       diplomatic;
 }
 

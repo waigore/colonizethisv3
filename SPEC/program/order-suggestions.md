@@ -6,7 +6,7 @@
 
 ## Responsibility
 
-Given a player, their current valid order list, and game context, enumerate **candidate orders** (move, build, work, research) guaranteed to be accepted if appended.
+Given a player, their current valid order list, and game context, enumerate **candidate orders** (move, build, work, research, naval, diplomatic) guaranteed to be accepted if appended.
 
 ---
 
@@ -33,10 +33,18 @@ For every suggested order `o`, appending it to the current list and validating v
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). Undiscovered factions are **never** valid diplomatic targets for order suggestions.
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
 - **Build orders:** `suggestBuildOrders` returns affordable, valid build-unit orders for both **military (regiment)** and **naval (ship)** unit types. Each candidate is validated (treasury, stockpile, tech, capital) via the order engine. Ordering is deterministic (e.g. by unit type id).
-- **Diplomatic orders:** `suggestDiplomaticOrders` suggests valid diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, Grant Aid, Set Subsidy) targeting factions the player knows about. Visibility rules per [regional discovery model](../game/diplomacy.md):
+- **Diplomatic orders (`suggestDiplomaticOrders`):** Suggests valid diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, Grant Aid, Set Subsidy) targeting factions the player knows about. Each candidate is validated with the order engine (`addDiplomaticOrderWithContext`), same as other suggestion families. Optional `tileMapByRegion` matches `suggestWorkOrders` for API symmetry. Visibility rules per [regional discovery model](../game/diplomacy.md):
   - **GP↔GP:** Always visible (global knowledge of major powers).
   - **GP↔Minor:** Always visible (same region/Old World).
   - **GP↔Tribe:** Only if discovered (diplomatic relation exists or province visibility).
+- **At most one suggested diplomatic order per target:** The returned list contains **at most one** `DiplomaticOrder` per `targetFactionId`. If several types could apply to the same target, the implementation tries candidates in a fixed priority order (offerPeace → alliance → establishOverture → grantAid → setSubsidy → declareWar) and keeps the first that passes the order engine.
+- **Draft list (`currentOrders`):** The suggester does **not** propose any diplomatic order toward a faction **T** if **T** already appears as `targetFactionId` on any of that player’s diplomatic orders in `currentOrders`. Removing that pending order from the draft restores eligibility for suggestions toward **T** in a later call (same turn).
+
+**Acceptance criteria (diplomatic suggestions)**
+
+- Given fixed `Game`, `MapTopology`, `PlayerView`, and `Orders` for player P, when `suggestDiplomaticOrders` returns a list L, then for every order o in L, appending o to P’s diplomatic order slot in those `Orders` and running `validatePlayerOrdersWithContext` for P yields **accepted** for that appended order (and no duplicate `targetFactionId` appears twice in L).
+- Given `currentOrders` already includes a diplomatic order from P to target T, when `suggestDiplomaticOrders` runs with those `currentOrders`, then L contains **no** order with `targetFactionId == T`.
+- Given `currentOrders` includes no diplomatic order to T, when a prior call returned a suggestion toward T and the player removed all diplomatic orders to T from the draft, when `suggestDiplomaticOrders` runs again with the updated `currentOrders`, then the system **may** again include a valid suggestion toward T subject to game rules and engine validation.
 
 ---
 

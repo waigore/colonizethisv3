@@ -1414,6 +1414,30 @@ bool _isNavalMissionOrderAccepted(
   return result.isAccepted;
 }
 
+bool _isDiplomaticOrderAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders baseOrders,
+  DiplomaticOrder candidate, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final engine = OrderEngine(initialOrders: baseOrders);
+  final result = engine.addDiplomaticOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+    tileMapByRegion: tileMapByRegion,
+  );
+  return result.isAccepted;
+}
+
+Set<String> _pendingDiplomaticTargetIds(Orders orders, String playerId) {
+  final list = orders.diplomaticOrdersByPlayerId[playerId] ?? const [];
+  return {for (final o in list) o.targetFactionId};
+}
+
 /// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
 OvertureStage? _nextOvertureStage(OvertureStage current) {
   switch (current) {
@@ -1430,21 +1454,147 @@ OvertureStage? _nextOvertureStage(OvertureStage current) {
   }
 }
 
+/// Per-target suggestion order: first candidate that passes the order engine wins.
+/// SPEC/program/order-suggestions.md § Diplomatic orders.
+List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
+  required Game game,
+  required String playerId,
+  required Player player,
+  required String targetId,
+  required Set<String> knownTargetIds,
+  required Set<String> knownFactionIds,
+}) {
+  final treasury = player.treasury;
+  final out = <DiplomaticOrder>[];
+  if (targetId == playerId) return out;
+
+  final rel = getRelation(game, playerId, targetId);
+  final atWar = rel?.atWar ?? false;
+  final atPeace = rel == null || rel.atPeace;
+  final isGpTarget = game.players.any((p) => p.id == targetId);
+  final isMinorOrTribe =
+      game.minorNations.any((m) => m.id == targetId) ||
+          game.tribes.any((t) => t.id == targetId);
+
+  if (knownTargetIds.contains(targetId) && atWar) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+  if (isGpTarget &&
+      rel != null &&
+      rel.atPeace &&
+      rel.level != RelationLevel.allied) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+    final overtureOrder = _establishOvertureSuggestionOrder(
+      game: game,
+      playerId: playerId,
+      targetId: targetId,
+      treasury: treasury,
+    );
+    if (overtureOrder != null) out.add(overtureOrder);
+  }
+
+  OvertureState? overtureRow;
+  for (final o in game.overtureStates) {
+    if (o.gpId == playerId && o.targetId == targetId) {
+      overtureRow = o;
+      break;
+    }
+  }
+  if (overtureRow != null) {
+    if (overtureRow.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.grantAid,
+          targetFactionId: targetId,
+          amount: suggestedGrantOrSubsidyAmount,
+        ),
+      );
+    }
+    if (overtureRow.hasConsulate &&
+        treasury >= suggestedGrantOrSubsidyAmount) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: targetId,
+          amount: suggestedGrantOrSubsidyAmount,
+        ),
+      );
+    }
+  }
+
+  if (knownTargetIds.contains(targetId) && atPeace) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+
+  return out;
+}
+
+DiplomaticOrder? _establishOvertureSuggestionOrder({
+  required Game game,
+  required String playerId,
+  required String targetId,
+  required int treasury,
+}) {
+  final rel = getRelation(game, playerId, targetId);
+  final atWar = rel?.atWar ?? false;
+  if (atWar) return null;
+
+  final existing = getOverture(game, playerId, targetId);
+  final current = existing?.stage ?? OvertureStage.none;
+  final next = _nextOvertureStage(current);
+  if (next == null) return null;
+  if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
+    final cost = next == OvertureStage.tradeConsulate
+        ? overtureConsulateCost
+        : overtureEmbassyCost;
+    if (treasury < cost) return null;
+  }
+  if (next == OvertureStage.joinEmpire) {
+    final score = rel?.score ?? relationScoreNeutral;
+    if (score < relationScoreMinFriendly) return null;
+    final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+    if (treasury < cost) return null;
+  }
+  return DiplomaticOrder(
+    type: DiplomaticOrderType.establishOverture,
+    targetFactionId: targetId,
+    overtureStage: next,
+  );
+}
+
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
-/// SPEC/program/ai-systems-impl.md; .github/ISSUE_AI_SPEC_GAPS.md item 11.
+/// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
 List<DiplomaticOrder> suggestDiplomaticOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   _log.d(
     '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
-  final treasury = player.treasury;
+  final blockedTargets = _pendingDiplomaticTargetIds(currentOrders, playerId);
 
   // Determine which factions are actually "known" to this player per SPEC:
   // - Any faction with an existing DiplomacyRelation to the player.
@@ -1484,99 +1634,57 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final knownTargets = allTargets
       .where((id) => knownFactionIds.contains(id))
       .toList();
+  final knownTargetIds = knownTargets.toSet();
 
-  for (final targetId in knownTargets) {
+  final unionTargets = <String>{
+    ...knownTargets,
+    ...otherGps,
+    for (final id in minorIds)
+      if (knownFactionIds.contains(id)) id,
+    for (final id in tribeIds)
+      if (knownFactionIds.contains(id)) id,
+    for (final o in game.overtureStates)
+      if (o.gpId == playerId) o.targetId,
+  };
+
+  final sortedTargetIds = unionTargets.toList()..sort();
+  for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
-    final rel = getRelation(game, playerId, targetId);
-    final atPeace = rel == null || rel.atPeace;
-    if (atPeace) {
-      suggestions.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: targetId,
-        ),
-      );
-    }
-    if (rel != null && rel.atWar) {
-      suggestions.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.offerPeace,
-          targetFactionId: targetId,
-        ),
-      );
-    }
-  }
+    if (blockedTargets.contains(targetId)) continue;
 
-  for (final targetId in otherGps) {
-    final rel = getRelation(game, playerId, targetId);
-    if (rel != null && rel.atPeace && rel.level != RelationLevel.allied) {
-      suggestions.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.alliance,
-          targetFactionId: targetId,
-        ),
-      );
-    }
-  }
-
-  for (final targetId in [
-    ...minorIds,
-    ...tribeIds,
-  ].where(knownFactionIds.contains)) {
-    final existing = getOverture(game, playerId, targetId);
-    final current = existing?.stage ?? OvertureStage.none;
-    final next = _nextOvertureStage(current);
-    if (next == null) continue;
-    if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
-      final cost = next == OvertureStage.tradeConsulate
-          ? overtureConsulateCost
-          : overtureEmbassyCost;
-      if (treasury < cost) continue;
-    }
-    if (next == OvertureStage.joinEmpire) {
-      final rel = getRelation(game, playerId, targetId);
-      final score = rel?.score ?? relationScoreNeutral;
-      if (score < relationScoreMinFriendly) continue;
-      final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-      if (treasury < cost) continue;
-    }
-    suggestions.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.establishOverture,
-        targetFactionId: targetId,
-        overtureStage: next,
-      ),
+    final candidates = _diplomaticCandidatesForTargetOrdered(
+      game: game,
+      playerId: playerId,
+      player: player,
+      targetId: targetId,
+      knownTargetIds: knownTargetIds,
+      knownFactionIds: knownFactionIds,
     );
-  }
-
-  final overtureStates = game.overtureStates;
-  for (final o in overtureStates) {
-    if (o.gpId != playerId) continue;
-    final targetId = o.targetId;
-    if (o.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
-      suggestions.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.grantAid,
-          targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
-        ),
-      );
-    }
-    if (o.hasConsulate && treasury >= suggestedGrantOrSubsidyAmount) {
-      suggestions.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.setSubsidy,
-          targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
-        ),
-      );
+    for (final candidate in candidates) {
+      if (_isDiplomaticOrderAccepted(
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        suggestions.add(candidate);
+        break;
+      }
     }
   }
 
   suggestions.sort((a, b) {
     final t = a.type.index.compareTo(b.type.index);
     if (t != 0) return t;
-    return a.targetFactionId.compareTo(b.targetFactionId);
+    final idCmp = a.targetFactionId.compareTo(b.targetFactionId);
+    if (idCmp != 0) return idCmp;
+    final stageCmp = (a.overtureStage?.index ?? -1).compareTo(
+      b.overtureStage?.index ?? -1,
+    );
+    if (stageCmp != 0) return stageCmp;
+    return (a.amount ?? 0).compareTo(b.amount ?? 0);
   });
   _log.d(
     '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
@@ -1631,6 +1739,7 @@ abstract class OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  });
 }
