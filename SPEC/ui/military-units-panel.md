@@ -23,6 +23,7 @@ The military units panel gives the player a single place to see every regiment a
 - **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated button (e.g. "Military Units"), in the same way as the Civilian Units panel.
 - **Desktop / wide viewport:** Panel appears as a side panel or bottom sheet so the map remains visible. Max height or scroll so content fits.
 - **Mobile / narrow viewport:** Panel appears as a bottom sheet or full-width overlay per [mobile-adaptation.md](mobile-adaptation.md).
+- **Train button:** Header includes a **Train** button in the same position/pattern as [civilian-units-panel.md](civilian-units-panel.md). On tap, the panel route is popped and the UI layer emits `OpenDialogEvent(trainMilitaryDialogId)` to open [train-military-dialog.md](train-military-dialog.md).
 
 ---
 
@@ -92,6 +93,8 @@ The military units panel gives the player a single place to see every regiment a
 - **Given** the panel is displayed with at least one region containing provinces with regiments or sea zones with ships, **when** the user views the tree, **then** the UI layer shows region headings, under each region location nodes (province name + region, or sea zone + region), and under each location type rows with type name, count, and status (and medals for regiments).
 
 - **Given** the user opens the Military Units panel on a narrow viewport (e.g. width < 600 dp), **when** the panel is displayed, **then** the UI layer presents the panel in a layout appropriate for mobile per [mobile-adaptation.md](mobile-adaptation.md).
+
+- **Given** the Military Units panel is open, **when** the user taps the Train button, **then** the UI layer closes the panel and emits `OpenDialogEvent(trainMilitaryDialogId)` so the Train Military dialog opens via `AppEventBus` wiring (the panel does not call `showDialog` directly).
 
 ---
 

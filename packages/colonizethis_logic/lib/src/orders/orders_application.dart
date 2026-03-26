@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../economy/build_cost.dart';
+import 'build_rail_work_rules.dart';
 import 'build_spawn_province.dart';
 import 'orders_application_helpers.dart';
 import '../world/naval.dart';
@@ -223,7 +224,7 @@ void _runBuildPhase(_BuildWorkState state) {
 /// BuildUnitOrder is applied by unit type category (civilian / military / naval) per buildUnitCategoryForUnitType.
 /// - Civilian: deduct treasury + paper, add unit with tileKey.
 /// - Military: deduct cost + worker, add unit.
-/// - Naval: deduct cost, add ship to home fleet at capital port.
+/// - Naval: deduct cost + one peasant, add ship to home fleet at capital port.
 /// - WorkOrder: sets the unit status to working; no terrain change yet.
 Game applyBuildAndWorkOrders(
   Game game,
@@ -411,7 +412,25 @@ Game applyBuildAndWorkOrders(
           break;
         }
       case 'build_rail':
-        s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+        {
+          final player = s.game.players
+              .where((p) => p.id == u.ownerId)
+              .firstOrNull;
+          final roadLevel = s.tileState.roadLevel(cw.tileKey);
+          final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
+          final reason = rejectionReasonForBuildRailOrder(
+            techUnlocked: player?.techUnlocked,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          );
+          if (reason == null) {
+            s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+          } else {
+            _log.d(
+              'logic: build_rail completion skipped unit=${u.id} reason=$reason',
+            );
+          }
+        }
         break;
       case 'steal_tech':
       case 'counter_spy':
@@ -959,6 +978,19 @@ void _runWorkPhase(
         if (applyStandardWorkOrder('build_fort')) continue;
       }
       if (workTarget == 'build_rail') {
+        final terrain = terrainTypeForTileKey(
+          state.tileMapByRegion,
+          targetTileKey,
+        );
+        final railReason = rejectionReasonForBuildRailOrder(
+          techUnlocked: player.techUnlocked,
+          roadLevel: tileState.roadLevel(targetTileKey),
+          terrain: terrain,
+        );
+        if (railReason != null) {
+          _log.d('logic: build_rail skipped - $railReason');
+          continue;
+        }
         if (applyStandardWorkOrder('build_rail')) continue;
       }
       if (workTarget == 'upgrade_town') {

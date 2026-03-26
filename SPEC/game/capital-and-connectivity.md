@@ -18,8 +18,10 @@ The **capital** is a designated home province plus a **specific tile** within th
 
 When the player chooses the capital tile:
 
-- If that tile is **adjacent to sea**, a **capital port** is auto-built on it.
-- Otherwise, a **port** is built on the tile in that province that is **closest to the capital tile** and adjacent to sea; then a **road** is auto-built along the **shortest path** (on province tiles only) from that port tile to the capital tile.
+- For **each seaboard** (each sea zone adjacent to the capital province), exactly one capital-port entry is created in `portsByProvinceSeaboard` using key `provinceId|seaZoneId`.
+- If the capital tile is adjacent to a given seaboard's sea zone, that seaboard's port tile is the capital tile.
+- Otherwise, for that seaboard, a port tile is chosen from tiles in the capital province that are adjacent to that seaboard's sea zone and is the tile with the shortest path to the capital tile (deterministic tie-break).
+- For each off-capital seaboard port tile, a road is auto-built along the shortest path (on province tiles only) from that seaboard's port tile to the capital tile.
 
 **Init order:** Capital placement (province + tile) and port placement happen first; **then** for each such port that is land-connected to the capital, roads are placed along the shortest path to the capital (so the path is computed and applied after all capitals/ports are fixed). **Then** (step 7d) province town assignment: each province gets one **town** tile — see § Town per province.
 
@@ -117,13 +119,13 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 
 ## Acceptance Criteria
 
-- Given a Great Power player selects a capital province and a capital tile `(regionId, provinceId, x, y)` that is adjacent to a sea tile in that region  
+- Given a Great Power player selects a capital province with `N` adjacent sea zones and a capital tile `(regionId, provinceId, x, y)` that is adjacent to one of those sea zones in that region  
   When the system initializes the game at the end of the capital-choice phase  
-  Then the system marks that tile as the player’s capital tile and creates a capital port on that tile, and sets the capital province’s `townTileKey` to that tile.
+  Then the system marks that tile as the player’s capital tile, creates exactly `N` entries in `portsByProvinceSeaboard` for that capital province (one per adjacent sea zone), sets the entry for the sea zone adjacent to `(x, y)` to that capital tile key, and sets the capital province’s `townTileKey` to that tile.
 
-- Given a Great Power player selects a capital province and a capital tile `(regionId, provinceId, x, y)` that is not adjacent to sea and the province contains at least one sea-adjacent land tile  
+- Given a Great Power player selects a capital province with one or more adjacent sea zones and a capital tile `(regionId, provinceId, x, y)` that is not adjacent to at least one of those sea zones, and the province contains at least one tile adjacent to each such sea zone  
   When the system initializes the game at the end of the capital-choice phase  
-  Then the system creates a port on the sea-adjacent tile in that province with the shortest path (by number of province tiles) to the capital tile and auto-builds a road along that shortest path from the port tile to the capital tile.
+  Then the system creates one port entry per adjacent sea zone, chooses each off-capital seaboard port tile by shortest path (by number of province tiles) to the capital tile with deterministic tie-break, and auto-builds a road along that shortest path from each off-capital seaboard port tile to the capital tile.
 
 - Given a Great Power player has a capital province with a capital tile already placed  
   When the system initializes towns for all provinces  

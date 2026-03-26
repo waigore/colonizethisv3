@@ -116,10 +116,10 @@ void main() {
   });
 
   group('workOrderCostBuildRail', () {
-    test('2 lumber + 2 cast iron (SPEC extraction-and-improvements)', () {
+    test('2 lumber + 2 steel (SPEC civilian-units)', () {
       final cost = workOrderCostBuildRail;
       expect(cost[CommodityCatalog.lumber.id], 2);
-      expect(cost[CommodityCatalog.castIron.id], 2);
+      expect(cost[CommodityCatalog.steel.id], 2);
     });
   });
 
@@ -180,6 +180,7 @@ void main() {
       final cost = workOrderMaterialCost('build_rail');
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 2);
+      expect(cost[CommodityCatalog.steel.id], 2);
     });
     test('unknown work target returns null', () {
       expect(workOrderMaterialCost('unknown'), isNull);

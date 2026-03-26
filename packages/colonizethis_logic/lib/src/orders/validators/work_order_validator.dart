@@ -6,6 +6,7 @@ import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
+import '../build_rail_work_rules.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
@@ -37,15 +38,15 @@ class WorkOrderValidator {
     required Stockpile stockpile,
     required int treasury,
     Map<String, TileMapResult>? tileMapByRegion,
-  })  : _game = game,
-        _player = player,
-        _playerId = playerId,
-        _view = view,
-        _unitsById = unitsById,
-        _devExclusiveTiles = devExclusiveTiles,
-        _tileMapByRegion = tileMapByRegion,
-        _stockpile = stockpile,
-        _treasury = treasury;
+  }) : _game = game,
+       _player = player,
+       _playerId = playerId,
+       _view = view,
+       _unitsById = unitsById,
+       _devExclusiveTiles = devExclusiveTiles,
+       _tileMapByRegion = tileMapByRegion,
+       _stockpile = stockpile,
+       _treasury = treasury;
 
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
@@ -65,14 +66,20 @@ class WorkOrderValidator {
           return OrderValidationResult.rejected('Unit not found');
         }
         if (unit.currentWork != null) {
-          return OrderValidationResult.rejected('Unit already has a work order; cancel first');
+          return OrderValidationResult.rejected(
+            'Unit already has a work order; cancel first',
+          );
         }
         final type = unit.type;
         if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
-          return OrderValidationResult.rejected('Invalid work target for unit type');
+          return OrderValidationResult.rejected(
+            'Invalid work target for unit type',
+          );
         }
         if (o.targetTileKey.isEmpty) {
-          return OrderValidationResult.rejected('Work order requires a target tile');
+          return OrderValidationResult.rejected(
+            'Work order requires a target tile',
+          );
         }
 
         final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
@@ -83,95 +90,133 @@ class WorkOrderValidator {
 
         if (o.target == 'steal_tech') {
           if (targetProvinceId == null) {
-            return OrderValidationResult.rejected('Invalid target for steal_tech');
+            return OrderValidationResult.rejected(
+              'Invalid target for steal_tech',
+            );
           }
           final otherPlayer = _game.players
-              .where((p) =>
-                  p.id != _playerId && p.capitalProvinceId == targetProvinceId)
+              .where(
+                (p) =>
+                    p.id != _playerId &&
+                    p.capitalProvinceId == targetProvinceId,
+              )
               .firstOrNull;
           if (otherPlayer == null) {
             return OrderValidationResult.rejected(
-                'steal_tech target must be another Great Power capital province');
+              'steal_tech target must be another Great Power capital province',
+            );
           }
           final ourTech = _player.techUnlocked ?? {};
           final theirTech = otherPlayer.techUnlocked ?? {};
-          final hasTechWeLack = theirTech.entries
-              .any((e) => e.value == true && ourTech[e.key] != true);
+          final hasTechWeLack = theirTech.entries.any(
+            (e) => e.value == true && ourTech[e.key] != true,
+          );
           if (!hasTechWeLack) {
-            return OrderValidationResult.rejected('Target has no technology you lack');
+            return OrderValidationResult.rejected(
+              'Target has no technology you lack',
+            );
           }
         } else if (o.target == 'counter_spy') {
           if (ownerId != _playerId) {
-            return OrderValidationResult.rejected('counter_spy target must be your own province');
+            return OrderValidationResult.rejected(
+              'counter_spy target must be your own province',
+            );
           }
         } else if (o.target == 'purchase_land') {
           if (ownerId == null || ownerId == _playerId) {
             return OrderValidationResult.rejected(
-                'purchase_land target must be a Minor or Tribe province');
+              'purchase_land target must be a Minor or Tribe province',
+            );
           }
           if (!isMinorOrTribe(_game, ownerId)) {
             return OrderValidationResult.rejected(
-                'purchase_land target must be a Minor or Tribe province');
+              'purchase_land target must be a Minor or Tribe province',
+            );
           }
           final rel = getRelation(_game, _playerId, ownerId);
           if (rel?.atWar == true) {
-            return OrderValidationResult.rejected('Cannot purchase land: at war with that faction');
+            return OrderValidationResult.rejected(
+              'Cannot purchase land: at war with that faction',
+            );
           }
           final overture = getOverture(_game, _playerId, ownerId);
           if (overture == null || !overture.hasEmbassy) {
             return OrderValidationResult.rejected(
-                'Cannot purchase land: embassy required with that Minor/Tribe');
+              'Cannot purchase land: embassy required with that Minor/Tribe',
+            );
           }
-          final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
+          final resourceId =
+              _game.worldState.resourceByTileKey[o.targetTileKey];
           if (resourceId == null || resourceId.isEmpty) {
             return OrderValidationResult.rejected('Tile has no resource');
           }
           if (kMineralResourceIds.contains(resourceId)) {
             final prospected =
-                _game.worldState.playerProspectedTiles[_playerId] ?? const <String>{};
+                _game.worldState.playerProspectedTiles[_playerId] ??
+                const <String>{};
             if (!prospected.contains(o.targetTileKey)) {
-              return OrderValidationResult.rejected('Mineral tile must be prospected first');
+              return OrderValidationResult.rejected(
+                'Mineral tile must be prospected first',
+              );
             }
           }
           final cost = purchaseLandCost(resourceId);
           if (_treasury < cost) {
             return OrderValidationResult.rejected(
-                'Insufficient treasury for purchase_land (need $cost)');
+              'Insufficient treasury for purchase_land (need $cost)',
+            );
           }
           final existingBuyer =
               _game.worldState.purchasedTilesByTileKey[o.targetTileKey];
           if (existingBuyer != null) {
-            return OrderValidationResult.rejected(existingBuyer == _playerId
-                ? 'You already own this tile'
-                : 'Tile already purchased by another power');
+            return OrderValidationResult.rejected(
+              existingBuyer == _playerId
+                  ? 'You already own this tile'
+                  : 'Tile already purchased by another power',
+            );
           }
         } else if (o.target == 'build_improvement') {
-          final controlled =
-              isTileControlledByPlayer(_game, _playerId, o.targetTileKey);
+          final controlled = isTileControlledByPlayer(
+            _game,
+            _playerId,
+            o.targetTileKey,
+          );
           if (!controlled) {
             return OrderValidationResult.rejected(
-                'Cannot build improvement in foreign or uncontrolled province');
+              'Cannot build improvement in foreign or uncontrolled province',
+            );
           }
-          final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
+          final resourceId =
+              _game.worldState.resourceByTileKey[o.targetTileKey];
           if (resourceId == null || resourceId.isEmpty) {
             return OrderValidationResult.rejected(
-                'Tile has no resource; build_improvement requires a resource on the tile');
+              'Tile has no resource; build_improvement requires a resource on the tile',
+            );
           }
-          final currentLevel =
-              _game.worldState.tileState.improvementLevel(o.targetTileKey);
+          final currentLevel = _game.worldState.tileState.improvementLevel(
+            o.targetTileKey,
+          );
           if (currentLevel >= 4) {
-            return OrderValidationResult.rejected('Improvement level already at maximum (4)');
+            return OrderValidationResult.rejected(
+              'Improvement level already at maximum (4)',
+            );
           }
           final techCap = extractionCapForUnlocked(_player.techUnlocked);
           if (currentLevel + 1 > techCap) {
             return OrderValidationResult.rejected(
-                'Insufficient tech to build next improvement level (cap $techCap)');
+              'Insufficient tech to build next improvement level (cap $techCap)',
+            );
           }
         } else if (!isExplorerUnit(type)) {
-          final controlled =
-              isTileControlledByPlayer(_game, _playerId, o.targetTileKey);
+          final controlled = isTileControlledByPlayer(
+            _game,
+            _playerId,
+            o.targetTileKey,
+          );
           if (!controlled) {
-            return OrderValidationResult.rejected('Cannot work in foreign province');
+            return OrderValidationResult.rejected(
+              'Cannot work in foreign province',
+            );
           }
         }
 
@@ -179,7 +224,8 @@ class WorkOrderValidator {
             isDevExclusiveWorkTarget(o.target) &&
             _devExclusiveTiles.contains(o.targetTileKey)) {
           return OrderValidationResult.rejected(
-              'Tile already has development or purchase work for this player');
+            'Tile already has development or purchase work for this player',
+          );
         }
 
         if (o.target != 'steal_tech' &&
@@ -189,24 +235,44 @@ class WorkOrderValidator {
               ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;
           final fortLevel = province?.fortLevel ?? 0;
-          final roadLevel = _game.worldState.tileState.roadLevel(o.targetTileKey);
+          final roadLevel = _game.worldState.tileState.roadLevel(
+            o.targetTileKey,
+          );
           if (o.target == 'build_road' && roadLevel >= 1) {
             final hasRoadConstruction =
                 _player.techUnlocked?['road_construction'] == true;
             if (!hasRoadConstruction) {
               return OrderValidationResult.rejected(
-                  'Road Construction tech required for transport level 2');
+                'Road Construction tech required for transport level 2',
+              );
             }
           }
           if (o.target == 'build_fort') {
             if (fortLevel == 1 &&
                 _player.techUnlocked?['mine_engineering'] != true) {
               return OrderValidationResult.rejected(
-                  'Mine Engineering tech required for fort level 2');
+                'Mine Engineering tech required for fort level 2',
+              );
             }
             if (fortLevel == 2 &&
                 _player.techUnlocked?['modern_forts'] != true) {
-              return OrderValidationResult.rejected('Modern Forts tech required for fort level 3');
+              return OrderValidationResult.rejected(
+                'Modern Forts tech required for fort level 3',
+              );
+            }
+          }
+          if (o.target == 'build_rail') {
+            final terrain = terrainTypeForTileKey(
+              _tileMapByRegion,
+              o.targetTileKey,
+            );
+            final reason = rejectionReasonForBuildRailOrder(
+              techUnlocked: _player.techUnlocked,
+              roadLevel: roadLevel,
+              terrain: terrain,
+            );
+            if (reason != null) {
+              return OrderValidationResult.rejected(reason);
             }
           }
           final costMap = WorkOrderCostCalculator(_game).calculateCost(
@@ -219,14 +285,18 @@ class WorkOrderValidator {
           if (costMap != null) {
             for (final entry in costMap.entries) {
               if (_stockpile.quantityOf(entry.key) < entry.value) {
-                return OrderValidationResult.rejected('Insufficient materials for work order');
+                return OrderValidationResult.rejected(
+                  'Insufficient materials for work order',
+                );
               }
             }
           }
         }
 
         if (!workOrderVisibilityOk(_view, unit, o.target, o.targetTileKey)) {
-          return OrderValidationResult.rejected('Province or tile not visible for this work');
+          return OrderValidationResult.rejected(
+            'Province or tile not visible for this work',
+          );
         }
 
         if (o.target == 'prospect') {
@@ -241,19 +311,21 @@ class WorkOrderValidator {
           }
           final prospected =
               _game.worldState.playerProspectedTiles[_playerId] ??
-                  const <String>{};
+              const <String>{};
           if (prospected.contains(o.targetTileKey)) {
             return OrderValidationResult.rejected('Tile already prospected');
           }
         }
 
-        if (isDevExclusiveUnitType(type) && isDevExclusiveWorkTarget(o.target)) {
+        if (isDevExclusiveUnitType(type) &&
+            isDevExclusiveWorkTarget(o.target)) {
           _devExclusiveTiles.add(o.targetTileKey);
         }
 
         // Apply projected cost so subsequent work orders see updated state.
         if (o.target == 'purchase_land') {
-          final resourceId = _game.worldState.resourceByTileKey[o.targetTileKey];
+          final resourceId =
+              _game.worldState.resourceByTileKey[o.targetTileKey];
           if (resourceId != null && resourceId.isNotEmpty) {
             final cost = purchaseLandCost(resourceId);
             _treasury -= cost;

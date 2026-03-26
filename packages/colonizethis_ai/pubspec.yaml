@@ -10,7 +10,7 @@ environment:
 
 dependencies:
   logger: ^2.0.2
-  riverpod: ^2.6.1
+  riverpod: ^3.2.1
   colonizethis_logger:
   colonizethis_data:
   colonizethis_logic:

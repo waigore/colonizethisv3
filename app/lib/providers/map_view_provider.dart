@@ -8,15 +8,45 @@ import 'games_provider.dart';
 /// Global province/sea boundary strokes on in-game Empire overview maps.
 /// Defaults to true at app start; updated via the Map display options dialog.
 /// SPEC/ui/map-widget.md, SPEC/ui/empire-overview.md.
-final mapProvinceOverlayVisibleProvider = StateProvider<bool>((ref) => true);
+class MapProvinceOverlayVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void set(bool value) => state = value;
+}
+
+final mapProvinceOverlayVisibleProvider =
+    NotifierProvider<MapProvinceOverlayVisibleNotifier, bool>(
+      MapProvinceOverlayVisibleNotifier.new,
+    );
 
 /// Great Power land ownership tint on in-game Empire overview maps.
 /// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to true at app start.
-final mapProvinceOwnershipTintVisibleProvider = StateProvider<bool>((ref) => true);
+class MapProvinceOwnershipTintVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void set(bool value) => state = value;
+}
+
+final mapProvinceOwnershipTintVisibleProvider =
+    NotifierProvider<MapProvinceOwnershipTintVisibleNotifier, bool>(
+      MapProvinceOwnershipTintVisibleNotifier.new,
+    );
 
 /// Global land province name labels on in-game Empire overview maps.
 /// Independent of boundary and ownership-tint toggles. Defaults to true at app start.
-final mapProvinceNamesVisibleProvider = StateProvider<bool>((ref) => true);
+class MapProvinceNamesVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void set(bool value) => state = value;
+}
+
+final mapProvinceNamesVisibleProvider =
+    NotifierProvider<MapProvinceNamesVisibleNotifier, bool>(
+      MapProvinceNamesVisibleNotifier.new,
+    );
 
 /// Map view data for the current game with player-constrained visibility.
 /// Null when no game, no map data (legacy save), or loading.

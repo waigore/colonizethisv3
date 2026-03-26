@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   group('computeGridSizeFromParams', () {
@@ -302,6 +303,42 @@ void main() {
       expect(logLines.any((s) => s.contains('Pass 8')), isTrue);
       expect(logLines.any((s) => s.contains('Pass 9')), isTrue);
       expect(logLines.any((s) => s.contains('Pass 11')), isTrue);
+    });
+
+    test('emits generation_params map log with derived grid and key toggles', () {
+      final capturedEvents = <LogEvent>[];
+      void listener(LogEvent event) => capturedEvents.add(event);
+      Logger.addLogListener(listener);
+      addTearDown(() => Logger.removeLogListener(listener));
+
+      final params = TileMapParams(
+        width: 12,
+        height: 9,
+        seed: 77,
+        seaFraction: 0.55,
+        joinContinents: true,
+        skipFillLakes: true,
+        seedBeforeAssignment: false,
+      );
+      TileMapGenerator(params: params).generate(
+        numProvinces: 3,
+        numContinents: 2,
+        regionId: 'oldWorld',
+      );
+
+      final message = capturedEvents
+          .map((e) => e.message.toString())
+          .firstWhere((m) => m.contains('map: generation_params'));
+      expect(message, contains('regionId=oldWorld'));
+      expect(message, contains('numProvinces=3'));
+      expect(message, contains('numContinents=2'));
+      expect(message, contains('width=12'));
+      expect(message, contains('height=9'));
+      expect(message, contains('seed=77'));
+      expect(message, contains('seaFraction=0.55'));
+      expect(message, contains('joinContinents=true'));
+      expect(message, contains('skipFillLakes=true'));
+      expect(message, contains('seedBeforeAssignment=false'));
     });
 
     test('without resourceRules leaves terrain and resource grids null', () {

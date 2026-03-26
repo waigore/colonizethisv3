@@ -47,7 +47,7 @@ The resolver does not decide actions; it applies actions provided by the caller.
 ## Integration
 
 - **Phase:** Combat phase, as alternative to auto-resolve ([turn-resolution-phases.md](turn-resolution-phases.md)).
-- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve. The main game path (turn resolver) typically invokes the resolver without supplying per-round actions and thus relies on default round actions; a future UI or AI may supply explicit round actions.
+- **Upstream:** Conflict detection and battle ordering from [combat-resolution.md](combat-resolution.md); WorldState and config for constructing input. General assignment, phase ledger, and attacker/defender medal counts for initiative must match [combat-resolution.md](combat-resolution.md) §3 (same RNG recipe as auto-resolve; primary attacker = first `BattleContext.attackers` entry). Tactical stats, terrain modifiers, and difficulty settings shared with auto-resolve. The main game path (turn resolver) typically invokes the resolver without supplying per-round actions and thus relies on default round actions; a future UI or AI may supply explicit round actions.
 - **Downstream:** Casualty lists, province-flip flag, and (siege) `fortDowngradeFromDestroyedEmplaced` returned to the combat pipeline; WorldState mutation by turn resolver, including optional `fortLevel` decrement when the flag is true per [combat-resolution.md](combat-resolution.md).
 
 ## Constraints

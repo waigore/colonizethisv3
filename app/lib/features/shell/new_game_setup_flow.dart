@@ -74,7 +74,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
 
     switch (outcome) {
       case _NewGameOutcomeSuccess(:final game):
-        container.read(currentGameProvider.notifier).state = game;
+        container.read(currentGameProvider.notifier).setGame(game);
         bus.emit(const NavigateToRouteEvent(Routes.game));
         return;
       case _NewGameOutcomeFailure(:final error):

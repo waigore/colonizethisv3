@@ -30,7 +30,7 @@ class ShellScreen extends ConsumerWidget {
         if (ids.isEmpty || !context.mounted) return;
         final game = service.loadGame(ids.first);
         if (game != null && context.mounted) {
-          ref.read(currentGameProvider.notifier).state = game;
+          ref.read(currentGameProvider.notifier).setGame(game);
           if (context.mounted) {
             bus.emit(const NavigateToRouteEvent(Routes.game));
           }

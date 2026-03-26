@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 /// Shared UI state between the region map and the province/sea detail panel.
 /// Map and panel stay decoupled: both read/write this provider only.

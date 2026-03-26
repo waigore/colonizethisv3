@@ -1,8 +1,10 @@
 // Helpers for the combat phase: apply one land battle (quick or auto-resolve), evidence, dialogue.
 // SPEC/program/turn-resolution-phase-details.md § Combat. Called from turn_resolver._runCombatPhase.
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../combat/battle_general_assignment.dart';
 import '../combat/combat_resolver.dart';
 import '../combat/conflict_detection.dart';
 import '../combat/quick_battle_input_builder.dart';
@@ -12,6 +14,8 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../game_events.dart';
 
+final _combatPhaseLog = logicLogger();
+
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(
   Game state,
@@ -20,18 +24,48 @@ Game runOneLandBattle(
   Map<String, double> feedingCoverageByPlayerId,
   int turn,
   int battleIndex,
-  int seed, {
+  int seed,
+  CombatPhaseGeneralLedger combatGeneralLedger, {
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
+  final attackerUnitsTotal =
+      ctx.attackers.fold<int>(0, (s, a) => s + a.unitIds.length);
+  _combatPhaseLog.i(
+    'logic: combat battle_start turn=$turn battleIndex=$battleIndex '
+    'regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+    'defenderFactionId=${ctx.defenderFactionId} attackerSides=${ctx.attackers.length} '
+    'attackerUnitsTotal=$attackerUnitsTotal mode=${mode.name}',
+  );
+
   String? winnerId;
   Map<String, int> casualties = {};
 
   if (mode == CombatMode.quickBattle) {
-    final input = buildQuickBattleInput(state, ctx,
-        seed: state.worldState.turnState.turnNumber);
+    final assignment = assignGeneralsForBattleContext(
+      game: state,
+      ctx: ctx,
+      rng: battleAssignmentRng(state, ctx),
+      ledger: combatGeneralLedger,
+    );
+    final input = buildQuickBattleInput(
+      state,
+      ctx,
+      seed: state.worldState.turnState.turnNumber,
+      battleAssignment: assignment,
+    );
     final qbResult = resolveQuickBattle(input);
     state = applyQuickBattleResultToGame(state, ctx, qbResult);
+    recordAttackCommandersForResolvedBattle(ctx, assignment, combatGeneralLedger);
+    final qbFlipped = qbResult.provinceFlips &&
+        qbResult.winner == QuickBattleWinner.attacker &&
+        ctx.attackers.isNotEmpty;
+    _combatPhaseLog.i(
+      'logic: combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+      'mode=quickBattle winner=${qbResult.winner.name} provinceFlipped=$qbFlipped '
+      'attCasualties=${qbResult.attackerCasualties.length} '
+      'defCasualties=${qbResult.defenderCasualties.length}',
+    );
 
     // Determine winner and casualties
     if (qbResult.winner == QuickBattleWinner.attacker) {
@@ -83,6 +117,7 @@ Game runOneLandBattle(
       state,
       ctx,
       feedingCoverageByPlayerId: feedingCoverageByPlayerId,
+      combatGeneralLedger: combatGeneralLedger,
     );
     final region = ctx.regionId == kRegionOldWorld
         ? state.worldState.oldWorld

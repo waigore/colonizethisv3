@@ -1,133 +1,25 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show Player;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+import 'ct_region_map_test_support.dart';
 
 void main() {
   suppressLogsForTests();
-
-  /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].
-  const ctRegionMapTestPlayerView = PlayerView(
-    playerId: 'ct_region_map_test',
-    player: Player(
-      id: 'ct_region_map_test',
-      displayName: 'Test',
-      isHuman: false,
-    ),
-    ownUnitsById: {},
-    provincesById: {},
-    visibilityByTile: {},
-    prospectedTiles: {},
-    diplomacyByOtherId: {},
-  );
-
-  group('debug init Old World region', () {
-    test('returns region with correct dimensions and cell count', () {
-      final region = getDebugInitGameResult().mapViewData.oldWorld;
-      expect(region.regionId, 'oldWorld');
-      expect(region.width, greaterThanOrEqualTo(8));
-      expect(region.height, greaterThanOrEqualTo(8));
-      expect(region.cells.length, region.width * region.height);
-      expect(region.cellSize, 24);
-    });
-
-    test('has terrain and faction colors', () {
-      final region = getDebugInitGameResult().mapViewData.oldWorld;
-      expect(region.terrainColors.length, greaterThanOrEqualTo(1));
-      expect(region.factionColors.length, greaterThanOrEqualTo(2));
-    });
-
-    test('has at least one capital marker', () {
-      final region = getDebugInitGameResult().mapViewData.oldWorld;
-      expect(region.capitalMarkers.length, greaterThanOrEqualTo(1));
-    });
-
-    test('has both sea and land cells with provinces', () {
-      final region = getDebugInitGameResult().mapViewData.oldWorld;
-      final seaCount = region.cells.where((c) => c.isSea).length;
-      final landCount = region.cells.where((c) => !c.isSea).length;
-      expect(seaCount, greaterThan(0));
-      expect(landCount, greaterThan(0));
-      final landCell = region.cells.firstWhere((c) => !c.isSea);
-      expect(landCell.regionCellId, startsWith('p'));
-      expect(landCell.terrainType, isNotNull);
-    });
-
-    test('land cells may have improvement and road levels', () {
-      final region = getDebugInitGameResult().mapViewData.oldWorld;
-      expect(region.cells.any((c) => !c.isSea), isTrue);
-    });
-  });
-
-  RegionMapViewData _oldWorldRegion() =>
-      getDebugInitGameResult().mapViewData.oldWorld;
-
-  Widget _buildCtRegionMap({
-    required RegionMapViewData region,
-    double width = 400,
-    double height = 320,
-    double cellSizePx = 24,
-    bool showPoliticalOverlay = true,
-    bool showProvinceOverlay = true,
-    bool showProvinceOwnershipTint = true,
-    CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
-    BaseLayerDisplayMode? baseLayerDisplayMode,
-    String? centerOnTileKey,
-    void Function(String)? onProvinceSelected,
-    void Function(String?)? onProvinceHovered,
-    void Function(String?)? onTileHovered,
-    void Function(String)? onMapTileTappedForDetail,
-    String? selectedTileKey,
-    String? secondaryHighlightTileKey,
-    VoidCallback? onRegionViewChanged,
-    PlayerView? playerViewForResources,
-  }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: CtRegionMap(
-              region: region,
-              cellSizePx: cellSizePx,
-              showPoliticalOverlay: showPoliticalOverlay,
-              showProvinceOverlay: showProvinceOverlay,
-              showProvinceOwnershipTint: showProvinceOwnershipTint,
-              visibilityMode: visibilityMode,
-              playerViewForResources: playerViewForResources,
-              baseLayerDisplayMode: baseLayerDisplayMode,
-              centerOnTileKey: centerOnTileKey,
-              onProvinceSelected: onProvinceSelected,
-              onProvinceHovered: onProvinceHovered,
-              onTileHovered: onTileHovered,
-              onMapTileTappedForDetail: onMapTileTappedForDetail,
-              selectedTileKey: selectedTileKey,
-              secondaryHighlightTileKey: secondaryHighlightTileKey,
-              onRegionViewChanged: onRegionViewChanged,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   group('CtRegionMap (Flame map widget)', () {
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -190,8 +82,8 @@ void main() {
         expect(terrainTilesetCache.getSeaDesertTileset(), isNotNull);
         expect(terrainTilesetCache.getPlainsDesertTileset(), isNotNull);
 
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
@@ -201,8 +93,8 @@ void main() {
     testWidgets(
       'builds without throwing for old world region',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         // Do a single pump; CtRegionMap embeds a Flame GameWidget which
         // does not naturally settle for pumpAndSettle.
         await tester.pump();
@@ -216,9 +108,9 @@ void main() {
     testWidgets(
       'applies non-default visibility and political overlay flags',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             showPoliticalOverlay: false,
             showProvinceOverlay: false,
@@ -236,18 +128,18 @@ void main() {
     testWidgets(
       'honors province overlay visibility flag without throwing',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
 
         // Province overlay on.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showProvinceOverlay: true),
+          ctRegionMapTestHarness(region: region, showProvinceOverlay: true),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
 
         // Province overlay off.
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, showProvinceOverlay: false),
+          ctRegionMapTestHarness(region: region, showProvinceOverlay: false),
         );
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
@@ -258,9 +150,9 @@ void main() {
     testWidgets(
       'honors province ownership tint flag without throwing',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             showProvinceOwnershipTint: true,
           ),
@@ -269,7 +161,7 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             showProvinceOwnershipTint: false,
           ),
@@ -283,16 +175,16 @@ void main() {
     testWidgets(
       'builds with each base layer display mode (SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         for (final mode in BaseLayerDisplayMode.values) {
           await tester.pumpWidget(
-            _buildCtRegionMap(region: region, baseLayerDisplayMode: mode),
+            ctRegionMapTestHarness(region: region, baseLayerDisplayMode: mode),
           );
           await tester.pump();
           expect(find.byType(CtRegionMap), findsOneWidget);
         }
         // Omitted baseLayerDisplayMode defaults to full letters
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
@@ -302,8 +194,8 @@ void main() {
     testWidgets(
       'responds to +/- keyboard shortcuts for zoom',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         final mapFinder = find.byType(CtRegionMap);
@@ -331,8 +223,8 @@ void main() {
     testWidgets(
       'supports drag-to-pan gesture without throwing',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         final mapFinder = find.byType(CtRegionMap);
@@ -350,12 +242,12 @@ void main() {
     testWidgets(
       'hover and tap callbacks fire for visible tiles',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         String? lastProvinceId;
         String? lastTileKey;
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onProvinceHovered: (id) => lastProvinceId = id,
             onTileHovered: (key) => lastTileKey = key,
@@ -384,13 +276,13 @@ void main() {
     testWidgets(
       'centerOnTileKey triggers centering logic without throwing',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         final landCell = region.cells.firstWhere((c) => !c.isSea);
         final tileKey =
             '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
 
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, centerOnTileKey: tileKey),
+          ctRegionMapTestHarness(region: region, centerOnTileKey: tileKey),
         );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
@@ -403,10 +295,10 @@ void main() {
     testWidgets(
       'didUpdateWidget propagates updated props into game',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             visibilityMode: CtMapVisibilityMode.full,
             baseLayerDisplayMode:
@@ -417,7 +309,7 @@ void main() {
 
         // Rebuild with changed visibility, political overlay, and base layer display mode.
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             showPoliticalOverlay: false,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
@@ -435,20 +327,20 @@ void main() {
     testWidgets(
       'camera resize logic runs when parent size changes',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
 
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, width: 400, height: 320),
+          ctRegionMapTestHarness(region: region, width: 400, height: 320),
         );
         await tester.pump();
 
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, width: 640, height: 360),
+          ctRegionMapTestHarness(region: region, width: 640, height: 360),
         );
         await tester.pump();
 
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, width: 320, height: 240),
+          ctRegionMapTestHarness(region: region, width: 320, height: 240),
         );
         await tester.pump();
 
@@ -460,15 +352,15 @@ void main() {
     testWidgets(
       'small cell size triggers map-smaller-than-viewport clamp path',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(region: region, width: 600, height: 600),
+          ctRegionMapTestHarness(region: region, width: 600, height: 600),
         );
         await tester.pump();
 
         // Rebuild with tiny cell size so that the map is smaller than the viewport.
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             width: 600,
             height: 600,
@@ -486,11 +378,11 @@ void main() {
     testWidgets(
       'onRegionViewChanged fires when camera moves',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         var callbackCount = 0;
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onRegionViewChanged: () {
               callbackCount++;
@@ -521,8 +413,8 @@ void main() {
     testWidgets(
       'hover and exit events are forwarded into the game',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         final mapFinder = find.byType(CtRegionMap);
@@ -547,8 +439,8 @@ void main() {
     testWidgets(
       'scroll wheel events are forwarded to zoom handler',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         final mapFinder = find.byType(CtRegionMap);
@@ -584,10 +476,10 @@ void main() {
     testWidgets(
       'tap on map invokes onProvinceSelected with prefixed province id (mobile/touch)',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         String? selectedId;
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onProvinceSelected: (id) => selectedId = id,
           ),
@@ -609,11 +501,11 @@ void main() {
     testWidgets(
       'tap invokes onMapTileTappedForDetail with full tile key',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         String? selectedId;
         String? detailTileKey;
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onProvinceSelected: (id) => selectedId = id,
             onMapTileTappedForDetail: (tk) => detailTileKey = tk,
@@ -641,7 +533,7 @@ void main() {
     testWidgets(
       'tap on a town tile still invokes map tile and province selection callbacks',
       (WidgetTester tester) async {
-        final base = _oldWorldRegion();
+        final base = ctRegionMapTestOldWorldRegion();
         final landTemplate = base.cells.firstWhere((c) => !c.isSea);
         final region = RegionMapViewData(
           regionId: 'oldWorld',
@@ -680,7 +572,7 @@ void main() {
         String? detailTileKey;
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onProvinceSelected: (id) => selectedId = id,
             onMapTileTappedForDetail: (tk) => detailTileKey = tk,
@@ -705,10 +597,10 @@ void main() {
     testWidgets(
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         String? hoveredTileKey;
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             onTileHovered: (key) => hoveredTileKey = key,
           ),
@@ -728,7 +620,7 @@ void main() {
     testWidgets(
       'tap still selects province when all tiles are unrevealed in player-constrained mode',
       (WidgetTester tester) async {
-        final base = _oldWorldRegion();
+        final base = ctRegionMapTestOldWorldRegion();
         final unrevealedCells = base.cells
             .map(
               (c) => CellViewData(
@@ -763,7 +655,7 @@ void main() {
 
         String? selectedId;
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             playerViewForResources: ctRegionMapTestPlayerView,
@@ -794,11 +686,11 @@ void main() {
         // The global terrainTilesetCache must be loaded for the map to render properly.
         // If it fails to load (e.g., missing assets), the component will throw.
         // This test documents the expected behavior: map should NOT silently fall back.
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
 
         // Build map - if tileset loading failed, this would throw a StateError
         // rather than rendering solid color fallback
-        await tester.pumpWidget(_buildCtRegionMap(region: region));
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
 
         // If we reach here, tilesets loaded successfully.
@@ -868,9 +760,9 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
@@ -891,9 +783,9 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode:
                 BaseLayerDisplayMode.terrainResourcesImprovements,
@@ -914,9 +806,9 @@ void main() {
           await terrainTilesetCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
           ),
@@ -937,7 +829,7 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final base = _oldWorldRegion();
+        final base = ctRegionMapTestOldWorldRegion();
         // Create a region with some fogged cells
         final foggedCells = base.cells.map((c) {
           if (c.isSea) return c;
@@ -973,7 +865,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             playerViewForResources: ctRegionMapTestPlayerView,
@@ -996,9 +888,9 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             cellSizePx: 64,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
@@ -1019,9 +911,9 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             cellSizePx: 32,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
@@ -1042,9 +934,9 @@ void main() {
           await resourceIconCache.load();
         });
 
-        final region = _oldWorldRegion();
+        final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
-          _buildCtRegionMap(
+          ctRegionMapTestHarness(
             region: region,
             cellSizePx: 16,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
@@ -1053,67 +945,6 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-  });
-
-  group('Town icon cache', () {
-    testWidgets(
-      'required town icon asset files are present in test asset bundle',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const SizedBox.shrink());
-
-        for (final iconId in kTownIconIds) {
-          final path = 'assets/icons/ui_icon_com_$iconId.png';
-          final data = await rootBundle.load(path);
-          expect(
-            data.lengthInBytes,
-            greaterThan(0),
-            reason: 'Town icon $path is empty',
-          );
-        }
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'town icon assets load successfully via rootBundle',
-      (WidgetTester tester) async {
-        var loadedCount = 0;
-        await tester.runAsync(() async {
-          for (final iconId in kTownIconIds) {
-            final path = 'assets/icons/ui_icon_com_$iconId.png';
-            try {
-              final data = await rootBundle.load(path);
-              if (data.lengthInBytes > 0) {
-                loadedCount++;
-              }
-            } catch (e) {
-              // Icon asset failed to load
-            }
-          }
-        });
-
-        expect(
-          loadedCount,
-          equals(kTownIconIds.length),
-          reason:
-              'Expected all ${kTownIconIds.length} town icon assets to load, but only $loadedCount loaded',
-        );
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'town markers exist in Old World region data',
-      (WidgetTester tester) async {
-        final region = _oldWorldRegion();
-        expect(
-          region.townMarkers.isNotEmpty,
-          isTrue,
-          reason: 'Old World region should have town markers',
-        );
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );

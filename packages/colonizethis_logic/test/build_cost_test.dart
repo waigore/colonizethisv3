@@ -83,7 +83,7 @@ void main() {
       for (final e in econ.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value);
       }
-      const treasuryStart = 500;
+      final treasuryStart = econ.buildTreasuryCost + 500;
       const order = BuildUnitOrder(
         unitType: 'peasant_levies',
         isMilitary: true,
@@ -113,7 +113,7 @@ void main() {
       for (final e in econ.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value);
       }
-      const treasuryStart = 500;
+      final treasuryStart = econ.buildTreasuryCost + 500;
       const order = BuildUnitOrder(
         unitType: 'carrack',
         isMilitary: false,
@@ -129,10 +129,34 @@ void main() {
         treasuryStart,
       );
       expect(after.treasury, treasuryStart - econ.buildTreasuryCost);
-      expect(after.workers.peasants, workers.peasants);
+      expect(after.workers.peasants, workers.peasants - 1);
       for (final e in econ.buildInputs.entries) {
         expect(after.stockpile.quantityOf(e.key), 0);
       }
+    });
+
+    test('naval carrack: canAfford false when peasants are zero', () {
+      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
+      const workers = WorkerPool(peasants: 0);
+      final econ = ShipEconomyCatalog.byId['carrack']!;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value);
+      }
+      const order = BuildUnitOrder(
+        unitType: 'carrack',
+        isMilitary: false,
+        spawnProvinceId: 'oldWorld|p1',
+      );
+      final result = canAffordBuild(
+        player,
+        order,
+        workers,
+        stockpile,
+        econ.buildTreasuryCost + 10,
+      );
+      expect(result.canAfford, isFalse);
+      expect(result.reason, 'Insufficient resources');
     });
   });
 }

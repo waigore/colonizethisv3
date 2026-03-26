@@ -1,12 +1,18 @@
+import 'dart:math';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/fog_resolution.dart';
 import '../world/unit_lookup.dart';
+import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
+
+final _combatLog = logicLogger();
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
@@ -39,7 +45,9 @@ Game resolveBattleContext(
   Game game,
   BattleContext ctx, {
   Map<String, double> feedingCoverageByPlayerId = const {},
+  CombatPhaseGeneralLedger? combatGeneralLedger,
 }) {
+  final ledger = combatGeneralLedger ?? CombatPhaseGeneralLedger();
   RegionData region;
   if (ctx.regionId == kRegionOldWorld) {
     region = game.worldState.oldWorld;
@@ -51,21 +59,44 @@ Game resolveBattleContext(
   var defenderUnitIds = ctx.defenderUnitIds.toList();
   var defenderFactionId = ctx.defenderFactionId;
   var provinceOwnerId = ctx.defenderFactionId;
+  var generalsById = {for (final g in game.generals) g.id: g};
+  final battleRng = battleAssignmentRng(game, ctx);
+  final generalAssignment = assignGeneralsForBattleContext(
+    game: game,
+    ctx: ctx,
+    rng: battleRng,
+    ledger: ledger,
+  );
 
-  var sortedAttackers = ctx.attackers.toList();
-  _sortAttackersByInitiative(sortedAttackers, region.units, unitsById);
+  final attackerSidesWithMedals = ctx.attackers.map((att) {
+    final assigned = generalAssignment.attackerByFactionId[att.factionId];
+    return _AttackingSideInBattle(
+      side: att.copyWith(generalMedals: assigned?.medals ?? 0),
+      assignedGeneralId: assigned?.generalId,
+    );
+  }).toList();
+  _sortAttackersByInitiative(
+    attackerSidesWithMedals,
+    unitsById,
+    battleRng,
+  );
+  var currentDefenderGeneralId = generalAssignment.defenderGeneralId;
+  var currentDefenderMedals = generalAssignment.defenderMedals;
 
   final allCasualties = <String>[];
   String? survivingAttackerFactionId;
 
   final initialDefenderCount = ctx.defenderUnitIds.length;
 
-  for (final attacker in sortedAttackers) {
+  for (var attackerIndex = 0;
+      attackerIndex < attackerSidesWithMedals.length;
+      attackerIndex++) {
+    final attacker = attackerSidesWithMedals[attackerIndex];
     if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
       break;
     }
 
-    final attackerUnits = attacker.unitIds
+    final attackerUnits = attacker.side.unitIds
         .map((id) => unitsById[id])
         .whereType<Unit>()
         .where((u) => !allCasualties.contains(u.id))
@@ -80,33 +111,35 @@ Game resolveBattleContext(
         .toList();
 
     if (defenderUnits.isEmpty) {
-      survivingAttackerFactionId = attacker.factionId;
+      survivingAttackerFactionId = attacker.side.factionId;
       break;
     }
 
     // Deployment limit per side. SPEC/game/military-generals.md.
     final attackerLimit = _deploymentLimitForFaction(
-        game, attacker.factionId, attacker.generalMedals);
+        game, attacker.side.factionId, attacker.side.generalMedals);
     final defenderLimit =
-        _deploymentLimitForFaction(game, defenderFactionId, 0);
+        _deploymentLimitForFaction(game, defenderFactionId, currentDefenderMedals);
     final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
     final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
 
     final defenderEffectiveLevel =
         _defenderEffectiveLevel(game, defenderFactionId);
     final attackerCoverage =
-        feedingCoverageByPlayerId[attacker.factionId] ?? 1.0;
+        feedingCoverageByPlayerId[attacker.side.factionId] ?? 1.0;
     final defenderCoverage =
         feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
-    final attackerLeaderMult = leaderBonusForFaction(game, attacker.factionId);
+    final attackerLeaderMult =
+        leaderBonusForFaction(game, attacker.side.factionId);
     final defenderLeaderMult = leaderBonusForFaction(game, defenderFactionId);
     final attackerGeneralMorale =
-        moraleMultiplierForGeneralMedals(attacker.generalMedals);
-    final defenderGeneralMorale = moraleMultiplierForGeneralMedals(0);
+        moraleMultiplierForGeneralMedals(attacker.side.generalMedals);
+    final defenderGeneralMorale =
+        moraleMultiplierForGeneralMedals(currentDefenderMedals);
     final outcome = resolveEngagement(
       attackerUnits: cappedAttackerUnits,
       defenderUnits: cappedDefenderUnits,
-      generalMedals: attacker.generalMedals,
+      generalMedals: attacker.side.generalMedals,
       fortLevel: ctx.fortLevel,
       terrain: ctx.terrain,
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
@@ -116,6 +149,12 @@ Game resolveBattleContext(
           defenderGeneralMorale,
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
+    );
+    _combatLog.d(
+      'logic: combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+      'attackerFactionId=${attacker.side.factionId} result=${outcome.result.name} '
+      'attCasualties=${outcome.attackerCasualties.length} '
+      'defCasualties=${outcome.defenderCasualties.length}',
     );
 
     for (final id in outcome.attackerCasualties) {
@@ -133,11 +172,27 @@ Game resolveBattleContext(
 
     switch (outcome.result) {
       case EngagementResult.attackerVictory:
-        survivingAttackerFactionId = attacker.factionId;
-        defenderFactionId = attacker.factionId;
-        provinceOwnerId = attacker.factionId;
+        _incrementGeneralMedals(
+          generalsById: generalsById,
+          generalId: attacker.assignedGeneralId,
+        );
+        survivingAttackerFactionId = attacker.side.factionId;
+        defenderFactionId = attacker.side.factionId;
+        provinceOwnerId = attacker.side.factionId;
+        currentDefenderGeneralId = attacker.assignedGeneralId;
+        currentDefenderMedals = attacker.side.generalMedals +
+            (attacker.assignedGeneralId != null ? 1 : 0);
+        if (currentDefenderMedals > 4) currentDefenderMedals = 4;
         break;
       case EngagementResult.defenderVictory:
+        _incrementGeneralMedals(
+          generalsById: generalsById,
+          generalId: currentDefenderGeneralId,
+        );
+        if (currentDefenderGeneralId != null) {
+          final updated = generalsById[currentDefenderGeneralId!];
+          if (updated != null) currentDefenderMedals = updated.medals;
+        }
         survivingAttackerFactionId = null;
         break;
       case EngagementResult.stalemate:
@@ -145,9 +200,8 @@ Game resolveBattleContext(
       case EngagementResult.mutualAnnihilation:
         defenderFactionId = provinceOwnerId;
         survivingAttackerFactionId = null;
-        final remainingAttackers = sortedAttackers
-            .skip(sortedAttackers.indexOf(attacker) + 1)
-            .toList();
+        final remainingAttackers =
+            attackerSidesWithMedals.skip(attackerIndex + 1).toList();
         if (remainingAttackers.isNotEmpty) {
           final recoverCount = (initialDefenderCount * 0.2)
               .ceil()
@@ -184,6 +238,18 @@ Game resolveBattleContext(
     survivingAttackerFactionId: survivingAttackerFactionId,
     defenderUnitIds: defenderUnitIds,
   );
+  var ownerAfter = '';
+  for (final p in post.region.provinces) {
+    if (p.id == ctx.provinceId) {
+      ownerAfter = p.ownerId ?? '';
+      break;
+    }
+  }
+  _combatLog.i(
+    'logic: combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+    'mode=autoResolve provinceFlipped=${post.provinceChangedOwner} '
+    'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',
+  );
 
   var newWorldState = ctx.regionId == kRegionOldWorld
       ? game.worldState.copyWith(oldWorld: post.region)
@@ -203,7 +269,14 @@ Game resolveBattleContext(
     );
   }
 
-  return game.copyWith(worldState: newWorldState);
+  recordAttackCommandersForResolvedBattle(ctx, generalAssignment, ledger);
+
+  return game.copyWith(
+    worldState: newWorldState,
+    generals: game.generals
+        .map((g) => generalsById[g.id] ?? g)
+        .toList(growable: false),
+  );
 }
 
 /// Builds post-battle region state: applies casualties, garrison recovery,
@@ -288,9 +361,9 @@ Map<String, String> _clearPurchasedTilesForProvince(
 }
 
 void _sortAttackersByInitiative(
-  List<AttackingSide> attackers,
-  List<Unit> allUnits,
+  List<_AttackingSideInBattle> attackers,
   Map<String, Unit> unitsById,
+  Random rng,
 ) {
   int cavalryCount(AttackingSide side) {
     var count = 0;
@@ -303,21 +376,46 @@ void _sortAttackersByInitiative(
     return count;
   }
 
+  final tieBreakRoll = rng.nextInt(1 << 31);
+  int tieRank(String factionId) => Object.hash(factionId, tieBreakRoll);
+
   attackers.sort((a, b) {
-    final cavA = cavalryCount(a);
-    final cavB = cavalryCount(b);
-    final totalA = a.unitIds.length;
-    final totalB = b.unitIds.length;
+    final cavA = cavalryCount(a.side);
+    final cavB = cavalryCount(b.side);
+    final totalA = a.side.unitIds.length;
+    final totalB = b.side.unitIds.length;
     final shareA = totalA > 0 ? cavA / totalA : 0.0;
     final shareB = totalB > 0 ? cavB / totalB : 0.0;
     final initA = shareA * initiativeCavalryShareWeight +
-        a.generalMedals * initiativeGeneralMedalWeight;
+        a.side.generalMedals * initiativeGeneralMedalWeight;
     final initB = shareB * initiativeCavalryShareWeight +
-        b.generalMedals * initiativeGeneralMedalWeight;
+        b.side.generalMedals * initiativeGeneralMedalWeight;
     final cmp = initB.compareTo(initA);
     if (cmp != 0) return cmp;
-    return a.factionId.compareTo(b.factionId);
+    return tieRank(a.side.factionId).compareTo(tieRank(b.side.factionId));
   });
+}
+
+class _AttackingSideInBattle {
+  const _AttackingSideInBattle({
+    required this.side,
+    required this.assignedGeneralId,
+  });
+
+  final AttackingSide side;
+  final String? assignedGeneralId;
+}
+
+void _incrementGeneralMedals({
+  required Map<String, General> generalsById,
+  required String? generalId,
+}) {
+  if (generalId == null) return;
+  final current = generalsById[generalId];
+  if (current == null) return;
+  generalsById[generalId] = current.copyWith(
+    medals: (current.medals + 1).clamp(0, 4),
+  );
 }
 
 int _defenderEffectiveLevel(Game game, String defenderFactionId) {

@@ -92,8 +92,9 @@ final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) =>
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
       const [];
 
   @override
@@ -139,7 +140,8 @@ final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) =>
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
       const [];
 }

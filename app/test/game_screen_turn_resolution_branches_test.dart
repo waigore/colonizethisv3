@@ -81,9 +81,11 @@ void main() {
           overrides: [
             gamesBoxProvider.overrideWith((ref) => box),
             gameServiceProvider.overrideWith((ref) => service),
-            currentGameProvider.overrideWith((ref) => game),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             mapViewDataProvider.overrideWith((ref) => null),
-            gameIdsWithIntroShownProvider.overrideWith((ref) => {game.id}),
+            gameIdsWithIntroShownProvider.overrideWith(
+              () => GameIdsWithIntroShownNotifier({game.id}),
+            ),
           ],
           child: MaterialApp(
             theme: AppThemes.colonial,

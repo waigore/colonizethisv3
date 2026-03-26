@@ -47,7 +47,7 @@ void main() {
     final initial = container.read(gameIdsWithIntroShownProvider);
     expect(initial, isEmpty);
 
-    container.read(gameIdsWithIntroShownProvider.notifier).state = {'game_1'};
+    container.read(gameIdsWithIntroShownProvider.notifier).markShown('game_1');
 
     final updated = container.read(gameIdsWithIntroShownProvider);
     expect(updated, contains('game_1'));
@@ -60,7 +60,7 @@ void main() {
     final initial = container.read(pendingOverturesProvider);
     expect(initial, isNull);
 
-    container.read(pendingOverturesProvider.notifier).state = const [];
+    container.read(pendingOverturesProvider.notifier).setPending(const []);
 
     final updated = container.read(pendingOverturesProvider);
     expect(updated, isNotNull);
