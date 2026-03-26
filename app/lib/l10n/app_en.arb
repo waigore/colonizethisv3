@@ -237,6 +237,11 @@
     "description": "Checkbox label: run Old World GP land connectivity repair and assignment retries per game-setup spec."
   },
 
+  "shell_leaderDialog_enforceFairGpAssignment": "Enforce fair GP assignment (slower)",
+  "@shell_leaderDialog_enforceFairGpAssignment": {
+    "description": "Checkbox label: run Old World GP land connectivity repair and assignment retries per game-setup spec."
+  },
+
   "shell_newGameProgress_title": "Creating game",
   "@shell_newGameProgress_title": {
     "description": "Title of the modal shown while a new game is being generated."

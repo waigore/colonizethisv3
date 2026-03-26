@@ -18,6 +18,9 @@ final _log = gameLogger();
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
 
+/// GP land ownership tint (province overlay). SPEC/ui/map-widget.md: alpha 0.10–0.20.
+const double _gpOwnershipTintAlpha = 0.15;
+
 /// Political border stroke colors.
 /// These are intentionally subtle so they don't overpower the terrain art.
 const Color _provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
