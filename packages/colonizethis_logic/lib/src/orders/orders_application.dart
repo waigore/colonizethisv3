@@ -224,7 +224,7 @@ void _runBuildPhase(_BuildWorkState state) {
 /// BuildUnitOrder is applied by unit type category (civilian / military / naval) per buildUnitCategoryForUnitType.
 /// - Civilian: deduct treasury + paper, add unit with tileKey.
 /// - Military: deduct cost + worker, add unit.
-/// - Naval: deduct cost, add ship to home fleet at capital port.
+/// - Naval: deduct cost + one peasant, add ship to home fleet at capital port.
 /// - WorkOrder: sets the unit status to working; no terrain change yet.
 Game applyBuildAndWorkOrders(
   Game game,
