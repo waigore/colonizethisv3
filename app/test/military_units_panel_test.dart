@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
@@ -145,31 +146,26 @@ void main() {
     testWidgets('AC: Tapping a row emits LocateMapTileEvent', (
       WidgetTester tester,
     ) async {
-        LocateMapTileEvent? locateEvent;
-        final bus = AppEventBus.create();
-        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
-        await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            bus: bus,
-          ),
-        );
-        await tester.pumpAndSettle();
+      LocateMapTileEvent? locateEvent;
+      final bus = AppEventBus.create();
+      bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      );
+      await tester.pumpAndSettle();
 
-        final listTiles = find.byType(ListTile);
-        if (listTiles.evaluate().isEmpty) return;
-        await tester.tap(listTiles.first);
-        await tester.pumpAndSettle();
+      final listTiles = find.byType(ListTile);
+      if (listTiles.evaluate().isEmpty) return;
+      await tester.tap(listTiles.first);
+      await tester.pumpAndSettle();
 
-        expect(locateEvent, isNotNull);
-        expect(
-          locateEvent!.regionId == 'oldWorld' ||
-              locateEvent!.regionId == 'newWorld',
-          isTrue,
-        );
-      },
-    );
+      expect(locateEvent, isNotNull);
+      expect(
+        locateEvent!.regionId == 'oldWorld' ||
+            locateEvent!.regionId == 'newWorld',
+        isTrue,
+      );
+    });
 
     testWidgets('builds without locate callback', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -183,6 +179,27 @@ void main() {
         await tester.tap(listTiles.first);
         await tester.pumpAndSettle();
       }
+    });
+
+    testWidgets('Train button emits train-military dialog open event', (
+      WidgetTester tester,
+    ) async {
+      OpenDialogEvent? openDialogEvent;
+      final bus = AppEventBus.create();
+      bus.on<OpenDialogEvent>().listen((e) => openDialogEvent = e);
+
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      );
+      await tester.pumpAndSettle();
+
+      final trainButton = find.text('Train');
+      expect(trainButton, findsOneWidget);
+      await tester.tap(trainButton);
+      await tester.pumpAndSettle();
+
+      expect(openDialogEvent, isNotNull);
+      expect(openDialogEvent!.dialogId, trainMilitaryDialogId);
     });
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {

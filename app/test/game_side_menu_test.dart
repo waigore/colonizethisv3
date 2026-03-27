@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -485,6 +486,68 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TrainCiviliansDialog), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'GameSideMenu Military Units Train opens TrainMilitaryDialog via bus',
+    (WidgetTester tester) async {
+      final humanPlayerId = game.players.where((p) => p.isHuman).isNotEmpty
+          ? game.players.where((p) => p.isHuman).first.id
+          : game.players.first.id;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            availableWorkTargetsProvider.overrideWith(
+              (ref) => <String, List<String>>{},
+            ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
+          ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      sideMenuOpen: true,
+                      onClose: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Military Units'));
+      await tester.tap(find.text('Military Units'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
+
+      await tester.tap(find.text('Train'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainMilitaryDialog), findsOneWidget);
+      expect(find.text('Train Military'), findsOneWidget);
     },
   );
 
