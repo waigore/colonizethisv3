@@ -102,9 +102,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 
 ### Ship Movement
 
-- **Individual move**: Click `>` to move one ship of the selected type from Original to New. Click `<` to move back.
-- **Move all**: Long-press `>` to move all ships of a type. Long-press `<` to move all back.
-- **Selection**: Clicking a ship row selects/deselects it for movement.
+- **Selection**: Clicking a ship row selects/deselects one ship type for transfer.
+- **Individual move**: Click `>` to move one ship of the selected type from Original to New. Click `<` to move one ship back.
+- **Move all**: Click `>>` to move all ships of the selected type from Original to New. Click `<<` to move all selected ships back.
+- **Disabled transfer controls**: `<`, `>`, `<<`, and `>>` are disabled when no ship type is selected.
 
 ### Rules
 
@@ -123,8 +124,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 |--------|----------|
 | **>** (Move to New) | Moves one ship of the selected type from Original to New. |
 | **<** (Move to Original) | Moves one ship of the selected type from New to Original. |
+| **>>** (Move All to New) | Moves all ships of the selected type from Original to New. |
+| **<<** (Move All to Original) | Moves all ships of the selected type from New to Original. |
 | **Cancel** | Closes dialog, no changes. |
-| **Confirm Split** | Creates the new fleet with the specified ships; removes those ships from the original. Disabled if original would have 0 ships (and is not Home Fleet). |
+| **Confirm Split** | Creates the new fleet with the specified ships; removes those ships from the original. Disabled if original would have 0 ships and the original is not the Home Fleet. |
 
 ### Data changes
 
