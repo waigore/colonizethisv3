@@ -9,6 +9,7 @@ enum TurnPhase {
   research,
   diplomacy,
   movement,
+  minorRegimentUpgrade,
   navalInterceptionCombat,
   combat,
   buildWork,

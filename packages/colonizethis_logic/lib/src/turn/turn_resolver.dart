@@ -48,6 +48,7 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.research,
   TurnPhase.diplomacy,
   TurnPhase.movement,
+  TurnPhase.minorRegimentUpgrade,
   TurnPhase.navalInterceptionCombat,
   TurnPhase.combat,
   TurnPhase.buildWork,
@@ -74,6 +75,7 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
     case TurnPhase.research:
     case TurnPhase.diplomacy:
     case TurnPhase.movement:
+    case TurnPhase.minorRegimentUpgrade:
     case TurnPhase.navalInterceptionCombat:
     case TurnPhase.combat:
     case TurnPhase.buildWork:
@@ -295,6 +297,9 @@ TurnResolutionResult resolveTurnForGame({
         }
       case TurnPhase.movement:
         state = _runMovementPhase(state, topology, orders);
+        break;
+      case TurnPhase.minorRegimentUpgrade:
+        state = _runMinorRegimentUpgradePhase(state);
         break;
       case TurnPhase.navalInterceptionCombat:
         state = runNavalInterceptionCombatPhase(
@@ -921,7 +926,7 @@ Game _runCombatPhase(
   final previousCapitalByPlayer = {
     for (final p in game.players) p.id: p.capitalProvinceId,
   };
-  Game state = applyMinorMilitaryParity(game);
+  Game state = game;
   final turn = state.worldState.turnState.turnNumber;
   _log.i('logic: combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
@@ -969,3 +974,5 @@ Game _runCombatPhase(
   state = applyGreatPowerFall(state, previousCapitalByPlayer);
   return state;
 }
+
+Game _runMinorRegimentUpgradePhase(Game game) => applyMinorMilitaryParity(game);

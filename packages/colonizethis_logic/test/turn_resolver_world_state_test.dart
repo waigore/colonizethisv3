@@ -28,6 +28,18 @@ void main() {
 
     test('phase sequence is defined', () {
       expect(turnResolutionSequence, isNotEmpty);
+      final movementIndex = turnResolutionSequence.indexOf(TurnPhase.movement);
+      final upgradeIndex = turnResolutionSequence.indexOf(
+        TurnPhase.minorRegimentUpgrade,
+      );
+      final navalCombatIndex = turnResolutionSequence.indexOf(
+        TurnPhase.navalInterceptionCombat,
+      );
+      final landCombatIndex = turnResolutionSequence.indexOf(TurnPhase.combat);
+      expect(movementIndex, greaterThanOrEqualTo(0));
+      expect(upgradeIndex, greaterThan(movementIndex));
+      expect(upgradeIndex, lessThan(navalCombatIndex));
+      expect(upgradeIndex, lessThan(landCombatIndex));
       expect(turnResolutionSequence.last, TurnPhase.endOfTurn);
     });
   });

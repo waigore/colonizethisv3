@@ -16,10 +16,11 @@ TurnResolver runs phases in **fixed order**:
 6. **Consumption** — Military food upkeep first, then workers/navy from remainder.
 7. **Research** — Read orders; validate treasury; deduct spending; add progress; complete techs. [research-resolution.md](research-resolution.md)
 8. **Movement** — Apply land/naval MoveOrders and mission assignments; update unit/fleet locations.
-9. **Naval Interception & Naval Combat** — Patrol/blockade/beachhead interceptions; sea battles; fleet updates. [naval-movement-resolution.md](naval-movement-resolution.md), [naval-combat-resolution.md](naval-combat-resolution.md)
-10. **Combat** — Land battles; casualties; province flips.
-11. **Build / work** — BuildUnitOrder; WorkOrder (explore, prospect, improvements, roads, ports, forts, rails). [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md), [development-resolution.md](development-resolution.md)
-12. **End-of-turn** — Victory check; era-change dialogue; fog decay (Spy 5-turn + Explorer/Spy); coastal sea zone full visibility; advance turn number. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn.
+9. **Minor Regiment Upgrade** — Compute `maxGreatPowerMilitaryLevel` from post-Research Great Power buildable regiment tiers; set Old World Minor Nations `effectiveMilitaryLevel`; upgrade eligible minor land regiments in place; set Tribe `effectiveMilitaryLevel` to 1 (no parity).
+10. **Naval Interception & Naval Combat** — Patrol/blockade/beachhead interceptions; sea battles; fleet updates. [naval-movement-resolution.md](naval-movement-resolution.md), [naval-combat-resolution.md](naval-combat-resolution.md)
+11. **Combat** — Land battles; casualties; province flips.
+12. **Build / work** — BuildUnitOrder; WorkOrder (explore, prospect, improvements, roads, ports, forts, rails). [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md), [development-resolution.md](development-resolution.md)
+13. **End-of-turn** — Victory check; era-change dialogue; fog decay (Spy 5-turn + Explorer/Spy); coastal sea zone full visibility; advance turn number. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn.
 
 ---
 
@@ -43,7 +44,7 @@ Same TurnResolver and phase order used in main game and ctdev sim_game; identica
 
 ## Acceptance criteria
 
-- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–12 above in that order (Orders → Diplomacy → Extraction → Riches to treasury → Production → Consumption → Research → Movement → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
+- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–13 above in that order (Orders → Diplomacy → Extraction → Riches to treasury → Production → Consumption → Research → Movement → Minor Regiment Upgrade → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
 - **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Production; Production before Consumption. Extraction through Consumption complete before Movement and before Build / work. Research runs after Consumption so treasury is current. Build vs Movement relative order is implementation-defined subject to that constraint. Given a resolver run, the system does not apply extraction/riches/production/consumption effects after movement or build has started.
 - **Determinism:** Given the same starting WorldState, merged orders, ruleset, and random seeds, TurnResolver produces the same resulting WorldState (and victory state) in main game and in ctdev sim_game; phase order is identical in both.
 - **Implementation contract:** Per-phase behaviour is specified in [turn-resolution-phase-details.md](turn-resolution-phase-details.md); this document is the single source of truth for phase sequence and ordering. Tests may assert phase order and dependency rules by inspecting resolver behaviour or by comparing outcomes across runs.
