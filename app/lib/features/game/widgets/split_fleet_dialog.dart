@@ -32,8 +32,10 @@ class SplitFleetDialog extends StatefulWidget {
 }
 
 class _SplitFleetDialogState extends State<SplitFleetDialog> {
+  static const double _panelListHeight = 150;
   late Map<String, int> _originalCounts;
   late Map<String, int> _newCounts;
+  String? _selectedTypeId;
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
   void _initializeCounts() {
     _originalCounts = {};
     _newCounts = {};
+    _selectedTypeId = null;
     for (final typeId in widget.originalFleet.shipTypeIds) {
       _originalCounts[typeId] = (_originalCounts[typeId] ?? 0) + 1;
     }
@@ -58,7 +61,10 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
   }
 
   bool get _canConfirm {
-    return _totalOriginal >= 1;
+    if (widget.isHomeFleet) {
+      return _totalNew > 0;
+    }
+    return _totalOriginal >= 1 && _totalNew > 0;
   }
 
   String _fleetLocationLabel() {
@@ -134,6 +140,42 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
   void _cleanupZeros() {
     _originalCounts.removeWhere((_, v) => v == 0);
     _newCounts.removeWhere((_, v) => v == 0);
+    final selected = _selectedTypeId;
+    if (selected != null &&
+        !_originalCounts.containsKey(selected) &&
+        !_newCounts.containsKey(selected)) {
+      _selectedTypeId = null;
+    }
+  }
+
+  void _toggleSelection(String typeId) {
+    setState(() {
+      _selectedTypeId = _selectedTypeId == typeId ? null : typeId;
+    });
+  }
+
+  void _moveSelectedToOriginal() {
+    final selected = _selectedTypeId;
+    if (selected == null) return;
+    _moveToOriginal(selected);
+  }
+
+  void _moveSelectedToNew() {
+    final selected = _selectedTypeId;
+    if (selected == null) return;
+    _moveToNew(selected);
+  }
+
+  void _moveAllSelectedToOriginal() {
+    final selected = _selectedTypeId;
+    if (selected == null) return;
+    _moveAllToOriginal(selected);
+  }
+
+  void _moveAllSelectedToNew() {
+    final selected = _selectedTypeId;
+    if (selected == null) return;
+    _moveAllToNew(selected);
   }
 
   void _handleConfirm() {
@@ -150,8 +192,9 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final allTypes = {..._originalCounts.keys, ..._newCounts.keys}.toList()
-      ..sort();
+    final selected = _selectedTypeId;
+    final selectedInOriginal = selected == null ? 0 : (_originalCounts[selected] ?? 0);
+    final selectedInNew = selected == null ? 0 : (_newCounts[selected] ?? 0);
 
     return CtDialogShell(
       maxWidth: 520,
@@ -174,10 +217,9 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
                     location: _fleetLocationLabel(),
                     counts: _originalCounts,
                     total: _totalOriginal,
-                    onMoveToOther: _moveToNew,
-                    onMoveAllToOther: _moveAllToNew,
-                    isOriginal: true,
-                    canMove: !widget.isHomeFleet,
+                    listHeight: _panelListHeight,
+                    selectedTypeId: _selectedTypeId,
+                    onSelectType: _toggleSelection,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -187,10 +229,9 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
                     location: _fleetLocationLabel(),
                     counts: _newCounts,
                     total: _totalNew,
-                    onMoveToOther: _moveToOriginal,
-                    onMoveAllToOther: _moveAllToOriginal,
-                    isOriginal: false,
-                    canMove: true,
+                    listHeight: _panelListHeight,
+                    selectedTypeId: _selectedTypeId,
+                    onSelectType: _toggleSelection,
                   ),
                 ),
               ],
@@ -200,29 +241,27 @@ class _SplitFleetDialogState extends State<SplitFleetDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CtNinePatchButton(
-                  onPressed: () {
-                    for (final typeId in allTypes) {
-                      final count = _originalCounts[typeId] ?? 0;
-                      for (var i = 0; i < count; i++) {
-                        _moveToNew(typeId);
-                      }
-                    }
-                  },
-                  enabled: _totalOriginal > 0,
-                  child: const Icon(Icons.arrow_back),
+                  onPressed: _moveAllSelectedToOriginal,
+                  enabled: selected != null && selectedInNew > 0,
+                  child: const Text('<<'),
+                ),
+                const SizedBox(width: 8),
+                CtNinePatchButton(
+                  onPressed: _moveSelectedToOriginal,
+                  enabled: selected != null && selectedInNew > 0,
+                  child: const Text('<'),
                 ),
                 const SizedBox(width: 16),
                 CtNinePatchButton(
-                  onPressed: () {
-                    for (final typeId in allTypes) {
-                      final count = _newCounts[typeId] ?? 0;
-                      for (var i = 0; i < count; i++) {
-                        _moveToOriginal(typeId);
-                      }
-                    }
-                  },
-                  enabled: _totalNew > 0,
-                  child: const Icon(Icons.arrow_forward),
+                  onPressed: _moveSelectedToNew,
+                  enabled: selected != null && selectedInOriginal > 0,
+                  child: const Text('>'),
+                ),
+                const SizedBox(width: 8),
+                CtNinePatchButton(
+                  onPressed: _moveAllSelectedToNew,
+                  enabled: selected != null && selectedInOriginal > 0,
+                  child: const Text('>>'),
                 ),
               ],
             ),
@@ -255,20 +294,18 @@ class _FleetPanel extends StatelessWidget {
     required this.location,
     required this.counts,
     required this.total,
-    required this.onMoveToOther,
-    required this.onMoveAllToOther,
-    required this.isOriginal,
-    required this.canMove,
+    required this.listHeight,
+    required this.selectedTypeId,
+    required this.onSelectType,
   });
 
   final String title;
   final String location;
   final Map<String, int> counts;
   final int total;
-  final void Function(String typeId) onMoveToOther;
-  final void Function(String typeId) onMoveAllToOther;
-  final bool isOriginal;
-  final bool canMove;
+  final double listHeight;
+  final String? selectedTypeId;
+  final void Function(String typeId) onSelectType;
 
   @override
   Widget build(BuildContext context) {
@@ -284,50 +321,45 @@ class _FleetPanel extends StatelessWidget {
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 8),
-          if (sortedTypes.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'No ships',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            )
-          else
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 150),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: sortedTypes.length,
-                itemBuilder: (context, index) {
-                  final typeId = sortedTypes[index];
-                  final count = counts[typeId] ?? 0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Text('$typeId ($count)'),
-                        const Spacer(),
-                        if (canMove) ...[
-                          GestureDetector(
-                            onTap: () => onMoveToOther(typeId),
-                            onLongPress: () => onMoveAllToOther(typeId),
-                            child: Icon(
-                              isOriginal
-                                  ? Icons.arrow_forward
-                                  : Icons.arrow_back,
-                              size: 20,
+          SizedBox(
+            height: listHeight,
+            child: sortedTypes.isEmpty
+                ? Center(
+                    child: Text(
+                      'No ships',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: sortedTypes.length,
+                    itemBuilder: (context, index) {
+                      final typeId = sortedTypes[index];
+                      final count = counts[typeId] ?? 0;
+                      final isSelected = selectedTypeId == typeId;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Material(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Colors.transparent,
+                          child: InkWell(
+                            onTap: () => onSelectType(typeId),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: Text('$typeId ($count)'),
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 4),
