@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
+import 'train_unit_dialog_helper.dart';
 
 class TrainMilitaryDialog extends StatefulWidget {
   const TrainMilitaryDialog({
@@ -34,20 +35,13 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   }
 
   Map<String, int> _initialCountsFromOrders() {
-    final next = {for (final e in RegimentEconomyCatalog.all) e.id: 0};
-    final capital = _player?.capitalProvinceId;
-    if (capital == null) return next;
-    final regimentIds = RegimentEconomyCatalog.byId.keys.toSet();
-    final list =
-        widget.currentOrders.buildUnitOrdersByPlayerId[widget.humanPlayerId] ??
-        const <BuildUnitOrder>[];
-    for (final o in list) {
-      if (!o.isMilitary) continue;
-      if (!regimentIds.contains(o.unitType)) continue;
-      if (o.spawnProvinceId != capital) continue;
-      next[o.unitType] = (next[o.unitType] ?? 0) + 1;
-    }
-    return next;
+    return initialTrainDialogCountsFromOrders(
+      unitTypeIds: RegimentEconomyCatalog.byId.keys,
+      currentOrders: widget.currentOrders,
+      humanPlayerId: widget.humanPlayerId,
+      capitalProvinceId: _player?.capitalProvinceId,
+      isMilitary: true,
+    );
   }
 
   Player? get _player {
@@ -144,41 +138,32 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   void _increment(String unitType) {
     if (!_canAffordIncrement(unitType)) return;
     setState(() {
-      _counts[unitType] = (_counts[unitType] ?? 0) + 1;
+      _counts = incrementTrainDialogCount(_counts, unitType);
     });
   }
 
   void _decrement(String unitType) {
     if ((_counts[unitType] ?? 0) <= 0) return;
     setState(() {
-      _counts[unitType] = (_counts[unitType] ?? 0) - 1;
+      _counts = decrementTrainDialogCount(_counts, unitType);
     });
   }
 
   void _reset() {
     setState(() {
-      for (final e in RegimentEconomyCatalog.all) {
-        _counts[e.id] = 0;
-      }
+      _counts = resetTrainDialogCounts(_counts);
     });
   }
 
   void _applyOrders() {
-    final orders = <BuildUnitOrder>[];
     final capital = _player?.capitalProvinceId;
     if (capital == null) return;
-    for (final e in RegimentEconomyCatalog.all) {
-      final count = _counts[e.id] ?? 0;
-      for (var i = 0; i < count; i++) {
-        orders.add(
-          BuildUnitOrder(
-            unitType: e.id,
-            isMilitary: true,
-            spawnProvinceId: capital,
-          ),
-        );
-      }
-    }
+    final orders = materializeTrainDialogOrdersFromCounts(
+      orderedUnitTypeIds: RegimentEconomyCatalog.byId.keys,
+      counts: _counts,
+      capitalProvinceId: capital,
+      isMilitary: true,
+    );
     widget.onOrdersChanged(orders);
   }
 

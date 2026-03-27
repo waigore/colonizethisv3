@@ -122,6 +122,16 @@ On dialog `didPop` / `Navigator.of(context).pop()`:
 
 **Note:** The dialog does NOT validate that capital is set — this is enforced by the logic package at game setup and turn resolution.
 
+### Shared helper requirement
+
+To keep civilian and military train-dialog orchestration aligned, the UI layer must use the shared helper at `app/lib/features/game/widgets/train_unit_dialog_helper.dart` for:
+
+- initializing counts from current orders at capital (`initialTrainDialogCountsFromOrders`)
+- materializing `List<BuildUnitOrder>` from counts (`materializeTrainDialogOrdersFromCounts`)
+- count mutation patterns for stepper interactions (`incrementTrainDialogCount`, `decrementTrainDialogCount`, `resetTrainDialogCounts`)
+
+Dialog-specific affordability and tech-lock logic remains local to each dialog.
+
 ---
 
 ## Tech Unlock Display
@@ -195,6 +205,8 @@ pixellab_create_map_object(
 
 - **Given** the Train Civilians dialog is open, **when** the user has queued training orders and closes the dialog, **then** those orders are persisted in the current turn's orders.
 
+- **Given** both train dialogs use shared orchestration behavior, **when** developers update train order/count conversion rules, **then** the UI layer updates `train_unit_dialog_helper.dart` and validates behavior with helper tests in `app/test/train_unit_dialog_helper_test.dart`.
+
 - **Given** the Train Civilians dialog is open, **when** the user has no capital set, **then** the UI shows an error message "No capital set — cannot train units" and all steppers are disabled.
 
 - **Given** the Train Civilians dialog is open, **when** the player has insufficient resources for any unit, **then** the deficit hint shows "Treasury low", "Paper low", or both.
@@ -217,5 +229,6 @@ pixellab_create_map_object(
 - The dialog is a **StatefulWidget** to hold stepper counts locally during the session.
 - Stepper counts are NOT persisted until dialog close.
 - The dialog receives `Game`, `humanPlayerId`, `currentOrders`, and an `onOrdersChanged(BuildUnitOrder[])` callback.
+- Shared order/count orchestration is implemented in `train_unit_dialog_helper.dart`; dialog code keeps only civilian-specific affordability/lock behavior.
 - All resource calculations are derived client-side from `Player` data — no server validation needed in UI.
 - Capital tile spawn: `BuildUnitOrder.spawnProvinceId = Player.capitalProvinceId` — the logic package handles resolution.
