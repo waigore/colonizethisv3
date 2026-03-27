@@ -8,6 +8,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -218,62 +219,78 @@ void main() {
       },
     );
 
-    testWidgets('Assign button shown for idle unit', (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-          ),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('Assign button shown for idle unit', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
+      await tester.pumpAndSettle();
 
-        final listTiles = find.byType(ListTile);
-        if (listTiles.evaluate().isEmpty) return;
-        expect(find.text('Assign'), findsAtLeastNWidgets(1));
-      },
-    );
+      final listTiles = find.byType(ListTile);
+      if (listTiles.evaluate().isEmpty) return;
+      expect(find.text('Assign'), findsAtLeastNWidgets(1));
+    });
 
-    testWidgets(
-      'tap Assign opens order menu',
-      (WidgetTester tester) async {
-        // Find an idle civilian unit
-        final units = [
-          ...game.worldState.oldWorld.units,
-          ...game.worldState.newWorld.units,
-        ];
-        final idleCivilians = units.where(
-          (u) =>
-              u.ownerId == humanPlayerIdWithUnits &&
-              u.tileKey != null &&
-              _isCivilian(u) &&
-              u.currentWork == null,
-        );
-        // Skip if no idle civilians in test game
-        if (idleCivilians.isEmpty) return;
+    testWidgets('tap Assign opens order menu', (WidgetTester tester) async {
+      // Find an idle civilian unit
+      final units = [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ];
+      final idleCivilians = units.where(
+        (u) =>
+            u.ownerId == humanPlayerIdWithUnits &&
+            u.tileKey != null &&
+            _isCivilian(u) &&
+            u.currentWork == null,
+      );
+      // Skip if no idle civilians in test game
+      if (idleCivilians.isEmpty) return;
 
-        await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            // Pass empty availableWorkTargets - all options will be disabled
-            // This tests the UI renders but callback won't fire on disabled items
-            availableWorkTargets: const {},
-          ),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        buildPanel(
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          // Pass empty availableWorkTargets - all options will be disabled
+          // This tests the UI renders but callback won't fire on disabled items
+          availableWorkTargets: const {},
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Assign').first);
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Assign').first);
+      await tester.pumpAndSettle();
 
-        // Menu opens but all items are disabled since no available targets provided
-        expect(find.textContaining('Assign work'), findsOneWidget);
-        // Note: selectedUnit/selectedTarget remain null because items are disabled
+      // Menu opens but all items are disabled since no available targets provided
+      expect(find.textContaining('Assign work'), findsOneWidget);
+      // Note: selectedUnit/selectedTarget remain null because items are disabled
 
-        final scaffoldCtx = tester.element(find.byType(Scaffold));
-        Navigator.of(scaffoldCtx, rootNavigator: true).pop();
-        await tester.pumpAndSettle();
-      },
-    );
+      final scaffoldCtx = tester.element(find.byType(Scaffold));
+      Navigator.of(scaffoldCtx, rootNavigator: true).pop();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Train button emits train-civilians dialog open event', (
+      WidgetTester tester,
+    ) async {
+      OpenDialogEvent? openDialogEvent;
+      final bus = AppEventBus.create();
+      bus.on<OpenDialogEvent>().listen((e) => openDialogEvent = e);
+
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      );
+      await tester.pumpAndSettle();
+
+      final trainButton = find.text('Train');
+      expect(trainButton, findsOneWidget);
+      await tester.tap(trainButton);
+      await tester.pumpAndSettle();
+
+      expect(openDialogEvent, isNotNull);
+      expect(openDialogEvent!.dialogId, trainCiviliansDialogId);
+    });
 
     testWidgets(
       'Cancel on pending row shows confirm dialog; Yes emits RemovePendingWorkOrderRequestedEvent',
@@ -412,6 +429,167 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(removeEvent, isNull);
+      },
+    );
+
+    testWidgets(
+      'pending cancel event can drive external watcher updates (cross-panel style)',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        final navigatorKey = GlobalKey<NavigatorState>();
+        final observedRemovals = ValueNotifier<int>(0);
+        final sub = bus.on<RemovePendingWorkOrderRequestedEvent>().listen((_) {
+          observedRemovals.value = observedRemovals.value + 1;
+        });
+        addTearDown(() async {
+          await sub.cancel();
+          observedRemovals.dispose();
+        });
+
+        final units = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ];
+        final idleCivilians = units.where(
+          (u) =>
+              u.ownerId == humanPlayerIdWithUnits &&
+              u.tileKey != null &&
+              _isCivilian(u) &&
+              u.currentWork == null,
+        );
+        if (idleCivilians.isEmpty) return;
+        final idleCivilian = idleCivilians.first;
+
+        final pendingOrder = WorkOrder(
+          unitId: idleCivilian.id,
+          target: 'explore',
+          targetTileKey:
+              '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
+        );
+        final ordersWithOne = Orders(
+          workOrdersByPlayerId: {
+            humanPlayerIdWithUnits: [pendingOrder],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navigatorKey,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: observedRemovals,
+                    builder: (_, count, _) => Text('observed-removals:$count'),
+                  ),
+                  Expanded(
+                    child: _EventHandlingWrapper(
+                      bus: bus,
+                      navigatorKey: navigatorKey,
+                      child: CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerIdWithUnits,
+                        currentOrders: ordersWithOne,
+                        availableWorkTargets: const {},
+                        bus: bus,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('observed-removals:0'), findsOneWidget);
+
+        final pendingRow = find.ancestor(
+          of: find.textContaining('(pending)'),
+          matching: find.byType(ListTile),
+        );
+        expect(pendingRow, findsOneWidget);
+        final cancelOnPendingRow = find.descendant(
+          of: pendingRow,
+          matching: find.byType(CtNinePatchButton),
+        );
+        final cancelBtn = tester.widget<CtNinePatchButton>(cancelOnPendingRow);
+        cancelBtn.onPressed!();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Yes'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('observed-removals:1'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'in-progress cancel event can drive external watcher updates (cross-panel style)',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        final navigatorKey = GlobalKey<NavigatorState>();
+        final observedCancels = ValueNotifier<int>(0);
+        final sub = bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen(
+          (_) {
+            observedCancels.value = observedCancels.value + 1;
+          },
+        );
+        addTearDown(() async {
+          await sub.cancel();
+          observedCancels.dispose();
+        });
+
+        final units = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ];
+        final workingCivilians = units.where(
+          (u) =>
+              u.ownerId == humanPlayerIdWithUnits &&
+              u.tileKey != null &&
+              _isCivilian(u) &&
+              u.currentWork != null,
+        );
+        if (workingCivilians.isEmpty) return;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navigatorKey,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: observedCancels,
+                    builder: (_, count, _) => Text('observed-cancels:$count'),
+                  ),
+                  Expanded(
+                    child: _EventHandlingWrapper(
+                      bus: bus,
+                      navigatorKey: navigatorKey,
+                      child: CivilianUnitsPanel(
+                        game: game,
+                        humanPlayerId: humanPlayerIdWithUnits,
+                        currentOrders: const Orders(),
+                        availableWorkTargets: const {},
+                        bus: bus,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('observed-cancels:0'), findsOneWidget);
+
+        final cancelButtons = find.text('Cancel');
+        if (cancelButtons.evaluate().isEmpty) return;
+        await tester.tap(cancelButtons.first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Yes'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('observed-cancels:1'), findsOneWidget);
       },
     );
 
