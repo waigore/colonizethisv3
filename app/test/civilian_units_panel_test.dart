@@ -87,9 +87,7 @@ void main() {
     Orders currentOrders = const Orders(),
     Map<String, List<String>> availableWorkTargets = const {},
     AppEventBus? bus,
-    void Function(Unit unit)? onLocateUnit,
     void Function(WorkOrder order)? onAddWorkOrder,
-    void Function(Unit unit, String workTarget)? onStartWorkTargetSelection,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -105,9 +103,7 @@ void main() {
             currentOrders: currentOrders,
             availableWorkTargets: availableWorkTargets,
             bus: resolvedBus,
-            onLocateUnit: onLocateUnit,
             onAddWorkOrder: onAddWorkOrder,
-            onStartWorkTargetSelection: onStartWorkTargetSelection,
           ),
         ),
       ),
@@ -187,7 +183,6 @@ void main() {
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             availableWorkTargets: availableWorkTargets,
-            onStartWorkTargetSelection: (_, __) {},
           ),
         );
         await tester.pumpAndSettle();
@@ -223,14 +218,11 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Assign button shown for idle unit when onStartWorkTargetSelection provided',
-      (WidgetTester tester) async {
+    testWidgets('Assign button shown for idle unit', (WidgetTester tester) async {
         await tester.pumpWidget(
           buildPanel(
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
-            onStartWorkTargetSelection: (_, __) {},
           ),
         );
         await tester.pumpAndSettle();
@@ -242,7 +234,7 @@ void main() {
     );
 
     testWidgets(
-      'tap Assign opens order menu; tap order invokes onStartWorkTargetSelection',
+      'tap Assign opens order menu',
       (WidgetTester tester) async {
         // Find an idle civilian unit
         final units = [
@@ -259,8 +251,6 @@ void main() {
         // Skip if no idle civilians in test game
         if (idleCivilians.isEmpty) return;
 
-        Unit? selectedUnit;
-        String? selectedTarget;
         await tester.pumpWidget(
           buildPanel(
             game: game,
@@ -268,10 +258,6 @@ void main() {
             // Pass empty availableWorkTargets - all options will be disabled
             // This tests the UI renders but callback won't fire on disabled items
             availableWorkTargets: const {},
-            onStartWorkTargetSelection: (u, t) {
-              selectedUnit = u;
-              selectedTarget = t;
-            },
           ),
         );
         await tester.pumpAndSettle();

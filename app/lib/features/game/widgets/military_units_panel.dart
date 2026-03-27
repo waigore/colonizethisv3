@@ -300,15 +300,11 @@ class MilitaryUnitsPanel extends StatelessWidget {
     required this.game,
     required this.humanPlayerId,
     required this.bus,
-    this.onLocateTile,
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
-
-  /// Called when the user taps a row. [tileKey] and [regionId] for highlight/center and tab switch.
-  final void Function(String tileKey, String regionId)? onLocateTile;
 
   @override
   Widget build(BuildContext context) {
@@ -362,27 +358,29 @@ class MilitaryUnitsPanel extends StatelessWidget {
                                 for (final row in loc.rows)
                                   _RegimentRow(
                                     row: row,
-                                    onTap:
-                                        row.tileKey != null &&
-                                            onLocateTile != null
-                                        ? () => onLocateTile!(
-                                            row.tileKey!,
-                                            row.regionId,
-                                          )
-                                        : null,
+                                    onTap: row.tileKey == null
+                                        ? null
+                                        : () => bus.emit(
+                                            LocateMapTileEvent(
+                                              tileKey: row.tileKey!,
+                                              regionId: row.regionId,
+                                              closeCurrentPanel: true,
+                                            ),
+                                          ),
                                   ),
                               if (loc is _SeaZoneLocationNode)
                                 for (final row in loc.rows)
                                   _ShipRow(
                                     row: row,
-                                    onTap:
-                                        row.tileKey != null &&
-                                            onLocateTile != null
-                                        ? () => onLocateTile!(
-                                            row.tileKey!,
-                                            row.regionId,
-                                          )
-                                        : null,
+                                    onTap: row.tileKey == null
+                                        ? null
+                                        : () => bus.emit(
+                                            LocateMapTileEvent(
+                                              tileKey: row.tileKey!,
+                                              regionId: row.regionId,
+                                              closeCurrentPanel: true,
+                                            ),
+                                          ),
                                   ),
                             ],
                           ],

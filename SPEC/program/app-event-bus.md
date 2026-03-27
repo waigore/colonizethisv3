@@ -51,7 +51,7 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 
-- **`UIActionEvent`** — dialogs, navigation, panels, target selection, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
+- **`UIActionEvent`** — dialogs, navigation, panels, map locate/selection intents, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
 - **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**.
 - **`UISystemEvent`** — snackbar, overlay, notify.
 - **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
@@ -132,7 +132,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`) |
 
-**Civilian / naval work and fleets:** `CivilianUnitsPanel` emits `RemovePendingWorkOrderRequestedEvent` and `CancelInProgressCivilianWorkRequestedEvent`; `NavalUnitsPanel` emits `NavalFleetsUpdatedEvent` after split/combine. `AppEventHandlerScope` subscribes and updates `currentOrdersProvider` / `currentGameProvider` using `colonizethis_logic` (`removePendingWorkOrderAt`, `clearUnitCurrentWork`). Panels do not receive Riverpod `ref` for those mutations.
+**Civilian / naval work and fleets:** `CivilianUnitsPanel` emits `StartCivilianWorkTargetSelectionEvent`, `LocateMapTileEvent`, `RemovePendingWorkOrderRequestedEvent`, and `CancelInProgressCivilianWorkRequestedEvent`; `MilitaryUnitsPanel` / `NavalUnitsPanel` emit `LocateMapTileEvent`; `NavalUnitsPanel` emits `NavalFleetsUpdatedEvent` after split/combine. `AppEventHandlerScope` subscribes and updates `currentOrdersProvider` / `currentGameProvider` using `colonizethis_logic` (`removePendingWorkOrderAt`, `clearUnitCurrentWork`). Panels do not receive Riverpod `ref` for those mutations.
 
 **Consumption:** No single shell subscriber. Each screen that must react listens (e.g. **`GameToUIBusListener`**) and reloads **`currentGameProvider`** when **`gameId`** matches.
 
