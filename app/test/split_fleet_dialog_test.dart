@@ -27,114 +27,143 @@ void main() {
     );
   }
 
-  testWidgets(
-    'SplitFleetDialog at sea shows region label and can confirm split',
-    (WidgetTester tester) async {
-      List<String>? captured;
-      final fleet = Fleet(
-        id: 'f1',
-        ownerId: 'gp1',
-        regionId: 'oldWorld',
-        seaZoneId: 'oldWorld|s1',
-        shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
-      );
-      final game = _minimalGame(provinces: const []);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return _openDialogButton(() {
-                  showDialog<void>(
-                    context: context,
-                    builder: (ctx) => SplitFleetDialog(
-                      originalFleet: fleet,
-                      game: game,
-                      humanPlayerId: 'gp1',
-                      isHomeFleet: false,
-                      onConfirm: (ships) => captured = ships,
-                    ),
-                  );
-                });
-              },
-            ),
+  Future<void> openDialog(
+    WidgetTester tester, {
+    required Fleet fleet,
+    required Game game,
+    required bool isHomeFleet,
+    required void Function(List<String> ships) onConfirm,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return _openDialogButton(() {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => SplitFleetDialog(
+                    originalFleet: fleet,
+                    game: game,
+                    humanPlayerId: 'gp1',
+                    isHomeFleet: isHomeFleet,
+                    onConfirm: onConfirm,
+                  ),
+                );
+              });
+            },
           ),
         ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+  }
 
-      expect(find.textContaining('Region'), findsWidgets);
+  bool buttonEnabled(WidgetTester tester, String label) {
+    final button = tester.widget<CtNinePatchButton>(
+      find.widgetWithText(CtNinePatchButton, label),
+    );
+    return button.enabled;
+  }
 
-      await tester.tap(find.byIcon(Icons.arrow_forward).first);
-      await tester.pump();
-      await tester.tap(find.text('Confirm Split'));
-      await tester.pumpAndSettle();
-
-      expect(captured, isNotNull);
-      expect(captured!.length, 1);
-    },
-  );
-
-  testWidgets(
-    'SplitFleetDialog in port shows province name and home fleet blocks moves',
-    (WidgetTester tester) async {
-      const ow = 'oldWorld';
-      final province = Province(
-        id: '$ow|p1',
-        regionId: ow,
-        displayName: 'TestPort',
-        ownerId: 'gp1',
-      );
-      final game = _minimalGame(provinces: [province]);
-      final fleet = Fleet(
-        id: 'f2',
-        ownerId: 'gp1',
-        regionId: ow,
-        inPortAtProvinceId: province.id,
-        shipTypeIds: const ['fluyte'],
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return _openDialogButton(() {
-                  showDialog<void>(
-                    context: context,
-                    builder: (ctx) => SplitFleetDialog(
-                      originalFleet: fleet,
-                      game: game,
-                      humanPlayerId: 'gp1',
-                      isHomeFleet: false,
-                      onConfirm: (_) {},
-                    ),
-                  );
-                });
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('TestPort — Old World'), findsNWidgets(2));
-
-      await tester.tap(find.byIcon(Icons.arrow_back));
-      await tester.pump();
-      await tester.tap(find.byIcon(Icons.arrow_forward));
-      await tester.pump();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-    },
-  );
-
-  testWidgets('SplitFleetDialog home fleet can be split', (
+  testWidgets('transfer buttons disabled until a type is selected', (
     WidgetTester tester,
   ) async {
+    final fleet = Fleet(
+      id: 'f1',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['carrack', 'fluyte'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(provinces: const []),
+      isHomeFleet: false,
+      onConfirm: (_) {},
+    );
+
+    expect(buttonEnabled(tester, '<'), isFalse);
+    expect(buttonEnabled(tester, '>'), isFalse);
+    expect(buttonEnabled(tester, '<<'), isFalse);
+    expect(buttonEnabled(tester, '>>'), isFalse);
+  });
+
+  testWidgets('selected type supports one and all transfers with exact counts', (
+    WidgetTester tester,
+  ) async {
+    final fleet = Fleet(
+      id: 'f2',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(provinces: const []),
+      isHomeFleet: false,
+      onConfirm: (_) {},
+    );
+
+    expect(find.text('carrack (2)'), findsOneWidget);
+    await tester.tap(find.text('carrack (2)'));
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.pump();
+    expect(find.text('carrack (1)'), findsNWidgets(2));
+
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.pump();
+    expect(find.text('carrack (2)'), findsOneWidget);
+    expect(find.text('carrack (1)'), findsNothing);
+
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '<'));
+    await tester.pump();
+    expect(find.text('carrack (1)'), findsNWidgets(2));
+  });
+
+  testWidgets('arrow semantics: < is right-to-left and > is left-to-right', (
+    WidgetTester tester,
+  ) async {
+    final fleet = Fleet(
+      id: 'f3',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['fluyte', 'fluyte'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(provinces: const []),
+      isHomeFleet: false,
+      onConfirm: (_) {},
+    );
+
+    await tester.tap(find.text('fluyte (2)'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.pump();
+    expect(find.text('fluyte (1)'), findsNWidgets(2));
+
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '<'));
+    await tester.pump();
+    expect(find.text('fluyte (2)'), findsOneWidget);
+    expect(find.text('fluyte (1)'), findsNothing);
+  });
+
+  testWidgets('home fleet can split to zero original ships', (
+    WidgetTester tester,
+  ) async {
+    List<String>? captured;
     final fleet = Fleet(
       id: 'home_fleet',
       ownerId: 'gp1',
@@ -142,94 +171,27 @@ void main() {
       seaZoneId: 'oldWorld|s1',
       shipTypeIds: const ['carrack'],
     );
-    final game = _minimalGame(provinces: const []);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return _openDialogButton(() {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => SplitFleetDialog(
-                    originalFleet: fleet,
-                    game: game,
-                    humanPlayerId: 'gp1',
-                    isHomeFleet: true,
-                    onConfirm: (_) {},
-                  ),
-                );
-              });
-            },
-          ),
-        ),
-      ),
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(provinces: const []),
+      isHomeFleet: true,
+      onConfirm: (ships) => captured = ships,
     );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
 
-    final confirm = tester.widget<CtNinePatchButton>(
-      find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
-    );
-    expect(confirm.enabled, isTrue);
-
-    final bulkBack = find.descendant(
-      of: find.byType(SplitFleetDialog),
-      matching: find.byWidgetPredicate(
-        (w) =>
-            w is CtNinePatchButton &&
-            w.child is Icon &&
-            (w.child! as Icon).icon == Icons.arrow_back,
-      ),
-    );
-    expect(tester.widget<CtNinePatchButton>(bulkBack.first).enabled, isTrue);
-  });
-
-  testWidgets('SplitFleetDialog long-press moves all of one type', (
-    WidgetTester tester,
-  ) async {
-    List<String>? captured;
-    final fleet = Fleet(
-      id: 'f3',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 's1',
-      shipTypeIds: const ['a', 'a', 'b'],
-    );
-    final game = _minimalGame(provinces: const []);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return _openDialogButton(() {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => SplitFleetDialog(
-                    originalFleet: fleet,
-                    game: game,
-                    humanPlayerId: 'gp1',
-                    isHomeFleet: false,
-                    onConfirm: (ships) => captured = ships,
-                  ),
-                );
-              });
-            },
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
-    await tester.longPress(find.byIcon(Icons.arrow_forward).first);
+    await tester.tap(find.text('carrack (1)'));
     await tester.pump();
+    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.pump();
+
+    expect(find.text('No ships'), findsOneWidget);
+    expect(buttonEnabled(tester, 'Confirm Split'), isTrue);
+
     await tester.tap(find.text('Confirm Split'));
     await tester.pumpAndSettle();
-
     expect(captured, isNotNull);
-    expect(captured!.where((s) => s == 'a').length, 2);
+    expect(captured, hasLength(1));
+    expect(captured!.first, 'carrack');
   });
 }
