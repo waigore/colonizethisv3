@@ -28,7 +28,6 @@ void main() {
     required Game game,
     required String humanPlayerId,
     AppEventBus? bus,
-    void Function(String tileKey, String regionId)? onLocateTile,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -36,7 +35,6 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           bus: bus ?? AppEventBus.create(),
-          onLocateTile: onLocateTile,
         ),
       ),
     );
@@ -144,19 +142,17 @@ void main() {
       expect(find.byType(CtPanel), findsOneWidget);
     });
 
-    testWidgets(
-      'AC: Tapping a row invokes onLocateTile with tileKey and regionId',
-      (WidgetTester tester) async {
-        String? locatedTileKey;
-        String? locatedRegionId;
+    testWidgets('AC: Tapping a row emits LocateMapTileEvent', (
+      WidgetTester tester,
+    ) async {
+        LocateMapTileEvent? locateEvent;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
         await tester.pumpWidget(
           buildPanel(
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
-            onLocateTile: (tileKey, regionId) {
-              locatedTileKey = tileKey;
-              locatedRegionId = regionId;
-            },
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -166,18 +162,16 @@ void main() {
         await tester.tap(listTiles.first);
         await tester.pumpAndSettle();
 
-        expect(locatedTileKey, isNotNull);
-        expect(locatedRegionId, isNotNull);
+        expect(locateEvent, isNotNull);
         expect(
-          locatedRegionId == 'oldWorld' || locatedRegionId == 'newWorld',
+          locateEvent!.regionId == 'oldWorld' ||
+              locateEvent!.regionId == 'newWorld',
           isTrue,
         );
       },
     );
 
-    testWidgets('builds without onLocateTile callback', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('builds without locate callback', (WidgetTester tester) async {
       await tester.pumpWidget(
         buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
       );

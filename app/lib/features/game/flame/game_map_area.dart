@@ -60,6 +60,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         setState(() {
           // Town icon tap will be handled by the province panel provider
         });
+      } else if (event is ct_models.LocateMapTileEvent) {
+        _locateTile(event.tileKey, event.regionId, closePanel: event.closeCurrentPanel);
+      } else if (event is ct_models.StartCivilianWorkTargetSelectionEvent) {
+        _startWorkTargetSelection(
+          event.unitId,
+          event.workTarget,
+          closePanel: event.closeCurrentPanel,
+        );
+      } else if (event is ct_models.UnitsPanelClosedEvent) {
+        ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
       }
     });
   }
@@ -153,10 +163,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  void _onLocateCivilianUnit(ct_models.Unit unit) {
-    final tileKey = unit.tileKey;
-    if (tileKey == null) return;
-    final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+  void _locateTile(String tileKey, String regionId, {required bool closePanel}) {
     ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
       _centerOnTileKey = tileKey;
@@ -166,41 +173,38 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _regionIndex = 0;
       }
     });
-    Navigator.of(context).maybePop();
+    if (closePanel) {
+      Navigator.of(context).maybePop();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _centerOnTileKey = null);
     });
   }
 
-  void _onLocateMilitaryTile(String tileKey, String regionId) {
-    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
-    setState(() {
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
-    });
-    Navigator.of(context).maybePop();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _centerOnTileKey = null);
-    });
+  ct_models.Unit? _findUnitById(String unitId) {
+    for (final unit in widget.game.worldState.oldWorld.units) {
+      if (unit.id == unitId) return unit;
+    }
+    for (final unit in widget.game.worldState.newWorld.units) {
+      if (unit.id == unitId) return unit;
+    }
+    return null;
   }
 
-  void _onLocateNavalFleet(String tileKey, String regionId) {
-    ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
+  void _startWorkTargetSelection(
+    String unitId,
+    String workTarget, {
+    required bool closePanel,
+  }) {
+    final unit = _findUnitById(unitId);
+    if (unit == null) return;
     setState(() {
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
+      _workTargetSelection = (unit: unit, workTarget: workTarget);
+      _computeValidTileKeysForSelection();
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _centerOnTileKey = null);
-    });
+    if (closePanel) {
+      Navigator.of(context).maybePop();
+    }
   }
 
   void _onTileSelectedForWork(String tileKey) {
@@ -441,21 +445,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     humanPlayerId: _humanPlayerId,
                     sideMenuOpen: _sideMenuOpen,
                     onClose: () => setState(() => _sideMenuOpen = false),
-                    onPanelDismissed: () => ref
-                        .read(mapProvincePanelProvider.notifier)
-                        .setSecondaryHighlight(null),
-                    onLocateCivilianUnit: _onLocateCivilianUnit,
-                    onLocateMilitaryTile: _onLocateMilitaryTile,
-                    onLocateNavalFleet: _onLocateNavalFleet,
-                    onStartWorkTargetSelection: (unit, workTarget) {
-                      setState(() {
-                        _workTargetSelection = (
-                          unit: unit,
-                          workTarget: workTarget,
-                        );
-                        _computeValidTileKeysForSelection();
-                      });
-                    },
                   ),
                 ],
               ],

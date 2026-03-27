@@ -1031,15 +1031,6 @@ class _CivilianPanelWithMapStoryState
               currentOrders: _orders,
               availableWorkTargets: const {},
               bus: _panelBus,
-              onLocateUnit: _onLocateUnit,
-              onStartWorkTargetSelection: (unit, workTarget) {
-                setState(
-                  () => _workTargetSelection = (
-                    unit: unit,
-                    workTarget: workTarget,
-                  ),
-                );
-              },
             ),
           ),
         ],
@@ -1215,7 +1206,6 @@ class _MilitaryPanelWithMapStoryState
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
-              onLocateTile: _onLocateTile,
             ),
           ),
         ],
@@ -1398,7 +1388,6 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
               game: _game,
               humanPlayerId: humanPlayerId,
               bus: _navalBus,
-              onLocateFleet: _onLocateFleet,
             ),
           ),
         ],

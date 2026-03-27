@@ -97,9 +97,7 @@ class CivilianUnitsPanel extends StatelessWidget {
     required this.bus,
     this.currentOrders = const Orders(),
     this.availableWorkTargets = const {},
-    this.onLocateUnit,
     this.onAddWorkOrder,
-    this.onStartWorkTargetSelection,
   });
 
   final Game game;
@@ -112,12 +110,7 @@ class CivilianUnitsPanel extends StatelessWidget {
   /// Available work targets per unit (computed at turn start). Work targets not in this list are grayed out.
   final Map<String, List<String>> availableWorkTargets;
 
-  /// Called when the user taps a unit row; [unit] has non-null [Unit.tileKey].
-  final void Function(Unit unit)? onLocateUnit;
   final void Function(WorkOrder order)? onAddWorkOrder;
-
-  /// Called when user picked an order from the Assign menu; shell enters work-target selection mode.
-  final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -180,12 +173,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
                                 bus: bus,
-                                onTap: onLocateUnit != null && u.tileKey != null
-                                    ? () => onLocateUnit!(u)
-                                    : null,
                                 onAddWorkOrder: onAddWorkOrder,
-                                onStartWorkTargetSelection:
-                                    onStartWorkTargetSelection,
                               ),
                             ),
                           ],
@@ -199,12 +187,7 @@ class CivilianUnitsPanel extends StatelessWidget {
                                 availableWorkTargets: availableWorkTargets,
                                 humanPlayerId: humanPlayerId,
                                 bus: bus,
-                                onTap: onLocateUnit != null && u.tileKey != null
-                                    ? () => onLocateUnit!(u)
-                                    : null,
                                 onAddWorkOrder: onAddWorkOrder,
-                                onStartWorkTargetSelection:
-                                    onStartWorkTargetSelection,
                               ),
                             ),
                           ],
@@ -261,9 +244,7 @@ class _UnitRow extends StatelessWidget {
     required this.availableWorkTargets,
     required this.humanPlayerId,
     required this.bus,
-    this.onTap,
     this.onAddWorkOrder,
-    this.onStartWorkTargetSelection,
   });
 
   final Unit unit;
@@ -272,9 +253,7 @@ class _UnitRow extends StatelessWidget {
   final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
   final AppEventBus bus;
-  final VoidCallback? onTap;
   final void Function(WorkOrder order)? onAddWorkOrder;
-  final void Function(Unit unit, String workTarget)? onStartWorkTargetSelection;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -345,9 +324,7 @@ class _UnitRow extends StatelessWidget {
 
   void _showOrderMenu(BuildContext context) {
     final allowed = workOrderTargetsByUnitType[unit.type];
-    if (allowed == null ||
-        allowed.isEmpty ||
-        onStartWorkTargetSelection == null) {
+    if (allowed == null || allowed.isEmpty) {
       return;
     }
     final available = availableWorkTargets[unit.id] ?? [];
@@ -378,7 +355,12 @@ class _UnitRow extends StatelessWidget {
                 onTap: available.contains(target)
                     ? () {
                         Navigator.of(ctx).pop();
-                        onStartWorkTargetSelection!(unit, target);
+                        bus.emit(
+                          StartCivilianWorkTargetSelectionEvent(
+                            unitId: unit.id,
+                            workTarget: target,
+                          ),
+                        );
                       }
                     : null,
               ),
@@ -435,11 +417,24 @@ class _UnitRow extends StatelessWidget {
         ],
       ),
       dense: true,
-      onTap: onTap,
+      onTap: unit.tileKey == null
+          ? null
+          : () {
+              final tileKey = unit.tileKey!;
+              final regionId = Unit.regionIdFromTileKey(tileKey);
+              if (regionId == null) return;
+              bus.emit(
+                LocateMapTileEvent(
+                  tileKey: tileKey,
+                  regionId: regionId,
+                  closeCurrentPanel: true,
+                ),
+              );
+            },
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_isIdleNoPending && onStartWorkTargetSelection != null)
+          if (_isIdleNoPending)
             CtNinePatchButton(
               onPressed: () => _showOrderMenu(context),
               child: const Text('Assign'),
