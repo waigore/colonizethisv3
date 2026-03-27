@@ -60,9 +60,16 @@ A **port** is connected to the player's capital iff: **(1)** the capital is on t
 
 ## Connectivity (Game Rule)
 
-A tile T is **connected** to the capital for a player iff there is a path of road/rail/port from T to the **province's town** and from that town to the capital (existing rules). So: **(a)** T is adjacent to the capital tile, or **(b)** T is on or adjacent to a road/railroad tile that has a path to the **province's town**, and that town has a path to the capital tile. The graph is: tiles connected by shared edge; edges are road/railroad tiles or adjacency to the capital tile or the province town.
+Connectivity is a **tile-level graph rule** and does **not** depend on `townTileKey` location.
 
-**Town development level** (from Builder `upgrade_town` work) and **transport level** along the path limit extraction: effective yield = min(production, tech cap, **town development level**, **min transport level along path to town**, then to capital). If multiple paths exist (e.g. tile connected to two towns), the **maximum** transport level path determines the cap.
+A tile `T` is **connected** to the capital for a player iff there is a valid road/rail/port path from `T` to the capital under ownership and sea rules in this document:
+
+- **Same region / land path:** `T` must be reachable to the capital tile through shared-edge tile adjacency where traversal expands along road/rail/port-capable paths and only through the player's owned provinces.
+- **Different region / overseas:** `T` must have a road/rail path to an owned port in that province, and that port must be connected to the capital by sea topology/warp rules and blockade constraints.
+
+Town remains an extraction anchor for **town development level** only; it is not a connectivity gate.
+
+**Town development level** (from Builder `upgrade_town` work) and **transport level** along the selected capital path limit extraction: effective yield = min(production, tech cap, **town development level**, **path transport cap to capital**). If multiple valid paths exist, the **maximum** path transport cap is used.
 
 **Road level** on a tile is the same as **transport level** used for extraction (effective yield = min(production, transport level)); railroads are a higher road/transport level gated by tech (see [extraction-and-improvements.md](extraction-and-improvements.md), [tech-tree-transport.md](tech-tree-transport.md)).
 
@@ -170,13 +177,17 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
   When the system evaluates whether `portC` is connected to the capital  
   Then `portC` is considered connected if and only if its sea zone is reachable from `S_cap` by a path that may cross warp-zone edges between regions and sea–sea edges within each region.
 
-- Given a tile `T` in a land province owned by a Great Power player and that province has a `townTileKey` with a valid path to the capital according to the connectivity rules  
+- Given a tile `T` in a land province owned by a Great Power player and a current world state with owned-territory roads/rails  
   When the system evaluates whether `T` is connected to the capital for extraction  
-  Then `T` is considered connected if and only if either `T` is the capital tile or directly edge-adjacent to the capital tile, or `T` lies on or is edge-adjacent to a road or rail tile that has a road or rail path to the province’s town tile, and the town tile has a path to the capital tile.
+  Then `T` is considered connected if and only if either `T` is the capital tile or directly edge-adjacent to the capital tile, or `T` lies on or is edge-adjacent to a road or rail tile that has a valid owned-territory path to the capital tile.
 
 - Given a tile `T_overseas` in an overseas province owned by a Great Power player, and that province has a port `P_over` that is road or rail connected to `T_overseas` and is itself connected to the capital by sea and land per the port-connection and sea-path rules  
   When the system evaluates whether `T_overseas` is connected to the capital for extraction  
   Then `T_overseas` is considered connected if and only if there exists a road or rail path from `T_overseas` to `P_over` and `P_over` is marked as connected to the capital.
+
+- Given a fixed game state where ownership, roads/rails, ports, sea topology, and blockade status are unchanged and only a province `townTileKey` value changes
+  When the system recomputes connectivity
+  Then the set of connected tiles and per-tile path transport caps remain unchanged for that player.
 
 - Given a connected tile `T_conn` with base production `P`, technology cap `TechCap`, a town development level `TownLvl` for its province’s town tile, and a set of transport levels along the chosen connectivity path with minimum value `MinTransport`  
   When the system computes the effective extracted yield for `T_conn`  

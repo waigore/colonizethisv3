@@ -9,6 +9,7 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -118,6 +119,14 @@ void main() {
           matching: find.textContaining(RegExp(r'^\d+/\d+$')),
         );
         expect(formattedValue, findsOneWidget);
+
+        final iconFinder = find.descendant(
+          of: indicator,
+          matching: find.byType(StrictAssetIcon),
+        );
+        expect(iconFinder, findsOneWidget);
+        final iconWidget = tester.widget<StrictAssetIcon>(iconFinder);
+        expect(iconWidget.assetPath, 'assets/icons/ui_icon_cargo_hold.png');
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
