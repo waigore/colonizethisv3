@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
 import 'gp_land_connectivity_repair.dart';
+import 'init_town_roads.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
@@ -368,7 +369,18 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
-  game = _assignProvinceTowns(game: game);
+  game = _assignProvinceTowns(
+    game: game,
+    topologyByRegion: topologyByRegion,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  // 7d.bis Init town → capital roads (per-region via config). SPEC/game/capital-and-connectivity.md.
+  game = applyInitTownRoadsToCapitals(
+    game: game,
+    config: config,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   // Apply historically inspired naming from default ruleset (after capitals are set).
   game = _applyNaming(
@@ -522,7 +534,11 @@ List<String> _provinceIdsFromTopology(MapTopology topology) {
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
 /// same region = tile with shortest path to capital; overseas = port tile or first tile. SPEC/program/game-setup-pipeline.md.
-Game _assignProvinceTowns({required Game game}) {
+Game _assignProvinceTowns({
+  required Game game,
+  required Map<String, MapTopology> topologyByRegion,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final ports = game.worldState.portsByProvinceSeaboard;
 
@@ -614,6 +630,57 @@ Game _assignProvinceTowns({required Game game}) {
     return null;
   }
 
+  Set<String> provinceSeaZones(String provinceId) {
+    final regionId = ProvinceId.regionIdFrom(provinceId);
+    final topology = topologyByRegion[regionId];
+    if (topology == null) return const <String>{};
+    final localProvinceId = ProvinceId.localIdFrom(provinceId);
+    final out = <String>{};
+    for (final edge in topology.edges) {
+      if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
+      final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
+      for (final node in topology.nodes) {
+        if (node.id == other && node.type == TopologyNodeType.seaZone) {
+          out.add(other);
+          break;
+        }
+      }
+    }
+    return out;
+  }
+
+  bool tileKeyAdjacentToProvinceSeaZone({
+    required String tileKey,
+    required String provinceId,
+    required Set<String> seaZoneIds,
+  }) {
+    if (seaZoneIds.isEmpty) return false;
+    final regionId = ProvinceId.regionIdFrom(provinceId);
+    final map = tileMapByRegion[regionId];
+    final topology = topologyByRegion[regionId];
+    if (map == null || topology == null) return false;
+    final parts = tileKey.split('|');
+    if (parts.length < 4) return false;
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) return false;
+
+    final provinceIds = topology.nodes
+        .where((n) => n.type == TopologyNodeType.province)
+        .map((n) => n.id)
+        .toSet();
+
+    for (final d in const [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+      final nx = x + d.$1;
+      final ny = y + d.$2;
+      if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
+      final cellId = map.cell(nx, ny);
+      if (provinceIds.contains(cellId)) continue;
+      if (seaZoneIds.contains(cellId)) return true;
+    }
+    return false;
+  }
+
   String? townTileKeyForProvince(Province p) {
     final ownerId = p.ownerId;
     if (ownerId == null) {
@@ -628,6 +695,46 @@ Game _assignProvinceTowns({required Game game}) {
     final sameRegion =
         capProvinceId != null &&
         ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
+    final regionTopology = topologyByRegion[p.regionId];
+    final isSeaBoundProvince =
+        regionTopology != null &&
+        isProvinceSeaBound(regionTopology, ProvinceId.localIdFrom(p.id));
+    if (isSeaBoundProvince) {
+      final seaZoneIds = provinceSeaZones(p.id);
+      final coastalCandidates = tiles
+          .where(
+            (tk) => tileKeyAdjacentToProvinceSeaZone(
+              tileKey: tk,
+              provinceId: p.id,
+              seaZoneIds: seaZoneIds,
+            ),
+          )
+          .toList();
+      if (coastalCandidates.isNotEmpty) {
+        if (sameRegion && capTileKey != null) {
+          final distances = bfsDistances(p.regionId, capTileKey);
+          String? best;
+          var bestD = 999999;
+          for (final tk in coastalCandidates) {
+            final d = distances[tk] ?? 999999;
+            if (d < bestD) {
+              bestD = d;
+              best = tk;
+            }
+          }
+          return best ?? coastalCandidates.first;
+        }
+        final portTile = portTileInProvince(p.id);
+        if (portTile != null && coastalCandidates.contains(portTile)) {
+          return portTile;
+        }
+        return coastalCandidates.first;
+      }
+      _log.w(
+        'logic: seaboard town fallback for province=${p.id}: '
+        'topology is sea-bound but no sea-zone-adjacent tile candidate found',
+      );
+    }
     if (sameRegion && capTileKey != null) {
       final distances = bfsDistances(p.regionId, capTileKey);
       String? best;

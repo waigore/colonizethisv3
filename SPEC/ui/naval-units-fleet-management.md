@@ -72,6 +72,26 @@ Each fleet row in the expanded state shows a **"Split Fleet"** button, including
 
 Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 
+### Reusable Transfer Component
+
+Split Fleet uses a reusable app-level transfer component (`CtTransferList`) for
+dual-list quantity movement. The naval split dialog configures this component
+with fleet-specific labels and validation.
+
+`CtTransferList` API requirements:
+- Inputs: left/right titles, optional subtitles, initial counts for both sides
+- Transfer controls: one/all moves in both directions (`<`, `>`, `<<`, `>>`)
+- Selection model: one selected row key at a time
+- Validation hook: `canConfirm(leftCounts, rightCounts)`
+- Confirm callback: `onConfirm(leftCounts, rightCounts)`
+- Optional cancel callback and customizable action labels
+- Customizable item label and empty-state labels
+
+Naval-specific behavior remains outside the component:
+- Home-fleet split rule override
+- Fleet location labeling
+- Conversion from right-side counts to resulting `shipTypeIds`
+
 ### Layout
 
 ```
@@ -102,9 +122,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 
 ### Ship Movement
 
-- **Individual move**: Click `>` to move one ship of the selected type from Original to New. Click `<` to move back.
-- **Move all**: Long-press `>` to move all ships of a type. Long-press `<` to move all back.
-- **Selection**: Clicking a ship row selects/deselects it for movement.
+- **Selection**: Clicking a ship row selects/deselects one ship type for transfer.
+- **Individual move**: Click `>` to move one ship of the selected type from Original to New. Click `<` to move one ship back.
+- **Move all**: Click `>>` to move all ships of the selected type from Original to New. Click `<<` to move all selected ships back.
+- **Disabled transfer controls**: `<`, `>`, `<<`, and `>>` are disabled when no ship type is selected.
 
 ### Rules
 
@@ -123,8 +144,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 |--------|----------|
 | **>** (Move to New) | Moves one ship of the selected type from Original to New. |
 | **<** (Move to Original) | Moves one ship of the selected type from New to Original. |
+| **>>** (Move All to New) | Moves all ships of the selected type from Original to New. |
+| **<<** (Move All to Original) | Moves all ships of the selected type from New to Original. |
 | **Cancel** | Closes dialog, no changes. |
-| **Confirm Split** | Creates the new fleet with the specified ships; removes those ships from the original. Disabled if original would have 0 ships (and is not Home Fleet). |
+| **Confirm Split** | Creates the new fleet with the specified ships; removes those ships from the original. Disabled if original would have 0 ships and the original is not the Home Fleet. |
 
 ### Data changes
 

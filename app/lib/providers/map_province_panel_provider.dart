@@ -27,8 +27,9 @@ String? displayProvinceOrSeaIdFromTileKey(String? tileKey) {
   return '${parts[0]}|${parts[1]}';
 }
 
-class MapProvincePanelNotifier extends StateNotifier<MapProvincePanelUiState> {
-  MapProvincePanelNotifier() : super(const MapProvincePanelUiState());
+class MapProvincePanelNotifier extends Notifier<MapProvincePanelUiState> {
+  @override
+  MapProvincePanelUiState build() => const MapProvincePanelUiState();
 
   /// User tapped a map cell: select tile, open panel, keep secondary highlight as-is.
   void reportMapTileTapped(String tileKey) {
@@ -61,6 +62,6 @@ class MapProvincePanelNotifier extends StateNotifier<MapProvincePanelUiState> {
 }
 
 final mapProvincePanelProvider =
-    StateNotifierProvider<MapProvincePanelNotifier, MapProvincePanelUiState>(
-      (ref) => MapProvincePanelNotifier(),
+    NotifierProvider<MapProvincePanelNotifier, MapProvincePanelUiState>(
+      MapProvincePanelNotifier.new,
     );

@@ -20,11 +20,6 @@ class GameSideMenu extends ConsumerWidget {
     required this.humanPlayerId,
     required this.sideMenuOpen,
     required this.onClose,
-    required this.onPanelDismissed,
-    required this.onLocateCivilianUnit,
-    required this.onLocateMilitaryTile,
-    required this.onLocateNavalFleet,
-    required this.onStartWorkTargetSelection,
     super.key,
   });
 
@@ -32,13 +27,6 @@ class GameSideMenu extends ConsumerWidget {
   final String humanPlayerId;
   final bool sideMenuOpen;
   final VoidCallback onClose;
-  final VoidCallback onPanelDismissed;
-
-  final void Function(ct_models.Unit unit) onLocateCivilianUnit;
-  final void Function(String tileKey, String regionId) onLocateMilitaryTile;
-  final void Function(String tileKey, String regionId) onLocateNavalFleet;
-  final void Function(ct_models.Unit unit, String workTarget)
-  onStartWorkTargetSelection;
 
   static const double _kSideMenuWidth = 280;
 
@@ -91,13 +79,7 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Civilian Units',
         onPressed: () {
           onClose();
-          bus.emit(
-            ct_models.OpenCivilianUnitsPanelEvent(
-              onLocateUnit: onLocateCivilianUnit,
-              onStartWorkTargetSelection: onStartWorkTargetSelection,
-              onPanelDismissed: onPanelDismissed,
-            ),
-          );
+          bus.emit(const ct_models.OpenCivilianUnitsPanelEvent());
         },
       ),
       _empireButton(
@@ -106,12 +88,7 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Military Units',
         onPressed: () {
           onClose();
-          bus.emit(
-            ct_models.OpenMilitaryUnitsPanelEvent(
-              onLocateTile: onLocateMilitaryTile,
-              onPanelDismissed: onPanelDismissed,
-            ),
-          );
+          bus.emit(const ct_models.OpenMilitaryUnitsPanelEvent());
         },
       ),
       _empireButton(
@@ -120,12 +97,7 @@ class GameSideMenu extends ConsumerWidget {
         label: 'Naval Units',
         onPressed: () {
           onClose();
-          bus.emit(
-            ct_models.OpenNavalUnitsPanelEvent(
-              onLocateFleet: onLocateNavalFleet,
-              onPanelDismissed: onPanelDismissed,
-            ),
-          );
+          bus.emit(const ct_models.OpenNavalUnitsPanelEvent());
         },
       ),
       _empireButton(
