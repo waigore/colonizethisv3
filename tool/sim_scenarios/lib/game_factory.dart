@@ -129,6 +129,7 @@ class GameFactory {
       startingResources: baseConfig.startingResources,
       enforceFairGpOldWorldAssignment:
           baseConfig.enforceFairGpOldWorldAssignment,
+      initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
     );
 
     final warpLinks = generateWarpZones(
@@ -275,6 +276,21 @@ class GameFactory {
       startingResources: startingResources,
       enforceFairGpOldWorldAssignment:
           json['enforceFairGpOldWorldAssignment'] == true,
+      initTownRoadWiringRegionIds: _parseInitTownRoadWiringRegionIds(
+        json['initTownRoadWiringRegionIds'],
+      ),
     );
+  }
+
+  static Set<String> _parseInitTownRoadWiringRegionIds(dynamic raw) {
+    if (raw == null) {
+      return GameSetupConfig.defaultConfig.initTownRoadWiringRegionIds;
+    }
+    if (raw is! List<dynamic>) {
+      throw ArgumentError(
+        'initTownRoadWiringRegionIds must be a JSON array of region id strings',
+      );
+    }
+    return raw.map((e) => e.toString()).toSet();
   }
 }
