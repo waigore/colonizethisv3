@@ -25,13 +25,6 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          mapProvincePanelProvider.overrideWith((ref) {
-            final n = MapProvincePanelNotifier();
-            n.reportMapTileTapped(sampleTileKeyForProvinceOverlay);
-            return n;
-          }),
-        ],
         child: MediaQuery(
           data: const MediaQueryData(size: Size(400, 600)),
           child: MaterialApp(
@@ -47,6 +40,11 @@ void main() {
         ),
       ),
     );
+    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
+    final container = ProviderScope.containerOf(ctx);
+    container
+        .read(mapProvincePanelProvider.notifier)
+        .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
     await tester.pumpAndSettle();
 
     expect(find.byType(GameMapNarrowDetailOverlaySlot), findsOneWidget);
@@ -56,8 +54,6 @@ void main() {
     await tester.tap(find.byKey(const Key('overlay_close')));
     await tester.pumpAndSettle();
 
-    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-    final container = ProviderScope.containerOf(ctx);
     expect(
       container.read(mapProvincePanelProvider).overlayOpen,
       isFalse,
@@ -77,13 +73,6 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          mapProvincePanelProvider.overrideWith((ref) {
-            final n = MapProvincePanelNotifier();
-            n.reportMapTileTapped(sampleTileKeyForProvinceOverlay);
-            return n;
-          }),
-        ],
         child: MediaQuery(
           data: const MediaQueryData(size: Size(400, viewportHeight)),
           child: MaterialApp(
@@ -99,7 +88,11 @@ void main() {
         ),
       ),
     );
-
+    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
+    final container = ProviderScope.containerOf(ctx);
+    container
+        .read(mapProvincePanelProvider.notifier)
+        .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
     await tester.pumpAndSettle();
 
     final constrained = find.byWidgetPredicate(
