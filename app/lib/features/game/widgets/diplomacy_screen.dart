@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel.dart';
 import 'grant_or_subsidy_listener.dart';
 
@@ -37,15 +38,10 @@ class DiplomacyScreen extends ConsumerWidget {
           bus: bus,
           game: displayGame,
           onConfirmed: (order) {
-            final list = List<DiplomaticOrder>.from(
-              currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-            )..add(order);
             onOrdersChanged(
-              currentOrders.copyWith(
-                diplomaticOrdersByPlayerId: {
-                  ...currentOrders.diplomaticOrdersByPlayerId,
-                  humanPlayerId: list,
-                },
+              currentOrders.appendDiplomaticOrderForPlayer(
+                humanPlayerId,
+                order,
               ),
             );
           },
