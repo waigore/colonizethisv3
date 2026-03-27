@@ -83,6 +83,21 @@ Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart
 
 ---
 
+## Game feature screen wrapper
+
+Game-bound feature screens under `app/lib/features/game/widgets/` should use a shared wrapper for repeated shell/listener/live-game orchestration.
+
+- Shared wrapper scope: full-screen feature routes (for example `TechnologyScreen`, `ProductionScreen`, `DiplomacyScreen`).
+- Shared wrapper responsibilities:
+  - resolve display game from route game vs `currentGameProvider` when ids match;
+  - wrap feature content with `CtScreenShell`;
+  - optionally attach `GameToUIBusListener` for the route game id (default attached; test-only override allowed).
+- `GameScreen` is excluded from this wrapper requirement because it owns Flame/map overlays and custom lifecycle concerns.
+
+Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialogs) remains in each feature screen.
+
+---
+
 ## Migration checklist
 
 ### Done
@@ -117,6 +132,13 @@ Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart
 - Given two distinct panels under `features/game/widgets/`, When one must show another **feature’s** UI or request map/session behavior, Then the first emits a typed `AppEvent` (`Open*PanelEvent`, `LocateMapTileEvent`, `StartCivilianWorkTargetSelectionEvent`, etc.) and does not call an `onXxx` callback supplied from the other panel’s widget API.
 - Given `AppEventHandler` is bound at the shell, When it handles `NavigateToRouteEvent` or `OpenDialogEvent` for cross-cutting cases, Then it uses `navigatorKey` (or dialog context from that handler), not `BuildContext` from an unrelated feature subtree.
 - Given a `ConsumerWidget` owns a screen or panel, When it passes dependencies to a **child in a different feature directory**, Then the child receives `AppEventBus`, data, or narrow listenables — not `WidgetRef` solely for cross-feature navigation or another panel’s behavior (**potential smell** if violated).
+
+### Game feature screen wrapper
+
+- Given a game-bound feature screen uses the shared wrapper with route game `G`, When `currentGameProvider` is null or has a different id, Then the wrapper builds feature content with route game `G`.
+- Given a game-bound feature screen uses the shared wrapper with route game `G`, When `currentGameProvider` has id `G`, Then the wrapper builds feature content with the provider game value.
+- Given a game-bound feature screen uses the shared wrapper with `attachGameToUiListener = true`, When it builds, Then the wrapper mounts `GameToUIBusListener(gameId: G.id)` around `CtScreenShell`.
+- Given a game-bound feature screen uses the shared wrapper with `attachGameToUiListener = false`, When it builds, Then the wrapper renders `CtScreenShell` without `GameToUIBusListener`.
 
 ### Automated tests (widget / integration)
 
