@@ -85,7 +85,6 @@ void main() {
     required Game game,
     required String humanPlayerId,
     AppEventBus? bus,
-    void Function(String tileKey, String regionId)? onLocateFleet,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
@@ -94,7 +93,6 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           bus: resolvedBus,
-          onLocateFleet: onLocateFleet,
         ),
       ),
     );
@@ -162,19 +160,17 @@ void main() {
       expect(find.byType(CtPanel), findsOneWidget);
     });
 
-    testWidgets('AC: Locate button invokes onLocateFleet', (
+    testWidgets('AC: Locate button emits LocateMapTileEvent', (
       WidgetTester tester,
     ) async {
-      String? locatedTileKey;
-      String? locatedRegionId;
+      LocateMapTileEvent? locateEvent;
+      final bus = AppEventBus.create();
+      bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
       await tester.pumpWidget(
         buildPanel(
           game: game,
           humanPlayerId: humanPlayerIdWithFleets,
-          onLocateFleet: (tileKey, regionId) {
-            locatedTileKey = tileKey;
-            locatedRegionId = regionId;
-          },
+          bus: bus,
         ),
       );
       await tester.pumpAndSettle();
@@ -184,10 +180,9 @@ void main() {
       await tester.tap(locateButtons.first);
       await tester.pumpAndSettle();
 
-      expect(locatedTileKey, isNotNull);
-      expect(locatedRegionId, isNotNull);
+      expect(locateEvent, isNotNull);
       expect(
-        locatedRegionId == 'oldWorld' || locatedRegionId == 'newWorld',
+        locateEvent!.regionId == 'oldWorld' || locateEvent!.regionId == 'newWorld',
         isTrue,
       );
     });
@@ -260,15 +255,17 @@ void main() {
 
         String? locatedTileKey;
         String? locatedRegionId;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) {
+          locatedTileKey = e.tileKey;
+          locatedRegionId = e.regionId;
+        });
 
         await tester.pumpWidget(
           buildPanel(
             game: gameWithExtraFleets,
             humanPlayerId: humanId,
-            onLocateFleet: (tileKey, regionId) {
-              locatedTileKey = tileKey;
-              locatedRegionId = regionId;
-            },
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -356,6 +353,11 @@ void main() {
 
         String? locatedTileKey;
         String? locatedRegionId;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) {
+          locatedTileKey = e.tileKey;
+          locatedRegionId = e.regionId;
+        });
 
         // Force the widget into the "synthetic" Home Fleet path by removing any
         // actual fleet that would be considered home (located at the capital
@@ -378,10 +380,7 @@ void main() {
           buildPanel(
             game: gameWithoutHomeFleets,
             humanPlayerId: humanPlayerIdWithFleets,
-            onLocateFleet: (tileKey, regionId) {
-              locatedTileKey = tileKey;
-              locatedRegionId = regionId;
-            },
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -449,14 +448,16 @@ void main() {
 
         String? locatedTileKey;
         String? locatedRegionId;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) {
+          locatedTileKey = e.tileKey;
+          locatedRegionId = e.regionId;
+        });
         await tester.pumpWidget(
           buildPanel(
             game: gameWithExtraFleets,
             humanPlayerId: humanId,
-            onLocateFleet: (tileKey, regionId) {
-              locatedTileKey = tileKey;
-              locatedRegionId = regionId;
-            },
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -555,15 +556,17 @@ void main() {
 
         String? locatedTileKey;
         String? locatedRegionId;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) {
+          locatedTileKey = e.tileKey;
+          locatedRegionId = e.regionId;
+        });
 
         await tester.pumpWidget(
           buildPanel(
             game: gameWithExtraFleets,
             humanPlayerId: humanId,
-            onLocateFleet: (tileKey, regionId) {
-              locatedTileKey = tileKey;
-              locatedRegionId = regionId;
-            },
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();

@@ -13,7 +13,6 @@
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'game.dart';
-import 'unit.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
 
@@ -90,39 +89,50 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
 /// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
 /// closures on this event — see SPEC/program/app-event-bus.md.
 class OpenCivilianUnitsPanelEvent extends UIActionEvent {
-  OpenCivilianUnitsPanelEvent({
-    required this.onLocateUnit,
-    required this.onStartWorkTargetSelection,
-    this.onPanelDismissed,
-  });
-
-  final void Function(Unit unit) onLocateUnit;
-  final void Function(Unit unit, String workTarget) onStartWorkTargetSelection;
-
-  /// Invoked when the bottom sheet route is popped (any reason).
-  final void Function()? onPanelDismissed;
+  const OpenCivilianUnitsPanelEvent();
 }
 
 /// Military units bottom sheet.
 class OpenMilitaryUnitsPanelEvent extends UIActionEvent {
-  OpenMilitaryUnitsPanelEvent({
-    required this.onLocateTile,
-    this.onPanelDismissed,
-  });
-
-  final void Function(String tileKey, String regionId) onLocateTile;
-  final void Function()? onPanelDismissed;
+  const OpenMilitaryUnitsPanelEvent();
 }
 
 /// Naval units bottom sheet. Fleet mutations emit [NavalFleetsUpdatedEvent] from the panel.
 class OpenNavalUnitsPanelEvent extends UIActionEvent {
-  OpenNavalUnitsPanelEvent({
-    required this.onLocateFleet,
-    this.onPanelDismissed,
+  const OpenNavalUnitsPanelEvent();
+}
+
+/// Request to center/highlight a map tile, optionally dismissing the active panel.
+class LocateMapTileEvent extends UIActionEvent {
+  const LocateMapTileEvent({
+    required this.tileKey,
+    required this.regionId,
+    this.closeCurrentPanel = false,
   });
 
-  final void Function(String tileKey, String regionId) onLocateFleet;
-  final void Function()? onPanelDismissed;
+  final String tileKey;
+  final String regionId;
+  final bool closeCurrentPanel;
+}
+
+/// Request to start civilian target-selection mode from the units panel.
+class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {
+  const StartCivilianWorkTargetSelectionEvent({
+    required this.unitId,
+    required this.workTarget,
+    this.closeCurrentPanel = true,
+  });
+
+  final String unitId;
+  final String workTarget;
+  final bool closeCurrentPanel;
+}
+
+/// Emitted when a typed units panel route is dismissed.
+class UnitsPanelClosedEvent extends UIActionEvent {
+  const UnitsPanelClosedEvent(this.panel);
+
+  final String panel;
 }
 
 /// Request to start a unit target-selection mode (map enters target-pick state).

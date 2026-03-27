@@ -30,7 +30,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 |--------|----------|
 | **`WidgetRef` passed into widgets** across panels or `features/...` subtrees to trigger another area | **Potential smell** — prefer bus events, notifiers, or data. |
 | **Panel A** calls **panel B’s `onXxx`** to open B’s UI or mutate B | **Definite smell — disallowed.** Emit a typed **`AppEvent`**. |
-| **`UIActionEvent`** with **`void Function(...)?`** filled by emitter for map/shell integration (e.g. `onLocateUnit` on `OpenCivilianUnitsPanelEvent`) | **Allowed** — not another panel widget’s API. |
+| Typed bus event payload (`LocateMapTileEvent`, `StartCivilianWorkTargetSelectionEvent`) | **Preferred** — avoid callback threading for cross-panel intent. |
 
 ---
 
@@ -43,7 +43,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` |
 
-`onPanelDismissed` runs when the sheet route completes (e.g. map highlight cleanup).
+Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
 
 ---
 
@@ -114,7 +114,7 @@ Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart
 ### Coupling rules
 
 - Given an empire panel specified to use the bus for a navigation or shared-dialog action (e.g. `DiplomacyPanel`), When that action runs, Then the panel emits the corresponding `UIActionEvent` via `AppEventBus` and does not use `Navigator.of(context).push`, `pushNamed`, or `showDialog` for that action (dismissing a **local** route remains allowed per **Local by design**).
-- Given two distinct panels under `features/game/widgets/`, When one must show another **feature’s** UI, Then the first emits a typed `AppEvent` and does not call an `onXxx` callback supplied from the other panel’s widget API.
+- Given two distinct panels under `features/game/widgets/`, When one must show another **feature’s** UI or request map/session behavior, Then the first emits a typed `AppEvent` (`Open*PanelEvent`, `LocateMapTileEvent`, `StartCivilianWorkTargetSelectionEvent`, etc.) and does not call an `onXxx` callback supplied from the other panel’s widget API.
 - Given `AppEventHandler` is bound at the shell, When it handles `NavigateToRouteEvent` or `OpenDialogEvent` for cross-cutting cases, Then it uses `navigatorKey` (or dialog context from that handler), not `BuildContext` from an unrelated feature subtree.
 - Given a `ConsumerWidget` owns a screen or panel, When it passes dependencies to a **child in a different feature directory**, Then the child receives `AppEventBus`, data, or narrow listenables — not `WidgetRef` solely for cross-feature navigation or another panel’s behavior (**potential smell** if violated).
 

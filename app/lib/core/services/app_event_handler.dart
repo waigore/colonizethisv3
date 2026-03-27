@@ -229,16 +229,11 @@ class AppEventHandler {
               bus: bus,
               currentOrders: currentOrders,
               availableWorkTargets: availableWorkTargets,
-              onLocateUnit: event.onLocateUnit,
-              onStartWorkTargetSelection: (unit, workTarget) {
-                Navigator.of(context).pop();
-                event.onStartWorkTargetSelection(unit, workTarget);
-              },
             ),
           );
         },
       ),
-    ).whenComplete(() => event.onPanelDismissed?.call());
+    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('civilian')));
   }
 
   Future<void> _openMilitaryUnitsPanel(
@@ -260,11 +255,10 @@ class AppEventHandler {
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
-            onLocateTile: event.onLocateTile,
           );
         },
       ),
-    ).whenComplete(() => event.onPanelDismissed?.call());
+    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('military')));
   }
 
   Future<void> _openNavalUnitsPanel(
@@ -286,11 +280,10 @@ class AppEventHandler {
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
-            onLocateFleet: event.onLocateFleet,
           );
         },
       ),
-    ).whenComplete(() => event.onPanelDismissed?.call());
+    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('naval')));
   }
 
   String _humanPlayerId(Game game) {
