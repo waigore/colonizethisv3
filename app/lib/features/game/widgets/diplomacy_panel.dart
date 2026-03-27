@@ -9,6 +9,7 @@ import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
+import 'diplomacy_order_helpers.dart';
 
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
@@ -272,37 +273,8 @@ class DiplomacyPanel extends StatelessWidget {
     }
   }
 
-  String _actionLabel(DiplomaticOrder o) {
-    switch (o.type) {
-      case DiplomaticOrderType.declareWar:
-        return 'Declare War';
-      case DiplomaticOrderType.offerPeace:
-        return 'Offer Peace';
-      case DiplomaticOrderType.alliance:
-        return 'Alliance';
-      case DiplomaticOrderType.establishOverture:
-        return o.overtureStage != null
-            ? _overtureStageShort(o.overtureStage!)
-            : 'Overture';
-      case DiplomaticOrderType.grantAid:
-        return o.amount != null ? 'Grant Aid (£${o.amount})' : 'Grant Aid';
-      case DiplomaticOrderType.setSubsidy:
-        return o.amount != null ? 'Subsidy (£${o.amount})' : 'Set Subsidy';
-    }
-  }
-
-  String _overtureStageShort(OvertureStage s) {
-    return switch (s) {
-      OvertureStage.none => 'Overture',
-      OvertureStage.tradeConsulate => 'Consulate',
-      OvertureStage.embassy => 'Embassy',
-      OvertureStage.nap => 'NAP',
-      OvertureStage.joinEmpire => 'Join Empire',
-    };
-  }
-
   void _showConfirmDialog(BuildContext context, DiplomaticOrder order) {
-    final actionLabel = _actionLabel(order);
+    final actionLabel = diplomacyActionLabel(order);
     bus.emit(
       ConfirmDialogEvent(
         title: actionLabel,
@@ -345,18 +317,11 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
-    final list =
-        List<DiplomaticOrder>.from(
-          currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-        )..removeWhere(
-          (o) => o.type == type && o.targetFactionId == targetFactionId,
-        );
     onOrdersChanged(
-      currentOrders.copyWith(
-        diplomaticOrdersByPlayerId: {
-          ...currentOrders.diplomaticOrdersByPlayerId,
-          humanPlayerId: list,
-        },
+      currentOrders.removeDiplomaticOrderForPlayer(
+        humanPlayerId,
+        type: type,
+        targetFactionId: targetFactionId,
       ),
     );
   }
@@ -375,16 +340,8 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _appendOrder(DiplomaticOrder order) {
-    final list = List<DiplomaticOrder>.from(
-      currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-    )..add(order);
     onOrdersChanged(
-      currentOrders.copyWith(
-        diplomaticOrdersByPlayerId: {
-          ...currentOrders.diplomaticOrdersByPlayerId,
-          humanPlayerId: list,
-        },
-      ),
+      currentOrders.appendDiplomaticOrderForPlayer(humanPlayerId, order),
     );
   }
 }
@@ -540,7 +497,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = isPending ? 'Cancel' : _actionLabel(order);
+    final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
     return SizedBox(
       height: 32,
       child: CtNinePatchButton(
@@ -549,34 +506,5 @@ class _ActionButton extends StatelessWidget {
         child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
     );
-  }
-
-  String _actionLabel(DiplomaticOrder o) {
-    switch (o.type) {
-      case DiplomaticOrderType.declareWar:
-        return 'Declare War';
-      case DiplomaticOrderType.offerPeace:
-        return 'Offer Peace';
-      case DiplomaticOrderType.alliance:
-        return 'Alliance';
-      case DiplomaticOrderType.establishOverture:
-        return o.overtureStage != null
-            ? _overtureStageShort(o.overtureStage!)
-            : 'Overture';
-      case DiplomaticOrderType.grantAid:
-        return o.amount != null ? 'Grant Aid (£${o.amount})' : 'Grant Aid';
-      case DiplomaticOrderType.setSubsidy:
-        return o.amount != null ? 'Subsidy (£${o.amount})' : 'Set Subsidy';
-    }
-  }
-
-  String _overtureStageShort(OvertureStage s) {
-    return switch (s) {
-      OvertureStage.none => 'Overture',
-      OvertureStage.tradeConsulate => 'Consulate',
-      OvertureStage.embassy => 'Embassy',
-      OvertureStage.nap => 'NAP',
-      OvertureStage.joinEmpire => 'Join Empire',
-    };
   }
 }
