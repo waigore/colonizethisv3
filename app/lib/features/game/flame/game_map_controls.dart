@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import '../../../config/app_assets.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 
 /// Top bar and region chips for the in-game map shell.
@@ -74,8 +76,11 @@ class GameMapControls extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Reserved crate-icon slot; issue #1328 tracks the asset.
-                    const SizedBox(width: 16, height: 16),
+                    const StrictAssetIcon(
+                      assetPath: '${kAppIconAssetPrefix}ui_icon_cargo_hold.png',
+                      width: 16,
+                      height: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text('$cargoUsed/$cargoCapacity'),
                   ],
