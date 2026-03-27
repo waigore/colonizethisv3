@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 /// Shared UI state between the region map and the province/sea detail panel.
 /// Map and panel stay decoupled: both read/write this provider only.
@@ -27,8 +26,9 @@ String? displayProvinceOrSeaIdFromTileKey(String? tileKey) {
   return '${parts[0]}|${parts[1]}';
 }
 
-class MapProvincePanelNotifier extends StateNotifier<MapProvincePanelUiState> {
-  MapProvincePanelNotifier() : super(const MapProvincePanelUiState());
+class MapProvincePanelNotifier extends Notifier<MapProvincePanelUiState> {
+  @override
+  MapProvincePanelUiState build() => const MapProvincePanelUiState();
 
   /// User tapped a map cell: select tile, open panel, keep secondary highlight as-is.
   void reportMapTileTapped(String tileKey) {
@@ -61,6 +61,6 @@ class MapProvincePanelNotifier extends StateNotifier<MapProvincePanelUiState> {
 }
 
 final mapProvincePanelProvider =
-    StateNotifierProvider<MapProvincePanelNotifier, MapProvincePanelUiState>(
-      (ref) => MapProvincePanelNotifier(),
+    NotifierProvider<MapProvincePanelNotifier, MapProvincePanelUiState>(
+      MapProvincePanelNotifier.new,
     );
