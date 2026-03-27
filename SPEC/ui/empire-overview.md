@@ -17,6 +17,8 @@
 - **Tabs:** One tab per region (e.g. "Old World", "New World"). Selecting a tab shows that region's map in the map area.
 - **Desktop:** Tab bar visible; map widget fills the map area for the active region. Layout may include sidebar and HUD (separate spec).
 - **Mobile:** One region per map. Same tab system: user switches regions via tabs. Each tab shows the full map widget for that region; no side-by-side regions on small screens. See [mobile-adaptation.md](mobile-adaptation.md) for touch targets and layout.
+- **Cargo hold indicator:** In the same control row as the region tabs, the UI shows a non-interactive cargo hold indicator with a crate icon and a numeric value in the exact format `used/capacity` (no spaces). `capacity` is the total cargo holds from all ships in the human player's Home Fleet (`cargoHoldsForHomeFleet`), and `used` is the total overseas resources extracted for that player in the current world state (sum of `computeExtraction(...).overseas` values for the player). The indicator is global (single total, not per-region) and remains visible when switching region tabs.
+- **Update contract:** The cargo hold indicator updates only when cargo-relevant game state changes (for example, fleet composition changes or extraction-relevant state changes) through the app's event bus/provider wiring; no animation or interaction is applied.
 
 ---
 
@@ -77,6 +79,10 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **When** the user selects a different region tab, **then** the map area shows that region's map (one region per map; no side-by-side on mobile).
 - **Given** the map widget is visible, **then** the user can pan, zoom (fixed levels, smooth), and toggle the political overlay; tap/click on a province invokes the selection callback and the screen can show province details (details content TBD).
 - **Desktop and mobile:** Both use the same tab-based region switching; on mobile, one region per map and tab system only.
+- **Given** the in-game shell control row is visible, **when** the UI renders region tabs, **then** the UI layer also renders a non-interactive cargo hold indicator beside the tabs with a crate icon and text formatted exactly as `used/capacity` (no spaces).
+- **Given** the in-game shell control row is visible for a human player, **when** the cargo hold indicator is computed, **then** `used` equals the sum of that player's overseas extraction totals in the current world state and `capacity` equals the total home-fleet cargo holds for that player.
+- **Given** the player switches between Old World and New World tabs, **when** the region tab changes, **then** the cargo hold indicator value remains a single global total and does not switch to per-region values.
+- **Given** fleet composition or extraction-relevant state changes and the app event bus/provider flow publishes those changes into the in-game shell state, **when** the map controls rebuild, **then** the cargo hold indicator updates to the new `used/capacity` value without animation.
 - **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is terrain + resources + improvements (full letters visible).
 - **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvements → terrain only (repeating).
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the top-left of the map area and displays the stacked layers icon (icon-only).
