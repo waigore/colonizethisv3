@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+    show demoGameForOverlay;
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -15,6 +21,15 @@ void main() {
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_games_provider');
     await Hive.openBox<dynamic>(HiveBoxNames.games);
+  });
+
+  tearDownAll(() async {
+    await Hive.box<dynamic>(HiveBoxNames.games).clear();
+    await Hive.close();
+    final dir = Directory('./.dart_tool/test_hive_games_provider');
+    if (dir.existsSync()) {
+      await dir.delete(recursive: true);
+    }
   });
 
   test('gameListIdsProvider returns empty list when no games saved', () async {
@@ -38,6 +53,32 @@ void main() {
     addTearDown(container.dispose);
 
     expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
+  });
+
+  test('derived providers compute with a real current game', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final gameService = container.read(gameServiceProvider);
+    expect(gameService, isA<GameService>());
+
+    final game = gameService.createNewGame(
+      id: 'games_provider_derived',
+      config: GameSetupConfig(
+        selectedGreatPowerIds: const ['england', 'france'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 4,
+        numProvincesNewWorld: 2,
+      ),
+    );
+    container.read(currentGameProvider.notifier).setGame(game);
+
+    final targets = container.read(availableWorkTargetsProvider);
+    final reserved = container.read(devExclusiveReservedWorkTileKeysProvider);
+    expect(targets, isA<Map<String, List<String>>>());
+    expect(reserved, isA<Set<String>>());
   });
 
   test('gameIdsWithIntroShownProvider defaults empty and can be updated', () {
@@ -65,6 +106,57 @@ void main() {
     final updated = container.read(pendingOverturesProvider);
     expect(updated, isNotNull);
     expect(updated, isEmpty);
+  });
+
+  test('currentGameProvider setGame and clear update the state', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(currentGameProvider.notifier);
+    expect(container.read(currentGameProvider), isNull);
+
+    notifier.setGame(demoGameForOverlay);
+    expect(container.read(currentGameProvider)?.id, demoGameForOverlay.id);
+
+    notifier.clear();
+    expect(container.read(currentGameProvider), isNull);
+  });
+
+  test('currentOrdersProvider replaceAll and clear update the state', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(currentOrdersProvider.notifier);
+    expect(container.read(currentOrdersProvider), const Orders());
+
+    const next = Orders(
+      buildUnitOrdersByPlayerId: {
+        'p1': [
+          BuildUnitOrder(
+            unitType: 'builder',
+            isMilitary: false,
+            spawnProvinceId: 'oldWorld|p1',
+          ),
+        ],
+      },
+    );
+    notifier.replaceAll(next);
+    expect(container.read(currentOrdersProvider), next);
+
+    notifier.clear();
+    expect(container.read(currentOrdersProvider), const Orders());
+  });
+
+  test('pendingOverturesProvider clear resets pending overtures to null', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(pendingOverturesProvider.notifier);
+    notifier.setPending(const []);
+    expect(container.read(pendingOverturesProvider), isNotNull);
+
+    notifier.clear();
+    expect(container.read(pendingOverturesProvider), isNull);
   });
 }
 
