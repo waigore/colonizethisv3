@@ -22,7 +22,10 @@ class GameSetupConfig {
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
     this.enforceFairGpOldWorldAssignment = false,
-  }) : assert(
+    Set<String>? initTownRoadWiringRegionIds,
+  }) : initTownRoadWiringRegionIds =
+           initTownRoadWiringRegionIds ?? const {'oldWorld'},
+       assert(
          selectedGreatPowerIds.isNotEmpty,
          'At least one Great Power required',
        ),
@@ -69,6 +72,12 @@ class GameSetupConfig {
   /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
   /// repair (faster; a GP may own disconnected P–P components).
   final bool enforceFairGpOldWorldAssignment;
+
+  /// Region ids (`oldWorld`, `newWorld`, …) where init runs **town → capital**
+  /// road wiring on **owned tiles only** after §7d town assignment.
+  /// Empty set disables. Default `{oldWorld}` — New World tribes are skipped unless
+  /// wired explicitly. SPEC/game/capital-and-connectivity.md § Init town roads.
+  final Set<String> initTownRoadWiringRegionIds;
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();

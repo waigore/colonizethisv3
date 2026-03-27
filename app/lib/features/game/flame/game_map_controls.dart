@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import 'game_screen_shared.dart';
 
 /// Top bar and region chips for the in-game map shell.
 class GameMapControls extends StatelessWidget {
@@ -12,6 +13,8 @@ class GameMapControls extends StatelessWidget {
     required this.regionIndex,
     required this.onRegionIndexChanged,
     required this.nextTurnText,
+    required this.cargoUsed,
+    required this.cargoCapacity,
     super.key,
   });
 
@@ -21,6 +24,8 @@ class GameMapControls extends StatelessWidget {
   final int regionIndex;
   final void Function(int index) onRegionIndexChanged;
   final String nextTurnText;
+  final int cargoUsed;
+  final int cargoCapacity;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +66,21 @@ class GameMapControls extends StatelessWidget {
                 selected: regionIndex == 1,
                 onSelected: (_) => onRegionIndexChanged(1),
               ),
+              const SizedBox(width: 10),
+              Container(
+                key: kCargoHoldIndicatorKey,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                color: Colors.black.withValues(alpha: 0.1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Reserved crate-icon slot; issue #1328 tracks the asset.
+                    const SizedBox(width: 16, height: 16),
+                    const SizedBox(width: 4),
+                    Text('$cargoUsed/$cargoCapacity'),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -68,4 +88,3 @@ class GameMapControls extends StatelessWidget {
     );
   }
 }
-
