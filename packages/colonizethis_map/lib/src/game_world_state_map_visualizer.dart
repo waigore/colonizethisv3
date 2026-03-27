@@ -34,6 +34,7 @@ const String _regionNewWorld = 'newWorld';
 Uint8List renderSingleRegionGameStateMapToPng({
   required TileMapResult result,
   required MapTopology topology,
+  required String regionId,
   required Map<String, String> ownerByProvinceId,
   required List<({String factionId, String displayName, int x, int y})> capitalTiles,
   int cellSize = 24,
@@ -80,9 +81,12 @@ Uint8List renderSingleRegionGameStateMapToPng({
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       final id = result.cell(x, y);
-      final (r, g, b) = seaZoneIds.contains(id)
+      final isSea = seaZoneIds.contains(id);
+      final fullProvinceId = isSea ? null : ProvinceId.full(regionId, id);
+      final (r, g, b) = isSea
           ? seaColorRgb
-          : (factionColors[ownerByProvinceId[id] ?? ''] ?? (128, 128, 128));
+          : (factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
+              (128, 128, 128));
       final color = image.getColor(r, g, b);
       img.fillRect(
         image,
@@ -259,6 +263,7 @@ Uint8List renderInitGameMapToPng({
   final owPng = renderSingleRegionGameStateMapToPng(
     result: owResult,
     topology: owTopo,
+    regionId: _regionOldWorld,
     ownerByProvinceId: owOwnerByProvinceId,
     capitalTiles: owCapitals,
     cellSize: cellSize,
@@ -268,6 +273,7 @@ Uint8List renderInitGameMapToPng({
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
+    regionId: _regionNewWorld,
     ownerByProvinceId: nwOwnerByProvinceId,
     capitalTiles: nwCapitals,
     cellSize: cellSize,
