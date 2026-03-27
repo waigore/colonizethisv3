@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
 import 'gp_land_connectivity_repair.dart';
+import 'init_town_roads.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
@@ -369,6 +370,13 @@ GameSetupResult createGameFromGeneratedMaps({
 
   // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
   game = _assignProvinceTowns(game: game);
+
+  // 7d.bis Init town → capital roads (per-region via config). SPEC/game/capital-and-connectivity.md.
+  game = applyInitTownRoadsToCapitals(
+    game: game,
+    config: config,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   // Apply historically inspired naming from default ruleset (after capitals are set).
   game = _applyNaming(

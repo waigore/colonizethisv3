@@ -61,6 +61,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       startingResources: templateConfig.startingResources,
       enforceFairGpOldWorldAssignment:
           templateConfig.enforceFairGpOldWorldAssignment,
+      initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
     );
 
     final outcome = await _showNewGameProgressDialog(
