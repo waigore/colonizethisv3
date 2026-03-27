@@ -30,7 +30,9 @@ When the player chooses the capital tile:
 ## Town per province
 
 At **game init**, every province has exactly one **town** tile assigned (the province's "town" for extraction). The town is: (1) the **capital tile** if the province is that faction's capital province, or (2) otherwise:
-   - **Same region (not overseas):** the tile in that province with the **shortest path** to the capital (per BFS on province tiles).
+   - **Sea-bound province (non-capital):** choose from tiles in that province that are adjacent to at least one sea-zone tile for a sea zone adjacent to that province in topology; pick the candidate with the **shortest path** to the capital (per BFS on province tiles; deterministic tie-break).
+   - **Sea-bound mismatch fallback (tolerant):** if topology marks the province sea-bound but no such seaboard candidate tile exists in the generated map, use the non-seaboard shortest-path rule and emit a `logic:` warning.
+   - **Same region (not overseas), not sea-bound:** the tile in that province with the **shortest path** to the capital (per BFS on province tiles).
    - **Overseas provinces:** the **port tile** in that province, if any; otherwise an arbitrary/default tile (the first tile in the province's tile list).
 
 Town is stored as province's `townTileKey` or in a region-level map. Linking a tile to a town (via road/rail/port path) means the faction can extract that tile's resources; town development level and transport level along the path limit extraction (see [extraction-and-improvements.md](extraction-and-improvements.md) § Town and extraction).
@@ -149,11 +151,15 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 
 - Given a Great Power player has a capital province with a capital tile already placed  
   When the system initializes towns for all provinces  
-  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set as follows: for same-region provinces, the tile with the shortest road/rail path to the capital; for overseas provinces, the port tile (if any) or an arbitrary/default tile.
+  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set as follows: for sea-bound non-capital provinces, a tile adjacent to one of that province’s adjacent sea zones (with shortest-path-to-capital candidate selection and deterministic tie-break); for non-sea-bound same-region provinces, the tile with the shortest path to the capital; for overseas provinces, the port tile (if any) or an arbitrary/default tile.
 
-- Given a Great Power player has a capital province in region `R1` and an owned province `P2` in the same region `R1` with at least one tile reachable by a road or rail path to the capital tile  
+- Given a Great Power player has a capital province in region `R1` and an owned sea-bound province `P2` in region `R1` with at least one tile adjacent to one of `P2`’s adjacent sea zones  
   When the system assigns a town for `P2`  
-  Then the system selects as `P2`’s `townTileKey` the tile in `P2` whose shortest road or rail path to the capital tile is minimal among tiles in `P2`, breaking ties deterministically according to the map-topology rules.
+  Then the system selects as `P2`’s `townTileKey` the tile in `P2` with minimum shortest-path distance to the capital among only those valid seaboard-adjacent candidates, breaking ties deterministically.
+
+- Given a Great Power player has a sea-bound owned province `P2` in region `R1` where no tile in `P2` is adjacent to any of `P2`’s adjacent sea zones in the generated tile map  
+  When the system assigns a town for `P2`  
+  Then the system falls back to selecting the tile in `P2` with minimum shortest-path distance to the capital among all tiles in `P2` and emits one `logic:` warning describing the mismatch.
 
 - Given a Great Power player has an owned province `P3` in region `R2` that is overseas (region `R2` is different from the capital region `R1`) and at least one port tile in `P3` whose sea zone is reachable from the capital’s seaboard via sea-zone and warp-zone edges  
   When the system assigns a town for `P3`  
