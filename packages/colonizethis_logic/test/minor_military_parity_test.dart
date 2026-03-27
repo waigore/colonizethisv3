@@ -36,6 +36,94 @@ void main() {
       expect(result.tribes[0].effectiveMilitaryLevel, 1);
     });
 
+    test('upgrades eligible minor land regiments in place to parity level', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+            units: [
+              Unit(
+                id: 'u_minor',
+                type: 'halberdiers',
+                ownerId: 'min1',
+                locationProvinceId: 'oldWorld|p1',
+                medals: 2,
+              ),
+              Unit(
+                id: 'u_gp',
+                type: 'halberdiers',
+                ownerId: 'pl1',
+                locationProvinceId: 'oldWorld|p1',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [Province(id: 'newWorld|n1', regionId: 'newWorld')],
+            units: [
+              Unit(
+                id: 'u_minor_nw',
+                type: 'horse_artillery',
+                ownerId: 'min1',
+                locationProvinceId: 'newWorld|n1',
+                medals: 1,
+              ),
+            ],
+          ),
+        ),
+        players: [
+          Player(id: 'pl1', displayName: 'P1', isHuman: true, militaryLevel: 4),
+        ],
+        minorNations: [
+          MinorNation(id: 'min1', effectiveMilitaryLevel: 1),
+        ],
+      );
+
+      final result = applyMinorMilitaryParity(game);
+      final oldWorldById = {
+        for (final u in result.worldState.oldWorld.units) u.id: u,
+      };
+      final newWorldById = {
+        for (final u in result.worldState.newWorld.units) u.id: u,
+      };
+
+      expect(oldWorldById['u_minor']!.type, 'rifle_infantry');
+      expect(oldWorldById['u_minor']!.medals, 2);
+      expect(newWorldById['u_minor_nw']!.type, 'field_artillery');
+      expect(newWorldById['u_minor_nw']!.medals, 1);
+      expect(oldWorldById['u_gp']!.type, 'halberdiers');
+    });
+
+    test('does not change units without a same-category target era regiment', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+            units: [
+              Unit(
+                id: 'u_bowmen',
+                type: 'bowmen',
+                ownerId: 'min1',
+                locationProvinceId: 'oldWorld|p1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'pl1', displayName: 'P1', isHuman: true, militaryLevel: 4),
+        ],
+        minorNations: const [MinorNation(id: 'min1', effectiveMilitaryLevel: 1)],
+      );
+
+      final result = applyMinorMilitaryParity(game);
+      final upgraded = result.worldState.oldWorld.units.single;
+      expect(upgraded.type, 'bowmen');
+    });
+
     test('uses 1 when no GP has militaryLevel set', () {
       final game = Game(
         id: 'g1',

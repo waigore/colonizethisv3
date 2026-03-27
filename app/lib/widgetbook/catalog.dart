@@ -28,6 +28,7 @@ import '../widgets/game_setup.dart';
 import '../widgets/main_menu.dart';
 import '../widgets/ct_nine_patch_button.dart';
 import '../widgets/ct_region_map.dart';
+import '../widgets/ct_transfer_list.dart';
 
 /// Invoked from `lib/widgetbook.dart` [main]; safe to call from tests after binding init.
 void bootstrapWidgetbook() {
@@ -53,6 +54,7 @@ class CtWidgetbookApp extends StatelessWidget {
     return Widgetbook.material(
       directories: [
         ...buttonDirectories,
+        ...transferListDirectories,
         ...mainMenuDirectories,
         ...gameSetupDirectories,
         ...mapWidgetDirectories,
@@ -106,6 +108,51 @@ List<WidgetbookNode> get buttonDirectories => [
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+/// Transfer list stories for reusable quantity transfer behavior.
+List<WidgetbookNode> get transferListDirectories => [
+  WidgetbookFolder(
+    name: 'Transfer List',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default',
+        builder: (context) => Theme(
+          data: AppThemes.colonial,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SizedBox(
+              width: 560,
+              child: CtTransferList(
+                leftTitle: 'Original Fleet',
+                rightTitle: 'New Fleet',
+                leftSubtitle: 'Old World - Lisbon',
+                rightSubtitle: 'Old World - Lisbon',
+                initialLeftCounts: const {'carrack': 2, 'fluyte': 1},
+                leftEmptyLabel: 'No ships',
+                rightEmptyLabel: 'No ships',
+                totalLabelBuilder: (total) => 'Total: $total ships',
+                confirmLabel: 'Confirm Split',
+                canConfirm: (left, right) {
+                  final leftTotal = left.values.fold(
+                    0,
+                    (sum, count) => sum + count,
+                  );
+                  final rightTotal = right.values.fold(
+                    0,
+                    (sum, count) => sum + count,
+                  );
+                  return leftTotal >= 1 && rightTotal > 0;
+                },
+                onCancel: () {},
+                onConfirm: (_, __) {},
+              ),
             ),
           ),
         ),
@@ -1031,15 +1078,6 @@ class _CivilianPanelWithMapStoryState
               currentOrders: _orders,
               availableWorkTargets: const {},
               bus: _panelBus,
-              onLocateUnit: _onLocateUnit,
-              onStartWorkTargetSelection: (unit, workTarget) {
-                setState(
-                  () => _workTargetSelection = (
-                    unit: unit,
-                    workTarget: workTarget,
-                  ),
-                );
-              },
             ),
           ),
         ],
@@ -1215,7 +1253,6 @@ class _MilitaryPanelWithMapStoryState
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
-              onLocateTile: _onLocateTile,
             ),
           ),
         ],
@@ -1398,7 +1435,6 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
               game: _game,
               humanPlayerId: humanPlayerId,
               bus: _navalBus,
-              onLocateFleet: _onLocateFleet,
             ),
           ),
         ],

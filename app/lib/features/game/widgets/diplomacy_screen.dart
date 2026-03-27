@@ -6,9 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/games_provider.dart';
-import '../../../widgets/ct_screen_shell.dart';
-import '../../../widgets/game_to_ui_bus_listener.dart';
+import '../../../widgets/ct_game_feature_screen_shell.dart';
+import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel.dart';
 import 'grant_or_subsidy_listener.dart';
 
@@ -31,30 +30,21 @@ class DiplomacyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bus = ref.watch(appEventBusProvider);
-    final live = ref.watch(currentGameProvider);
-    final displayGame = live != null && live.id == game.id ? live : game;
-
-    return GameToUIBusListener(
-      gameId: game.id,
-      child: GrantOrSubsidyListener(
-        bus: bus,
-        game: displayGame,
-        onConfirmed: (order) {
-          final list = List<DiplomaticOrder>.from(
-            currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-          )..add(order);
-          onOrdersChanged(
-            currentOrders.copyWith(
-              diplomaticOrdersByPlayerId: {
-                ...currentOrders.diplomaticOrdersByPlayerId,
-                humanPlayerId: list,
-              },
-            ),
-          );
-        },
-        child: CtScreenShell(
-          title: 'Diplomacy',
-          showBackButton: true,
+    return CtGameFeatureScreenShell(
+      game: game,
+      title: 'Diplomacy',
+      bodyBuilder: (context, shellRef, displayGame) {
+        return GrantOrSubsidyListener(
+          bus: bus,
+          game: displayGame,
+          onConfirmed: (order) {
+            onOrdersChanged(
+              currentOrders.appendDiplomaticOrderForPlayer(
+                humanPlayerId,
+                order,
+              ),
+            );
+          },
           child: DiplomacyPanel(
             game: displayGame,
             humanPlayerId: humanPlayerId,
@@ -63,8 +53,8 @@ class DiplomacyScreen extends ConsumerWidget {
             onOrdersChanged: onOrdersChanged,
             bus: bus,
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

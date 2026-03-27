@@ -27,6 +27,7 @@ void main() {
       final bytes = renderSingleRegionGameStateMapToPng(
         result: smallResult,
         topology: topology,
+        regionId: 'oldWorld',
         ownerByProvinceId: {'oldWorld|p1': 'gp1'},
         capitalTiles: [],
         cellSize: 8,
@@ -42,6 +43,7 @@ void main() {
       final bytes = renderSingleRegionGameStateMapToPng(
         result: smallResult,
         topology: topology,
+        regionId: 'oldWorld',
         ownerByProvinceId: {'oldWorld|p1': 'gp1'},
         capitalTiles: [
           (factionId: 'gp1', displayName: 'GP1', x: 0, y: 0),
@@ -54,6 +56,24 @@ void main() {
       final decoded = img.decodeImage(bytes);
       expect(decoded, isNotNull);
       expect(decoded!.height, greaterThan(2 * 8));
+    });
+
+    test('resolves ownership via full province id and colors land tile', () {
+      final bytes = renderSingleRegionGameStateMapToPng(
+        result: smallResult,
+        topology: topology,
+        regionId: 'oldWorld',
+        ownerByProvinceId: {'oldWorld|p1': 'gp1'},
+        capitalTiles: [],
+        cellSize: 8,
+        factionColorsOverride: {'gp1': (10, 20, 30)},
+      );
+      final decoded = img.decodeImage(bytes);
+      expect(decoded, isNotNull);
+      final pixel = decoded!.getPixel(4, 4);
+      expect(pixel.r.toInt(), equals(10));
+      expect(pixel.g.toInt(), equals(20));
+      expect(pixel.b.toInt(), equals(30));
     });
   });
 

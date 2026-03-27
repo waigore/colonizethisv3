@@ -183,6 +183,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                     startingResources: baseConfig.startingResources,
                     enforceFairGpOldWorldAssignment:
                         enforceFairGpOldWorldAssignment,
+                    initTownRoadWiringRegionIds:
+                        baseConfig.initTownRoadWiringRegionIds,
                   );
                   unawaited(
                     runNewGameSetupAfterLeaderPick(

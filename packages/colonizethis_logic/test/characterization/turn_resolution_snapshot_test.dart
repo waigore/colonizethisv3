@@ -177,6 +177,7 @@ void main() {
         TurnPhase.research,
         TurnPhase.diplomacy,
         TurnPhase.movement,
+        TurnPhase.minorRegimentUpgrade,
         TurnPhase.navalInterceptionCombat,
         TurnPhase.combat,
         TurnPhase.buildWork,

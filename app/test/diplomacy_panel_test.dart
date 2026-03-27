@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -34,12 +35,13 @@ class _EventHandlingWrapper extends StatefulWidget {
 }
 
 class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _sub;
+  StreamSubscription? _confirmSub;
+  StreamSubscription? _openDialogSub;
 
   @override
   void initState() {
     super.initState();
-    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
+    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
       final nav = widget.navigatorKey.currentState;
       if (nav == null) return;
       final result = await showDialog<bool>(
@@ -61,11 +63,29 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
       );
       event.result(result ?? false);
     });
+    _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) async {
+      final nav = widget.navigatorKey.currentState;
+      if (nav == null) return;
+      await showDialog<void>(
+        context: nav.context,
+        builder: (ctx) => AlertDialog(
+          title: Text('dialog:${event.dialogId}'),
+          content: const Text('opened-via-bus'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _confirmSub?.cancel();
+    _openDialogSub?.cancel();
     super.dispose();
   }
 
@@ -343,6 +363,31 @@ void main() {
             isTrue,
           );
         }
+      },
+    );
+
+    testWidgets(
+      'AC: Param action opens grant/subsidy dialog via event handler wrapper',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final grantAid = find.text('Grant Aid');
+        final subsidy = find.text('Set Subsidy');
+        final action = grantAid.evaluate().isNotEmpty ? grantAid : subsidy;
+        if (action.evaluate().isEmpty) return;
+
+        await tester.tap(action.first);
+        await tester.pumpAndSettle();
+
+        expect(find.text('dialog:$grantOrSubsidyDialogId'), findsOneWidget);
+        expect(find.text('opened-via-bus'), findsOneWidget);
       },
     );
 

@@ -424,13 +424,11 @@ class NavalUnitsPanel extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.bus,
-    this.onLocateFleet,
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
-  final void Function(String tileKey, String regionId)? onLocateFleet;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -637,11 +635,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                                 _FleetExpansionTile(
                                   row: group.homeFleet!,
                                   onTap:
-                                      group.homeFleet!.tileKey != null &&
-                                          widget.onLocateFleet != null
-                                      ? () => widget.onLocateFleet!(
-                                          group.homeFleet!.tileKey!,
-                                          group.homeFleet!.regionId,
+                                      group.homeFleet!.tileKey != null
+                                      ? () => widget.bus.emit(
+                                          LocateMapTileEvent(
+                                            tileKey: group.homeFleet!.tileKey!,
+                                            regionId: group.homeFleet!.regionId,
+                                          ),
                                         )
                                       : null,
                                   isCombineMode: _isCombineModeActive(),
@@ -671,11 +670,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                                   _FleetExpansionTile(
                                     row: row,
                                     onTap:
-                                        row.tileKey != null &&
-                                            widget.onLocateFleet != null
-                                        ? () => widget.onLocateFleet!(
-                                            row.tileKey!,
-                                            row.regionId,
+                                        row.tileKey != null
+                                        ? () => widget.bus.emit(
+                                            LocateMapTileEvent(
+                                              tileKey: row.tileKey!,
+                                              regionId: row.regionId,
+                                            ),
                                           )
                                         : null,
                                     isCombineMode: _isCombineModeActive(),
@@ -842,6 +842,16 @@ class _FleetExpansionTile extends StatelessWidget {
                   ),
                 ),
               ],
+              if (onTap != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Locate fleet',
+                  onPressed: onTap,
+                  icon: const Icon(Icons.my_location),
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ],
           ),
           subtitle: Text(
@@ -849,11 +859,6 @@ class _FleetExpansionTile extends StatelessWidget {
           ),
           dense: true,
           initiallyExpanded: isCombineMode,
-          onExpansionChanged: (expanded) {
-            if (!isCombineMode && onTap != null) {
-              onTap!();
-            }
-          },
           children: [
             if (row.shipCountsByType.isEmpty)
               const ListTile(title: Text('No ships in this fleet'), dense: true)
