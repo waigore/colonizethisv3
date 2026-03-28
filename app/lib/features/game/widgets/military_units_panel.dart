@@ -6,19 +6,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
-
-/// Region id to display label. SPEC/ui/military-units-panel.md.
-String _regionLabel(String regionId) {
-  switch (regionId) {
-    case 'oldWorld':
-      return 'Old World';
-    case 'newWorld':
-      return 'New World';
-    default:
-      return regionId;
-  }
-}
+import 'units/shared/location_section_header.dart';
+import 'units/shared/region_section_header.dart';
+import 'units/shared/units_panel_region_label.dart';
+import 'units/shared/units_panel_shell.dart';
 
 /// Fleet mission to display label.
 String _missionLabel(FleetMission m) {
@@ -311,140 +302,58 @@ class MilitaryUnitsPanel extends StatelessWidget {
     final tree = _buildMilitaryTree(game, humanPlayerId);
     final hasAny = tree.isNotEmpty;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: CtPanel(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Military Units',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    CtNinePatchButton(
-                      onPressed: () {
-                        Navigator.of(context).maybePop();
-                        bus.emit(OpenDialogEvent(trainMilitaryDialogId));
-                      },
-                      child: const Text('Train'),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: hasAny
-                    ? ListView(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                        children: [
-                          for (final group in tree) ...[
-                            _RegionHeader(label: _regionLabel(group.regionId)),
-                            for (final loc in group.locations) ...[
-                              _LocationHeader(
-                                label: loc.displayLabel,
-                                regionLabel: _regionLabel(loc.regionId),
-                              ),
-                              if (loc is _ProvinceLocationNode)
-                                for (final row in loc.rows)
-                                  _RegimentRow(
-                                    row: row,
-                                    onTap: row.tileKey == null
-                                        ? null
-                                        : () => bus.emit(
-                                            LocateMapTileEvent(
-                                              tileKey: row.tileKey!,
-                                              regionId: row.regionId,
-                                              closeCurrentPanel: true,
-                                            ),
-                                          ),
-                                  ),
-                              if (loc is _SeaZoneLocationNode)
-                                for (final row in loc.rows)
-                                  _ShipRow(
-                                    row: row,
-                                    onTap: row.tileKey == null
-                                        ? null
-                                        : () => bus.emit(
-                                            LocateMapTileEvent(
-                                              tileKey: row.tileKey!,
-                                              regionId: row.regionId,
-                                              closeCurrentPanel: true,
-                                            ),
-                                          ),
-                                  ),
-                            ],
-                          ],
-                        ],
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Text(
-                            'No military units',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
+    return UnitsPanelShell(
+      title: 'Military Units',
+      actions: [
+        CtNinePatchButton(
+          onPressed: () {
+            Navigator.of(context).maybePop();
+            bus.emit(OpenDialogEvent(trainMilitaryDialogId));
+          },
+          child: const Text('Train'),
+        ),
+      ],
+      hasContent: hasAny,
+      listChildren: [
+        for (final group in tree) ...[
+          RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
+          for (final loc in group.locations) ...[
+            LocationSectionHeader(
+              label: loc.displayLabel,
+              regionLabel: unitsPanelRegionLabel(loc.regionId),
+            ),
+            if (loc is _ProvinceLocationNode)
+              for (final row in loc.rows)
+                _RegimentRow(
+                  row: row,
+                  onTap: row.tileKey == null
+                      ? null
+                      : () => bus.emit(
+                          LocateMapTileEvent(
+                            tileKey: row.tileKey!,
+                            regionId: row.regionId,
+                            closeCurrentPanel: true,
                           ),
                         ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RegionHeader extends StatelessWidget {
-  const _RegionHeader({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _LocationHeader extends StatelessWidget {
-  const _LocationHeader({required this.label, required this.regionLabel});
-
-  final String label;
-  final String regionLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, top: 6, bottom: 2),
-      child: Text(
-        '$label — $regionLabel',
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
+                ),
+            if (loc is _SeaZoneLocationNode)
+              for (final row in loc.rows)
+                _ShipRow(
+                  row: row,
+                  onTap: row.tileKey == null
+                      ? null
+                      : () => bus.emit(
+                          LocateMapTileEvent(
+                            tileKey: row.tileKey!,
+                            regionId: row.regionId,
+                            closeCurrentPanel: true,
+                          ),
+                        ),
+                ),
+          ],
+        ],
+      ],
+      emptyMessage: 'No military units',
     );
   }
 }

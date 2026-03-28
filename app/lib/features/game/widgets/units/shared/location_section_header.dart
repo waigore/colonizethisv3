@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+
+/// Sub-header for a province or sea zone within a region in military/naval panels.
+class LocationSectionHeader extends StatelessWidget {
+  const LocationSectionHeader({
+    super.key,
+    required this.label,
+    required this.regionLabel,
+  });
+
+  final String label;
+  final String regionLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 6, bottom: 2),
+      child: Text(
+        '$label — $regionLabel',
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+}
