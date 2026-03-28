@@ -17,7 +17,7 @@ Resolves diplomatic orders, manages overture state machine, updates relation sco
 - **turn** (int, same domain as `worldState.turnState.turnNumber`).
 - **intraTurnIndex** (int, monotonically increasing for events created in the same turn, to preserve resolution order).
 - **participants**: set of faction ids involved in the event (always includes at least one Great Power id).
-- **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`).
+- **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`, `callToArmsAccepted`, `callToArmsRefused`).
 - **details**: structured payload fields specific to the primaryType (e.g. `fromFactionId`, `toFactionId`, `overtureStage`, `amount`, `reason`, `wasAiInitiator`).
 
 Rendering of human-readable strings (including year labels derived from turn) is delegated to UI/TUI layers based on this structured event model.
@@ -32,9 +32,11 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 2. **Advance in-progress overtures** — Apply turn delays; mark completed.
 3. **Resolve Join Empire/Colony** — For each valid Join Empire order (target Minor/Tribe, NAP stage, relation score ≥ 51): compute cost = base + (province count × per-province); if GP treasury ≥ cost, deduct cost, transfer all provinces/units/fleets from target to GP, remove target from minorNations or tribes, remove overtures and relations involving the target. Tribe absorption uses the same cost and transfer rules as Minor (colony semantics deferred).
 4. **Process alliance proposals** — Apply accept/refuse; update alliance state; apply refusal relation penalties per game rules.
-5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn.
-6. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
-7. **Update relation scores** — Recompute from modifiers; clamp 0–100; derive level.
+5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn; cancel subsidies between newly warring pairs as per game rules.
+5b. **Call to arms (alliance mutual defence)** — After GP–GP wars from step 5 are applied, for each aggressor–defender GP pair at war due to a declare-war order this phase, process each other GP allied (`RelationLevel.allied`, at peace) with the defender: AI resolves join/refuse per score threshold; human-controlled allies add to **pending call to arms** and suspend the phase until **resumeTurnResolutionWithCallToArmsDecisions** supplies decisions. See [diplomacy.md](../game/diplomacy.md) § Alliances.
+6. **Terminate agreements on war** — Clear overtures between warring pairs; further steps per implementation (subsidies, convergence, grants) follow the live resolver order in `diplomacy_resolver.dart`.
+7. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
+8. **Update relation scores** — Convergence and score derivation per implementation; clamp 0–100; derive level.
 
 At the same hook points where relation state, overtures, or economic diplomacy are mutated, the resolver **appends one or more Diplomatic history events** to the flat world log:
 
@@ -45,10 +47,11 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 - When **GrantAid** is applied, an event with primaryType `grantAidApplied` is appended.
 - When a **subsidy** is created, updated, or cancelled (including automatic cancellation on war or insufficient funds), events with primaryType `subsidySet`, `subsidyUpdated`, or `subsidyCancelled` are appended.
 - When an **Intervention** decision is applied (Intervene, Do Nothing, Protest), events with primaryType `interventionIntervene`, `interventionDoNothing`, or `interventionProtest` are appended.
+- When **call to arms** is resolved (join or refuse), events with primaryType `callToArmsAccepted` or `callToArmsRefused` are appended.
 
 **Order validation:** Each diplomatic order type (see game/diplomacy.md § Diplomatic Order Types) is validated by the order engine — preconditions (AT_PEACE/AT_WAR, overture stage, treasury) checked at submission and again at resolution. Establish Overture may target Minor, Tribe, or Great Power. At most one Establish Overture per (player, target faction) per turn; a second such order for the same target is rejected at validation (see game/diplomacy.md, program/orders.md).
 
-**Blocking:** When an overture targets a human-controlled GP, the diplomacy phase returns a **DiplomacyPhaseResult** that includes the updated game state and a non-empty list of **pending overture offers** (offerer, target, stage). Turn resolution returns a **TurnResolutionResult** indicating pending human input. The app presents the offer(s) to the human target(s), collects accept/reject, and calls the **resume** API with the corresponding **overture decisions**. The resolver then applies those decisions and continues the Diplomacy phase and remaining phases.
+**Blocking:** When an overture targets a human-controlled GP, the diplomacy phase returns a **DiplomacyPhaseResult** that includes the updated game state and a non-empty list of **pending overture offers** (offerer, target, stage). Turn resolution returns a **TurnResolutionResult** indicating pending human input. The app presents the offer(s) to the human target(s), collects accept/reject, and calls the **resume** API with the corresponding **overture decisions**. When **call to arms** requires a human ally’s choice, the phase returns **pending call to arms** (ally, defender, aggressor); the app calls **resumeTurnResolutionWithCallToArmsDecisions** with **CallToArmsDecision** entries. The resolver then applies those decisions and continues the Diplomacy phase and remaining phases.
 
 ---
 
