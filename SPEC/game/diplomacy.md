@@ -14,10 +14,10 @@ Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0�
 
 While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace.
 
-### Tribe vs Minor War Rule
+### War required for hostile actions
 
-- **Minor Nations (Old World):** Declaration of war required before attacking provinces or units.
-- **Tribes (New World):** No declaration required to attack unless another GP has any diplomatic relation (Consulate, Embassy, Non-Aggression Pact, or trade) with the Tribe. If such relations exist, war must be declared on that GP before attacking the Tribe. Diplomatic relations with Tribes are per-nation (not per-province); an Embassy with a Tribe applies to all its provinces. The phrase "in that province" refers to the attack location, not relation scope. Any province id used in diplomacy state or in orders (e.g. "in that province", purchase_land target) must be in prefixed form and resolved per [world-model-identity.md](world-model-identity.md).
+- **Land invasion:** A Great Power must be at `AT_WAR` with the **owner** of a foreign province (Great Power, Minor Nation, or Tribe) before a **military** move order may enter that province as an attack, or the same turn must include a valid `Declare War` diplomatic order against that owner. Order validation and movement resolution enforce this uniformly for all owner types.
+- **Naval blockade:** A fleet on **Blockade** mission against a port province is a hostile act; the blockading GP must be at `AT_WAR` with the **owner** of that province (same rule as land: existing war or same-turn declaration). See [capital-and-connectivity.md](capital-and-connectivity.md) § Blockade. Other orders (e.g. espionage, trade, civilian exploration) are not defined as hostile by this rule unless specified elsewhere.
 
 ### GP–GP Rules
 
@@ -40,20 +40,20 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. **Overtures are two-way:** one player offers; the **target** faction must accept or reject. When the target is a Minor or Tribe, the accept/reject decision is applied at turn resolution by rule (e.g. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and cost). When the target is a Great Power, that GP's controller decides: if the target is **AI**, the decision is made during the Diplomacy phase; if the target is **human**, turn resolution **blocks** until the human responds (see [turn-resolution-phases.md](../program/turn-resolution-phases.md) § Blocking human input). Only when the target accepts are cost deducted and overture stage advanced. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
 - **Foreign aid:** **Grant Aid** — deducts the chosen amount from the granting GP’s treasury and improves relation score. **MVP** matches the **Grant Aid** order rules under **Diplomatic Order Types** below: **positive multiple of £1000** (minimum £1000), enforced at validation and resolution; there is **no** percentage mode and **no** fixed menu of allowed amounts—only step/min rules. UI **defaults** (e.g. £1000) and AI suggestions are conveniences, not an exclusive list of legal values (see **Amount parameters (MVP)**).
-- **Intervention (human and AI, at war declaration):**
-  - Trigger (embassy or investment protection): When a Great Power **declares war** on a Minor that currently has **at least one GP Embassy** **or** at least one GP with **purchased land** recorded in its provinces (`purchasedTilesByTileKey` entries where the tile’s province ownerId is that Minor), each such GP evaluates or is offered a **one-time Intervention choice** against the aggressor **during the Diplomacy phase**, as part of resolving that `Declare War` order.
-  - Human GP with Embassy or purchased land: For each valid GP–Minor war declaration, each human GP that:
+- **Intervention (human and AI, at war declaration — Diplomacy phase only):**
+  - Trigger (embassy or investment protection): When a Great Power **declares war** on a **Minor Nation or Tribe** that currently has **at least one other GP** with an **Embassy** with that Minor/Tribe **or** **purchased land** recorded in its provinces (`purchasedTilesByTileKey` entries where the tile’s province ownerId is that Minor/Tribe), each such other GP evaluates or is offered a **one-time Intervention choice** against the aggressor **during the Diplomacy phase** (after `Declare War` is applied for that pair, before Movement). Intervention is **not** a combat-phase action.
+  - Human GP with Embassy or purchased land: For each valid GP–Minor/Tribe war declaration, each human GP that:
     - is **not** the declaring GP, and
-    - has an **Embassy** with the Minor **or** has **purchased land** in any province owned by that Minor  
-    is presented an Intervention choice **once, at war declaration time**:
+    - has an **Embassy** with that Minor/Tribe **or** has **purchased land** in any province owned by that Minor/Tribe  
+    is presented an Intervention choice **once, at war declaration time** in the Diplomacy phase:
     - **Intervene (human):** The intervening GP immediately enters a war state (`AT_WAR`) with the declaring Great Power; this war state is in effect for all subsequent Movement and Combat in that turn and beyond. The Minor remains an independent faction for province ownership purposes in MVP.
     - **Do Nothing (human):** The intervening GP does not change relation score or war state with the declaring Great Power at that moment, but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared). Any existing **purchased land** in that Minor’s provinces remains recorded until normal province conquest rules apply (see province conquest rules).
     - **Diplomatic Protest (human):** The intervening GP remains at peace but applies a relation penalty with the declaring Great Power; the Minor’s diplomatic state is unchanged. Purchased land and Embassy state remain unchanged.
-  - AI GP with Embassy or purchased land: For each GP–Minor war declaration:
-    - Every AI-controlled GP that has an Embassy with the attacked Minor, or has any purchased land in that Minor’s provinces, independently evaluates whether to intervene against the declaring Great Power.
+  - AI GP with Embassy or purchased land: For each GP–Minor/Tribe war declaration:
+    - Every AI-controlled GP that has an Embassy with the attacked Minor/Tribe, or has any purchased land in that Minor’s or Tribe’s provinces, independently evaluates whether to intervene against the declaring Great Power.
     - The **probability to intervene** is a monotonic function of the GP–Minor relation score; default values for MVP are: relation score 0–25 → 0% chance, 26–50 → 25% chance, 51–75 → 50% chance, 76–100 → 80% chance.
     - On **AI Intervene**, the AI GP immediately enters a war state with the declaring Great Power; this war state is used for all Movement and Combat validation in that turn and subsequent turns. Embassy and overture state with the Minor remain unchanged.
-    - On **AI Do Nothing**, the AI GP does not change relation or war state with the declaring Great Power but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared), matching the human Do Nothing outcome. Purchased land remains recorded until province conquest rules apply.
+    - On **AI Do Nothing**, the AI GP does not change relation or war state with the declaring Great Power but **loses its Embassy** (all overtures) with the attacked Minor/Tribe, matching the human Do Nothing outcome. Purchased land remains recorded until province conquest rules apply.
     - MVP does not implement an AI **Protest** choice; AI either intervenes or does nothing.
   - Turn timing and scope: Intervention is evaluated **once per war declaration** during the Diplomacy phase, before Movement and Combat. There are **no additional intervention prompts tied to later battles** in that war; once the war state has been updated (or not) based on Intervention choices, subsequent combats proceed with that fixed war/peace state.
 - **Peace:** Minors never refuse peace offers.
@@ -61,12 +61,12 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 
 ### GP–Tribe Rules
 
-- No war required for invasion (see Tribe vs Minor war rule).
+- **War before hostile action:** Same as Minors — see **War required for hostile actions** above (military invasion and naval blockade require `AT_WAR` or same-turn `Declare War` on the Tribe as province owner).
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
 - Tribes react to nearby conquest (relation/trade effects).
- - **Investment intervention:** When a Tribe that currently owns any province with **purchased land** belonging to a GP (entries in `purchasedTilesByTileKey` whose tile’s province ownerId is that Tribe) is attacked by a Great Power during combat resolution, that GP is treated as having an **investment-based intervention trigger**, analogous to an Embassy-based trigger for Minors. Human GPs with such purchased land may be offered an Intervention choice; AI GPs may evaluate intervention probabilistically using the same rules as for Minors.
- - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
+- **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
+- **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
 
 ### Diplomatic Order Types
 
@@ -116,29 +116,29 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system validates the `purchase_land` work order during turn resolution  
   Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
 
-- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
+- Given the Player controls a Great Power with an Embassy with a Minor Nation or Tribe, a different Great Power has a valid `Declare War` order against that Minor or Tribe in the Diplomacy phase of turn index `t`, and war between aggressor and that Minor/Tribe is applied in that phase  
   When the system presents the Player with an Intervention choice and the Player selects **Intervene**  
-  Then the system changes the relation state between the Player’s Great Power and each attacking Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t` for each such relation, and uses this `AT_WAR` state for all Movement and Combat validation for that battle during turn `t`.
+  Then the system changes the relation state between the Player’s Great Power and the declaring Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t`, and uses this `AT_WAR` state for all Movement and Combat validation later in turn `t`.
 
-- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
+- Given the same context as the previous criterion (Embassy with the Minor/Tribe under attack by another GP’s declaration in turn `t`)  
   When the system presents the Player with an Intervention choice and the Player selects **Do Nothing**  
-  Then the system does not change the relation state or relation score between the Player’s Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between the Player’s Great Power and that Minor from the game state.
+  Then the system does not change the relation state or relation score between the Player’s Great Power and the declaring Great Power at that moment, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between the Player’s Great Power and that Minor/Tribe from the game state.
 
-- Given the Player controls a Great Power with an Embassy in a Minor Nation that is currently being attacked by a different Great Power in turn index `t` and the battle has not yet been resolved  
+- Given the same context as the previous criterion  
   When the system presents the Player with an Intervention choice and the Player selects **Diplomatic Protest**  
-  Then the system leaves the relation state between the Player’s Great Power and each attacking Great Power as `AT_PEACE` during turn `t`, decreases the relation score with each attacking Great Power by a fixed penalty of 10 points (clamped between 0 and 100 inclusive), updates `lastInteractionTurn = t` for each such relation, and does not change any overture or Embassy state with the attacked Minor.
+  Then the system leaves the relation state between the Player’s Great Power and the declaring Great Power as `AT_PEACE`, decreases the relation score with the declaring Great Power by a fixed penalty of 10 points (clamped between 0 and 100 inclusive), updates `lastInteractionTurn = t`, and does not change any overture or Embassy state with the attacked Minor/Tribe.
 
-- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
-  When the system evaluates whether that AI Great Power will intervene on the Minor’s side  
-  Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene.
+- Given the system controls an AI Great Power that has an Embassy with a Minor Nation or Tribe and another Great Power declares war on that Minor/Tribe in the Diplomacy phase of turn `t`  
+  When the system evaluates whether that AI Great Power will intervene against the aggressor  
+  Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor/Tribe, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene (otherwise **Do Nothing**; AI does not choose **Protest** in MVP).
 
-- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
-  When the system decides that the AI Great Power **will intervene** based on the relation-score-driven probability  
-  Then the system changes the relation state between that AI Great Power and each attacking Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t` for each such relation, uses this `AT_WAR` state for all Movement and Combat validation for that battle during turn `t`, and leaves the Embassy and overture state between the AI Great Power and the Minor unchanged.
+- Given the same AI intervention context and the Bernoulli trial results in **intervene**  
+  When the Diplomacy phase applies that outcome  
+  Then the system changes the relation state between that AI Great Power and the declaring Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t`, and leaves Embassy and overture state between the AI Great Power and the Minor/Tribe unchanged.
 
-- Given the system controls an AI Great Power that has an Embassy with a Minor Nation, that Minor Nation is currently being attacked by a different Great Power in turn index `t`, and the battle has not yet been resolved  
-  When the system decides that the AI Great Power **will not intervene** based on the relation-score-driven probability  
-  Then the system does not change the relation state or relation score between that AI Great Power and any attacking Great Power in turn `t`, allows combat between the attacker and the Minor to proceed unchanged, and clears all overture state (Consulate, Embassy, NAP, Join Empire) between that AI Great Power and that Minor from the game state.
+- Given the same AI intervention context and the Bernoulli trial results in **do nothing**  
+  When the Diplomacy phase applies that outcome  
+  Then the system does not change the relation state or relation score between that AI Great Power and the declaring Great Power, and clears all overture state between that AI Great Power and that Minor/Tribe from the game state.
 - Given the Player controls a Great Power with a Non-Aggression Pact overture with a target Minor Nation or Tribe, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
   When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor or Tribe in the Diplomacy phase and the order is valid  
   Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation or Tribe from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.

@@ -1,6 +1,6 @@
 # Test logging
 
-**SPEC/program** — How logging is configured when tests run. See [ctdev-logging.md](ctdev-logging.md) for runtime logging.
+**SPEC/program** — How logging is configured when tests run. Runtime logging policy: [logging/logging.md](logging/logging.md); ctdev file/Sim Log: [ctdev-logging.md](ctdev-logging.md).
 
 ---
 

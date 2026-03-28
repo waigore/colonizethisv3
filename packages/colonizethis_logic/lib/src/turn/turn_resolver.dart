@@ -205,11 +205,14 @@ TurnResolutionResult resolveTurnForGame({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 
-  /// When non-null, skip phases before this (used when resuming after pending overture decisions).
+  /// When non-null, skip phases before this (used when resuming after pending overture or intervention).
   TurnPhase? startFromPhase,
 
   /// Overture accept/reject decisions from human target(s); when set, Diplomacy phase uses these and does not suspend.
   List<OvertureDecision>? overtureDecisions,
+
+  /// Intervention choices after a GP declares war on a Minor/Tribe; Diplomacy phase resume path.
+  List<InterventionDecision>? interventionDecisions,
 
   /// Call to arms accept/refuse from human ally(ies); when set, Diplomacy phase applies and does not suspend on CTA.
   List<CallToArmsDecision>? callToArmsDecisions,
@@ -289,6 +292,7 @@ TurnResolutionResult resolveTurnForGame({
             orders,
             onDialogue: onDialogue,
             overtureDecisions: overtureDecisions,
+            interventionDecisions: interventionDecisions,
             callToArmsDecisions: callToArmsDecisions,
           );
           if (diploResult.isPending) {
@@ -299,15 +303,22 @@ TurnResolutionResult resolveTurnForGame({
                 pendingOvertures: po,
               );
             }
-            final cta = diploResult.pendingCallToArms;
-            if (cta == null || cta.isEmpty) {
-              throw StateError(
-                'logic: diplomacy pending but no overtures or call to arms',
+            final pi = diploResult.pendingInterventions;
+            if (pi != null && pi.isNotEmpty) {
+              return TurnResolutionPendingIntervention(
+                game: diploResult.game,
+                pendingInterventions: pi,
               );
             }
-            return TurnResolutionPendingCallToArms(
-              game: diploResult.game,
-              pendingCallToArms: cta,
+            final cta = diploResult.pendingCallToArms;
+            if (cta != null && cta.isNotEmpty) {
+              return TurnResolutionPendingCallToArms(
+                game: diploResult.game,
+                pendingCallToArms: cta,
+              );
+            }
+            throw StateError(
+              'logic: diplomacy pending but no pending lists populated',
             );
           }
           state = diploResult.game;
@@ -404,6 +415,9 @@ Game requireTurnResolutionComplete(TurnResolutionResult result) {
     TurnResolutionPendingOvertures() => throw StateError(
       'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
     ),
+    TurnResolutionPendingIntervention() => throw StateError(
+      'Turn resolution is pending intervention decisions; use resumeTurnResolutionWithInterventionDecisions',
+    ),
     TurnResolutionPendingCallToArms() => throw StateError(
       'Turn resolution is pending call to arms; use resumeTurnResolutionWithCallToArmsDecisions',
     ),
@@ -446,6 +460,41 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     onProductionComplete: onProductionComplete,
     startFromPhase: TurnPhase.diplomacy,
     overtureDecisions: decisions,
+  );
+}
+
+/// Resumes turn resolution after human intervention choices (Diplomacy phase).
+TurnResolutionResult resumeTurnResolutionWithInterventionDecisions({
+  required Game game,
+  required List<InterventionDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    interventionDecisions: decisions,
   );
 }
 
