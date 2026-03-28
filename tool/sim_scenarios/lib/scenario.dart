@@ -172,6 +172,21 @@ class OvertureDecisionScript {
   final bool accepted;
 }
 
+/// Scripted call-to-arms response when turn resolution blocks on human ally.
+class CallToArmsDecisionScript {
+  const CallToArmsDecisionScript({
+    required this.allyGpId,
+    required this.defenderGpId,
+    required this.aggressorGpId,
+    required this.accepted,
+  });
+
+  final String allyGpId;
+  final String defenderGpId;
+  final String aggressorGpId;
+  final bool accepted;
+}
+
 /// Scripted orders for a single turn.
 class TurnScript {
   const TurnScript({
@@ -179,6 +194,7 @@ class TurnScript {
     required this.orders,
     this.workerAssignments,
     this.overtureDecisions,
+    this.callToArmsDecisions,
   });
 
   final int turn;
@@ -190,6 +206,10 @@ class TurnScript {
   /// When turn resolution returns pending overtures (human GP target), these
   /// decisions are applied via resumeTurnResolutionWithOvertureDecisions.
   final List<OvertureDecisionScript>? overtureDecisions;
+
+  /// When turn resolution returns pending call to arms, applied via
+  /// resumeTurnResolutionWithCallToArmsDecisions.
+  final List<CallToArmsDecisionScript>? callToArmsDecisions;
 }
 
 /// A single order command from a scenario.
@@ -637,7 +657,33 @@ TurnScript _parseTurnScript(Map<String, dynamic> json) {
         [],
     workerAssignments: _parseWorkerAssignments(json['workerAssignments']),
     overtureDecisions: _parseOvertureDecisions(json['overtureDecisions']),
+    callToArmsDecisions: _parseCallToArmsDecisions(json['callToArmsDecisions']),
   );
+}
+
+List<CallToArmsDecisionScript>? _parseCallToArmsDecisions(dynamic raw) {
+  if (raw is! List<dynamic> || raw.isEmpty) return null;
+  final list = <CallToArmsDecisionScript>[];
+  for (final e in raw) {
+    if (e is! Map<String, dynamic>) continue;
+    final allyGpId = e['allyGpId'] as String?;
+    final defenderGpId = e['defenderGpId'] as String?;
+    final aggressorGpId = e['aggressorGpId'] as String?;
+    final accepted = e['accepted'] as bool?;
+    if (allyGpId == null ||
+        defenderGpId == null ||
+        aggressorGpId == null ||
+        accepted == null) {
+      continue;
+    }
+    list.add(CallToArmsDecisionScript(
+      allyGpId: allyGpId,
+      defenderGpId: defenderGpId,
+      aggressorGpId: aggressorGpId,
+      accepted: accepted,
+    ));
+  }
+  return list.isEmpty ? null : list;
 }
 
 List<OvertureDecisionScript>? _parseOvertureDecisions(dynamic raw) {

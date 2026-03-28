@@ -5,6 +5,7 @@
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../ai/ai_control.dart';
 import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
@@ -86,11 +87,14 @@ OvertureDecision? _findDecision(
 /// [overtureDecisions] does not supply a decision, returns pending so turn
 /// resolution can block. When [overtureDecisions] is provided (resume path),
 /// applies those decisions and does not suspend.
+/// Call to arms: after GP–GP war declarations, allies of the defender may need
+/// to join or refuse; [callToArmsDecisions] supplies human responses on resume.
 DiplomacyPhaseResult resolveDiplomacyPhase(
   Game game,
   Orders orders, {
   void Function(DialogueEvent)? onDialogue,
   List<OvertureDecision>? overtureDecisions,
+  List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   _diploLog.d('logic: diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
@@ -111,7 +115,10 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     _diploLog.d(
       'logic: diplomacy phase suspended (pending overture decisions)',
     );
-    return DiplomacyPhaseResult(state, overtureResult.pendingOvertures);
+    return DiplomacyPhaseResult(
+      state,
+      pendingOvertures: overtureResult.pendingOvertures,
+    );
   }
 
   // 2. Advance in-progress overtures (turn delays)
@@ -130,6 +137,25 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     onDialogue: onDialogue,
   );
+
+  // 5b. Call to arms (allies of GP declared upon). SPEC/game/diplomacy.md.
+  final ctaResult = _processCallToArms(
+    state,
+    diploByPlayer,
+    turn,
+    callToArmsDecisions: callToArmsDecisions,
+  );
+  state = ctaResult.game;
+  if (ctaResult.pendingCallToArms != null &&
+      ctaResult.pendingCallToArms!.isNotEmpty) {
+    _diploLog.d(
+      'logic: diplomacy phase suspended (pending call to arms)',
+    );
+    return DiplomacyPhaseResult(
+      state,
+      pendingCallToArms: ctaResult.pendingCallToArms,
+    );
+  }
 
   // 6. War terminates agreements with target
   state = _terminateAgreementsOnWar(state);
@@ -617,36 +643,14 @@ Game _processWarAndPeace(
             turn: turn,
           );
 
-          // Cancel any active subsidies between these factions
-          var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
-          final cancelledSubsidies = subsidyStates
-              .where(
-                (s) =>
-                    (s.payerId == gpId && s.targetId == targetId) ||
-                    (s.payerId == targetId && s.targetId == gpId),
-              )
-              .toList();
-          subsidyStates = subsidyStates
-              .where(
-                (s) =>
-                    !((s.payerId == gpId && s.targetId == targetId) ||
-                        (s.payerId == targetId && s.targetId == gpId)),
-              )
-              .toList();
-          if (cancelledSubsidies.isNotEmpty) {
-            _diploLog.i(
-              'logic: diplomacy subsidies cancelled due to war $gpId vs $targetId',
-            );
-          }
-
           game = game.copyWith(
             diplomacyRelations: relations,
-            subsidyStates: subsidyStates,
             dossierEvidenceEntries: [
               ...game.dossierEvidenceEntries,
               ...evidence,
             ],
           );
+          game = _cancelSubsidiesBetweenGps(game, gpId, targetId, turn);
           game = _appendDiplomaticEvent(
             game,
             turn,
@@ -656,18 +660,6 @@ Game _processWarAndPeace(
             toFactionId: targetId,
             wasAiInitiator: isAiControlledForEvidence(game, gpId),
           );
-          for (final s in cancelledSubsidies) {
-            game = _appendDiplomaticEvent(
-              game,
-              turn,
-              DiplomaticEventType.subsidyCancelled,
-              {s.payerId, s.targetId},
-              fromFactionId: s.payerId,
-              toFactionId: s.targetId,
-              reason: 'war',
-              wasAiInitiator: isAiControlledForEvidence(game, s.payerId),
-            );
-          }
           _diploLog.i(
             'logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)',
           );
@@ -746,6 +738,247 @@ Game _processWarAndPeace(
     }
   }
   return game;
+}
+
+class _CallToArmsResult {
+  _CallToArmsResult(this.game, {this.pendingCallToArms});
+  final Game game;
+  final List<CallToArmsPending>? pendingCallToArms;
+}
+
+CallToArmsDecision? _findCallToArmsDecision(
+  List<CallToArmsDecision>? decisions,
+  String allyGpId,
+  String defenderGpId,
+  String aggressorGpId,
+) {
+  if (decisions == null) return null;
+  for (final d in decisions) {
+    if (d.allyGpId == allyGpId &&
+        d.defenderGpId == defenderGpId &&
+        d.aggressorGpId == aggressorGpId) {
+      return d;
+    }
+  }
+  return null;
+}
+
+/// GP–GP war pairs from declare-war orders that are at war after step 5.
+List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
+  Game game,
+  Map<String, List<DiplomaticOrder>> diploByPlayer,
+) {
+  final seen = <String>{};
+  final out = <({String aggressor, String defender})>[];
+  for (final e in diploByPlayer.entries) {
+    final aggressor = e.key;
+    if (!isGreatPower(game, aggressor)) continue;
+    for (final o in e.value) {
+      if (o.type != DiplomaticOrderType.declareWar) continue;
+      final defender = o.targetFactionId;
+      if (!isGreatPower(game, defender)) continue;
+      if (!factionsAtWar(game, aggressor, defender)) continue;
+      final key = '$aggressor|$defender';
+      if (seen.add(key)) {
+        out.add((aggressor: aggressor, defender: defender));
+      }
+    }
+  }
+  return out;
+}
+
+Game _cancelSubsidiesBetweenGps(
+  Game game,
+  String id1,
+  String id2,
+  int turn,
+) {
+  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+  final cancelled = subsidyStates
+      .where(
+        (s) =>
+            (s.payerId == id1 && s.targetId == id2) ||
+            (s.payerId == id2 && s.targetId == id1),
+      )
+      .toList();
+  if (cancelled.isEmpty) return game;
+  subsidyStates = subsidyStates
+      .where(
+        (s) =>
+            !((s.payerId == id1 && s.targetId == id2) ||
+                (s.payerId == id2 && s.targetId == id1)),
+      )
+      .toList();
+  var g = game.copyWith(subsidyStates: subsidyStates);
+  for (final s in cancelled) {
+    _diploLog.i(
+      'logic: diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
+    );
+    g = _appendDiplomaticEvent(
+      g,
+      turn,
+      DiplomaticEventType.subsidyCancelled,
+      {s.payerId, s.targetId},
+      fromFactionId: s.payerId,
+      toFactionId: s.targetId,
+      reason: 'war',
+      wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
+    );
+  }
+  return g;
+}
+
+Game _applyCallToArmsAccept(
+  Game game,
+  String allyGpId,
+  String aggressorGpId,
+  int turn,
+) {
+  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  relations = setWarStateForPair(
+    relations: relations,
+    gpId: allyGpId,
+    targetId: aggressorGpId,
+    turn: turn,
+  );
+  var g = game.copyWith(diplomacyRelations: relations);
+  g = _cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
+  g = _appendDiplomaticEvent(
+    g,
+    turn,
+    DiplomaticEventType.callToArmsAccepted,
+    {allyGpId, aggressorGpId},
+    fromFactionId: allyGpId,
+    toFactionId: aggressorGpId,
+    wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+  );
+  _diploLog.i(
+    'logic: diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
+  );
+  return g;
+}
+
+Game _applyCallToArmsRefuse(
+  Game game,
+  String allyGpId,
+  String defenderGpId,
+  int turn,
+) {
+  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
+    final base = existing?.score ?? relationScoreNeutral;
+    var newScore =
+        (base - callToArmsRefusalScorePenalty).clamp(relationScoreMin, relationScoreMax);
+    var newLevel = scoreToLevel(newScore);
+    if (newLevel == RelationLevel.allied) {
+      newScore = relationScoreLevelFriendlyMax;
+      newLevel = RelationLevel.friendly;
+    }
+    final ids = canonicalPairIds(allyGpId, defenderGpId);
+    if (existing == null) {
+      return DiplomacyRelation(
+        factionId1: ids.id1,
+        factionId2: ids.id2,
+        score: newScore,
+        level: newLevel,
+        lastInteractionTurn: turn,
+      );
+    }
+    return existing.copyWith(
+      score: newScore,
+      level: newLevel,
+      lastInteractionTurn: turn,
+    );
+  });
+  var g = game.copyWith(diplomacyRelations: relations);
+  g = _appendDiplomaticEvent(
+    g,
+    turn,
+    DiplomaticEventType.callToArmsRefused,
+    {allyGpId, defenderGpId},
+    fromFactionId: allyGpId,
+    toFactionId: defenderGpId,
+    wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
+  );
+  _diploLog.i(
+    'logic: diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
+  );
+  return g;
+}
+
+_CallToArmsResult _processCallToArms(
+  Game game,
+  Map<String, List<DiplomaticOrder>> diploByPlayer,
+  int turn, {
+  List<CallToArmsDecision>? callToArmsDecisions,
+}) {
+  var state = game;
+  final warPairs = _gpGpWarPairsFromOrders(state, diploByPlayer);
+  final pending = <CallToArmsPending>[];
+
+  for (final pair in warPairs) {
+    final aggressorGpId = pair.aggressor;
+    final defenderGpId = pair.defender;
+    for (final p in state.players) {
+      final allyGpId = p.id;
+      if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
+      if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
+      final rel = getRelation(state, allyGpId, defenderGpId);
+      if (rel == null ||
+          !rel.atPeace ||
+          rel.level != RelationLevel.allied) {
+        continue;
+      }
+
+      if (isAiControlled(state, allyGpId)) {
+        final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
+        if (accept) {
+          state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+        } else {
+          state = _applyCallToArmsRefuse(
+            state,
+            allyGpId,
+            defenderGpId,
+            turn,
+          );
+        }
+        continue;
+      }
+
+      final decision = _findCallToArmsDecision(
+        callToArmsDecisions,
+        allyGpId,
+        defenderGpId,
+        aggressorGpId,
+      );
+      if (decision == null) {
+        pending.add(
+          CallToArmsPending(
+            allyGpId: allyGpId,
+            defenderGpId: defenderGpId,
+            aggressorGpId: aggressorGpId,
+          ),
+        );
+      } else if (decision.accepted) {
+        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+      } else {
+        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      }
+    }
+  }
+
+  pending.sort((a, b) {
+    final c1 = a.allyGpId.compareTo(b.allyGpId);
+    if (c1 != 0) return c1;
+    final c2 = a.defenderGpId.compareTo(b.defenderGpId);
+    if (c2 != 0) return c2;
+    return a.aggressorGpId.compareTo(b.aggressorGpId);
+  });
+
+  if (pending.isNotEmpty) {
+    return _CallToArmsResult(state, pendingCallToArms: pending);
+  }
+  return _CallToArmsResult(state);
 }
 
 Game _terminateAgreementsOnWar(Game game) {
