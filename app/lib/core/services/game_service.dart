@@ -99,12 +99,12 @@ class GameService {
   /// Lists all saved game ids.
   List<String> listGameIds() => _adapter.listGameIds(_box);
 
-  /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists)
-  /// or [TurnResolutionPendingOvertures] when the human must accept/reject overtures.
+  /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
+  /// [TurnResolutionPendingOvertures], or [TurnResolutionPendingIntervention].
   /// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
   ///
-  /// When result is [TurnResolutionComplete], saves and returns. When [TurnResolutionPendingOvertures],
-  /// does not save; caller must present dialogue and call [resumeOvertureDecisions], then persist the final game.
+  /// When result is [TurnResolutionComplete], saves and returns. When pending human input,
+  /// does not save; caller must present dialogue and call the matching resume API, then persist.
   TurnResolutionResult runTurnResolution(
     Game current, {
     Orders? orders,
@@ -139,6 +139,10 @@ class GameService {
       );
     } else if (result is TurnResolutionPendingOvertures) {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
     }
     return result;
   }
@@ -177,6 +181,48 @@ class GameService {
       );
     } else if (result is TurnResolutionPendingOvertures) {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    }
+    return result;
+  }
+
+  /// Resumes after human intervention choices (GP declared war on Minor/Tribe).
+  TurnResolutionResult resumeInterventionDecisions(
+    Game game,
+    List<InterventionDecision> decisions,
+    Orders orders, {
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final cache = _mapCache[game.id];
+    final topo = cache?.combinedTopology ?? const MapTopology();
+    final tileMaps = cache?.tileMapByRegion;
+    final result = resumeTurnResolutionWithInterventionDecisions(
+      game: game,
+      decisions: decisions,
+      topology: topo,
+      orders: orders,
+      tileMapByRegion: tileMaps,
+      eventBus: logicEventBus,
+      onGameEvent: onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+        ),
+      );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
     }
     return result;
   }

@@ -2,6 +2,8 @@
 /// When the Diplomacy phase needs a human target to accept/reject an overture,
 /// resolution returns [TurnResolutionPendingOvertures] and blocks until the app
 /// supplies decisions and calls the resume API.
+/// When the Diplomacy phase needs intervention choices, resolution returns
+/// [TurnResolutionPendingIntervention] and blocks until [resumeTurnResolutionWithInterventionDecisions].
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -57,18 +59,80 @@ class OvertureDecision {
       Object.hash(offererGpId, targetFactionId, stage, accepted);
 }
 
-/// Result of the Diplomacy phase: either complete or pending overture decisions (human target).
+/// Human intervention prompt after a GP declares war on a Minor or Tribe.
+/// SPEC/game/diplomacy.md § Intervention.
+class InterventionPrompt {
+  const InterventionPrompt({
+    required this.aggressorGpId,
+    required this.defenderMinorOrTribeId,
+    required this.interveningGpId,
+  });
+
+  final String aggressorGpId;
+  final String defenderMinorOrTribeId;
+  final String interveningGpId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InterventionPrompt &&
+          aggressorGpId == other.aggressorGpId &&
+          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
+          interveningGpId == other.interveningGpId;
+
+  @override
+  int get hashCode =>
+      Object.hash(aggressorGpId, defenderMinorOrTribeId, interveningGpId);
+}
+
+/// Player's intervention choice for one [InterventionPrompt].
+class InterventionDecision {
+  const InterventionDecision({
+    required this.aggressorGpId,
+    required this.defenderMinorOrTribeId,
+    required this.interveningGpId,
+    required this.choice,
+  });
+
+  final String aggressorGpId;
+  final String defenderMinorOrTribeId;
+  final String interveningGpId;
+  final InterventionChoice choice;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InterventionDecision &&
+          aggressorGpId == other.aggressorGpId &&
+          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
+          interveningGpId == other.interveningGpId &&
+          choice == other.choice;
+
+  @override
+  int get hashCode =>
+      Object.hash(aggressorGpId, defenderMinorOrTribeId, interveningGpId, choice);
+}
+
+/// Result of the Diplomacy phase: complete or pending human input.
 class DiplomacyPhaseResult {
-  const DiplomacyPhaseResult(this.game, [this.pendingOvertures]);
+  const DiplomacyPhaseResult(
+    this.game, {
+    this.pendingOvertures,
+    this.pendingInterventions,
+  });
 
   final Game game;
   /// Non-null when phase suspended because an overture targets a human GP.
   final List<OvertureOffer>? pendingOvertures;
+  /// Non-null when phase suspended for intervention choices (GP with embassy or purchased land).
+  final List<InterventionPrompt>? pendingInterventions;
 
-  bool get isPending => pendingOvertures != null && pendingOvertures!.isNotEmpty;
+  bool get isPending =>
+      (pendingOvertures != null && pendingOvertures!.isNotEmpty) ||
+      (pendingInterventions != null && pendingInterventions!.isNotEmpty);
 }
 
-/// Sealed result of turn resolution: either complete or pending human overture decisions.
+/// Sealed result of turn resolution: complete or pending human input.
 sealed class TurnResolutionResult {
   const TurnResolutionResult();
 }
@@ -90,4 +154,16 @@ class TurnResolutionPendingOvertures extends TurnResolutionResult {
 
   final Game game;
   final List<OvertureOffer> pendingOvertures;
+}
+
+/// Turn resolution suspended: [game] is after war declarations; [pendingInterventions]
+/// need the listed human GPs' choices. App calls [resumeTurnResolutionWithInterventionDecisions].
+class TurnResolutionPendingIntervention extends TurnResolutionResult {
+  const TurnResolutionPendingIntervention({
+    required this.game,
+    required this.pendingInterventions,
+  });
+
+  final Game game;
+  final List<InterventionPrompt> pendingInterventions;
 }

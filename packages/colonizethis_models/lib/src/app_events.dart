@@ -282,6 +282,12 @@ class OvertureRequiredEvent extends GameToUIEvent {
   final List<Object> overtures; // OvertureOffer
 }
 
+/// Emitted when intervention choices are required (Diplomacy phase).
+class InterventionRequiredEvent extends GameToUIEvent {
+  const InterventionRequiredEvent({required this.prompts});
+  final List<Object> prompts; // InterventionPrompt from colonizethis_logic
+}
+
 /// Emitted when save/load completes.
 class SaveGameCompleteEvent extends GameToUIEvent {
   const SaveGameCompleteEvent({required this.gameId});

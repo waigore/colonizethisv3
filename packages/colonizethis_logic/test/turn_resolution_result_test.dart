@@ -83,13 +83,30 @@ void main() {
 
   group('DiplomacyPhaseResult', () {
     test('isPending true when pendingOvertures non-empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, [
-        OvertureOffer(
-          offererGpId: 'gp1',
-          targetFactionId: 'gp2',
-          stage: OvertureStage.tradeConsulate,
-        ),
-      ]);
+      final result = DiplomacyPhaseResult(
+        minimalGame,
+        pendingOvertures: [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
+      );
+      expect(result.isPending, isTrue);
+    });
+
+    test('isPending true when pendingInterventions non-empty', () {
+      final result = DiplomacyPhaseResult(
+        minimalGame,
+        pendingInterventions: const [
+          InterventionPrompt(
+            aggressorGpId: 'gp2',
+            defenderMinorOrTribeId: 'minor1',
+            interveningGpId: 'gp1',
+          ),
+        ],
+      );
       expect(result.isPending, isTrue);
     });
 
@@ -99,7 +116,7 @@ void main() {
     });
 
     test('isPending false when pendingOvertures empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, []);
+      final result = DiplomacyPhaseResult(minimalGame, pendingOvertures: []);
       expect(result.isPending, isFalse);
     });
   });
