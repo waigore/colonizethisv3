@@ -6,8 +6,7 @@ import 'ct_panel.dart';
 /// Generic dual-list transfer widget for moving counted items between two sides.
 ///
 /// Use this component when a feature needs transferable quantities with:
-/// - one selected item at a time
-/// - single-item and move-all controls
+/// - per-row single-item and move-all controls (no selection step)
 /// - configurable validation before confirm
 /// - customizable labels and item rendering
 class CtTransferList extends StatefulWidget {
@@ -63,10 +62,24 @@ class CtTransferList extends StatefulWidget {
   State<CtTransferList> createState() => _CtTransferListState();
 }
 
+/// Keys for widget tests: one control per ship type and side/direction.
+abstract final class CtTransferListKeys {
+  static Key leftMoveOne(String itemId) =>
+      ValueKey<String>('ctTransfer.left.>$itemId');
+
+  static Key leftMoveAll(String itemId) =>
+      ValueKey<String>('ctTransfer.left.>>$itemId');
+
+  static Key rightMoveOne(String itemId) =>
+      ValueKey<String>('ctTransfer.right.<$itemId');
+
+  static Key rightMoveAll(String itemId) =>
+      ValueKey<String>('ctTransfer.right.<<$itemId');
+}
+
 class _CtTransferListState extends State<CtTransferList> {
   late Map<String, int> _leftCounts;
   late Map<String, int> _rightCounts;
-  String? _selectedItemId;
 
   int get _leftTotal => _leftCounts.values.fold(0, (sum, count) => sum + count);
   int get _rightTotal =>
@@ -97,15 +110,9 @@ class _CtTransferListState extends State<CtTransferList> {
     widget.onChanged?.call(_leftCounts, _rightCounts);
   }
 
-  void _cleanupZerosAndSelection() {
+  void _cleanupZeros() {
     _leftCounts.removeWhere((_, v) => v <= 0);
     _rightCounts.removeWhere((_, v) => v <= 0);
-    final selected = _selectedItemId;
-    if (selected == null) return;
-    if (!_leftCounts.containsKey(selected) &&
-        !_rightCounts.containsKey(selected)) {
-      _selectedItemId = null;
-    }
   }
 
   void _moveOneToRight(String itemId) {
@@ -114,7 +121,7 @@ class _CtTransferListState extends State<CtTransferList> {
     setState(() {
       _leftCounts[itemId] = from - 1;
       _rightCounts[itemId] = (_rightCounts[itemId] ?? 0) + 1;
-      _cleanupZerosAndSelection();
+      _cleanupZeros();
     });
     _notifyChanged();
   }
@@ -125,7 +132,7 @@ class _CtTransferListState extends State<CtTransferList> {
     setState(() {
       _rightCounts[itemId] = from - 1;
       _leftCounts[itemId] = (_leftCounts[itemId] ?? 0) + 1;
-      _cleanupZerosAndSelection();
+      _cleanupZeros();
     });
     _notifyChanged();
   }
@@ -136,7 +143,7 @@ class _CtTransferListState extends State<CtTransferList> {
     setState(() {
       _rightCounts[itemId] = (_rightCounts[itemId] ?? 0) + from;
       _leftCounts.remove(itemId);
-      _cleanupZerosAndSelection();
+      _cleanupZeros();
     });
     _notifyChanged();
   }
@@ -147,15 +154,9 @@ class _CtTransferListState extends State<CtTransferList> {
     setState(() {
       _leftCounts[itemId] = (_leftCounts[itemId] ?? 0) + from;
       _rightCounts.remove(itemId);
-      _cleanupZerosAndSelection();
+      _cleanupZeros();
     });
     _notifyChanged();
-  }
-
-  void _toggleSelection(String itemId) {
-    setState(() {
-      _selectedItemId = _selectedItemId == itemId ? null : itemId;
-    });
   }
 
   void _handleConfirm() {
@@ -168,9 +169,6 @@ class _CtTransferListState extends State<CtTransferList> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = _selectedItemId;
-    final selectedLeft = selected == null ? 0 : (_leftCounts[selected] ?? 0);
-    final selectedRight = selected == null ? 0 : (_rightCounts[selected] ?? 0);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -184,11 +182,18 @@ class _CtTransferListState extends State<CtTransferList> {
                 counts: _leftCounts,
                 total: _leftTotal,
                 listHeight: widget.listHeight,
-                selectedItemId: _selectedItemId,
                 emptyLabel: widget.leftEmptyLabel,
                 itemLabelBuilder: _itemLabel,
-                onSelectItem: _toggleSelection,
                 totalLabelBuilder: widget.totalLabelBuilder,
+                placeActionsAfterLabel: true,
+                moveAllToLeftLabel: widget.moveAllToLeftLabel,
+                moveOneToLeftLabel: widget.moveOneToLeftLabel,
+                moveOneToRightLabel: widget.moveOneToRightLabel,
+                moveAllToRightLabel: widget.moveAllToRightLabel,
+                onMoveOneToRight: _moveOneToRight,
+                onMoveAllToRight: _moveAllToRight,
+                onMoveOneToLeft: _moveOneToLeft,
+                onMoveAllToLeft: _moveAllToLeft,
               ),
             ),
             const SizedBox(width: 16),
@@ -199,49 +204,19 @@ class _CtTransferListState extends State<CtTransferList> {
                 counts: _rightCounts,
                 total: _rightTotal,
                 listHeight: widget.listHeight,
-                selectedItemId: _selectedItemId,
                 emptyLabel: widget.rightEmptyLabel,
                 itemLabelBuilder: _itemLabel,
-                onSelectItem: _toggleSelection,
                 totalLabelBuilder: widget.totalLabelBuilder,
+                placeActionsAfterLabel: false,
+                moveAllToLeftLabel: widget.moveAllToLeftLabel,
+                moveOneToLeftLabel: widget.moveOneToLeftLabel,
+                moveOneToRightLabel: widget.moveOneToRightLabel,
+                moveAllToRightLabel: widget.moveAllToRightLabel,
+                onMoveOneToRight: _moveOneToRight,
+                onMoveAllToRight: _moveAllToRight,
+                onMoveOneToLeft: _moveOneToLeft,
+                onMoveAllToLeft: _moveAllToLeft,
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CtNinePatchButton(
-              onPressed: selected == null
-                  ? null
-                  : () => _moveAllToLeft(selected),
-              enabled: selected != null && selectedRight > 0,
-              child: Text(widget.moveAllToLeftLabel),
-            ),
-            const SizedBox(width: 8),
-            CtNinePatchButton(
-              onPressed: selected == null
-                  ? null
-                  : () => _moveOneToLeft(selected),
-              enabled: selected != null && selectedRight > 0,
-              child: Text(widget.moveOneToLeftLabel),
-            ),
-            const SizedBox(width: 16),
-            CtNinePatchButton(
-              onPressed: selected == null
-                  ? null
-                  : () => _moveOneToRight(selected),
-              enabled: selected != null && selectedLeft > 0,
-              child: Text(widget.moveOneToRightLabel),
-            ),
-            const SizedBox(width: 8),
-            CtNinePatchButton(
-              onPressed: selected == null
-                  ? null
-                  : () => _moveAllToRight(selected),
-              enabled: selected != null && selectedLeft > 0,
-              child: Text(widget.moveAllToRightLabel),
             ),
           ],
         ),
@@ -274,11 +249,18 @@ class _TransferSidePanel extends StatelessWidget {
     required this.counts,
     required this.total,
     required this.listHeight,
-    required this.selectedItemId,
     required this.emptyLabel,
     required this.itemLabelBuilder,
-    required this.onSelectItem,
     required this.totalLabelBuilder,
+    required this.placeActionsAfterLabel,
+    required this.moveAllToLeftLabel,
+    required this.moveOneToLeftLabel,
+    required this.moveOneToRightLabel,
+    required this.moveAllToRightLabel,
+    required this.onMoveOneToRight,
+    required this.onMoveAllToRight,
+    required this.onMoveOneToLeft,
+    required this.onMoveAllToLeft,
     this.subtitle,
   });
 
@@ -287,11 +269,26 @@ class _TransferSidePanel extends StatelessWidget {
   final Map<String, int> counts;
   final int total;
   final double listHeight;
-  final String? selectedItemId;
   final String emptyLabel;
   final String Function(String itemId) itemLabelBuilder;
-  final void Function(String itemId) onSelectItem;
   final String Function(int total)? totalLabelBuilder;
+
+  /// True: original-fleet panel — label then [>] [>>]. False: new-fleet panel — [<<] [<] then label.
+  final bool placeActionsAfterLabel;
+  final String moveAllToLeftLabel;
+  final String moveOneToLeftLabel;
+  final String moveOneToRightLabel;
+  final String moveAllToRightLabel;
+  final void Function(String itemId) onMoveOneToRight;
+  final void Function(String itemId) onMoveAllToRight;
+  final void Function(String itemId) onMoveOneToLeft;
+  final void Function(String itemId) onMoveAllToLeft;
+
+  static const double _rowButtonMinHeight = 40;
+  static const EdgeInsets _rowButtonPadding = EdgeInsets.symmetric(
+    horizontal: 8,
+    vertical: 6,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -324,24 +321,76 @@ class _TransferSidePanel extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final typeId = sortedTypes[index];
                       final count = counts[typeId] ?? 0;
-                      final isSelected = selectedItemId == typeId;
+                      final label = Text(
+                        '${itemLabelBuilder(typeId)} ($count)',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      );
+                      final List<Widget> rowChildren;
+                      if (placeActionsAfterLabel) {
+                        final canMove = count > 0;
+                        rowChildren = [
+                          Expanded(child: label),
+                          const SizedBox(width: 6),
+                          CtNinePatchButton(
+                            key: CtTransferListKeys.leftMoveOne(typeId),
+                            minHeight: _rowButtonMinHeight,
+                            padding: _rowButtonPadding,
+                            enabled: canMove,
+                            onPressed: canMove
+                                ? () => onMoveOneToRight(typeId)
+                                : null,
+                            child: Text(moveOneToRightLabel),
+                          ),
+                          const SizedBox(width: 4),
+                          CtNinePatchButton(
+                            key: CtTransferListKeys.leftMoveAll(typeId),
+                            minHeight: _rowButtonMinHeight,
+                            padding: _rowButtonPadding,
+                            enabled: canMove,
+                            onPressed: canMove
+                                ? () => onMoveAllToRight(typeId)
+                                : null,
+                            child: Text(moveAllToRightLabel),
+                          ),
+                        ];
+                      } else {
+                        final canMove = count > 0;
+                        rowChildren = [
+                          CtNinePatchButton(
+                            key: CtTransferListKeys.rightMoveAll(typeId),
+                            minHeight: _rowButtonMinHeight,
+                            padding: _rowButtonPadding,
+                            enabled: canMove,
+                            onPressed: canMove
+                                ? () => onMoveAllToLeft(typeId)
+                                : null,
+                            child: Text(moveAllToLeftLabel),
+                          ),
+                          const SizedBox(width: 4),
+                          CtNinePatchButton(
+                            key: CtTransferListKeys.rightMoveOne(typeId),
+                            minHeight: _rowButtonMinHeight,
+                            padding: _rowButtonPadding,
+                            enabled: canMove,
+                            onPressed: canMove
+                                ? () => onMoveOneToLeft(typeId)
+                                : null,
+                            child: Text(moveOneToLeftLabel),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(child: label),
+                        ];
+                      }
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Material(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Colors.transparent,
-                          child: InkWell(
-                            onTap: () => onSelectItem(typeId),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              child: Text(
-                                '${itemLabelBuilder(typeId)} ($count)',
-                              ),
+                          color: Colors.transparent,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
+                            child: Row(children: rowChildren),
                           ),
                         ),
                       );

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../utils/map_location_resolver.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -25,43 +26,6 @@ String _missionLabel(FleetMission m) {
     case FleetMission.defend:
       return 'Defend';
   }
-}
-
-/// Resolves the tile key to use when centering on [province] (town tile or first tile).
-/// Returns null if no tile can be resolved. SPEC/ui/military-units-panel.md.
-String? tileKeyForProvinceLocation(Game game, Province province) {
-  final prefixedId = '${province.regionId}|${province.id}';
-  if (province.townTileKey != null && province.townTileKey!.isNotEmpty) {
-    return province.townTileKey;
-  }
-  final byProvince =
-      game.worldState.tileKeysByRegionAndProvince[province.regionId];
-  final tiles = byProvince?[prefixedId] ?? byProvince?[province.id];
-  if (tiles != null && tiles.isNotEmpty) return tiles.first;
-  return null;
-}
-
-/// Resolves a port tile key adjacent to the given sea zone in [regionId].
-/// [seaZoneId] may be prefixed (regionId|localId) or local. Returns null if none.
-/// SPEC/ui/military-units-panel.md.
-String? tileKeyForSeaZoneLocation(
-  Game game,
-  String regionId,
-  String seaZoneId,
-) {
-  final localSeaZone = seaZoneId.contains('|')
-      ? seaZoneId.split('|').last
-      : seaZoneId;
-  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final parts = e.key.split('|');
-    if (parts.length < 2) continue;
-    final keyRegion = parts[0];
-    final keySeaZone = parts.last;
-    if (keyRegion == regionId && keySeaZone == localSeaZone) {
-      return e.value;
-    }
-  }
-  return null;
 }
 
 /// One regiment-type row under a province: type, count, medals, status.

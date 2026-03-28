@@ -107,8 +107,9 @@ void main() {
       expect(untouched.$3, greaterThan(250));
 
       expect(tinted.$1, greaterThan(240));
-      expect(tinted.$2, lessThan(120));
-      expect(tinted.$3, lessThan(120));
+      // srcOver red (255,0,0) at kGpOwnershipTintAlpha over white → G/B ≈ 255*(1-alpha).
+      expect(tinted.$2, inInclusiveRange(110, 140));
+      expect(tinted.$3, inInclusiveRange(110, 140));
     });
 
     test('skips sea cells and non-GP owners', () async {
@@ -203,7 +204,7 @@ void main() {
     });
   });
 
-  test('kGpOwnershipTintAlpha matches map spec (0.65)', () {
-    expect(kGpOwnershipTintAlpha, 0.65);
+  test('kGpOwnershipTintAlpha matches map spec (0.5)', () {
+    expect(kGpOwnershipTintAlpha, 0.5);
   });
 }

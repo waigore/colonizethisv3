@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 Widget _openDialogButton(VoidCallback onOpen) {
   return TextButton(onPressed: onOpen, child: const Text('open'));
@@ -67,7 +68,7 @@ void main() {
     return button.enabled;
   }
 
-  testWidgets('transfer buttons disabled until a type is selected', (
+  testWidgets('moving exactly one from three of a type leaves 2 and 1', (
     WidgetTester tester,
   ) async {
     final fleet = Fleet(
@@ -75,7 +76,7 @@ void main() {
       ownerId: 'gp1',
       regionId: 'oldWorld',
       seaZoneId: 'oldWorld|s1',
-      shipTypeIds: const ['carrack', 'fluyte'],
+      shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
     );
 
     await openDialog(
@@ -86,13 +87,108 @@ void main() {
       onConfirm: (_) {},
     );
 
-    expect(buttonEnabled(tester, '<'), isFalse);
-    expect(buttonEnabled(tester, '>'), isFalse);
-    expect(buttonEnabled(tester, '<<'), isFalse);
-    expect(buttonEnabled(tester, '>>'), isFalse);
+    expect(find.text('carrack (3)'), findsOneWidget);
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+    await tester.pump();
+
+    expect(find.text('carrack (2)'), findsOneWidget);
+    expect(find.text('carrack (1)'), findsOneWidget);
+    expect(find.text('fluyte (1)'), findsOneWidget);
   });
 
-  testWidgets('selected type supports one and all transfers with exact counts', (
+  testWidgets(
+    'bulk >> moves all remaining of a type after a single-carrier move (non-Home)',
+    (WidgetTester tester) async {
+      final fleet = Fleet(
+        id: 'f1b',
+        ownerId: 'gp1',
+        regionId: 'oldWorld',
+        seaZoneId: 'oldWorld|s1',
+        shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
+      );
+
+      await openDialog(
+        tester,
+        fleet: fleet,
+        game: _minimalGame(provinces: const []),
+        isHomeFleet: false,
+        onConfirm: (_) {},
+      );
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (2)'), findsOneWidget);
+      expect(find.text('carrack (1)'), findsOneWidget);
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (3)'), findsOneWidget);
+      expect(find.text('fluyte (1)'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '<< moves all of a type from new back to original in one action',
+    (WidgetTester tester) async {
+      final fleet = Fleet(
+        id: 'f1c',
+        ownerId: 'gp1',
+        regionId: 'oldWorld',
+        seaZoneId: 'oldWorld|s1',
+        shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
+      );
+
+      await openDialog(
+        tester,
+        fleet: fleet,
+        game: _minimalGame(provinces: const []),
+        isHomeFleet: false,
+        onConfirm: (_) {},
+      );
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (3)'), findsOneWidget);
+      expect(find.text('fluyte (1)'), findsOneWidget);
+
+      await tester.tap(find.byKey(CtTransferListKeys.rightMoveAll('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (3)'), findsOneWidget);
+      expect(find.text('fluyte (1)'), findsOneWidget);
+      expect(find.text('carrack (2)'), findsNothing);
+      expect(find.text('carrack (1)'), findsNothing);
+    },
+  );
+
+  testWidgets('confirm sends only ships shown on new fleet side', (
+    WidgetTester tester,
+  ) async {
+    List<String>? captured;
+    final fleet = Fleet(
+      id: 'f1d',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|s1',
+      shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(provinces: const []),
+      isHomeFleet: false,
+      onConfirm: (ships) => captured = ships,
+    );
+
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+    await tester.pump();
+    await tester.tap(find.text('Confirm Split'));
+    await tester.pumpAndSettle();
+
+    expect(captured, ['carrack']);
+  });
+
+  testWidgets('per-row controls: one and all transfers with exact counts', (
     WidgetTester tester,
   ) async {
     final fleet = Fleet(
@@ -112,19 +208,16 @@ void main() {
     );
 
     expect(find.text('carrack (2)'), findsOneWidget);
-    await tester.tap(find.text('carrack (2)'));
-    await tester.pump();
-
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
     expect(find.text('carrack (1)'), findsNWidgets(2));
 
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
     await tester.pump();
     expect(find.text('carrack (2)'), findsOneWidget);
     expect(find.text('carrack (1)'), findsNothing);
 
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '<'));
+    await tester.tap(find.byKey(CtTransferListKeys.rightMoveOne('carrack')));
     await tester.pump();
     expect(find.text('carrack (1)'), findsNWidgets(2));
   });
@@ -148,13 +241,11 @@ void main() {
       onConfirm: (_) {},
     );
 
-    await tester.tap(find.text('fluyte (2)'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('fluyte')));
     await tester.pump();
     expect(find.text('fluyte (1)'), findsNWidgets(2));
 
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '<'));
+    await tester.tap(find.byKey(CtTransferListKeys.rightMoveOne('fluyte')));
     await tester.pump();
     expect(find.text('fluyte (2)'), findsOneWidget);
     expect(find.text('fluyte (1)'), findsNothing);
@@ -180,9 +271,7 @@ void main() {
       onConfirm: (ships) => captured = ships,
     );
 
-    await tester.tap(find.text('carrack (1)'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
     await tester.pump();
 
     expect(find.text('No ships'), findsOneWidget);

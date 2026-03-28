@@ -6,6 +6,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';

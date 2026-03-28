@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 /// Fixed alpha for Great Power land ownership tint on the in-game map.
 /// SPEC/ui/map-widget.md § Province ownership (GP tint).
-const double kGpOwnershipTintAlpha = 0.65;
+const double kGpOwnershipTintAlpha = 0.5;
 
 /// Semi-transparent GP ownership wash after terrain, before resource glyphs.
 /// See [shouldApplyGreatPowerOwnershipTint] for per-cell eligibility.
