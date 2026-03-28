@@ -804,74 +804,94 @@ void main() {
       expect(after.playerById('gp1')!.treasury, 1000);
     });
 
-    test('grantAid skipped at resolution when amount is not a multiple of £1000', () {
-      var game = _baseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
-          ),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.grantAid,
-              targetFactionId: 'minor1',
-              amount: 1500,
+    test(
+      'grantAid at resolution throws StateError when amount is not a multiple of £1000',
+      () {
+        var game = _baseGame().copyWith(
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
             ),
           ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      expect(after.playerById('gp1')!.treasury, 2000);
-      expect(getRelation(after, 'gp1', 'minor1')!.score, 50);
-    });
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              score: 50,
+              level: RelationLevel.neutral,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp1': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.grantAid,
+                targetFactionId: 'minor1',
+                amount: 1500,
+              ),
+            ],
+          },
+        );
+        expect(
+          () => resolveDiplomacyPhase(game, orders),
+          throwsA(
+            isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              contains('GrantAid'),
+            ),
+          ),
+        );
+      },
+    );
 
-    test('setSubsidy skipped at resolution when amount is not a multiple of £100', () {
-      var game = _baseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.tradeConsulate,
-            sinceTurn: 0,
-          ),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.setSubsidy,
-              targetFactionId: 'minor1',
-              amount: 150,
+    test(
+      'setSubsidy at resolution throws StateError when amount is not a multiple of £100',
+      () {
+        var game = _baseGame().copyWith(
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.tradeConsulate,
+              sinceTurn: 0,
             ),
           ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      expect(after.playerById('gp1')!.treasury, 2000);
-      expect(after.subsidyStates, isEmpty);
-    });
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              score: 50,
+              level: RelationLevel.neutral,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp1': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.setSubsidy,
+                targetFactionId: 'minor1',
+                amount: 150,
+              ),
+            ],
+          },
+        );
+        expect(
+          () => resolveDiplomacyPhase(game, orders),
+          throwsA(
+            isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              contains('SetSubsidy'),
+            ),
+          ),
+        );
+      },
+    );
   });
 }
