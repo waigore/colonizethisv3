@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
 
@@ -20,6 +19,14 @@ void main() {
   suppressLogsForTests();
 
   group('CtRegionMap (Flame map widget)', () {
+    setUpAll(() async {
+      // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
+      // pump() is not enough when tests run alone (e.g. CI --total-shards).
+      await terrainTilesetCache.load();
+      await resourceIconCache.load();
+      await townIconCache.load();
+    });
+
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
       (WidgetTester tester) async {
@@ -306,7 +313,7 @@ void main() {
             region: region,
             visibilityMode: CtMapVisibilityMode.full,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
           ),
         );
         await tester.pump();
@@ -781,7 +788,7 @@ void main() {
     );
 
     testWidgets(
-      'map renders with resource icons in terrainResourcesImprovements mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      'map renders with resource icons in terrainAndResourcesImprovementLabels mode (SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -793,12 +800,34 @@ void main() {
           ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
           ),
         );
         await tester.pump();
 
-        // Widget should render without errors when resource icons are loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders with resource icons in terrainAndResourcesImprovementsRoads mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          ),
+        );
+        await tester.pump();
+
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
