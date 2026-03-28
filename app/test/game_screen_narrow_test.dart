@@ -175,12 +175,10 @@ void main() {
 
         final buttonFinder = find.byKey(kBaseLayerCycleButtonKey);
         expect(buttonFinder, findsOneWidget);
-        await tester.tap(buttonFinder);
-        await tester.pump();
-        await tester.tap(buttonFinder);
-        await tester.pump();
-        await tester.tap(buttonFinder);
-        await tester.pump();
+        for (var i = 0; i < 4; i++) {
+          await tester.tap(buttonFinder);
+          await tester.pump();
+        }
         expect(buttonFinder, findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 15)),

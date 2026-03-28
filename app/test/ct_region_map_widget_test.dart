@@ -302,7 +302,7 @@ void main() {
             region: region,
             visibilityMode: CtMapVisibilityMode.full,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
           ),
         );
         await tester.pump();
@@ -776,7 +776,7 @@ void main() {
     );
 
     testWidgets(
-      'map renders with resource icons in terrainResourcesImprovements mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      'map renders with resource icons in terrainAndResourcesImprovementLabels mode (SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -788,12 +788,34 @@ void main() {
           ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
           ),
         );
         await tester.pump();
 
-        // Widget should render without errors when resource icons are loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders with resource icons in terrainAndResourcesImprovementsRoads mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          ),
+        );
+        await tester.pump();
+
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),

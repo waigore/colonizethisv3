@@ -94,16 +94,21 @@ void assertCtMapPlayerViewRequired({
   }
 }
 
-/// Base layer display mode: which tile letters are drawn. SPEC/ui/map-widget.md § Base layer display mode.
+/// Base layer display mode: terrain, resource icons, improvement/road labels.
+/// SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
-  /// Terrain only; no resource or improvement/road letters.
+  /// Terrain only; no resource icons or improvement/road labels.
   terrainOnly,
 
-  /// Terrain + resource letters (g, t, i, …).
+  /// Terrain + resource icons; no improvement or road labels.
   terrainAndResources,
 
-  /// Terrain + resource letters + improvement/road labels (I0, R0, …).
-  terrainResourcesImprovements,
+  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no road labels.
+  terrainAndResourcesImprovementLabels,
+
+  /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
+  /// Roads are painted after improvements (on top). Road labels require improvement mode on.
+  terrainAndResourcesImprovementsRoads,
 }
 
 /// Flame-based region map component. Renders one RegionMapViewData and exposes
@@ -118,7 +123,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.showProvinceNamesLayer,
     required this.visibilityMode,
     this.baseLayerDisplayMode =
-        BaseLayerDisplayMode.terrainResourcesImprovements,
+        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     this.onProvinceSelected,
     this.onMapTileTappedForDetail,
     this.onProvinceHovered,
@@ -878,13 +883,17 @@ class CtRegionMapComponent extends PositionComponent {
 
   void _paintOverlay(Canvas canvas) {
     final showResources =
-        baseLayerDisplayMode == BaseLayerDisplayMode.terrainAndResources ||
+        baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+    final showImprovementLabels =
         baseLayerDisplayMode ==
-            BaseLayerDisplayMode.terrainResourcesImprovements;
-    final showImprovements =
+            BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
         baseLayerDisplayMode ==
-        BaseLayerDisplayMode.terrainResourcesImprovements;
+            BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+    final showRoadLabels = baseLayerDisplayMode ==
+        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
 
+    // Z-order: resource icons, then improvement labels, then road labels
+    // (SPEC/ui/map-widget.md § Base overlay paint order).
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
@@ -892,10 +901,6 @@ class CtRegionMapComponent extends PositionComponent {
         continue;
       }
 
-      final cx = cell.x * cellSize + cellSize / 2;
-      final cy = cell.y * cellSize + cellSize / 2;
-
-      // Draw resource icon if present and mode includes resources.
       final resourceForIcon = _resourceIdForMapIcon(cell);
       if (showResources && resourceForIcon != null) {
         final icon = resourceIconCache.getIcon(resourceForIcon);
@@ -904,11 +909,6 @@ class CtRegionMapComponent extends PositionComponent {
           final tileLeft = cell.x * cellSize;
           final tileTop = cell.y * cellSize;
 
-          // Resource icons are always 32x32, never upscaled.
-          // For tiles > 32px: bottom-left corner (SPEC/ui/map-widget.md).
-          // For tiles == 32px: centered in the cell (icon fills the tile).
-          // For tiles < 32px: center horizontally; bottom-align so the icon
-          // sits in the lower part of the cell (extends upward if needed).
           final double iconX;
           final double iconY;
           if (cellSize > iconSize) {
@@ -934,34 +934,71 @@ class CtRegionMapComponent extends PositionComponent {
           canvas.drawImageRect(icon, srcRect, dstRect, paint);
         }
       }
+    }
 
-      // Draw improvement/road labels below the icon if mode includes improvements.
-      if (showImprovements) {
-        final imp = cell.improvementLevel ?? 0;
-        final road = cell.roadLevel ?? 0;
-        if (imp > 0 || road > 0) {
-          final parts = <String>[];
-          parts.add('I$imp');
-          parts.add('R$road');
-          final text = parts.join(' ');
-          final fontSize = math.max(8.0, cellSize * 0.25);
-          final textPainter = TextPainter(textDirection: TextDirection.ltr);
-          textPainter.text = TextSpan(
-            text: text,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-            ),
-          );
-          textPainter.layout();
-          textPainter.paint(
-            canvas,
-            Offset(cx - textPainter.width / 2, cy + cellSize / 4),
-          );
+    if (showImprovementLabels) {
+      for (final cell in region.cells) {
+        if (cell.isSea) continue;
+        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+            cell.visibility == TileVisibility.unrevealed) {
+          continue;
         }
+        final imp = cell.improvementLevel ?? 0;
+        if (imp <= 0) continue;
+        _paintTileCornerLabel(
+          canvas,
+          cell,
+          'I$imp',
+          alignEnd: false,
+        );
       }
     }
+
+    if (showRoadLabels) {
+      for (final cell in region.cells) {
+        if (cell.isSea) continue;
+        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+            cell.visibility == TileVisibility.unrevealed) {
+          continue;
+        }
+        final road = cell.roadLevel ?? 0;
+        if (road <= 0) continue;
+        _paintTileCornerLabel(
+          canvas,
+          cell,
+          'R$road',
+          alignEnd: true,
+        );
+      }
+    }
+  }
+
+  /// Improvement labels: top-left; road labels: top-right. Inset from edges.
+  void _paintTileCornerLabel(
+    Canvas canvas,
+    CellViewData cell,
+    String text, {
+    required bool alignEnd,
+  }) {
+    final tileLeft = cell.x * cellSize;
+    final tileTop = cell.y * cellSize;
+    final pad = math.max(1.0, cellSize * 0.06);
+    final fontSize = math.max(8.0, cellSize * 0.25);
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: text,
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    textPainter.layout(maxWidth: cellSize - 2 * pad);
+    final y = tileTop + pad;
+    final x = alignEnd
+        ? tileLeft + cellSize - pad - textPainter.width
+        : tileLeft + pad;
+    textPainter.paint(canvas, Offset(x, y));
   }
 
   void _paintHoveredProvinceGlow(Canvas canvas) {

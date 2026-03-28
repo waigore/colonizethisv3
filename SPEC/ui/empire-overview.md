@@ -8,7 +8,7 @@
 
 - **Entry:** Reached from Game Initializing screen on success (or from Load Game when loading a save into play).
 - **Role:** In-game shell. Map-centric view with region tabs; HUD/sidebar and panels (units, development, production, etc.) are defined by separate specs or later. This spec focuses on the map area and region switching.
-- **Map:** Each region has its own map view. The reusable [map-widget](map-widget.md) is used for each; viewport is the widget size; pan, fixed zoom levels, smooth zoom; base layer (terrain, resources, improvements, towns, capitals) plus togglable political overlay; tap/click selects province and triggers a callback. Province details (what to show and where) are to be defined; the map widget only reports selection.
+- **Map:** Each region has its own map view. The reusable [map-widget](map-widget.md) is used for each; viewport is the widget size; pan, fixed zoom levels, smooth zoom; base layer (terrain, optional resource icons and improvement/road labels, towns, capitals) plus togglable political overlay; tap/click selects province and triggers a callback. Province details (what to show and where) are to be defined; the map widget only reports selection.
 
 ---
 
@@ -32,8 +32,8 @@
 ### Base layer display cycle (in-game map only)
 
 - **Overlay:** A single toggle button is overlaid at the **top-left** of the map area. Icon only: pixel-art stacked layers icon (`ui_icon_layer_toggle.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button cycles the map's base layer display mode; it is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
-- **Modes (cycle order):** 1) **terrain only** — no resource or improvement/road letters; 2) **terrain + resources** — resource letters (g, t, i, …) only; 3) **terrain + resources + improvements** — resource letters plus improvement and road labels (I0, R0, …). Each tap advances to the next mode; after the third, the next tap returns to the first.
-- **Default at game start:** When the player enters the in-game shell (after init or load), the base layer display mode is **terrain + resources + improvements** (full letters).
+- **Modes (cycle order):** 1) **terrain only** — no resource icons or improvement/road labels; 2) **terrain + resources** — resource icons only; 3) **terrain + resources + improvement labels** — resource icons plus improvement labels `I{n}` when `n > 0` (top-left of tile), no road labels; 4) **terrain + resources + improvements + roads** — resource icons, improvement labels when `n > 0`, and road/rail labels `R{n}` when `n > 0` (top-right; painted above improvement labels). Each tap advances to the next mode; after the fourth, the next tap returns to the first. Road labels are never shown without improvement labels (see [map-widget.md](map-widget.md) § Base layer display mode).
+- **Default at game start:** When the player enters the in-game shell (after init or load), the base layer display mode is **terrain + resources + improvements + roads** (full detail).
 - **Spec reference:** [map-widget.md](map-widget.md) § Base layer display mode.
 
 ### Home-to-capital button (in-game map only)
@@ -60,7 +60,7 @@
 +------------------------------------------------------------------+
 | [r]                                                              |
 |     Map widget (viewport = this area)                             |
-|     – base: terrain [+ resources + improvements per cycle]       |
+|     – base: terrain [+ resources + labels per 4-step cycle]        |
 |     – overlay: boundaries / ownership tint / political (toggles) |
 |     – pan / zoom / tap province                                   |
 |     – [r] = base layer cycle (top-left overlay, in-game only)    |
@@ -83,8 +83,8 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **Given** the in-game shell control row is visible for a human player, **when** the cargo hold indicator is computed, **then** `used` equals the sum of that player's overseas extraction totals in the current world state and `capacity` equals the total home-fleet cargo holds for that player.
 - **Given** the player switches between Old World and New World tabs, **when** the region tab changes, **then** the cargo hold indicator value remains a single global total and does not switch to per-region values.
 - **Given** fleet composition or extraction-relevant state changes and the app event bus/provider flow publishes those changes into the in-game shell state, **when** the map controls rebuild, **then** the cargo hold indicator updates to the new `used/capacity` value without animation.
-- **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is terrain + resources + improvements (full letters visible).
-- **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvements → terrain only (repeating).
+- **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is **terrain + resources + improvements + roads** (full detail per [map-widget.md](map-widget.md) § Base layer display mode).
+- **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvement labels (no road labels) → terrain + resources + improvement + road labels → terrain only (repeating).
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the top-left of the map area and displays the stacked layers icon (icon-only).
 
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible directly beneath the base-layer cycle button at the top-left of the map area.
