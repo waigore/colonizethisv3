@@ -47,6 +47,14 @@ double aggregateStrength(List<Unit> units, int effectiveEra) {
   return total;
 }
 
+/// Morale multiplier from feeding coverage (land or naval). Same breakpoints for
+/// army and fleet upkeep shortfall. SPEC/program/turn-resolution-phase-details.md § Consumption.
+double moraleMultiplierForFeedingCoverage(double coverage) {
+  if (coverage >= 1.0) return 1.0;
+  if (coverage >= 0.5) return 0.75;
+  return 0.5;
+}
+
 /// Computes the effective military level for a faction.
 /// Great Powers use era 4; Minor Nations and Tribes use their effectiveMilitaryLevel.
 int effectiveEraForFaction(Game game, String factionId) {

@@ -135,6 +135,54 @@ void main() {
       expect(result.stockpile.quantityOf(CommodityCatalog.meat.id), 5);
       expect(result.totalRegiments, 0);
       expect(result.fullyFedRegiments, 0);
+      expect(result.totalShips, 0);
+      expect(result.fullyFedShips, 0);
+    });
+
+    test('unknown ship type id throws ConsumptionUnknownShipTypeException', () {
+      const stockpile = Stockpile();
+      const workers = WorkerPool(peasants: 0);
+      expect(
+        () => resolveConsumption(
+          stockpile: stockpile,
+          workers: workers,
+          shipCountsById: const {'not_a_real_ship': 1},
+        ),
+        throwsA(isA<ConsumptionUnknownShipTypeException>()),
+      );
+    });
+
+    test('navy consumes food after land military and before workers', () {
+      // 1 carrack = 2 food (navy), then 5 peasants need 5 food; 6 food total.
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 6)
+          .applyDelta(CommodityCatalog.meat.id, 0);
+      const workers = WorkerPool(peasants: 5);
+      final result = resolveConsumption(
+        stockpile: stockpile,
+        workers: workers,
+        shipCountsById: const {'carrack': 1},
+      );
+      expect(result.totalShips, 1);
+      expect(result.fullyFedShips, 1);
+      // Navy 2 + 4 peasants fed = 6 grain.
+      expect(result.workerPool.peasants, 4);
+      expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
+    });
+
+    test('ships consume 2 food units each from catalog foodUpkeep', () {
+      var stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 4)
+          .applyDelta(CommodityCatalog.meat.id, 0);
+      const workers = WorkerPool(peasants: 0);
+      final result = resolveConsumption(
+        stockpile: stockpile,
+        workers: workers,
+        shipCountsById: const {'carrack': 2},
+      );
+      expect(result.totalShips, 2);
+      expect(result.fullyFedShips, 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
     });
 
     test('trained workers consume tier luxuries when available', () {

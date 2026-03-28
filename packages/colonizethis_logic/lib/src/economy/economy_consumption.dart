@@ -6,6 +6,17 @@ import 'worker_economy.dart';
 
 final _log = logicLogger();
 
+/// Thrown when [resolveConsumption] sees a ship type id not in [ShipEconomyCatalog].
+/// SPEC/game/workers-and-population.md (invalid fleet data).
+class ConsumptionUnknownShipTypeException implements Exception {
+  ConsumptionUnknownShipTypeException(this.shipTypeId);
+  final String shipTypeId;
+
+  @override
+  String toString() =>
+      'ConsumptionUnknownShipTypeException: unknown ship type $shipTypeId';
+}
+
 /// Consumption resolution helpers.
 /// SPEC/game/workers-and-population.md
 /// SPEC/game/stockpiles-and-production.md
@@ -16,31 +27,47 @@ class ConsumptionResult {
     required this.workerPool,
     required this.totalRegiments,
     required this.fullyFedRegiments,
+    required this.totalShips,
+    required this.fullyFedShips,
   });
 
   final Stockpile stockpile;
   final WorkerPool workerPool;
   final int totalRegiments;
   final int fullyFedRegiments;
+  final int totalShips;
+  final int fullyFedShips;
 }
 
-/// Applies worker and basic military food consumption for one turn.
+/// Applies land military, navy, and worker food consumption for one turn.
 ///
 /// Food rules (per SPEC/game/workers-and-population.md):
 /// - Peasant: 1 grain or meat
 /// - Apprentice/Journeyman/Master: 1 grain + 1 meat (2 food units total)
-/// - Military: treated as 2 food units per regiment (simple stub)
+/// - Land military: per-type `foodUpkeep` from [RegimentEconomyCatalog], or 2/regiment
+///   when only [militaryUnits] is set
+/// - Navy: per-type `foodUpkeep` from [ShipEconomyCatalog] (2 per ship in default catalog)
 ///
-/// If food is insufficient, workers **starve** (removed from WorkerPool).
-/// Peasants are removed first, then apprentices, then journeymen, then masters.
+/// Order: land military → navy → workers. If food is insufficient, workers **starve**
+/// (removed from WorkerPool). Peasants first, then apprentices, journeymen, masters.
 /// After food and starvation, trained workers consume tier luxuries
 /// (refinedSugar/cigars/furHats) per SPEC/game/workers-and-population.md.
+///
+/// Throws [ConsumptionUnknownShipTypeException] if [shipCountsById] contains a type
+/// id not present in [ShipEconomyCatalog].
 ConsumptionResult resolveConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
   int militaryUnits = 0,
   Map<String, int> regimentCountsById = const {},
+  Map<String, int> shipCountsById = const {},
 }) {
+  for (final id in shipCountsById.keys) {
+    if (!ShipEconomyCatalog.byId.containsKey(id)) {
+      throw ConsumptionUnknownShipTypeException(id);
+    }
+  }
+
   Stockpile current = stockpile;
 
   int feedGroup({required int count, required int foodPerUnit}) {
@@ -55,10 +82,7 @@ ConsumptionResult resolveConsumption({
     return fed;
   }
 
-  // --- Military-first feeding ---
-  // Derive total regiment count and food demand. If detailed regiment counts
-  // are provided, use per-type foodUpkeep from RegimentEconomyCatalog; fall
-  // back to 2 food units per regiment when only [militaryUnits] is known.
+  // --- Land military feeding ---
   int totalRegiments = 0;
   int totalFoodDemand = 0;
 
@@ -85,9 +109,8 @@ ConsumptionResult resolveConsumption({
       required: totalFoodDemand,
     );
     current = nextStockpile;
-    // Approximate fully-fed regiments using average food per regiment.
     final avgFoodPerRegiment =
-        (totalFoodDemand + totalRegiments - 1) ~/ totalRegiments; // ceil
+        (totalFoodDemand + totalRegiments - 1) ~/ totalRegiments;
     if (avgFoodPerRegiment > 0) {
       fullyFedRegiments = consumedForMilitary ~/ avgFoodPerRegiment;
       if (fullyFedRegiments > totalRegiments) {
@@ -96,17 +119,37 @@ ConsumptionResult resolveConsumption({
     }
   }
 
+  // --- Navy (after land military, before workers) ---
+  int totalShips = 0;
+  int totalNavyFoodDemand = 0;
+  for (final entry in shipCountsById.entries) {
+    final count = entry.value;
+    if (count <= 0) continue;
+    totalShips += count;
+    final upkeep = ShipEconomyCatalog.byId[entry.key]!.foodUpkeep;
+    if (upkeep > 0) {
+      totalNavyFoodDemand += upkeep * count;
+    }
+  }
+
+  int fullyFedShips = 0;
+  if (totalNavyFoodDemand > 0 && totalShips > 0) {
+    final (nextStockpile, consumedForNavy) = consumeFoodUnits(
+      stockpile: current,
+      required: totalNavyFoodDemand,
+    );
+    current = nextStockpile;
+    final avgFoodPerShip = (totalNavyFoodDemand + totalShips - 1) ~/ totalShips;
+    if (avgFoodPerShip > 0) {
+      fullyFedShips = consumedForNavy ~/ avgFoodPerShip;
+      if (fullyFedShips > totalShips) fullyFedShips = totalShips;
+    }
+  }
+
   // --- Workers: fed from remaining food ---
-  // Peasants: feed first, 1 food each.
   final fedPeasants = feedGroup(count: workers.peasants, foodPerUnit: 1);
-
-  // Apprentices: 2 food each.
   final fedApprentices = feedGroup(count: workers.apprentices, foodPerUnit: 2);
-
-  // Journeymen: 2 food each.
   final fedJourneymen = feedGroup(count: workers.journeymen, foodPerUnit: 2);
-
-  // Masters: 2 food each.
   final fedMasters = feedGroup(count: workers.masters, foodPerUnit: 2);
 
   final updatedWorkers = WorkerPool(
@@ -119,12 +162,15 @@ ConsumptionResult resolveConsumption({
   current = deductLuxuryForWorkers(stockpile: current, workers: updatedWorkers);
 
   _log.d(
-    'logic: consumption totalRegiments=$totalRegiments fullyFedRegiments=$fullyFedRegiments',
+    'logic: consumption totalRegiments=$totalRegiments fullyFedRegiments=$fullyFedRegiments '
+    'totalShips=$totalShips fullyFedShips=$fullyFedShips',
   );
   return ConsumptionResult(
     stockpile: current,
     workerPool: updatedWorkers,
     totalRegiments: totalRegiments,
     fullyFedRegiments: fullyFedRegiments,
+    totalShips: totalShips,
+    fullyFedShips: fullyFedShips,
   );
 }

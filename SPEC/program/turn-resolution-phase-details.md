@@ -36,7 +36,7 @@ Per recipe: consume inputs and labour from stockpile and WorkerPool; add outputs
 
 ## Consumption
 
-Military regiments consume food upkeep **before** workers and navy. Per player: (1) Compute regiment food demand. (2) Consume food from stockpile (military-first). (3) Derive feeding coverage ratio → morale/strength modifier for Combat (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (4) Workers/navy consume remainder per [workers-and-population.md](../game/workers-and-population.md): food first, then starvation removes workers; then **luxury deduction** (one unit per trained worker of that tier: refinedSugar/apprentices, cigars/journeymen, furHats/masters), up to stockpile. Upkeep shortfall for military affects morale/strength, not unit count.
+Per player, order is: (1) **Land military regiments** — compute food demand, consume from stockpile first, derive **land** feeding coverage ratio → land combat morale multiplier (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (2) **Navy** — all ships in that player's fleets: **2 food units per ship**; consume from stockpile; derive **naval** feeding coverage (`fullyFedShips / totalShips`, or 1.0 when `totalShips == 0`). Apply the **same three-tier morale multiplier** to **effective naval strength** in sea battles as for land combat. (3) **Workers** — per [workers-and-population.md](../game/workers-and-population.md): food from remainder, starvation removes workers, then **luxury deduction** (refinedSugar/apprentices, cigars/journeymen, furHats/masters), up to stockpile. Upkeep shortfall for military and navy affects combat multipliers, not unit/ship count. Unknown `ship_type_id` in fleet state is a **fatal** resolution error.
 
 ---
 

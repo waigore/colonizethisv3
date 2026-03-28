@@ -157,6 +157,13 @@ void main() {
       expect(result.survivingShipTypeIdsSide2, isEmpty);
     });
 
+    test('feeding coverage multiplies raw naval strength like land combat morale', () {
+      final raw = navalStrength(['carrack', 'carrack']);
+      expect(raw * moraleMultiplierForFeedingCoverage(1.0), raw);
+      expect(raw * moraleMultiplierForFeedingCoverage(0.6), raw * 0.75);
+      expect(raw * moraleMultiplierForFeedingCoverage(0.0), raw * 0.5);
+    });
+
     test('does not retreat when retreat is disallowed by topology/relation gate', () {
       const battle = BattleContextSea(
         seaZoneId: 'sea1',
