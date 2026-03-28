@@ -94,7 +94,7 @@ RegionData applyMoveOrdersToRegion(
   bool Function(String playerId, String destFullProvinceId)?
       isDestinationOwnedByPlayer,
 }) {
-  if (moveOrdersByPlayerId.isEmpty || regionData.units.isEmpty) {
+  if (moveOrdersByPlayerId.isEmpty) {
     return regionData;
   }
 
@@ -108,6 +108,12 @@ RegionData applyMoveOrdersToRegion(
     for (final order in entry.value) {
       final unit = unitsById[order.unitId];
       if (unit == null) {
+        ordersForRegion++;
+        ignored++;
+        _log.d(
+          'logic: movement ignored reason=unit_not_found '
+          'unitId=${order.unitId} orderPlayerId=$playerId',
+        );
         continue;
       }
       ordersForRegion++;
