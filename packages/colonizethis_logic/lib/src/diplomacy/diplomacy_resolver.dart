@@ -806,6 +806,9 @@ Game _applyRelationModifiersAndUpdateScores(
       if (order.type != DiplomaticOrderType.grantAid) continue;
       final amount = order.amount ?? 0;
       if (amount <= 0 || player.treasury < amount) continue;
+      if (amount < grantAidAmountStep || amount % grantAidAmountStep != 0) {
+        continue;
+      }
 
       final targetId = order.targetFactionId;
       final overture = getOverture(game, gpId, targetId);
@@ -853,6 +856,9 @@ Game _applyRelationModifiersAndUpdateScores(
       final amount = order.amount ?? 0;
       final player = game.playerById(gpId);
       if (player == null || amount <= 0 || player.treasury < amount) continue;
+      if (amount < setSubsidyAmountStep || amount % setSubsidyAmountStep != 0) {
+        continue;
+      }
 
       final targetId = order.targetFactionId;
       final overture = getOverture(game, gpId, targetId);
