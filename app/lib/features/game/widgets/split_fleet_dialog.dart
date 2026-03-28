@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_transfer_list.dart';
+import '../utils/region_labels.dart';
 
 class SplitFleetDialog extends StatelessWidget {
   const SplitFleetDialog({
@@ -49,7 +50,7 @@ class SplitFleetDialog extends StatelessWidget {
       }
       final province = provinceMap[inPortId];
       final regionId = fleet.regionId;
-      final regionLabel = regionId == 'oldWorld' ? 'Old World' : 'New World';
+      final regionLabel = regionDisplayLabel(regionId);
       final provinceName = province?.displayName ?? inPortId;
       return '$provinceName — $regionLabel';
     }
@@ -85,6 +86,7 @@ class SplitFleetDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               CtTransferList(
+                listHeight: 220,
                 leftTitle: originalFleet.id == 'home_fleet'
                     ? 'Home Fleet'
                     : 'Fleet ${originalFleet.id}',
