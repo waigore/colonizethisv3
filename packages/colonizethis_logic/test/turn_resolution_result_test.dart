@@ -83,13 +83,30 @@ void main() {
 
   group('DiplomacyPhaseResult', () {
     test('isPending true when pendingOvertures non-empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, [
-        OvertureOffer(
-          offererGpId: 'gp1',
-          targetFactionId: 'gp2',
-          stage: OvertureStage.tradeConsulate,
-        ),
-      ]);
+      final result = DiplomacyPhaseResult(
+        minimalGame,
+        pendingOvertures: [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
+      );
+      expect(result.isPending, isTrue);
+    });
+
+    test('isPending true when pendingCallToArms non-empty', () {
+      final result = DiplomacyPhaseResult(
+        minimalGame,
+        pendingCallToArms: [
+          CallToArmsPending(
+            allyGpId: 'gp1',
+            defenderGpId: 'gp2',
+            aggressorGpId: 'gp3',
+          ),
+        ],
+      );
       expect(result.isPending, isTrue);
     });
 
@@ -99,7 +116,7 @@ void main() {
     });
 
     test('isPending false when pendingOvertures empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, []);
+      final result = DiplomacyPhaseResult(minimalGame, pendingOvertures: []);
       expect(result.isPending, isFalse);
     });
   });
@@ -124,6 +141,22 @@ void main() {
       );
       expect(result.game, minimalGame);
       expect(result.pendingOvertures, offers);
+    });
+
+    test('TurnResolutionPendingCallToArms holds game and list', () {
+      final pending = [
+        CallToArmsPending(
+          allyGpId: 'gp1',
+          defenderGpId: 'gp2',
+          aggressorGpId: 'gp3',
+        ),
+      ];
+      final result = TurnResolutionPendingCallToArms(
+        game: minimalGame,
+        pendingCallToArms: pending,
+      );
+      expect(result.game, minimalGame);
+      expect(result.pendingCallToArms, pending);
     });
   });
 }

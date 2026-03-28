@@ -276,6 +276,10 @@ enum DiplomaticEventType {
   interventionDoNothing,
   interventionProtest,
   agreementsClearedOnWar,
+  /// Ally accepted call to arms: entered war with aggressor. SPEC/game/diplomacy.md.
+  callToArmsAccepted,
+  /// Ally refused call to arms: broke alliance obligations with defender. SPEC/game/diplomacy.md.
+  callToArmsRefused,
 }
 
 /// Diplomatic history event stored on Game.diplomaticHistoryEvents.

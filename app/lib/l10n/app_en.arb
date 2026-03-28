@@ -275,6 +275,35 @@
   "shell_newGameError_retry": "Retry",
   "@shell_newGameError_retry": {
     "description": "Button to retry new-game setup with a different random seed."
+  },
+
+  "game_callToArms_title": "Call to arms",
+  "@game_callToArms_title": {
+    "description": "Title when the human must respond to an ally's call to arms."
+  },
+  "game_callToArms_intro": "An allied power is at war. Join their war or refuse (alliance ends, relations worsen).",
+  "@game_callToArms_intro": {
+    "description": "Short explanation above the list of call-to-arms choices."
+  },
+  "game_callToArms_prompt": "{defender} is attacked by {aggressor}.",
+  "@game_callToArms_prompt": {
+    "description": "One line per pending call to arms.",
+    "placeholders": {
+      "defender": {"type": "String"},
+      "aggressor": {"type": "String"}
+    }
+  },
+  "game_callToArms_join": "Join",
+  "@game_callToArms_join": {
+    "description": "Button: accept call to arms and enter war with the aggressor."
+  },
+  "game_callToArms_refuse": "Refuse",
+  "@game_callToArms_refuse": {
+    "description": "Button: refuse call to arms."
+  },
+  "game_callToArms_submit": "Submit",
+  "@game_callToArms_submit": {
+    "description": "Submit all call-to-arms choices."
   }
 }
 

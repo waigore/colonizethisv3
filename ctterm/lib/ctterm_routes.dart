@@ -22,6 +22,8 @@ enum CttermRoute {
   pauseOptions,
   /// Shown when turn resolution blocks on human accept/reject of diplomatic overtures. SPEC/program/turn-resolution-phases.md.
   pendingOvertures,
+  /// Human ally must join or refuse call to arms. SPEC/game/diplomacy.md.
+  pendingCallToArms,
   /// Debug log viewer. SPEC/program/debug-log-viewer.md.
   debugLogViewer,
 }
@@ -69,6 +71,8 @@ extension CttermRouteScreenId on CttermRoute {
         return '100018';
       case CttermRoute.pendingOvertures:
         return '100019';
+      case CttermRoute.pendingCallToArms:
+        return '100021';
       case CttermRoute.debugLogViewer:
         return '100020';
     }

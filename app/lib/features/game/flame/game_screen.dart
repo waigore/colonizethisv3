@@ -17,6 +17,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import '../../../widgets/game_to_ui_bus_listener.dart';
 
+import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
@@ -105,6 +106,7 @@ class GameScreen extends ConsumerWidget {
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
     final pendingOvertures = ref.watch(pendingOverturesProvider);
+    final pendingCallToArms = ref.watch(pendingCallToArmsProvider);
     Widget content = Stack(
       children: [
         if (mapViewData != null && game != null)
@@ -137,6 +139,11 @@ class GameScreen extends ConsumerWidget {
                   ref
                       .read(pendingOverturesProvider.notifier)
                       .setPending(result.pendingOvertures);
+                } else if (result is TurnResolutionPendingCallToArms) {
+                  ref.read(currentGameProvider.notifier).setGame(result.game);
+                  ref
+                      .read(pendingCallToArmsProvider.notifier)
+                      .setPending(result.pendingCallToArms);
                 }
               },
               child: Text(
@@ -193,6 +200,45 @@ class GameScreen extends ConsumerWidget {
             ref
                 .read(pendingOverturesProvider.notifier)
                 .setPending(result.pendingOvertures);
+          } else if (result is TurnResolutionPendingCallToArms) {
+            ref.read(currentGameProvider.notifier).setGame(result.game);
+            ref
+                .read(pendingCallToArmsProvider.notifier)
+                .setPending(result.pendingCallToArms);
+          }
+        },
+        child: content,
+      );
+    }
+
+    if (game != null &&
+        pendingCallToArms != null &&
+        pendingCallToArms.isNotEmpty) {
+      content = CallToArmsDialogueOverlay(
+        game: game,
+        pending: pendingCallToArms,
+        onDecisions: (decisions) {
+          final service = ref.read(gameServiceProvider);
+          final orders = ref.read(currentOrdersProvider);
+          final result = service.resumeCallToArmsDecisions(
+            game,
+            decisions,
+            orders,
+          );
+          ref.read(pendingCallToArmsProvider.notifier).clear();
+          if (result is TurnResolutionComplete) {
+            ref.read(currentGameProvider.notifier).setGame(result.game);
+            ref.read(currentOrdersProvider.notifier).clear();
+          } else if (result is TurnResolutionPendingOvertures) {
+            ref.read(currentGameProvider.notifier).setGame(result.game);
+            ref
+                .read(pendingOverturesProvider.notifier)
+                .setPending(result.pendingOvertures);
+          } else if (result is TurnResolutionPendingCallToArms) {
+            ref.read(currentGameProvider.notifier).setGame(result.game);
+            ref
+                .read(pendingCallToArmsProvider.notifier)
+                .setPending(result.pendingCallToArms);
           }
         },
         child: content,

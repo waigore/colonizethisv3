@@ -506,7 +506,7 @@ class ScenarioRunner {
         : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
-    final result = resolveTurnForGameFromOrderEngine(
+    TurnResolutionResult result = resolveTurnForGameFromOrderEngine(
       game: context.game,
       topology: topology,
       orderEngine: orderEngine,
@@ -515,41 +515,73 @@ class ScenarioRunner {
       defaultAssignments: defaultAssignments,
     );
 
-    if (result is TurnResolutionPendingOvertures) {
-      final decisions = turnScript?.overtureDecisions;
-      if (decisions == null || decisions.isEmpty) {
-        throw StateError(
-          'Turn ${turnScript?.turn ?? 0} resolution is pending overture decisions '
-          '(human GP target) but scenario has no overtureDecisions for this turn. '
-          'Add overtureDecisions to the turn script.',
-        );
+    while (true) {
+      if (result is TurnResolutionComplete) {
+        return result.game;
       }
-      final logicDecisions = decisions
-          .map(
-            (d) => OvertureDecision(
-              offererGpId: d.offererGpId,
-              targetFactionId: d.targetFactionId,
-              stage: OvertureStage.values.firstWhere(
-                (e) => e.name == d.stage,
-                orElse: () => OvertureStage.none,
+      if (result is TurnResolutionPendingOvertures) {
+        final decisions = turnScript?.overtureDecisions;
+        if (decisions == null || decisions.isEmpty) {
+          throw StateError(
+            'Turn ${turnScript?.turn ?? 0} resolution is pending overture decisions '
+            '(human GP target) but scenario has no overtureDecisions for this turn. '
+            'Add overtureDecisions to the turn script.',
+          );
+        }
+        final logicDecisions = decisions
+            .map(
+              (d) => OvertureDecision(
+                offererGpId: d.offererGpId,
+                targetFactionId: d.targetFactionId,
+                stage: OvertureStage.values.firstWhere(
+                  (e) => e.name == d.stage,
+                  orElse: () => OvertureStage.none,
+                ),
+                accepted: d.accepted,
               ),
-              accepted: d.accepted,
-            ),
-          )
-          .toList();
-      final resumed = resumeTurnResolutionWithOvertureDecisions(
-        game: result.game,
-        pendingOvertures: result.pendingOvertures,
-        decisions: logicDecisions,
-        topology: topology,
-        orders: orderEngine.orders,
-        tileMapByRegion: context.tileMapByRegion,
-        defaultAssignments: defaultAssignments,
-      );
-      return requireTurnResolutionComplete(resumed);
+            )
+            .toList();
+        result = resumeTurnResolutionWithOvertureDecisions(
+          game: result.game,
+          pendingOvertures: result.pendingOvertures,
+          decisions: logicDecisions,
+          topology: topology,
+          orders: orderEngine.orders,
+          tileMapByRegion: context.tileMapByRegion,
+          defaultAssignments: defaultAssignments,
+        );
+        continue;
+      }
+      if (result is TurnResolutionPendingCallToArms) {
+        final decisions = turnScript?.callToArmsDecisions;
+        if (decisions == null || decisions.isEmpty) {
+          throw StateError(
+            'Turn ${turnScript?.turn ?? 0} resolution is pending call to arms '
+            'but scenario has no callToArmsDecisions for this turn.',
+          );
+        }
+        final logicDecisions = decisions
+            .map(
+              (d) => CallToArmsDecision(
+                allyGpId: d.allyGpId,
+                defenderGpId: d.defenderGpId,
+                aggressorGpId: d.aggressorGpId,
+                accepted: d.accepted,
+              ),
+            )
+            .toList();
+        result = resumeTurnResolutionWithCallToArmsDecisions(
+          game: result.game,
+          decisions: logicDecisions,
+          topology: topology,
+          orders: orderEngine.orders,
+          tileMapByRegion: context.tileMapByRegion,
+          defaultAssignments: defaultAssignments,
+        );
+        continue;
+      }
+      throw StateError('Unhandled turn resolution result: ${result.runtimeType}');
     }
-
-    return requireTurnResolutionComplete(result);
   }
 
   /// Converts scenario setup productionAssignments to AssignedRecipe list for resolver.

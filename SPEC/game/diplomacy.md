@@ -23,7 +23,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
-- **Alliances:** Offer/accept between GPs. Mutual defence: when ally is attacked, the other receives a demand to join; refusal breaks the alliance with relation penalties. Joining an ally's offensive war is optional; no penalty for refusing.
+- **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app popup / TUI screen; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
 - **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
 
 #### Nearly defeated (GP target)
@@ -190,6 +190,8 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Embassy cost | £1000 | |
 | Join Empire base cost | £5000 | One-time cost when enacting Join Empire. |
 | Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
+| Call to arms refusal score penalty | 20 | Subtracted from ally–defender relation score; alliance ends (no longer Allied). |
+| Call to arms AI join threshold | 50 | AI ally joins the war if relation score with the defended ally is ≥ this value. |
 
 ### Player-facing relation display
 

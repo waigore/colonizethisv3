@@ -210,6 +210,9 @@ TurnResolutionResult resolveTurnForGame({
 
   /// Overture accept/reject decisions from human target(s); when set, Diplomacy phase uses these and does not suspend.
   List<OvertureDecision>? overtureDecisions,
+
+  /// Call to arms accept/refuse from human ally(ies); when set, Diplomacy phase applies and does not suspend on CTA.
+  List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
@@ -286,11 +289,25 @@ TurnResolutionResult resolveTurnForGame({
             orders,
             onDialogue: onDialogue,
             overtureDecisions: overtureDecisions,
+            callToArmsDecisions: callToArmsDecisions,
           );
           if (diploResult.isPending) {
-            return TurnResolutionPendingOvertures(
+            final po = diploResult.pendingOvertures;
+            if (po != null && po.isNotEmpty) {
+              return TurnResolutionPendingOvertures(
+                game: diploResult.game,
+                pendingOvertures: po,
+              );
+            }
+            final cta = diploResult.pendingCallToArms;
+            if (cta == null || cta.isEmpty) {
+              throw StateError(
+                'logic: diplomacy pending but no overtures or call to arms',
+              );
+            }
+            return TurnResolutionPendingCallToArms(
               game: diploResult.game,
-              pendingOvertures: diploResult.pendingOvertures!,
+              pendingCallToArms: cta,
             );
           }
           state = diploResult.game;
@@ -387,6 +404,9 @@ Game requireTurnResolutionComplete(TurnResolutionResult result) {
     TurnResolutionPendingOvertures() => throw StateError(
       'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
     ),
+    TurnResolutionPendingCallToArms() => throw StateError(
+      'Turn resolution is pending call to arms; use resumeTurnResolutionWithCallToArmsDecisions',
+    ),
   };
 }
 
@@ -426,6 +446,41 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     onProductionComplete: onProductionComplete,
     startFromPhase: TurnPhase.diplomacy,
     overtureDecisions: decisions,
+  );
+}
+
+/// Resumes turn resolution after human ally(ies) responded to call to arms.
+TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
+  required Game game,
+  required List<CallToArmsDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    callToArmsDecisions: decisions,
   );
 }
 

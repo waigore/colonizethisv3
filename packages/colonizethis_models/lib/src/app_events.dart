@@ -282,6 +282,13 @@ class OvertureRequiredEvent extends GameToUIEvent {
   final List<Object> overtures; // OvertureOffer
 }
 
+/// Emitted when human ally must accept or refuse call to arms after a GP war declaration.
+class CallToArmsRequiredEvent extends GameToUIEvent {
+  const CallToArmsRequiredEvent({required this.pending});
+  /// [CallToArmsPending] from colonizethis_logic (kept as Object to avoid package cycle).
+  final List<Object> pending;
+}
+
 /// Emitted when save/load completes.
 class SaveGameCompleteEvent extends GameToUIEvent {
   const SaveGameCompleteEvent({required this.gameId});
