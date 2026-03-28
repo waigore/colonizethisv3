@@ -66,6 +66,10 @@ Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine
 
 Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tech catalog MUST have exactly one row in this table. `carrack` MUST NOT appear in `shipUnlockIds` (no unlocking tech).
 
+### Ship food upkeep (canonical)
+
+**Source of truth:** Per turn, each ship consumes **2 food units** (grain/meat, same stockpile abstraction as land military upkeep). Values are stored on `ShipEconomyEntry.foodUpkeep` in colonizethis_data (currently **2** for every row). Consumption phase order and invalid-id behavior: [workers-and-population.md](workers-and-population.md) § Consumption and Production.
+
 ### Ship combat and cargo stats (canonical)
 
 **Source of truth:** The table below defines per-ship **FRP**, **RNG**, **ARM**, **HULL**, **MV**, **interceptRating**, **fleeRating**, and **cargoHold** for naval combat, interception, and home-fleet cargo (`NavalStatsCatalog` and related code MUST match). **Warships** use `cargoHold = 0` (they do not contribute merchant cargo capacity). **Merchants** use `cargoHold ≥ 1`.

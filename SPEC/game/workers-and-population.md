@@ -38,6 +38,8 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 - Without luxury: trained worker produces no labour that turn (but is not removed).
 - Production uses labour: one labour per resource input consumed by a recipe (e.g. 2 timber → 1 lumber = 2 labour).
 - Total food demand = workers + navy + army.
+- **Navy food:** Each ship in the player's fleets consumes **2 food units** per turn (same grain/meat abstraction as military upkeep; see [ships-and-naval.md](ships-and-naval.md) § Ship food upkeep). Deduction order for the Consumption phase: **land military regiments first**, then **navy (all owned ships in all fleets)**, then **workers** (with worker starvation and luxury deduction unchanged). Any `ship_type_id` present in fleet state that is **not** in `ShipEconomyCatalog` is invalid data: the System **must fail** turn resolution (session error) rather than ignore or silently skip.
+- **Naval combat:** Navy feeding shortfall uses the **same morale multipliers** as land military feeding shortfall for that player (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Consumption): effective naval strength in sea battles is scaled by that multiplier derived from `fullyFedShips / totalShips` for the turn.
 
 ---
 
@@ -52,7 +54,7 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets).
 
-**Current scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). **Luxury consumption** is in scope: trained workers consume one unit of their tier luxury per turn (refinedSugar / cigars / furHats); shortage reduces that worker's labour contribution to zero for that turn (worker is not removed). Worker tier training (paper + cash → next tier) remains deferred until Recruiting/Training quantities are defined or a simplification is chosen.
+**Current scope:** Food consumption and starvation are implemented in economy_consumption.dart (peasant 1 food, trained 2 food; starvation order: peasants first, then apprentices, journeymen, masters). Navy food: 2 units per ship per turn after land military, before workers. **Luxury consumption** is in scope: trained workers consume one unit of their tier luxury per turn (refinedSugar / cigars / furHats); shortage reduces that worker's labour contribution to zero for that turn (worker is not removed). Worker tier training (paper + cash → next tier) remains deferred until Recruiting/Training quantities are defined or a simplification is chosen.
 
 ---
 
@@ -66,6 +68,14 @@ Data structures in [economy-models.md](../program/economy-models.md). Worker mod
 ---
 
 ## Acceptance Criteria
+
+- Given a player owns one or more fleets whose `shipTypeIds` entries are all present in `ShipEconomyCatalog` and the player has a non-negative integer quantity of grain and meat in the central stockpile  
+  When the System executes the Consumption phase for that player after land military upkeep  
+  Then the System deducts **2 food units per ship** (from grain and meat per the same rules as military upkeep) for every ship in those fleets before deducting worker food, and does not reduce any stockpile commodity quantity below zero except by those deductions.
+
+- Given a player's fleet lists a `ship_type_id` that is not a key in `ShipEconomyCatalog`  
+  When the System executes the Consumption phase for that player  
+  Then the System fails turn resolution with an error (invalid fleet data).
 
 - Given a player has a WorkerPool with non-negative integer counts for each worker tier and a central stockpile as described in [stockpiles-and-production.md](stockpiles-and-production.md)  
   When the System executes the Consumption phase for that player  

@@ -294,6 +294,7 @@ Game runNavalInterceptionCombatPhase(
   Game game,
   MapTopology topology,
   Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
+  Map<String, double> navalFeedingCoverageByPlayerId = const {},
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
   GameEventBus? eventBus,
@@ -330,6 +331,7 @@ Game runNavalInterceptionCombatPhase(
       seed,
       side1CanRetreat: retreatZoneSide1 != null,
       side2CanRetreat: retreatZoneSide2 != null,
+      navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
     );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
