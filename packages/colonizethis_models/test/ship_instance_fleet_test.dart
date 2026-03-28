@@ -1,5 +1,5 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('shipInstancesForTransferCounts', () {
