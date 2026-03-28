@@ -144,5 +144,61 @@ void main() {
         isTrue,
       );
     });
+
+    test('applyMoveOrdersToRegion emits unit_not_found at debug when unit absent',
+        () {
+      const regionId = 'oldWorld';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
+          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'P1', id2: 'P2'),
+        ],
+      );
+
+      final region = RegionData(
+        provinces: const [
+          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'P2', regionId: regionId, ownerId: 'p2'),
+        ],
+        units: const [],
+      );
+
+      final orders = {
+        'p1': [
+          const MoveOrder(unitId: 'missing', destinationProvinceId: 'P2'),
+        ],
+      };
+
+      applyMoveOrdersToRegion(
+        region,
+        topology,
+        orders,
+        regionId: regionId,
+      );
+
+      final movement = _movementMessages(capturedEvents);
+      expect(
+        movement.any(
+          (m) =>
+              m.contains('logic: movement ignored') &&
+              m.contains('reason=unit_not_found') &&
+              m.contains('unitId=missing'),
+        ),
+        isTrue,
+      );
+      expect(
+        movement.any(
+          (m) =>
+              m.contains('logic: movement apply') &&
+              m.contains('orders=1') &&
+              m.contains('applied=0') &&
+              m.contains('ignored=1'),
+        ),
+        isTrue,
+      );
+    });
   });
 }

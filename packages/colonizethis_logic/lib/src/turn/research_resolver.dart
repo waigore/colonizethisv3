@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
@@ -6,13 +7,20 @@ import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';
 import 'research_rules.dart';
 
+final _log = logicLogger();
+
 /// Research phase resolution. SPEC/program/research-resolution.md.
 Game resolveResearchPhase(Game game, Orders orders) {
+  final turn = game.worldState.turnState.turnNumber;
   final researchByPlayer = orders.researchOrdersByPlayerId;
+  _log.i('logic: research phase start turn=$turn');
+
   if (researchByPlayer.isEmpty) {
+    _log.i('logic: research phase end turn=$turn playersWithOrders=0');
     return game;
   }
 
+  final playersWithOrders = researchByPlayer.values.where((o) => o.isNotEmpty).length;
   final updatedPlayers = <Player>[];
 
   for (final p in game.players) {
@@ -26,6 +34,10 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final slots = player.researchSlots ?? defaultResearchSlots;
     if (slots <= 0) {
+      _log.i(
+        'logic: research apply turn=$turn playerId=${player.id} '
+        'orders=${playerOrders.length} skipped=true reason=no_research_slots',
+      );
       updatedPlayers.add(player);
       continue;
     }
@@ -155,6 +167,13 @@ Game resolveResearchPhase(Game game, Orders orders) {
     final nextProgress =
         progress.isNotEmpty ? progress : const <String, int>{};
 
+    final treasuryDelta = treasury - player.treasury;
+    _log.i(
+      'logic: research apply turn=$turn playerId=${player.id} '
+      'orders=${playerOrders.length} treasuryDelta=$treasuryDelta '
+      'completedTechs=${toUnlock.length} inProgressTechs=${nextProgress.length}',
+    );
+
     updatedPlayers.add(
       player.copyWith(
         treasury: treasury,
@@ -166,6 +185,9 @@ Game resolveResearchPhase(Game game, Orders orders) {
     );
   }
 
+  _log.i(
+    'logic: research phase end turn=$turn playersWithOrders=$playersWithOrders',
+  );
   return game.copyWith(players: updatedPlayers);
 }
 
