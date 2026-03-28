@@ -22,6 +22,49 @@ class CapitalTile {
   static String tileKey(String regionId, String provinceId, int x, int y) =>
       '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
 
+  /// Parses a stored town/capital tile key `regionId|localId|x|y`.
+  /// [expectedProvinceId] must be the full id `regionId|localId` and match the key.
+  /// Throws [FormatException] if the string is empty, has fewer than four segments,
+  /// has non-integer x/y, or the implied province id does not equal [expectedProvinceId].
+  static CapitalTile parseTownTileKey(
+    String townTileKey,
+    String expectedProvinceId,
+  ) {
+    final trimmed = townTileKey.trim();
+    if (trimmed.isEmpty) {
+      throw FormatException(
+        'townTileKey is empty for province $expectedProvinceId',
+      );
+    }
+    final parts = trimmed.split('|');
+    if (parts.length < 4) {
+      throw FormatException(
+        'townTileKey must have at least 4 pipe-separated segments: "$townTileKey"',
+      );
+    }
+    final regionId = parts[0];
+    final localId = parts[1];
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) {
+      throw FormatException(
+        'townTileKey x and y must be integers: "$townTileKey"',
+      );
+    }
+    final fullProv = '$regionId|$localId';
+    if (fullProv != expectedProvinceId) {
+      throw FormatException(
+        'townTileKey implies province "$fullProv" but expected "$expectedProvinceId"',
+      );
+    }
+    return CapitalTile(
+      regionId: regionId,
+      provinceId: fullProv,
+      x: x,
+      y: y,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'regionId': regionId,
         'provinceId': provinceId,

@@ -185,7 +185,7 @@ TurnResolutionResult resolveTurnForGame({
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// Per-region topology for capital reassignment (SPEC/game/world-model-identity). When set, capital reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this.
+  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. Reassignment does not use [tileMapByRegion].
   Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -922,7 +922,6 @@ Game _runCombatPhase(
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
-  // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   final previousCapitalByPlayer = {
     for (final p in game.players) p.id: p.capitalProvinceId,
   };
@@ -961,15 +960,12 @@ Game _runCombatPhase(
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     battleIndex++;
   }
-  // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment. Uses region-scoped topology when topologyByRegion is set (#315).
-  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
-    state = applyCapitalReassignmentAfterCombat(
-      state,
-      topology,
-      tileMapByRegion,
-      topologyByRegion: topologyByRegion,
-    );
-  }
+  // Capital reassignment: any player with capital set who no longer owns that province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+  state = applyCapitalReassignmentAfterCombat(
+    state,
+    topology,
+    topologyByRegion: topologyByRegion,
+  );
   // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
   state = applyGreatPowerFall(state, previousCapitalByPlayer);
   return state;

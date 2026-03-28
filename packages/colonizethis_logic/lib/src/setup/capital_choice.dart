@@ -150,6 +150,31 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   return (provinceId, tile);
 }
 
+/// New capital **province** id for runtime reassignment after combat (not init capital choice).
+/// [ownedProvinceIds] are full `regionId|localId`. Prefers **seaboard** provinces; if none, uses inland.
+/// Deterministic: ascending sort by full id, first in the preferred set.
+/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+String pickCapitalProvinceIdForReassignment(
+  List<String> ownedProvinceIds,
+  MapTopology topology,
+) {
+  if (ownedProvinceIds.isEmpty) {
+    throw ArgumentError.value(
+      ownedProvinceIds,
+      'ownedProvinceIds',
+      'must be non-empty',
+    );
+  }
+  final sorted = List<String>.from(ownedProvinceIds)..sort();
+  final seaBound = sorted
+      .where(
+        (id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)),
+      )
+      .toList();
+  if (seaBound.isNotEmpty) return seaBound.first;
+  return sorted.first;
+}
+
 /// Updates WorldState with capital port and road for the given capital tile. Shared by setCapital and setCapitalForMinor/Tribe.
 WorldState applyCapitalPortAndRoad(
   WorldState worldState,
@@ -279,38 +304,25 @@ Game setCapital({
   return game.copyWith(worldState: worldState, players: updatedPlayers);
 }
 
-/// Sets [playerId]'s capital for reassignment after loss. Same as [setCapital] when province is sea-bound; when not (inland fallback), only updates capital province/tile. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+/// Sets [playerId]'s capital after runtime reassignment (combat). Updates **only** player
+/// `capitalProvinceId` and `capitalTile`; does not place ports, roads, or change province
+/// `townTileKey`. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
 Game setCapitalForReassignment({
   required Game game,
   required String playerId,
   required String provinceId,
   required CapitalTile tile,
-  required MapTopology topology,
-  required Map<String, TileMapResult> tileMapByRegion,
 }) {
   if (tile.provinceId != provinceId) {
     throw ArgumentError(
       'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
-  final seaBound = isProvinceSeaBound(
-    topology,
-    ProvinceId.localIdFrom(provinceId),
-  );
-  final worldState = seaBound
-      ? applyCapitalPortAndRoad(
-          game.worldState,
-          provinceId,
-          tile,
-          topology,
-          tileMapByRegion,
-        )
-      : game.worldState;
   final updatedPlayers = game.players.map((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   }).toList();
-  return game.copyWith(worldState: worldState, players: updatedPlayers);
+  return game.copyWith(players: updatedPlayers);
 }
 
 /// Sets a Minor Nation's capital. Port/road applied only when province is sea-bound.
