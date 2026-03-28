@@ -61,9 +61,10 @@ Player fullAvailabilityProductionPlayer() {
 }
 
 /// Limited stockpile: only enough for a few runs of some recipes.
+/// Grain covers debug-init military/navy upkeep so worker effective labour matches pool size.
 Stockpile get _partialStockpile => Stockpile(
       quantities: {
-        CommodityCatalog.grain.id: 10,
+        CommodityCatalog.grain.id: 500,
         CommodityCatalog.timber.id: 6,
         CommodityCatalog.iron.id: 4,
         CommodityCatalog.coal.id: 2,

@@ -12,8 +12,8 @@ TurnResolver runs phases in **fixed order**:
 2. **Diplomacy** — Before Movement so war/peace apply same turn. Overtures, Join Empire/Colony, alliances, Declare War, Peace, relation updates. [diplomacy-resolution.md](diplomacy-resolution.md)
 3. **Extraction** — Tile yields to stockpile.
 4. **Riches to treasury** — Riches convert to treasury at base price; removed from stockpile.
-5. **Production** — Recipes and labour; outputs to stockpile.
-6. **Consumption** — Military food upkeep first, then workers/navy from remainder.
+5. **Consumption** — Military food upkeep first, then workers/navy (food + luxury); strike rules per [workers-and-population.md](../game/workers-and-population.md).
+6. **Production** — Recipes and idle labour; outputs to stockpile (uses post-Consumption stockpile and labour).
 7. **Research** — Read orders; validate treasury; deduct spending; add progress; complete techs. [research-resolution.md](research-resolution.md)
 8. **Movement** — Apply land/naval MoveOrders and mission assignments; update unit/fleet locations.
 9. **Minor Regiment Upgrade** — Compute `maxGreatPowerMilitaryLevel` from post-Research Great Power buildable regiment tiers; set Old World Minor Nations `effectiveMilitaryLevel`; upgrade eligible minor land regiments in place; set Tribe `effectiveMilitaryLevel` to 1 (no parity).
@@ -26,7 +26,7 @@ TurnResolver runs phases in **fixed order**:
 
 ## Dependency Rules
 
-Extraction → riches to treasury → production → consumption **must** run before movement and build. Research runs after consumption so treasury is current. Build vs movement ordering is implementation-defined within that constraint.
+Extraction → riches to treasury → **consumption → production** **must** run before movement and build, in that order. Research runs after production (and consumption) so treasury is current. Build vs movement ordering is implementation-defined within that constraint.
 
 ---
 
@@ -44,8 +44,8 @@ Same TurnResolver and phase order used in main game and ctdev sim_game; identica
 
 ## Acceptance criteria
 
-- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–13 above in that order (Orders → Diplomacy → Extraction → Riches to treasury → Production → Consumption → Research → Movement → Minor Regiment Upgrade → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
-- **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Production; Production before Consumption. Extraction through Consumption complete before Movement and before Build / work. Research runs after Consumption so treasury is current. Build vs Movement relative order is implementation-defined subject to that constraint. Given a resolver run, the system does not apply extraction/riches/production/consumption effects after movement or build has started.
+- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–13 above in that order (Orders → Diplomacy → Extraction → Riches to treasury → Consumption → Production → Research → Movement → Minor Regiment Upgrade → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
+- **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Consumption; Consumption before Production. Extraction through Production complete before Movement and before Build / work. Research runs after Production so treasury is current. Build vs Movement relative order is implementation-defined subject to that constraint. Given a resolver run, the system does not apply extraction/riches/consumption/production effects after movement or build has started.
 - **Determinism:** Given the same starting WorldState, merged orders, ruleset, and random seeds, TurnResolver produces the same resulting WorldState (and victory state) in main game and in ctdev sim_game; phase order is identical in both.
 - **Implementation contract:** Per-phase behaviour is specified in [turn-resolution-phase-details.md](turn-resolution-phase-details.md); this document is the single source of truth for phase sequence and ordering. Tests may assert phase order and dependency rules by inspecting resolver behaviour or by comparing outcomes across runs.
 - **Blocking:** When the Diplomacy phase encounters an overture whose target is a human-controlled Great Power, turn resolution returns a result indicating pending overture decision(s). The app must not advance the turn until it has collected the human’s response and called the resume API. When no human input is pending, resolution runs to completion and returns the final game state.

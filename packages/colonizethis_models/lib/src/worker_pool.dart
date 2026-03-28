@@ -30,8 +30,8 @@ class WorkerPool {
 
   /// Raw labour supply per turn from all tiers (sum of tier × count).
   ///
-  /// Does not apply luxury gating; see `effectiveLabourForWorkers` in
-  /// `colonizethis_logic` for production-time effective labour.
+  /// Does not apply food/luxury strike gating; see [WorkerIdleCounts] and
+  /// `effectiveLabourForWorkers` / `resolveProduction` in `colonizethis_logic`.
   int get labourSupplyPerTurn =>
       peasants * labourPerPeasantTurn +
       apprentices * labourPerApprenticeTurn +

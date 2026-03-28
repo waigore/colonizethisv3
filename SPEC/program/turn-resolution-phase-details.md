@@ -28,15 +28,15 @@ For each riches commodity (gold, silver, gems, diamonds, spices): add quantity �
 
 ---
 
-## Production
+## Consumption
 
-Per recipe: consume inputs and labour from stockpile and WorkerPool; add outputs. Insufficient input: skip or partial per spec.
+Per player, order is: (1) **Land military regiments** — compute food demand, consume from stockpile first, derive **land** feeding coverage ratio → land combat morale multiplier (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (2) **Navy** — all ships in that player's fleets: food per ship from `ShipEconomyCatalog` (default ruleset: 2 food units per ship); consume from stockpile; derive **naval** feeding coverage (`fullyFedShips / totalShips`, or 1.0 when `totalShips == 0`). Apply the **same three-tier morale multiplier** to **effective naval strength** in sea battles as for land combat. (3) **Workers** — per [workers-and-population.md](../game/workers-and-population.md): food priority **Masters → Journeymen → Apprentices → Peasants**; workers who lack food or (for trained tiers) lack luxury assignment are **on strike** (no labour) but **not removed**; **luxury deduction** only for food-fed trained workers who receive a unit, up to stockpile. Upkeep shortfall for military and navy affects combat multipliers, not unit/ship count. Unknown `ship_type_id` in fleet state is a **fatal** resolution error.
 
 ---
 
-## Consumption
+## Production
 
-Per player, order is: (1) **Land military regiments** — compute food demand, consume from stockpile first, derive **land** feeding coverage ratio → land combat morale multiplier (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (2) **Navy** — all ships in that player's fleets: **2 food units per ship**; consume from stockpile; derive **naval** feeding coverage (`fullyFedShips / totalShips`, or 1.0 when `totalShips == 0`). Apply the **same three-tier morale multiplier** to **effective naval strength** in sea battles as for land combat. (3) **Workers** — per [workers-and-population.md](../game/workers-and-population.md): food from remainder, starvation removes workers, then **luxury deduction** (refinedSugar/apprentices, cigars/journeymen, furHats/masters), up to stockpile. Upkeep shortfall for military and navy affects combat multipliers, not unit/ship count. Unknown `ship_type_id` in fleet state is a **fatal** resolution error.
+Runs **after** Consumption for that turn. Per recipe: consume inputs and labour from stockpile and **idle worker labour** (from post-Consumption `WorkerIdleCounts`); add outputs. Insufficient input: skip or partial per spec. Labour does not use raw `WorkerPool` headcounts alone.
 
 ---
 

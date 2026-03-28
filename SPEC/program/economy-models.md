@@ -24,8 +24,8 @@ Turn economic phases (in order):
 
 1. **Extraction:** Province tiles produce; resources flow to player stockpile via auto-transport. Per game/extraction-and-improvements.md.
 2. **Riches-to-treasury:** Riches in stockpile convert to treasury at base price; removed from stockpile. The list of riches commodity ids and base price per commodity is defined at program level in package **colonizethis_data** (riches catalog). Scenario overrides may apply a **richesCashMultiplier** (e.g. 1.5) to the treasury conversion; see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Riches to treasury) and resolution API. In the **default ColonizeThis ruleset**, `game.richesCashMultiplier` is 1.0 unless a scenario or ruleset explicitly overrides it; tests and sim_economy may pass higher multipliers (such as 1.5) to explore variant economies without changing the default balance.
-3. **Production:** Consume commodities and labour; produce outputs to stockpile. **Effective labour** for production is capped by worker luxury: peasants×1 + min(apprentices, stockpile.refinedSugar)×4 + min(journeymen, stockpile.cigars)×6 + min(masters, stockpile.furHats)×8 (stockpile at start of Production phase). Per game/stockpiles-and-production.md and [workers-and-population.md](../game/workers-and-population.md) § Luxury consumption.
-4. **Consumption:** Land military regiments consume food upkeep first, then **navy** (all ships in the player's fleets, 2 food units per ship per [workers-and-population.md](../game/workers-and-population.md)), then **workers** (food, starvation, luxury per workers-and-population.md). Military and navy food shortfalls do not remove units; **land** feeding coverage drives land combat morale multipliers; **naval** feeding coverage (`fullyFedShips / totalShips`) drives the **same** morale multipliers for **naval** strength in sea battles per [turn-resolution-phase-details.md](turn-resolution-phase-details.md) and [naval-combat-resolution.md](naval-combat-resolution.md). Unknown `ship_type_id` in fleets fails turn resolution.
+3. **Consumption:** Land military regiments consume food upkeep first, then **navy** (ships in the player's fleets; per-ship food from `ShipEconomyCatalog`), then **workers** (food priority Masters→Journeymen→Apprentices→Peasants; strike for missing food/luxury, **not removed**; luxury only for food-fed trained workers who receive a unit). Military and navy food shortfalls do not remove units; **land** feeding coverage drives land combat morale multipliers; **naval** feeding coverage (`fullyFedShips / totalShips`, or 1.0 when there are no ships) drives the **same** morale multipliers for **naval** strength in sea battles per [turn-resolution-phase-details.md](turn-resolution-phase-details.md) and [naval-combat-resolution.md](naval-combat-resolution.md). `WorkerIdleCounts` / `ConsumptionResult.idleLabour` capture post-consumption labour. Unknown `ship_type_id` in fleets fails turn resolution.
+4. **Production:** Runs **after** Consumption. Consume commodities and **idle labour** from post-Consumption `WorkerIdleCounts`; produce outputs to stockpile. `resolveProduction` takes `idleLabour` from the consumption pass. Per game/stockpiles-and-production.md and workers-and-population.md.
 
 ---
 
@@ -33,7 +33,7 @@ Turn economic phases (in order):
 
 | Aspect | Detail |
 |---|---|
-| Phase | Spans extraction through consumption |
+| Phase | Spans extraction through production (consumption before production) |
 | Upstream | Extraction pipeline, game rules (stockpiles-and-production, workers-and-population) |
 | Downstream | Player treasury, military morale, production output |
 
@@ -46,13 +46,13 @@ Turn economic phases (in order):
 
 ## Acceptance criteria and testing
 
-- **Phase order:** Extraction → Riches → Production → Consumption is fixed and tested (e.g. turn resolver and integration tests).
+- **Phase order:** Extraction → Riches → Consumption → Production is fixed and tested (e.g. turn resolver and integration tests).
 - **Serialization:** Stockpile and WorkerPool are serializable for save/load; tests cover round-trip or snapshot behaviour.
 - **Riches:** Conversion uses base price from colonizethis_data; riches are removed from stockpile; optional richesCashMultiplier scales treasury delta when provided. When no scenario override is active, the main game uses a multiplier of exactly 1.0.
-- **Consumption:** Land military fed first, then navy (2 food units per ship), then workers (food, starvation, luxury). Land feeding coverage from `ConsumptionResult` feeds land combat; naval feeding coverage feeds sea combat (same multiplier tiers as land). `resolveConsumption` throws if a fleet references an unknown ship type id.
-- **Production:** Effective labour capped by luxury availability at start of Production phase (workers-and-population.md). Inputs and labour consumed; outputs added to stockpile; insufficient input skips or partial per recipe spec.
+- **Consumption:** Land military fed first, then navy (per catalog food upkeep per ship), then workers (food priority Masters→Peasants; luxury for food-fed trained only). Workers are not removed for missing food (strike). Land and naval feeding coverage from `ConsumptionResult` feed land and sea combat (same multiplier tiers). `resolveConsumption` throws if a fleet references an unknown ship type id.
+- **Production:** Effective labour from `WorkerIdleCounts` after Consumption (workers-and-population.md). Inputs and labour consumed; outputs added to stockpile; insufficient input skips or partial per recipe spec.
 
-Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, navy-before-workers, worker feeding, starve order, unknown ship id error); resolveProduction. Integration: turn resolver runs phases in order; consumption feeding coverage flows to land and naval combat morale where applicable.
+Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, navy-before-workers, worker food priority, strike / idle counts, unknown ship id error); resolveProduction (with `idleLabour`). Integration: turn resolver runs phases in order; consumption coverage flows to land and naval combat morale and production labour where applicable.
 
 ---
 
