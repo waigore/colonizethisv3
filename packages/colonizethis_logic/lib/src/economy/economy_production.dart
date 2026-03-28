@@ -2,14 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'worker_economy.dart';
-
 final _log = logicLogger();
-
-int _effectiveLabourForWorkers({
-  required WorkerPool workers,
-  required Stockpile stockpile,
-}) => effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
@@ -39,8 +32,9 @@ class ProductionResult {
 
 /// Resolves production for a single player for one turn.
 ///
-/// - [stockpile]: starting stockpile.
+/// - [stockpile]: starting stockpile (after Consumption for a normal turn).
 /// - [workers]: starting WorkerPool (unchanged by production itself).
+/// - [idleLabour]: idle worker headcounts from Consumption (fed + luxury when required).
 /// - [assignments]: per-recipe labour assignments for this turn.
 ///
 /// For each assignment, the number of runs is limited by:
@@ -49,15 +43,13 @@ class ProductionResult {
 ProductionResult resolveProduction({
   required Stockpile stockpile,
   required WorkerPool workers,
+  required WorkerIdleCounts idleLabour,
   required List<AssignedRecipe> assignments,
 }) {
   Stockpile current = stockpile;
   final productionByRecipe = <String, int>{};
 
-  final effectiveLabour = _effectiveLabourForWorkers(
-    workers: workers,
-    stockpile: stockpile,
-  );
+  final effectiveLabour = idleLabour.effectiveLabour;
   var remainingEffectiveLabour = effectiveLabour;
 
   for (final assignment in assignments) {
