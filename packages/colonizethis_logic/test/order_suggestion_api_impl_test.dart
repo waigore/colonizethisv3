@@ -335,7 +335,7 @@ void main() {
     });
 
     test(
-      'returns grantAid only when embassy and consulate both allow grant and subsidy (one per target)',
+      'toward minor at peace with join-empire overture suggests declareWar (primary before economic)',
       () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
@@ -348,7 +348,7 @@ void main() {
         ),
         players: [
           const Player(id: 'gp1', displayName: 'A', isHuman: false)
-              .copyWith(treasury: 200),
+              .copyWith(treasury: 5000),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
@@ -374,8 +374,7 @@ void main() {
       final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
       final toMinor1 = list.where((o) => o.targetFactionId == 'minor1').toList();
       expect(toMinor1, hasLength(1));
-      expect(toMinor1.single.type, DiplomaticOrderType.grantAid);
-      expect(toMinor1.single.amount, 100);
+      expect(toMinor1.single.type, DiplomaticOrderType.declareWar);
     });
 
     test('does not suggest toward target already in draft diplomatic orders', () {
@@ -442,31 +441,43 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       final suggestions =
           api.suggestDiplomaticOrders(view, game, topology, const Orders());
-      final targets = <String>{};
+      final byTarget = <String, List<DiplomaticOrderType>>{};
       for (final o in suggestions) {
-        expect(targets.add(o.targetFactionId), isTrue,
-            reason: 'at most one suggestion per target');
-        final addResult = OrderEngine().addDiplomaticOrderWithContext(
+        byTarget.putIfAbsent(o.targetFactionId, () => []).add(o.type);
+      }
+      for (final e in byTarget.entries) {
+        final types = e.value;
+        expect(types.toSet().length, types.length,
+            reason: 'at most one suggestion per type per target ${e.key}');
+        final nonEconomic = types
+            .where(
+              (t) =>
+                  t != DiplomaticOrderType.grantAid &&
+                  t != DiplomaticOrderType.setSubsidy,
+            )
+            .length;
+        expect(nonEconomic, lessThanOrEqualTo(1),
+            reason: 'at most one primary diplomatic suggestion per target ${e.key}');
+      }
+      final eng = OrderEngine();
+      for (final o in suggestions) {
+        final addResult = eng.addDiplomaticOrderWithContext(
           game,
           topology,
           'gp1',
           o,
         );
-        expect(addResult.isAccepted, isTrue, reason: '${o.type} ${o.targetFactionId}');
-        final withOrder = Orders(
-          diplomaticOrdersByPlayerId: {
-            'gp1': [o],
-          },
-        );
-        final validateResults = OrderEngine(initialOrders: withOrder)
-            .validatePlayerOrdersWithContext(game, topology, 'gp1');
-        expect(validateResults, isNotEmpty);
-        expect(
-          validateResults.every((r) => r.isAccepted),
-          isTrue,
-          reason: 'validatePlayerOrdersWithContext for $o',
-        );
+        expect(addResult.isAccepted, isTrue,
+            reason: '${o.type} ${o.targetFactionId} after prior suggestions');
       }
+      final validateResults =
+          eng.validatePlayerOrdersWithContext(game, topology, 'gp1');
+      expect(validateResults, isNotEmpty);
+      expect(
+        validateResults.every((r) => r.isAccepted),
+        isTrue,
+        reason: 'full merged diplomatic list validates',
+      );
     });
 
     test('removing pending diplomatic order restores suggestions for that target', () {
