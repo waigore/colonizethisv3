@@ -100,7 +100,8 @@ class GameService {
   List<String> listGameIds() => _adapter.listGameIds(_box);
 
   /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
-  /// [TurnResolutionPendingOvertures], or [TurnResolutionPendingIntervention].
+  /// or a pending result: [TurnResolutionPendingOvertures], [TurnResolutionPendingIntervention],
+  /// or [TurnResolutionPendingCallToArms].
   /// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
   ///
   /// When result is [TurnResolutionComplete], saves and returns. When pending human input,
@@ -142,6 +143,52 @@ class GameService {
     } else if (result is TurnResolutionPendingIntervention) {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
+      );
+    }
+    return result;
+  }
+
+  /// Resumes turn resolution after the user has submitted call to arms decisions.
+  TurnResolutionResult resumeCallToArmsDecisions(
+    Game game,
+    List<CallToArmsDecision> decisions,
+    Orders orders, {
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final cache = _mapCache[game.id];
+    final topo = cache?.combinedTopology ?? const MapTopology();
+    final tileMaps = cache?.tileMapByRegion;
+    final result = resumeTurnResolutionWithCallToArmsDecisions(
+      game: game,
+      decisions: decisions,
+      topology: topo,
+      orders: orders,
+      tileMapByRegion: tileMaps,
+      eventBus: logicEventBus,
+      onGameEvent: onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+        ),
+      );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
       );
     }
     return result;
@@ -185,6 +232,10 @@ class GameService {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
       );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
+      );
     }
     return result;
   }
@@ -222,6 +273,10 @@ class GameService {
     } else if (result is TurnResolutionPendingIntervention) {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
       );
     }
     return result;

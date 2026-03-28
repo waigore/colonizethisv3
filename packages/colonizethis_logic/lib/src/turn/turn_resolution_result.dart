@@ -4,6 +4,8 @@
 /// supplies decisions and calls the resume API.
 /// When the Diplomacy phase needs intervention choices, resolution returns
 /// [TurnResolutionPendingIntervention] and blocks until [resumeTurnResolutionWithInterventionDecisions].
+/// When call to arms requires a human ally, resolution returns
+/// [TurnResolutionPendingCallToArms].
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -109,8 +111,65 @@ class InterventionDecision {
           choice == other.choice;
 
   @override
+  int get hashCode => Object.hash(
+        aggressorGpId,
+        defenderMinorOrTribeId,
+        interveningGpId,
+        choice,
+      );
+}
+
+/// One call-to-arms prompt: ally [allyGpId] must choose to join defender [defenderGpId]
+/// against aggressor [aggressorGpId]. SPEC/game/diplomacy.md mutual defence.
+class CallToArmsPending {
+  const CallToArmsPending({
+    required this.allyGpId,
+    required this.defenderGpId,
+    required this.aggressorGpId,
+  });
+
+  final String allyGpId;
+  final String defenderGpId;
+  final String aggressorGpId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CallToArmsPending &&
+          allyGpId == other.allyGpId &&
+          defenderGpId == other.defenderGpId &&
+          aggressorGpId == other.aggressorGpId;
+
+  @override
+  int get hashCode => Object.hash(allyGpId, defenderGpId, aggressorGpId);
+}
+
+/// Human ally's decision for one call to arms.
+class CallToArmsDecision {
+  const CallToArmsDecision({
+    required this.allyGpId,
+    required this.defenderGpId,
+    required this.aggressorGpId,
+    required this.accepted,
+  });
+
+  final String allyGpId;
+  final String defenderGpId;
+  final String aggressorGpId;
+  final bool accepted;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CallToArmsDecision &&
+          allyGpId == other.allyGpId &&
+          defenderGpId == other.defenderGpId &&
+          aggressorGpId == other.aggressorGpId &&
+          accepted == other.accepted;
+
+  @override
   int get hashCode =>
-      Object.hash(aggressorGpId, defenderMinorOrTribeId, interveningGpId, choice);
+      Object.hash(allyGpId, defenderGpId, aggressorGpId, accepted);
 }
 
 /// Result of the Diplomacy phase: complete or pending human input.
@@ -119,6 +178,7 @@ class DiplomacyPhaseResult {
     this.game, {
     this.pendingOvertures,
     this.pendingInterventions,
+    this.pendingCallToArms,
   });
 
   final Game game;
@@ -126,10 +186,13 @@ class DiplomacyPhaseResult {
   final List<OvertureOffer>? pendingOvertures;
   /// Non-null when phase suspended for intervention choices (GP with embassy or purchased land).
   final List<InterventionPrompt>? pendingInterventions;
+  /// Non-null when phase suspended because a human ally must accept/refuse call to arms.
+  final List<CallToArmsPending>? pendingCallToArms;
 
   bool get isPending =>
       (pendingOvertures != null && pendingOvertures!.isNotEmpty) ||
-      (pendingInterventions != null && pendingInterventions!.isNotEmpty);
+      (pendingInterventions != null && pendingInterventions!.isNotEmpty) ||
+      (pendingCallToArms != null && pendingCallToArms!.isNotEmpty);
 }
 
 /// Sealed result of turn resolution: complete or pending human input.
@@ -166,4 +229,16 @@ class TurnResolutionPendingIntervention extends TurnResolutionResult {
 
   final Game game;
   final List<InterventionPrompt> pendingInterventions;
+}
+
+/// Turn resolution suspended: human ally must accept or refuse call to arms.
+/// App prompts, then calls [resumeTurnResolutionWithCallToArmsDecisions].
+class TurnResolutionPendingCallToArms extends TurnResolutionResult {
+  const TurnResolutionPendingCallToArms({
+    required this.game,
+    required this.pendingCallToArms,
+  });
+
+  final Game game;
+  final List<CallToArmsPending> pendingCallToArms;
 }

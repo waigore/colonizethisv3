@@ -54,7 +54,7 @@ Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 - **`UIActionEvent`** — dialogs, navigation, panels, map locate/selection intents, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
 - **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**.
 - **`UISystemEvent`** — snackbar, overlay, notify.
-- **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`InterventionRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
+- **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`InterventionRequiredEvent`**, **`CallToArmsRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
 
 ---
 
@@ -117,12 +117,13 @@ class AppEventHandler {
 
 **`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
 
-- **`TurnResolutionCompleteEvent`** after `runTurnResolution`, **`resumeOvertureDecisions`**, or **`resumeInterventionDecisions`** completes with **`TurnResolutionComplete`**
+- **`TurnResolutionCompleteEvent`** after `runTurnResolution` or any resume method completes with **`TurnResolutionComplete`**
 - **`NewGameCreatedEvent`** after a new game is created and saved (sync **`createNewGame()`** or async phased **`createNewGameAsync()`** used by the shell)
-- **`OvertureRequiredEvent`** when `runTurnResolution` or `resumeOvertureDecisions` returns **`TurnResolutionPendingOvertures`**
-- **`InterventionRequiredEvent`** when `runTurnResolution` or `resumeInterventionDecisions` returns **`TurnResolutionPendingIntervention`**
+- **`OvertureRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingOvertures`**
+- **`InterventionRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingIntervention`**
+- **`CallToArmsRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingCallToArms`**
 
-When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnForGame`** / **`resumeTurnResolutionWithOvertureDecisions`** so **`GameEventBridge`** can subscribe and map logic **`GameEvent`** instances to **`GameToUIEvent`** on the app bus. **Full bridge:** **SPEC/program/game-event-bridge.md**.
+When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnForGame`** and the **`resumeTurnResolutionWith*`** entry points so **`GameEventBridge`** can subscribe and map logic **`GameEvent`** instances to **`GameToUIEvent`** on the app bus. **Full bridge:** **SPEC/program/game-event-bridge.md**.
 
 **Typed panels** (shell **`AppEventHandler`**): full **`Ref` / callback rules** in **[app-ui-wiring.md](app-ui-wiring.md)**.
 
@@ -173,6 +174,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 - Given a `GameEventBridge` started, When `stop()` is called, Then subsequent events on the logic bus are not forwarded.
 - Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingOvertures`, Then `AppEventBus` has emitted `OvertureRequiredEvent` before the result is returned.
 - Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingIntervention`, Then `AppEventBus` has emitted `InterventionRequiredEvent` before the result is returned.
+- Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingCallToArms`, Then `AppEventBus` has emitted `CallToArmsRequiredEvent` before the result is returned.
 
 ### Automated tests (must pass in CI)
 

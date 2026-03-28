@@ -82,6 +82,12 @@ const int relationScoreDisplayCordialMax = 69;
 /// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
 const int relationScoreWarDelta = 10;
 
+/// Score drop on ally refusing a call to arms; alliance ends (no longer Allied). SPEC/game/diplomacy.md.
+const int callToArmsRefusalScorePenalty = 20;
+
+/// AI ally joins the war if B–A relation score is at least this (inclusive). SPEC/game/diplomacy.md.
+const int callToArmsAiAcceptMinRelationScore = 50;
+
 /// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
 const int grantAidDefaultAmount = 1000;
 

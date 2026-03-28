@@ -148,3 +148,26 @@ final pendingOverturesProvider =
     NotifierProvider<PendingOverturesNotifier, List<OvertureOffer>?>(
       PendingOverturesNotifier.new,
     );
+
+/// When non-null, turn resolution is suspended; user must join or refuse call to arms.
+class PendingCallToArmsNotifier extends Notifier<List<CallToArmsPending>?> {
+  PendingCallToArmsNotifier([this._initial]);
+
+  final List<CallToArmsPending>? _initial;
+
+  @override
+  List<CallToArmsPending>? build() => _initial;
+
+  void setPending(List<CallToArmsPending>? value) {
+    state = value;
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
+final pendingCallToArmsProvider =
+    NotifierProvider<PendingCallToArmsNotifier, List<CallToArmsPending>?>(
+      PendingCallToArmsNotifier.new,
+    );
