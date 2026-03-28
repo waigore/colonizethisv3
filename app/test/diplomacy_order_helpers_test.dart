@@ -66,7 +66,7 @@ void main() {
             amount: 500,
           ),
         ),
-        'Subsidy (£500)',
+        'Set Subsidy (£500)',
       );
     });
   });

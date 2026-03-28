@@ -251,7 +251,7 @@ void main() {
           const DiplomaticOrder(
             type: DiplomaticOrderType.grantAid,
             targetFactionId: 'minor1',
-            amount: 10,
+            amount: 1000,
           ),
         );
         expect(noEmbassy.status, OrderValidationStatus.rejected);
@@ -270,7 +270,7 @@ void main() {
           const DiplomaticOrder(
             type: DiplomaticOrderType.grantAid,
             targetFactionId: 'minor1',
-            amount: 10,
+            amount: 1000,
           ),
         );
         expect(insufficient.status, OrderValidationStatus.rejected);
@@ -292,7 +292,7 @@ void main() {
             const DiplomaticOrder(
               type: DiplomaticOrderType.setSubsidy,
               targetFactionId: 'minor1',
-              amount: 50,
+              amount: 100,
             ),
           );
           expect(noConsulate.status, OrderValidationStatus.rejected);
@@ -310,13 +310,145 @@ void main() {
             const DiplomaticOrder(
               type: DiplomaticOrderType.setSubsidy,
               targetFactionId: 'minor1',
-              amount: 50,
+              amount: 100,
             ),
           );
           expect(insufficient.status, OrderValidationStatus.rejected);
           expect(insufficient.reason, contains('Insufficient treasury'));
         },
       );
+
+      test('grantAid rejects amount not a multiple of 1000', () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.embassy,
+          treasury: 5000,
+        );
+        final engine = OrderEngine();
+        final r = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 500,
+          ),
+        );
+        expect(r.status, OrderValidationStatus.rejected);
+        expect(r.reason, contains('multiple'));
+      });
+
+      test('setSubsidy rejects amount not a multiple of 100', () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.tradeConsulate,
+          treasury: 5000,
+        );
+        final engine = OrderEngine();
+        final r = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.setSubsidy,
+            targetFactionId: 'minor1',
+            amount: 150,
+          ),
+        );
+        expect(r.status, OrderValidationStatus.rejected);
+        expect(r.reason, contains('multiple'));
+      });
+
+      test('grantAid and setSubsidy toward same target accepted in one turn', () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.embassy,
+          treasury: 5000,
+        );
+        final engine = OrderEngine();
+        final g = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 1000,
+          ),
+        );
+        expect(g.status, OrderValidationStatus.accepted);
+        final s = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.setSubsidy,
+            targetFactionId: 'minor1',
+            amount: 1000,
+          ),
+        );
+        expect(s.status, OrderValidationStatus.accepted);
+      });
+
+      test('second grantAid toward same target rejected', () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.embassy,
+          treasury: 5000,
+        );
+        final engine = OrderEngine();
+        engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 1000,
+          ),
+        );
+        final second = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 1000,
+          ),
+        );
+        expect(second.status, OrderValidationStatus.rejected);
+      });
+
+      test('declareWar then grantAid toward same target rejected', () {
+        final game = _gpMinorBaseGame(
+          relationState: RelationState.atPeace,
+          overtureStage: OvertureStage.embassy,
+          treasury: 5000,
+        );
+        final engine = OrderEngine();
+        engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'minor1',
+          ),
+        );
+        final g = engine.addDiplomaticOrderWithContext(
+          game,
+          emptyTopology,
+          'gp1',
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 1000,
+          ),
+        );
+        expect(g.status, OrderValidationStatus.rejected);
+      });
     });
   });
 }

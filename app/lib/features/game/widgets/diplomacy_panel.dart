@@ -26,6 +26,9 @@ class DiplomacyRowData {
     this.powerScore,
     this.playerPowerScore,
     required this.pendingOrderTypes,
+    this.activeOutgoingSubsidyPerTurn,
+    this.pendingGrantAmount,
+    this.pendingSubsidyAmount,
   });
 
   final String factionId;
@@ -43,6 +46,15 @@ class DiplomacyRowData {
 
   /// Set of DiplomaticOrderType that are currently pending for this target faction.
   final Set<DiplomaticOrderType> pendingOrderTypes;
+
+  /// Active subsidy from human GP to this row's faction (£/turn), if any.
+  final int? activeOutgoingSubsidyPerTurn;
+
+  /// Pending grant aid amount for this target, if any.
+  final int? pendingGrantAmount;
+
+  /// Pending set subsidy amount for this target, if any.
+  final int? pendingSubsidyAmount;
 }
 
 /// Builds list of discovered factions and their available actions.
@@ -109,9 +121,28 @@ List<DiplomacyRowData> buildDiplomacyRows(
     return id;
   }
 
+  ({int? grant, int? subsidy, int? activeSub}) economicRowHints(String id) {
+    int? grantAmt;
+    int? subAmt;
+    for (final o in pending) {
+      if (o.targetFactionId != id) continue;
+      if (o.type == DiplomaticOrderType.grantAid) grantAmt = o.amount;
+      if (o.type == DiplomaticOrderType.setSubsidy) subAmt = o.amount;
+    }
+    int? activeSub;
+    for (final s in game.subsidyStates) {
+      if (s.payerId == humanPlayerId && s.targetId == id) {
+        activeSub = s.amountPerTurn;
+        break;
+      }
+    }
+    return (grant: grantAmt, subsidy: subAmt, activeSub: activeSub);
+  }
+
   List<DiplomacyRowData> rows = [];
   final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
+    final hints = economicRowHints(id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -123,11 +154,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: greatPowerPowerScore(game, id),
         playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        activeOutgoingSubsidyPerTurn: hints.activeSub,
+        pendingGrantAmount: hints.grant,
+        pendingSubsidyAmount: hints.subsidy,
       ),
     );
   }
   minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in minorIds) {
+    final hints = economicRowHints(id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -139,11 +174,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        activeOutgoingSubsidyPerTurn: hints.activeSub,
+        pendingGrantAmount: hints.grant,
+        pendingSubsidyAmount: hints.subsidy,
       ),
     );
   }
   tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in tribeIds) {
+    final hints = economicRowHints(id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -155,6 +194,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
+        activeOutgoingSubsidyPerTurn: hints.activeSub,
+        pendingGrantAmount: hints.grant,
+        pendingSubsidyAmount: hints.subsidy,
       ),
     );
   }
@@ -410,6 +452,27 @@ class _DiplomacyRow extends StatelessWidget {
                     : '$stateLabel · $relationStateLabel$overtureLabel',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (data.activeOutgoingSubsidyPerTurn != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Outgoing subsidy: £${data.activeOutgoingSubsidyPerTurn}/turn to ${data.displayName}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              if (data.pendingGrantAmount != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Pending grant aid: £${data.pendingGrantAmount} (resolves end of turn)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              if (data.pendingSubsidyAmount != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Pending subsidy: £${data.pendingSubsidyAmount}/turn (resolves end of turn)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ),
         ),

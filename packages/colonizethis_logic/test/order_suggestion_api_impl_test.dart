@@ -335,7 +335,7 @@ void main() {
     });
 
     test(
-      'returns grantAid only when embassy and consulate both allow grant and subsidy (one per target)',
+      'returns grantAid and setSubsidy when embassy path and treasury allow both',
       () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
@@ -348,7 +348,7 @@ void main() {
         ),
         players: [
           const Player(id: 'gp1', displayName: 'A', isHuman: false)
-              .copyWith(treasury: 200),
+              .copyWith(treasury: 10000),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
@@ -373,9 +373,15 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       final list = api.suggestDiplomaticOrders(view, game, topology, const Orders());
       final toMinor1 = list.where((o) => o.targetFactionId == 'minor1').toList();
-      expect(toMinor1, hasLength(1));
-      expect(toMinor1.single.type, DiplomaticOrderType.grantAid);
-      expect(toMinor1.single.amount, 100);
+      expect(toMinor1, hasLength(2));
+      final grants =
+          toMinor1.where((o) => o.type == DiplomaticOrderType.grantAid).toList();
+      final subs =
+          toMinor1.where((o) => o.type == DiplomaticOrderType.setSubsidy).toList();
+      expect(grants, hasLength(1));
+      expect(subs, hasLength(1));
+      expect(grants.single.amount, 1000);
+      expect(subs.single.amount, 1000);
     });
 
     test('does not suggest toward target already in draft diplomatic orders', () {
@@ -416,7 +422,7 @@ void main() {
       expect(list.where((o) => o.targetFactionId == 'gp2'), isEmpty);
     });
 
-    test('suggestDiplomaticOrders: each suggestion appendable and validates with context', () {
+    test('suggestDiplomaticOrders: cumulative list appendable and validates', () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
       final game = Game(
@@ -442,31 +448,34 @@ void main() {
       final view = buildPlayerView(game, topology, 'gp1');
       final suggestions =
           api.suggestDiplomaticOrders(view, game, topology, const Orders());
-      final targets = <String>{};
+      var working = const Orders();
       for (final o in suggestions) {
-        expect(targets.add(o.targetFactionId), isTrue,
-            reason: 'at most one suggestion per target');
-        final addResult = OrderEngine().addDiplomaticOrderWithContext(
+        final engine = OrderEngine(initialOrders: working);
+        final addResult = engine.addDiplomaticOrderWithContext(
           game,
           topology,
           'gp1',
           o,
         );
         expect(addResult.isAccepted, isTrue, reason: '${o.type} ${o.targetFactionId}');
-        final withOrder = Orders(
+        final list = List<DiplomaticOrder>.from(
+          working.diplomaticOrdersByPlayerId['gp1'] ?? const [],
+        )..add(o);
+        working = working.copyWith(
           diplomaticOrdersByPlayerId: {
-            'gp1': [o],
+            ...working.diplomaticOrdersByPlayerId,
+            'gp1': list,
           },
         );
-        final validateResults = OrderEngine(initialOrders: withOrder)
-            .validatePlayerOrdersWithContext(game, topology, 'gp1');
-        expect(validateResults, isNotEmpty);
-        expect(
-          validateResults.every((r) => r.isAccepted),
-          isTrue,
-          reason: 'validatePlayerOrdersWithContext for $o',
-        );
       }
+      final validateResults = OrderEngine(initialOrders: working)
+          .validatePlayerOrdersWithContext(game, topology, 'gp1');
+      expect(validateResults, isNotEmpty);
+      expect(
+        validateResults.every((r) => r.isAccepted),
+        isTrue,
+        reason: 'full suggested diplomatic list validates',
+      );
     });
 
     test('removing pending diplomatic order restores suggestions for that target', () {

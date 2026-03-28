@@ -82,8 +82,17 @@ const int relationScoreDisplayCordialMax = 69;
 /// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
 const int relationScoreWarDelta = 10;
 
-/// Suggested grant/subsidy amount for AI order suggestion when GP has embassy/consulate.
-const int suggestedGrantOrSubsidyAmount = 100;
+/// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
+const int grantAidDefaultAmount = 1000;
+
+/// Default Set Subsidy amount (UI + suggestions). Positive multiples of [setSubsidyAmountStep].
+const int setSubsidyDefaultAmount = 1000;
+
+/// Grant Aid step and multiple (pounds).
+const int grantAidAmountStep = 1000;
+
+/// Set Subsidy step and multiple (pounds).
+const int setSubsidyAmountStep = 100;
 
 /// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].
 const int subsidyBoostDucatsPerStep = 500;

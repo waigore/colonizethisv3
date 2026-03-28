@@ -1433,9 +1433,20 @@ bool _isDiplomaticOrderAccepted(
   return result.isAccepted;
 }
 
-Set<String> _pendingDiplomaticTargetIds(Orders orders, String playerId) {
-  final list = orders.diplomaticOrdersByPlayerId[playerId] ?? const [];
-  return {for (final o in list) o.targetFactionId};
+Orders _appendDiplomaticOrderForPlayer(
+  Orders orders,
+  String playerId,
+  DiplomaticOrder order,
+) {
+  final list = List<DiplomaticOrder>.from(
+    orders.diplomaticOrdersByPlayerId[playerId] ?? const [],
+  )..add(order);
+  return orders.copyWith(
+    diplomaticOrdersByPlayerId: {
+      ...orders.diplomaticOrdersByPlayerId,
+      playerId: list,
+    },
+  );
 }
 
 /// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
@@ -1513,22 +1524,21 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
     }
   }
   if (overtureRow != null) {
-    if (overtureRow.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
+    if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.grantAid,
           targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
+          amount: grantAidDefaultAmount,
         ),
       );
     }
-    if (overtureRow.hasConsulate &&
-        treasury >= suggestedGrantOrSubsidyAmount) {
+    if (overtureRow.hasConsulate && treasury >= setSubsidyDefaultAmount) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
+          amount: setSubsidyDefaultAmount,
         ),
       );
     }
@@ -1594,7 +1604,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
-  final blockedTargets = _pendingDiplomaticTargetIds(currentOrders, playerId);
 
   // Determine which factions are actually "known" to this player per SPEC:
   // - Any faction with an existing DiplomacyRelation to the player.
@@ -1648,9 +1657,9 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
+  var workingOrders = currentOrders;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
-    if (blockedTargets.contains(targetId)) continue;
 
     final candidates = _diplomaticCandidatesForTargetOrdered(
       game: game,
@@ -1665,12 +1674,16 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         game,
         topology,
         playerId,
-        currentOrders,
+        workingOrders,
         candidate,
         tileMapByRegion: tileMapByRegion,
       )) {
         suggestions.add(candidate);
-        break;
+        workingOrders = _appendDiplomaticOrderForPlayer(
+          workingOrders,
+          playerId,
+          candidate,
+        );
       }
     }
   }

@@ -164,7 +164,7 @@ void main() {
             DiplomaticOrder(
               type: DiplomaticOrderType.grantAid,
               targetFactionId: 'minor1',
-              amount: 100,
+              amount: 1000,
             ),
           ],
         },
@@ -174,6 +174,83 @@ void main() {
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, greaterThan(initialRel.score));
       expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 1);
+      expect(after.playerById('gp1')!.treasury, 2000 - 1000);
+    });
+
+    test('grantAid at resolution with wrong multiple throws StateError', () {
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      game = game.copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.grantAid,
+              targetFactionId: 'minor1',
+              amount: 500,
+            ),
+          ],
+        },
+      );
+      expect(
+        () => resolveDiplomacyPhase(game, orders),
+        throwsStateError,
+      );
+    });
+
+    test('setSubsidy at resolution with wrong multiple throws StateError', () {
+      var game = _baseGame().copyWith(
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      game = game.copyWith(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+            level: RelationLevel.neutral,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.setSubsidy,
+              targetFactionId: 'minor1',
+              amount: 150,
+            ),
+          ],
+        },
+      );
+      expect(
+        () => resolveDiplomacyPhase(game, orders),
+        throwsStateError,
+      );
     });
 
     test('join empire absorbs minor: provinces transfer, minor removed, cost deducted', () {
@@ -385,7 +462,7 @@ void main() {
             DiplomaticOrder(
               type: DiplomaticOrderType.grantAid,
               targetFactionId: 'minor1',
-              amount: 100,
+              amount: 1000,
             ),
           ],
         },

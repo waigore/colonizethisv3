@@ -19,7 +19,7 @@ String diplomacyActionLabel(DiplomaticOrder order) {
           : 'Grant Aid';
     case DiplomaticOrderType.setSubsidy:
       return order.amount != null
-          ? 'Subsidy (£${order.amount})'
+          ? 'Set Subsidy (£${order.amount})'
           : 'Set Subsidy';
   }
 }
