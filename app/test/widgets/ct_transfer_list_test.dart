@@ -13,6 +13,7 @@ void main() {
     required void Function(Map<String, int> left, Map<String, int> right)
     onConfirm,
     bool Function(Map<String, int> left, Map<String, int> right)? canConfirm,
+    Map<String, int> initialLeftCounts = const {'carrack': 2, 'fluyte': 1},
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -20,7 +21,7 @@ void main() {
           body: CtTransferList(
             leftTitle: 'Original',
             rightTitle: 'New',
-            initialLeftCounts: const {'carrack': 2, 'fluyte': 1},
+            initialLeftCounts: initialLeftCounts,
             onConfirm: onConfirm,
             canConfirm: canConfirm,
             confirmLabel: 'Confirm Split',
@@ -34,44 +35,78 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  bool buttonEnabled(WidgetTester tester, String label) {
-    final button = tester.widget<CtNinePatchButton>(
-      find.widgetWithText(CtNinePatchButton, label),
-    );
+  bool buttonEnabled(WidgetTester tester, Finder finder) {
+    final button = tester.widget<CtNinePatchButton>(finder);
     return button.enabled;
   }
 
-  testWidgets('transfer controls disabled until an item is selected', (
+  testWidgets(
+    'repeated single moves transfer exactly one per tap (3 identical items)',
+    (WidgetTester tester) async {
+      await pumpTransferList(
+        tester,
+        onConfirm: (_, __) {},
+        initialLeftCounts: const {'carrack': 3},
+      );
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (2)'), findsOneWidget);
+      expect(find.text('carrack (1)'), findsOneWidget);
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (1)'), findsOneWidget);
+      expect(find.text('carrack (2)'), findsOneWidget);
+
+      await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
+      await tester.pump();
+      expect(find.text('carrack (3)'), findsOneWidget);
+      expect(find.text('carrack (2)'), findsNothing);
+      expect(find.text('carrack (1)'), findsNothing);
+    },
+  );
+
+  testWidgets('per-row controls move one and all without selection', (
     WidgetTester tester,
   ) async {
     await pumpTransferList(tester, onConfirm: (_, __) {});
 
-    expect(buttonEnabled(tester, '<'), isFalse);
-    expect(buttonEnabled(tester, '>'), isFalse);
-    expect(buttonEnabled(tester, '<<'), isFalse);
-    expect(buttonEnabled(tester, '>>'), isFalse);
-  });
-
-  testWidgets('selected item supports one and all transfers', (
-    WidgetTester tester,
-  ) async {
-    await pumpTransferList(tester, onConfirm: (_, __) {});
-
-    await tester.tap(find.text('carrack (2)').first);
-    await tester.pump();
-
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
     expect(find.text('carrack (1)'), findsNWidgets(2));
 
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
     await tester.pump();
     expect(find.text('carrack (2)'), findsOneWidget);
     expect(find.text('carrack (1)'), findsNothing);
 
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '<'));
+    await tester.tap(find.byKey(CtTransferListKeys.rightMoveOne('carrack')));
     await tester.pump();
     expect(find.text('carrack (1)'), findsNWidgets(2));
+  });
+
+  testWidgets('<< on new side moves entire type back in one action', (
+    WidgetTester tester,
+  ) async {
+    await pumpTransferList(
+      tester,
+      onConfirm: (_, __) {},
+      initialLeftCounts: const {'carrack': 2, 'galleon': 1},
+    );
+
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
+    await tester.pump();
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
+    await tester.pump();
+    expect(find.text('carrack (2)'), findsOneWidget);
+    expect(find.text('galleon (1)'), findsOneWidget);
+
+    await tester.tap(find.byKey(CtTransferListKeys.rightMoveAll('carrack')));
+    await tester.pump();
+    expect(find.text('carrack (2)'), findsOneWidget);
+    expect(find.text('galleon (1)'), findsOneWidget);
+    expect(find.text('carrack (1)'), findsNothing);
   });
 
   testWidgets('confirm enablement follows validation callback', (
@@ -87,14 +122,24 @@ void main() {
       },
     );
 
-    expect(buttonEnabled(tester, 'Confirm Split'), isFalse);
+    expect(
+      buttonEnabled(
+        tester,
+        find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+      ),
+      isFalse,
+    );
 
-    await tester.tap(find.text('fluyte (1)'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
     await tester.pump();
 
-    expect(buttonEnabled(tester, 'Confirm Split'), isTrue);
+    expect(
+      buttonEnabled(
+        tester,
+        find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+      ),
+      isTrue,
+    );
   });
 
   testWidgets('confirm returns current left and right counts', (
@@ -111,9 +156,7 @@ void main() {
       },
     );
 
-    await tester.tap(find.text('carrack (2)').first);
-    await tester.pump();
-    await tester.tap(find.widgetWithText(CtNinePatchButton, '>'));
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
 
     await tester.tap(find.text('Confirm Split'));
