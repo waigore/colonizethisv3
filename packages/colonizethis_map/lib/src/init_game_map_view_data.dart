@@ -124,6 +124,9 @@ class TownMarkerView {
     required this.provinceId,
     required this.isCoastal,
     required this.isPort,
+    required this.touchesSea,
+    this.portIconX,
+    this.portIconY,
   });
 
   final int x;
@@ -137,6 +140,15 @@ class TownMarkerView {
 
   /// True if this province is a port (trade hub with port access).
   final bool isPort;
+
+  /// Province has a P↔S topology edge (sea-touching). Used for the town glyph
+  /// on [x]/[y] (coastal vs inland) even when [isPort] is true.
+  final bool touchesSea;
+
+  /// When [isPort] is true, grid coordinates for the port icon (may differ from
+  /// [x]/[y] when the port tile matches town or capital). SPEC/ui/town-port-icons.md.
+  final int? portIconX;
+  final int? portIconY;
 }
 
 /// Warp zone marker location for a sea zone that links to another region.
