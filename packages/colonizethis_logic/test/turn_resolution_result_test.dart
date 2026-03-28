@@ -96,6 +96,20 @@ void main() {
       expect(result.isPending, isTrue);
     });
 
+    test('isPending true when pendingInterventions non-empty', () {
+      final result = DiplomacyPhaseResult(
+        minimalGame,
+        pendingInterventions: const [
+          InterventionPrompt(
+            aggressorGpId: 'gp2',
+            defenderMinorOrTribeId: 'minor1',
+            interveningGpId: 'gp1',
+          ),
+        ],
+      );
+      expect(result.isPending, isTrue);
+    });
+
     test('isPending true when pendingCallToArms non-empty', () {
       final result = DiplomacyPhaseResult(
         minimalGame,
@@ -141,6 +155,22 @@ void main() {
       );
       expect(result.game, minimalGame);
       expect(result.pendingOvertures, offers);
+    });
+
+    test('TurnResolutionPendingIntervention holds game and list', () {
+      final prompts = [
+        InterventionPrompt(
+          aggressorGpId: 'gp2',
+          defenderMinorOrTribeId: 'minor1',
+          interveningGpId: 'gp1',
+        ),
+      ];
+      final result = TurnResolutionPendingIntervention(
+        game: minimalGame,
+        pendingInterventions: prompts,
+      );
+      expect(result.game, minimalGame);
+      expect(result.pendingInterventions, prompts);
     });
 
     test('TurnResolutionPendingCallToArms holds game and list', () {

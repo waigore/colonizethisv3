@@ -282,6 +282,12 @@ class OvertureRequiredEvent extends GameToUIEvent {
   final List<Object> overtures; // OvertureOffer
 }
 
+/// Emitted when intervention choices are required (Diplomacy phase).
+class InterventionRequiredEvent extends GameToUIEvent {
+  const InterventionRequiredEvent({required this.prompts});
+  final List<Object> prompts; // InterventionPrompt from colonizethis_logic
+}
+
 /// Emitted when human ally must accept or refuse call to arms after a GP war declaration.
 class CallToArmsRequiredEvent extends GameToUIEvent {
   const CallToArmsRequiredEvent({required this.pending});
