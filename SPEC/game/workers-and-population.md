@@ -42,6 +42,8 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 - Production uses labour: one labour per resource input consumed by a recipe (e.g. 2 timber → 1 lumber = 2 labour).
 - **Military/naval build costs** that consume a peasant from the pool use **headcount**, not idle labour (food strikers remain draftable).
 - Total food demand = workers + navy + army.
+- **Navy food:** Each ship in the player's fleets consumes **2 food units** per turn (same grain/meat abstraction as military upkeep; see [ships-and-naval.md](ships-and-naval.md) § Ship food upkeep). Deduction order for the Consumption phase: **land military regiments first**, then **navy (all owned ships in all fleets)**, then **workers** (with worker starvation and luxury deduction unchanged). Any `ship_type_id` present in fleet state that is **not** in `ShipEconomyCatalog` is invalid data: the System **must fail** turn resolution (session error) rather than ignore or silently skip.
+- **Naval combat:** Navy feeding shortfall uses the **same morale multipliers** as land military feeding shortfall for that player (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Consumption): effective naval strength in sea battles is scaled by that multiplier derived from `fullyFedShips / totalShips` for the turn.
 
 ---
 
@@ -56,7 +58,7 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets).
 
-**Current scope:** Food and luxury consumption and strike rules are implemented in `economy_consumption.dart` and `worker_economy.dart` (peasant 1 food unit, trained 2 food units; grain then meat; worker food priority Masters→Peasants; `WorkerIdleCounts` / `ConsumptionResult.idleLabour`; `resolveProduction` takes post-consumption `idleLabour`). Worker tier training (paper + cash → next tier) remains deferred until Recruiting/Training quantities are defined or a simplification is chosen.
+**Current scope:** Food and luxury consumption, land military and navy upkeep order, and worker **strike** rules (no removal for missing food) are implemented in `economy_consumption.dart` and `worker_economy.dart` (peasant 1 food unit, trained 2 food units; grain then meat; order land military → navy → workers; worker food priority Masters→Peasants; `WorkerIdleCounts` / `ConsumptionResult.idleLabour`; `resolveProduction` takes post-consumption `idleLabour`). Navy: 2 food units per ship per turn from catalog after land military, before workers. **Luxury consumption:** trained workers deduct tier luxury only when food-fed and assigned a unit; shortage of luxury zeros labour for that tier for that turn. Worker tier training (paper + cash → next tier) remains deferred until Recruiting/Training quantities are defined or a simplification is chosen.
 
 ---
 
@@ -65,11 +67,19 @@ Data structures in [economy-models.md](../program/economy-models.md). Worker mod
 - **Commodity per tier:** Apprentice → 1 refinedSugar; Journeyman → 1 cigars; Master → 1 furHats. Commodity ids per [commodity-catalog.md](commodity-catalog.md).
 - **Deduction:** After worker food allocation, the System deducts luxury only for workers who become **idle** (food-fed and assigned a unit). Count per tier = min(food-fed count for that tier, stockpile quantity). Food-unfed trained workers incur **no** luxury deduction.
 - **Order:** Masters, then Journeymen, then Apprentices (each tier uses its own commodity).
-- **Labour effect:** Effective labour for Production is derived from `WorkerIdleCounts` after Consumption (see Implementation). UI/AI preview uses `effectiveLabourForWorkers` / `previewWorkerIdleLabour` with the same rules, including military food first when regiment counts are provided.
+- **Labour effect:** Effective labour for Production is derived from `WorkerIdleCounts` after Consumption (see Implementation). UI/AI preview uses `effectiveLabourForWorkers` / `previewWorkerIdleLabour` with the same rules, including land military and navy food first when regiment and ship counts are provided.
 
 ---
 
 ## Acceptance Criteria
+
+- Given a player owns one or more fleets whose `shipTypeIds` entries are all present in `ShipEconomyCatalog` and the player has a non-negative integer quantity of grain and meat in the central stockpile  
+  When the System executes the Consumption phase for that player after land military upkeep  
+  Then the System deducts **2 food units per ship** (from grain and meat per the same rules as military upkeep) for every ship in those fleets before deducting worker food, and does not reduce any stockpile commodity quantity below zero except by those deductions.
+
+- Given a player's fleet lists a `ship_type_id` that is not a key in `ShipEconomyCatalog`  
+  When the System executes the Consumption phase for that player  
+  Then the System fails turn resolution with an error (invalid fleet data).
 
 - Given a player has a WorkerPool with non-negative integer counts for each worker tier and a central stockpile as described in [stockpiles-and-production.md](stockpiles-and-production.md)  
   When the System executes the Consumption phase for that player  

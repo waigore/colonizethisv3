@@ -5,6 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'military_strength.dart';
+
 final _log = logicLogger();
 
 /// Mission factor for Patrol interception probability.
@@ -234,10 +236,15 @@ NavalBattleResult resolveSeaBattle(
   int seed, {
   bool side1CanRetreat = true,
   bool side2CanRetreat = true,
+  Map<String, double> navalFeedingCoverageByPlayerId = const {},
 }) {
   final rng = _SeededRng(seed);
-  final str1 = navalStrength(battle.side1.shipTypeIds);
-  final str2 = navalStrength(battle.side2.shipTypeIds);
+  final cov1 = navalFeedingCoverageByPlayerId[battle.side1.ownerId] ?? 1.0;
+  final cov2 = navalFeedingCoverageByPlayerId[battle.side2.ownerId] ?? 1.0;
+  final m1 = moraleMultiplierForFeedingCoverage(cov1);
+  final m2 = moraleMultiplierForFeedingCoverage(cov2);
+  final str1 = navalStrength(battle.side1.shipTypeIds) * m1;
+  final str2 = navalStrength(battle.side2.shipTypeIds) * m2;
   final total = str1 + str2;
   if (total <= 0) {
     return NavalBattleResult(

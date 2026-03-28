@@ -214,7 +214,8 @@ TurnResolutionResult resolveTurnForGame({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
   Game state = game;
-  final feedingCoverageByPlayerId = <String, double>{};
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
   final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
   final phaseIndex = startFromPhase != null
       ? turnResolutionSequence.indexOf(startFromPhase)
@@ -242,7 +243,8 @@ TurnResolutionResult resolveTurnForGame({
       case TurnPhase.consumption:
         state = _runConsumptionPhase(
           state,
-          feedingCoverageByPlayerId,
+          landFeedingCoverageByPlayerId,
+          navalFeedingCoverageByPlayerId,
           idleLabourByPlayerId,
         );
         break;
@@ -312,6 +314,7 @@ TurnResolutionResult resolveTurnForGame({
           state,
           topology,
           orders.navalMoveOrdersByPlayerId,
+          navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
           onDialogue: onDialogue,
           onGameEvent: onGameEvent,
           eventBus: eventBus,
@@ -332,7 +335,7 @@ TurnResolutionResult resolveTurnForGame({
           state = _runCombatPhase(
             state,
             orders,
-            feedingCoverageByPlayerId,
+            landFeedingCoverageByPlayerId,
             topology,
             tileMapByRegion,
             topologyByRegion: topologyByRegion,
@@ -662,7 +665,8 @@ Game _runProductionPhase(
 
 Game _runConsumptionPhase(
   Game game,
-  Map<String, double> feedingCoverageByPlayerId,
+  Map<String, double> landFeedingCoverageByPlayerId,
+  Map<String, double> navalFeedingCoverageByPlayerId,
   Map<String, WorkerIdleCounts> idleLabourByPlayerId,
 ) {
   final updatedPlayers = <Player>[];
@@ -670,22 +674,34 @@ Game _runConsumptionPhase(
   for (final player in game.players) {
     final regimentCounts =
         regimentTypeCountsForPlayer(game.worldState, player.id);
+    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
 
     final result = resolveConsumption(
       stockpile: player.stockpile,
       workers: player.workerPool,
       regimentCountsById: regimentCounts,
+      shipCountsById: shipCounts,
     );
 
-    double coverage;
+    double landCoverage;
     if (result.totalRegiments <= 0) {
-      coverage = 1.0;
+      landCoverage = 1.0;
     } else {
-      coverage = result.fullyFedRegiments / result.totalRegiments;
-      if (coverage < 0) coverage = 0;
-      if (coverage > 1) coverage = 1;
+      landCoverage = result.fullyFedRegiments / result.totalRegiments;
+      if (landCoverage < 0) landCoverage = 0;
+      if (landCoverage > 1) landCoverage = 1;
     }
-    feedingCoverageByPlayerId[player.id] = coverage;
+    landFeedingCoverageByPlayerId[player.id] = landCoverage;
+
+    double navalCoverage;
+    if (result.totalShips <= 0) {
+      navalCoverage = 1.0;
+    } else {
+      navalCoverage = result.fullyFedShips / result.totalShips;
+      if (navalCoverage < 0) navalCoverage = 0;
+      if (navalCoverage > 1) navalCoverage = 1;
+    }
+    navalFeedingCoverageByPlayerId[player.id] = navalCoverage;
     idleLabourByPlayerId[player.id] = result.idleLabour;
     updatedPlayers.add(
       player.copyWith(

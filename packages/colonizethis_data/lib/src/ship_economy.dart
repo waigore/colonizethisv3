@@ -8,11 +8,16 @@ class ShipEconomyEntry {
     required this.shipTypeId,
     required this.buildTreasuryCost,
     this.buildInputs = const {},
+    this.foodUpkeep = 2,
   });
 
   final String shipTypeId;
   final int buildTreasuryCost;
   final Map<CommodityId, int> buildInputs;
+
+  /// Food units (grain/meat) per ship per turn during Consumption.
+  /// SPEC/game/ships-and-naval.md § Ship food upkeep.
+  final int foodUpkeep;
 }
 
 /// Ship economy catalog. SPEC/game/ships-and-naval.md (canonical table).

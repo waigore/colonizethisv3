@@ -11,18 +11,21 @@ import 'economy_consumption.dart';
 int effectiveLabourFromIdleCounts(WorkerIdleCounts idle) => idle.effectiveLabour;
 
 /// Preview effective labour if [resolveConsumption] ran with the same inputs
-/// (military-first food, worker priority Masters→Peasants, luxury for food-fed trained).
+/// (land military → navy → workers, worker food priority Masters→Peasants,
+/// luxury for food-fed trained).
 int effectiveLabourForWorkers({
   required WorkerPool workers,
   required Stockpile stockpile,
   int militaryUnits = 0,
   Map<String, int> regimentCountsById = const {},
+  Map<String, int> shipCountsById = const {},
 }) {
   final idle = previewWorkerIdleLabour(
     stockpile: stockpile,
     workers: workers,
     militaryUnits: militaryUnits,
     regimentCountsById: regimentCountsById,
+    shipCountsById: shipCountsById,
   );
   return effectiveLabourFromIdleCounts(idle);
 }

@@ -26,12 +26,13 @@ Detects naval conflicts per sea zone and auto-resolves fleet engagements, produc
    - `ARM * 0.15`
    - `durability = HULL * (1 + ARM / 10)`
    - `MV * 0.1`
-2. Sum all ship strengths into side-level `navalStrength`.
-3. Leader bonuses from [leader-bonuses.md](../game/leader-bonuses.md) do not apply to naval combat.
+2. Sum all ship strengths into side-level raw `navalStrength`.
+3. Multiply each side's raw sum by that faction's **naval feeding morale multiplier** from the current turn's Consumption phase (same breakpoints as land military: coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5; see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Consumption). When a faction has no ships, naval coverage is treated as 1.0 for this purpose.
+4. Leader bonuses from [leader-bonuses.md](../game/leader-bonuses.md) do not apply to naval combat.
 
 **Per-Engagement Resolution:**
 
-1. Read `navalStrength` for both sides.
+1. Read morale-adjusted `navalStrength` for both sides.
 2. Compute casualties (ships sunk) from relative strength and deterministic seeded RNG.
 3. Compute retreat attempts using the retreat model below.
 4. Return one outcome enum (`side1Victory`, `side2Victory`, `stalemate`, `mutualDestruction`) and retreat flags.

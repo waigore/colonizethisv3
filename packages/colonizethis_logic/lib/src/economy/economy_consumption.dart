@@ -4,6 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = logicLogger();
 
+/// Thrown when [resolveConsumption] sees a ship type id not in [ShipEconomyCatalog].
+/// SPEC/game/workers-and-population.md (invalid fleet data).
+class ConsumptionUnknownShipTypeException implements Exception {
+  ConsumptionUnknownShipTypeException(this.shipTypeId);
+  final String shipTypeId;
+
+  @override
+  String toString() =>
+      'ConsumptionUnknownShipTypeException: unknown ship type $shipTypeId';
+}
+
 /// Consumes up to [required] food units (grain/meat) from [stockpile].
 /// Returns a record of (updatedStockpile, unitsConsumed).
 (Stockpile, int) consumeFoodUnits({
@@ -52,6 +63,8 @@ class ConsumptionResult {
     required this.idleLabour,
     required this.totalRegiments,
     required this.fullyFedRegiments,
+    required this.totalShips,
+    required this.fullyFedShips,
   });
 
   final Stockpile stockpile;
@@ -59,11 +72,13 @@ class ConsumptionResult {
   /// Headcounts unchanged by consumption (workers are not removed).
   final WorkerPool workerPool;
 
-  /// Idle workers for Production this turn (fed + luxury when required).
+  /// Workers contributing labour this turn (fed + luxury when required).
   final WorkerIdleCounts idleLabour;
 
   final int totalRegiments;
   final int fullyFedRegiments;
+  final int totalShips;
+  final int fullyFedShips;
 }
 
 /// Same allocation rules as [resolveConsumption]; returns only [WorkerIdleCounts]
@@ -73,41 +88,52 @@ WorkerIdleCounts previewWorkerIdleLabour({
   required WorkerPool workers,
   int militaryUnits = 0,
   Map<String, int> regimentCountsById = const {},
+  Map<String, int> shipCountsById = const {},
 }) {
   return _allocateConsumption(
     stockpile: stockpile,
     workers: workers,
     militaryUnits: militaryUnits,
     regimentCountsById: regimentCountsById,
+    shipCountsById: shipCountsById,
   ).idleLabour;
 }
 
-/// Applies worker and basic military food consumption for one turn.
+/// Applies land military, navy, and worker food consumption for one turn.
 ///
 /// Food rules (per SPEC/game/workers-and-population.md):
 /// - Peasant: 1 grain or meat
-/// - Apprentice/Journeyman/Master: 2 food units (implementation: grain then meat)
-/// - Military: per [RegimentEconomyCatalog.foodUpkeep] or 2 food units per regiment stub
+/// - Apprentice/Journeyman/Master: 2 food units (grain then meat)
+/// - Land military: per-type `foodUpkeep` from [RegimentEconomyCatalog], or 2/regiment
+///   when only [militaryUnits] is set
+/// - Navy: per-type `foodUpkeep` from [ShipEconomyCatalog]
 ///
-/// Worker food priority: **Masters → Journeymen → Apprentices → Peasants**.
-/// Insufficient food: worker **stays in pool** but is **on strike** (no labour).
-/// Luxury is deducted only for food-fed trained workers who receive a unit;
-/// food-unfed trained workers consume **no** luxury.
+/// Order: land military → navy → workers. Worker food priority:
+/// **Masters → Journeymen → Apprentices → Peasants**. Insufficient food: worker
+/// **stays in pool** but is **on strike** (no labour). Luxury is deducted only
+/// for food-fed trained workers who receive a unit; food-unfed trained workers
+/// consume **no** luxury.
+///
+/// Throws [ConsumptionUnknownShipTypeException] if [shipCountsById] contains a type
+/// id not present in [ShipEconomyCatalog].
 ConsumptionResult resolveConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
   int militaryUnits = 0,
   Map<String, int> regimentCountsById = const {},
+  Map<String, int> shipCountsById = const {},
 }) {
   final alloc = _allocateConsumption(
     stockpile: stockpile,
     workers: workers,
     militaryUnits: militaryUnits,
     regimentCountsById: regimentCountsById,
+    shipCountsById: shipCountsById,
   );
   _log.d(
     'logic: consumption totalRegiments=${alloc.totalRegiments} '
     'fullyFedRegiments=${alloc.fullyFedRegiments} '
+    'totalShips=${alloc.totalShips} fullyFedShips=${alloc.fullyFedShips} '
     'idlePeasants=${alloc.idleLabour.peasants}',
   );
   return ConsumptionResult(
@@ -116,16 +142,32 @@ ConsumptionResult resolveConsumption({
     idleLabour: alloc.idleLabour,
     totalRegiments: alloc.totalRegiments,
     fullyFedRegiments: alloc.fullyFedRegiments,
+    totalShips: alloc.totalShips,
+    fullyFedShips: alloc.fullyFedShips,
   );
 }
 
-({Stockpile stockpile, WorkerIdleCounts idleLabour, int totalRegiments, int fullyFedRegiments})
+({
+  Stockpile stockpile,
+  WorkerIdleCounts idleLabour,
+  int totalRegiments,
+  int fullyFedRegiments,
+  int totalShips,
+  int fullyFedShips,
+})
 _allocateConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
   int militaryUnits = 0,
   Map<String, int> regimentCountsById = const {},
+  Map<String, int> shipCountsById = const {},
 }) {
+  for (final id in shipCountsById.keys) {
+    if (!ShipEconomyCatalog.byId.containsKey(id)) {
+      throw ConsumptionUnknownShipTypeException(id);
+    }
+  }
+
   Stockpile current = stockpile;
 
   int feedGroup({required int count, required int foodPerUnit}) {
@@ -175,6 +217,33 @@ _allocateConsumption({
     }
   }
 
+  int totalShips = 0;
+  int totalNavyFoodDemand = 0;
+  for (final entry in shipCountsById.entries) {
+    final count = entry.value;
+    if (count <= 0) continue;
+    totalShips += count;
+    final upkeep = ShipEconomyCatalog.byId[entry.key]!.foodUpkeep;
+    if (upkeep > 0) {
+      totalNavyFoodDemand += upkeep * count;
+    }
+  }
+
+  int fullyFedShips = 0;
+  if (totalNavyFoodDemand > 0 && totalShips > 0) {
+    final (nextStockpile, consumedForNavy) = consumeFoodUnits(
+      stockpile: current,
+      required: totalNavyFoodDemand,
+    );
+    current = nextStockpile;
+    final avgFoodPerShip =
+        (totalNavyFoodDemand + totalShips - 1) ~/ totalShips;
+    if (avgFoodPerShip > 0) {
+      fullyFedShips = consumedForNavy ~/ avgFoodPerShip;
+      if (fullyFedShips > totalShips) fullyFedShips = totalShips;
+    }
+  }
+
   // Masters → Journeymen → Apprentices → Peasants
   final fedMasters = feedGroup(count: workers.masters, foodPerUnit: 2);
   final fedJourneymen = feedGroup(count: workers.journeymen, foodPerUnit: 2);
@@ -185,21 +254,21 @@ _allocateConsumption({
   final cigarsId = CommodityCatalog.cigars.id;
   final sugarId = CommodityCatalog.refinedSugar.id;
 
-  final (s1, idleMasters) = _assignLuxuryForFoodFedTier(
+  final (s1, mastersWithLuxury) = _assignLuxuryForFoodFedTier(
     stockpile: current,
     foodFedCount: fedMasters,
     luxuryId: furHatsId,
   );
   current = s1;
 
-  final (s2, idleJourneymen) = _assignLuxuryForFoodFedTier(
+  final (s2, journeymenWithLuxury) = _assignLuxuryForFoodFedTier(
     stockpile: current,
     foodFedCount: fedJourneymen,
     luxuryId: cigarsId,
   );
   current = s2;
 
-  final (s3, idleApprentices) = _assignLuxuryForFoodFedTier(
+  final (s3, apprenticesWithLuxury) = _assignLuxuryForFoodFedTier(
     stockpile: current,
     foodFedCount: fedApprentices,
     luxuryId: sugarId,
@@ -208,9 +277,9 @@ _allocateConsumption({
 
   final idleLabour = WorkerIdleCounts(
     peasants: fedPeasants,
-    apprentices: idleApprentices,
-    journeymen: idleJourneymen,
-    masters: idleMasters,
+    apprentices: apprenticesWithLuxury,
+    journeymen: journeymenWithLuxury,
+    masters: mastersWithLuxury,
   );
 
   return (
@@ -218,6 +287,8 @@ _allocateConsumption({
     idleLabour: idleLabour,
     totalRegiments: totalRegiments,
     fullyFedRegiments: fullyFedRegiments,
+    totalShips: totalShips,
+    fullyFedShips: fullyFedShips,
   );
 }
 
@@ -230,7 +301,7 @@ _allocateConsumption({
     return (stockpile, 0);
   }
   final available = stockpile.quantityOf(luxuryId);
-  final assign = foodFedCount < available ? foodFedCount : available;
+  final assign = foodFedCount <= available ? foodFedCount : available;
   if (assign <= 0) {
     return (stockpile, 0);
   }

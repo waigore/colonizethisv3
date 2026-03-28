@@ -37,3 +37,16 @@ Map<String, int> regimentTypeCountsForPlayer(WorldState world, String playerId) 
   }
   return map;
 }
+
+/// Ship type id → count of ships in that player's fleets.
+/// Used for navy food upkeep during Consumption. SPEC/program/turn-resolution-phase-details.md.
+Map<String, int> shipTypeCountsForPlayer(WorldState world, String playerId) {
+  final map = <String, int>{};
+  for (final fleet in world.fleets) {
+    if (fleet.ownerId != playerId) continue;
+    for (final shipTypeId in fleet.shipTypeIds) {
+      map.update(shipTypeId, (v) => v + 1, ifAbsent: () => 1);
+    }
+  }
+  return map;
+}

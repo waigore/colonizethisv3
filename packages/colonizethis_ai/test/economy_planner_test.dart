@@ -63,6 +63,7 @@ void main() {
             displayName: 'England',
             isHuman: false,
             stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 20)
                 .applyDelta(CommodityCatalog.timber.id, 20)
                 .applyDelta(CommodityCatalog.iron.id, 20)
                 .applyDelta(CommodityCatalog.coal.id, 10),
@@ -112,6 +113,7 @@ void main() {
             displayName: 'England',
             isHuman: false,
             stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 20)
                 .applyDelta(CommodityCatalog.timber.id, 30)
                 .applyDelta(CommodityCatalog.wool.id, 20),
             workerPool: const WorkerPool(peasants: 12),
