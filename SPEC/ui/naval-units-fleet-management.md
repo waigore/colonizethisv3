@@ -24,13 +24,13 @@ Each non-Home Fleet row in the expanded state shows a **"Combine"** button.
    - The button changes to indicate the fleet is the **combine target**.
    - Other fleets at the **same location** (same port province OR same sea zone) that are also owned by the human player become visually selectable (e.g., highlighted with a checkbox).
 
-2. **Tapping Combine on another fleet at the same location**:
-   - That fleet is added to the selection.
+2. **Selecting another fleet at the same location** (e.g. checkbox on its title row):
+   - That fleet is added to the selection set.
    - Visual feedback shows all selected fleets.
 
-3. **Tapping Combine on the target fleet again** (confirm):
-   - All selected fleets (including the target) are merged into the **target fleet**.
-   - Ship type IDs from all source fleets are appended to the target fleet's `shipTypeIds`.
+3. **Tapping Confirm on the target fleet** (after selecting sources):
+   - All selected fleets (non-target sources) are merged into the **target fleet**.
+   - **Ship instances** (`id` + `typeId`) from each source fleet are **appended** to the target fleet’s instance list (each hull keeps its unique id).
    - Source fleets (non-target) are **removed** from `WorldState.fleets`.
    - The Home Fleet is **excluded** from combine operations.
 
@@ -49,16 +49,17 @@ Each non-Home Fleet row in the expanded state shows a **"Combine"** button.
 ### Data changes
 
 ```dart
-// Before: Fleet A (target) + Fleet B (source)
-// After: Fleet A (shipTypeIds = A.ships + B.ships), Fleet B removed
+// Before: Fleet A (target) + Fleet B (source), each with List<ShipInstance> ships
+// After: Fleet A.ships = [...A.ships, ...B.ships]; Fleet B removed from WorldState.fleets
 ```
 
 ### UI
 
-- **Combine button**: Text button in the expanded fleet tile, labeled "Combine".
-- **Selection state**: Checkbox appears next to each eligible fleet. Selected fleets have checked checkbox.
-- **Target indicator**: Target fleet's button changes to "Confirm Combine".
-- **Ineligible fleets**: Fleets at different locations are greyed out/not selectable.
+- **Combine button**: Nine-patch button in the **expanded** fleet tile (scroll if needed in short panels), labeled "Combine".
+- **Selection state**: Checkbox appears next to each eligible fleet title. Selected fleets show a checked checkbox.
+- **Target indicator**: Target fleet shows a **TARGET** badge on the title row; its action button is **Confirm**.
+- **Ineligible fleets**: Fleets at different locations are not selectable (no checkbox).
+- **Expansion vs locate:** Tapping the fleet **header** expands or collapses the tile. **Locate fleet** runs only from the **location icon** in the header (not a whole-row tap).
 
 ---
 
@@ -89,7 +90,7 @@ with fleet-specific labels and validation.
 Naval-specific behavior remains outside the component:
 - Home-fleet split rule override
 - Fleet location labeling
-- Conversion from right-side counts to resulting `shipTypeIds`
+- Conversion from right-side counts to the set of **ship instance ids** transferred to the new fleet
 
 ### Layout
 
@@ -148,10 +149,9 @@ Naval-specific behavior remains outside the component:
 ### Data changes
 
 ```dart
-// Original Fleet: Fleet { shipTypeIds: [carrack, carrock, fluyte, galleon] }
-// After moving 1 carrack to new:
-// Original Fleet: Fleet { shipTypeIds: [carrack, fluyte, galleon] }
-// New Fleet: Fleet { shipTypeIds: [carrack] }
+// Original Fleet: ships: [ShipInstance(id: ship_1, carrack), …]
+// After moving one carrack instance to new:
+// Original Fleet: remaining instances only; New Fleet: the moved instances (same ids)
 ```
 
 ---
@@ -159,7 +159,7 @@ Naval-specific behavior remains outside the component:
 ## Empty Fleet Cleanup
 
 After any fleet operation (split or combine):
-- Fleets with empty `shipTypeIds` are removed from `WorldState.fleets`.
+- Fleets with an **empty** `ships` list are removed from `WorldState.fleets`.
 - Exception: The Home Fleet is **never deleted**, even when empty.
 
 ---
@@ -176,7 +176,7 @@ After any fleet operation (split or combine):
 
 ### Combine
 
-- **Given** two fleets at the same port province owned by the human player, **when** the user taps Combine on Fleet A and then taps Combine on Fleet B, **then** Fleet A contains all ships from both fleets, Fleet B is removed, and the panel reflects these changes immediately.
+- **Given** two fleets at the same port province owned by the human player, **when** the user expands Fleet A, taps Combine, selects Fleet B via its checkbox, and taps Confirm on the target, **then** Fleet A’s instance list contains every hull from both fleets (each **instance id** appears once), Fleet B is removed, and the panel reflects these changes immediately.
 
 - **Given** three fleets at the same sea zone owned by the human player, **when** the user combines them, **then** the target fleet receives all ships, the two source fleets are removed, and the panel updates immediately.
 
@@ -188,7 +188,7 @@ After any fleet operation (split or combine):
 
 - **Given** a non-Home Fleet with multiple ships, **when** the user clicks Split Fleet, **then** a modal dialog opens showing the fleet's ship composition with transfer controls.
 
-- **Given** the Split Fleet dialog is open with a fleet containing ships, **when** the user moves ships to the new fleet panel and clicks Confirm, **then** a new fleet is created with the moved ships, the original fleet retains the remaining ships, and both fleets appear in the panel.
+- **Given** the Split Fleet dialog is open with a fleet containing ships, **when** the user moves ships to the new fleet panel and clicks Confirm, **then** a new fleet is created with the **moved ship instances** (same instance ids), the original fleet retains the remaining instances, and both fleets appear in the panel.
 
 - **Given** a fleet with 4 ships, **when** the user moves all 4 ships to the new fleet in the split dialog, **then** the Confirm button is disabled and the original fleet cannot be split.
 
@@ -249,6 +249,6 @@ After any fleet operation (split or combine):
 
 - **Split Button**: Shortened from "Split Fleet" to "Split" to save space
 - **Combine Button**: Shows "Select"/"Remove" during selection, "Confirm" for target
-- **TARGET Badge**: Red badge appears next to target fleet name
+- **TARGET badge**: Theme-colored badge next to target fleet name
 - **Checkboxes**: Appear on eligible fleets during combine mode
 

@@ -95,6 +95,16 @@ Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tec
 
 ---
 
+## Ship instances (hulls)
+
+Like military and civilian **units**, each ship **hull** in play has a **stable unique instance id** for the life of the save.
+
+- **Fleet state:** Each fleet holds an ordered list of instances `{ id, typeId }` (catalog type, e.g. `carrack`). UI counts such as “carrack × 3” are **aggregations** of distinct hulls that share the same `typeId`.
+- **Minting:** New hulls use ids `ship_<n>`; `WorldState.nextShipInstanceSeq` must stay consistent (at least the next free index; implementations may infer from existing ids on load). Legacy saves that stored only repeated `shipTypeIds` strings **must** migrate to instances without collapsing duplicate types into one hull.
+- **Split / combine:** Operations move **whole instances** between fleets. The same `id` must never appear in two fleets. Combine **appends** source fleets’ instance lists onto the target fleet’s list (order preserved per source order); split **partitions** instances by id.
+
+---
+
 ## Ship Reveal Mechanic
 
 When a fleet **enters** a sea zone (move order), all **coastal land tiles** of provinces adjacent to that sea zone are set to **revealed** for that player. This enables Explorer deployment to New World (at least one coastal tile must be revealed first). Reference: I2 03-units-civilian — "first terrain tile is uncovered when a ship enters a sea zone adjacent to the New World."
@@ -135,7 +145,7 @@ The **home fleet** is a special fleet for each Great Power:
   \text{cargoHolds} = \sum_t H(t) \times \text{count\\_home}(t)
   \]
 
-  where `H(t)` is the cargoHold for ship type `t` and `count_home(t)` is the number of ships of type `t` in the home fleet.
+  where `H(t)` is the cargoHold for ship type `t` and `count_home(t)` is the number of **ship instances** in the home fleet whose `typeId` is `t` (aggregation over distinct hulls).
 
 - Each cargo hold carries exactly **1 unit** of any commodity per turn.
 - Cargo capacity is used **only** for:

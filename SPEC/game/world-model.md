@@ -57,6 +57,7 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 - Province lookup: always regionId + provinceId (or prefixed id). See [world-model-identity.md](world-model-identity.md).
 - Resource per tile only where region/terrain allows.
 - Turn state in WorldState; resolution takes WorldState in, returns new out. See [turn-resolution.md](../program/turn-resolution.md).
+- **Fleets:** Each ship hull in `WorldState.fleets` has a **unique instance id** within the save; fleet rows store instances with catalog `typeId`. Counts by type in UI or formulas are aggregations. See [ships-and-naval.md](ships-and-naval.md) § Ship instances.
 
 ---
 

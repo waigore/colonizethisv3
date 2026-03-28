@@ -934,35 +934,86 @@ void main() {
     testWidgets('AC: Combining fleets creates correct ship counts', (
       WidgetTester tester,
     ) async {
-      final humanId = humanPlayerIdWithFleets;
+      const humanId = 'gp_combine_count';
+      const capProvince = 'oldWorld|cap1';
+      const mergePort = 'oldWorld|mergeport';
 
-      final playerFleets = game.worldState.fleets
-          .where(
-            (f) =>
-                f.ownerId == humanId &&
-                f.shipTypeIds.isNotEmpty &&
-                f.id != 'home_fleet',
-          )
-          .toList();
-      if (playerFleets.isEmpty) return;
-
-      final fleet1 = playerFleets.first;
-
-      final gameWithTwoFleetsAtSamePort = game.copyWith(
-        worldState: game.worldState.copyWith(
+      final combineGame = Game(
+        id: 'g_combine_count',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'cap1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+              Province(
+                id: 'mergeport',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Merge Port',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
           fleets: [
-            ...game.worldState.fleets,
-            fleet1.copyWith(id: 'test_fleet_1'),
-            fleet1.copyWith(
+            Fleet(
+              id: 'test_fleet_1',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [
+                ShipInstance(id: 'ship_1', typeId: 'carrack'),
+              ],
+            ),
+            Fleet(
               id: 'test_fleet_2',
-              inPortAtProvinceId: fleet1.inPortAtProvinceId,
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [
+                ShipInstance(id: 'ship_2', typeId: 'fluyte'),
+              ],
             ),
           ],
+          // Capital only: merge-port fleets intentionally have no tile key so the
+          // panel does not wrap them in a locate InkWell (that would swallow taps
+          // and prevent ExpansionTile from expanding in widget tests).
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              capProvince: ['oldWorld|cap1|0|0'],
+            },
+          },
+          nextShipInstanceSeq: 3,
         ),
+        players: [
+          Player(
+            id: humanId,
+            displayName: 'Combine tester',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: const CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
       );
 
+      final bus = AppEventBus.create();
+      NavalFleetsUpdatedEvent? updated;
+      final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+        updated = e;
+      });
+      addTearDown(sub.cancel);
+
       await tester.pumpWidget(
-        buildPanel(game: gameWithTwoFleetsAtSamePort, humanPlayerId: humanId),
+        buildPanel(game: combineGame, humanPlayerId: humanId, bus: bus),
       );
       await tester.pumpAndSettle();
 
@@ -970,19 +1021,70 @@ void main() {
         ExpansionTile,
         'Fleet test_fleet_1',
       );
-      if (fleet1Finder.evaluate().isEmpty) return;
+      expect(fleet1Finder, findsOneWidget);
 
       await tester.ensureVisible(fleet1Finder);
-      await tester.tap(fleet1Finder);
+      final fleet1Title = find.descendant(
+        of: fleet1Finder,
+        matching: find.text('Fleet test_fleet_1'),
+      );
+      expect(fleet1Title, findsOneWidget);
+      final fleet1HeaderListTile = find.ancestor(
+        of: fleet1Title,
+        matching: find.byType(ListTile),
+      );
+      await tester.ensureVisible(fleet1HeaderListTile);
+      await tester.tap(fleet1HeaderListTile);
       await tester.pumpAndSettle();
 
-      final combineButton = find.text('Combine');
-      if (combineButton.evaluate().isEmpty) return;
+      final splitInFleet1 = find.descendant(
+        of: fleet1Finder,
+        matching: find.text('Split'),
+      );
+      expect(splitInFleet1, findsOneWidget);
 
-      await tester.tap(combineButton);
+      final combineInFleet1 = find.descendant(
+        of: fleet1Finder,
+        matching: find.text('Combine'),
+      );
+      await tester.scrollUntilVisible(combineInFleet1, 80);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(combineInFleet1);
+      await tester.tap(combineInFleet1);
       await tester.pumpAndSettle();
 
       expect(find.text('TARGET'), findsOneWidget);
+
+      final fleet2Finder = find.widgetWithText(
+        ExpansionTile,
+        'Fleet test_fleet_2',
+      );
+      expect(fleet2Finder, findsOneWidget);
+      await tester.ensureVisible(fleet2Finder);
+
+      final checkboxInFleet2 = find.descendant(
+        of: fleet2Finder,
+        matching: find.byType(Checkbox),
+      );
+      expect(checkboxInFleet2, findsOneWidget);
+      await tester.ensureVisible(checkboxInFleet2);
+      await tester.tap(checkboxInFleet2);
+      await tester.pumpAndSettle();
+
+      final confirmInFleet1 = find.descendant(
+        of: fleet1Finder,
+        matching: find.text('Confirm'),
+      );
+      await tester.ensureVisible(confirmInFleet1);
+      await tester.tap(confirmInFleet1);
+      await tester.pumpAndSettle();
+
+      expect(updated, isNotNull);
+      final fleetsAfter = updated!.game.worldState.fleets;
+      final merged = fleetsAfter.firstWhere((f) => f.id == 'test_fleet_1');
+      final mergedIds = merged.ships.map((s) => s.id).toList()..sort();
+      expect(mergedIds, ['ship_1', 'ship_2']);
+      expect(fleetsAfter.any((f) => f.id == 'test_fleet_2'), isFalse);
     });
 
     testWidgets('AC: Fleets at different locations cannot be combined', (

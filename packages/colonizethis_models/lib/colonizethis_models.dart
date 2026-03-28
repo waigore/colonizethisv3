@@ -4,6 +4,7 @@ library colonizethis_models;
 export 'src/capital_tile.dart';
 export 'src/diplomacy.dart';
 export 'src/fleet.dart';
+export 'src/ship_instance.dart';
 export 'src/combat_mode.dart';
 export 'src/current_work.dart';
 export 'src/game.dart';

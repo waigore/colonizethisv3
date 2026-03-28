@@ -269,15 +269,15 @@ TradeInterceptionResult applyTradeInterception(
       updatedFleets.add(f);
       continue;
     }
-    final types = List<String>.from(f.shipTypeIds);
-    for (var i = types.length - 1; i >= 0 && remainingToRemove > 0; i--) {
-      if (_merchantShipTypes.contains(types[i])) {
-        types.removeAt(i);
+    final inst = List<ShipInstance>.from(f.ships);
+    for (var i = inst.length - 1; i >= 0 && remainingToRemove > 0; i--) {
+      if (_merchantShipTypes.contains(inst[i].typeId)) {
+        inst.removeAt(i);
         remainingToRemove--;
       }
     }
-    if (types.isNotEmpty) {
-      updatedFleets.add(f.copyWith(shipTypeIds: types));
+    if (inst.isNotEmpty) {
+      updatedFleets.add(f.copyWith(ships: inst));
     }
   }
 
