@@ -48,6 +48,24 @@ Game resolveResearchPhase(Game game, Orders orders) {
     }
     final ordersPerSlot = bySlot.values.toList();
 
+    // SPEC/program/research-resolution.md: clearing a slot loses progress for that
+    // tech. Progress is keyed by techId only; derive "still researching this turn"
+    // from non-empty slot assignments (empty techId = cancel slot).
+    final assignedNonEmptyTechIds = <String>{};
+    for (final order in ordersPerSlot) {
+      if (order.slotIndex < 0 || order.slotIndex >= slots) {
+        continue;
+      }
+      final id = order.techId;
+      if (id.isEmpty) {
+        continue;
+      }
+      assignedNonEmptyTechIds.add(id);
+    }
+    progress.removeWhere(
+      (techId, _) => !assignedNonEmptyTechIds.contains(techId),
+    );
+
     // 1–4: validate, deduct treasury, and add progress per slot.
     for (final order in ordersPerSlot) {
       if (order.slotIndex < 0 || order.slotIndex >= slots) {
@@ -55,8 +73,6 @@ Game resolveResearchPhase(Game game, Orders orders) {
       }
       final techId = order.techId;
       if (techId.isEmpty) {
-        // Cancel slot: Phase 5 spec says cancelling loses progress; with a
-        // per-tech progress map we treat this as a no-op here.
         continue;
       }
 
@@ -129,15 +145,15 @@ Game resolveResearchPhase(Game game, Orders orders) {
       nextUnlocked = workingUnlocked;
     }
 
-    Map<String, int>? nextProgress;
-    if (progress.isNotEmpty) {
-      nextProgress = progress;
-    }
-
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
     final nextResearchSlots =
         researchSlotsForUnlockedTechs(player, nextUnlockedForLevel);
+
+    // `Player.copyWith` treats null map fields as "keep previous"; use an explicit
+    // empty map when there is no in-progress research so clears persist (e.g. cancel slot).
+    final nextProgress =
+        progress.isNotEmpty ? progress : const <String, int>{};
 
     updatedPlayers.add(
       player.copyWith(
