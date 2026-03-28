@@ -1,9 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import 'unit_lookup.dart';
+
+final _log = logicLogger();
 
 /// Movement validation and application.
 /// SPEC/program/movement.md
@@ -96,16 +99,36 @@ RegionData applyMoveOrdersToRegion(
   }
 
   final unitsById = Map<String, Unit>.from(unitsByIdFromRegion(regionData));
+  var ordersForRegion = 0;
+  var applied = 0;
+  var ignored = 0;
 
   for (final entry in moveOrdersByPlayerId.entries) {
     final playerId = entry.key;
     for (final order in entry.value) {
       final unit = unitsById[order.unitId];
-      if (unit == null || unit.ownerId != playerId) continue;
+      if (unit == null) {
+        continue;
+      }
+      ordersForRegion++;
+      if (unit.ownerId != playerId) {
+        ignored++;
+        _log.d(
+          'logic: movement ignored reason=owner_mismatch '
+          'unitId=${order.unitId} orderPlayerId=$playerId unitOwnerId=${unit.ownerId}',
+        );
+        continue;
+      }
       final currentProvinceId = unit.locationProvinceId;
       final destProvinceId = order.destinationProvinceId;
       if (regionId != null && ProvinceId.isPrefixed(destProvinceId) &&
           ProvinceId.regionIdFrom(destProvinceId) != regionId) {
+        ignored++;
+        _log.d(
+          'logic: movement ignored reason=region_mismatch '
+          'unitId=${order.unitId} destRegion=${ProvinceId.regionIdFrom(destProvinceId)} '
+          'expectedRegion=$regionId',
+        );
         continue; // Land move cannot cross regions.
       }
       // Normalize to prefixed form when regionId known (SPEC/game/world-model-identity.md).
@@ -123,8 +146,14 @@ RegionData applyMoveOrdersToRegion(
               ? isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal)
               : isValidLandMove(topology, fromLocal, toLocal));
       if (!valid) {
+        ignored++;
+        _log.d(
+          'logic: movement ignored reason=invalid_adjacency '
+          'unitId=${order.unitId} from=$fromLocal to=$toLocal',
+        );
         continue;
       }
+      applied++;
       final isCivilian = unit.tileKey != null && unit.tileKey!.isNotEmpty;
       final firstTileInDest = regionId != null &&
               tileKeysByRegionAndProvince != null &&
@@ -140,6 +169,14 @@ RegionData applyMoveOrdersToRegion(
         unitsById[unit.id] = unit.copyWith(locationProvinceId: destFullId);
       }
     }
+  }
+
+  if (ordersForRegion > 0) {
+    final regionLabel = regionId ?? 'unspecified';
+    _log.i(
+      'logic: movement apply regionId=$regionLabel '
+      'orders=$ordersForRegion applied=$applied ignored=$ignored',
+    );
   }
 
   return RegionData(
