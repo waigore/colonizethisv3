@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../utils/map_location_resolver.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
@@ -24,38 +25,6 @@ String _missionLabel(FleetMission m) {
     case FleetMission.defend:
       return 'Defend';
   }
-}
-
-String? tileKeyForProvinceLocation(Game game, Province province) {
-  final prefixedId = '${province.regionId}|${province.id}';
-  if (province.townTileKey != null && province.townTileKey!.isNotEmpty) {
-    return province.townTileKey;
-  }
-  final byProvince =
-      game.worldState.tileKeysByRegionAndProvince[province.regionId];
-  final tiles = byProvince?[prefixedId] ?? byProvince?[province.id];
-  if (tiles != null && tiles.isNotEmpty) return tiles.first;
-  return null;
-}
-
-String? tileKeyForSeaZoneLocation(
-  Game game,
-  String regionId,
-  String seaZoneId,
-) {
-  final localSeaZone = seaZoneId.contains('|')
-      ? seaZoneId.split('|').last
-      : seaZoneId;
-  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final parts = e.key.split('|');
-    if (parts.length < 2) continue;
-    final keyRegion = parts[0];
-    final keySeaZone = parts.last;
-    if (keyRegion == regionId && keySeaZone == localSeaZone) {
-      return e.value;
-    }
-  }
-  return null;
 }
 
 class _FleetRow {
