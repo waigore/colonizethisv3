@@ -185,7 +185,7 @@ void main() {
     await tester.tap(find.text('Confirm Split'));
     await tester.pumpAndSettle();
 
-    expect(captured, ['carrack']);
+    expect(captured, [fleet.ships.first.id]);
   });
 
   testWidgets('per-row controls: one and all transfers with exact counts', (
@@ -281,6 +281,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(captured, isNotNull);
     expect(captured, hasLength(1));
-    expect(captured!.first, 'carrack');
+    expect(captured!.first, fleet.ships.single.id);
   });
 }

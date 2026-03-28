@@ -18,7 +18,8 @@ class SplitFleetDialog extends StatelessWidget {
   final Fleet originalFleet;
   final Game game;
   final String humanPlayerId;
-  final void Function(List<String> shipsToNewFleet) onConfirm;
+  /// Instance ids to place on the new fleet (see [ShipInstance.id]).
+  final void Function(List<String> shipInstanceIdsToNewFleet) onConfirm;
   final bool isHomeFleet;
 
   Map<String, int> _initialOriginalCounts() {
@@ -58,13 +59,9 @@ class SplitFleetDialog extends StatelessWidget {
   }
 
   void _handleConfirm(Map<String, int> newCounts, BuildContext context) {
-    final shipsToNewFleet = <String>[];
-    for (final entry in newCounts.entries) {
-      for (var i = 0; i < entry.value; i++) {
-        shipsToNewFleet.add(entry.key);
-      }
-    }
-    onConfirm(shipsToNewFleet);
+    final toMove =
+        shipInstancesForTransferCounts(originalFleet.ships, newCounts);
+    onConfirm(toMove.map((s) => s.id).toList());
     Navigator.of(context).pop();
   }
 

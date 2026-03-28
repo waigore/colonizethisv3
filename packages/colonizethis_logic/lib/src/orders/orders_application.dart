@@ -11,6 +11,7 @@ import 'build_rail_work_rules.dart';
 import 'build_spawn_province.dart';
 import 'orders_application_helpers.dart';
 import '../world/naval.dart';
+import '../world/ship_instance_allocate.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
@@ -139,17 +140,24 @@ void _runBuildPhase(_BuildWorkState state) {
         );
         if (seaZoneAtCap == null) continue;
 
-        var fleets = List<Fleet>.from(state.game.worldState.fleets);
+        var ws = state.game.worldState;
+        var fleets = List<Fleet>.from(ws.fleets);
         final homeFleetId = homeFleetIdFor(player.id);
         final existing = fleets.indexWhere(
           (f) => f.id == homeFleetId && f.ownerId == player.id,
         );
+        var nextSeq = ws.nextShipInstanceSeq;
+        final inferred = inferNextShipInstanceSeqFromFleets(fleets);
+        if (nextSeq < inferred) nextSeq = inferred;
+        final (seqAfter, minted) = mintShipInstances(
+          nextShipInstanceSeq: nextSeq,
+          typeIds: [order.unitType],
+        );
+        nextSeq = seqAfter;
         if (existing >= 0) {
           final f = fleets[existing];
           fleets = List<Fleet>.from(fleets)
-            ..[existing] = f.copyWith(
-              shipTypeIds: [...f.shipTypeIds, order.unitType],
-            );
+            ..[existing] = f.copyWith(ships: [...f.ships, ...minted]);
         } else {
           fleets = [
             ...fleets,
@@ -159,12 +167,12 @@ void _runBuildPhase(_BuildWorkState state) {
               seaZoneId: null,
               inPortAtProvinceId: capProvinceId,
               regionId: regionId,
-              shipTypeIds: [order.unitType],
+              ships: minted,
             ),
           ];
         }
         state.game = state.game.copyWith(
-          worldState: state.game.worldState.copyWith(fleets: fleets),
+          worldState: ws.copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
         );
         continue;
       }

@@ -18,6 +18,7 @@ class WorldState {
     this.spyRevealTurnsByPlayer = const {},
     this.purchasedTilesByTileKey = const {},
     this.resourceByTileKey = const {},
+    this.nextShipInstanceSeq = 1,
   });
 
   final TurnState turnState;
@@ -55,6 +56,10 @@ class WorldState {
   /// Resource (commodity id) per tile key. Populated at game setup from tile map. Used for purchase_land validation.
   final Map<String, String> resourceByTileKey;
 
+  /// Next index for minting `ship_<n>` instance ids. At least [inferNextShipInstanceSeqFromFleets](fleets).
+  /// SPEC/game/ships-and-naval.md.
+  final int nextShipInstanceSeq;
+
   Map<String, dynamic> toJson() => {
         'turnState': turnState.toJson(),
         'oldWorld': oldWorld.toJson(),
@@ -78,6 +83,7 @@ class WorldState {
         if (spyRevealTurnsByPlayer.isNotEmpty) 'spyRevealTurnsByPlayer': spyRevealTurnsByPlayer,
         if (purchasedTilesByTileKey.isNotEmpty) 'purchasedTilesByTileKey': purchasedTilesByTileKey,
         if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
+        'nextShipInstanceSeq': nextShipInstanceSeq,
       };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -123,6 +129,12 @@ class WorldState {
     final fleets = fleetsRaw
         .map((e) => Fleet.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
+
+    final inferredSeq = inferNextShipInstanceSeqFromFleets(fleets);
+    final storedSeq = json['nextShipInstanceSeq'];
+    final nextShipInstanceSeq = storedSeq is int
+        ? (storedSeq >= inferredSeq ? storedSeq : inferredSeq)
+        : inferredSeq;
 
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];
     final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
@@ -174,6 +186,7 @@ class WorldState {
       playerVisibilityByTile: visibility,
       playerProspectedTiles: prospected,
       fleets: fleets,
+      nextShipInstanceSeq: nextShipInstanceSeq,
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
       spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
       purchasedTilesByTileKey: purchasedTilesByTileKey,
@@ -194,6 +207,7 @@ class WorldState {
     Map<String, Map<String, int>>? spyRevealTurnsByPlayer,
     Map<String, String>? purchasedTilesByTileKey,
     Map<String, String>? resourceByTileKey,
+    int? nextShipInstanceSeq,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -209,6 +223,7 @@ class WorldState {
       spyRevealTurnsByPlayer: spyRevealTurnsByPlayer ?? this.spyRevealTurnsByPlayer,
       purchasedTilesByTileKey: purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
       resourceByTileKey: resourceByTileKey ?? this.resourceByTileKey,
+      nextShipInstanceSeq: nextShipInstanceSeq ?? this.nextShipInstanceSeq,
     );
   }
 
@@ -229,7 +244,8 @@ class WorldState {
               tileKeysByRegionAndProvince, other.tileKeysByRegionAndProvince) &&
           _spyRevealEquals(spyRevealTurnsByPlayer, other.spyRevealTurnsByPlayer) &&
           _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
-          _mapEquals(resourceByTileKey, other.resourceByTileKey);
+          _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
+          nextShipInstanceSeq == other.nextShipInstanceSeq;
 
   @override
   int get hashCode => Object.hash(
@@ -261,6 +277,7 @@ class WorldState {
         )),
         Object.hashAll(purchasedTilesByTileKey.entries),
         Object.hashAll(resourceByTileKey.entries),
+        nextShipInstanceSeq,
       );
 
   static bool _tileKeysByRegionEquals(
