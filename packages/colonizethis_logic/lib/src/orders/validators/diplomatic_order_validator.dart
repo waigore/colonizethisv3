@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_resolver.dart';
-import '../../diplomacy/diplomacy_relation_lookup.dart';
 import '../order_validation_result.dart';
 
 /// Validates diplomatic orders for a single player in submission order.
@@ -12,14 +11,9 @@ class DiplomaticOrderValidator {
 
   int _treasury;
 
-  /// Non-economic types: at most one toward a target per turn.
-  final Set<String> _nonEconomicTargetsThisTurn = <String>{};
-
-  /// At most one grantAid per target (may pair with one setSubsidy).
-  final Set<String> _grantAidTargetsThisTurn = <String>{};
-
-  /// At most one setSubsidy per target (may pair with one grantAid).
-  final Set<String> _setSubsidyTargetsThisTurn = <String>{};
+  /// Types already accepted toward each target this turn. SPEC/program/orders.md § diplomatic cap.
+  final Map<String, Set<DiplomaticOrderType>> _typesByTarget =
+      <String, Set<DiplomaticOrderType>>{};
 
   DiplomaticOrderValidator({
     required Game game,
@@ -41,25 +35,26 @@ class DiplomaticOrderValidator {
         treasury: _treasury,
       );
 
-  ({OrderValidationResult result, int treasury}) _acceptNonEconomic(
+  ({OrderValidationResult result, int treasury}) _acceptRecordingTarget(
     String targetId,
+    DiplomaticOrderType type,
   ) {
-    _nonEconomicTargetsThisTurn.add(targetId);
+    _typesByTarget.putIfAbsent(targetId, () => <DiplomaticOrderType>{}).add(type);
     return _accept();
   }
 
-  ({OrderValidationResult result, int treasury}) _acceptGrantAid(
-    String targetId,
-  ) {
-    _grantAidTargetsThisTurn.add(targetId);
-    return _accept();
-  }
-
-  ({OrderValidationResult result, int treasury}) _acceptSetSubsidy(
-    String targetId,
-  ) {
-    _setSubsidyTargetsThisTurn.add(targetId);
-    return _accept();
+  bool _canAddDiplomaticOrder(String targetId, DiplomaticOrderType type) {
+    final existing = _typesByTarget[targetId] ?? const <DiplomaticOrderType>{};
+    if (existing.contains(type)) return false;
+    const economic = {
+      DiplomaticOrderType.grantAid,
+      DiplomaticOrderType.setSubsidy,
+    };
+    final isEconomic = economic.contains(type);
+    final hasNonEconomic = existing.any((t) => !economic.contains(t));
+    if (hasNonEconomic && isEconomic) return false;
+    if (!isEconomic && existing.isNotEmpty) return false;
+    return true;
   }
 
   /// Validate a single [DiplomaticOrder], given whether a previous order
@@ -95,35 +90,10 @@ class DiplomaticOrderValidator {
       return _reject('Target faction not found');
     }
 
-    switch (order.type) {
-      case DiplomaticOrderType.declareWar:
-      case DiplomaticOrderType.offerPeace:
-      case DiplomaticOrderType.alliance:
-      case DiplomaticOrderType.establishOverture:
-        if (_nonEconomicTargetsThisTurn.contains(targetId) ||
-            _grantAidTargetsThisTurn.contains(targetId) ||
-            _setSubsidyTargetsThisTurn.contains(targetId)) {
-          return _reject(
-            'Already have a diplomatic order for this faction this turn',
-          );
-        }
-        break;
-      case DiplomaticOrderType.grantAid:
-        if (_nonEconomicTargetsThisTurn.contains(targetId) ||
-            _grantAidTargetsThisTurn.contains(targetId)) {
-          return _reject(
-            'Already have a diplomatic order for this faction this turn',
-          );
-        }
-        break;
-      case DiplomaticOrderType.setSubsidy:
-        if (_nonEconomicTargetsThisTurn.contains(targetId) ||
-            _setSubsidyTargetsThisTurn.contains(targetId)) {
-          return _reject(
-            'Already have a diplomatic order for this faction this turn',
-          );
-        }
-        break;
+    if (!_canAddDiplomaticOrder(targetId, order.type)) {
+      return _reject(
+        'Already have a diplomatic order for this faction this turn',
+      );
     }
 
     final rel = getRelation(_game, _playerId, targetId);
@@ -135,7 +105,7 @@ class DiplomaticOrderValidator {
         if (!atPeace) {
           return _reject('Already at war with that faction');
         }
-        return _acceptNonEconomic(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.offerPeace:
         if (!atWar) {
@@ -143,7 +113,7 @@ class DiplomaticOrderValidator {
             'Cannot offer peace when not at war with that faction',
           );
         }
-        return _acceptNonEconomic(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.alliance:
         if (!isGreatPower(_game, targetId)) {
@@ -154,7 +124,7 @@ class DiplomaticOrderValidator {
             'Cannot form alliance while at war with that faction',
           );
         }
-        return _acceptNonEconomic(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.establishOverture:
         final stage = order.overtureStage;
@@ -226,16 +196,21 @@ class DiplomaticOrderValidator {
           }
         }
 
-        return _acceptNonEconomic(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.grantAid:
         final amount = order.amount ?? 0;
         if (amount <= 0) {
           return _reject('GrantAid amount must be positive');
         }
+        if (amount < grantAidAmountStep) {
+          return _reject(
+            'GrantAid amount must be at least £$grantAidAmountStep',
+          );
+        }
         if (amount % grantAidAmountStep != 0) {
           return _reject(
-            'GrantAid amount must be a positive multiple of £$grantAidAmountStep',
+            'GrantAid amount must be a multiple of £$grantAidAmountStep',
           );
         }
         final overture = getOverture(_game, _playerId, targetId);
@@ -246,16 +221,21 @@ class DiplomaticOrderValidator {
           return _reject('Insufficient treasury for GrantAid (need $amount)');
         }
         _treasury -= amount;
-        return _acceptGrantAid(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.setSubsidy:
         final amount = order.amount ?? 0;
         if (amount <= 0) {
           return _reject('SetSubsidy amount must be positive');
         }
+        if (amount < setSubsidyAmountStep) {
+          return _reject(
+            'SetSubsidy amount must be at least £$setSubsidyAmountStep',
+          );
+        }
         if (amount % setSubsidyAmountStep != 0) {
           return _reject(
-            'SetSubsidy amount must be a positive multiple of £$setSubsidyAmountStep',
+            'SetSubsidy amount must be a multiple of £$setSubsidyAmountStep',
           );
         }
         final overture = getOverture(_game, _playerId, targetId);
@@ -268,7 +248,8 @@ class DiplomaticOrderValidator {
           );
         }
         _treasury -= amount;
-        return _acceptSetSubsidy(targetId);
+        return _acceptRecordingTarget(targetId, order.type);
     }
   }
 }
+

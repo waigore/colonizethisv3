@@ -26,7 +26,7 @@
       "turn": 2,
       "orders": [
         { "player": "gp1", "type": "diplomatic", "diplomaticType": "establishOverture", "targetFactionId": "minor1", "overtureStage": "nap" },
-        { "player": "gp1", "type": "diplomatic", "diplomaticType": "grantAid", "targetFactionId": "minor1", "amount": 100 }
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "grantAid", "targetFactionId": "minor1", "amount": 1000 }
       ]
     },
     {

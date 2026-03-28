@@ -11,6 +11,33 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_order_helpers.dart';
 
+int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
+  for (final s in game.subsidyStates) {
+    if (s.payerId == payerId && s.targetId == targetId) {
+      return s.amountPerTurn;
+    }
+  }
+  return null;
+}
+
+({int? grant, int? subsidy}) _pendingEconomicAmounts(
+  List<DiplomaticOrder> list,
+  String targetId,
+) {
+  int? grant;
+  int? subsidy;
+  for (final o in list) {
+    if (o.targetFactionId != targetId) continue;
+    if (o.type == DiplomaticOrderType.grantAid) {
+      grant = o.amount;
+    }
+    if (o.type == DiplomaticOrderType.setSubsidy) {
+      subsidy = o.amount;
+    }
+  }
+  return (grant: grant, subsidy: subsidy);
+}
+
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
 
@@ -26,7 +53,7 @@ class DiplomacyRowData {
     this.powerScore,
     this.playerPowerScore,
     required this.pendingOrderTypes,
-    this.activeOutgoingSubsidyPerTurn,
+    this.activeSubsidyPerTurn,
     this.pendingGrantAmount,
     this.pendingSubsidyAmount,
   });
@@ -47,13 +74,13 @@ class DiplomacyRowData {
   /// Set of DiplomaticOrderType that are currently pending for this target faction.
   final Set<DiplomaticOrderType> pendingOrderTypes;
 
-  /// Active subsidy from human GP to this row's faction (£/turn), if any.
-  final int? activeOutgoingSubsidyPerTurn;
+  /// Active £/turn subsidy from the human GP to this row's faction (`Game.subsidyStates`).
+  final int? activeSubsidyPerTurn;
 
-  /// Pending grant aid amount for this target, if any.
+  /// Pending grant aid amount in current-turn orders (not yet resolved).
   final int? pendingGrantAmount;
 
-  /// Pending set subsidy amount for this target, if any.
+  /// Pending set-subsidy amount per turn in current-turn orders.
   final int? pendingSubsidyAmount;
 }
 
@@ -104,8 +131,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
   });
 
   final pendingByTarget = <String, Set<DiplomaticOrderType>>{};
-  final pending = currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
-  for (final o in pending) {
+  final pendingList =
+      currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
+  for (final o in pendingList) {
     pendingByTarget.putIfAbsent(o.targetFactionId, () => {}).add(o.type);
   }
 
@@ -121,28 +149,10 @@ List<DiplomacyRowData> buildDiplomacyRows(
     return id;
   }
 
-  ({int? grant, int? subsidy, int? activeSub}) economicRowHints(String id) {
-    int? grantAmt;
-    int? subAmt;
-    for (final o in pending) {
-      if (o.targetFactionId != id) continue;
-      if (o.type == DiplomaticOrderType.grantAid) grantAmt = o.amount;
-      if (o.type == DiplomaticOrderType.setSubsidy) subAmt = o.amount;
-    }
-    int? activeSub;
-    for (final s in game.subsidyStates) {
-      if (s.payerId == humanPlayerId && s.targetId == id) {
-        activeSub = s.amountPerTurn;
-        break;
-      }
-    }
-    return (grant: grantAmt, subsidy: subAmt, activeSub: activeSub);
-  }
-
   List<DiplomacyRowData> rows = [];
   final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
-    final hints = economicRowHints(id);
+    final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -154,15 +164,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: greatPowerPowerScore(game, id),
         playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeOutgoingSubsidyPerTurn: hints.activeSub,
-        pendingGrantAmount: hints.grant,
-        pendingSubsidyAmount: hints.subsidy,
+        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        pendingGrantAmount: econ.grant,
+        pendingSubsidyAmount: econ.subsidy,
       ),
     );
   }
   minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in minorIds) {
-    final hints = economicRowHints(id);
+    final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -174,15 +184,15 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeOutgoingSubsidyPerTurn: hints.activeSub,
-        pendingGrantAmount: hints.grant,
-        pendingSubsidyAmount: hints.subsidy,
+        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        pendingGrantAmount: econ.grant,
+        pendingSubsidyAmount: econ.subsidy,
       ),
     );
   }
   tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
   for (final id in tribeIds) {
-    final hints = economicRowHints(id);
+    final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
       DiplomacyRowData(
         factionId: id,
@@ -194,9 +204,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
         powerScore: null,
         playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeOutgoingSubsidyPerTurn: hints.activeSub,
-        pendingGrantAmount: hints.grant,
-        pendingSubsidyAmount: hints.subsidy,
+        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
+        pendingGrantAmount: econ.grant,
+        pendingSubsidyAmount: econ.subsidy,
       ),
     );
   }
@@ -452,25 +462,33 @@ class _DiplomacyRow extends StatelessWidget {
                     : '$stateLabel · $relationStateLabel$overtureLabel',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              if (data.activeOutgoingSubsidyPerTurn != null) ...[
+              if (data.activeSubsidyPerTurn != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Outgoing subsidy: £${data.activeOutgoingSubsidyPerTurn}/turn to ${data.displayName}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
               if (data.pendingGrantAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Pending grant aid: £${data.pendingGrantAmount} (resolves end of turn)',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
                 ),
               ],
               if (data.pendingSubsidyAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Pending subsidy: £${data.pendingSubsidyAmount}/turn (resolves end of turn)',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
                 ),
               ],
             ],

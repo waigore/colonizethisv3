@@ -88,10 +88,10 @@ const int grantAidDefaultAmount = 1000;
 /// Default Set Subsidy amount (UI + suggestions). Positive multiples of [setSubsidyAmountStep].
 const int setSubsidyDefaultAmount = 1000;
 
-/// Grant Aid step and multiple (pounds).
+/// Grant Aid step and multiple (pounds). Validation and UI stepper.
 const int grantAidAmountStep = 1000;
 
-/// Set Subsidy step and multiple (pounds).
+/// Set Subsidy step and multiple (pounds). Validation and UI stepper.
 const int setSubsidyAmountStep = 100;
 
 /// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].

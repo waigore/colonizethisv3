@@ -56,7 +56,7 @@ void main() {
             amount: 1000,
           ),
         ),
-        'Grant Aid (£1000)',
+        'Grant Aid',
       );
       expect(
         diplomacyActionLabel(

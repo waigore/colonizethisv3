@@ -812,6 +812,9 @@ Game _applyRelationModifiersAndUpdateScores(
         );
       }
       if (amount <= 0 || player.treasury < amount) continue;
+      if (amount < grantAidAmountStep || amount % grantAidAmountStep != 0) {
+        continue;
+      }
 
       final targetId = order.targetFactionId;
       final overture = getOverture(game, gpId, targetId);
@@ -865,6 +868,9 @@ Game _applyRelationModifiersAndUpdateScores(
         );
       }
       if (player == null || amount <= 0 || player.treasury < amount) continue;
+      if (amount < setSubsidyAmountStep || amount % setSubsidyAmountStep != 0) {
+        continue;
+      }
 
       final targetId = order.targetFactionId;
       final overture = getOverture(game, gpId, targetId);
