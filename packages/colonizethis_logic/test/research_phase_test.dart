@@ -52,6 +52,65 @@ void main() {
       expect(result.players.single.researchProgressByTechId ?? const {}, isEmpty);
     });
 
+    test(
+        'resolveResearchPhase clears progress when slot canceled (empty techId)',
+        () {
+      const initialTreasury = 500;
+      final game = _baseGame(
+        treasury: initialTreasury,
+        techUnlocked: const {},
+        progress: const {'crop_rotation': 10},
+        researchSlots: 1,
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: '',
+              funding: ResearchFundingLevel.none,
+            ),
+          ],
+        },
+      );
+      final result = resolveResearchPhase(game, orders);
+      final player = result.players.single;
+      expect(player.treasury, initialTreasury);
+      expect(player.researchProgressByTechId ?? const {}, isEmpty);
+    });
+
+    test(
+        'resolveResearchPhase keeps progress for tech still assigned in another slot',
+        () {
+      const initialTreasury = 500;
+      final game = _baseGame(
+        treasury: initialTreasury,
+        techUnlocked: const {'saw_mill': true},
+        progress: const {'wind_saw_mill': 80},
+        researchSlots: 2,
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: '',
+              funding: ResearchFundingLevel.none,
+            ),
+            ResearchOrder(
+              slotIndex: 1,
+              techId: 'wind_saw_mill',
+              funding: ResearchFundingLevel.none,
+            ),
+          ],
+        },
+      );
+      final result = resolveResearchPhase(game, orders);
+      final player = result.players.single;
+      expect(player.treasury, initialTreasury);
+      expect(player.researchProgressByTechId, {'wind_saw_mill': 80});
+    });
+
     test('resolveResearchPhase skips player when that player has no research orders', () {
       final p1 = Player(
         id: 'p1',
@@ -167,7 +226,7 @@ void main() {
 
       // Treasury unchanged and no progress recorded because prerequisite not met.
       expect(player.treasury, game.players.single.treasury);
-      expect(player.researchProgressByTechId, isNull);
+      expect(player.researchProgressByTechId ?? const {}, isEmpty);
       expect(player.techUnlocked?['wind_saw_mill'], isNot(true));
     });
 
@@ -191,7 +250,7 @@ void main() {
         orders: orders,
       ));
       expect(next.players.single.treasury, 100);
-      expect(next.players.single.researchProgressByTechId, isNull);
+      expect(next.players.single.researchProgressByTechId ?? const {}, isEmpty);
     });
 
     test('research with low funding deducts treasury and adds progress', () {
