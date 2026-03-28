@@ -86,6 +86,7 @@ class SplitFleetDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               CtTransferList(
+                listHeight: 220,
                 leftTitle: originalFleet.id == 'home_fleet'
                     ? 'Home Fleet'
                     : 'Fleet ${originalFleet.id}',

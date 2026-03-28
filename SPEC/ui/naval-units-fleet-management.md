@@ -80,8 +80,7 @@ with fleet-specific labels and validation.
 
 `CtTransferList` API requirements:
 - Inputs: left/right titles, optional subtitles, initial counts for both sides
-- Transfer controls: one/all moves in both directions (`<`, `>`, `<<`, `>>`)
-- Selection model: one selected row key at a time
+- Transfer controls: per-row one/all moves in both directions (`<`, `>`, `<<`, `>>`) on each list row (no separate “selected type” step)
 - Validation hook: `canConfirm(leftCounts, rightCounts)`
 - Confirm callback: `onConfirm(leftCounts, rightCounts)`
 - Optional cancel callback and customizable action labels
@@ -104,16 +103,14 @@ Naval-specific behavior remains outside the component:
 │  │ Fleet 5             │    │ Fleet 6             ││
 │  │ Location: OW-Lisbon │    │ Location: OW-Lisbon ││
 │  │                     │    │                     ││
-│  │ Ships:              │    │ Ships:              ││
-│  │ □ Carrack (2)       │    │ □ Carrack (0)       ││
-│  │ □ Fluyte (1)        │    │ □ Fluyte (0)        ││
-│  │ □ Galleon (1)       │    │ □ Galleon (0)       ││
-│  │                     │    │                     ││
+│  │ Ships:                │    │ Ships:                ││
+│  │ Carrack (2)  [>][>>]  │    │ [<<][<] Carrack (0)  ││
+│  │ Fluyte (1)   [>][>>]  │    │ [<<][<] Fluyte (0)   ││
+│  │ Galleon (1)  [>][>>]  │    │ [<<][<] Galleon (0)  ││
+│  │                       │    │                       ││
 │  └─────────────────────┘    └─────────────────────┘│
 │                                                     │
 │  Total: 4 ships             Total: 0 ships          │
-│                                                     │
-│              [ < ]       [ > ]                      │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │              [Cancel]  [Confirm Split]              │
@@ -122,10 +119,9 @@ Naval-specific behavior remains outside the component:
 
 ### Ship Movement
 
-- **Selection**: Clicking a ship row selects/deselects one ship type for transfer.
-- **Individual move**: Click `>` to move one ship of the selected type from Original to New. Click `<` to move one ship back.
-- **Move all**: Click `>>` to move all ships of the selected type from Original to New. Click `<<` to move all selected ships back.
-- **Disabled transfer controls**: `<`, `>`, `<<`, and `>>` are disabled when no ship type is selected.
+- **Individual move**: On each Original row, use `>` to move one ship of that type to New; on each New row, use `<` to move one back.
+- **Move all**: On each Original row, use `>>` to move all ships of that type to New; on each New row, use `<<` to move all of that type back to Original.
+- **Disabled transfer controls**: Row buttons for a type are absent when that side has zero of that type; otherwise controls respect minimum-ship rules via Confirm validation.
 
 ### Rules
 
