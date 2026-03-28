@@ -1,4 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show RegionData, Unit, WorldState;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show RegionData, Unit, WorldState;
 
 /// Central unit lookup. Units live in [WorldState.oldWorld] and [WorldState.newWorld];
 /// lookup is by unit id. SPEC/game/world-model-identity.md.
@@ -24,4 +25,15 @@ Map<String, Unit> unitsByIdFromWorld(WorldState world) {
 /// Returns all units from both regions in [world]. For iteration over every unit.
 List<Unit> allUnitsFromWorld(WorldState world) {
   return [...world.oldWorld.units, ...world.newWorld.units];
+}
+
+/// Unit type id → count of land units owned by [playerId] (both regions).
+/// Used for military food upkeep during Consumption. SPEC/program/turn-resolution-phase-details.md.
+Map<String, int> regimentTypeCountsForPlayer(WorldState world, String playerId) {
+  final map = <String, int>{};
+  for (final u in allUnitsFromWorld(world)) {
+    if (u.ownerId != playerId) continue;
+    map.update(u.type, (v) => v + 1, ifAbsent: () => 1);
+  }
+  return map;
 }

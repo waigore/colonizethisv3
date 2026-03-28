@@ -43,8 +43,8 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.orders,
   TurnPhase.extraction,
   TurnPhase.richesToTreasury,
-  TurnPhase.production,
   TurnPhase.consumption,
+  TurnPhase.production,
   TurnPhase.research,
   TurnPhase.diplomacy,
   TurnPhase.movement,
@@ -215,6 +215,7 @@ TurnResolutionResult resolveTurnForGame({
   _log.i('logic: turn $turn resolve start');
   Game state = game;
   final feedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
   final phaseIndex = startFromPhase != null
       ? turnResolutionSequence.indexOf(startFromPhase)
       : 0;
@@ -238,16 +239,21 @@ TurnResolutionResult resolveTurnForGame({
       case TurnPhase.richesToTreasury:
         state = _runRichesToTreasuryPhase(state);
         break;
+      case TurnPhase.consumption:
+        state = _runConsumptionPhase(
+          state,
+          feedingCoverageByPlayerId,
+          idleLabourByPlayerId,
+        );
+        break;
       case TurnPhase.production:
         state = _runProductionPhase(
           state,
           defaultAssignments,
           defaultAssignmentsByPlayerId,
+          idleLabourByPlayerId,
           onProductionComplete,
         );
-        break;
-      case TurnPhase.consumption:
-        state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
         break;
       case TurnPhase.research:
         {
@@ -619,6 +625,7 @@ Game _runProductionPhase(
   Game game,
   List<AssignedRecipe> defaultAssignments,
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  Map<String, WorkerIdleCounts> idleLabourByPlayerId,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 ) {
@@ -628,9 +635,12 @@ Game _runProductionPhase(
   for (final player in game.players) {
     final assignments =
         defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
+    final idleLabour =
+        idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
     final result = resolveProduction(
       stockpile: player.stockpile,
       workers: player.workerPool,
+      idleLabour: idleLabour,
       assignments: assignments,
     );
     if (result.productionByRecipe.isNotEmpty) {
@@ -653,20 +663,13 @@ Game _runProductionPhase(
 Game _runConsumptionPhase(
   Game game,
   Map<String, double> feedingCoverageByPlayerId,
+  Map<String, WorkerIdleCounts> idleLabourByPlayerId,
 ) {
   final updatedPlayers = <Player>[];
 
   for (final player in game.players) {
-    // Count this player's regiments across both regions.
-    final regimentCounts = <String, int>{};
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.ownerId != player.id) continue;
-      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
-    }
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.ownerId != player.id) continue;
-      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
-    }
+    final regimentCounts =
+        regimentTypeCountsForPlayer(game.worldState, player.id);
 
     final result = resolveConsumption(
       stockpile: player.stockpile,
@@ -683,6 +686,7 @@ Game _runConsumptionPhase(
       if (coverage > 1) coverage = 1;
     }
     feedingCoverageByPlayerId[player.id] = coverage;
+    idleLabourByPlayerId[player.id] = result.idleLabour;
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,

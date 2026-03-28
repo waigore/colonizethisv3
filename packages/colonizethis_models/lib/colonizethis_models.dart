@@ -20,6 +20,7 @@ export 'src/quick_battle.dart';
 export 'src/region.dart';
 export 'src/region_data.dart';
 export 'src/worker_pool.dart';
+export 'src/worker_idle_counts.dart';
 export 'src/turn_state.dart';
 export 'src/turn_time_mapping.dart';
 export 'src/unit.dart';

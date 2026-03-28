@@ -37,9 +37,12 @@ class ProductionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final regimentCounts =
+        regimentTypeCountsForPlayer(game.worldState, player.id);
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
       stockpile: player.stockpile,
+      regimentCountsById: regimentCounts,
     );
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;

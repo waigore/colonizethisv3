@@ -28,15 +28,15 @@ For each riches commodity (gold, silver, gems, diamonds, spices): add quantity �
 
 ---
 
-## Production
+## Consumption
 
-Per recipe: consume inputs and labour from stockpile and WorkerPool; add outputs. Insufficient input: skip or partial per spec.
+Military regiments consume food upkeep **before** workers and navy. Per player: (1) Compute regiment food demand. (2) Consume food from stockpile (military-first). (3) Derive feeding coverage ratio → morale/strength modifier for Combat (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (4) Workers/navy consume remainder per [workers-and-population.md](../game/workers-and-population.md): worker food priority **Masters → Journeymen → Apprentices → Peasants**; workers who lack food or (for trained tiers) lack luxury assignment are **on strike** (no labour) but **not removed**; **luxury deduction** only for food-fed trained workers who receive a unit, up to stockpile. Upkeep shortfall for military affects morale/strength, not unit count.
 
 ---
 
-## Consumption
+## Production
 
-Military regiments consume food upkeep **before** workers and navy. Per player: (1) Compute regiment food demand. (2) Consume food from stockpile (military-first). (3) Derive feeding coverage ratio → morale/strength modifier for Combat (coverage ≥ 1.0 → 1.0; 0.5–<1.0 → 0.75; <0.5 → 0.5). (4) Workers/navy consume remainder per [workers-and-population.md](../game/workers-and-population.md): food first, then starvation removes workers; then **luxury deduction** (one unit per trained worker of that tier: refinedSugar/apprentices, cigars/journeymen, furHats/masters), up to stockpile. Upkeep shortfall for military affects morale/strength, not unit count.
+Runs **after** Consumption for that turn. Per recipe: consume inputs and labour from stockpile and **idle worker labour** (from post-Consumption `WorkerIdleCounts`); add outputs. Insufficient input: skip or partial per spec. Labour does not use raw `WorkerPool` headcounts alone.
 
 ---
 

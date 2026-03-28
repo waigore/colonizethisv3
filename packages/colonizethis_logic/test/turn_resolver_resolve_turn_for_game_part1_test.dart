@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('resolveTurnForGame', () {
-    test('runs extraction, production, consumption, and movement phases', () {
+    test('runs extraction, consumption, production, and movement phases', () {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
