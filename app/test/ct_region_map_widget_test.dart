@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
@@ -16,6 +17,14 @@ void main() {
   suppressLogsForTests();
 
   group('CtRegionMap (Flame map widget)', () {
+    setUpAll(() async {
+      // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
+      // pump() is not enough when tests run alone (e.g. CI --total-shards).
+      await terrainTilesetCache.load();
+      await resourceIconCache.load();
+      await townIconCache.load();
+    });
+
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
       (WidgetTester tester) async {
