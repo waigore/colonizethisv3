@@ -13,7 +13,12 @@ void main() {
       // Province P1 was original capital (now owned by p2); P2 is inland and owned by p1.
       final provinces = [
         const Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
-        const Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+        Province(
+          id: '$ow|P2',
+          regionId: ow,
+          ownerId: 'p1',
+          townTileKey: '$ow|P2|0|0',
+        ),
       ];
 
       // Ports: only on P1, which is now owned by p2.
@@ -31,14 +36,20 @@ void main() {
       final game = Game(
         id: 'g1',
         worldState: world,
-        players: const [
-          Player(
+        players: [
+          const Player(
             id: 'p1',
             displayName: 'Attacker',
             isHuman: true,
             capitalProvinceId: '$ow|P1',
+            capitalTile: CapitalTile(
+              regionId: ow,
+              provinceId: '$ow|P1',
+              x: 0,
+              y: 0,
+            ),
           ),
-          Player(
+          const Player(
             id: 'p2',
             displayName: 'Conqueror',
             isHuman: true,
