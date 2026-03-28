@@ -2,16 +2,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import '../setup/capital_choice.dart';
 import '../world/province_lookup.dart';
+import 'capital_reassignment_fatal.dart';
 
 final _log = logicLogger();
 
 Game applyCapitalReassignmentAfterCombat(
   Game state,
-  MapTopology topology,
-  Map<String, TileMapResult> tileMapByRegion, {
+  MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
 }) {
   Game game = state;
@@ -43,33 +42,74 @@ Game applyCapitalReassignmentAfterCombat(
       );
       continue;
     }
-    final tileMap = tileMapByRegion[regionId];
-    if (tileMap == null) continue;
-    try {
-      final (newProvinceId, tile) = pickCapitalForFaction(
-        ownedInRegion,
-        regionId,
-        regionTopology,
-        tileMap,
-        requireSeaBound: false,
+
+    final newProvinceId = pickCapitalProvinceIdForReassignment(
+      ownedInRegion,
+      regionTopology,
+    );
+    final newProvince = region.provinces
+        .where((p) => p.id == newProvinceId)
+        .firstOrNull;
+    if (newProvince == null) {
+      final msg =
+          'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
+      _log.e(
+        'logic: $msg',
+        error: StateError(msg),
+        stackTrace: StackTrace.current,
       );
+      throw CapitalReassignmentFatalError(msg);
+    }
+
+    final rawTown = newProvince.townTileKey;
+    if (rawTown == null || rawTown.isEmpty) {
+      final msg =
+          'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
+      final err = StateError(msg);
+      _log.e(
+        'logic: $msg',
+        error: err,
+        stackTrace: StackTrace.current,
+      );
+      throw CapitalReassignmentFatalError(msg, err);
+    }
+
+    late final CapitalTile tile;
+    try {
+      tile = CapitalTile.parseTownTileKey(rawTown, newProvinceId);
+    } catch (e, st) {
+      final msg =
+          'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
+      _log.e(
+        'logic: $msg',
+        error: e,
+        stackTrace: st,
+      );
+      throw CapitalReassignmentFatalError(
+        'Invalid townTileKey for province $newProvinceId (player ${player.id}): $e',
+        e,
+      );
+    }
+
+    try {
       game = setCapitalForReassignment(
         game: game,
         playerId: player.id,
         provinceId: newProvinceId,
         tile: tile,
-        topology: regionTopology,
-        tileMapByRegion: tileMapByRegion,
       );
       _log.i(
-        'logic: player ${player.id} capital reassigned to $newProvinceId after loss',
+        'logic: player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
       );
     } catch (e, st) {
-      _log.w(
-        'logic: capital reassignment failed for ${player.id}',
+      final msg =
+          'capital reassignment: failed to apply new capital for ${player.id}';
+      _log.e(
+        'logic: $msg',
         error: e,
         stackTrace: st,
       );
+      rethrow;
     }
   }
   return game;

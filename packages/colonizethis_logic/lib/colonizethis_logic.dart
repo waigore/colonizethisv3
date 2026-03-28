@@ -75,6 +75,7 @@ export 'src/ai/sim_game_ai.dart';
 export 'src/ai/simple_ai_heuristics.dart';
 
 // World
+export 'src/world/capital_reassignment_fatal.dart';
 export 'src/world/connectivity_resolver.dart';
 export 'src/world/unit_lookup.dart';
 export 'src/world/minor_military_parity.dart';
