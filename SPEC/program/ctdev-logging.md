@@ -1,6 +1,6 @@
 # ctdev logging
 
-**SPEC/program** — File-based and in-memory logging for the ctdev dev app. End-to-end coverage: init game, map generation, load/save, and sim (orders, resolve, phases). All code in the listed areas must log key operations (start/end of flows, rejections, errors) as described below.
+**SPEC/program** — **Ctdev-only** log **sinks**: file layout, session id, pre-sim buffer, and Sim Log UI. **What** to log and **info vs debug** semantics are defined in **[SPEC/program/logging/logging.md](logging/logging.md)** and its annexes ([map-generation](logging/map-generation.md), [turn-resolution](logging/turn-resolution.md), [ai-actions](logging/ai-actions.md), [events](logging/events.md)).
 
 ---
 
@@ -14,67 +14,31 @@
 
 ---
 
-## Logger package and configuration
+## Logger package and ctdev outputs
 
-- **Dart `logger` package:** Used for all logging. Ctdev configures a single global log listener; packages use `Logger()` and do not configure outputs.
-- **Levels:** Standard levels: debug, info, warn, error.
+- **Dart `logger` package:** Used for all logging. Ctdev configures a single global log listener; packages do not configure outputs (see [colonizethis-logger.md](colonizethis-logger.md)).
+- **Levels (ctdev sinks):**
   - **File:** Logs at **debug** and above (default).
   - **In-memory Sim Log (UI):** Logs at **info** and above; shows the **last 10 lines** only; **cleared at the start of every turn** (when resolving a turn or stepping a full turn).
-  - **AI:** **Info** for major decisions (e.g. selected goal, chosen order type, economy plan summary); **debug** for full evals (candidate lists, scores, weights, snapshot, dossier).
-- **Exception capture:** All log calls use `error` and `stackTrace` parameters where applicable. Uncaught errors are handled in `runZonedGuarded` and logged with stack trace. The file format appends error and stack trace when present (e.g. on following lines).
-  - **CLI tools:** Init-game, map generation, and sim tools use the same logger configuration for **operational and diagnostic** output (`logic:`, `map:`, etc.). They may still write **usage, help text, and human-readable reports** to `stdout`/`print` as part of their CLI contract; these are exempt from the “no print for logging” rule.
+- **Semantic levels** (what belongs in info vs debug): [logging.md](logging/logging.md).
+- **Exception capture:** Log calls use `error` and `stackTrace` where applicable. Uncaught errors are handled in `runZonedGuarded` and logged with stack trace. The file format appends error and stack trace when present (e.g. on following lines).
+- **CLI tools:** Init-game, map generation, and sim tools use the same logger configuration for **operational and diagnostic** output. They may still write **usage, help text, and human-readable reports** to `stdout`/`print` as part of their CLI contract; these are exempt from the “no print for logging” rule.
 
 ---
 
-## Logger naming
+## Land combat and turn logging
 
-- **Prefix:** By package / subpackage-or-file (class): e.g. `ai/strategic_ai`, `ai/goal_manager`, `ai/domain_planners`, `ai/economy_planner`, `ai/perception`, `ai/dossier`, `logic/order_suggestion`. Enables grep-friendly logs (e.g. `ai/goal_manager: selected primaryGoal=conquer`).
-- Packages: **ctdev**, **logic**, **ai**, **data**, **map**, **save**. No models logger.
-
----
-
-## Scope (everything logged)
-
-- **ctdev:** App lifecycle, init game submit, start sim (session id), turn steps, exceptions in turn handlers.
-- **logic:** Turn resolution (phases), order engine (validation, rejections), order suggestion API (all suggestion functions and results), movement, combat, naval, extraction, production, consumption, research, diplomacy, init game orchestration, game setup.
-
-### Land combat (`logic:`)
-
-During the Combat phase, **land** resolution emits grep-oriented lines (token `logic: combat`). **Naval** combat logging is unchanged unless separately specified.
-
-- **Conflict detection** (info): start and end of detection for the phase, including `turn` and `battleContexts` count. Emitted from turn combat orchestration (`_runCombatPhase`), not from standalone `detectConflicts` unit tests in isolation.
-- **Per battle** (info): `battle_start` with `turn`, `battleIndex`, prefixed `regionId` and `provinceId`, `defenderFactionId`, `attackerSides`, `attackerUnitsTotal`, and `mode` (`autoResolve` or `quickBattle`).
-- **Per engagement** (debug, auto-resolve only): each executed engagement logs `attackerFactionId`, `result` (`EngagementResult` enum name), and `attCasualties` / `defCasualties` **counts** only (no per-unit id lists at info).
-- **World application** (info): `battle_apply` with `regionId`, `provinceId`, `mode`, `provinceFlipped`, casualty counts as applicable, `ownerAfter` for the province when resolved, and for Quick Battle `winner` (`QuickBattleWinner` enum name).
-
-Message bodies use `key=value` segments separated by spaces where practical so logs are easy to filter (e.g. `rg 'logic: combat battle_apply'`).
-- **ai:** Order generation, planner, goals/candidates. Info = major decisions; debug = full evals (goal weights, candidate scores, perception snapshot, dossier, economy recipe scores).
-- **data:** Catalog/config lookups; fallbacks and defaults.
-- **map:** Map generation (tile map, topology), init game map view build, load savegame view build.
-- **save:** Save/load calls (path, gameId, success); errors on failure.
-
-See [ctdev-app.md](ctdev-app.md) for UI behaviour (session ID display, Sim Log panel).
+Structured **land** combat log lines and **Given–When–Then** criteria: [logging/turn-resolution.md](logging/turn-resolution.md) § Land combat.
 
 ---
 
-## Acceptance criteria
+## Acceptance criteria (ctdev sinks)
 
 - **Log directory:** `logs/` under project root (repo root when run from ctdev or root); created if missing.
 - **Log file:** One per calendar day: `logs/YYYY-MM-DD.log`; multiple sim sessions on the same day append.
 - **Session ID:** Generated at Start Game (Sim); displayed on Running Game screen; **Log:** shows path to the current day file.
 - **Pre-sim:** Events before Start Game buffered in memory; on Start Game replayed to the day file, then all subsequent events go to file.
 - **Levels:** File at debug and above; in-memory Sim Log at info and above, last 10 lines, cleared at start of every turn (resolve/step).
-- **Exceptions:** Log calls use `error` and `stackTrace` where applicable; uncaught errors in `runZonedGuarded` logged with stack.
-- **Scope:** ctdev, logic, ai, data, map, save each log key operations (start/end of flows, rejections, errors) with the specified prefixes; no `print` for operational/diagnostic output in ctdev and in-scope flows (or document exemptions).
+- **Exceptions:** Uncaught errors in `runZonedGuarded` logged with stack; log calls use `error` and `stackTrace` where applicable.
 
-### Land combat — acceptance criteria
-
-- **Given** a game state after Movement where at least one land `BattleContext` exists for the turn, **when** the system runs the Combat phase (`_runCombatPhase`), **then** the logger emits at **info** a line containing `logic: combat conflict_detection start` with `turn=<integer>` and a line containing `logic: combat conflict_detection end` with the same `turn` and `battleContexts=<non-negative integer>`.
-
-- **Given** a land `BattleContext` processed in that phase, **when** the system begins resolving that battle, **then** the logger emits at **info** a line containing `logic: combat battle_start` with `regionId=`, `provinceId=`, `defenderFactionId=`, `attackerSides=<integer>`, `attackerUnitsTotal=<integer>`, and `mode=autoResolve` or `mode=quickBattle`.
-
-- **Given** auto-resolve for a `BattleContext` with at least one executed engagement, **when** each engagement completes, **then** the logger emits at **debug** a line containing `logic: combat engagement` with `attackerFactionId=<string>`, `result=<EngagementResult enum name>`, `attCasualties=<integer>`, and `defCasualties=<integer>`.
-
-- **Given** auto-resolve completes for a `BattleContext`, **when** the system applies the result to world state, **then** the logger emits at **info** a line containing `logic: combat battle_apply` with `mode=autoResolve`, `provinceFlipped=true` or `provinceFlipped=false`, `casualtiesApplied=<integer>`, and `ownerAfter=<faction id string or empty if unknown>`.
-
-- **Given** Quick Battle completes for a `BattleContext`, **when** the system applies the result to world state, **then** the logger emits at **info** a line containing `logic: combat battle_apply` with `mode=quickBattle`, `winner=<QuickBattleWinner enum name>`, `provinceFlipped=true` or `provinceFlipped=false`, and per-side casualty **counts** (`attCasualties`, `defCasualties`).
+See [ctdev-app.md](ctdev-app.md) for UI behaviour (session ID display, Sim Log panel).
