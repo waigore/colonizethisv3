@@ -106,7 +106,7 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 
 ## Observability
 
-Structured **land** combat logs (`logic: combat …`) are specified in [ctdev-logging.md](ctdev-logging.md) § Land combat: conflict detection, `battle_start`, per-engagement (debug, auto-resolve), and `battle_apply`. Global logger emission does not change resolver return values or determinism of game state.
+Structured **land** combat logs (`combat …` tokens after the `logic` prefix) are specified in [logging/turn-resolution.md](logging/turn-resolution.md) § Land combat: conflict detection, `battle_start`, per-engagement (debug, auto-resolve), and `battle_apply`. Global logger emission does not change resolver return values or determinism of game state.
 
 ## Integration
 

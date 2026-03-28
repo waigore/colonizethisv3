@@ -1,6 +1,6 @@
 # colonizethis-logger
 
-**SPEC/program** — Prefixed logger utility for consistent log categorization in the debug log viewer.
+**SPEC/program** — Prefixed logger utility for consistent log categorization in the debug log viewer. **Policy** (levels, prefixes, domain rules): [logging/logging.md](logging/logging.md).
 
 ---
 
