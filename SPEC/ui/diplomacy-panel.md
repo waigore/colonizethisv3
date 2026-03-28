@@ -30,11 +30,7 @@ A faction is **discovered** iff the player has a **diplomatic relation** with th
 ## Per-faction row
 
 - **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** the **power score** per [diplomacy.md](../game/diplomacy.md) § Great Power power score is shown; if the GP’s score is higher than the player’s, the score is shown in **red**, otherwise in **green**.
-- **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy **toward this faction (the row’s counterparty)**, show short **receiver-centric** lines (this faction is the recipient):
-  - **Active subsidy:** If `Game.subsidyStates` contains an entry with `payerId` = human GP and `targetId` = this row’s faction, show ongoing subsidy as e.g. `Your subsidy: £N/turn` (or equivalent wording).
-  - **Pending grant:** If the human’s **current-turn** diplomatic orders include `grantAid` toward this faction, show e.g. `Grant pending: £M` (treasury is **not** reduced until turn resolution; this is draft-only state).
-  - **Pending subsidy:** If the human’s current-turn orders include `setSubsidy` toward this faction, show e.g. `Subsidy pending: £K/turn`.
-  Do **not** duplicate this block on the Diplomacy Detail screen for MVP of this feature (list row is the source of truth for this summary).
+- **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for MVP (list row is the source of truth).
 - **Right:** **Available diplomatic actions** for the player toward that faction. Actions are those explicitly in SPEC/game/diplomacy.md and SPEC/program/orders.md: Declare War, Offer Peace, Alliance (GP only), Establish Overture (stage), **Grant Aid**, **Set Subsidy** as **separate** buttons when each is valid. Grant Aid requires Embassy; Set Subsidy requires Consulate or Embassy — hide or omit a button when its preconditions are not met. Only show actions that are **valid** per the diplomatic order validator (same rules as order submission). Any counterparty that is a valid target for aid/subsidy per game rules (Great Power, Minor, or Tribe) uses the same button rules.
 
 Tapping anywhere on a faction row (or an explicit “Details” affordance in that row) opens a **Diplomacy Detail** view for that faction, scoped to the current player’s Great Power.
@@ -63,9 +59,7 @@ All diplomatic actions are **submitted for end-of-turn resolution** — the pane
 ### Submitting an action
 
 - **Confirm dialog:** Before any action is submitted, the UI shows a **confirmation dialog** with the action name and target faction. The dialog has "Confirm" and "Cancel" buttons. Tapping "Confirm" submits the order; tapping "Cancel" dismisses without submitting.
-- **Parameter dialogs:** Actions that require parameters (Grant Aid amount, Set Subsidy amount, Establish Overture stage) open the parameter dialog first; after parameters are set, the confirmation dialog appears before the order is submitted.
-- **Grant Aid amount dialog:** Single dialog component parameterized by mode (`GrantOrSubsidyDialog`, `isSubsidy: false`). Amount is adjusted with **− / + stepper** controls (no free-typed arbitrary integers required for MVP). **Step £1000**, **default £1000**, minimum **£1000**, maximum bounded by current treasury. **Submit** only enabled when the amount is a positive multiple of £1000 and ≤ treasury.
-- **Set Subsidy amount dialog:** Same dialog with `isSubsidy: true`. **Step £100**, **default £1000**, minimum **£100**, maximum bounded by current treasury. **Submit** only enabled when the amount is a positive multiple of £100 and ≤ treasury.
+- **Parameter dialogs:** Actions that require parameters (Grant Aid amount, Set Subsidy amount, Establish Overture stage) open the parameter dialog first; after parameters are set, the confirmation dialog appears before the order is submitted. **Grant Aid / Set Subsidy:** single dialog (`GrantOrSubsidyDialog`) with **stepper-only** entry (no free numeric typing). Dialog titles use **sentence case** (`Grant aid`, `Set subsidy`). **Grant Aid:** step **£1000**, default **£1000**, positive multiples of **£1000** up to treasury; **Submit** only when valid. **Set Subsidy:** step **£100**, default **£1000**, positive multiples of **£100** up to treasury; **Submit** only when valid.
 - **Pending state:** After an order is submitted, the corresponding action button for that (player, target, type) is shown with a **"Cancel" label** to indicate the action is pending. The button text changes from the action name to "Cancel" and tapping it **removes the pending order** (toggle off), returning the UI to the pre-submitted state.
 - **Toggle logic:** Clicking an action button while the same order is already pending cancels it. The pending state is per `(humanPlayerId, targetFactionId, DiplomaticOrderType)`. If the pending order has parameters (amount, overtureStage), canceling removes the entire order; the user must re-enter parameters to submit again.
 
@@ -77,8 +71,8 @@ All diplomatic actions are **submitted for end-of-turn resolution** — the pane
 | Offer Peace | "Offer Peace" | "Cancel" |
 | Alliance | "Alliance" | "Cancel" |
 | Establish Overture | "Consulate/Embassy/NAP/Join Empire" | "Cancel" |
-| Grant Aid | "Grant Aid" | "Cancel" |
-| Set Subsidy | "Set Subsidy" | "Cancel" |
+| Grant Aid | "Grant Aid (£N)" | "Cancel" |
+| Set Subsidy | "Set Subsidy (£N)" | "Cancel" |
 
 Orders are submitted into the current turn's order set; resolution happens on Next Turn.
 

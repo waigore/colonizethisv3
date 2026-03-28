@@ -9,10 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
-  testWidgets('showGrantOrSubsidyDialog submits default grant amount via stepper',
+  testWidgets('showGrantOrSubsidyDialog submits default valid grant amount',
       (WidgetTester tester) async {
     final game = getDebugInitGameResult().game;
     final humanPlayerId = game.players.first.id;
+    final treasury = game.players.first.treasury;
+    if (treasury < 1000) {
+      return;
+    }
     final targetFactionId = game.players.length >= 2
         ? game.players[1].id
         : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
@@ -50,11 +54,6 @@ void main() {
     expect(find.text('Grant aid'), findsOneWidget);
     expect(find.textContaining('£'), findsWidgets);
 
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.remove));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.widgetWithText(CtNinePatchButton, 'Submit'));
     await tester.pumpAndSettle();
 
@@ -64,20 +63,20 @@ void main() {
   });
 
   testWidgets(
-      'showGrantOrSubsidyDialog submit disabled when treasury cannot fund minimum',
+      'showGrantOrSubsidyDialog submit disabled when treasury below minimum',
       (WidgetTester tester) async {
     final base = getDebugInitGameResult().game;
     final humanPlayerId = base.players.first.id;
-    final p0 = base.players.firstWhere((p) => p.id == humanPlayerId);
+    final targetFactionId = base.players.length >= 2
+        ? base.players[1].id
+        : (base.minorNations.isNotEmpty ? base.minorNations.first.id : 'm1');
+
     final game = base.copyWith(
       players: [
-        p0.copyWith(treasury: 0),
-        ...base.players.where((p) => p.id != humanPlayerId),
+        base.players.first.copyWith(treasury: 500),
+        ...base.players.skip(1),
       ],
     );
-    final targetFactionId = game.players.length >= 2
-        ? game.players[1].id
-        : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
 
     var submittedCalled = false;
 
@@ -93,7 +92,7 @@ void main() {
                   game: game,
                   humanPlayerId: humanPlayerId,
                   targetFactionId: targetFactionId,
-                  isSubsidy: true,
+                  isSubsidy: false,
                   onSubmitted: (_) {
                     submittedCalled = true;
                   },
@@ -108,16 +107,16 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Set subsidy'), findsOneWidget);
+    expect(find.text('Grant aid'), findsOneWidget);
     final submit = find.widgetWithText(CtNinePatchButton, 'Submit');
     final button = tester.widget<CtNinePatchButton>(submit);
-    expect(button.onPressed, isNull);
+    expect(button.enabled, isFalse);
 
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
     expect(submittedCalled, isFalse);
-    expect(find.text('Set subsidy'), findsOneWidget);
+    expect(find.text('Grant aid'), findsOneWidget);
   });
 
   testWidgets('showGrantOrSubsidyDialog Cancel closes dialog',

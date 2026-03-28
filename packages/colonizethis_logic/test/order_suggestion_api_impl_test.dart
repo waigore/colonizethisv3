@@ -415,7 +415,7 @@ void main() {
       expect(list.where((o) => o.targetFactionId == 'gp2'), isEmpty);
     });
 
-    test('suggestDiplomaticOrders: each suggestion appendable and validates with context', () {
+    test('suggestDiplomaticOrders: cumulative list appendable and validates', () {
       const api = DefaultOrderSuggestionAPI();
       const topology = MapTopology(nodes: [], edges: []);
       final game = Game(

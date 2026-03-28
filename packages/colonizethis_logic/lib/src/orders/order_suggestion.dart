@@ -1658,6 +1658,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
+  var workingOrders = currentOrders;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
@@ -1669,7 +1670,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
     );
-    var trialOrders = currentOrders;
+    var trialOrders = workingOrders;
 
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
@@ -1717,6 +1718,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         candidate,
       );
     }
+
+    workingOrders = trialOrders;
   }
 
   suggestions.sort((a, b) {

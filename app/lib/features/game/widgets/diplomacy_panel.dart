@@ -465,7 +465,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.activeSubsidyPerTurn != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Your subsidy: £${data.activeSubsidyPerTurn}/turn',
+                  'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                   ),
@@ -474,7 +474,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingGrantAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Grant pending: £${data.pendingGrantAmount}',
+                  'Pending grant aid: £${data.pendingGrantAmount} (resolves end of turn)',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,
@@ -484,7 +484,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingSubsidyAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Subsidy pending: £${data.pendingSubsidyAmount}/turn',
+                  'Pending subsidy: £${data.pendingSubsidyAmount}/turn (resolves end of turn)',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,

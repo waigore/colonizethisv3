@@ -805,6 +805,12 @@ Game _applyRelationModifiersAndUpdateScores(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.grantAid) continue;
       final amount = order.amount ?? 0;
+      if (amount > 0 && amount % grantAidAmountStep != 0) {
+        throw StateError(
+          'GrantAid at resolution must be a positive multiple of '
+          '£$grantAidAmountStep (was $amount)',
+        );
+      }
       if (amount <= 0 || player.treasury < amount) continue;
       if (amount < grantAidAmountStep || amount % grantAidAmountStep != 0) {
         continue;
@@ -855,6 +861,12 @@ Game _applyRelationModifiersAndUpdateScores(
       if (order.type != DiplomaticOrderType.setSubsidy) continue;
       final amount = order.amount ?? 0;
       final player = game.playerById(gpId);
+      if (amount > 0 && amount % setSubsidyAmountStep != 0) {
+        throw StateError(
+          'SetSubsidy at resolution must be a positive multiple of '
+          '£$setSubsidyAmountStep (was $amount)',
+        );
+      }
       if (player == null || amount <= 0 || player.treasury < amount) continue;
       if (amount < setSubsidyAmountStep || amount % setSubsidyAmountStep != 0) {
         continue;
