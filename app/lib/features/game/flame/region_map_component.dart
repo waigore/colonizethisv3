@@ -257,7 +257,7 @@ class CtRegionMapComponent extends PositionComponent {
       return;
     }
     // Not in work target mode: allow province selection.
-    // Check if tap is on a town icon first.
+    // Town or port icon hit (port may be on an adjacent sea tile). SPEC/ui/town-port-icons.md.
     final tappedTown = _getTownAtTile(x, y);
     if (tappedTown != null) {
       final provinceId = '${region.regionId}|${tappedTown.provinceId}';
@@ -272,6 +272,13 @@ class CtRegionMapComponent extends PositionComponent {
     for (final town in region.townMarkers) {
       if (town.x == x && town.y == y) {
         return town;
+      }
+      if (town.isPort) {
+        final px = town.portIconX;
+        final py = town.portIconY;
+        if (px != null && py != null && px == x && py == y) {
+          return town;
+        }
       }
     }
     return null;
@@ -1144,41 +1151,71 @@ class CtRegionMapComponent extends PositionComponent {
         }
       }
 
-      String iconId;
-      if (town.isPort) {
-        iconId = 'port';
-      } else if (town.isCoastal) {
-        iconId = 'town_coastal';
-      } else {
-        iconId = 'town_inland';
-      }
-      final icon = townIconCache.getIcon(iconId);
-      if (icon == null) continue;
-
-      final cx = town.x * cellSize + cellSize / 2;
-      final cy = town.y * cellSize + cellSize / 2;
-      final halfIcon = TownIconCache.iconSize / 2;
-
-      final srcRect = Rect.fromLTWH(
-        0,
-        0,
-        TownIconCache.iconSize,
-        TownIconCache.iconSize,
+      final String townIconId =
+          town.touchesSea ? 'town_coastal' : 'town_inland';
+      _paintTownIconAt(
+        canvas,
+        cell: cell,
+        cx: town.x,
+        cy: town.y,
+        icon: townIconId,
       );
-      final dstRect = Rect.fromLTWH(
-        cx - halfIcon,
-        cy - halfIcon,
-        TownIconCache.iconSize,
-        TownIconCache.iconSize,
-      );
-
-      var paint = Paint();
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.fogged) {
-        paint.color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity);
-      }
-      canvas.drawImageRect(icon, srcRect, dstRect, paint);
     }
+
+    for (final town in region.townMarkers) {
+      if (!town.isPort) continue;
+      final px = town.portIconX;
+      final py = town.portIconY;
+      if (px == null || py == null) continue;
+      final portCell = region.cellAt(px, py);
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
+        if (portCell.visibility == TileVisibility.unrevealed) {
+          continue;
+        }
+      }
+      _paintTownIconAt(
+        canvas,
+        cell: portCell,
+        cx: px,
+        cy: py,
+        icon: 'port',
+      );
+    }
+  }
+
+  void _paintTownIconAt(
+    Canvas canvas, {
+    required CellViewData cell,
+    required int cx,
+    required int cy,
+    required String icon,
+  }) {
+    final uiImage = townIconCache.getIcon(icon);
+    if (uiImage == null) return;
+
+    final centerX = cx * cellSize + cellSize / 2;
+    final centerY = cy * cellSize + cellSize / 2;
+    final halfIcon = TownIconCache.iconSize / 2;
+
+    final srcRect = Rect.fromLTWH(
+      0,
+      0,
+      TownIconCache.iconSize,
+      TownIconCache.iconSize,
+    );
+    final dstRect = Rect.fromLTWH(
+      centerX - halfIcon,
+      centerY - halfIcon,
+      TownIconCache.iconSize,
+      TownIconCache.iconSize,
+    );
+
+    var paint = Paint();
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.fogged) {
+      paint.color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity);
+    }
+    canvas.drawImageRect(uiImage, srcRect, dstRect, paint);
   }
 
   void _paintWarpZones(Canvas canvas) {
