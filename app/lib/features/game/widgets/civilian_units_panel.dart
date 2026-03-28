@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
+import 'units/shared/region_section_header.dart';
+import 'units/shared/units_panel_region_label.dart';
+import 'units/shared/units_panel_shell.dart';
 
 /// Human-readable label for work target ids. SPEC/ui/civilian-units-panel.md.
 const Map<String, String> _workTargetLabels = {
@@ -24,18 +26,6 @@ const Map<String, String> _workTargetLabels = {
   'counter_spy': 'Counter spy',
   'purchase_land': 'Purchase land',
 };
-
-/// Region id to display label. SPEC/ui/civilian-units-panel.md.
-String _regionLabel(String regionId) {
-  switch (regionId) {
-    case 'oldWorld':
-      return 'Old World';
-    case 'newWorld':
-      return 'New World';
-    default:
-      return regionId;
-  }
-}
 
 /// Builds prefixed province id -> province display name from [game].
 Map<String, String> _provinceNamesByPrefixedId(Game game) {
@@ -127,111 +117,49 @@ class CivilianUnitsPanel extends StatelessWidget {
     );
     final hasAny = ow.isNotEmpty || nw.isNotEmpty;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: CtPanel(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Civilian Units',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    CtNinePatchButton(
-                      onPressed: () {
-                        Navigator.of(context).maybePop();
-                        bus.emit(OpenDialogEvent(trainCiviliansDialogId));
-                      },
-                      child: const Text('Train'),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: hasAny
-                    ? ListView(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                        children: [
-                          if (ow.isNotEmpty) ...[
-                            _RegionHeader(label: _regionLabel('oldWorld')),
-                            ...ow.map(
-                              (u) => _UnitRow(
-                                unit: u,
-                                provinceNames: provinceNames,
-                                currentOrders: currentOrders,
-                                availableWorkTargets: availableWorkTargets,
-                                humanPlayerId: humanPlayerId,
-                                bus: bus,
-                                onAddWorkOrder: onAddWorkOrder,
-                              ),
-                            ),
-                          ],
-                          if (nw.isNotEmpty) ...[
-                            _RegionHeader(label: _regionLabel('newWorld')),
-                            ...nw.map(
-                              (u) => _UnitRow(
-                                unit: u,
-                                provinceNames: provinceNames,
-                                currentOrders: currentOrders,
-                                availableWorkTargets: availableWorkTargets,
-                                humanPlayerId: humanPlayerId,
-                                bus: bus,
-                                onAddWorkOrder: onAddWorkOrder,
-                              ),
-                            ),
-                          ],
-                        ],
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Text(
-                            'No civilian units',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ),
-                      ),
-              ),
-            ],
+    return UnitsPanelShell(
+      title: 'Civilian Units',
+      actions: [
+        CtNinePatchButton(
+          onPressed: () {
+            Navigator.of(context).maybePop();
+            bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+          },
+          child: const Text('Train'),
+        ),
+      ],
+      hasContent: hasAny,
+      listChildren: [
+        if (ow.isNotEmpty) ...[
+          RegionSectionHeader(label: unitsPanelRegionLabel('oldWorld')),
+          ...ow.map(
+            (u) => _UnitRow(
+              unit: u,
+              provinceNames: provinceNames,
+              currentOrders: currentOrders,
+              availableWorkTargets: availableWorkTargets,
+              humanPlayerId: humanPlayerId,
+              bus: bus,
+              onAddWorkOrder: onAddWorkOrder,
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RegionHeader extends StatelessWidget {
-  const _RegionHeader({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+        ],
+        if (nw.isNotEmpty) ...[
+          RegionSectionHeader(label: unitsPanelRegionLabel('newWorld')),
+          ...nw.map(
+            (u) => _UnitRow(
+              unit: u,
+              provinceNames: provinceNames,
+              currentOrders: currentOrders,
+              availableWorkTargets: availableWorkTargets,
+              humanPlayerId: humanPlayerId,
+              bus: bus,
+              onAddWorkOrder: onAddWorkOrder,
+            ),
+          ),
+        ],
+      ],
+      emptyMessage: 'No civilian units',
     );
   }
 }
@@ -281,7 +209,7 @@ class _UnitRow extends StatelessWidget {
     if (regionId == null || provinceId == null) return '—';
     final prefixed = '$regionId|$provinceId';
     final name = provinceNames[prefixed] ?? prefixed;
-    final regionLabel = _regionLabel(regionId);
+    final regionLabel = unitsPanelRegionLabel(regionId);
     return '$regionLabel — $name';
   }
 
@@ -297,7 +225,7 @@ class _UnitRow extends StatelessWidget {
         if (regionId != null && provinceId != null) {
           final name =
               provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-          location = ' (${_regionLabel(regionId)} — $name)';
+          location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
         }
         return '$workLabel$location (pending)';
       }
@@ -314,7 +242,7 @@ class _UnitRow extends StatelessWidget {
     if (regionId != null && provinceId != null) {
       final name =
           provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-      location = ' (${_regionLabel(regionId)} — $name)';
+      location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
     }
     final progress = cw.totalTurns > 0
         ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
