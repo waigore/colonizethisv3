@@ -465,6 +465,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(chosen?.mode, CombatMode.quickBattle);
+        expect(find.text('Combat at TestProv'), findsNothing);
       },
     );
 
