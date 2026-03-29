@@ -14,12 +14,10 @@ String diplomacyActionLabel(DiplomaticOrder order) {
           ? diplomacyOvertureStageShortLabel(order.overtureStage!)
           : 'Overture';
     case DiplomaticOrderType.grantAid:
-      return order.amount != null
-          ? 'Grant Aid (£${order.amount})'
-          : 'Grant Aid';
+      return 'Grant Aid';
     case DiplomaticOrderType.setSubsidy:
       return order.amount != null
-          ? 'Subsidy (£${order.amount})'
+          ? 'Set Subsidy (£${order.amount})'
           : 'Set Subsidy';
   }
 }

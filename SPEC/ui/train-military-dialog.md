@@ -82,6 +82,16 @@ On dialog close (`didPop` / close button), create orders from current counts:
 
 If no capital exists, UI shows `No capital set — cannot train units`, steppers are disabled, and no orders are created.
 
+### Shared helper requirement
+
+To keep military and civilian train-dialog orchestration aligned, the UI layer must use the shared helper at `app/lib/features/game/widgets/train_unit_dialog_helper.dart` for:
+
+- initializing counts from current orders at capital (`initialTrainDialogCountsFromOrders`)
+- materializing `List<BuildUnitOrder>` from counts (`materializeTrainDialogOrdersFromCounts`)
+- count mutation patterns for stepper interactions (`incrementTrainDialogCount`, `decrementTrainDialogCount`, `resetTrainDialogCounts`)
+
+Dialog-specific affordability and tech-lock logic remains local to each dialog.
+
 ---
 
 ## Integration
@@ -106,3 +116,5 @@ If no capital exists, UI shows `No capital set — cannot train units`, steppers
 - **Given** the Train Military dialog opens with existing pending military train orders for the player's capital, **when** the dialog renders, **then** the steppers pre-populate with those existing counts.
 
 - **Given** the Train Military dialog is open and the user closes it, **when** there are non-zero selected counts, **then** the UI layer writes `BuildUnitOrder` entries with `isMilitary == true` and `spawnProvinceId == Player.capitalProvinceId`, replacing only dialog-managed military orders and leaving all other build orders unchanged.
+
+- **Given** both train dialogs use shared orchestration behavior, **when** developers update train order/count conversion rules, **then** the UI layer updates `train_unit_dialog_helper.dart` and validates behavior with helper tests in `app/test/train_unit_dialog_helper_test.dart`.

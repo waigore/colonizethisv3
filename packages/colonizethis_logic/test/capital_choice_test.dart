@@ -576,27 +576,8 @@ void main() {
     );
 
     test(
-      'setCapitalForReassignment allows inland capital and applies port/road when sea-bound',
+      'setCapitalForReassignment updates player capital only; no port/road changes',
       () {
-        final grid = [
-          ['p1', 'sea1'],
-          ['p1', 'p1'],
-        ];
-        final topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'sea1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
-        );
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -611,6 +592,7 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
+            portsByProvinceSeaboard: const {'oldWorld|p1|sea1': 'oldWorld|p1|0|0'},
           ),
           players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
         );
@@ -621,18 +603,73 @@ void main() {
           tile: const CapitalTile(
             regionId: 'oldWorld',
             provinceId: 'oldWorld|p1',
-            x: 0,
-            y: 0,
+            x: 1,
+            y: 1,
           ),
-          topology: topology,
-          tileMapByRegion: {
-            'oldWorld': TileMapResult(width: 2, height: 2, grid: grid),
-          },
         );
         expect(next.players.single.capitalProvinceId, 'oldWorld|p1');
-        expect(next.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 4);
+        expect(next.players.single.capitalTile!.x, 1);
+        expect(next.players.single.capitalTile!.y, 1);
+        expect(
+          next.worldState.portsByProvinceSeaboard,
+          game.worldState.portsByProvinceSeaboard,
+        );
+        expect(next.worldState.tileState, game.worldState.tileState);
       },
     );
+
+    test('pickCapitalProvinceIdForReassignment prefers seaboard by sorted id', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'pA',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'pB',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'pA', id2: 'sea1'),
+        ],
+      );
+      final id = pickCapitalProvinceIdForReassignment(
+        ['oldWorld|pB', 'oldWorld|pA'],
+        topology,
+      );
+      expect(id, 'oldWorld|pA');
+    });
+
+    test('pickCapitalProvinceIdForReassignment inland when no seaboard', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'pA',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'pB',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final id = pickCapitalProvinceIdForReassignment(
+        ['oldWorld|pB', 'oldWorld|pA'],
+        topology,
+      );
+      expect(id, 'oldWorld|pA');
+    });
 
     test('setCapital creates one port entry per adjacent sea zone', () {
       final grid = [

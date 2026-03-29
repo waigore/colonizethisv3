@@ -40,7 +40,7 @@ Multiple context-specific rules may apply to a single file (e.g., a UI widget ma
 3. **Thin screens**: Prefer reuse; keep screens thin and delegate logic to services/controllers/components. See `colonizethis-component-structure.mdc`.
 4. **Coverage policy**: **90% for logic/ai/map packages; 80% everywhere else**. See `colonizethis-testing.mdc`.
 5. **Widget tests**: Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`. See `colonizethis-testing.mdc`.
-6. **Logging**: Use `logger` for runtime logs; use `basic_logger_file` (defined in `colonizethis-logging-file.mdc`) for file logging.
+6. **Logging**: Policy and annexes: `SPEC/program/logging/logging.md`; ctdev file/Sim Log: `SPEC/program/ctdev-logging.md`; use `basic_logger_file` per `colonizethis-logging-file.mdc` where file sinks apply.
 7. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md`, `SPEC/program/app-event-bus.md`, and `colonizethis-tui.mdc`.
 
 For complete details, read the relevant rule file(s) in `.cursor/rules/`.

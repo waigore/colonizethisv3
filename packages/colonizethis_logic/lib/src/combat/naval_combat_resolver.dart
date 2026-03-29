@@ -5,6 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'military_strength.dart';
+
 final _log = logicLogger();
 
 /// Mission factor for Patrol interception probability.
@@ -25,17 +27,20 @@ const double kNavalRetreatEnemyPatrol = 0.1;
 /// Enemy aggression when enemy is on Blockade.
 const double kNavalRetreatEnemyBlockade = 0.2;
 
-/// One side in a sea battle: owner, ship type ids, optional mission for retreat aggression.
+/// One side in a sea battle: owner, ship instances, optional mission for retreat aggression.
 class NavalBattleSide {
   const NavalBattleSide({
     required this.ownerId,
-    required this.shipTypeIds,
+    required this.ships,
     this.mission = FleetMission.none,
   });
 
   final String ownerId;
-  final List<String> shipTypeIds;
+  final List<ShipInstance> ships;
   final FleetMission mission;
+
+  /// Type id per ship (combat aggregation).
+  List<String> get shipTypeIds => ships.map((s) => s.typeId).toList();
 }
 
 /// Sea battle context for one zone. SPEC/program/naval-combat-resolution.md.
@@ -60,13 +65,13 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
     atWar.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
     atWar.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
   }
-  final byZone = <String, Map<String, List<String>>>{};
+  final byZone = <String, Map<String, List<ShipInstance>>>{};
   final missionByZoneOwner = <String, Map<String, FleetMission>>{};
   for (final f in game.worldState.fleets) {
     if (!f.isAtSea || f.seaZoneId == null) continue; // Naval combat only in sea zones. SPEC/game/ships-and-naval.md.
     final zoneId = f.seaZoneId!;
     byZone.putIfAbsent(zoneId, () => {});
-    byZone[zoneId]!.putIfAbsent(f.ownerId, () => []).addAll(f.shipTypeIds);
+    byZone[zoneId]!.putIfAbsent(f.ownerId, () => []).addAll(f.ships);
     missionByZoneOwner.putIfAbsent(zoneId, () => {});
     missionByZoneOwner[zoneId]!.putIfAbsent(f.ownerId, () => f.mission);
   }
@@ -86,8 +91,8 @@ List<BattleContextSea> detectNavalConflicts(Game game) {
         final missionB = missionByZoneOwner[zoneId]?[b] ?? FleetMission.none;
         result.add(BattleContextSea(
           seaZoneId: zoneId,
-          side1: NavalBattleSide(ownerId: a, shipTypeIds: List.from(owners[a]!), mission: missionA),
-          side2: NavalBattleSide(ownerId: b, shipTypeIds: List.from(owners[b]!), mission: missionB),
+          side1: NavalBattleSide(ownerId: a, ships: List.from(owners[a]!), mission: missionA),
+          side2: NavalBattleSide(ownerId: b, ships: List.from(owners[b]!), mission: missionB),
         ));
         added = true;
       }
@@ -213,15 +218,15 @@ enum NavalBattleOutcome {
 /// Result of resolving one sea battle: updated fleet lists (sunk ships removed).
 class NavalBattleResult {
   const NavalBattleResult({
-    required this.survivingShipTypeIdsSide1,
-    required this.survivingShipTypeIdsSide2,
+    required this.survivingShipsSide1,
+    required this.survivingShipsSide2,
     this.side1Retreated = false,
     this.side2Retreated = false,
     this.outcome = NavalBattleOutcome.stalemate,
   });
 
-  final List<String> survivingShipTypeIdsSide1;
-  final List<String> survivingShipTypeIdsSide2;
+  final List<ShipInstance> survivingShipsSide1;
+  final List<ShipInstance> survivingShipsSide2;
   final bool side1Retreated;
   final bool side2Retreated;
   final NavalBattleOutcome outcome;
@@ -234,22 +239,27 @@ NavalBattleResult resolveSeaBattle(
   int seed, {
   bool side1CanRetreat = true,
   bool side2CanRetreat = true,
+  Map<String, double> navalFeedingCoverageByPlayerId = const {},
 }) {
   final rng = _SeededRng(seed);
-  final str1 = navalStrength(battle.side1.shipTypeIds);
-  final str2 = navalStrength(battle.side2.shipTypeIds);
+  final cov1 = navalFeedingCoverageByPlayerId[battle.side1.ownerId] ?? 1.0;
+  final cov2 = navalFeedingCoverageByPlayerId[battle.side2.ownerId] ?? 1.0;
+  final m1 = moraleMultiplierForFeedingCoverage(cov1);
+  final m2 = moraleMultiplierForFeedingCoverage(cov2);
+  final str1 = navalStrength(battle.side1.shipTypeIds) * m1;
+  final str2 = navalStrength(battle.side2.shipTypeIds) * m2;
   final total = str1 + str2;
   if (total <= 0) {
     return NavalBattleResult(
-      survivingShipTypeIdsSide1: List.from(battle.side1.shipTypeIds),
-      survivingShipTypeIdsSide2: List.from(battle.side2.shipTypeIds),
+      survivingShipsSide1: List.from(battle.side1.ships),
+      survivingShipsSide2: List.from(battle.side2.ships),
     );
   }
   final ratio1 = str1 / total;
-  final casualties1 = (battle.side1.shipTypeIds.length * (1 - ratio1) * 0.5).round().clamp(0, battle.side1.shipTypeIds.length);
-  final casualties2 = (battle.side2.shipTypeIds.length * (1 - (1 - ratio1)) * 0.5).round().clamp(0, battle.side2.shipTypeIds.length);
-  final list1 = List<String>.from(battle.side1.shipTypeIds);
-  final list2 = List<String>.from(battle.side2.shipTypeIds);
+  final casualties1 = (battle.side1.ships.length * (1 - ratio1) * 0.5).round().clamp(0, battle.side1.ships.length);
+  final casualties2 = (battle.side2.ships.length * (1 - (1 - ratio1)) * 0.5).round().clamp(0, battle.side2.ships.length);
+  final list1 = List<ShipInstance>.from(battle.side1.ships);
+  final list2 = List<ShipInstance>.from(battle.side2.ships);
   for (var i = 0; i < casualties1 && list1.isNotEmpty; i++) {
     list1.removeAt(rng.nextInt(list1.length));
   }
@@ -285,8 +295,8 @@ NavalBattleResult resolveSeaBattle(
   );
 
   return NavalBattleResult(
-    survivingShipTypeIdsSide1: list1,
-    survivingShipTypeIdsSide2: list2,
+    survivingShipsSide1: list1,
+    survivingShipsSide2: list2,
     side1Retreated: side1Retreated,
     side2Retreated: side2Retreated,
     outcome: outcome,
@@ -325,25 +335,25 @@ Game applyNavalBattleResults(
   if (result.side1Retreated && retreatDestinationSide1 != null) zone1 = retreatDestinationSide1;
   if (result.side2Retreated && retreatDestinationSide2 != null) zone2 = retreatDestinationSide2;
 
-  if (result.survivingShipTypeIdsSide1.isNotEmpty) {
+  if (result.survivingShipsSide1.isNotEmpty) {
     fleets.add(Fleet(
       id: 'naval_${owner1}_$zone1',
       ownerId: owner1,
       seaZoneId: zone1,
       inPortAtProvinceId: null,
       regionId: regionIdForZone,
-      shipTypeIds: result.survivingShipTypeIdsSide1,
+      ships: result.survivingShipsSide1,
       mission: battle.side1.mission,
     ));
   }
-  if (result.survivingShipTypeIdsSide2.isNotEmpty) {
+  if (result.survivingShipsSide2.isNotEmpty) {
     fleets.add(Fleet(
       id: 'naval_${owner2}_$zone2',
       ownerId: owner2,
       seaZoneId: zone2,
       inPortAtProvinceId: null,
       regionId: regionIdForZone,
-      shipTypeIds: result.survivingShipTypeIdsSide2,
+      ships: result.survivingShipsSide2,
       mission: battle.side2.mission,
     ));
   }

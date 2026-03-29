@@ -129,19 +129,7 @@ void main(List<String> arguments) {
     treasury += richesResult.treasuryDelta;
     final stockpileAfterRiches = stockpile;
 
-    // 4. Production
-    final assignments = scriptTurn?.assignments ??
-        _defaultAssignments(workers, stockpile, rng);
-    final productionResult = resolveProduction(
-      stockpile: stockpile,
-      workers: workers,
-      assignments: assignments,
-    );
-    stockpile = productionResult.stockpile;
-    workers = productionResult.workerPool;
-    final stockpileAfterProduction = stockpile;
-
-    // 5. Consumption
+    // 4. Consumption (before production; workers are not removed on strike)
     final consumptionResult = resolveConsumption(
       stockpile: stockpile,
       workers: workers,
@@ -149,6 +137,21 @@ void main(List<String> arguments) {
     );
     stockpile = consumptionResult.stockpile;
     workers = consumptionResult.workerPool;
+    final stockpileAfterConsumption = stockpile;
+
+    // 5. Production
+    final assignments = scriptTurn?.assignments ??
+        _defaultAssignments(workers, stockpile, rng);
+    final productionResult = resolveProduction(
+      stockpile: stockpile,
+      workers: workers,
+      idleLabour: consumptionResult.idleLabour,
+      assignments: assignments,
+    );
+    stockpile = productionResult.stockpile;
+    workers = productionResult.workerPool;
+    final stockpileAfterProduction = stockpile;
+
     final stockpileEnd = stockpile;
     final workersEnd = workers;
 
@@ -157,6 +160,7 @@ void main(List<String> arguments) {
       stockpileStart: stockpileStart,
       stockpileAfterExtraction: stockpileAfterExtraction,
       stockpileAfterRiches: stockpileAfterRiches,
+      stockpileAfterConsumption: stockpileAfterConsumption,
       stockpileAfterProduction: stockpileAfterProduction,
       stockpileEnd: stockpileEnd,
       workersStart: workersStart,
@@ -257,6 +261,7 @@ Map<String, dynamic> buildTurnLogEntry({
   required Stockpile stockpileStart,
   required Stockpile stockpileAfterExtraction,
   required Stockpile stockpileAfterRiches,
+  required Stockpile stockpileAfterConsumption,
   required Stockpile stockpileAfterProduction,
   required Stockpile stockpileEnd,
   required WorkerPool workersStart,
@@ -269,13 +274,15 @@ Map<String, dynamic> buildTurnLogEntry({
   final startMap = _quantitiesFromStockpile(stockpileStart);
   final afterExtractionMap = _quantitiesFromStockpile(stockpileAfterExtraction);
   final afterRichesMap = _quantitiesFromStockpile(stockpileAfterRiches);
+  final afterConsumptionMap =
+      _quantitiesFromStockpile(stockpileAfterConsumption);
   final afterProductionMap = _quantitiesFromStockpile(stockpileAfterProduction);
   final endMap = _quantitiesFromStockpile(stockpileEnd);
 
   final deltaExtraction = _deltaMap(startMap, afterExtractionMap);
   final deltaRiches = _deltaMap(afterExtractionMap, afterRichesMap);
-  final deltaProduction = _deltaMap(afterRichesMap, afterProductionMap);
-  final deltaConsumption = _deltaMap(afterProductionMap, endMap);
+  final deltaConsumption = _deltaMap(afterRichesMap, afterConsumptionMap);
+  final deltaProduction = _deltaMap(afterConsumptionMap, afterProductionMap);
 
   final extractionJson = <String, int>{
     for (final entry in extractionVector.entries) entry.key: entry.value,
@@ -295,6 +302,7 @@ Map<String, dynamic> buildTurnLogEntry({
     'stockpileStart': startMap,
     'stockpileAfterExtraction': afterExtractionMap,
     'stockpileAfterRiches': afterRichesMap,
+    'stockpileAfterConsumption': afterConsumptionMap,
     'stockpileAfterProduction': afterProductionMap,
     'stockpileEnd': endMap,
     'workersStart': workersStart.toJson(),

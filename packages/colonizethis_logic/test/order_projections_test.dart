@@ -269,8 +269,8 @@ void main() {
             id: 'p1',
             displayName: 'A',
             isHuman: true,
-            stockpile: Stockpile(quantities: {'timber': 4}),
-            // 4 peasants → 4 labour; assignedLabour=4 can be fully used.
+            stockpile: Stockpile(quantities: {'timber': 4, 'grain': 4}),
+            // Consumption before production: peasants need food to be idle for labour.
             workerPool: WorkerPool(peasants: 4),
           ),
         ],

@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show AppEventBus, OpenProvinceDetailPanelEvent;
 
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
@@ -16,6 +19,14 @@ void main() {
   suppressLogsForTests();
 
   group('CtRegionMap (Flame map widget)', () {
+    setUpAll(() async {
+      // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
+      // pump() is not enough when tests run alone (e.g. CI --total-shards).
+      await terrainTilesetCache.load();
+      await resourceIconCache.load();
+      await townIconCache.load();
+    });
+
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
       (WidgetTester tester) async {
@@ -302,7 +313,7 @@ void main() {
             region: region,
             visibilityMode: CtMapVisibilityMode.full,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
           ),
         );
         await tester.pump();
@@ -561,6 +572,7 @@ void main() {
               provinceId: 'pTown',
               isCoastal: false,
               isPort: false,
+              touchesSea: false,
             ),
           ],
           factionColors: base.factionColors,
@@ -776,7 +788,7 @@ void main() {
     );
 
     testWidgets(
-      'map renders with resource icons in terrainResourcesImprovements mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      'map renders with resource icons in terrainAndResourcesImprovementLabels mode (SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -788,12 +800,34 @@ void main() {
           ctRegionMapTestHarness(
             region: region,
             baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainResourcesImprovements,
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
           ),
         );
         await tester.pump();
 
-        // Widget should render without errors when resource icons are loaded
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'map renders with resource icons in terrainAndResourcesImprovementsRoads mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          ),
+        );
+        await tester.pump();
+
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
@@ -945,6 +979,117 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'tap on port drawable sea cell emits OpenProvinceDetailPanelEvent same as town',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+          await townIconCache.load();
+        });
+
+        final base = ctRegionMapTestOldWorldRegion();
+        final land = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 2,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            const CellViewData(
+              x: 1,
+              y: 0,
+              regionCellId: 's1',
+              isSea: true,
+            ),
+            CellViewData(
+              x: 0,
+              y: 1,
+              regionCellId: 'p1x',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 1,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 1,
+              y: 1,
+              provinceId: 'p1',
+              isCoastal: false,
+              isPort: true,
+              touchesSea: true,
+              portIconX: 1,
+              portIconY: 0,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+
+        const cell = 32.0;
+        final bus = AppEventBus.create();
+        String? panelProvinceId;
+
+        bus.on<OpenProvinceDetailPanelEvent>().listen((e) {
+          panelProvinceId = e.provinceId;
+        });
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CtRegionMap(
+                    region: region,
+                    cellSizePx: cell,
+                    bus: bus,
+                    baseLayerDisplayMode:
+                        BaseLayerDisplayMode.terrainAndResources,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        final topLeft = tester.getTopLeft(mapFinder);
+        await tester.tapAt(topLeft + const Offset(48, 16));
+        await tester.pump();
+
+        expect(panelProvinceId, equals('oldWorld|p1'));
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );

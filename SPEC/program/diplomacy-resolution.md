@@ -17,7 +17,7 @@ Resolves diplomatic orders, manages overture state machine, updates relation sco
 - **turn** (int, same domain as `worldState.turnState.turnNumber`).
 - **intraTurnIndex** (int, monotonically increasing for events created in the same turn, to preserve resolution order).
 - **participants**: set of faction ids involved in the event (always includes at least one Great Power id).
-- **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`).
+- **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`, `callToArmsAccepted`, `callToArmsRefused`).
 - **details**: structured payload fields specific to the primaryType (e.g. `fromFactionId`, `toFactionId`, `overtureStage`, `amount`, `reason`, `wasAiInitiator`).
 
 Rendering of human-readable strings (including year labels derived from turn) is delegated to UI/TUI layers based on this structured event model.
@@ -32,9 +32,12 @@ Diplomacy phase runs before Movement. Resolution steps in order:
 2. **Advance in-progress overtures** — Apply turn delays; mark completed.
 3. **Resolve Join Empire/Colony** — For each valid Join Empire order (target Minor/Tribe, NAP stage, relation score ≥ 51): compute cost = base + (province count × per-province); if GP treasury ≥ cost, deduct cost, transfer all provinces/units/fleets from target to GP, remove target from minorNations or tribes, remove overtures and relations involving the target. Tribe absorption uses the same cost and transfer rules as Minor (colony semantics deferred).
 4. **Process alliance proposals** — Apply accept/refuse; update alliance state; apply refusal relation penalties per game rules.
-5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn.
-6. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
-7. **Update relation scores** — Recompute from modifiers; clamp 0–100; derive level.
+5. **Process Declare War and Peace** — Update relationState, sinceTurn, lastInteractionTurn; cancel subsidies between newly warring pairs as per game rules.
+5b. **Intervention (GP → Minor/Tribe war)** — For each Great Power at `AT_WAR` with a Minor or Tribe this turn via a resolved `Declare War` order, and another Great Power has an Embassy or purchased land in that Minor/Tribe (see [diplomacy.md](../game/diplomacy.md) § Intervention): resolve AI choices immediately; if any **human** Great Power must choose, suspend the Diplomacy phase and return **pending intervention prompts**. On resume, apply **InterventionDecision** values and continue. Intervention runs only in the Diplomacy phase, not during Combat.
+5c. **Call to arms (alliance mutual defence)** — After step 5 and 5b, for each aggressor–defender GP pair at war due to a declare-war order this phase, process each other GP allied (`RelationLevel.allied`, at peace) with the defender: AI resolves join/refuse per score threshold; human-controlled allies add to **pending call to arms** until **resumeTurnResolutionWithCallToArmsDecisions** supplies decisions. See [diplomacy.md](../game/diplomacy.md) § Alliances.
+6. **Terminate agreements on war** — Clear overtures between warring pairs; further steps per implementation (subsidies, convergence, grants) follow the live resolver order in `diplomacy_resolver.dart`.
+7. **Apply relation modifiers** — From trade, grants (GrantAid), subsidies (SetSubsidy), war, broken treaties per game rules. SetSubsidy: valid if consulate/embassy exists; deducts payer treasury; if target is GP adds to target treasury, else (Minor/Tribe) improves relation.
+8. **Update relation scores** — Convergence and score derivation per implementation; clamp 0–100; derive level.
 
 At the same hook points where relation state, overtures, or economic diplomacy are mutated, the resolver **appends one or more Diplomatic history events** to the flat world log:
 
@@ -45,10 +48,11 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 - When **GrantAid** is applied, an event with primaryType `grantAidApplied` is appended.
 - When a **subsidy** is created, updated, or cancelled (including automatic cancellation on war or insufficient funds), events with primaryType `subsidySet`, `subsidyUpdated`, or `subsidyCancelled` are appended.
 - When an **Intervention** decision is applied (Intervene, Do Nothing, Protest), events with primaryType `interventionIntervene`, `interventionDoNothing`, or `interventionProtest` are appended.
+- When **call to arms** is resolved (join or refuse), events with primaryType `callToArmsAccepted` or `callToArmsRefused` are appended.
 
 **Order validation:** Each diplomatic order type (see game/diplomacy.md § Diplomatic Order Types) is validated by the order engine — preconditions (AT_PEACE/AT_WAR, overture stage, treasury) checked at submission and again at resolution. Establish Overture may target Minor, Tribe, or Great Power. At most one Establish Overture per (player, target faction) per turn; a second such order for the same target is rejected at validation (see game/diplomacy.md, program/orders.md).
 
-**Blocking:** When an overture targets a human-controlled GP, the diplomacy phase returns a **DiplomacyPhaseResult** that includes the updated game state and a non-empty list of **pending overture offers** (offerer, target, stage). Turn resolution returns a **TurnResolutionResult** indicating pending human input. The app presents the offer(s) to the human target(s), collects accept/reject, and calls the **resume** API with the corresponding **overture decisions**. The resolver then applies those decisions and continues the Diplomacy phase and remaining phases.
+**Blocking:** When an overture targets a human-controlled GP, the diplomacy phase returns **pending overture offers** (offerer, target, stage) and turn resolution returns **TurnResolutionPendingOvertures**; the app calls **resumeTurnResolutionWithOvertureDecisions**. When intervention requires human input, the phase returns **pending intervention prompts** (aggressor GP, defender Minor/Tribe, intervening GP) and turn resolution returns **TurnResolutionPendingIntervention**; the app calls **resumeTurnResolutionWithInterventionDecisions**. When **call to arms** requires a human ally’s choice, the phase returns **pending call to arms**; the app calls **resumeTurnResolutionWithCallToArmsDecisions** with **CallToArmsDecision** entries. The resolver continues the Diplomacy phase (re-entering from the start with supplied decisions where applicable) and runs remaining phases.
 
 ---
 
@@ -62,7 +66,7 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 
 **Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
 
-**Combat/movement:** Before move or attack, check AT_WAR for Minors; for Tribes, check only if province has another GP's investment. Enforced by order engine and turn resolver. Intervention choices for Minors with Embassies or GP **investment** (purchased land in that Minor’s provinces) and for Tribes with GP investment are evaluated during combat resolution, and may change relationState to `AT_WAR` between additional faction pairs (e.g., an intervening GP and each attacking GP) immediately before battle odds are computed.
+**Combat/movement:** Before military move into a foreign province or naval **Blockade** against a province owner, require `AT_WAR` or same-turn `Declare War` on that owner (Great Power, Minor, or Tribe). Enforced by order validation and turn resolver. **Intervention** is evaluated only in the Diplomacy phase (step 5b), not during Combat; it may set `AT_WAR` between an intervening GP and the declaring GP before Movement.
 
 **AI:** Diplomatic actions feed into AI evidence and dialogue event pipelines for hidden-agenda discovery. See [ai-events-and-dossier.md](ai-events-and-dossier.md), [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md).
 
@@ -81,13 +85,13 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 
 ## Acceptance criteria
 
-- **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–7 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → terminate agreements on war → relation modifiers and score update).
+- **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–8 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → **intervention (5b)** → **call to arms (5c)** → terminate agreements on war → relation modifiers and score update).
 - **Upstream orders:** The diplomacy phase receives merged orders that include `diplomaticOrdersByPlayerId`; the turn resolver supplies the output of the order engine (see [order-engine.md](order-engine.md), [turn-resolution-phases.md](turn-resolution-phases.md)). The order engine must preserve diplomatic orders and pass them into the diplomacy phase input.
 - **Overture two-way:** Each Establish Overture is considered by the **target** at resolution. For Minor/Tribe targets, accept/reject is applied by rule (e.g. accept Consulate/Embassy/NAP); only when accepted are cost deducted and stage advanced. For GP targets: if AI, decision at resolution and apply; if human, phase returns pending and turn resolution blocks until app supplies decisions and resumes.
 - **Overture payments:** When the target **accepts** (by rule or decision): Consulate/Embassy orders deduct cost and advance stage; NAP is free. Join Empire has a separate cost (base + per-province); see step 3.
 - **Join Empire/Colony:** Requires NAP stage, relation score ≥ 51 (Friendly/Allied), and treasury ≥ cost. Cost = base + (province count × per-province); see game/diplomacy.md § Configurable Values. On success: cost deducted from GP treasury; all provinces, units, and fleets owned by the target transfer to the GP; target is removed from minorNations or tribes; overture state and diplomacy relations involving the target are removed.
 - **Alliances:** GP–GP only; relation set to allied (score ≥ 76), state atPeace.
-- **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable. Intervention-driven war state changes (from human or AI intervention decisions) also update relationState, sinceTurn, and lastInteractionTurn outside the Diplomacy phase so that combat validation uses the updated state for the current battle.
+- **War and peace:** Declare War / Offer Peace update relationState, sinceTurn, lastInteractionTurn and scores per game rules; evidence and dialogue events emitted when applicable. Intervention-driven war state changes (from human or AI intervention decisions) update relationState, sinceTurn, and lastInteractionTurn during the Diplomacy phase (step 5b) so that Movement and Combat validation in the same turn use the updated state.
 - **Agreements on war:** Overtures between a faction pair at war are terminated. When relationState changes from `AT_PEACE` to `AT_WAR` between a GP and a Minor/Tribe, any overture state between that GP and that Minor/Tribe is removed so that the effective overture stage is `none`, and later peace between them does not restore the previous overture stage automatically. When a GP (human or AI) chooses **Do Nothing** in response to an intervention trigger for a Minor it has an Embassy with, the overture state between that GP and that Minor is also cleared to `none` even if relationState remains `AT_PEACE`.
 - **GrantAid / SetSubsidy:** GrantAid requires Embassy; SetSubsidy requires Consulate or Embassy. Payer treasury deducted; SetSubsidy to GP adds to target treasury, to Minor/Tribe improves relation modifier.
 - **Order validation:** Preconditions for each diplomatic order type (AT_PEACE/AT_WAR, overture stage, treasury, etc.) are checked at order submission by the order engine and again at resolution; invalid orders are rejected and not applied. In particular, when relationState between a GP and a Minor/Tribe is `AT_WAR`, `Establish Overture` orders targeting that faction are invalid and must not create or advance overture state or deduct overture costs. See game/diplomacy.md § Diplomatic Order Types.
@@ -114,6 +118,6 @@ Relation thresholds (score-to-level bands), overture costs (Consulate £500, Emb
 ## Constraints
 
 - All diplomatic rules (relation thresholds, overture chain, order preconditions) are defined in game/diplomacy.md; this module references, not restates, them.
-- Resolution order is strict (steps 1–7); reordering may break precondition checks.
+- Resolution order is strict (steps 1–8); reordering may break precondition checks.
 - Overture stage transitions are linear; no stage may be skipped.
 - Any province id used in diplomacy state or in diplomatic order payloads must be in prefixed form and resolved per [world-model-identity.md](../game/world-model-identity.md).

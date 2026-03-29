@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_transfer_list.dart';
+import '../utils/region_labels.dart';
 
 class SplitFleetDialog extends StatelessWidget {
   const SplitFleetDialog({
@@ -17,7 +18,8 @@ class SplitFleetDialog extends StatelessWidget {
   final Fleet originalFleet;
   final Game game;
   final String humanPlayerId;
-  final void Function(List<String> shipsToNewFleet) onConfirm;
+  /// Instance ids to place on the new fleet (see [ShipInstance.id]).
+  final void Function(List<String> shipInstanceIdsToNewFleet) onConfirm;
   final bool isHomeFleet;
 
   Map<String, int> _initialOriginalCounts() {
@@ -49,7 +51,7 @@ class SplitFleetDialog extends StatelessWidget {
       }
       final province = provinceMap[inPortId];
       final regionId = fleet.regionId;
-      final regionLabel = regionId == 'oldWorld' ? 'Old World' : 'New World';
+      final regionLabel = regionDisplayLabel(regionId);
       final provinceName = province?.displayName ?? inPortId;
       return '$provinceName — $regionLabel';
     }
@@ -57,13 +59,9 @@ class SplitFleetDialog extends StatelessWidget {
   }
 
   void _handleConfirm(Map<String, int> newCounts, BuildContext context) {
-    final shipsToNewFleet = <String>[];
-    for (final entry in newCounts.entries) {
-      for (var i = 0; i < entry.value; i++) {
-        shipsToNewFleet.add(entry.key);
-      }
-    }
-    onConfirm(shipsToNewFleet);
+    final toMove =
+        shipInstancesForTransferCounts(originalFleet.ships, newCounts);
+    onConfirm(toMove.map((s) => s.id).toList());
     Navigator.of(context).pop();
   }
 
@@ -85,6 +83,7 @@ class SplitFleetDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               CtTransferList(
+                listHeight: 220,
                 leftTitle: originalFleet.id == 'home_fleet'
                     ? 'Home Fleet'
                     : 'Fleet ${originalFleet.id}',

@@ -2,6 +2,10 @@
 /// When the Diplomacy phase needs a human target to accept/reject an overture,
 /// resolution returns [TurnResolutionPendingOvertures] and blocks until the app
 /// supplies decisions and calls the resume API.
+/// When the Diplomacy phase needs intervention choices, resolution returns
+/// [TurnResolutionPendingIntervention] and blocks until [resumeTurnResolutionWithInterventionDecisions].
+/// When call to arms requires a human ally, resolution returns
+/// [TurnResolutionPendingCallToArms].
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -57,18 +61,141 @@ class OvertureDecision {
       Object.hash(offererGpId, targetFactionId, stage, accepted);
 }
 
-/// Result of the Diplomacy phase: either complete or pending overture decisions (human target).
+/// Human intervention prompt after a GP declares war on a Minor or Tribe.
+/// SPEC/game/diplomacy.md § Intervention.
+class InterventionPrompt {
+  const InterventionPrompt({
+    required this.aggressorGpId,
+    required this.defenderMinorOrTribeId,
+    required this.interveningGpId,
+  });
+
+  final String aggressorGpId;
+  final String defenderMinorOrTribeId;
+  final String interveningGpId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InterventionPrompt &&
+          aggressorGpId == other.aggressorGpId &&
+          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
+          interveningGpId == other.interveningGpId;
+
+  @override
+  int get hashCode =>
+      Object.hash(aggressorGpId, defenderMinorOrTribeId, interveningGpId);
+}
+
+/// Player's intervention choice for one [InterventionPrompt].
+class InterventionDecision {
+  const InterventionDecision({
+    required this.aggressorGpId,
+    required this.defenderMinorOrTribeId,
+    required this.interveningGpId,
+    required this.choice,
+  });
+
+  final String aggressorGpId;
+  final String defenderMinorOrTribeId;
+  final String interveningGpId;
+  final InterventionChoice choice;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InterventionDecision &&
+          aggressorGpId == other.aggressorGpId &&
+          defenderMinorOrTribeId == other.defenderMinorOrTribeId &&
+          interveningGpId == other.interveningGpId &&
+          choice == other.choice;
+
+  @override
+  int get hashCode => Object.hash(
+        aggressorGpId,
+        defenderMinorOrTribeId,
+        interveningGpId,
+        choice,
+      );
+}
+
+/// One call-to-arms prompt: ally [allyGpId] must choose to join defender [defenderGpId]
+/// against aggressor [aggressorGpId]. SPEC/game/diplomacy.md mutual defence.
+class CallToArmsPending {
+  const CallToArmsPending({
+    required this.allyGpId,
+    required this.defenderGpId,
+    required this.aggressorGpId,
+  });
+
+  final String allyGpId;
+  final String defenderGpId;
+  final String aggressorGpId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CallToArmsPending &&
+          allyGpId == other.allyGpId &&
+          defenderGpId == other.defenderGpId &&
+          aggressorGpId == other.aggressorGpId;
+
+  @override
+  int get hashCode => Object.hash(allyGpId, defenderGpId, aggressorGpId);
+}
+
+/// Human ally's decision for one call to arms.
+class CallToArmsDecision {
+  const CallToArmsDecision({
+    required this.allyGpId,
+    required this.defenderGpId,
+    required this.aggressorGpId,
+    required this.accepted,
+  });
+
+  final String allyGpId;
+  final String defenderGpId;
+  final String aggressorGpId;
+  final bool accepted;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CallToArmsDecision &&
+          allyGpId == other.allyGpId &&
+          defenderGpId == other.defenderGpId &&
+          aggressorGpId == other.aggressorGpId &&
+          accepted == other.accepted;
+
+  @override
+  int get hashCode =>
+      Object.hash(allyGpId, defenderGpId, aggressorGpId, accepted);
+}
+
+/// Result of the Diplomacy phase: complete or pending human input.
 class DiplomacyPhaseResult {
-  const DiplomacyPhaseResult(this.game, [this.pendingOvertures]);
+  const DiplomacyPhaseResult(
+    this.game, {
+    this.pendingOvertures,
+    this.pendingInterventions,
+    this.pendingCallToArms,
+  });
 
   final Game game;
   /// Non-null when phase suspended because an overture targets a human GP.
   final List<OvertureOffer>? pendingOvertures;
+  /// Non-null when phase suspended for intervention choices (GP with embassy or purchased land).
+  final List<InterventionPrompt>? pendingInterventions;
+  /// Non-null when phase suspended because a human ally must accept/refuse call to arms.
+  final List<CallToArmsPending>? pendingCallToArms;
 
-  bool get isPending => pendingOvertures != null && pendingOvertures!.isNotEmpty;
+  bool get isPending =>
+      (pendingOvertures != null && pendingOvertures!.isNotEmpty) ||
+      (pendingInterventions != null && pendingInterventions!.isNotEmpty) ||
+      (pendingCallToArms != null && pendingCallToArms!.isNotEmpty);
 }
 
-/// Sealed result of turn resolution: either complete or pending human overture decisions.
+/// Sealed result of turn resolution: complete or pending human input.
 sealed class TurnResolutionResult {
   const TurnResolutionResult();
 }
@@ -90,4 +217,28 @@ class TurnResolutionPendingOvertures extends TurnResolutionResult {
 
   final Game game;
   final List<OvertureOffer> pendingOvertures;
+}
+
+/// Turn resolution suspended: [game] is after war declarations; [pendingInterventions]
+/// need the listed human GPs' choices. App calls [resumeTurnResolutionWithInterventionDecisions].
+class TurnResolutionPendingIntervention extends TurnResolutionResult {
+  const TurnResolutionPendingIntervention({
+    required this.game,
+    required this.pendingInterventions,
+  });
+
+  final Game game;
+  final List<InterventionPrompt> pendingInterventions;
+}
+
+/// Turn resolution suspended: human ally must accept or refuse call to arms.
+/// App prompts, then calls [resumeTurnResolutionWithCallToArmsDecisions].
+class TurnResolutionPendingCallToArms extends TurnResolutionResult {
+  const TurnResolutionPendingCallToArms({
+    required this.game,
+    required this.pendingCallToArms,
+  });
+
+  final Game game;
+  final List<CallToArmsPending> pendingCallToArms;
 }

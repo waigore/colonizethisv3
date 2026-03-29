@@ -46,7 +46,7 @@ void main() {
     });
 
     test(' CttermRoute enum has all expected values', () {
-      expect(CttermRoute.values.length, equals(20));
+      expect(CttermRoute.values.length, equals(21));
       expect(CttermRoute.mainMenu.screenId, equals('100001'));
       expect(CttermRoute.gameSetup.screenId, equals('100002'));
       expect(CttermRoute.loadGame.screenId, equals('100003'));
@@ -67,6 +67,7 @@ void main() {
       expect(CttermRoute.pauseOptions.screenId, equals('100018'));
       expect(CttermRoute.pendingOvertures.screenId, equals('100019'));
       expect(CttermRoute.debugLogViewer.screenId, equals('100020'));
+      expect(CttermRoute.pendingCallToArms.screenId, equals('100021'));
     });
   });
 }

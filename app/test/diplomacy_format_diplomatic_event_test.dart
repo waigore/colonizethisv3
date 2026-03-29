@@ -235,4 +235,28 @@ void main() {
       contains('war'),
     );
   });
+
+  test('callToArmsAccepted', () {
+    final g = minimalGame();
+    expect(
+      formatDiplomaticEvent(
+        ev(DiplomaticEventType.callToArmsAccepted),
+        g,
+        humanId,
+      ),
+      contains('joined the war'),
+    );
+  });
+
+  test('callToArmsRefused', () {
+    final g = minimalGame();
+    expect(
+      formatDiplomaticEvent(
+        ev(DiplomaticEventType.callToArmsRefused),
+        g,
+        humanId,
+      ),
+      contains('refused call to arms'),
+    );
+  });
 }

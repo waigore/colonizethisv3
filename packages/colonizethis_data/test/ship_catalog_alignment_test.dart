@@ -31,6 +31,12 @@ void main() {
       },
     );
 
+    test('every ship has food upkeep 2 per workers-and-population / ships-and-naval', () {
+      for (final e in ShipEconomyCatalog.all) {
+        expect(e.foodUpkeep, 2, reason: e.shipTypeId);
+      }
+    });
+
     test('ShipEconomyCatalog.all matches byId keys exactly', () {
       final fromList = {for (final e in ShipEconomyCatalog.all) e.shipTypeId};
       expect(fromList, NavalStatsCatalog.byId.keys.toSet());

@@ -58,6 +58,8 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
 | `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
 
+For `train_civilians` and `train_military`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
+
 | ID | Widget | Status |
 |----|--------|--------|
 | `quick_battle_result` | `QuickBattleResultDialog` | planned (or local if combat UI stays internal) |
@@ -143,3 +145,4 @@ Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialog
 ### Automated tests (widget / integration)
 
 - Widget tests for `GameScreen`, `GameSideMenu`, and `TrainCiviliansDialog` / `CivilianUnitsPanel` cover pause menu, empire panels, and Train-via-bus behavior.
+- Train dialog helper tests in `app/test/train_unit_dialog_helper_test.dart` cover shared count initialization, order materialization, and shared stepper count mutation helpers used by both train dialogs.

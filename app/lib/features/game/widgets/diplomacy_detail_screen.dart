@@ -68,6 +68,10 @@ String formatDiplomaticEvent(
       return '${from ?? 'Unknown'} protested (against ${to ?? 'Unknown'}).';
     case DiplomaticEventType.agreementsClearedOnWar:
       return 'Overtures between ${from ?? 'Unknown'} and ${to ?? 'Unknown'} ended due to war.';
+    case DiplomaticEventType.callToArmsAccepted:
+      return '${from ?? 'Unknown'} joined the war against ${to ?? 'Unknown'} (call to arms).';
+    case DiplomaticEventType.callToArmsRefused:
+      return '${from ?? 'Unknown'} refused call to arms; alliance with ${to ?? 'Unknown'} ended.';
   }
 }
 

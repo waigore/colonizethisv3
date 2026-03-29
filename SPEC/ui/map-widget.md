@@ -8,7 +8,7 @@
 
 - Display a **full** region map (one region per widget instance).
 - **Viewport:** The visible area is the widget's layout size. Map extent is the full 2D tile grid; user pans and zooms to see it.
-- **Base layer:** Single 2D tile layer: terrain, resources, improvements, towns, capitals.
+- **Base layer:** Terrain plus optional **base overlays** (resource icons, improvement labels, road/rail labels) drawn in a fixed Z-order; towns, capitals, and warp markers per below.
 - **Overlays:** Province boundary strokes, Great Power **province ownership** tint, and political (faction-difference) borders as **separate layers** on top; the in-game shell exposes independent toggles for boundaries vs ownership tint vs province names ([empire-overview.md](empire-overview.md)).
 - **Interaction:** Pan; fixed zoom levels with smooth zooming; tap/click to select a province (callbacks; province details content TBD elsewhere). **Hover:** When the pointer is over a tile, a selector (e.g. a simple square) is shown on that tile with a subtle bouncing animation; the hovered tile's province (or sea zone) borders glow and use a subtle animation (e.g. pulse).
 - **Animation:** Widget supports animation of individual tiles and other assets (e.g. highlights, build progress); Flame is the implementation fit.
@@ -19,27 +19,44 @@
 
 | Layer | Content | Togglable |
 |-------|---------|-----------|
-| **Base (tile)** | Terrain, resources, improvements, towns, capitals. | Optional per-sublayer if needed; at minimum base is always on. |
+| **Base (tile)** | Terrain; optional resource icons; optional improvement labels (`I{n}`); optional road/rail labels (`R{n}`); towns; capitals. | Base terrain always on; resource and label sublayers controlled by [Base layer display mode](#base-layer-display-mode). |
 | **Province overlay** | Province and sea-zone **boundary strokes** only (topology edges P–P, P–S, S–S). | Yes. In-game toggle **Show province overlay** ([empire-overview.md](empire-overview.md)). When off, boundary strokes are not drawn; other layers follow their own toggles. |
-| **Province ownership (GP tint)** | **Great Power land ownership tint:** for each **land** cell whose `ownerFactionId` is a Great Power (runtime id in `RegionMapViewData.greatPowerFactionIds`), draw a **semi-transparent** fill in that faction’s colour from `factionColors` at **fixed alpha 0.65** (`BlendMode.srcOver`). **Not** drawn for sea cells, unowned land, Minor Nations, or Tribes. **Player-constrained visibility:** tint is **not** drawn on `unrevealed` tiles; **`visible` and `fogged`** tiles use the same tint rules (no extra suppression for fogged). **Full visibility mode:** all GP-owned land cells qualify when the layer is on. Tint is painted **after** terrain (including feature layers) and **before** resource icons and improvement/road labels. | Yes. In-game toggle **Show province ownership** ([empire-overview.md](empire-overview.md)), independent of boundary strokes. When off, no GP tint is drawn. |
+| **Province ownership (GP tint)** | **Great Power land ownership tint:** for each **land** cell whose `ownerFactionId` is a Great Power (runtime id in `RegionMapViewData.greatPowerFactionIds`), draw a **semi-transparent** fill in that faction’s colour from `factionColors` at **fixed alpha 0.5** (`BlendMode.srcOver`). **Not** drawn for sea cells, unowned land, Minor Nations, or Tribes. **Player-constrained visibility:** tint is **not** drawn on `unrevealed` tiles; **`visible` and `fogged`** tiles use the same tint rules (no extra suppression for fogged). **Full visibility mode:** all GP-owned land cells qualify when the layer is on. Tint is painted **after** terrain (including feature layers) and **before** resource icons, improvement labels, and road/rail labels. | Yes. In-game toggle **Show province ownership** ([empire-overview.md](empire-overview.md)), independent of boundary strokes. When off, no GP tint is drawn. |
 | **Political** | Political borders (ownership differences between adjacent land provinces). Drawn on top of base and province overlay strokes when both are enabled. | Yes. User can turn political overlay on/off. |
 | **Province names** | Land province labels: `CellViewData.provinceDisplayName` (same string as the Political section in the province detail overlay), with fallback to local province id when missing. One label per land province per region. Position: centroid of that province’s **land** tiles in the region (tile centers averaged). **Not** drawn for sea zones. **Player-constrained visibility:** only tiles that are not `unrevealed` participate in the centroid and get a label; if no qualifying tiles, no label. **Screen space:** text and backing plate use roughly **constant logical pixel size** regardless of map zoom (inverse scale in world space). Style: short label on a semi-transparent rectangular plate; neighbor overlap is acceptable. Rendered after province/political border strokes and before capitals/ports. | Yes. Independent of province overlay, province ownership tint, and political overlay toggles. |
 
 Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData` / game + tile maps per [map-visualization.md](../program/map-visualization.md)). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
 
+### Base overlay paint order (Z-order, bottom → top)
+
+Within the Flame map render pipeline, after terrain (sea, land base, features), the **base overlays** and subsequent layers are painted in this order (earlier = underneath):
+
+1. **Great Power province ownership tint** (when that layer is enabled).
+2. **Resource icons** (when the base-layer mode includes resources).
+3. **Improvement labels** `I{n}` (when the mode includes improvements and `n > 0`).
+4. **Road/rail labels** `R{n}` (when the mode includes roads and `n > 0`). **Road labels are only used in a mode that also enables improvement labels** (roads are painted after improvements so they sit on top where pixels overlap).
+5. Province boundary strokes (when enabled), then hover glow, political borders, province names, capitals, towns/ports, warp indicators, then selection/hover chrome — unchanged except as noted elsewhere in this spec.
+
+**Label placement:** Improvement label at the **top-left** of the tile cell (small inset from top and left edges). Road/rail label at the **top-right** (inset from top and right). **Do not** draw `I0` or `R0`; only draw when the corresponding level is **greater than zero**.
+
+Implementation: separate paint passes (or equivalent ordering) for icons, improvement text, and road text so Z-order is guaranteed.
+
 ---
 
 ## Base layer display mode
 
-The base (tile) layer can show terrain only, terrain plus resource icons, or terrain plus resource icons and improvement/road labels. The widget accepts an optional **base layer display mode**; when provided, the map draws the overlay according to that mode. When not provided (e.g. Widgetbook, debug stories), the widget uses **full** mode so all overlays are shown for backward compatibility.
+The widget accepts an optional **base layer display mode** enumerating terrain, resource icons, improvement labels, and road/rail labels. When `baseLayerDisplayMode` is **omitted** (e.g. some Widgetbook stories), the widget uses **terrain + resources + improvements + roads** (full detail) for backward compatibility.
 
-| Mode | Terrain | Resource icon | Improvement/road (I0, R0, …) |
-|------|---------|---------------|-------------------------------|
-| **terrainOnly** | Yes | No | No |
-| **terrainAndResources** | Yes | Yes (icon) | No |
-| **terrainResourcesImprovements** | Yes | Yes (icon) | Yes |
+| Mode | Terrain | Resource icon | Improvement `I{n}` (n > 0) | Road/rail `R{n}` (n > 0) |
+|------|---------|---------------|----------------------------|---------------------------|
+| **terrainOnly** | Yes | No | No | No |
+| **terrainAndResources** | Yes | Yes | No | No |
+| **terrainAndResourcesImprovementLabels** | Yes | Yes | Yes | No |
+| **terrainAndResourcesImprovementsRoads** | Yes | Yes | Yes | Yes |
 
-Implementation: a single overlay pass draws per-cell icons and text; the mode controls which elements are included. Capitals, ports, and warp zone indicators are always drawn regardless of mode.
+**Constraint:** Any mode that shows road labels **must** also show improvement labels (the enum satisfies this: road labels exist only in `terrainAndResourcesImprovementsRoads`).
+
+Capitals, ports, and warp zone indicators are always drawn regardless of mode.
 
 ---
 
@@ -182,14 +199,14 @@ The map widget supports two visibility modes that determine how each tile is ren
 
 ### Tile rendering semantics per visibility
 
-When the widget is in **full visibility mode**, it renders the base layer exactly as today (terrain, resources, improvements, roads, capitals, borders) and does not consider visibility.
+When the widget is in **full visibility mode**, it renders the base layer per the selected base-layer mode (terrain, resource icons, improvement/road labels as enabled) plus capitals, borders, etc., and does not consider visibility.
 
 When the widget is in **player-constrained visibility mode**, it maps `CellViewData.visibility` to rendering and interaction as follows:
 
-- **`visible`:** The tile is rendered unmodified (full terrain color, resource icons, improvement/road labels, and borders).
+- **`visible`:** The tile is rendered unmodified (full terrain color, resource icons and improvement/road labels per base-layer mode, and borders).
 - **`fogged`:** The tile is rendered with the same content as `visible` but visually muted:
   - The base terrain color is blended towards a **darker gray or black** with a consistent, moderate darkening (e.g. ~40% toward black / 40% overlay) so fogged tiles are noticeably darker than fully visible tiles but remain readable.
-  - Resource icons and improvement/road labels remain readable but appear on the muted background.
+  - Resource icons and improvement/road labels remain readable but appear on the muted background (same treatment as today for icons; text remains legible on muted terrain).
 - **`unrevealed`:** The tile is rendered as a solid black square:
   - No terrain color or icons/labels are shown.
   - Province and faction borders for unrevealed tiles are not emphasized; border behavior at the edge between revealed/fogged and unrevealed tiles is implementation-defined and may be omitted for unrevealed areas.
@@ -291,9 +308,10 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 
 ## Acceptance criteria
 
-- **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows the base tile layer (terrain, resources, improvements, towns, capitals) at the current zoom level.
+- **Given** a map widget with a region's data, **when** the widget is laid out, **then** the viewport matches the widget size and shows terrain, optional resource icons and improvement/road labels (per base-layer mode), and always-on markers (capitals, ports, warp) at the current zoom level.
+- **Given** the Great Power tint layer and a base-layer mode that includes resource icons and/or improvement or road labels, **when** the map renders a qualifying land tile, **then** the stack from bottom to top is: terrain → GP tint (if on) → resource icons (if mode includes resources) → improvement labels (if mode includes improvements and level > 0) → road labels (if mode includes roads and level > 0) → later overlays per § Layer model.
 - **Given** the province overlay is enabled, **when** the map renders province and sea-zone boundaries, **then** land↔sea-zone edges use a subtle/fainter stroke (instead of a solid black line) and other province/sea-zone borders are rendered subtly (not solid black).
-- **Given** the province ownership (GP tint) layer is enabled and a land tile’s `ownerFactionId` is a Great Power (present in `RegionMapViewData.greatPowerFactionIds`) and the tile is not `unrevealed` when in player-constrained visibility mode, **when** the map renders that tile, **then** a semi-transparent tint of that faction’s `factionColors` entry at **alpha 0.65** is drawn over terrain but under resource icons and improvement/road labels.
+- **Given** the province ownership (GP tint) layer is enabled and a land tile’s `ownerFactionId` is a Great Power (present in `RegionMapViewData.greatPowerFactionIds`) and the tile is not `unrevealed` when in player-constrained visibility mode, **when** the map renders that tile, **then** a semi-transparent tint of that faction’s `factionColors` entry at **alpha 0.5** is drawn over terrain but under resource icons, improvement labels, and road/rail labels.
 - **Given** the province ownership layer is enabled, **when** the map renders a land tile owned by a Minor Nation or Tribe, **then** no Great Power ownership tint is drawn on that tile (political borders may still apply per political overlay).
 - **Given** the province ownership layer is enabled, **when** the map renders a **sea** tile, **then** no Great Power ownership tint is drawn on that tile.
 - **Given** the province ownership layer is enabled and visibility mode is player-constrained, **when** the map renders a tile whose `CellViewData.visibility` is `unrevealed`, **then** no Great Power ownership tint is drawn on that tile (the tile remains black per base visibility rules).
@@ -317,16 +335,19 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **full**, **when** the widget renders tiles, **then** tiles whose visibility is `visible`, `fogged`, or `unrevealed` are all drawn as fully visible (no gray or black masking is applied based on visibility).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `visible`, **then** the tile is drawn identically to the current base behavior (full terrain color and overlays).
 - **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `fogged`, **then** the tile is drawn with the same terrain and overlays as `visible` tiles but with a consistent gray/opacity effect applied so the tile appears muted.
-- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource icons/improvement/road labels are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
+- **Given** a map widget with `CellViewData.visibility` populated and the visibility mode set to **player-constrained**, **when** the widget renders a tile whose visibility is `unrevealed`, **then** the tile area is drawn as solid black, no terrain or resource icons or improvement/road labels are shown, and hover callbacks are not fired for that tile while tap/click selection still invokes province-selection callbacks.
 
 - **Given** the map widget is in work target selection mode (non-null **validTileKeys** and **onTileSelected** provided), **when** the widget renders a tile whose key is in **validTileKeys** and in the current region, **then** that tile is drawn with a flashing yellow border (opacity oscillates between ~0.4 and ~0.8). When the user taps a tile in **validTileKeys**, **then** the widget invokes **onTileSelected** with that tile key, commits the order (via parent), and exits selection mode (clears yellow selectors, restores white cursor). When the user taps a tile not in **validTileKeys** or empty area, **then** the widget invokes **onWorkTargetSelectionCancelled** and exits selection mode.
 - **Given** the map widget is in work target selection mode with **validTileKeys** provided but empty, **when** the user taps any tile, **then** the widget invokes **onWorkTargetSelectionCancelled** to allow the user to back out of selection mode.
 - **Given** the map widget is in work target selection mode, **when** the pointer hovers over tiles, **then** the hover selector is rendered with an **orange** outline (`Color(0xFFFFAA00`)) and hover events update the tile position via **onTileHovered**; hover does NOT trigger selection or cancellation.
 - **Given** the map widget is in work target selection mode, **when** the user taps a tile in **validTileKeys** or taps outside valid tiles, **then** the widget invokes **onTileSelected** (for valid tiles) or **onWorkTargetSelectionCancelled** (for invalid/empty), respectively; hover gestures remain purely visual during selection mode and do not commit or cancel.
 - **Given** the map widget is in work target selection mode, **when** the map renders, **then** a cancel button with a cross icon (×) is overlaid on the map (Flutter overlay) in a visible position (e.g., top-right corner). Clicking the cancel button invokes **onWorkTargetSelectionCancelled** and exits selection mode.
-- **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports) is drawn and no resource icons or improvement/road labels are drawn on tiles.
-- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and improvement/road labels (I0, R0, …) are not drawn.
-- **Given** the map widget is given **base layer display mode** `terrainResourcesImprovements` (or the parameter is omitted), **when** the widget renders the base layer, **then** terrain, resource icons, and improvement/road labels are all drawn per cell where present.
+- **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain (and capitals, ports, warp per spec) is drawn and no resource icons or improvement or road labels are drawn on tiles.
+- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and no improvement or road labels are drawn.
+- **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementLabels`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, and improvement labels `I{n}` are drawn only when `improvementLevel > 0` (top-left of cell); no road labels are drawn.
+- **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementsRoads`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, improvement labels when `improvementLevel > 0`, and road labels `R{n}` when `roadLevel > 0` (top-right), with **roads painted after improvements** in Z-order.
+- **Given** the map widget omits **base layer display mode** (null), **when** the widget renders the base layer, **then** behavior matches `terrainAndResourcesImprovementsRoads` (full detail).
+- **Given** the map widget uses a mode that draws improvement or road labels, **when** a tile has `improvementLevel == 0` or `roadLevel == 0`, **then** no `I0` or `R0` label is drawn for that level.
 - **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/ui_icon_com_<resource_id>.png` and rendered at native 32×32 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
 - **Given** a map widget rendering a tile with a resource on a **32px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
 - **Given** a map widget rendering a tile with a resource on a **larger than 32px cell** (e.g. 64px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-32) at native 32×32 resolution.

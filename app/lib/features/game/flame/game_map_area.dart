@@ -50,7 +50,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
-      BaseLayerDisplayMode.terrainResourcesImprovements;
+      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
 
   @override
   void initState() {
@@ -130,8 +130,10 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         BaseLayerDisplayMode.terrainOnly =>
           BaseLayerDisplayMode.terrainAndResources,
         BaseLayerDisplayMode.terrainAndResources =>
-          BaseLayerDisplayMode.terrainResourcesImprovements,
-        BaseLayerDisplayMode.terrainResourcesImprovements =>
+          BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+        BaseLayerDisplayMode.terrainAndResourcesImprovementLabels =>
+          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads =>
           BaseLayerDisplayMode.terrainOnly,
       };
     });

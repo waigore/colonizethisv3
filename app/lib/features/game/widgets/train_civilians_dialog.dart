@@ -8,6 +8,7 @@ import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import 'train_unit_dialog_helper.dart';
 
 class TrainCiviliansDialog extends StatefulWidget {
   const TrainCiviliansDialog({
@@ -38,20 +39,13 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
 
   /// Counts pending train-at-capital civilian builds from [widget.currentOrders].
   Map<String, int> _initialCountsFromOrders() {
-    final next = {for (final e in CivilianEconomyCatalog.all) e.id: 0};
-    final capital = _player?.capitalProvinceId;
-    if (capital == null) return next;
-    final civilianIds = CivilianEconomyCatalog.byId.keys.toSet();
-    final list =
-        widget.currentOrders.buildUnitOrdersByPlayerId[widget.humanPlayerId] ??
-        const <BuildUnitOrder>[];
-    for (final o in list) {
-      if (o.isMilitary) continue;
-      if (!civilianIds.contains(o.unitType)) continue;
-      if (o.spawnProvinceId != capital) continue;
-      next[o.unitType] = (next[o.unitType] ?? 0) + 1;
-    }
-    return next;
+    return initialTrainDialogCountsFromOrders(
+      unitTypeIds: CivilianEconomyCatalog.byId.keys,
+      currentOrders: widget.currentOrders,
+      humanPlayerId: widget.humanPlayerId,
+      capitalProvinceId: _player?.capitalProvinceId,
+      isMilitary: false,
+    );
   }
 
   Player? get _player {
@@ -115,41 +109,32 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
     if (_isLocked(unitType)) return;
     if (!_canAffordIncrement(unitType)) return;
     setState(() {
-      _counts[unitType] = (_counts[unitType] ?? 0) + 1;
+      _counts = incrementTrainDialogCount(_counts, unitType);
     });
   }
 
   void _decrement(String unitType) {
     if (_counts[unitType] == null || _counts[unitType]! <= 0) return;
     setState(() {
-      _counts[unitType] = _counts[unitType]! - 1;
+      _counts = decrementTrainDialogCount(_counts, unitType);
     });
   }
 
   void _reset() {
     setState(() {
-      for (final e in CivilianEconomyCatalog.all) {
-        _counts[e.id] = 0;
-      }
+      _counts = resetTrainDialogCounts(_counts);
     });
   }
 
   void _applyOrders() {
-    final orders = <BuildUnitOrder>[];
     final capital = _player?.capitalProvinceId;
     if (capital == null) return;
-    for (final e in CivilianEconomyCatalog.all) {
-      final count = _counts[e.id] ?? 0;
-      for (var i = 0; i < count; i++) {
-        orders.add(
-          BuildUnitOrder(
-            unitType: e.id,
-            isMilitary: false,
-            spawnProvinceId: capital,
-          ),
-        );
-      }
-    }
+    final orders = materializeTrainDialogOrdersFromCounts(
+      orderedUnitTypeIds: CivilianEconomyCatalog.byId.keys,
+      counts: _counts,
+      capitalProvinceId: capital,
+      isMilitary: false,
+    );
     widget.onOrdersChanged(orders);
   }
 

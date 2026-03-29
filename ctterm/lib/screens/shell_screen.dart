@@ -22,6 +22,7 @@ import 'package:ctterm/screens/victory_screen.dart';
 import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/pause_options_screen.dart';
+import 'package:ctterm/screens/pending_call_to_arms_screen.dart';
 import 'package:ctterm/screens/pending_overtures_screen.dart';
 import 'package:ctterm/screens/debug_log_viewer_screen.dart';
 import 'package:ctterm/save_service.dart';
@@ -58,8 +59,11 @@ class ShellScreen extends StatefulComponent {
     this.settingsReturnRoute,
     this.debugLogViewerReturnRoute,
     this.pendingOvertures,
+    this.pendingCallToArms,
     this.onTurnResolutionPending,
+    this.onTurnResolutionPendingCallToArms,
     this.onOvertureDecisions,
+    this.onCallToArmsDecisions,
     this.showGameStartIntro = false,
     this.onIntroDismissed,
   });
@@ -129,12 +133,22 @@ class ShellScreen extends StatefulComponent {
   /// When non-null, turn resolution is suspended awaiting human overture decisions. SPEC/program/turn-resolution-phases.md.
   final List<OvertureOffer>? pendingOvertures;
 
+  /// When non-null, human ally must respond to call to arms. SPEC/game/diplomacy.md.
+  final List<CallToArmsPending>? pendingCallToArms;
+
   /// Called when resolve returns pending; app should navigate to pendingOvertures and show prompt.
   final void Function(Game game, List<OvertureOffer> pending)?
       onTurnResolutionPending;
 
+  /// Called when resolve returns pending call to arms.
+  final void Function(Game game, List<CallToArmsPending> pending)?
+      onTurnResolutionPendingCallToArms;
+
   /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
   final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
+
+  /// Called when user submits call to arms decisions.
+  final void Function(List<CallToArmsDecision> decisions)? onCallToArmsDecisions;
 
   /// When true, in-game shell shows game-start intro overlay until dismissed. SPEC/ai/dialogue-management.md.
   final bool showGameStartIntro;
@@ -326,6 +340,13 @@ class _ShellScreenState extends State<ShellScreen> {
                   ?.call(result.game, result.pendingOvertures);
               return;
             }
+            if (result is TurnResolutionPendingCallToArms) {
+              _log.d(
+                  'tui:game: turn resolution pending ${result.pendingCallToArms.length} call(s) to arms');
+              component.onTurnResolutionPendingCallToArms
+                  ?.call(result.game, result.pendingCallToArms);
+              return;
+            }
             final nextGame = requireTurnResolutionComplete(result);
             component.onTurnProcessed?.call(nextGame);
             _log.i(
@@ -475,6 +496,26 @@ class _ShellScreenState extends State<ShellScreen> {
           game: game,
           pendingOvertures: pending,
           onDecisions: onDecisions,
+        );
+      case CttermRoute.pendingCallToArms:
+        final ctaGame = component.game;
+        final ctaPending = component.pendingCallToArms;
+        final onCta = component.onCallToArmsDecisions;
+        if (ctaGame == null ||
+            ctaPending == null ||
+            ctaPending.isEmpty ||
+            onCta == null) {
+          _log.w(
+              'tui:nav: pendingCallToArms route with missing game/pending/onDecisions');
+          return const Padding(
+            padding: EdgeInsets.all(1),
+            child: Text('No pending call to arms.'),
+          );
+        }
+        return PendingCallToArmsScreen(
+          game: ctaGame,
+          pending: ctaPending,
+          onDecisions: onCta,
         );
     }
   }
