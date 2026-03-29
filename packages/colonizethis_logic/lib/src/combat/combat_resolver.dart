@@ -143,10 +143,12 @@ Game resolveBattleContext(
       fortLevel: ctx.fortLevel,
       terrain: ctx.terrain,
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
-      attackerMoraleMultiplier: _moraleMultiplierForCoverage(attackerCoverage) *
-          attackerGeneralMorale,
-      defenderMoraleMultiplier: _moraleMultiplierForCoverage(defenderCoverage) *
-          defenderGeneralMorale,
+      attackerMoraleMultiplier:
+          moraleMultiplierForFeedingCoverage(attackerCoverage) *
+              attackerGeneralMorale,
+      defenderMoraleMultiplier:
+          moraleMultiplierForFeedingCoverage(defenderCoverage) *
+              defenderGeneralMorale,
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
@@ -615,12 +617,6 @@ EngagementOutcome _buildOutcome({
     attackerStrength: attStr,
     defenderStrength: defStr,
   );
-}
-
-double _moraleMultiplierForCoverage(double coverage) {
-  if (coverage >= 1.0) return 1.0;
-  if (coverage >= 0.5) return 0.75;
-  return 0.5;
 }
 
 /// Morale aura from general medals. SPEC/game/military-generals.md:

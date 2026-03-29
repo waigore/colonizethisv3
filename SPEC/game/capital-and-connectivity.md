@@ -119,7 +119,17 @@ Connectivity is recomputed each turn; blockade state is taken from the current f
 
 ## Capital loss and reassignment
 
-If a player no longer owns their capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). New capital is in the player's **original region** (region of the previous capital) from the player's **owned provinces** in that region. Prefer **seaboard** provinces; place capital along the seaboard when possible. If the player has no seaboard provinces in that region, choose any remaining owned province (inland capital). Apply port/road setup per § Capital Setup. Reference capital-choice heuristics (e.g. border-avoidance) for tile choice where applicable. If the player has no owned provinces in the original region, leave capital (and capital tile) null; no port/road setup is applied.
+If a player no longer owns their capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). This path is **separate** from the init-game capital-choice phase and **does not** use capital-choice A/B/C tile heuristics or § Capital Setup port/road placement.
+
+**Province:** New capital province is in the player's **original region** (region of the lost capital), chosen from **owned** provinces in that region. Prefer **seaboard** provinces (P–S edge in region topology). If none, use **inland** owned provinces. Deterministic tie-break: ascending sorted full province id, first entry in the preferred list (seaboard list, else full owned list).
+
+**Tile:** The new capital **tile** is exactly that province's stored **`townTileKey`**, parsed as tile key `regionId|localId|x|y` per [world-model-identity.md](world-model-identity.md). The System **does not** reassign, recompute, or validate `townTileKey` against the tile map during reassignment (post-generation data is authoritative). The System **does not** mutate any province's `townTileKey` during reassignment.
+
+**World state:** Reassignment updates **only** the player's `capitalProvinceId` and `capitalTile`. It **does not** add or change ports, roads, or other `WorldState.tileState` entries for capital wiring.
+
+**Fatal error:** If reassignment must run for a chosen province but `townTileKey` is null, empty, or not parseable to a `CapitalTile` for that province id, The System **throws** a dedicated fatal error, emits **`logic:`** logs at **error** level with **full error and stack trace** for diagnostics, and the host treats this as **end of game** (turn resolution does not complete). The same logging and propagation apply to any other unexpected failure during reassignment.
+
+If the player has **no** owned provinces in the original region, The System sets `capitalProvinceId` and `capitalTile` to `null` and performs no throws from the missing-town rule above.
 
 ### Great Power fall (loss of capital and ports)
 
@@ -205,13 +215,33 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
   When the system recomputes connectivity during the next extraction phase  
   Then all tiles in provinces that now have a valid path via `P_retake` to their town and to the capital are marked as connected again and resume contributing extraction according to the normal yield rules.
 
-- Given a player’s capital province is conquered so the player owns zero tiles in that province at the end of combat resolution  
+- Given a Great Power player no longer owns their capital province and still owns at least one province `P` in the original capital region with a non-null `townTileKey` equal to tile key `T` in canonical form and `P` is the first owned seaboard province in that region when sorted by full province id ascending, or the first owned inland province in that order when no seaboard province exists  
   When the system executes capital loss and reassignment during turn resolution  
-  Then the system selects a new capital province from the player’s owned provinces in the original capital region, preferring seaboard provinces when available, assigns a new capital tile using the capital-choice heuristics, applies capital port and road setup per the capital-setup rules, and updates all towns and connectivity based on the new capital before the next extraction phase.
+  Then the system sets the player’s `capitalProvinceId` to `P.id`, sets `capitalTile` so `capitalTile.toTileKey()` equals `T`, does not modify any province’s `townTileKey`, and does not add or change port or road entries in `WorldState` for reassignment.
 
-- Given a player has no owned provinces remaining in the original capital region after capital loss  
+- Given a Great Power player no longer owns their capital province and owns provinces `P1` and `P2` in the original region where only `P2` is seaboard and both have valid `townTileKey` values  
   When the system executes capital loss and reassignment during turn resolution  
-  Then the system sets the player’s capital province and capital tile to `null`, performs no new port or road setup, and in the subsequent extraction phase treats all tiles for that player as not connected for extraction until a new capital is defined by later rules.
+  Then the system selects `P2` as the new capital province (seaboard preference) and sets the player’s capital tile from `P2.townTileKey` only.
+
+- Given a Great Power player no longer owns their capital province and owns only non-seaboard provinces in the original region each with a valid `townTileKey`  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system selects the new capital province by ascending sorted full province id among those owned provinces and sets the capital tile from that province’s `townTileKey` only.
+
+- Given a Great Power player no longer owns their capital province and the reassignment-selected province `P` has `townTileKey` that is null, empty, or not parseable as `regionId|localId|x|y` consistent with `P.id`  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system throws a fatal capital-reassignment error, logs at `logic:` error level with full error and stack trace, and does not complete turn resolution (host ends the game session).
+
+- Given a Great Power player no longer owns their capital province and still owns another province in the original region whose `townTileKey` is valid  
+  When capital reassignment runs and any unexpected error occurs inside reassignment  
+  Then the system logs at `logic:` error level with full error and stack trace and propagates the error (host ends the game session or surfaces diagnostics per program spec).
+
+- Given a player’s capital province is conquered so the player owns zero provinces in the original capital region at the end of combat resolution  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system sets the player’s capital province and capital tile to `null`, performs no port or road changes for reassignment, and does not throw the missing-`townTileKey` fatal error for that player.
+
+- Given two distinct non-capital owned provinces `A` and `B` in the same region before capital loss and reassignment  
+  When reassignment completes for a player who still owns both `A` and `B`  
+  Then `A.townTileKey` and `B.townTileKey` are unchanged from their values immediately before reassignment.
 
 - Given a Great Power player has an owned port province `P_port` and an enemy fleet **at sea** (at war with that player) is on Blockade mission targeting `P_port` and is in a sea zone adjacent to `P_port`'s port  
   When the system recomputes connectivity during the extraction phase  

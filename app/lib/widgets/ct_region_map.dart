@@ -27,7 +27,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required bool showProvinceNamesLayer,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
-        BaseLayerDisplayMode.terrainResourcesImprovements,
+        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     required void Function(String provinceId)? onProvinceSelected,
     void Function(String tileKey)? onMapTileTappedForDetail,
     required VoidCallback? onRegionViewChanged,
@@ -409,7 +409,7 @@ class CtRegionMap extends StatefulWidget {
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
 
-  /// When null, full letters (terrain + resources + improvements) for backward compatibility.
+  /// When null, full detail (terrain + resources + improvements + roads) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
   final void Function(String tileKey)? onMapTileTappedForDetail;
@@ -470,7 +470,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
-            BaseLayerDisplayMode.terrainResourcesImprovements,
+            BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
         selectedTileKey: widget.selectedTileKey,
         clearSelectedTileKey: widget.selectedTileKey == null,
         secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
@@ -503,7 +503,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       visibilityMode: widget.visibilityMode,
       baseLayerDisplayMode:
           widget.baseLayerDisplayMode ??
-          BaseLayerDisplayMode.terrainResourcesImprovements,
+          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
       onProvinceSelected: widget.onProvinceSelected,
       onMapTileTappedForDetail: widget.onMapTileTappedForDetail,
       onRegionViewChanged: widget.onRegionViewChanged,

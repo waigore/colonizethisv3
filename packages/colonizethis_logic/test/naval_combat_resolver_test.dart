@@ -109,6 +109,8 @@ void main() {
       expect(battles[0].seaZoneId, 'sea1');
       expect(battles[0].side1.ownerId, 'p1');
       expect(battles[0].side1.shipTypeIds, ['carrack', 'carrack']);
+      expect(battles[0].side1.ships.length, 2);
+      expect(battles[0].side1.ships.map((s) => s.id).toSet().length, 2);
       expect(battles[0].side2.ownerId, 'p2');
       expect(battles[0].side2.shipTypeIds, ['fluyte']);
     });
@@ -132,16 +134,22 @@ void main() {
 
   group('resolveSeaBattle', () {
     test('returns surviving ships with casualties by strength ratio', () {
-      const battle = BattleContextSea(
+      final battle = BattleContextSea(
         seaZoneId: 'sea1',
-        side1: NavalBattleSide(ownerId: 'p1', shipTypeIds: ['carrack', 'carrack']),
-        side2: NavalBattleSide(ownerId: 'p2', shipTypeIds: ['fluyte']),
+        side1: NavalBattleSide(
+          ownerId: 'p1',
+          ships: legacyShipInstancesForFleet('battle_p1', ['carrack', 'carrack']),
+        ),
+        side2: NavalBattleSide(
+          ownerId: 'p2',
+          ships: legacyShipInstancesForFleet('battle_p2', ['fluyte']),
+        ),
       );
       final result = resolveSeaBattle(battle, 42);
-      expect(result.survivingShipTypeIdsSide1, isNotEmpty);
-      expect(result.survivingShipTypeIdsSide2, isNotEmpty);
+      expect(result.survivingShipsSide1, isNotEmpty);
+      expect(result.survivingShipsSide2, isNotEmpty);
       expect(
-        result.survivingShipTypeIdsSide1.length + result.survivingShipTypeIdsSide2.length,
+        result.survivingShipsSide1.length + result.survivingShipsSide2.length,
         lessThanOrEqualTo(3),
       );
     });
@@ -149,25 +157,32 @@ void main() {
     test('returns all ships when total strength is zero', () {
       const battle = BattleContextSea(
         seaZoneId: 'sea1',
-        side1: NavalBattleSide(ownerId: 'p1', shipTypeIds: []),
-        side2: NavalBattleSide(ownerId: 'p2', shipTypeIds: []),
+        side1: NavalBattleSide(ownerId: 'p1', ships: []),
+        side2: NavalBattleSide(ownerId: 'p2', ships: []),
       );
       final result = resolveSeaBattle(battle, 0);
-      expect(result.survivingShipTypeIdsSide1, isEmpty);
-      expect(result.survivingShipTypeIdsSide2, isEmpty);
+      expect(result.survivingShipsSide1, isEmpty);
+      expect(result.survivingShipsSide2, isEmpty);
+    });
+
+    test('feeding coverage multiplies raw naval strength like land combat morale', () {
+      final raw = navalStrength(['carrack', 'carrack']);
+      expect(raw * moraleMultiplierForFeedingCoverage(1.0), raw);
+      expect(raw * moraleMultiplierForFeedingCoverage(0.6), raw * 0.75);
+      expect(raw * moraleMultiplierForFeedingCoverage(0.0), raw * 0.5);
     });
 
     test('does not retreat when retreat is disallowed by topology/relation gate', () {
-      const battle = BattleContextSea(
+      final battle = BattleContextSea(
         seaZoneId: 'sea1',
         side1: NavalBattleSide(
           ownerId: 'p1',
-          shipTypeIds: ['carrack', 'carrack'],
+          ships: legacyShipInstancesForFleet('ret_p1', ['carrack', 'carrack']),
           mission: FleetMission.patrol,
         ),
         side2: NavalBattleSide(
           ownerId: 'p2',
-          shipTypeIds: ['fluyte', 'fluyte'],
+          ships: legacyShipInstancesForFleet('ret_p2', ['fluyte', 'fluyte']),
           mission: FleetMission.blockade,
         ),
       );
@@ -212,14 +227,20 @@ void main() {
           Player(id: 'p2', displayName: 'B', isHuman: true),
         ],
       );
-      const battle = BattleContextSea(
+      final battle = BattleContextSea(
         seaZoneId: 'sea1',
-        side1: NavalBattleSide(ownerId: 'p1', shipTypeIds: ['carrack']),
-        side2: NavalBattleSide(ownerId: 'p2', shipTypeIds: ['fluyte']),
+        side1: NavalBattleSide(
+          ownerId: 'p1',
+          ships: legacyShipInstancesForFleet('ap1', ['carrack']),
+        ),
+        side2: NavalBattleSide(
+          ownerId: 'p2',
+          ships: legacyShipInstancesForFleet('ap2', ['fluyte']),
+        ),
       );
-      const result = NavalBattleResult(
-        survivingShipTypeIdsSide1: ['carrack'],
-        survivingShipTypeIdsSide2: [],
+      final result = NavalBattleResult(
+        survivingShipsSide1: legacyShipInstancesForFleet('out1', ['carrack']),
+        survivingShipsSide2: const [],
       );
       final updated = applyNavalBattleResults(game, battle, result, 'oldWorld');
       expect(updated.worldState.fleets.length, 1);
@@ -259,14 +280,22 @@ void main() {
           Player(id: 'p2', displayName: 'B', isHuman: true),
         ],
       );
-      const battle = BattleContextSea(
+      final battle = BattleContextSea(
         seaZoneId: 'sea1',
-        side1: NavalBattleSide(ownerId: 'p1', shipTypeIds: ['carrack'], mission: FleetMission.patrol),
-        side2: NavalBattleSide(ownerId: 'p2', shipTypeIds: ['fluyte'], mission: FleetMission.blockade),
+        side1: NavalBattleSide(
+          ownerId: 'p1',
+          ships: legacyShipInstancesForFleet('m1', ['carrack']),
+          mission: FleetMission.patrol,
+        ),
+        side2: NavalBattleSide(
+          ownerId: 'p2',
+          ships: legacyShipInstancesForFleet('m2', ['fluyte']),
+          mission: FleetMission.blockade,
+        ),
       );
-      const result = NavalBattleResult(
-        survivingShipTypeIdsSide1: ['carrack'],
-        survivingShipTypeIdsSide2: ['fluyte'],
+      final result = NavalBattleResult(
+        survivingShipsSide1: legacyShipInstancesForFleet('om1', ['carrack']),
+        survivingShipsSide2: legacyShipInstancesForFleet('om2', ['fluyte']),
       );
       final updated = applyNavalBattleResults(game, battle, result, 'oldWorld');
       final p1 = updated.worldState.fleets.firstWhere((f) => f.ownerId == 'p1');

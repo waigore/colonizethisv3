@@ -61,9 +61,14 @@ EconomyPlan runEconomyPlanner({
 
   final stockpile = player.stockpile;
   final workers = player.workerPool;
+  final regimentCounts =
+      regimentTypeCountsForPlayer(game.worldState, view.playerId);
+  final shipCounts = shipTypeCountsForPlayer(game.worldState, view.playerId);
   final effectiveLabour = effectiveLabourForWorkers(
     workers: workers,
     stockpile: stockpile,
+    regimentCountsById: regimentCounts,
+    shipCountsById: shipCounts,
   );
 
   if (effectiveLabour <= 0) {

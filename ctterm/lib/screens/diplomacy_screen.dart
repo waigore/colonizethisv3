@@ -658,8 +658,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       return;
     }
     
-    // Default aid amount: 1000
-    const aidAmount = 1000;
+    final aidAmount = grantAidDefaultAmount;
     final treasury = _getTreasury();
     if (treasury < aidAmount) {
       _setStatus('Insufficient funds: need £$aidAmount', isError: true);
@@ -686,8 +685,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       return;
     }
     
-    // Default subsidy amount: 500
-    const subsidyAmount = 500;
+    final subsidyAmount = setSubsidyDefaultAmount;
     final treasury = _getTreasury();
     if (treasury < subsidyAmount) {
       _setStatus('Insufficient funds: need £$subsidyAmount', isError: true);
@@ -937,9 +935,9 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.embassy),
             _buildActionHint('j', 'Join Empire (£${_getJoinEmpireCost(faction.id)})',
               faction.relationState == RelationState.atPeace && faction.overtureStage == OvertureStage.nap && (faction.relationScore ?? 0) >= 51),
-            _buildActionHint('g', 'Grant Aid (£1000)', 
+            _buildActionHint('g', 'Grant Aid (£$grantAidDefaultAmount)',
               faction.overtureStage == OvertureStage.embassy || faction.overtureStage == OvertureStage.nap),
-            _buildActionHint('s', 'Set Subsidy (£500)', 
+            _buildActionHint('s', 'Set Subsidy (£$setSubsidyDefaultAmount)', 
               faction.overtureStage != null && faction.overtureStage != OvertureStage.none),
           ],
         ],

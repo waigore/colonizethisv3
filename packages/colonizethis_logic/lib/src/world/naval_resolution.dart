@@ -83,7 +83,7 @@ Game applyNavalMissionOrders(
             fleet.inPortAtProvinceId != capitalProvinceId) continue;
         if (fleet.shipTypeIds.isEmpty) continue;
         final updatedHome = homeFleet.copyWith(
-          shipTypeIds: [...homeFleet.shipTypeIds, ...fleet.shipTypeIds],
+          ships: [...homeFleet.ships, ...fleet.ships],
         );
         fleets = fleets
             .where((f) => f.id != fleet.id)
@@ -204,7 +204,7 @@ Game applyNavalMovesAndShipReveal(
           seaZoneId: null,
           inPortAtProvinceId: fullProvinceId,
           regionId: portRegionId,
-          shipTypeIds: fleet.shipTypeIds,
+          ships: fleet.ships,
           mission: fleet.mission,
           targetPortId: fleet.targetPortId,
           targetProvinceId: fleet.targetProvinceId,
@@ -248,7 +248,7 @@ Game applyNavalMovesAndShipReveal(
         seaZoneId: destZoneId,
         inPortAtProvinceId: null,
         regionId: destRegionId ?? fleet.regionId,
-        shipTypeIds: fleet.shipTypeIds,
+        ships: fleet.ships,
         mission: fleet.mission,
         targetPortId: fleet.targetPortId,
         targetProvinceId: fleet.targetProvinceId,
@@ -294,6 +294,7 @@ Game runNavalInterceptionCombatPhase(
   Game game,
   MapTopology topology,
   Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId, {
+  Map<String, double> navalFeedingCoverageByPlayerId = const {},
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
   GameEventBus? eventBus,
@@ -330,6 +331,7 @@ Game runNavalInterceptionCombatPhase(
       seed,
       side1CanRetreat: retreatZoneSide1 != null,
       side2CanRetreat: retreatZoneSide2 != null,
+      navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
     );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
@@ -353,12 +355,12 @@ Game runNavalInterceptionCombatPhase(
 
     String? victorId;
     String? loserId;
-    if (result.survivingShipTypeIdsSide1.isEmpty &&
-        result.survivingShipTypeIdsSide2.isNotEmpty) {
+    if (result.survivingShipsSide1.isEmpty &&
+        result.survivingShipsSide2.isNotEmpty) {
       victorId = battle.side2.ownerId;
       loserId = battle.side1.ownerId;
-    } else if (result.survivingShipTypeIdsSide2.isEmpty &&
-        result.survivingShipTypeIdsSide1.isNotEmpty) {
+    } else if (result.survivingShipsSide2.isEmpty &&
+        result.survivingShipsSide1.isNotEmpty) {
       victorId = battle.side1.ownerId;
       loserId = battle.side2.ownerId;
     }

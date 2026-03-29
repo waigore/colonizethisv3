@@ -66,6 +66,10 @@ Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine
 
 Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tech catalog MUST have exactly one row in this table. `carrack` MUST NOT appear in `shipUnlockIds` (no unlocking tech).
 
+### Ship food upkeep (canonical)
+
+**Source of truth:** Per turn, each ship consumes **2 food units** (grain/meat, same stockpile abstraction as land military upkeep). Values are stored on `ShipEconomyEntry.foodUpkeep` in colonizethis_data (currently **2** for every row). Consumption phase order and invalid-id behavior: [workers-and-population.md](workers-and-population.md) § Consumption and Production.
+
 ### Ship combat and cargo stats (canonical)
 
 **Source of truth:** The table below defines per-ship **FRP**, **RNG**, **ARM**, **HULL**, **MV**, **interceptRating**, **fleeRating**, and **cargoHold** for naval combat, interception, and home-fleet cargo (`NavalStatsCatalog` and related code MUST match). **Warships** use `cargoHold = 0` (they do not contribute merchant cargo capacity). **Merchants** use `cargoHold ≥ 1`.
@@ -88,6 +92,16 @@ Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tec
 | clipper | merchant | 1 | 2 | 1 | 3 | 4 | 2 | 4 | 7 |
 | merchant_steamship | merchant | 2 | 2 | 3 | 5 | 3 | 1 | 3 | 9 |
 | ironclad | warship | 5 | 3 | 8 | 6 | 3 | 2 | 2 | 0 |
+
+---
+
+## Ship instances (hulls)
+
+Like military and civilian **units**, each ship **hull** in play has a **stable unique instance id** for the life of the save.
+
+- **Fleet state:** Each fleet holds an ordered list of instances `{ id, typeId }` (catalog type, e.g. `carrack`). UI counts such as “carrack × 3” are **aggregations** of distinct hulls that share the same `typeId`.
+- **Minting:** New hulls use ids `ship_<n>`; `WorldState.nextShipInstanceSeq` must stay consistent (at least the next free index; implementations may infer from existing ids on load). Legacy saves that stored only repeated `shipTypeIds` strings **must** migrate to instances without collapsing duplicate types into one hull.
+- **Split / combine:** Operations move **whole instances** between fleets. The same `id` must never appear in two fleets. Combine **appends** source fleets’ instance lists onto the target fleet’s list (order preserved per source order); split **partitions** instances by id.
 
 ---
 
@@ -131,7 +145,7 @@ The **home fleet** is a special fleet for each Great Power:
   \text{cargoHolds} = \sum_t H(t) \times \text{count\\_home}(t)
   \]
 
-  where `H(t)` is the cargoHold for ship type `t` and `count_home(t)` is the number of ships of type `t` in the home fleet.
+  where `H(t)` is the cargoHold for ship type `t` and `count_home(t)` is the number of **ship instances** in the home fleet whose `typeId` is `t` (aggregation over distinct hulls).
 
 - Each cargo hold carries exactly **1 unit** of any commodity per turn.
 - Cargo capacity is used **only** for:

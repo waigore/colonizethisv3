@@ -67,7 +67,7 @@ void main() {
             DiplomaticOrder(
               type: DiplomaticOrderType.grantAid,
               targetFactionId: 'minor1',
-              amount: 100,
+              amount: 1000,
             ),
           ],
         },

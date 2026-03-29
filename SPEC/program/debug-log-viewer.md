@@ -75,6 +75,6 @@
 
 ## 8. References
 
-- Logger and prefixes: [ctdev-logging.md](ctdev-logging.md). Ctterm prefixes: [ctterm.md](../tui/ctterm.md) §5 (tui:, tui:menu:, etc.).
+- Logger policy and prefixes: [logging/logging.md](logging/logging.md). Ctdev sinks: [ctdev-logging.md](ctdev-logging.md). Ctterm prefixes: [ctterm.md](../tui/ctterm.md) §5 (tui:, tui:menu:, etc.).
 - Flutter app shell/menus: [ctdev-app.md](ctdev-app.md); [SPEC/ui/main-menu.md](../ui/main-menu.md).
 - Ctterm Pause/Options: [SPEC/tui/screens/pause-options.md](../tui/screens/pause-options.md). Screen IDs: [SPEC/tui/ctterm.md](../tui/ctterm.md).

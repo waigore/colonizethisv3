@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         fleetsInPortAtProvince,
         foreignCivilianVisibleToPlayer,
+        homeFleetIdFor,
         isProspectableTerrain,
         isProspectableTerrainId,
         kProspectRequiredResourceIds,
@@ -777,12 +778,15 @@ Widget _buildNavalSection(Game game, List<Fleet> fleets) {
       else
         ...fleets.map((f) {
           final ownerName = _ownerName(game, f.ownerId);
-          final ships = f.shipTypeIds;
           final byType = <String, int>{};
-          for (final s in ships) {
-            byType[s] = (byType[s] ?? 0) + 1;
+          for (final s in f.ships) {
+            byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
           }
-          return Text('$ownerName: ${byType.entries.map((e) => '${e.key}×${e.value}').join(', ')}');
+          final fleetLabel =
+              f.id == homeFleetIdFor(f.ownerId) ? 'Home fleet' : 'Fleet ${f.id}';
+          return Text(
+            '$ownerName — $fleetLabel: ${byType.entries.map((e) => '${e.key}×${e.value}').join(', ')}',
+          );
         }),
     ],
   ));

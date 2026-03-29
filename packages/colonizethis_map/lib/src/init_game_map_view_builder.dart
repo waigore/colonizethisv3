@@ -7,7 +7,37 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combine_region_topologies.dart';
 import 'init_game_map_view_data.dart';
+import 'port_icon_placement.dart';
 import 'tile_map_visualization_shared.dart';
+
+String? _capitalTileKeyForProvince({
+  required Game game,
+  required String regionId,
+  required String fullProvinceId,
+}) {
+  for (final p in game.players) {
+    if (p.capitalProvinceId == fullProvinceId &&
+        p.capitalTile != null &&
+        p.capitalTile!.regionId == regionId) {
+      return p.capitalTile!.toTileKey();
+    }
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalProvinceId == fullProvinceId &&
+        m.capitalTile != null &&
+        m.capitalTile!.regionId == regionId) {
+      return m.capitalTile!.toTileKey();
+    }
+  }
+  for (final t in game.tribes) {
+    if (t.capitalProvinceId == fullProvinceId &&
+        t.capitalTile != null &&
+        t.capitalTile!.regionId == regionId) {
+      return t.capitalTile!.toTileKey();
+    }
+  }
+  return null;
+}
 
 final _log = mapLogger();
 
@@ -280,18 +310,13 @@ RegionMapViewData _buildRegionViewData({
   });
 
   // Determine coastal provinces from topology edges (P<->S connections).
-  // A province is coastal if it has an edge to any sea zone.
+  // A province is coastal if it has an edge to any sea zone node in [seaZoneIds].
   final coastalProvinceIds = <String>{};
   for (final edge in topology.edges) {
-    final id1IsProvince = edge.id1.startsWith('p');
-    final id2IsProvince = edge.id2.startsWith('p');
-    final id1IsSea = edge.id1.startsWith('sea');
-    final id2IsSea = edge.id2.startsWith('sea');
-    // P<->S edge: one is province, other is sea zone
-    if ((id1IsProvince && id2IsSea) || (id1IsSea && id2IsProvince)) {
-      // Extract province id (id starts with 'p' for province, 'sea' for sea zone)
-      final provinceId = id1IsProvince ? edge.id1 : edge.id2;
-      coastalProvinceIds.add(provinceId);
+    final id1Sea = seaZoneIds.contains(edge.id1);
+    final id2Sea = seaZoneIds.contains(edge.id2);
+    if ((id1Sea && !id2Sea) || (!id1Sea && id2Sea)) {
+      coastalProvinceIds.add(id1Sea ? edge.id2 : edge.id1);
     }
   }
 
@@ -316,15 +341,49 @@ RegionMapViewData _buildRegionViewData({
     if (x == null || y == null) {
       continue;
     }
+    final localProvinceId = ProvinceId.localIdFrom(p.id);
+    final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
+    final hasPort = portProvinceIds.contains(localProvinceId);
+    String? portTileKey;
+    if (hasPort) {
+      for (final pm in ports) {
+        if (pm.provinceId == localProvinceId) {
+          portTileKey = '$regionId|${pm.provinceId}|${pm.x}|${pm.y}';
+          break;
+        }
+      }
+    }
+    final capitalTileKey = _capitalTileKeyForProvince(
+      game: game,
+      regionId: regionId,
+      fullProvinceId: fullProvinceId,
+    );
+    int? portIconX;
+    int? portIconY;
+    if (hasPort && portTileKey != null) {
+      final placed = computePortIconCellForMap(
+        tileMap: tileMap,
+        seaZoneIds: seaZoneIds,
+        townX: x,
+        townY: y,
+        townTileKey: townTileKey,
+        capitalTileKey: capitalTileKey,
+        portTileKey: portTileKey,
+      );
+      portIconX = placed.x;
+      portIconY = placed.y;
+    }
+    final touchesSea = coastalProvinceIds.contains(localProvinceId);
     towns.add(
       TownMarkerView(
         x: x,
         y: y,
-        provinceId: p.id,
-        isCoastal:
-            coastalProvinceIds.contains(p.id) &&
-            !portProvinceIds.contains(p.id),
-        isPort: portProvinceIds.contains(p.id),
+        provinceId: localProvinceId,
+        isCoastal: touchesSea && !hasPort,
+        isPort: hasPort,
+        touchesSea: touchesSea,
+        portIconX: portIconX,
+        portIconY: portIconY,
       ),
     );
   }

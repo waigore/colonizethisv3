@@ -231,7 +231,7 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
-          fleets: const [
+          fleets: [
             Fleet(
               id: 'f1',
               ownerId: 'gp1',
@@ -288,7 +288,7 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
-          fleets: const [
+          fleets: [
             Fleet(
               id: 'f1',
               ownerId: 'gp1',

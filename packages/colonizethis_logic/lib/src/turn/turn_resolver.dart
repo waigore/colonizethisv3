@@ -43,8 +43,8 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.orders,
   TurnPhase.extraction,
   TurnPhase.richesToTreasury,
-  TurnPhase.production,
   TurnPhase.consumption,
+  TurnPhase.production,
   TurnPhase.research,
   TurnPhase.diplomacy,
   TurnPhase.movement,
@@ -185,7 +185,7 @@ TurnResolutionResult resolveTurnForGame({
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// Per-region topology for capital reassignment (SPEC/game/world-model-identity). When set, capital reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this.
+  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. Reassignment does not use [tileMapByRegion].
   Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -205,16 +205,24 @@ TurnResolutionResult resolveTurnForGame({
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 
-  /// When non-null, skip phases before this (used when resuming after pending overture decisions).
+  /// When non-null, skip phases before this (used when resuming after pending overture or intervention).
   TurnPhase? startFromPhase,
 
   /// Overture accept/reject decisions from human target(s); when set, Diplomacy phase uses these and does not suspend.
   List<OvertureDecision>? overtureDecisions,
+
+  /// Intervention choices after a GP declares war on a Minor/Tribe; Diplomacy phase resume path.
+  List<InterventionDecision>? interventionDecisions,
+
+  /// Call to arms accept/refuse from human ally(ies); when set, Diplomacy phase applies and does not suspend on CTA.
+  List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('logic: turn $turn resolve start');
   Game state = game;
-  final feedingCoverageByPlayerId = <String, double>{};
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
   final phaseIndex = startFromPhase != null
       ? turnResolutionSequence.indexOf(startFromPhase)
       : 0;
@@ -238,16 +246,22 @@ TurnResolutionResult resolveTurnForGame({
       case TurnPhase.richesToTreasury:
         state = _runRichesToTreasuryPhase(state);
         break;
+      case TurnPhase.consumption:
+        state = _runConsumptionPhase(
+          state,
+          landFeedingCoverageByPlayerId,
+          navalFeedingCoverageByPlayerId,
+          idleLabourByPlayerId,
+        );
+        break;
       case TurnPhase.production:
         state = _runProductionPhase(
           state,
           defaultAssignments,
           defaultAssignmentsByPlayerId,
+          idleLabourByPlayerId,
           onProductionComplete,
         );
-        break;
-      case TurnPhase.consumption:
-        state = _runConsumptionPhase(state, feedingCoverageByPlayerId);
         break;
       case TurnPhase.research:
         {
@@ -278,11 +292,33 @@ TurnResolutionResult resolveTurnForGame({
             orders,
             onDialogue: onDialogue,
             overtureDecisions: overtureDecisions,
+            interventionDecisions: interventionDecisions,
+            callToArmsDecisions: callToArmsDecisions,
           );
           if (diploResult.isPending) {
-            return TurnResolutionPendingOvertures(
-              game: diploResult.game,
-              pendingOvertures: diploResult.pendingOvertures!,
+            final po = diploResult.pendingOvertures;
+            if (po != null && po.isNotEmpty) {
+              return TurnResolutionPendingOvertures(
+                game: diploResult.game,
+                pendingOvertures: po,
+              );
+            }
+            final pi = diploResult.pendingInterventions;
+            if (pi != null && pi.isNotEmpty) {
+              return TurnResolutionPendingIntervention(
+                game: diploResult.game,
+                pendingInterventions: pi,
+              );
+            }
+            final cta = diploResult.pendingCallToArms;
+            if (cta != null && cta.isNotEmpty) {
+              return TurnResolutionPendingCallToArms(
+                game: diploResult.game,
+                pendingCallToArms: cta,
+              );
+            }
+            throw StateError(
+              'logic: diplomacy pending but no pending lists populated',
             );
           }
           state = diploResult.game;
@@ -306,6 +342,7 @@ TurnResolutionResult resolveTurnForGame({
           state,
           topology,
           orders.navalMoveOrdersByPlayerId,
+          navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
           onDialogue: onDialogue,
           onGameEvent: onGameEvent,
           eventBus: eventBus,
@@ -326,7 +363,7 @@ TurnResolutionResult resolveTurnForGame({
           state = _runCombatPhase(
             state,
             orders,
-            feedingCoverageByPlayerId,
+            landFeedingCoverageByPlayerId,
             topology,
             tileMapByRegion,
             topologyByRegion: topologyByRegion,
@@ -378,6 +415,12 @@ Game requireTurnResolutionComplete(TurnResolutionResult result) {
     TurnResolutionPendingOvertures() => throw StateError(
       'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
     ),
+    TurnResolutionPendingIntervention() => throw StateError(
+      'Turn resolution is pending intervention decisions; use resumeTurnResolutionWithInterventionDecisions',
+    ),
+    TurnResolutionPendingCallToArms() => throw StateError(
+      'Turn resolution is pending call to arms; use resumeTurnResolutionWithCallToArmsDecisions',
+    ),
   };
 }
 
@@ -417,6 +460,76 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     onProductionComplete: onProductionComplete,
     startFromPhase: TurnPhase.diplomacy,
     overtureDecisions: decisions,
+  );
+}
+
+/// Resumes turn resolution after human intervention choices (Diplomacy phase).
+TurnResolutionResult resumeTurnResolutionWithInterventionDecisions({
+  required Game game,
+  required List<InterventionDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    interventionDecisions: decisions,
+  );
+}
+
+/// Resumes turn resolution after human ally(ies) responded to call to arms.
+TurnResolutionResult resumeTurnResolutionWithCallToArmsDecisions({
+  required Game game,
+  required List<CallToArmsDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    callToArmsDecisions: decisions,
   );
 }
 
@@ -619,6 +732,7 @@ Game _runProductionPhase(
   Game game,
   List<AssignedRecipe> defaultAssignments,
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  Map<String, WorkerIdleCounts> idleLabourByPlayerId,
   void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
   onProductionComplete,
 ) {
@@ -628,9 +742,12 @@ Game _runProductionPhase(
   for (final player in game.players) {
     final assignments =
         defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
+    final idleLabour =
+        idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
     final result = resolveProduction(
       stockpile: player.stockpile,
       workers: player.workerPool,
+      idleLabour: idleLabour,
       assignments: assignments,
     );
     if (result.productionByRecipe.isNotEmpty) {
@@ -652,37 +769,44 @@ Game _runProductionPhase(
 
 Game _runConsumptionPhase(
   Game game,
-  Map<String, double> feedingCoverageByPlayerId,
+  Map<String, double> landFeedingCoverageByPlayerId,
+  Map<String, double> navalFeedingCoverageByPlayerId,
+  Map<String, WorkerIdleCounts> idleLabourByPlayerId,
 ) {
   final updatedPlayers = <Player>[];
 
   for (final player in game.players) {
-    // Count this player's regiments across both regions.
-    final regimentCounts = <String, int>{};
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.ownerId != player.id) continue;
-      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
-    }
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.ownerId != player.id) continue;
-      regimentCounts.update(unit.type, (v) => v + 1, ifAbsent: () => 1);
-    }
+    final regimentCounts =
+        regimentTypeCountsForPlayer(game.worldState, player.id);
+    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
 
     final result = resolveConsumption(
       stockpile: player.stockpile,
       workers: player.workerPool,
       regimentCountsById: regimentCounts,
+      shipCountsById: shipCounts,
     );
 
-    double coverage;
+    double landCoverage;
     if (result.totalRegiments <= 0) {
-      coverage = 1.0;
+      landCoverage = 1.0;
     } else {
-      coverage = result.fullyFedRegiments / result.totalRegiments;
-      if (coverage < 0) coverage = 0;
-      if (coverage > 1) coverage = 1;
+      landCoverage = result.fullyFedRegiments / result.totalRegiments;
+      if (landCoverage < 0) landCoverage = 0;
+      if (landCoverage > 1) landCoverage = 1;
     }
-    feedingCoverageByPlayerId[player.id] = coverage;
+    landFeedingCoverageByPlayerId[player.id] = landCoverage;
+
+    double navalCoverage;
+    if (result.totalShips <= 0) {
+      navalCoverage = 1.0;
+    } else {
+      navalCoverage = result.fullyFedShips / result.totalShips;
+      if (navalCoverage < 0) navalCoverage = 0;
+      if (navalCoverage > 1) navalCoverage = 1;
+    }
+    navalFeedingCoverageByPlayerId[player.id] = navalCoverage;
+    idleLabourByPlayerId[player.id] = result.idleLabour;
     updatedPlayers.add(
       player.copyWith(
         stockpile: result.stockpile,
@@ -922,7 +1046,6 @@ Game _runCombatPhase(
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
-  // When tileMapByRegion is null (e.g. tests), skip capital reassignment.
   final previousCapitalByPlayer = {
     for (final p in game.players) p.id: p.capitalProvinceId,
   };
@@ -961,15 +1084,12 @@ Game _runCombatPhase(
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     battleIndex++;
   }
-  // Capital reassignment: any GP that no longer owns their capital province. SPEC/game/capital-and-connectivity § Capital loss and reassignment. Uses region-scoped topology when topologyByRegion is set (#315).
-  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty) {
-    state = applyCapitalReassignmentAfterCombat(
-      state,
-      topology,
-      tileMapByRegion,
-      topologyByRegion: topologyByRegion,
-    );
-  }
+  // Capital reassignment: any player with capital set who no longer owns that province. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+  state = applyCapitalReassignmentAfterCombat(
+    state,
+    topology,
+    topologyByRegion: topologyByRegion,
+  );
   // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
   state = applyGreatPowerFall(state, previousCapitalByPlayer);
   return state;

@@ -11,12 +11,13 @@ void main() {
           .applyDelta(CommodityCatalog.timber.id, 10)
           .applyDelta(CommodityCatalog.iron.id, 10)
           .applyDelta(CommodityCatalog.coal.id, 5);
-      // 20 peasants → 20 labour (no luxury gating) so assignedLabour=20 can be fully used.
+      // 20 peasants → 20 labour (idle counts from post-consumption).
       const workers = WorkerPool(peasants: 20);
 
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 20),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -43,6 +44,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 20),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -66,6 +68,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 10),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -88,6 +91,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 3, apprentices: 2),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -106,6 +110,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: const WorkerPool(peasants: 5),
+        idleLabour: WorkerIdleCounts(peasants: 5),
         assignments: const [
           AssignedRecipe(recipeId: 'unknown_recipe', assignedLabour: 100),
         ],
@@ -123,6 +128,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: const WorkerPool(peasants: 5),
+        idleLabour: WorkerIdleCounts(peasants: 5),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -146,6 +152,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 25),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -168,6 +175,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: const WorkerPool(peasants: 5),
+        idleLabour: WorkerIdleCounts(peasants: 5),
         assignments: const [],
       );
 
@@ -176,39 +184,44 @@ void main() {
   });
 
   group('effectiveLabourForWorkers', () {
-    test('peasants contribute 1 labour each', () {
+    test('peasants contribute 1 labour each when fed', () {
       const workers = WorkerPool(peasants: 10);
-      const stockpile = Stockpile();
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 10);
       expect(
         effectiveLabourForWorkers(workers: workers, stockpile: stockpile),
         10,
       );
     });
 
-    test('trained workers capped by luxury in stockpile', () {
+    test('trained workers capped by luxury after food', () {
       const workers = WorkerPool(
         peasants: 2,
         apprentices: 3,
         journeymen: 0,
         masters: 0,
       );
-      // Only 1 refinedSugar → only 1 apprentice contributes (4 labour).
+      // Food: peasants first in consumption is last — masters→apprentices→peasants,
+      // so apprentices fed before peasants. 3*2 + 2*1 = 8 food to feed all trained + peasants.
       final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 8)
           .applyDelta(CommodityCatalog.refinedSugar.id, 1);
       expect(
         effectiveLabourForWorkers(workers: workers, stockpile: stockpile),
-        2 + 4, // 2 peasants + 1 apprentice with luxury
+        2 + 4, // 2 peasants fed + 1 apprentice with luxury
       );
     });
 
-    test('full luxury gives full trained labour', () {
+    test('full luxury gives full trained labour when food sufficient', () {
       const workers = WorkerPool(
         peasants: 1,
         apprentices: 2,
         journeymen: 1,
         masters: 0,
       );
+      // Food: journeyman 2, apprentices 4, peasant 1 = 7.
       final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 7)
           .applyDelta(CommodityCatalog.refinedSugar.id, 5)
           .applyDelta(CommodityCatalog.cigars.id, 5);
       expect(

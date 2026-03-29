@@ -79,7 +79,7 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.movement, turnNumber: 0),
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
-          fleets: const [
+          fleets: [
             Fleet(
               id: 'f1',
               ownerId: 'gp1',

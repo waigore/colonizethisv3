@@ -44,7 +44,7 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
     super.initState();
     _sub = widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
       final targetName = _targetName(event.targetFactionId);
-      final actionName = event.isSubsidy ? 'Set Subsidy' : 'Grant Aid';
+      final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
       widget.bus.emit(
         ConfirmDialogEvent(
           title: actionName,

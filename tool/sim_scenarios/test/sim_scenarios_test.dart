@@ -292,6 +292,41 @@ void main() {
         expect(scenario.turns[0].overtureDecisions![0].accepted, isTrue);
       });
 
+      test('parses turn with callToArmsDecisions', () {
+        final json = {
+          'name': 'cta_decisions',
+          'init': {
+            'type': 'fresh',
+            'config': {'seed': 42, 'greatPowers': ['england', 'france']},
+          },
+          'turns': [
+            {
+              'turn': 1,
+              'orders': [],
+              'callToArmsDecisions': [
+                {
+                  'allyGpId': 'gp1',
+                  'defenderGpId': 'gp2',
+                  'aggressorGpId': 'gp3',
+                  'accepted': false,
+                },
+              ],
+            },
+          ],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.turns[0].callToArmsDecisions, isNotNull);
+        expect(scenario.turns[0].callToArmsDecisions!.length, 1);
+        final d = scenario.turns[0].callToArmsDecisions![0];
+        expect(d.allyGpId, 'gp1');
+        expect(d.defenderGpId, 'gp2');
+        expect(d.aggressorGpId, 'gp3');
+        expect(d.accepted, isFalse);
+      });
+
       test('parses setup leaderKeys and assertion leaderKey', () {
         final json = {
           'name': 'leader_setup',

@@ -67,7 +67,7 @@ void main() {
       expect(needsInterventionChoice(game, ctx), isNull);
     });
 
-    test('applyInterventionChoice doNothing returns game unchanged', () {
+    test('applyInterventionChoice doNothing clears overtures and logs event', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -80,6 +80,17 @@ void main() {
           Player(id: 'gp2', displayName: 'Attacker', isHuman: false),
         ],
         diplomacyRelations: const [],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
       );
       final ctx = BattleContext(
         provinceId: 'P1',
@@ -91,7 +102,12 @@ void main() {
         terrain: 'plains',
       );
       final after = applyInterventionChoice(game, ctx, 'gp1', InterventionChoice.doNothing);
-      expect(after.diplomacyRelations, game.diplomacyRelations);
+      expect(after.overtureStates, isEmpty);
+      expect(
+        after.diplomaticHistoryEvents
+            .where((e) => e.type == DiplomaticEventType.interventionDoNothing),
+        isNotEmpty,
+      );
     });
 
     test('applyInterventionChoice protest reduces relation score with attacker', () {
@@ -217,11 +233,12 @@ void main() {
       );
 
       final result = resolveDiplomacyPhase(game, orders);
+      expect(result.isPending, isTrue);
+      expect(result.pendingInterventions, isNotNull);
+      expect(result.pendingInterventions!.length, 1);
+      expect(result.pendingInterventions!.first.interveningGpId, 'gp1');
+      expect(result.pendingInterventions!.first.aggressorGpId, 'gp2');
       final after = result.game;
-
-      // For now, this scenario anchors the state after DoW is applied.
-      // When intervention-at-declaration is wired, extend this to assert
-      // pending intervention choice for gp1 as appropriate.
       final relGp2Minor = getRelation(after, 'gp2', 'minor1');
       expect(relGp2Minor, isNotNull);
       expect(relGp2Minor!.atWar, isTrue);

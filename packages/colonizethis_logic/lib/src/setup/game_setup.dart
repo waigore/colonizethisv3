@@ -15,6 +15,7 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
 import '../world/naval.dart';
+import '../world/ship_instance_allocate.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 
@@ -1089,6 +1090,9 @@ Game _addStartingMilitaryAndNaval({
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
   var fleets = List<Fleet>.from(game.worldState.fleets);
+  var nextSeq = game.worldState.nextShipInstanceSeq;
+  final inferredStart = inferNextShipInstanceSeqFromFleets(fleets);
+  if (nextSeq < inferredStart) nextSeq = inferredStart;
 
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
@@ -1126,10 +1130,12 @@ Game _addStartingMilitaryAndNaval({
       final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
 
       final shipTypeId = _startingShipTypeForPlayer(player);
-      final newShipTypes = <String>[
-        if (existingFleet != null) ...existingFleet.shipTypeIds,
-        for (var i = 0; i < shipCount; i++) shipTypeId,
-      ];
+      final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
+      final (seqAfter, newInstances) = mintShipInstances(
+        nextShipInstanceSeq: nextSeq,
+        typeIds: [for (var i = 0; i < shipCount; i++) shipTypeId],
+      );
+      nextSeq = seqAfter;
 
       final homeFleet = Fleet(
         id: homeFleetId,
@@ -1137,7 +1143,7 @@ Game _addStartingMilitaryAndNaval({
         seaZoneId: null,
         inPortAtProvinceId: fullProvinceId,
         regionId: regionId,
-        shipTypeIds: newShipTypes,
+        ships: [...existingShips, ...newInstances],
       );
 
       if (existingFleet == null) {
@@ -1159,6 +1165,7 @@ Game _addStartingMilitaryAndNaval({
         units: newWorldUnits,
       ),
       fleets: fleets,
+      nextShipInstanceSeq: nextSeq,
     ),
   );
 }

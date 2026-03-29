@@ -64,6 +64,7 @@ class _CttermAppState extends State<CttermApp> {
   _MapCache? _mapCache;
   /// When non-null, turn resolution is suspended; user must accept/reject overtures. SPEC/program/turn-resolution-phases.md.
   List<OvertureOffer>? _pendingOvertures;
+  List<CallToArmsPending>? _pendingCallToArms;
   /// Game events received during turn processing (displayed to user).
   final List<GameEvent> _gameEvents = [];
   /// Current terminal theme.
@@ -191,6 +192,7 @@ class _CttermAppState extends State<CttermApp> {
       _mapCache = null;
       _pendingNewGameConfig = null;
       _pendingOvertures = null;
+      _pendingCallToArms = null;
       _gameEvents.clear();
     });
   }
@@ -201,7 +203,21 @@ class _CttermAppState extends State<CttermApp> {
     setState(() {
       _currentGame = game;
       _pendingOvertures = pending;
+      _pendingCallToArms = null;
       _route = CttermRoute.pendingOvertures;
+    });
+  }
+
+  void _onTurnResolutionPendingCallToArms(
+    Game game,
+    List<CallToArmsPending> pending,
+  ) {
+    _log.d('tui:app: turn resolution pending ${pending.length} call(s) to arms');
+    setState(() {
+      _currentGame = game;
+      _pendingCallToArms = pending;
+      _pendingOvertures = null;
+      _route = CttermRoute.pendingCallToArms;
     });
   }
 
@@ -228,6 +244,7 @@ class _CttermAppState extends State<CttermApp> {
       setState(() {
         _currentGame = result.game;
         _pendingOvertures = null;
+        _pendingCallToArms = null;
         _route = CttermRoute.inGameShell;
       });
       _onTurnProcessed(result.game);
@@ -236,6 +253,56 @@ class _CttermAppState extends State<CttermApp> {
       setState(() {
         _currentGame = result.game;
         _pendingOvertures = result.pendingOvertures;
+        _pendingCallToArms = null;
+      });
+    } else if (result is TurnResolutionPendingCallToArms) {
+      _log.d(
+        'tui:app: after overtures, pending ${result.pendingCallToArms.length} call(s) to arms',
+      );
+      setState(() {
+        _currentGame = result.game;
+        _pendingOvertures = null;
+        _pendingCallToArms = result.pendingCallToArms;
+        _route = CttermRoute.pendingCallToArms;
+      });
+    }
+  }
+
+  void _onCallToArmsDecisions(List<CallToArmsDecision> decisions) {
+    final game = _currentGame;
+    final mapCache = _mapCache;
+    if (game == null || mapCache == null) {
+      _log.w('tui:app: onCallToArmsDecisions with null game/mapCache');
+      return;
+    }
+    final result = resumeTurnResolutionWithCallToArmsDecisions(
+      game: game,
+      decisions: decisions,
+      topology: mapCache.combinedTopology,
+      orders: _currentOrders,
+      tileMapByRegion: mapCache.tileMapByRegion,
+      onGameEvent: _onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      _log.d('tui:app: turn resolution complete after call to arms');
+      setState(() {
+        _currentGame = result.game;
+        _pendingCallToArms = null;
+        _pendingOvertures = null;
+        _route = CttermRoute.inGameShell;
+      });
+      _onTurnProcessed(result.game);
+    } else if (result is TurnResolutionPendingOvertures) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingCallToArms = null;
+        _pendingOvertures = result.pendingOvertures;
+        _route = CttermRoute.pendingOvertures;
+      });
+    } else if (result is TurnResolutionPendingCallToArms) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingCallToArms = result.pendingCallToArms;
       });
     }
   }
@@ -355,8 +422,11 @@ class _CttermAppState extends State<CttermApp> {
         onClearGame: _clearGame,
         onLoadGame: _loadGame,
         pendingOvertures: _pendingOvertures,
+        pendingCallToArms: _pendingCallToArms,
         onTurnResolutionPending: _onTurnResolutionPending,
+        onTurnResolutionPendingCallToArms: _onTurnResolutionPendingCallToArms,
         onOvertureDecisions: _onOvertureDecisions,
+        onCallToArmsDecisions: _onCallToArmsDecisions,
         initialTheme: _terminalTheme,
         onThemeChanged: _onThemeChanged,
         /// When in Settings, Back goes to Pause if we came from Pause. SPEC/tui/screens/pause-options.md §7.

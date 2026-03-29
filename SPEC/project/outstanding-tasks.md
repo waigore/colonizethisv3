@@ -92,9 +92,9 @@ No outstanding P0 tasks.
 
 ### Task: Verify and Complete Worker/Population Model
 
-**Status:** Food consumption and starvation verified and tested (economy_consumption_test, economy_logic_test). Luxury consumption is in scope per spec (AC and scenarios added) and now implemented in logic (consumption + effective labour). Training remains deferred per spec.
+**Status:** Food consumption, food/luxury strike (`WorkerIdleCounts`), and Consumption-before-Production order verified and tested (economy_consumption_test, economy_logic_test, economy_consumption_production_integration_test). Training remains deferred per spec.
 
-**Gap:** Worker model exists (`WorkerPool`). Food and starvation implemented; luxury consumption specified and scenarios added (workers_luxury_consumption.json, workers_luxury_zero_labour.json) and now wired into `economy_consumption.dart` (tier luxuries) and `economy_production.dart` (effective labour). Training remains deferred.
+**Gap:** Worker model exists (`WorkerPool`). Food and strike rules implemented in `economy_consumption.dart`; production uses `idleLabour` in `economy_production.dart`. Luxury scenarios (workers_luxury_consumption.json, workers_luxury_zero_labour.json) remain valid for strike behaviour. Training remains deferred.
 
 | Component | Spec Reference | Status |
 |-----------|----------------|--------|

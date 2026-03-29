@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('resolveTurnForGame', () {
-    test('runs extraction, production, consumption, and movement phases', () {
+    test('runs extraction, consumption, production, and movement phases', () {
       final topology = MapTopology(
         nodes: [
           const TopologyNode(
@@ -481,6 +481,7 @@ void main() {
             displayName: 'P1',
             isHuman: false,
             stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 20)
                 .applyDelta(CommodityCatalog.timber.id, 20)
                 .applyDelta(CommodityCatalog.iron.id, 0)
                 .applyDelta(CommodityCatalog.coal.id, 0),
@@ -491,6 +492,7 @@ void main() {
             displayName: 'P2',
             isHuman: false,
             stockpile: const Stockpile()
+                .applyDelta(CommodityCatalog.grain.id, 20)
                 .applyDelta(CommodityCatalog.timber.id, 20)
                 .applyDelta(CommodityCatalog.iron.id, 20)
                 .applyDelta(CommodityCatalog.coal.id, 10),

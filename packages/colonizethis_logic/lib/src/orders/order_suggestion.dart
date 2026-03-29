@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
@@ -1433,9 +1434,20 @@ bool _isDiplomaticOrderAccepted(
   return result.isAccepted;
 }
 
-Set<String> _pendingDiplomaticTargetIds(Orders orders, String playerId) {
-  final list = orders.diplomaticOrdersByPlayerId[playerId] ?? const [];
-  return {for (final o in list) o.targetFactionId};
+/// Trial append for suggestion enumeration. SPEC/program/order-suggestions.md.
+Orders _appendDiplomaticOrderForTrial(
+  Orders orders,
+  String playerId,
+  DiplomaticOrder order,
+) {
+  final prev =
+      orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
+  return orders.copyWith(
+    diplomaticOrdersByPlayerId: {
+      ...orders.diplomaticOrdersByPlayerId,
+      playerId: [...prev, order],
+    },
+  );
 }
 
 /// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
@@ -1513,22 +1525,21 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
     }
   }
   if (overtureRow != null) {
-    if (overtureRow.hasEmbassy && treasury >= suggestedGrantOrSubsidyAmount) {
+    if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.grantAid,
           targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
+          amount: grantAidDefaultAmount,
         ),
       );
     }
-    if (overtureRow.hasConsulate &&
-        treasury >= suggestedGrantOrSubsidyAmount) {
+    if (overtureRow.hasConsulate && treasury >= setSubsidyDefaultAmount) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: targetId,
-          amount: suggestedGrantOrSubsidyAmount,
+          amount: setSubsidyDefaultAmount,
         ),
       );
     }
@@ -1594,7 +1605,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
-  final blockedTargets = _pendingDiplomaticTargetIds(currentOrders, playerId);
 
   // Determine which factions are actually "known" to this player per SPEC:
   // - Any faction with an existing DiplomacyRelation to the player.
@@ -1648,9 +1658,9 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
+  var workingOrders = currentOrders;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
-    if (blockedTargets.contains(targetId)) continue;
 
     final candidates = _diplomaticCandidatesForTargetOrdered(
       game: game,
@@ -1660,19 +1670,56 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
     );
+    var trialOrders = workingOrders;
+
     for (final candidate in candidates) {
-      if (_isDiplomaticOrderAccepted(
+      if (candidate.type == DiplomaticOrderType.grantAid ||
+          candidate.type == DiplomaticOrderType.setSubsidy) {
+        continue;
+      }
+      if (!_isDiplomaticOrderAccepted(
         game,
         topology,
         playerId,
-        currentOrders,
+        trialOrders,
         candidate,
         tileMapByRegion: tileMapByRegion,
       )) {
-        suggestions.add(candidate);
-        break;
+        continue;
       }
+      suggestions.add(candidate);
+      trialOrders = _appendDiplomaticOrderForTrial(
+        trialOrders,
+        playerId,
+        candidate,
+      );
+      break;
     }
+
+    for (final candidate in candidates) {
+      if (candidate.type != DiplomaticOrderType.grantAid &&
+          candidate.type != DiplomaticOrderType.setSubsidy) {
+        continue;
+      }
+      if (!_isDiplomaticOrderAccepted(
+        game,
+        topology,
+        playerId,
+        trialOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        continue;
+      }
+      suggestions.add(candidate);
+      trialOrders = _appendDiplomaticOrderForTrial(
+        trialOrders,
+        playerId,
+        candidate,
+      );
+    }
+
+    workingOrders = trialOrders;
   }
 
   suggestions.sort((a, b) {
