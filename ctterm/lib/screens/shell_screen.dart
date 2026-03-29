@@ -23,6 +23,7 @@ import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/pause_options_screen.dart';
 import 'package:ctterm/screens/pending_call_to_arms_screen.dart';
+import 'package:ctterm/screens/pending_intervention_screen.dart';
 import 'package:ctterm/screens/pending_overtures_screen.dart';
 import 'package:ctterm/screens/debug_log_viewer_screen.dart';
 import 'package:ctterm/save_service.dart';
@@ -60,10 +61,13 @@ class ShellScreen extends StatefulComponent {
     this.debugLogViewerReturnRoute,
     this.pendingOvertures,
     this.pendingCallToArms,
+    this.pendingInterventions,
     this.onTurnResolutionPending,
     this.onTurnResolutionPendingCallToArms,
+    this.onTurnResolutionPendingIntervention,
     this.onOvertureDecisions,
     this.onCallToArmsDecisions,
+    this.onInterventionDecisions,
     this.showGameStartIntro = false,
     this.onIntroDismissed,
   });
@@ -136,6 +140,9 @@ class ShellScreen extends StatefulComponent {
   /// When non-null, human ally must respond to call to arms. SPEC/game/diplomacy.md.
   final List<CallToArmsPending>? pendingCallToArms;
 
+  /// When non-null, human must choose intervention per prompt. SPEC/tui/screens/pending-intervention.md.
+  final List<InterventionPrompt>? pendingInterventions;
+
   /// Called when resolve returns pending; app should navigate to pendingOvertures and show prompt.
   final void Function(Game game, List<OvertureOffer> pending)?
       onTurnResolutionPending;
@@ -144,11 +151,18 @@ class ShellScreen extends StatefulComponent {
   final void Function(Game game, List<CallToArmsPending> pending)?
       onTurnResolutionPendingCallToArms;
 
+  /// Called when resolve returns pending intervention.
+  final void Function(Game game, List<InterventionPrompt> pending)?
+      onTurnResolutionPendingIntervention;
+
   /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
   final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
 
   /// Called when user submits call to arms decisions.
   final void Function(List<CallToArmsDecision> decisions)? onCallToArmsDecisions;
+
+  /// Called when user submits intervention decisions.
+  final void Function(List<InterventionDecision> decisions)? onInterventionDecisions;
 
   /// When true, in-game shell shows game-start intro overlay until dismissed. SPEC/ai/dialogue-management.md.
   final bool showGameStartIntro;
@@ -340,6 +354,15 @@ class _ShellScreenState extends State<ShellScreen> {
                   ?.call(result.game, result.pendingOvertures);
               return;
             }
+            if (result is TurnResolutionPendingIntervention) {
+              _log.d(
+                  'tui:game: turn resolution pending ${result.pendingInterventions.length} intervention(s)');
+              component.onTurnResolutionPendingIntervention?.call(
+                result.game,
+                result.pendingInterventions,
+              );
+              return;
+            }
             if (result is TurnResolutionPendingCallToArms) {
               _log.d(
                   'tui:game: turn resolution pending ${result.pendingCallToArms.length} call(s) to arms');
@@ -516,6 +539,26 @@ class _ShellScreenState extends State<ShellScreen> {
           game: ctaGame,
           pending: ctaPending,
           onDecisions: onCta,
+        );
+      case CttermRoute.pendingIntervention:
+        final ivGame = component.game;
+        final ivPending = component.pendingInterventions;
+        final onIv = component.onInterventionDecisions;
+        if (ivGame == null ||
+            ivPending == null ||
+            ivPending.isEmpty ||
+            onIv == null) {
+          _log.w(
+              'tui:nav: pendingIntervention route with missing game/pending/onDecisions');
+          return const Padding(
+            padding: EdgeInsets.all(1),
+            child: Text('No pending intervention.'),
+          );
+        }
+        return PendingInterventionScreen(
+          game: ivGame,
+          prompts: ivPending,
+          onDecisions: onIv,
         );
     }
   }

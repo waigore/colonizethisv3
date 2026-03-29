@@ -17,6 +17,8 @@ Dialogue **content** (lines and choices) is authored separately from logic. The 
   - **situation** or **subtype** (e.g. overture stage: `trade_consulate`, `embassy`, `nap`, `join_empire`; intervention: `minor_embassy`, `tribe_investment`);
   - Optional **era** and **variables** (e.g. offerer name, province) for localization or branching.
 
+- **intervention_choice (app):** Nodes in `assets/dialogue/intervention.yarn`: `DialoguePoint/intervention_intro`, `DialoguePoint/intervention_situation`, `DialoguePoint/intervention_reaction_intervene`, `DialoguePoint/intervention_reaction_do_nothing`, `DialoguePoint/intervention_reaction_protest`. Variables: `aggressorName`, `defenderName`, `interveningName` (strings). See [pending-intervention-overlay.md](../ui/screens/pending-intervention-overlay.md).
+
 - **App (Jenny):** The content key maps to a **Yarn node name**. Convention: `DialoguePoint/<kind>/<situation>` (e.g. `DialoguePoint/overture_target_response/embassy`). The node contains:
   - **Lines:** Speaker (leader/offerer), text (possibly with inline expressions for variables).
   - **Options:** Each option has a **destination** (next node or stop) and an **outcome tag** or **command** that the runner interprets as the game outcome (e.g. `<<Accept>>`, `<<Reject>>` for overture; `<<Intervene>>`, `<<DoNothing>>`, `<<Protest>>` for intervention).

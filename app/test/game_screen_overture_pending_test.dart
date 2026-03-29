@@ -35,8 +35,10 @@ void main() {
           gameIdsWithIntroShownProvider.overrideWith(
             () => GameIdsWithIntroShownNotifier({game.id}),
           ),
-          pendingOverturesProvider.overrideWith(
-            () => PendingOverturesNotifier(pending),
+          pendingDiplomacyProvider.overrideWith(
+            () => PendingDiplomacyNotifier(
+              PendingDiplomacyOvertures(pending),
+            ),
           ),
         ],
         child: MaterialApp(

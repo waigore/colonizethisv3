@@ -125,18 +125,45 @@ final gameIdsWithIntroShownProvider =
       GameIdsWithIntroShownNotifier.new,
     );
 
-/// When non-null, turn resolution is suspended; user must accept/reject overtures.
-/// SPEC/program/dialogue-system.md, SPEC/ai/dialogue-management.md.
-class PendingOverturesNotifier extends Notifier<List<OvertureOffer>?> {
-  PendingOverturesNotifier([this._initial]);
+/// At most one blocking diplomacy gate from turn resolution (overture, intervention, CTA).
+/// SPEC/ui/pending-diplomacy-state.md, SPEC/program/dialogue-system.md.
+sealed class PendingDiplomacyState {
+  const PendingDiplomacyState();
+}
 
-  final List<OvertureOffer>? _initial;
+final class PendingDiplomacyOvertures extends PendingDiplomacyState {
+  const PendingDiplomacyOvertures(this.offers);
+  final List<OvertureOffer> offers;
+}
+
+final class PendingDiplomacyIntervention extends PendingDiplomacyState {
+  const PendingDiplomacyIntervention(this.prompts);
+  final List<InterventionPrompt> prompts;
+}
+
+final class PendingDiplomacyCallToArms extends PendingDiplomacyState {
+  const PendingDiplomacyCallToArms(this.pending);
+  final List<CallToArmsPending> pending;
+}
+
+class PendingDiplomacyNotifier extends Notifier<PendingDiplomacyState?> {
+  PendingDiplomacyNotifier([this._initial]);
+
+  final PendingDiplomacyState? _initial;
 
   @override
-  List<OvertureOffer>? build() => _initial;
+  PendingDiplomacyState? build() => _initial;
 
-  void setPending(List<OvertureOffer>? overtures) {
-    state = overtures;
+  void setOvertures(List<OvertureOffer> offers) {
+    state = PendingDiplomacyOvertures(offers);
+  }
+
+  void setIntervention(List<InterventionPrompt> prompts) {
+    state = PendingDiplomacyIntervention(prompts);
+  }
+
+  void setCallToArms(List<CallToArmsPending> pending) {
+    state = PendingDiplomacyCallToArms(pending);
   }
 
   void clear() {
@@ -144,30 +171,7 @@ class PendingOverturesNotifier extends Notifier<List<OvertureOffer>?> {
   }
 }
 
-final pendingOverturesProvider =
-    NotifierProvider<PendingOverturesNotifier, List<OvertureOffer>?>(
-      PendingOverturesNotifier.new,
-    );
-
-/// When non-null, turn resolution is suspended; user must join or refuse call to arms.
-class PendingCallToArmsNotifier extends Notifier<List<CallToArmsPending>?> {
-  PendingCallToArmsNotifier([this._initial]);
-
-  final List<CallToArmsPending>? _initial;
-
-  @override
-  List<CallToArmsPending>? build() => _initial;
-
-  void setPending(List<CallToArmsPending>? value) {
-    state = value;
-  }
-
-  void clear() {
-    state = null;
-  }
-}
-
-final pendingCallToArmsProvider =
-    NotifierProvider<PendingCallToArmsNotifier, List<CallToArmsPending>?>(
-      PendingCallToArmsNotifier.new,
+final pendingDiplomacyProvider =
+    NotifierProvider<PendingDiplomacyNotifier, PendingDiplomacyState?>(
+      PendingDiplomacyNotifier.new,
     );

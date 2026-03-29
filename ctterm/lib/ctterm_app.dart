@@ -65,6 +65,7 @@ class _CttermAppState extends State<CttermApp> {
   /// When non-null, turn resolution is suspended; user must accept/reject overtures. SPEC/program/turn-resolution-phases.md.
   List<OvertureOffer>? _pendingOvertures;
   List<CallToArmsPending>? _pendingCallToArms;
+  List<InterventionPrompt>? _pendingInterventions;
   /// Game events received during turn processing (displayed to user).
   final List<GameEvent> _gameEvents = [];
   /// Current terminal theme.
@@ -193,6 +194,7 @@ class _CttermAppState extends State<CttermApp> {
       _pendingNewGameConfig = null;
       _pendingOvertures = null;
       _pendingCallToArms = null;
+      _pendingInterventions = null;
       _gameEvents.clear();
     });
   }
@@ -204,7 +206,22 @@ class _CttermAppState extends State<CttermApp> {
       _currentGame = game;
       _pendingOvertures = pending;
       _pendingCallToArms = null;
+      _pendingInterventions = null;
       _route = CttermRoute.pendingOvertures;
+    });
+  }
+
+  void _onTurnResolutionPendingIntervention(
+    Game game,
+    List<InterventionPrompt> pending,
+  ) {
+    _log.d('tui:app: turn resolution pending ${pending.length} intervention(s)');
+    setState(() {
+      _currentGame = game;
+      _pendingInterventions = pending;
+      _pendingOvertures = null;
+      _pendingCallToArms = null;
+      _route = CttermRoute.pendingIntervention;
     });
   }
 
@@ -217,6 +234,7 @@ class _CttermAppState extends State<CttermApp> {
       _currentGame = game;
       _pendingCallToArms = pending;
       _pendingOvertures = null;
+      _pendingInterventions = null;
       _route = CttermRoute.pendingCallToArms;
     });
   }
@@ -245,6 +263,7 @@ class _CttermAppState extends State<CttermApp> {
         _currentGame = result.game;
         _pendingOvertures = null;
         _pendingCallToArms = null;
+        _pendingInterventions = null;
         _route = CttermRoute.inGameShell;
       });
       _onTurnProcessed(result.game);
@@ -254,6 +273,18 @@ class _CttermAppState extends State<CttermApp> {
         _currentGame = result.game;
         _pendingOvertures = result.pendingOvertures;
         _pendingCallToArms = null;
+        _pendingInterventions = null;
+      });
+    } else if (result is TurnResolutionPendingIntervention) {
+      _log.d(
+        'tui:app: after overtures, pending ${result.pendingInterventions.length} intervention(s)',
+      );
+      setState(() {
+        _currentGame = result.game;
+        _pendingOvertures = null;
+        _pendingCallToArms = null;
+        _pendingInterventions = result.pendingInterventions;
+        _route = CttermRoute.pendingIntervention;
       });
     } else if (result is TurnResolutionPendingCallToArms) {
       _log.d(
@@ -261,6 +292,58 @@ class _CttermAppState extends State<CttermApp> {
       );
       setState(() {
         _currentGame = result.game;
+        _pendingOvertures = null;
+        _pendingInterventions = null;
+        _pendingCallToArms = result.pendingCallToArms;
+        _route = CttermRoute.pendingCallToArms;
+      });
+    }
+  }
+
+  void _onInterventionDecisions(List<InterventionDecision> decisions) {
+    final game = _currentGame;
+    final mapCache = _mapCache;
+    if (game == null || mapCache == null) {
+      _log.w('tui:app: onInterventionDecisions with null game/mapCache');
+      return;
+    }
+    final result = resumeTurnResolutionWithInterventionDecisions(
+      game: game,
+      decisions: decisions,
+      topology: mapCache.combinedTopology,
+      orders: _currentOrders,
+      tileMapByRegion: mapCache.tileMapByRegion,
+      onGameEvent: _onGameEvent,
+    );
+    if (result is TurnResolutionComplete) {
+      _log.d('tui:app: turn resolution complete after intervention');
+      setState(() {
+        _currentGame = result.game;
+        _pendingInterventions = null;
+        _pendingOvertures = null;
+        _pendingCallToArms = null;
+        _route = CttermRoute.inGameShell;
+      });
+      _onTurnProcessed(result.game);
+    } else if (result is TurnResolutionPendingOvertures) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingInterventions = null;
+        _pendingCallToArms = null;
+        _pendingOvertures = result.pendingOvertures;
+        _route = CttermRoute.pendingOvertures;
+      });
+    } else if (result is TurnResolutionPendingIntervention) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingOvertures = null;
+        _pendingCallToArms = null;
+        _pendingInterventions = result.pendingInterventions;
+      });
+    } else if (result is TurnResolutionPendingCallToArms) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingInterventions = null;
         _pendingOvertures = null;
         _pendingCallToArms = result.pendingCallToArms;
         _route = CttermRoute.pendingCallToArms;
@@ -289,6 +372,7 @@ class _CttermAppState extends State<CttermApp> {
         _currentGame = result.game;
         _pendingCallToArms = null;
         _pendingOvertures = null;
+        _pendingInterventions = null;
         _route = CttermRoute.inGameShell;
       });
       _onTurnProcessed(result.game);
@@ -296,12 +380,23 @@ class _CttermAppState extends State<CttermApp> {
       setState(() {
         _currentGame = result.game;
         _pendingCallToArms = null;
+        _pendingInterventions = null;
         _pendingOvertures = result.pendingOvertures;
         _route = CttermRoute.pendingOvertures;
+      });
+    } else if (result is TurnResolutionPendingIntervention) {
+      setState(() {
+        _currentGame = result.game;
+        _pendingCallToArms = null;
+        _pendingOvertures = null;
+        _pendingInterventions = result.pendingInterventions;
+        _route = CttermRoute.pendingIntervention;
       });
     } else if (result is TurnResolutionPendingCallToArms) {
       setState(() {
         _currentGame = result.game;
+        _pendingInterventions = null;
+        _pendingOvertures = null;
         _pendingCallToArms = result.pendingCallToArms;
       });
     }
@@ -423,10 +518,13 @@ class _CttermAppState extends State<CttermApp> {
         onLoadGame: _loadGame,
         pendingOvertures: _pendingOvertures,
         pendingCallToArms: _pendingCallToArms,
+        pendingInterventions: _pendingInterventions,
         onTurnResolutionPending: _onTurnResolutionPending,
         onTurnResolutionPendingCallToArms: _onTurnResolutionPendingCallToArms,
+        onTurnResolutionPendingIntervention: _onTurnResolutionPendingIntervention,
         onOvertureDecisions: _onOvertureDecisions,
         onCallToArmsDecisions: _onCallToArmsDecisions,
+        onInterventionDecisions: _onInterventionDecisions,
         initialTheme: _terminalTheme,
         onThemeChanged: _onThemeChanged,
         /// When in Settings, Back goes to Pause if we came from Pause. SPEC/tui/screens/pause-options.md §7.
