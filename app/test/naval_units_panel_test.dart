@@ -14,10 +14,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+/// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
+StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
+  required AppEventBus bus,
+  required Game Function() gameSnapshot,
+}) {
+  return bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+    final next = applyNavalSplitFleet(
+      game: gameSnapshot(),
+      humanPlayerId: e.humanPlayerId,
+      originalFleetId: e.originalFleetId,
+      shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+    );
+    bus.emit(NavalFleetsUpdatedEvent(game: next));
+  });
+}
 
 void main() {
   suppressLogsForTests();
@@ -776,6 +793,11 @@ void main() {
           fleetEvent = e;
         });
         addTearDown(sub.cancel);
+        final subSplit = wireNavalSplitForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => game,
+        );
+        addTearDown(subSplit.cancel);
 
         final splittable = game.worldState.fleets
             .where((f) => f.ownerId == humanId && f.shipTypeIds.length >= 2)
@@ -833,8 +855,13 @@ void main() {
         final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
           observedFleetCount.value = e.game.worldState.fleets.length;
         });
+        final subSplit = wireNavalSplitForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => game,
+        );
         addTearDown(() async {
           await sub.cancel();
+          await subSplit.cancel();
           observedFleetCount.dispose();
         });
 

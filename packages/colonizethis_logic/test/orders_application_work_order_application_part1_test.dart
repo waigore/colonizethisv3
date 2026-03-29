@@ -245,6 +245,70 @@ void main() {
       },
     );
 
+    test(
+      'build_fort assigns currentWork.totalTurns from totalTurnsForWork (fort level)',
+      () {
+        final unit = Unit(
+          id: 'u1',
+          type: 'Engineer',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+        );
+        final cost = workOrderCostBuildFort(1);
+        var stockpile = const Stockpile();
+        for (final e in cost.entries) {
+          stockpile = stockpile.applyDelta(e.key, e.value);
+        }
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: provinceId,
+                  regionId: ow,
+                  ownerId: 'p1',
+                  fortLevel: 1,
+                ),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              stockpile: stockpile,
+              techUnlocked: const {'mine_engineering': true},
+            ),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            'p1': [
+              WorkOrder(
+                unitId: 'u1',
+                target: 'build_fort',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        final next = applyBuildAndWorkOrders(game, orders);
+        final u = next.worldState.oldWorld.units.single;
+        expect(
+          u.currentWork!.totalTurns,
+          totalTurnsForWork('build_fort', fortLevel: 1),
+        );
+        expect(u.currentWork!.remainingTurns, 1);
+        expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
+      },
+    );
+
     test('steal_tech work order sets currentWork for Spy unit', () {
       const targetProvinceId = 'oldWorld|P2';
       const targetTileKey = 'oldWorld|P2|0|0';
