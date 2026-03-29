@@ -82,6 +82,7 @@ void main() {
     });
 
     test('factory functions create loggers with correct prefixes', () {
+      expect(ctdevLogger().prefix, 'ctdev');
       expect(logicLogger().prefix, 'logic');
       expect(aiLogger().prefix, 'ai');
       expect(dataLogger().prefix, 'data');
@@ -104,6 +105,7 @@ void main() {
 
   group('prefixes', () {
     test('allLogPrefixes contains expected prefixes', () {
+      expect(allLogPrefixes, contains('ctdev'));
       expect(allLogPrefixes, contains('logic'));
       expect(allLogPrefixes, contains('ai'));
       expect(allLogPrefixes, contains('data'));
@@ -123,6 +125,7 @@ void main() {
       expect(kLogPrefixTui, 'tui');
       expect(kLogPrefixGame, 'game');
       expect(kLogPrefixApp, 'app');
+      expect(kLogPrefixCtdev, 'ctdev');
     });
   });
 }

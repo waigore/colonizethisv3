@@ -799,7 +799,7 @@ class TileMapGenerator {
         );
         if (stillSplit.length > 1) {
           _log.w(
-            'map: join continents hit iteration cap with >1 land component for '
+            'join continents hit iteration cap with >1 land component for '
             'continent index $c (width=${params.width} height=${params.height})',
           );
         }

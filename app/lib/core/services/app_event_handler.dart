@@ -22,10 +22,10 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 
 import '../../features/game/flame/game_screen_shared.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
@@ -38,7 +38,7 @@ import '../../providers/games_provider.dart';
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
-final _log = Logger();
+final _log = appLogger('event');
 
 class AppEventHandler {
   AppEventHandler({
@@ -167,7 +167,7 @@ class AppEventHandler {
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
-      _log.e('ui:app_event: ConfirmDialog failed', error: e, stackTrace: st);
+      _log.e('ConfirmDialog failed', error: e, stackTrace: st);
       event.result(false);
       return false;
     }

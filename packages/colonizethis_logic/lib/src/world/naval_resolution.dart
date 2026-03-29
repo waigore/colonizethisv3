@@ -300,7 +300,7 @@ Game runNavalInterceptionCombatPhase(
   GameEventBus? eventBus,
 }) {
   var battles = detectNavalConflicts(game);
-  _log.d('logic: naval phase detected battles=${battles.length}');
+  _log.d('naval phase detected battles=${battles.length}');
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
@@ -308,7 +308,7 @@ Game runNavalInterceptionCombatPhase(
   var seed = (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * 0x9E3779B1);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
-  _log.d('logic: naval phase after interception battles=${battles.length}');
+  _log.d('naval phase after interception battles=${battles.length}');
   seed = (seed * 1103515245 + 12345) & 0x7fffffff;
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
@@ -349,7 +349,7 @@ Game runNavalInterceptionCombatPhase(
       retreatDestinationSide2: retreatZoneSide2,
     );
     _log.d(
-      'logic: naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
+      'naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
       'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );
 
@@ -408,8 +408,7 @@ Game runNavalInterceptionCombatPhase(
       side1Retreated: result.side1Retreated,
       side2Retreated: result.side2Retreated,
     );
-    eventBus?.publish(navalEv);
-    onGameEvent?.call(navalEv);
+    deliverGameEvent(navalEv, eventBus: eventBus, onGameEvent: onGameEvent);
 
     battleIndex++;
   }

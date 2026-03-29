@@ -1,6 +1,6 @@
 // Development Screen: manage civilian unit work orders. SPEC/tui/screens/development.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -10,7 +10,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Valid work targets per spec: work target id -> display label.
 const _validWorkTargets = {
@@ -245,7 +245,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           _tileWindowStart = 0;
           _feedbackMessage = '';
         });
-        _log.d('tui:nav: cancelled development input mode');
+        _log.d('cancelled development input mode');
         return true;
       }
       // Idle: leave Development screen back to in-game shell.
@@ -309,7 +309,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         _tileWindowStart = 0;
         _feedbackMessage = '';
       });
-      _log.d('tui:nav: cancelled development input mode');
+      _log.d('cancelled development input mode');
       return true;
     }
     // Idle: leave Development screen back to in-game shell.
@@ -398,7 +398,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
         _feedbackColor = Colors.yellow;
       });
       _log.d(
-          'tui:development: no eligible tiles for $target and unit ${unit.id}');
+          'no eligible tiles for $target and unit ${unit.id}');
       return;
     }
 
@@ -426,7 +426,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackColor = Colors.cyan;
     });
     _log.d(
-        'tui:development: selecting province/tile for $target and unit ${unit.id}');
+        'selecting province/tile for $target and unit ${unit.id}');
   }
 
   /// Ensure the province sliding window keeps the selected province visible.
@@ -653,7 +653,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackColor = Colors.green;
     });
 
-    _log.d('tui:development: assigned $target to unit ${unit.id}');
+    _log.d('assigned $target to unit ${unit.id}');
   }
 
   /// Cancel work for a unit: remove pending order and/or clear in-progress currentWork.
@@ -690,7 +690,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackColor = Colors.yellow;
     });
 
-    _log.d('tui:development: cancelled work order for unit $unitId');
+    _log.d('cancelled work order for unit $unitId');
   }
 
   /// Get display name for work target.

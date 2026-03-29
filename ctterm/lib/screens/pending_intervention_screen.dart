@@ -1,13 +1,13 @@
 // Pending intervention: Diplomacy-phase choices when a GP attacks Minor/Tribe.
 // SPEC/tui/screens/pending-intervention.md, SPEC/program/dialogue-system.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Blocking screen: human chooses intervene / do naught / protest per prompt.
 class PendingInterventionScreen extends StatefulComponent {
@@ -160,7 +160,7 @@ class _PendingInterventionScreenState extends State<PendingInterventionScreen> {
           ),
         );
       }
-      _log.d('tui:intervention: submitting ${decisions.length} decision(s)');
+      _log.d('submitting ${decisions.length} decision(s)');
       component.onDecisions(decisions);
       return true;
     }

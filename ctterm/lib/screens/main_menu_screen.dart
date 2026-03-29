@@ -1,12 +1,12 @@
 // Main Menu. SPEC/ui/main-menu.md, SPEC/tui/ctterm.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/menu_logic.dart';
 import 'package:ctterm/save_service.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Main menu: New Game, Load Game (L always navigates; list empty when no saves), Settings, Debug log, Quit.
 class MainMenuScreen extends StatefulComponent {
@@ -45,14 +45,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     try {
       final ids = await listGameIds(component.dataDirOverride)
           .timeout(const Duration(seconds: 5), onTimeout: () => <String>[]);
-      _log.d('tui:menu: listGameIds count=${ids.length}');
+      _log.d('listGameIds count=${ids.length}');
       if (!mounted) return;
       setState(() {
         _loadGameEnabled = isLoadGameEnabled(ids);
         _savesChecked = true;
       });
     } catch (e, st) {
-      _log.w('tui:menu: checkSaves failed', error: e, stackTrace: st);
+      _log.w('checkSaves failed', error: e, stackTrace: st);
       if (!mounted) return;
       setState(() {
         _loadGameEnabled = false;

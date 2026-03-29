@@ -1,6 +1,6 @@
 // Debug log viewer. SPEC/program/debug-log-viewer.md. Screen ID 100020.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:logger/logger.dart' show Level;
 import 'package:nocterm/nocterm.dart' hide Logger;
 import 'package:session_log_buffer/session_log_buffer.dart';
 
@@ -19,7 +19,7 @@ class DebugLogViewerScreen extends StatefulComponent {
 
 class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
   Set<String> _selectedPrefixes = Set<String>.from(knownPrefixes);
-  Set<log_pkg.Level> _selectedLevels = Set<log_pkg.Level>.from(knownLevels);
+  Set<Level> _selectedLevels = Set<Level>.from(knownLevels);
   int _scrollOffset = 0;
 
   List<SessionLogEntry> get _filtered =>
@@ -86,10 +86,10 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
             final l = knownLevels[levelIdx];
             setState(() {
               if (_selectedLevels.contains(l)) {
-                _selectedLevels = Set<log_pkg.Level>.from(_selectedLevels)
+                _selectedLevels = Set<Level>.from(_selectedLevels)
                   ..remove(l);
               } else {
-                _selectedLevels = Set<log_pkg.Level>.from(_selectedLevels)
+                _selectedLevels = Set<Level>.from(_selectedLevels)
                   ..add(l);
               }
             });
@@ -111,7 +111,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 1),
             child: Text(
-              'Package: ${_selectedPrefixes.join(' ')}  Level: ${_selectedLevels.map((log_pkg.Level l) => l.name).join(' ')}',
+              'Package: ${_selectedPrefixes.join(' ')}  Level: ${_selectedLevels.map((Level l) => l.name).join(' ')}',
               style: TextStyle(color: Colors.gray),
             ),
           ),

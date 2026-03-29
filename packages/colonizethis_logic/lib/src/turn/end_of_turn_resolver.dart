@@ -24,7 +24,7 @@ Game runEndOfTurnPhase(
   final winnerId = findMilitaryVictoryWinner(game);
   if (winnerId != null) {
     final turnNumber = game.worldState.turnState.turnNumber;
-    _log.i('logic: military victory set winner=$winnerId turn=$turnNumber');
+    _log.i('military victory set winner=$winnerId turn=$turnNumber');
     return game.copyWith(
       victory: VictoryState(
         winnerPlayerId: winnerId,

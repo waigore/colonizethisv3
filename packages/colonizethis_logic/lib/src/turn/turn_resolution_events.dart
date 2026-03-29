@@ -33,8 +33,7 @@ void emitResearchCompleteEvents(
           techId: tech,
           turnNumber: turn,
         );
-        eventBus?.publish(event);
-        onGameEvent?.call(event);
+        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
       }
     }
   }
@@ -57,8 +56,7 @@ void emitDiplomacyChangeEvents(
         changeType: rel.state.name,
         turnNumber: turn,
       );
-      eventBus?.publish(event);
-      onGameEvent?.call(event);
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
     }
   }
 }
@@ -84,8 +82,7 @@ void emitProvinceCapturedEvents(
           newOwnerId: prov.ownerId ?? '',
           turnNumber: turn,
         );
-        eventBus?.publish(event);
-        onGameEvent?.call(event);
+        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
       }
     }
   }
@@ -104,7 +101,6 @@ void emitVictorySetEvent(
       victoryType: state.victory!.type.name,
       turnNumber: turn,
     );
-    eventBus?.publish(event);
-    onGameEvent?.call(event);
+    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
   }
 }

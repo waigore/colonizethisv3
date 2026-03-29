@@ -1,6 +1,6 @@
 // Technology screen — research panel. SPEC/tui/screens/technology.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -8,7 +8,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Technology research panel.
 /// Shows research slots, available techs, and allows assigning research.
@@ -173,7 +173,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
         setState(() {
           _feedbackMessage = 'Prerequisites not met: ${missing.join(', ')}';
         });
-        _log.d('tui:tech: failed to assign $techId - missing prerequisites: $missing');
+        _log.d('failed to assign $techId - missing prerequisites: $missing');
         return;
       }
     }
@@ -217,7 +217,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
     );
 
     component.onOrdersChanged(newOrders);
-    _log.d('tui:tech: assigned $techId to slot ${_selectedSlot + 1}');
+    _log.d('assigned $techId to slot ${_selectedSlot + 1}');
   }
 
   // Set funding level for slot
@@ -252,7 +252,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
     );
 
     component.onOrdersChanged(newOrders);
-    _log.d('tui:tech: set funding ${level.name} for slot ${_selectedSlot + 1}');
+    _log.d('set funding ${level.name} for slot ${_selectedSlot + 1}');
   }
 
   // Cancel research in slot
@@ -279,7 +279,7 @@ class _TechnologyScreenState extends State<TechnologyScreen> {
 
     component.onOrdersChanged(newOrders);
     setState(() => _showCancelConfirm = false);
-    _log.d('tui:tech: cancelled slot ${_selectedSlot + 1}');
+    _log.d('cancelled slot ${_selectedSlot + 1}');
   }
 
   @override

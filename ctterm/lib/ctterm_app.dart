@@ -1,6 +1,6 @@
 // Root ctterm app: navigation shell and main menu. SPEC/tui/ctterm.md. /// CTTerm application entry point
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart';
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -12,7 +12,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Pending setup data when user has completed Game Setup and we are about to generate the world.
 class _PendingNewGameConfig {
@@ -98,7 +98,7 @@ class _CttermAppState extends State<CttermApp> {
     Map<String, String> leaderVariantByGpId,
     bool enforceFairGpOldWorldAssignment,
   ) {
-    _log.d('tui:app: prepare new game with ${orderedGpIdsForSlots.length} players');
+    _log.d('prepare new game with ${orderedGpIdsForSlots.length} players');
     setState(() {
       _pendingNewGameConfig = _PendingNewGameConfig(
         orderedGpIdsForSlots: orderedGpIdsForSlots,
@@ -114,7 +114,7 @@ class _CttermAppState extends State<CttermApp> {
   void _runGeneration() {
     final pending = _pendingNewGameConfig;
     if (pending == null) {
-      _log.w('tui:app: runGeneration called with no pending config');
+      _log.w('runGeneration called with no pending config');
       return;
     }
     final config = GameSetupConfig(
@@ -130,12 +130,12 @@ class _CttermAppState extends State<CttermApp> {
       enforceFairGpOldWorldAssignment: pending.enforceFairGpOldWorldAssignment,
     );
     try {
-      _log.i('tui:app: running init game');
+      _log.i('running init game');
       final result = runInitGame(
         config: config,
         options: const InitGameOptions(renderPng: false),
       );
-      _log.i('tui:app: init game complete, turn ${result.game.worldState.turnState.turnNumber}');
+      _log.i('init game complete, turn ${result.game.worldState.turnState.turnNumber}');
       // Set game and route in one setState so no rebuild can see inGameShell with null game.
       setState(() {
         _currentGame = result.game;
@@ -147,7 +147,7 @@ class _CttermAppState extends State<CttermApp> {
         _route = CttermRoute.inGameShell;
       });
     } catch (e, st) {
-      _log.e('tui:app: init game failed', error: e, stackTrace: st);
+      _log.e('init game failed', error: e, stackTrace: st);
       setState(() => _pendingNewGameConfig = null);
       _navigateTo(CttermRoute.mainMenu);
     }
@@ -155,13 +155,13 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Loads a game by ID and navigates to in-game shell.
   Future<void> _loadGame(String gameId) async {
-    _log.d('tui:app: loading game $gameId');
+    _log.d('loading game $gameId');
     final game = await loadGame(gameId, component.dataDirOverride);
     if (game == null) {
-      _log.e('tui:app: failed to load game $gameId');
+      _log.e('failed to load game $gameId');
       return;
     }
-    _log.i('tui:app: loaded game $gameId, turn ${game.worldState.turnState.turnNumber}');
+    _log.i('loaded game $gameId, turn ${game.worldState.turnState.turnNumber}');
     setState(() {
       _currentGame = game;
       _route = CttermRoute.inGameShell;
@@ -170,7 +170,7 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Callback when turn is processed, updates game state and clears orders.
   void _onTurnProcessed(Game updatedGame) {
-    _log.d('tui:app: turn processed, now turn ${updatedGame.worldState.turnState.turnNumber}');
+    _log.d('turn processed, now turn ${updatedGame.worldState.turnState.turnNumber}');
     setState(() {
       _currentGame = updatedGame;
       _currentOrders = const Orders(); // Clear orders after turn is processed
@@ -180,13 +180,13 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Callback to receive game events (combat, diplomacy, research, victory, etc.).
   void _onGameEvent(GameEvent event) {
-    _log.d('tui:event: received ${event.runtimeType}');
+    _log.d('received ${event.runtimeType}');
     setState(() => _gameEvents.add(event));
   }
 
   /// Clears game state (e.g., when returning to main menu).
   void _clearGame() {
-    _log.d('tui:app: clearing game state');
+    _log.d('clearing game state');
     setState(() {
       _currentGame = null;
       _currentOrders = const Orders();
@@ -201,7 +201,7 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Called when turn resolution returns pending overtures; navigate to pending overtures screen.
   void _onTurnResolutionPending(Game game, List<OvertureOffer> pending) {
-    _log.d('tui:app: turn resolution pending ${pending.length} overture(s)');
+    _log.d('turn resolution pending ${pending.length} overture(s)');
     setState(() {
       _currentGame = game;
       _pendingOvertures = pending;
@@ -215,7 +215,7 @@ class _CttermAppState extends State<CttermApp> {
     Game game,
     List<InterventionPrompt> pending,
   ) {
-    _log.d('tui:app: turn resolution pending ${pending.length} intervention(s)');
+    _log.d('turn resolution pending ${pending.length} intervention(s)');
     setState(() {
       _currentGame = game;
       _pendingInterventions = pending;
@@ -229,7 +229,7 @@ class _CttermAppState extends State<CttermApp> {
     Game game,
     List<CallToArmsPending> pending,
   ) {
-    _log.d('tui:app: turn resolution pending ${pending.length} call(s) to arms');
+    _log.d('turn resolution pending ${pending.length} call(s) to arms');
     setState(() {
       _currentGame = game;
       _pendingCallToArms = pending;
@@ -245,7 +245,7 @@ class _CttermAppState extends State<CttermApp> {
     final pending = _pendingOvertures;
     final mapCache = _mapCache;
     if (game == null || pending == null || mapCache == null) {
-      _log.w('tui:app: onOvertureDecisions with null game/pending/mapCache');
+      _log.w('onOvertureDecisions with null game/pending/mapCache');
       return;
     }
     final result = resumeTurnResolutionWithOvertureDecisions(
@@ -258,7 +258,7 @@ class _CttermAppState extends State<CttermApp> {
       onGameEvent: _onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      _log.d('tui:app: turn resolution complete after overture decisions');
+      _log.d('turn resolution complete after overture decisions');
       setState(() {
         _currentGame = result.game;
         _pendingOvertures = null;
@@ -268,7 +268,7 @@ class _CttermAppState extends State<CttermApp> {
       });
       _onTurnProcessed(result.game);
     } else if (result is TurnResolutionPendingOvertures) {
-      _log.d('tui:app: turn resolution still pending ${result.pendingOvertures.length} overture(s)');
+      _log.d('turn resolution still pending ${result.pendingOvertures.length} overture(s)');
       setState(() {
         _currentGame = result.game;
         _pendingOvertures = result.pendingOvertures;
@@ -277,7 +277,7 @@ class _CttermAppState extends State<CttermApp> {
       });
     } else if (result is TurnResolutionPendingIntervention) {
       _log.d(
-        'tui:app: after overtures, pending ${result.pendingInterventions.length} intervention(s)',
+        'after overtures, pending ${result.pendingInterventions.length} intervention(s)',
       );
       setState(() {
         _currentGame = result.game;
@@ -288,7 +288,7 @@ class _CttermAppState extends State<CttermApp> {
       });
     } else if (result is TurnResolutionPendingCallToArms) {
       _log.d(
-        'tui:app: after overtures, pending ${result.pendingCallToArms.length} call(s) to arms',
+        'after overtures, pending ${result.pendingCallToArms.length} call(s) to arms',
       );
       setState(() {
         _currentGame = result.game;
@@ -304,7 +304,7 @@ class _CttermAppState extends State<CttermApp> {
     final game = _currentGame;
     final mapCache = _mapCache;
     if (game == null || mapCache == null) {
-      _log.w('tui:app: onInterventionDecisions with null game/mapCache');
+      _log.w('onInterventionDecisions with null game/mapCache');
       return;
     }
     final result = resumeTurnResolutionWithInterventionDecisions(
@@ -316,7 +316,7 @@ class _CttermAppState extends State<CttermApp> {
       onGameEvent: _onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      _log.d('tui:app: turn resolution complete after intervention');
+      _log.d('turn resolution complete after intervention');
       setState(() {
         _currentGame = result.game;
         _pendingInterventions = null;
@@ -355,7 +355,7 @@ class _CttermAppState extends State<CttermApp> {
     final game = _currentGame;
     final mapCache = _mapCache;
     if (game == null || mapCache == null) {
-      _log.w('tui:app: onCallToArmsDecisions with null game/mapCache');
+      _log.w('onCallToArmsDecisions with null game/mapCache');
       return;
     }
     final result = resumeTurnResolutionWithCallToArmsDecisions(
@@ -367,7 +367,7 @@ class _CttermAppState extends State<CttermApp> {
       onGameEvent: _onGameEvent,
     );
     if (result is TurnResolutionComplete) {
-      _log.d('tui:app: turn resolution complete after call to arms');
+      _log.d('turn resolution complete after call to arms');
       setState(() {
         _currentGame = result.game;
         _pendingCallToArms = null;
@@ -404,7 +404,7 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Updates current orders (e.g., from Units panel).
   void _updateOrders(Orders orders) {
-    _log.d('tui:app: orders updated');
+    _log.d('orders updated');
     setState(() => _currentOrders = orders);
   }
 
@@ -455,7 +455,7 @@ class _CttermAppState extends State<CttermApp> {
     final newGame = game.copyWith(
       worldState: ws.copyWith(oldWorld: newRegion, newWorld: newNwRegion),
     );
-    _log.d('tui:app: cancelled in-progress work for unit $unitId');
+    _log.d('cancelled in-progress work for unit $unitId');
     setState(() => _currentGame = newGame);
   }
 
@@ -465,7 +465,7 @@ class _CttermAppState extends State<CttermApp> {
 
   /// Handles theme change from Settings screen.
   void _onThemeChanged(TerminalTheme theme) {
-    _log.d('tui:app: theme changed to ${theme.name}');
+    _log.d('theme changed to ${theme.name}');
     setState(() => _terminalTheme = theme);
   }
 
@@ -511,7 +511,7 @@ class _CttermAppState extends State<CttermApp> {
         onCancelUnitWork: _cancelUnitWork,
         onGameEvent: _onGameEvent,
         onGameUpdated: (game) {
-          _log.d('tui:app: game updated from panel');
+          _log.d('game updated from panel');
           setState(() => _currentGame = game);
         },
         onClearGame: _clearGame,

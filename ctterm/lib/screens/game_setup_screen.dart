@@ -1,10 +1,10 @@
 // Game Setup screen. SPEC/tui/screens/game-setup.md, SPEC/tui/ctterm.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Number of player slots: 1 human + 5 AI.
 const int _kNumSlots = 6;
@@ -100,7 +100,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     }
 
     if (filledSlots.isEmpty) {
-      _log.i('tui:setup: auto-assign: no changes');
+      _log.i('auto-assign: no changes');
       return;
     }
 
@@ -108,7 +108,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       _orderedGpIdsBySlot = currentOrdered;
       _leaderVariantByGpId = currentLeaders;
     });
-    _log.i('tui:setup: auto-assign filled slots $filledSlots');
+    _log.i('auto-assign filled slots $filledSlots');
   }
 
   /// Check if all slots have nation and leader selected.
@@ -156,7 +156,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       case 'b':
       case 'B':
       case 'escape':
-        _log.d('tui:setup: back pressed');
+        _log.d('back pressed');
         component.onBack();
         break;
       case 'enter':
@@ -209,7 +209,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
           }
         }
       });
-      _log.d('tui:setup: slot $slotIndex nation -> $newGpId');
+      _log.d('slot $slotIndex nation -> $newGpId');
     } else {
       // Cycle through leaders for selected nation
       if (gpId.isEmpty) return;
@@ -225,7 +225,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       setState(() {
         _leaderVariantByGpId[gpId] = newVariant;
       });
-      _log.d('tui:setup: slot $slotIndex leader -> $newVariant');
+      _log.d('slot $slotIndex leader -> $newVariant');
     }
   }
 
@@ -242,7 +242,7 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
         }
       }
     }
-    _log.i('tui:setup: start game with ${_orderedGpIdsBySlot.length} players');
+    _log.i('start game with ${_orderedGpIdsBySlot.length} players');
     component.onStartGame(
       List<String>.from(_orderedGpIdsBySlot),
       leaderMap,
