@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
-/// Displays Quick Battle result. SPEC/program/quick-battle-resolution.
+/// Displays Quick Battle result. Open via `OpenDialogEvent('quick_battle_result', params)`.
+/// SPEC/program/quick-battle-resolution.
 class QuickBattleResultDialog extends StatelessWidget {
   const QuickBattleResultDialog({
     super.key,
@@ -16,22 +17,6 @@ class QuickBattleResultDialog extends StatelessWidget {
   final QuickBattleResult result;
   final String attackerName;
   final String defenderName;
-
-  static Future<void> show(
-    BuildContext context, {
-    required QuickBattleResult result,
-    String attackerName = 'Attacker',
-    String defenderName = 'Defender',
-  }) {
-    return showDialog(
-      context: context,
-      builder: (context) => QuickBattleResultDialog(
-        result: result,
-        attackerName: attackerName,
-        defenderName: defenderName,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +51,7 @@ class QuickBattleResultDialog extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('OK'),
             ),
           ),

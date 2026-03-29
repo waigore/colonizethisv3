@@ -15,6 +15,17 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 - **Stable handlers, not ephemeral refs:** Panels, side menus, and routes that close before an async action completes must not capture `WidgetRef` or other context that becomes invalid on dispose. Emit a typed **command event** (e.g. `SessionCommandEvent`); a **long-lived** shell listener (e.g. `AppEventHandlerScope`) applies mutations using a stable ref.
 - **No coupling on sibling mount state:** Do not assume another widget is still mounted when handling user actions. The emitter publishes intent; the subscriber owns session state and may outlive any single panel.
 
+### Navigator, `maybePop`, and dialog/panel presentation
+
+**Heavily discouraged** outside **`AppEventHandler`** (and the small set of flows explicitly marked **local by design** in **[app-ui-wiring.md](app-ui-wiring.md)**):
+
+- Calling **`Navigator.of(context).push` / `pushNamed` / `popUntil` / `maybePop`** or **`showDialog` / `showModalBottomSheet`** from empire panels, the map, side menus, or shell to drive **cross-panel, cross-screen, or shell-level** behavior.
+- Using **`maybePop`** to dismiss bottom sheets or routes that **`AppEventHandler`** opened with **`navigatorKey`**, except from **`AppEventHandler`** itself (e.g. handling **`ClosePanelEvent`**) or from documented local-only flows.
+
+**Preferred:** Emit **`UIActionEvent`** subclasses (`NavigateToRouteEvent`, `NavigateToShellEvent`, `ClosePanelEvent`, `OpenDialogEvent`, typed panel opens, `LocateMapTileEvent`, etc.). **`AppEventHandler`** is the choke point that turns those into **`Navigator`** / **`showDialog`** using **`GlobalKey<NavigatorState>`**.
+
+**Local-by-design exception:** **`Navigator.pop`** / **`showDialog`** entirely **inside one widget’s local UX** (same panel subtree, confirm steps, internal pickers; see **Local by design** in app-ui-wiring) remain allowed; they must not replace the bus for cross-cutting actions.
+
 ---
 
 ## Architecture
@@ -154,6 +165,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 
 - Given **`AppEventHandler`** is bound with a registered **`train_civilians`** dialog builder, When the system emits **`OpenDialogEvent('train_civilians')`**, Then **`showDialog`** runs and the dialog widget tree is present.
 - Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a modal bottom sheet appears listing Debug log and Resume.
+- Given **`AppEventHandler`** is bound with routes **`shell`** and **`game`** on the stack, When the system emits **`NavigateToShellEvent`**, Then the navigator returns to the **`shell`** route.
 - Given **`AppEventHandler`** is bound, When the system emits **`OpenDialogEvent`** with an unknown **`dialogId`**, Then the handler logs a debug warning and does not throw.
 - Given **`ConfirmDialogEvent`** with **`onResult`**, When the user taps confirm, Then **`onResult(true)`** runs; When the user taps cancel, Then **`onResult(false)`** runs.
 
@@ -179,7 +191,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 ### Automated tests (must pass in CI)
 
 - **`app/test/app_event_bus_test.dart`** — delivery, filtering, **`dispose`**, equality for **`UIActionEvent`** / **`UISystemEvent`** / **`GameToUIEvent`** (including new **`GameToUIEvent`** subtypes where applicable).
-- **`app/test/app_event_handler_test.dart`** — **`OpenDialogEvent`**, **`NavigateToRouteEvent`**, **`ConfirmDialogEvent`**, **`OpenPanelEvent`**, **`OpenPauseMenuPanelEvent`**, **`PopNavigationEvent`**, snackbar/overlay callbacks.
+- **`app/test/app_event_handler_test.dart`** — **`OpenDialogEvent`**, **`NavigateToRouteEvent`**, **`NavigateToShellEvent`**, **`ClosePanelEvent`** sequencing, **`ConfirmDialogEvent`**, **`OpenPanelEvent`**, **`OpenPauseMenuPanelEvent`**, **`PopNavigationEvent`**, combat choice (**`CombatModeChosenEvent`**), snackbar/overlay callbacks.
 - **`app/test/game_to_ui_bus_listener_test.dart`** — **`TurnResolutionCompleteEvent`** → provider reload.
 - **`app/test/game_event_bridge_test.dart`** — bridge forwarding of **`GameEvent`** → **`GameToUIEvent`** mappings.
 

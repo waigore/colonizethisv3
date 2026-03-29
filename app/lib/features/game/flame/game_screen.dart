@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
@@ -28,15 +27,7 @@ import 'victory_overlay.dart';
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 /// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
 void _showPauseMenu(AppEventBus bus) {
-  bus.emit(
-    OpenPauseMenuPanelEvent(
-      onDebugLog: () {
-        bus.emit(const ClosePanelEvent());
-        bus.emit(NavigateToRouteEvent(Routes.debugLog));
-      },
-      onResume: () => bus.emit(const ClosePanelEvent()),
-    ),
-  );
+  bus.emit(const OpenPauseMenuPanelEvent());
 }
 
 Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
@@ -99,21 +90,6 @@ void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
   }
 }
 
-void _navigateToMainMenu(BuildContext context) {
-  var foundShellRoute = false;
-  final navigator = Navigator.of(context);
-  navigator.popUntil((route) {
-    final matches = route.settings.name == Routes.shell;
-    if (matches) {
-      foundShellRoute = true;
-    }
-    return matches;
-  });
-  if (!foundShellRoute) {
-    navigator.pushNamedAndRemoveUntil(Routes.shell, (route) => false);
-  }
-}
-
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
@@ -167,7 +143,11 @@ class GameScreen extends ConsumerWidget {
           ),
         ],
         if (game != null && victory != null)
-          VictoryOverlay(game: game, victory: victory),
+          VictoryOverlay(
+            game: game,
+            victory: victory,
+            bus: ref.read(appEventBusProvider),
+          ),
       ],
     );
 
@@ -247,7 +227,7 @@ class GameScreen extends ConsumerWidget {
         if (didPop || !context.mounted) return;
         final shouldExit = await _showExitToMainMenuConfirmDialog(context);
         if (!shouldExit || !context.mounted) return;
-        _navigateToMainMenu(context);
+        ref.read(appEventBusProvider).emit(const NavigateToShellEvent());
       },
       child: CtScreenShell(
         title: appL10n(context).game_screenTitle,
