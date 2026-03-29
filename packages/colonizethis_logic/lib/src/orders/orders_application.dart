@@ -316,6 +316,8 @@ Game applyBuildAndWorkOrders(
     );
     switch (cw.workTarget) {
       case 'build_improvement':
+        // Stored level: min(level+1, 4). Tech/resource gating at assign only;
+        // SPEC/program/development-resolution.md (build_improvement completion).
         final level = s.tileState.improvementLevel(cw.tileKey);
         s.tileState = s.tileState.setImprovement(
           cw.tileKey,
@@ -857,7 +859,7 @@ void _runWorkPhase(
           isWorkOrderTargetAllowedForUnitType(u.type, 'steal_tech') &&
           u.currentWork == null &&
           hasValidTarget) {
-        const totalTurns = 5;
+        final totalTurns = totalTurnsForWork('steal_tech');
         _log.d(
           'work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
@@ -881,7 +883,7 @@ void _runWorkPhase(
           isWorkOrderTargetAllowedForUnitType(u.type, 'counter_spy') &&
           u.currentWork == null &&
           hasValidTarget) {
-        const totalTurns = 0;
+        final totalTurns = totalTurnsForWork('counter_spy');
         _log.d(
           'work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
