@@ -13,6 +13,7 @@
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'game.dart';
+import 'orders.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
 
@@ -211,6 +212,34 @@ class NavalFleetsUpdatedEvent extends SessionCommandEvent {
   NavalFleetsUpdatedEvent({required this.game});
 
   final Game game;
+}
+
+/// Split fleet dialog confirm: shell applies split and emits [NavalFleetsUpdatedEvent]
+/// (same pipeline as combine). SPEC/program/app-ui-wiring.md.
+class NavalSplitFleetRequestedEvent extends SessionCommandEvent {
+  NavalSplitFleetRequestedEvent({
+    required this.humanPlayerId,
+    required this.originalFleetId,
+    required this.shipInstanceIdsToNewFleet,
+  });
+
+  final String humanPlayerId;
+  final String originalFleetId;
+  final List<String> shipInstanceIdsToNewFleet;
+}
+
+/// Train civilians dialog close: shell merges into current-turn orders draft.
+class TrainCivilianBuildOrdersCommittedEvent extends SessionCommandEvent {
+  TrainCivilianBuildOrdersCommittedEvent({required this.orders});
+
+  final List<BuildUnitOrder> orders;
+}
+
+/// Train military dialog close: shell merges into current-turn orders draft.
+class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
+  TrainMilitaryBuildOrdersCommittedEvent({required this.orders});
+
+  final List<BuildUnitOrder> orders;
 }
 
 // ---------------------------------------------------------------------------

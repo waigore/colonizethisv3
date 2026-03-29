@@ -254,8 +254,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...gps.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -264,8 +264,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...minors.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -274,8 +274,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...tribes.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -303,7 +303,7 @@ class DiplomacyPanel extends StatelessWidget {
     );
   }
 
-  void _submitOrDialog(BuildContext context, DiplomaticOrder order) {
+  void _submitOrDialog(DiplomaticOrder order) {
     final pending =
         currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
     final alreadyPending = pending.any(
@@ -319,13 +319,13 @@ class DiplomacyPanel extends StatelessWidget {
         (order.type == DiplomaticOrderType.establishOverture &&
             order.overtureStage != null);
     if (needsParams) {
-      _showDialogForOrder(context, order);
+      _showDialogForOrder(order);
     } else {
-      _showConfirmDialog(context, order);
+      _showConfirmDialog(order);
     }
   }
 
-  void _showConfirmDialog(BuildContext context, DiplomaticOrder order) {
+  void _showConfirmDialog(DiplomaticOrder order) {
     final actionLabel = diplomacyActionLabel(order);
     bus.emit(
       ConfirmDialogEvent(
@@ -353,7 +353,7 @@ class DiplomacyPanel extends StatelessWidget {
     return factionId;
   }
 
-  void _showDialogForOrder(BuildContext context, DiplomaticOrder order) {
+  void _showDialogForOrder(DiplomaticOrder order) {
     if (order.type == DiplomaticOrderType.grantAid ||
         order.type == DiplomaticOrderType.setSubsidy) {
       bus.emit(
@@ -364,7 +364,7 @@ class DiplomacyPanel extends StatelessWidget {
       );
     } else if (order.type == DiplomaticOrderType.establishOverture &&
         order.overtureStage != null) {
-      _showConfirmDialog(context, order);
+      _showConfirmDialog(order);
     }
   }
 
@@ -378,7 +378,7 @@ class DiplomacyPanel extends StatelessWidget {
     );
   }
 
-  void _openDetail(BuildContext context, DiplomacyRowData row) {
+  void _openDetail(DiplomacyRowData row) {
     bus.emit(
       NavigateToRouteEvent(Routes.diplomacyDetail, {
         'game': game,

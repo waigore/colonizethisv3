@@ -33,7 +33,7 @@ void main() {
     required Fleet fleet,
     required Game game,
     required bool isHomeFleet,
-    required void Function(List<String> ships) onConfirm,
+    required AppEventBus bus,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -48,7 +48,7 @@ void main() {
                     game: game,
                     humanPlayerId: 'gp1',
                     isHomeFleet: isHomeFleet,
-                    onConfirm: onConfirm,
+                    bus: bus,
                   ),
                 );
               });
@@ -84,7 +84,7 @@ void main() {
       fleet: fleet,
       game: _minimalGame(provinces: const []),
       isHomeFleet: false,
-      onConfirm: (_) {},
+      bus: AppEventBus.create(),
     );
 
     expect(find.text('carrack (3)'), findsOneWidget);
@@ -112,7 +112,7 @@ void main() {
         fleet: fleet,
         game: _minimalGame(provinces: const []),
         isHomeFleet: false,
-        onConfirm: (_) {},
+        bus: AppEventBus.create(),
       );
 
       await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
@@ -143,7 +143,7 @@ void main() {
         fleet: fleet,
         game: _minimalGame(provinces: const []),
         isHomeFleet: false,
-        onConfirm: (_) {},
+        bus: AppEventBus.create(),
       );
 
       await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
@@ -160,10 +160,16 @@ void main() {
     },
   );
 
-  testWidgets('confirm sends only ships shown on new fleet side', (
+  testWidgets('confirm emits split request with only ships on new fleet side', (
     WidgetTester tester,
   ) async {
-    List<String>? captured;
+    NavalSplitFleetRequestedEvent? captured;
+    final bus = AppEventBus.create();
+    final sub = bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+      captured = e;
+    });
+    addTearDown(sub.cancel);
+
     final fleet = Fleet(
       id: 'f1d',
       ownerId: 'gp1',
@@ -177,7 +183,7 @@ void main() {
       fleet: fleet,
       game: _minimalGame(provinces: const []),
       isHomeFleet: false,
-      onConfirm: (ships) => captured = ships,
+      bus: bus,
     );
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
@@ -185,7 +191,10 @@ void main() {
     await tester.tap(find.text('Confirm Split'));
     await tester.pumpAndSettle();
 
-    expect(captured, [fleet.ships.first.id]);
+    expect(captured, isNotNull);
+    expect(captured!.shipInstanceIdsToNewFleet, [fleet.ships.first.id]);
+    expect(captured!.originalFleetId, fleet.id);
+    expect(captured!.humanPlayerId, 'gp1');
   });
 
   testWidgets('per-row controls: one and all transfers with exact counts', (
@@ -204,7 +213,7 @@ void main() {
       fleet: fleet,
       game: _minimalGame(provinces: const []),
       isHomeFleet: false,
-      onConfirm: (_) {},
+      bus: AppEventBus.create(),
     );
 
     expect(find.text('carrack (2)'), findsOneWidget);
@@ -238,7 +247,7 @@ void main() {
       fleet: fleet,
       game: _minimalGame(provinces: const []),
       isHomeFleet: false,
-      onConfirm: (_) {},
+      bus: AppEventBus.create(),
     );
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('fluyte')));
@@ -254,7 +263,13 @@ void main() {
   testWidgets('home fleet can split to zero original ships', (
     WidgetTester tester,
   ) async {
-    List<String>? captured;
+    NavalSplitFleetRequestedEvent? captured;
+    final bus = AppEventBus.create();
+    final sub = bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+      captured = e;
+    });
+    addTearDown(sub.cancel);
+
     final fleet = Fleet(
       id: 'home_fleet',
       ownerId: 'gp1',
@@ -268,7 +283,7 @@ void main() {
       fleet: fleet,
       game: _minimalGame(provinces: const []),
       isHomeFleet: true,
-      onConfirm: (ships) => captured = ships,
+      bus: bus,
     );
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
@@ -280,7 +295,7 @@ void main() {
     await tester.tap(find.text('Confirm Split'));
     await tester.pumpAndSettle();
     expect(captured, isNotNull);
-    expect(captured, hasLength(1));
-    expect(captured!.first, fleet.ships.single.id);
+    expect(captured!.shipInstanceIdsToNewFleet, hasLength(1));
+    expect(captured!.shipInstanceIdsToNewFleet.first, fleet.ships.single.id);
   });
 }
