@@ -98,6 +98,13 @@ Game applyCapitalReassignmentAfterCombat(
         provinceId: newProvinceId,
         tile: tile,
       );
+      game = game.copyWith(
+        worldState: applyGreatPowerCapitalProvinceTownDevelopment(
+          game.worldState,
+          regionId,
+          newProvinceId,
+        ),
+      );
       _log.i(
         'player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
       );

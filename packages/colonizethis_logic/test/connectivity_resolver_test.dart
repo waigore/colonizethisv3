@@ -482,7 +482,12 @@ void main() {
         topology: topology,
       );
 
-      expect(resultA['pl1']!.connected, equals(resultB['pl1']!.connected));
+      // Road/Town rules: Town-rule closure can differ when only townTileKey moves;
+      // road-rule set must stay aligned for the same roads/capital.
+      expect(
+        resultA['pl1']!.connectedByRoadRule,
+        equals(resultB['pl1']!.connectedByRoadRule),
+      );
       expect(
         resultA['pl1']!.pathTransportCap,
         equals(resultB['pl1']!.pathTransportCap),

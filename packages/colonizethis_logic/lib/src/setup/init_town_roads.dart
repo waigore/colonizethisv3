@@ -27,6 +27,7 @@ Game applyInitTownRoadsToCapitals({
   required Game game,
   required GameSetupConfig config,
   required Map<String, TileMapResult> tileMapByRegion,
+  Map<String, List<String>> bootstrapGrainTileKeysByPlayerId = const {},
 }) {
   if (config.initTownRoadWiringRegionIds.isEmpty) {
     return game;
@@ -80,6 +81,36 @@ Game applyInitTownRoadsToCapitals({
 
   for (final p in game.players) {
     collectForFaction(p.id, p.capitalTile);
+    final extra = bootstrapGrainTileKeysByPlayerId[p.id];
+    if (extra == null) continue;
+    final cap = p.capitalTile;
+    if (cap == null) continue;
+    final regionId = cap.regionId;
+    if (!config.initTownRoadWiringRegionIds.contains(regionId)) continue;
+    final map = tileMapByRegion[regionId];
+    if (map == null) continue;
+    final capitalKey = cap.toTileKey();
+    final allowed = _allowedTileKeysForFaction(ws, regionId, p.id);
+    if (allowed.isEmpty || !allowed.contains(capitalKey)) continue;
+    final coordToKey = _coordToTileKey(ws, regionId);
+    final parent = _bfsParentsFromCapital(
+      capitalKey: capitalKey,
+      allowed: allowed,
+      coordToKey: coordToKey,
+      mapWidth: map.width,
+      mapHeight: map.height,
+    );
+    for (final farmKey in extra) {
+      if (!parent.containsKey(farmKey) && farmKey != capitalKey) {
+        continue;
+      }
+      _addPathTilesToSet(
+        townOrCapitalKey: farmKey,
+        capitalKey: capitalKey,
+        parent: parent,
+        out: toRaise,
+      );
+    }
   }
   for (final m in game.minorNations) {
     collectForFaction(m.id, m.capitalTile);
