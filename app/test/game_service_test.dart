@@ -48,40 +48,6 @@ class _PendingOverturesGameService extends GameService {
   }
 }
 
-class _PendingInterventionGameService extends GameService {
-  _PendingInterventionGameService(super.box, super.adapter);
-
-  @override
-  TurnResolutionResult runTurnResolution(
-    Game current, {
-    Orders? orders,
-    Orders? aiOrders,
-    MapTopology? topology,
-    Map<String, TileMapResult>? tileMapByRegion,
-    void Function(GameEvent)? onGameEvent,
-  }) {
-    final humanId = current.players.firstWhere((p) => p.isHuman).id;
-    final prompts = <Object>[
-      InterventionPrompt(
-        aggressorGpId: 'gp2',
-        defenderMinorOrTribeId: 'minor_x',
-        interveningGpId: humanId,
-      ),
-    ];
-    eventBus?.emit(InterventionRequiredEvent(prompts: prompts));
-    return TurnResolutionPendingIntervention(
-      game: current,
-      pendingInterventions: [
-        InterventionPrompt(
-          aggressorGpId: 'gp2',
-          defenderMinorOrTribeId: 'minor_x',
-          interveningGpId: humanId,
-        ),
-      ],
-    );
-  }
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -175,30 +141,72 @@ void main() {
     );
 
     test(
-      'runTurnResolution returns TurnResolutionPendingIntervention and emits InterventionRequiredEvent',
+      'runTurnResolution emits InterventionRequiredEvent from GameService when resolver returns pending intervention',
       () async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        final service = _PendingInterventionGameService(box, adapter);
+        final service = GameService(box, adapter);
         service.eventBus = bus;
 
+        const ow = 'oldWorld';
+        const minorProvId = '$ow|M1';
         final game = Game(
-          id: 'g_intervention_test',
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
+          id: 'g_intervention_bus_integration',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: minorProvId, regionId: ow, ownerId: 'minor1'),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(),
           ),
           players: const [
             Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'Aggressor', isHuman: false, treasury: 0),
           ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              state: RelationState.atPeace,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'minor1',
+              state: RelationState.atPeace,
+            ),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: const {
+            'gp2': [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+          },
         );
 
         final received = <AppEvent>[];
         bus.on<InterventionRequiredEvent>().listen(received.add);
 
-        final result = service.runTurnResolution(game);
+        final result = service.runTurnResolution(game, orders: orders);
 
         await pumpEventQueue();
         expect(result, isA<TurnResolutionPendingIntervention>());
@@ -207,6 +215,7 @@ void main() {
         expect(event.prompts, hasLength(1));
         final prompt = event.prompts.first as InterventionPrompt;
         expect(prompt.aggressorGpId, 'gp2');
+        expect(prompt.defenderMinorOrTribeId, 'minor1');
         expect(prompt.interveningGpId, 'gp1');
       },
     );
