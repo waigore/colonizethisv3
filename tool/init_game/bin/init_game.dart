@@ -8,11 +8,11 @@ import 'dart:io';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = logicLogger('init_game');
 
 Future<void> main(List<String> arguments) async {
   String? configPath;
@@ -245,31 +245,31 @@ Future<void> main(List<String> arguments) async {
   }
 
   try {
-    _log.i('logic: init_game start');
-    _log.i('logic: Running game setup...');
+    _log.i('start');
+    _log.i('Running game setup...');
     final shouldRenderPng = outputMapPath != null && outputMapPath.isNotEmpty;
     final result = runInitGame(
       config: config,
       options: InitGameOptions(cellSize: 24, renderPng: shouldRenderPng),
     );
-    _log.i('logic: Game created: ${result.game.id}');
+    _log.i('Game created: ${result.game.id}');
 
     if (outputMapPath != null && outputMapPath.isNotEmpty) {
       File(outputMapPath).writeAsBytesSync(result.mapPngBytes);
-      _log.d('logic: Map PNG: $outputMapPath');
+      _log.d('Map PNG: $outputMapPath');
     }
 
     if (outputMarkdownPath != null && outputMarkdownPath.isNotEmpty) {
       File(outputMarkdownPath).writeAsStringSync(result.markdown);
-      _log.d('logic: Markdown: $outputMarkdownPath');
+      _log.d('Markdown: $outputMarkdownPath');
     }
 
     if (!noSave && outputGamePath != null && outputGamePath.isNotEmpty) {
       await _saveGame(result.game, outputGamePath);
-      _log.d('logic: Game saved: $outputGamePath');
+      _log.d('Game saved: $outputGamePath');
     }
 
-    _log.i('logic: Faction setup:\n${result.markdown}');
+    _log.i('Faction setup:\n${result.markdown}');
   } catch (e) {
     final message = e is ArgumentError
         ? (e.message ?? e.toString())

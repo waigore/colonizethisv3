@@ -1,5 +1,7 @@
 // ctterm entrypoint. SPEC/tui/ctterm.md. Run with: dart run ctterm [--data-dir <path>]
 
+import 'dart:async';
+
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
@@ -38,8 +40,19 @@ void main(List<String> args) async {
     );
   }
 
-  runApp(CttermApp(
-    dataDirOverride: dataDirOverride,
-    initialLockDetected: initialLockDetected,
-  ));
+  runZonedGuarded(
+    () {
+      runApp(CttermApp(
+        dataDirOverride: dataDirOverride,
+        initialLockDetected: initialLockDetected,
+      ));
+    },
+    (Object error, StackTrace stackTrace) {
+      tuiLogger().e(
+        'uncaught async error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    },
+  );
 }

@@ -9,6 +9,28 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = tuiLogger();
 
+/// Builds the rows submitted when the player confirms all prompts (Enter).
+/// SPEC/tui/screens/pending-intervention.md.
+List<InterventionDecision> buildInterventionDecisionsForSubmit({
+  required List<InterventionPrompt> prompts,
+  required List<InterventionChoice> choices,
+}) {
+  if (prompts.length != choices.length) {
+    throw ArgumentError(
+      'prompts (${prompts.length}) and choices (${choices.length}) length mismatch',
+    );
+  }
+  return List<InterventionDecision>.generate(prompts.length, (i) {
+    final p = prompts[i];
+    return InterventionDecision(
+      aggressorGpId: p.aggressorGpId,
+      defenderMinorOrTribeId: p.defenderMinorOrTribeId,
+      interveningGpId: p.interveningGpId,
+      choice: choices[i],
+    );
+  });
+}
+
 /// Blocking screen: human chooses intervene / do naught / protest per prompt.
 class PendingInterventionScreen extends StatefulComponent {
   const PendingInterventionScreen({
@@ -148,18 +170,10 @@ class _PendingInterventionScreenState extends State<PendingInterventionScreen> {
       return true;
     }
     if (key == LogicalKey.enter) {
-      final decisions = <InterventionDecision>[];
-      for (var i = 0; i < component.prompts.length; i++) {
-        final p = component.prompts[i];
-        decisions.add(
-          InterventionDecision(
-            aggressorGpId: p.aggressorGpId,
-            defenderMinorOrTribeId: p.defenderMinorOrTribeId,
-            interveningGpId: p.interveningGpId,
-            choice: _choices[i],
-          ),
-        );
-      }
+      final decisions = buildInterventionDecisionsForSubmit(
+        prompts: component.prompts,
+        choices: _choices,
+      );
       _log.d('submitting ${decisions.length} decision(s)');
       component.onDecisions(decisions);
       return true;
