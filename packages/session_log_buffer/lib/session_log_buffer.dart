@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 /// Default maximum number of log entries to retain (oldest dropped when exceeded).
 const int defaultMaxEntries = 5000;
 
-/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game).
+/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game, app).
 /// Used for filter options in the viewer.
 const List<String> knownPrefixes = [
   'ctdev',
@@ -16,6 +16,7 @@ const List<String> knownPrefixes = [
   'save',
   'game',
   'tui',
+  'app',
 ];
 
 /// Standard log levels for filter options.

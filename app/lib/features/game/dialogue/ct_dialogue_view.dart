@@ -1,14 +1,14 @@
 import 'dart:async';
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:jenny/jenny.dart';
-import 'package:logger/logger.dart';
 
 /// Flutter/Jenny dialogue view that drives UI via callbacks and completers.
 /// SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.
 class CtDialogueView extends DialogueView {
-  CtDialogueView({Logger? logger}) : _log = logger ?? Logger();
+  CtDialogueView({CtLogger? logger}) : _log = logger ?? appLogger('dialogue');
 
-  final Logger _log;
+  final CtLogger _log;
 
   DialogueLine? _currentLine;
   DialogueChoice? _currentChoice;
@@ -40,7 +40,7 @@ class CtDialogueView extends DialogueView {
 
   @override
   FutureOr<bool> onLineStart(DialogueLine line) {
-    _log.d('ui:dialogue: line start "${line.text}"');
+    _log.d('line start "${line.text}"');
     _currentLine = line;
     _currentChoice = null;
     _lineCompleter = Completer<void>();
@@ -54,7 +54,7 @@ class CtDialogueView extends DialogueView {
 
   @override
   FutureOr<int?> onChoiceStart(DialogueChoice choice) {
-    _log.d('ui:dialogue: choice start ${choice.options.length} options');
+    _log.d('choice start ${choice.options.length} options');
     _currentLine = null;
     _currentChoice = choice;
     _choiceCompleter = Completer<int?>();
@@ -68,7 +68,7 @@ class CtDialogueView extends DialogueView {
 
   @override
   FutureOr<void> onDialogueFinish() {
-    _log.d('ui:dialogue: dialogue finish');
+    _log.d('dialogue finish');
     _currentLine = null;
     _currentChoice = null;
     _lineCompleter = null;
@@ -78,6 +78,6 @@ class CtDialogueView extends DialogueView {
 
   @override
   void onDialogueStart() {
-    _log.d('ui:dialogue: dialogue start');
+    _log.d('dialogue start');
   }
 }

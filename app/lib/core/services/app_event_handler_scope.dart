@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
@@ -30,7 +30,8 @@ const String grantOrSubsidyDialogId = 'grant_or_subsidy';
 /// [OpenDialogEvent] id for [NewGameLeaderSelectionDialog]. SPEC/program/app-ui-wiring.md.
 const String newGameLeaderSelectionDialogId = 'new_game_leader_selection';
 
-final _log = Logger();
+final _logShell = appLogger('shell');
+final _logEvent = appLogger('event');
 
 /// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
 /// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
@@ -164,8 +165,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                 ) {
                   final navCtx = appNavigatorKey.currentContext;
                   if (navCtx == null) {
-                    _log.w(
-                      'shell: appNavigatorKey has no context; skipping new game setup',
+                    _logShell.w(
+                      'appNavigatorKey has no context; skipping new game setup',
                     );
                     return;
                   }
@@ -285,8 +286,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         ref.read(currentGameProvider.notifier).setGame(e.game);
       }),
     ]);
-    _log.d(
-      'ui:app_event: AppEventHandler bound; session command listeners attached',
+    _logEvent.d(
+      'AppEventHandler bound; session command listeners attached',
     );
   }
 

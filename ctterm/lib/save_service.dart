@@ -7,10 +7,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:path/path.dart' as path;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 String? _initDataDir;
 Box<dynamic>? _box;
@@ -63,7 +63,7 @@ Future<Box<dynamic>> _ensureBox([String? dataDirOverride]) async {
     throw StaleLockException(dir);
   }
 
-  _log.d('tui:save: Hive box opened at $dir');
+  _log.d('Hive box opened at $dir');
   return _box!;
 }
 
@@ -74,7 +74,7 @@ void removeStaleLock([String? dataDirOverride]) {
   final lockFile = File(path.join(dir, gamesLockFilename));
   if (lockFile.existsSync()) {
     lockFile.deleteSync();
-    _log.i('tui:save: removed lock file at ${lockFile.path}');
+    _log.i('removed lock file at ${lockFile.path}');
   }
 }
 
@@ -91,7 +91,7 @@ final _adapter = GameSaveAdapter();
 Future<List<String>> listGameIds([String? dataDirOverride]) async {
   final box = await _ensureBox(dataDirOverride);
   final ids = _adapter.listGameIds(box);
-  _log.d('tui:save: listGameIds count=${ids.length}');
+  _log.d('listGameIds count=${ids.length}');
   return ids;
 }
 
@@ -128,7 +128,7 @@ Future<void> saveGameAndMapData(
     combinedTopology: result.combinedTopology,
     warpLinks: result.warpLinks,
   );
-  _log.i('tui:save: saved gameId=${game.id} with map data');
+  _log.i('saved gameId=${game.id} with map data');
 }
 
 /// Summary of a saved game for display in Load Game list.
@@ -179,7 +179,7 @@ Future<List<SaveSummary>> listSaves([String? dataDirOverride]) async {
   // Sort by turn number descending (most recent first)
   summaries.sort((a, b) => b.turnNumber.compareTo(a.turnNumber));
 
-  _log.d('tui:save: listSaves count=${summaries.length}');
+  _log.d('listSaves count=${summaries.length}');
   return summaries;
 }
 
@@ -187,5 +187,5 @@ Future<List<SaveSummary>> listSaves([String? dataDirOverride]) async {
 Future<void> deleteSave(String gameId, [String? dataDirOverride]) async {
   final box = await _ensureBox(dataDirOverride);
   _adapter.delete(box, gameId);
-  _log.i('tui:save: deleted gameId=$gameId');
+  _log.i('deleted gameId=$gameId');
 }

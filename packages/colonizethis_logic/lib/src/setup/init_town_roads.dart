@@ -43,7 +43,7 @@ Game applyInitTownRoadsToCapitals({
     }
     final map = tileMapByRegion[regionId];
     if (map == null) {
-      _log.w('logic: init town roads skip regionId=$regionId (no tile map)');
+      _log.w('init town roads skip regionId=$regionId (no tile map)');
       return;
     }
 
@@ -98,7 +98,7 @@ Game applyInitTownRoadsToCapitals({
   }
 
   _log.i(
-    'logic: init town roads raised ${_initTownRoadLevel} on ${toRaise.length} tile(s)',
+    'init town roads raised ${_initTownRoadLevel} on ${toRaise.length} tile(s)',
   );
   return game.copyWith(worldState: ws.copyWith(tileState: tileState));
 }

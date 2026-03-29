@@ -44,7 +44,7 @@ RichesToTreasuryResult resolveRichesToTreasury({
   }
 
   _log.d(
-    'logic: riches-to-treasury treasuryDelta=$totalCash multiplier=$richesCashMultiplier',
+    'riches-to-treasury treasuryDelta=$totalCash multiplier=$richesCashMultiplier',
   );
   return RichesToTreasuryResult(
     stockpile: updatedStockpile,

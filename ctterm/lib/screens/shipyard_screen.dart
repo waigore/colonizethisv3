@@ -1,13 +1,13 @@
 // Shipyard Screen: construct naval units. SPEC/tui/screens/shipyard.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Display info for a ship type in the Shipyard.
 class ShipDisplayInfo {
@@ -165,7 +165,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
       navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
     );
     component.onOrdersChanged(newOrders);
-    _log.i('tui:shipyard: build order for ${ship.name} in $provinceId');
+    _log.i('build order for ${ship.name} in $provinceId');
     setState(() { _inputMode = 'none'; _provinceInput = ''; _feedbackMessage = 'Build order issued'; _feedbackColor = Colors.green; });
   }
 

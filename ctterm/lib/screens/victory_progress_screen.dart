@@ -1,11 +1,11 @@
 // Victory/Progress screen: shows progress toward victory. SPEC/tui/ctterm.md, SPEC/tui/screens/victory-progress.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Victory/Progress screen: shows progress toward victory condition.
 /// 
@@ -56,18 +56,18 @@ class _VictoryProgressScreenState extends State<VictoryProgressScreen> {
       onKeyEvent: (event) {
         if (event.logicalKey == LogicalKey.escape || 
             event.character?.toLowerCase() == 'b') {
-          _log.d('tui:nav: Victory/Progress -> shell');
+          _log.d('Victory/Progress -> shell');
           component.onNavigate(CttermRoute.inGameShell);
           return true;
         }
         // For testing: V = victory, D = defeat
         if (event.character?.toLowerCase() == 'v') {
-          _log.d('tui:game: test victory triggered');
+          _log.d('test victory triggered');
           component.onVictory();
           return true;
         }
         if (event.character?.toLowerCase() == 'd') {
-          _log.d('tui:game: test defeat triggered');
+          _log.d('test defeat triggered');
           component.onDefeat();
           return true;
         }

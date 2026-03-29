@@ -153,7 +153,7 @@ Game resolveBattleContext(
       defenderLeaderMultiplier: defenderLeaderMult,
     );
     _combatLog.d(
-      'logic: combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+      'combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'attackerFactionId=${attacker.side.factionId} result=${outcome.result.name} '
       'attCasualties=${outcome.attackerCasualties.length} '
       'defCasualties=${outcome.defenderCasualties.length}',
@@ -248,7 +248,7 @@ Game resolveBattleContext(
     }
   }
   _combatLog.i(
-    'logic: combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+    'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'mode=autoResolve provinceFlipped=${post.provinceChangedOwner} '
     'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',
   );

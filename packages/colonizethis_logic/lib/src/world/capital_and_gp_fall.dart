@@ -38,7 +38,7 @@ Game applyCapitalReassignmentAfterCombat(
       }).toList();
       game = game.copyWith(players: updatedPlayers);
       _log.i(
-        'logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
+        'player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
       );
       continue;
     }
@@ -54,7 +54,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: StateError(msg),
         stackTrace: StackTrace.current,
       );
@@ -67,7 +67,7 @@ Game applyCapitalReassignmentAfterCombat(
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: err,
         stackTrace: StackTrace.current,
       );
@@ -81,7 +81,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: e,
         stackTrace: st,
       );
@@ -99,13 +99,13 @@ Game applyCapitalReassignmentAfterCombat(
         tile: tile,
       );
       _log.i(
-        'logic: player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
+        'player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
       );
     } catch (e, st) {
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: e,
         stackTrace: st,
       );

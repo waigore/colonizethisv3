@@ -101,7 +101,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
-  _diploLog.d('logic: diplomacy phase start');
+  _diploLog.d('diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
   var state = game;
 
@@ -118,7 +118,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   if (overtureResult.pendingOvertures != null &&
       overtureResult.pendingOvertures!.isNotEmpty) {
     _diploLog.d(
-      'logic: diplomacy phase suspended (pending overture decisions)',
+      'diplomacy phase suspended (pending overture decisions)',
     );
     return DiplomacyPhaseResult(
       state,
@@ -170,7 +170,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   if (ctaResult.pendingCallToArms != null &&
       ctaResult.pendingCallToArms!.isNotEmpty) {
     _diploLog.d(
-      'logic: diplomacy phase suspended (pending call to arms)',
+      'diplomacy phase suspended (pending call to arms)',
     );
     return DiplomacyPhaseResult(
       state,
@@ -191,7 +191,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // 9. Apply relation modifiers (grants, etc.)
   state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
 
-  _diploLog.d('logic: diplomacy phase end');
+  _diploLog.d('diplomacy phase end');
   return DiplomacyPhaseResult(state);
 }
 
@@ -355,7 +355,7 @@ _OverturePaymentsResult _processOverturePayments(
         wasAiInitiator: isAiControlledForEvidence(state, gpId),
       );
       _diploLog.i(
-        'logic: diplomacy overture $gpId -> $targetId $stage (accepted)',
+        'diplomacy overture $gpId -> $targetId $stage (accepted)',
       );
     }
   }
@@ -428,7 +428,7 @@ Game _resolveJoinEmpireColony(
         amount: cost,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
-      _diploLog.i('logic: diplomacy join empire $gpId $targetId cost=$cost');
+      _diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
     }
   }
   return game;
@@ -607,7 +607,7 @@ Game _processAlliances(
         toFactionId: targetId,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
-      _diploLog.i('logic: diplomacy alliance $gpId-$targetId');
+      _diploLog.i('diplomacy alliance $gpId-$targetId');
     }
   }
   return game;
@@ -682,7 +682,7 @@ Game _processWarAndPeace(
             wasAiInitiator: isAiControlledForEvidence(game, gpId),
           );
           _diploLog.i(
-            'logic: diplomacy war declared $gpId vs $targetId (scores reset to 20)',
+            'diplomacy war declared $gpId vs $targetId (scores reset to 20)',
           );
         }
       } else if (order.type == DiplomaticOrderType.offerPeace) {
@@ -745,7 +745,7 @@ Game _processWarAndPeace(
               toFactionId: targetId,
               wasAiInitiator: isAiControlledForEvidence(game, gpId),
             );
-            _diploLog.i('logic: diplomacy peace $gpId-$targetId');
+            _diploLog.i('diplomacy peace $gpId-$targetId');
           } else {
             game = game.copyWith(
               dossierEvidenceEntries: [
@@ -1061,7 +1061,7 @@ Game _cancelSubsidiesBetweenGps(
   var g = game.copyWith(subsidyStates: subsidyStates);
   for (final s in cancelled) {
     _diploLog.i(
-      'logic: diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
+      'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
     );
     g = _appendDiplomaticEvent(
       g,
@@ -1102,7 +1102,7 @@ Game _applyCallToArmsAccept(
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
   );
   _diploLog.i(
-    'logic: diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
+    'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
   );
   return g;
 }
@@ -1150,7 +1150,7 @@ Game _applyCallToArmsRefuse(
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
   );
   _diploLog.i(
-    'logic: diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
+    'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
   );
   return g;
 }
@@ -1265,7 +1265,7 @@ Game _terminateAgreementsOnWar(Game game) {
         reason: 'war',
       );
     }
-    _diploLog.i('logic: diplomacy agreements terminated (war)');
+    _diploLog.i('diplomacy agreements terminated (war)');
   }
   return game;
 }
@@ -1328,7 +1328,7 @@ Game _applyRelationModifiersAndUpdateScores(
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
       _diploLog.i(
-        'logic: diplomacy GrantAid $gpId -> $targetId amount $amount',
+        'diplomacy GrantAid $gpId -> $targetId amount $amount',
       );
     }
   }
@@ -1401,11 +1401,11 @@ Game _applyRelationModifiersAndUpdateScores(
       final targetPlayer = game.playerById(targetId);
       if (targetPlayer != null) {
         _diploLog.i(
-          'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)',
+          'diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing)',
         );
       } else {
         _diploLog.i(
-          'logic: diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)',
+          'diplomacy SetSubsidy $gpId -> $targetId amount $amount/turn (ongoing relation boost)',
         );
       }
     }
@@ -1444,7 +1444,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
       _diploLog.i(
-        'logic: diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)',
+        'diplomacy subsidy cancelled $payerId -> $targetId (insufficient funds)',
       );
       continue;
     }
@@ -1466,7 +1466,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
           .where((s) => s.payerId != payerId || s.targetId != targetId)
           .toList();
       _diploLog.i(
-        'logic: diplomacy subsidy cancelled $payerId -> $targetId (war declared)',
+        'diplomacy subsidy cancelled $payerId -> $targetId (war declared)',
       );
       continue;
     }
@@ -1495,7 +1495,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
         turn: turn,
       );
       _diploLog.i(
-        'logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost',
+        'diplomacy subsidy processed $payerId -> $targetId amount=$amount boost=+$boost',
       );
     } else {
       // GP target: transfer treasury
@@ -1506,7 +1506,7 @@ Game _processOngoingSubsidies(Game game, int turn) {
         );
       }
       _diploLog.i(
-        'logic: diplomacy subsidy processed $payerId -> $targetId amount=$amount (treasury transfer)',
+        'diplomacy subsidy processed $payerId -> $targetId amount=$amount (treasury transfer)',
       );
     }
   }

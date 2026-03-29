@@ -1,11 +1,11 @@
 // Load Game screen. SPEC/tui/screens/load-game.md, SPEC/tui/ctterm.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/save_service.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Load Game: lists saved games, allows load or delete.
 class LoadGameScreen extends StatefulComponent {
@@ -96,14 +96,14 @@ class _LoadGameScreenState extends State<LoadGameScreen> {
   void _doLoad() {
     if (_saves.isEmpty || _selectedIndex >= _saves.length) return;
     final gameId = _saves[_selectedIndex].gameId;
-    _log.d('tui:save: load gameId=$gameId');
+    _log.d('load gameId=$gameId');
     component.onLoad(gameId);
   }
 
   void _doDelete() {
     if (_saves.isEmpty || _selectedIndex >= _saves.length) return;
     final gameId = _saves[_selectedIndex].gameId;
-    _log.i('tui:save: delete gameId=$gameId');
+    _log.i('delete gameId=$gameId');
     component.onDelete(gameId);
     setState(() {
       _saves.removeAt(_selectedIndex);

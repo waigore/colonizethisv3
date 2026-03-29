@@ -29,7 +29,7 @@ Map<String, ExtractionTotals> computeExtraction({
   required Map<String, ConnectivityResult> connectivityResult,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
 }) {
-  _log.d('logic: extraction compute start players=${game.players.length}');
+  _log.d('extraction compute start players=${game.players.length}');
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
@@ -122,7 +122,7 @@ Map<String, ExtractionTotals> computeExtraction({
     (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
   );
   _log.d(
-    'logic: extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
+    'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );
   return out;
 }

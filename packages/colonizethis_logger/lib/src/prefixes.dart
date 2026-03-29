@@ -6,8 +6,10 @@ const String kLogPrefixSave = 'save';
 const String kLogPrefixTui = 'tui';
 const String kLogPrefixGame = 'game';
 const String kLogPrefixApp = 'app';
+const String kLogPrefixCtdev = 'ctdev';
 
 const List<String> allLogPrefixes = [
+  kLogPrefixCtdev,
   kLogPrefixLogic,
   kLogPrefixAi,
   kLogPrefixData,

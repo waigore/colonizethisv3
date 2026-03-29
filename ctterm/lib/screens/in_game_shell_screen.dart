@@ -2,7 +2,7 @@
 // SPEC/tui/ctterm.md, SPEC/tui/screens/in-game-shell.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -11,7 +11,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/map_tui_mapping.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// In-game shell: topology graph map, HUD, province info panel, navigation to panels.
 class InGameShellScreen extends StatefulComponent {
@@ -309,7 +309,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
       _neighbourIndex = 0;
     });
     _ensureSelection();
-    _log.d('tui:map: region changed to $_selectedRegion');
+    _log.d('region changed to $_selectedRegion');
   }
 
   void _selectNextNeighbour() {
@@ -422,7 +422,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   Future<void> _handleEndTurn() async {
     if (_isEndingTurn) return;
     setState(() => _isEndingTurn = true);
-    _log.d('tui:game: ending turn $_turn');
+    _log.d('ending turn $_turn');
     await component.onEndTurn();
     final game = component.game;
     if (game?.victory != null) {
@@ -450,7 +450,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
         if (_isConfirmingEndTurn) {
           if (key == LogicalKey.enter || c == 'y') {
             _log.d(
-                'tui:game: end turn confirmed with $_idleCivilianCountForPrompt idle civilian unit(s)');
+                'end turn confirmed with $_idleCivilianCountForPrompt idle civilian unit(s)');
             setState(() {
               _isConfirmingEndTurn = false;
               _idleCivilianCountForPrompt = 0;
@@ -460,7 +460,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           }
           if (key == LogicalKey.escape || c == 'n') {
             _log.d(
-                'tui:game: end turn cancelled with $_idleCivilianCountForPrompt idle civilian unit(s)');
+                'end turn cancelled with $_idleCivilianCountForPrompt idle civilian unit(s)');
             setState(() {
               _isConfirmingEndTurn = false;
               _idleCivilianCountForPrompt = 0;
@@ -503,7 +503,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
           return true;
         }
         if (c == 'm') {
-          _log.d('tui:nav: in-game shell -> map context');
+          _log.d('in-game shell -> map context');
           component.onNavigate(CttermRoute.mapContext);
           return true;
         }
@@ -1009,7 +1009,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
               onKeyEvent: (event) {
                 if (event.logicalKey == LogicalKey.enter ||
                     event.character == '\r') {
-                  _log.d('tui:dialogue: game start intro dismissed');
+                  _log.d('game start intro dismissed');
                   component.onIntroDismissed?.call();
                   return true;
                 }

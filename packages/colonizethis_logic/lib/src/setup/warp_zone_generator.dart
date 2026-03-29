@@ -89,7 +89,7 @@ List<WarpLink> generateWarpZones({
     ..sort();
 
   if (commonEdges.isEmpty) {
-    _log.d('logic: warp zones: no common edges with sea zones, skipping');
+    _log.d('warp zones: no common edges with sea zones, skipping');
     return [];
   }
 
@@ -106,7 +106,7 @@ List<WarpLink> generateWarpZones({
   }
 
   _log.d(
-    'logic: warp zones: ${links.length} links on edges ${commonEdges.join(", ")}',
+    'warp zones: ${links.length} links on edges ${commonEdges.join(", ")}',
   );
   return links;
 }

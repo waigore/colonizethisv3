@@ -2,10 +2,10 @@
 
 import 'dart:async';
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Screen shown while the game world is being generated.
 /// SPEC/tui/screens/generating-world.md.
@@ -102,20 +102,20 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
 
   void _onGenerationComplete() {
     if (_cancelled) return;
-    _log.d('tui:nav: World generation complete -> in-game shell');
+    _log.d('World generation complete -> in-game shell');
     component.onComplete();
   }
 
   void _handleCancel() {
     if (_error != null) {
       // After error, any key returns to main menu
-      _log.d('tui:nav: Generation error acknowledged -> main menu');
+      _log.d('Generation error acknowledged -> main menu');
       component.onCancel();
       return;
     }
 
     _cancelled = true;
-    _log.d('tui:nav: Generation cancelled by user -> main menu');
+    _log.d('Generation cancelled by user -> main menu');
     component.onCancel();
   }
 

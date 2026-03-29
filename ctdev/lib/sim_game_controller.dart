@@ -2,11 +2,13 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 import 'package:meta/meta.dart';
 
 import 'ctdev_log.dart';
+
+final _ctdevSimLog = ctdevLogger();
 
 /// One order entry in the sim game order history (for UI display).
 class SimOrderHistoryEntry {
@@ -166,8 +168,8 @@ class SimGameController {
         final orders = generateOrdersForPlayer(_game, _topology, player.id);
         _pendingOrdersByPlayerId[player.id] = orders;
       }
-      Logger().i(
-        'ctdev: Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
+      _ctdevSimLog.i(
+        'Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
       );
       break;
     }
@@ -306,7 +308,7 @@ class SimGameController {
     final line = _combatEventUiLine(event);
     if (line == null) return;
     _lastTurnCombatSummaries.add(line);
-    Logger().i('ctdev: $line');
+    _ctdevSimLog.i(line);
   }
 
   bool _isOrdersEffectivelyEmpty(Orders o) =>
@@ -583,10 +585,10 @@ class SimGameController {
     }
 
     if (flips.isEmpty) {
-      Logger().i('ctdev: Turn $turn ($year): no province ownership changes');
+      _ctdevSimLog.i('Turn $turn ($year): no province ownership changes');
     } else {
-      Logger().i(
-        'ctdev: Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
+      _ctdevSimLog.i(
+        'Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
       );
     }
   }

@@ -218,7 +218,7 @@ TurnResolutionResult resolveTurnForGame({
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  _log.i('logic: turn $turn resolve start');
+  _log.i('turn $turn resolve start');
   Game state = game;
   final landFeedingCoverageByPlayerId = <String, double>{};
   final navalFeedingCoverageByPlayerId = <String, double>{};
@@ -230,7 +230,7 @@ TurnResolutionResult resolveTurnForGame({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
-    _log.d('logic: phase ${phase.name} start');
+    _log.d('phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
         // Orders are assumed to already be attached to the Game or passed in.
@@ -318,7 +318,7 @@ TurnResolutionResult resolveTurnForGame({
               );
             }
             throw StateError(
-              'logic: diplomacy pending but no pending lists populated',
+              'diplomacy pending but no pending lists populated',
             );
           }
           state = diploResult.game;
@@ -400,10 +400,10 @@ TurnResolutionResult resolveTurnForGame({
           break;
         }
     }
-    _log.d('logic: phase ${phase.name} end');
+    _log.d('phase ${phase.name} end');
   }
 
-  _log.i('logic: turn $turn resolve end');
+  _log.i('turn $turn resolve end');
   return TurnResolutionComplete(state);
 }
 
@@ -557,8 +557,7 @@ void _filterOrderList<T>(
         orderSummary: orderSummary(order),
         reasonCode: r.reason!,
       );
-      eventBus?.publish(event);
-      onGameEvent?.call(event);
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
     }
   }
 }
@@ -1051,10 +1050,10 @@ Game _runCombatPhase(
   };
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
-  _log.i('logic: combat conflict_detection start turn=$turn');
+  _log.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
   _log.i(
-    'logic: combat conflict_detection end turn=$turn battleContexts=${battles.length}',
+    'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
