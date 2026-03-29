@@ -44,6 +44,32 @@ class _PendingTurnGameService extends GameService {
   }
 }
 
+class _PendingInterventionGameService extends GameService {
+  _PendingInterventionGameService(super.box, super.adapter);
+
+  @override
+  TurnResolutionResult runTurnResolution(
+    Game current, {
+    Orders? orders,
+    Orders? aiOrders,
+    MapTopology? topology,
+    Map<String, TileMapResult>? tileMapByRegion,
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final humanId = current.players.firstWhere((p) => p.isHuman).id;
+    return TurnResolutionPendingIntervention(
+      game: current,
+      pendingInterventions: [
+        InterventionPrompt(
+          aggressorGpId: 'aggressor_gp',
+          defenderMinorOrTribeId: 'minor_1',
+          interveningGpId: humanId,
+        ),
+      ],
+    );
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -101,9 +127,70 @@ void main() {
 
       final container =
           ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
-      final pending = container.read(pendingOverturesProvider);
-      expect(pending, isNotNull);
-      expect(pending, isNotEmpty);
+      final pending = container.read(pendingDiplomacyProvider);
+      expect(pending, isA<PendingDiplomacyOvertures>());
+      expect((pending! as PendingDiplomacyOvertures).offers, isNotEmpty);
+    },
+    timeout: const Timeout(Duration(seconds: 30)),
+  );
+
+  testWidgets(
+    'GameScreen Next turn sets pending intervention when resolution returns pending',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'turn_pending_intervention_ui',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp_human',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+        ],
+        minorNations: const [
+          MinorNation(
+            id: 'minor_1',
+            displayName: 'Minorca',
+            capitalProvinceId: 'oldWorld|p1',
+          ),
+        ],
+      );
+
+      final service = _PendingInterventionGameService(box, GameSaveAdapter());
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => box),
+            gameServiceProvider.overrideWith((ref) => service),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            mapViewDataProvider.overrideWith((ref) => null),
+            gameIdsWithIntroShownProvider.overrideWith(
+              () => GameIdsWithIntroShownNotifier({game.id}),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppThemes.colonial,
+            home: const GameScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.tap(find.textContaining('Next turn').last);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final container =
+          ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+      final pending = container.read(pendingDiplomacyProvider);
+      expect(pending, isA<PendingDiplomacyIntervention>());
+      expect((pending! as PendingDiplomacyIntervention).prompts, isNotEmpty);
     },
     timeout: const Timeout(Duration(seconds: 30)),
   );

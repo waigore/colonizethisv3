@@ -19,6 +19,7 @@ import '../../../widgets/game_to_ui_bus_listener.dart';
 
 import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
+import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
@@ -77,6 +78,27 @@ Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
   return shouldExit ?? false;
 }
 
+void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
+  final gameN = ref.read(currentGameProvider.notifier);
+  final ordersN = ref.read(currentOrdersProvider.notifier);
+  final dipN = ref.read(pendingDiplomacyProvider.notifier);
+  switch (result) {
+    case TurnResolutionComplete():
+      gameN.setGame(result.game);
+      ordersN.clear();
+      dipN.clear();
+    case TurnResolutionPendingOvertures():
+      gameN.setGame(result.game);
+      dipN.setOvertures(result.pendingOvertures);
+    case TurnResolutionPendingIntervention():
+      gameN.setGame(result.game);
+      dipN.setIntervention(result.pendingInterventions);
+    case TurnResolutionPendingCallToArms():
+      gameN.setGame(result.game);
+      dipN.setCallToArms(result.pendingCallToArms);
+  }
+}
+
 void _navigateToMainMenu(BuildContext context) {
   var foundShellRoute = false;
   final navigator = Navigator.of(context);
@@ -105,8 +127,7 @@ class GameScreen extends ConsumerWidget {
         game != null && victory == null && mapViewData == null;
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
-    final pendingOvertures = ref.watch(pendingOverturesProvider);
-    final pendingCallToArms = ref.watch(pendingCallToArmsProvider);
+    final pendingDiplomacy = ref.watch(pendingDiplomacyProvider);
     Widget content = Stack(
       children: [
         if (mapViewData != null && game != null)
@@ -131,20 +152,7 @@ class GameScreen extends ConsumerWidget {
                 final service = ref.read(gameServiceProvider);
                 final orders = ref.read(currentOrdersProvider);
                 final result = service.runTurnResolution(game, orders: orders);
-                if (result is TurnResolutionComplete) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref.read(currentOrdersProvider.notifier).clear();
-                } else if (result is TurnResolutionPendingOvertures) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref
-                      .read(pendingOverturesProvider.notifier)
-                      .setPending(result.pendingOvertures);
-                } else if (result is TurnResolutionPendingCallToArms) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref
-                      .read(pendingCallToArmsProvider.notifier)
-                      .setPending(result.pendingCallToArms);
-                }
+                _applyTurnResolutionResult(ref, result);
               },
               child: Text(
                 appL10n(context).game_nextTurnButton(
@@ -176,73 +184,61 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    if (game != null &&
-        pendingOvertures != null &&
-        pendingOvertures.isNotEmpty) {
-      content = OvertureDialogueOverlay(
-        game: game,
-        pendingOvertures: pendingOvertures,
-        onDecisions: (decisions) {
-          final service = ref.read(gameServiceProvider);
-          final orders = ref.read(currentOrdersProvider);
-          final result = service.resumeOvertureDecisions(
-            game,
-            pendingOvertures,
-            decisions,
-            orders,
+    if (game != null && pendingDiplomacy != null) {
+      switch (pendingDiplomacy) {
+        case PendingDiplomacyOvertures(:final offers) when offers.isNotEmpty:
+          content = OvertureDialogueOverlay(
+            game: game,
+            pendingOvertures: offers,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeOvertureDecisions(
+                game,
+                offers,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
           );
-          ref.read(pendingOverturesProvider.notifier).clear();
-          if (result is TurnResolutionComplete) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref.read(currentOrdersProvider.notifier).clear();
-          } else if (result is TurnResolutionPendingOvertures) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingOverturesProvider.notifier)
-                .setPending(result.pendingOvertures);
-          } else if (result is TurnResolutionPendingCallToArms) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingCallToArmsProvider.notifier)
-                .setPending(result.pendingCallToArms);
-          }
-        },
-        child: content,
-      );
-    }
-
-    if (game != null &&
-        pendingCallToArms != null &&
-        pendingCallToArms.isNotEmpty) {
-      content = CallToArmsDialogueOverlay(
-        game: game,
-        pending: pendingCallToArms,
-        onDecisions: (decisions) {
-          final service = ref.read(gameServiceProvider);
-          final orders = ref.read(currentOrdersProvider);
-          final result = service.resumeCallToArmsDecisions(
-            game,
-            decisions,
-            orders,
+        case PendingDiplomacyIntervention(:final prompts)
+            when prompts.isNotEmpty:
+          content = InterventionDialogueOverlay(
+            game: game,
+            prompts: prompts,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeInterventionDecisions(
+                game,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
           );
-          ref.read(pendingCallToArmsProvider.notifier).clear();
-          if (result is TurnResolutionComplete) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref.read(currentOrdersProvider.notifier).clear();
-          } else if (result is TurnResolutionPendingOvertures) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingOverturesProvider.notifier)
-                .setPending(result.pendingOvertures);
-          } else if (result is TurnResolutionPendingCallToArms) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingCallToArmsProvider.notifier)
-                .setPending(result.pendingCallToArms);
-          }
-        },
-        child: content,
-      );
+        case PendingDiplomacyCallToArms(:final pending) when pending.isNotEmpty:
+          content = CallToArmsDialogueOverlay(
+            game: game,
+            pending: pending,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeCallToArmsDecisions(
+                game,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
+          );
+        case _:
+          break;
+      }
     }
 
     return PopScope(

@@ -19,6 +19,7 @@ import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/widgets/technology_screen.dart';
+import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../widgets/debug_init_game.dart';
@@ -67,6 +68,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...navalUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
+        ...interventionDialogueDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -591,6 +593,63 @@ List<WidgetbookNode> get techTreeDirectories => [
             home: Scaffold(
               appBar: AppBar(title: const Text('Tech Tree')),
               body: TechTreeWidget(game: midGame, player: midGamePlayer),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
+/// Intervention blocking dialogue. SPEC/ui/screens/pending-intervention-overlay.md.
+List<WidgetbookNode> get interventionDialogueDirectories => [
+  WidgetbookFolder(
+    name: 'Dialogue',
+    children: [
+      WidgetbookUseCase(
+        name: 'InterventionDialogueOverlay',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_iv',
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(
+                id: 'spain',
+                displayName: 'Spain',
+                isHuman: false,
+                treasury: 0,
+              ),
+              Player(
+                id: 'portugal',
+                displayName: 'Portugal',
+                isHuman: true,
+                treasury: 0,
+              ),
+            ],
+            minorNations: const [
+              MinorNation(id: 'minorca', displayName: 'Minorca'),
+            ],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              body: InterventionDialogueOverlay(
+                game: game,
+                prompts: const [
+                  InterventionPrompt(
+                    aggressorGpId: 'spain',
+                    defenderMinorOrTribeId: 'minorca',
+                    interveningGpId: 'portugal',
+                  ),
+                ],
+                skipIntroForTest: true,
+                onDecisions: (_) {},
+                child: const Center(child: Text('Game shell')),
+              ),
             ),
           );
         },
