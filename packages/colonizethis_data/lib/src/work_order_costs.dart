@@ -1,12 +1,12 @@
 import 'commodities.dart';
 
 /// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md. Single source of truth for stockpile costs in order validation and application.
-/// Single source of truth for order engine validation and orders_application deduction.
+/// Durations: SPEC/program/development-resolution.md — `totalTurnsForWork` is authoritative for assign-time `currentWork.totalTurns` for standard material-backed targets (see `applyBuildAndWorkOrders`).
 
 /// Material cost for a work order: commodity id -> quantity.
 typedef WorkOrderCost = Map<String, int>;
 
-/// Default duration in turns when not specified by level. Config can override later.
+/// Duration in turns for a work target. Used when assigning `currentWork` for standard development orders.
 int totalTurnsForWork(String workTarget, {int? improvementLevel, int? fortLevel}) {
   switch (workTarget) {
     case 'explore':

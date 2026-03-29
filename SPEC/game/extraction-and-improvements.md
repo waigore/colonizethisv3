@@ -97,7 +97,7 @@ A Builder may build an improvement on a tile only if: (a) the tile has a **resou
 
 ### Railroad Costs (Rail Builder)
 
-2 lumber + 2 steel per tile (authoritative values in `work_order_costs.dart` / ruleset config).
+2 lumber + 2 steel per tile (authoritative values in `work_order_costs.dart`).
 
 ### Port Placement
 
