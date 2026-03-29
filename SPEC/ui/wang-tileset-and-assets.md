@@ -179,6 +179,14 @@ Use PixelLab `create_map_object`:
 
 ---
 
+## 64×64 standalone base fill tiles
+
+Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP tool** (`mcp_pixellab_generate_image_pixflux`), **async REST** (`generate-image-v2` + `background-jobs`), **verbatim prompts**, and `pytool/generate_base_tiles_64_async.py`: [base-tiles-64.md](tileset/base-tiles-64.md).
+
+**64×64 inpainted plains↔sea corner Wang (16 tiles),** `inpaint-v3` + composite/mask plan + `wang_index` metadata: [plains-sea-wang-inpaint-64.md](tileset/plains-sea-wang-inpaint-64.md).
+
+---
+
 ## Map Viewer Contract
 
 - **Input:** Asset directory with Wang tilesets and feature overlay tiles.

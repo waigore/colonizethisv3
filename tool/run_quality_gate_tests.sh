@@ -15,6 +15,13 @@ echo "=== Check test import convention (SPEC/program/test-logging.md) ==="
 tool/check_test_imports.sh
 
 echo ""
+echo "=== Wang incremental assets gate (Python) ==="
+if ! python3 -c "import PIL" 2>/dev/null; then
+  python3 -m pip install -q pillow
+fi
+(cd pytool && python3 test_wang_incremental_assets_and_preview.py)
+
+echo ""
 echo "=== Test packages (Dart) ==="
 for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
   [ -d "$dir/test" ] || continue

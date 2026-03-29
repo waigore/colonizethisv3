@@ -42,6 +42,7 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/terrain/
+    - assets/images/terrain/base_64/
     - assets/images/terrain/tilesets/
     - assets/dialogue/
 
