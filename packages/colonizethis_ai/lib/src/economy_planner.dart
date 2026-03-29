@@ -8,9 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'ai_config.dart';
 import 'seed_bundle.dart';
 
-final _log = aiLogger();
-
-const String _kEconomyLogPrefix = 'ai/economy_planner';
+final _log = aiLogger('economy_planner');
 
 /// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
 enum CargoPreference { none, preferCargo, strongCargo }
@@ -52,7 +50,7 @@ EconomyPlan runEconomyPlanner({
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
-    _log.w('$_kEconomyLogPrefix: no player for ${view.playerId}');
+    _log.w('no player for ${view.playerId}');
     return const EconomyPlan(
       productionAssignments: [],
       cargoPreference: CargoPreference.none,
@@ -88,7 +86,7 @@ EconomyPlan runEconomyPlanner({
 
   final cargoPref = _cargoPreference(game, view.playerId, config);
   _log.i(
-    '$_kEconomyLogPrefix: economy plan playerId=${view.playerId} '
+    'economy plan playerId=${view.playerId} '
     'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length}',
   );
   return EconomyPlan(
@@ -104,7 +102,7 @@ CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
   final economyWeight = domainWeights.economy;
   if (economyWeight < 30) {
     _log.d(
-      '$_kEconomyLogPrefix: cargoPreference none economyWeight=$economyWeight',
+      'cargoPreference none economyWeight=$economyWeight',
     );
     return CargoPreference.none;
   }
@@ -120,7 +118,7 @@ CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
       ? CargoPreference.preferCargo
       : CargoPreference.none;
   _log.d(
-    '$_kEconomyLogPrefix: cargoPreference eval playerId=$playerId '
+    'cargoPreference eval playerId=$playerId '
     'economyWeight=$economyWeight agendaId=$agendaId tradeBias=$tradeBias result=$pref',
   );
   return pref;
@@ -170,7 +168,7 @@ List<AssignedRecipe> _allocateLabour({
   if (candidates.isEmpty) return result;
 
   _log.d(
-    '$_kEconomyLogPrefix: recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
+    'recipe eval playerId=${config.leaderId} effectiveLabour=$effectiveLabour '
     'candidates=${candidates.map((c) => "${c.recipe.id}:${c.score.toStringAsFixed(2)}").toList()}',
   );
 
@@ -221,7 +219,7 @@ List<AssignedRecipe> _allocateLabour({
   }
 
   _log.d(
-    '$_kEconomyLogPrefix: allocation effectiveLabour=$effectiveLabour '
+    'allocation effectiveLabour=$effectiveLabour '
     'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;

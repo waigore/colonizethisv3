@@ -8,13 +8,13 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:sim_scenarios/scenario.dart';
 import 'package:sim_scenarios/scenario_runner.dart';
 
-final _log = Logger();
+final _log = logicLogger('sim_scenarios');
 
 void main(List<String> args) async {
   final parser = ArgParser();
@@ -47,15 +47,15 @@ void main(List<String> args) async {
   final results = parser.parse(args);
 
   if (results['help'] == true) {
-    _log.i('logic: sim_scenarios: sim_scenarios - Batch scenario test driver');
-    _log.i('logic: sim_scenarios: ');
-    _log.i('logic: sim_scenarios: Usage:');
-    _log.i('logic: sim_scenarios:   dart run sim_scenarios                          # Run all scenarios');
-    _log.i('logic: sim_scenarios:   dart run sim_scenarios --scenario=path.json     # Run specific scenario');
-    _log.i('logic: sim_scenarios:   dart run sim_scenarios --directory=path         # Run from directory');
-    _log.i('logic: sim_scenarios:   dart run sim_scenarios --verbose                # Verbose output');
-    _log.i('logic: sim_scenarios: ');
-    _log.i('logic: sim_scenarios: ${parser.usage}');
+    _log.i('sim_scenarios - Batch scenario test driver');
+    _log.i('');
+    _log.i('Usage:');
+    _log.i('  dart run sim_scenarios                          # Run all scenarios');
+    _log.i('  dart run sim_scenarios --scenario=path.json     # Run specific scenario');
+    _log.i('  dart run sim_scenarios --directory=path         # Run from directory');
+    _log.i('  dart run sim_scenarios --verbose                # Verbose output');
+    _log.i('');
+    _log.i(parser.usage);
     return;
   }
 
@@ -88,30 +88,30 @@ void main(List<String> args) async {
     // Run single scenario
     final file = File(scenarioPath);
     if (!file.existsSync()) {
-      _log.e('logic: sim_scenarios: Error: Scenario file not found: $scenarioPath');
+      _log.e('Error: Scenario file not found: $scenarioPath');
       exit(1);
     }
     if (verbose) {
-      _log.i('logic: sim_scenarios: Running scenario: $scenarioPath');
+      _log.i('Running scenario: $scenarioPath');
     }
     final result = await runner.runFile(file);
     final report = formatScenarioReport(result);
-    _log.i('logic: sim_scenarios:\n$report');
+    _log.i('run report\n$report');
     print(report);
     exit(result.passed ? 0 : 1);
   } else {
     // Run all scenarios in directory
     final dir = Directory(directory);
     if (!dir.existsSync()) {
-      _log.e('logic: sim_scenarios: Error: Directory not found: $directory');
+      _log.e('Error: Directory not found: $directory');
       exit(1);
     }
     if (verbose) {
-      _log.i('logic: sim_scenarios: Running all scenarios in: $directory');
+      _log.i('Running all scenarios in: $directory');
     }
     final batchResult = await runner.runAll(dir);
     final report = formatBatchReport(batchResult);
-    _log.i('logic: sim_scenarios:\n$report');
+    _log.i('run report\n$report');
     print(report);
     exit(batchResult.failed > 0 ? 1 : 0);
   }
