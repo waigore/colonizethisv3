@@ -399,108 +399,193 @@ class NavalUnitsPanel extends StatefulWidget {
 }
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
-  String? _combineTargetFleetId;
-  final Set<String> _selectedForCombine = {};
+  final Set<String> _selectedFleetIds = {};
 
-  bool _isCombineModeActive() => _combineTargetFleetId != null;
+  /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
+  String _selectionFleetId(_FleetRow row) {
+    if (row.isHomeFleet) return homeFleetIdFor(widget.humanPlayerId);
+    return row.fleetId;
+  }
 
-  _FleetRow? _getTargetRow() {
-    if (_combineTargetFleetId == null) return null;
-    final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
-    final allRows = _flattenTree(tree);
-    for (final row in allRows) {
-      if (row.fleetId == _combineTargetFleetId) {
-        return row;
-      }
+  bool _canCombineSelection(List<_FleetRow> flat) {
+    final rowsById = <String, _FleetRow>{
+      for (final r in flat) _selectionFleetId(r): r,
+    };
+    final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
+    if (activeIds.length < 2) return false;
+    String? locationKey;
+    for (final id in activeIds) {
+      final row = rowsById[id]!;
+      locationKey ??= row.locationKey;
+      if (row.locationKey != locationKey) return false;
+    }
+    return true;
+  }
+
+  String _combineTargetFleetId(List<_FleetRow> flat, Set<String> selected) {
+    for (final row in flat) {
+      final id = _selectionFleetId(row);
+      if (!selected.contains(id)) continue;
+      if (row.isHomeFleet) return id;
+    }
+    for (final row in flat) {
+      final id = _selectionFleetId(row);
+      if (selected.contains(id)) return id;
+    }
+    throw StateError('combine target: empty selection');
+  }
+
+  Fleet? _fleetForRow(_FleetRow row) {
+    final id = _selectionFleetId(row);
+    for (final f in widget.game.worldState.fleets) {
+      if (f.id == id) return f;
+    }
+    if (row.isHomeFleet) {
+      final portId = row.inPortAtProvinceId;
+      if (portId == null) return null;
+      return Fleet(
+        id: id,
+        ownerId: widget.humanPlayerId,
+        regionId: row.regionId,
+        inPortAtProvinceId: portId,
+        ships: const [],
+        mission: FleetMission.none,
+      );
     }
     return null;
   }
 
-  bool _isEligibleForCombine(_FleetRow row) {
-    final targetRow = _getTargetRow();
-    if (targetRow == null) return false;
-    if (row.isHomeFleet) return false;
-    if (row.fleetId == targetRow.fleetId) return false;
-    return row.locationKey == targetRow.locationKey;
-  }
-
-  void _startCombine(_FleetRow row) {
+  void _toggleFleetSelection(_FleetRow row) {
     setState(() {
-      _combineTargetFleetId = row.fleetId;
-      _selectedForCombine.clear();
-    });
-  }
-
-  void _toggleFleetForCombine(_FleetRow row) {
-    setState(() {
-      if (_selectedForCombine.contains(row.fleetId)) {
-        _selectedForCombine.remove(row.fleetId);
+      final id = _selectionFleetId(row);
+      if (_selectedFleetIds.contains(id)) {
+        _selectedFleetIds.remove(id);
       } else {
-        _selectedForCombine.add(row.fleetId);
+        _selectedFleetIds.add(id);
       }
     });
   }
 
-  void _confirmCombine() {
-    if (_combineTargetFleetId == null) return;
-
-    final targetFleet = widget.game.worldState.fleets.firstWhere(
-      (f) => f.id == _combineTargetFleetId,
-      orElse: () => widget.game.worldState.fleets.first,
-    );
-
-    final fleetsToCombine = <Fleet>[targetFleet];
-    for (final fleetId in _selectedForCombine) {
-      final fleet = widget.game.worldState.fleets.firstWhere(
-        (f) => f.id == fleetId,
-        orElse: () => widget.game.worldState.fleets.first,
-      );
-      fleetsToCombine.add(fleet);
+  bool? _headerSelectAllValue(List<_FleetRow> flat) {
+    if (flat.isEmpty) return false;
+    final ids = flat.map(_selectionFleetId).toSet();
+    var n = 0;
+    for (final id in ids) {
+      if (_selectedFleetIds.contains(id)) n++;
     }
-
-    final allShips = <ShipInstance>[];
-    for (final fleet in fleetsToCombine) {
-      allShips.addAll(fleet.ships);
-    }
-
-    final updatedTarget = targetFleet.copyWith(ships: allShips);
-    final sourceFleetIds = _selectedForCombine.toSet();
-
-    final updatedFleets = widget.game.worldState.fleets
-        .where((f) => !sourceFleetIds.contains(f.id))
-        .map((f) => f.id == _combineTargetFleetId ? updatedTarget : f)
-        .toList();
-
-    final newGame = widget.game.copyWith(
-      worldState: widget.game.worldState.copyWith(fleets: updatedFleets),
-    );
-
-    _cancelCombine();
-    widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+    if (n == 0) return false;
+    if (n == ids.length) return true;
+    return null;
   }
 
-  void _cancelCombine() {
+  void _onHeaderSelectAllChanged(bool? next, List<_FleetRow> flat) {
     setState(() {
-      _combineTargetFleetId = null;
-      _selectedForCombine.clear();
+      if (next == true) {
+        _selectedFleetIds
+          ..clear()
+          ..addAll(flat.map(_selectionFleetId));
+      } else {
+        _selectedFleetIds.clear();
+      }
     });
   }
 
-  void _openSplitDialog(_FleetRow row) {
-    final fleet = widget.game.worldState.fleets.firstWhere(
-      (f) => f.id == row.fleetId,
-      orElse: () => widget.game.worldState.fleets.first,
+  void _performCombine(List<_FleetRow> flat) {
+    if (!_canCombineSelection(flat)) return;
+
+    final selected = Set<String>.from(_selectedFleetIds);
+    final targetId = _combineTargetFleetId(flat, selected);
+
+    _FleetRow? targetRow;
+    for (final row in flat) {
+      if (_selectionFleetId(row) == targetId) {
+        targetRow = row;
+        break;
+      }
+    }
+    if (targetRow == null) return;
+
+    final targetFleet = _fleetForRow(targetRow);
+    if (targetFleet == null) return;
+
+    final mergedShips = <ShipInstance>[...targetFleet.ships];
+    for (final row in flat) {
+      final id = _selectionFleetId(row);
+      if (!selected.contains(id) || id == targetId) continue;
+      final f = _fleetForRow(row);
+      if (f != null) mergedShips.addAll(f.ships);
+    }
+
+    final merged = Fleet(
+      id: targetId,
+      ownerId: widget.humanPlayerId,
+      seaZoneId: targetFleet.seaZoneId,
+      inPortAtProvinceId: targetFleet.inPortAtProvinceId,
+      regionId: targetFleet.regionId,
+      ships: mergedShips,
+      mission: FleetMission.none,
     );
 
+    final homeId = homeFleetIdFor(widget.humanPlayerId);
+    var updated = widget.game.worldState.fleets
+        .where((f) => !selected.contains(f.id))
+        .toList();
+    updated = [...updated, merged];
+    updated = updated
+        .where((f) => f.ships.isNotEmpty || f.id == homeId)
+        .toList();
+
+    final newGame = widget.game.copyWith(
+      worldState: widget.game.worldState.copyWith(fleets: updated),
+    );
+
+    setState(_selectedFleetIds.clear);
+    widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+  }
+
+  @override
+  void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game != widget.game) {
+      final flat = _flattenTree(
+        _buildNavalTree(widget.game, widget.humanPlayerId),
+      );
+      final valid = flat.map(_selectionFleetId).toSet();
+      final pruned = _selectedFleetIds.intersection(valid);
+      if (pruned.length != _selectedFleetIds.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _selectedFleetIds
+              ..clear()
+              ..addAll(pruned);
+          });
+        });
+      }
+    }
+  }
+
+  void _openSplitDialog(_FleetRow row) {
+    final id = _selectionFleetId(row);
+    Fleet? fleet;
+    for (final f in widget.game.worldState.fleets) {
+      if (f.id == id) {
+        fleet = f;
+        break;
+      }
+    }
+    if (fleet == null) return;
+
+    final original = fleet;
     showDialog<void>(
       context: context,
       builder: (ctx) => SplitFleetDialog(
-        originalFleet: fleet,
+        originalFleet: original,
         game: widget.game,
         humanPlayerId: widget.humanPlayerId,
         isHomeFleet: row.isHomeFleet,
         onConfirm: (shipInstanceIds) {
-          _performSplit(fleet, shipInstanceIds);
+          _performSplit(original, shipInstanceIds);
         },
       ),
     );
@@ -510,10 +595,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     if (shipInstanceIdsToNew.isEmpty) return;
 
     final idSet = shipInstanceIdsToNew.toSet();
-    final shipsToNewFleet =
-        originalFleet.ships.where((s) => idSet.contains(s.id)).toList();
-    final remainingShips =
-        originalFleet.ships.where((s) => !idSet.contains(s.id)).toList();
+    final shipsToNewFleet = originalFleet.ships
+        .where((s) => idSet.contains(s.id))
+        .toList();
+    final remainingShips = originalFleet.ships
+        .where((s) => !idSet.contains(s.id))
+        .toList();
 
     final allFleetIds = widget.game.worldState.fleets
         .map((f) => int.tryParse(f.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
@@ -551,83 +638,89 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   Widget build(BuildContext context) {
     final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
+    final flat = _flattenTree(tree);
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
+    final canCombine = _canCombineSelection(flat);
+    final headerCheckbox = _headerSelectAllValue(flat);
 
-    return GestureDetector(
-      onTap: _isCombineModeActive() ? _cancelCombine : null,
-      behavior: HitTestBehavior.translucent,
-      child: UnitsPanelShell(
-        title: 'Naval Units',
-        actions: [
-          if (_isCombineModeActive())
-            TextButton(onPressed: _cancelCombine, child: const Text('Cancel')),
+    return UnitsPanelShell(
+      title: 'Naval Units',
+      actions: [
+        if (hasAny && flat.isNotEmpty) ...[
+          Tooltip(
+            message: headerCheckbox == true
+                ? 'Deselect all fleets'
+                : 'Select all fleets',
+            child: Checkbox(
+              tristate: true,
+              value: headerCheckbox,
+              onChanged: (v) => _onHeaderSelectAllChanged(v, flat),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(width: 4),
+          CtNinePatchButton(
+            onPressed: canCombine ? () => _performCombine(flat) : null,
+            enabled: canCombine,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            minHeight: 32,
+            child: const Text('Combine'),
+          ),
         ],
-        hasContent: hasAny,
-        listChildren: [
-          for (final group in tree) ...[
-            RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
-            if (group.homeFleet != null)
+      ],
+      hasContent: hasAny,
+      listChildren: [
+        for (final group in tree) ...[
+          RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
+          if (group.homeFleet != null)
+            _FleetExpansionTile(
+              row: group.homeFleet!,
+              onTap: group.homeFleet!.tileKey != null
+                  ? () => widget.bus.emit(
+                      LocateMapTileEvent(
+                        tileKey: group.homeFleet!.tileKey!,
+                        regionId: group.homeFleet!.regionId,
+                      ),
+                    )
+                  : null,
+              isSelectedForCombine: _selectedFleetIds.contains(
+                _selectionFleetId(group.homeFleet!),
+              ),
+              onCombineSelectionToggle: () =>
+                  _toggleFleetSelection(group.homeFleet!),
+              onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+              isSplitAllowed: true,
+            ),
+          for (final loc in group.locations) ...[
+            LocationSectionHeader(
+              label: loc.displayLabel,
+              regionLabel: unitsPanelRegionLabel(loc.regionId),
+            ),
+            for (final row in loc.fleets)
               _FleetExpansionTile(
-                row: group.homeFleet!,
-                onTap: group.homeFleet!.tileKey != null
+                row: row,
+                onTap: row.tileKey != null
                     ? () => widget.bus.emit(
                         LocateMapTileEvent(
-                          tileKey: group.homeFleet!.tileKey!,
-                          regionId: group.homeFleet!.regionId,
+                          tileKey: row.tileKey!,
+                          regionId: row.regionId,
                         ),
                       )
                     : null,
-                isCombineMode: _isCombineModeActive(),
-                isCombineTarget:
-                    _combineTargetFleetId == group.homeFleet!.fleetId,
-                isSelectedForCombine: _selectedForCombine.contains(
-                  group.homeFleet!.fleetId,
+                isSelectedForCombine: _selectedFleetIds.contains(
+                  _selectionFleetId(row),
                 ),
-                isEligibleForCombine:
-                    _isCombineModeActive() &&
-                    _isEligibleForCombine(group.homeFleet!),
-                onCombineStart: () => _startCombine(group.homeFleet!),
-                onCombineToggle: () => _toggleFleetForCombine(group.homeFleet!),
-                onCombineConfirm: () => _confirmCombine(),
-                onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+                onCombineSelectionToggle: () => _toggleFleetSelection(row),
+                onSplitFleet: () => _openSplitDialog(row),
                 isSplitAllowed: true,
               ),
-            for (final loc in group.locations) ...[
-              LocationSectionHeader(
-                label: loc.displayLabel,
-                regionLabel: unitsPanelRegionLabel(loc.regionId),
-              ),
-              for (final row in loc.fleets)
-                _FleetExpansionTile(
-                  row: row,
-                  onTap: row.tileKey != null
-                      ? () => widget.bus.emit(
-                          LocateMapTileEvent(
-                            tileKey: row.tileKey!,
-                            regionId: row.regionId,
-                          ),
-                        )
-                      : null,
-                  isCombineMode: _isCombineModeActive(),
-                  isCombineTarget: _combineTargetFleetId == row.fleetId,
-                  isSelectedForCombine: _selectedForCombine.contains(
-                    row.fleetId,
-                  ),
-                  isEligibleForCombine:
-                      _isCombineModeActive() && _isEligibleForCombine(row),
-                  onCombineStart: () => _startCombine(row),
-                  onCombineToggle: () => _toggleFleetForCombine(row),
-                  onCombineConfirm: () => _confirmCombine(),
-                  onSplitFleet: () => _openSplitDialog(row),
-                  isSplitAllowed: true,
-                ),
-            ],
           ],
         ],
-        emptyMessage: 'No naval units',
-      ),
+      ],
+      emptyMessage: 'No naval units',
     );
   }
 }
@@ -636,26 +729,16 @@ class _FleetExpansionTile extends StatelessWidget {
   const _FleetExpansionTile({
     required this.row,
     this.onTap,
-    this.isCombineMode = false,
-    this.isCombineTarget = false,
-    this.isSelectedForCombine = false,
-    this.isEligibleForCombine = false,
-    this.onCombineStart,
-    this.onCombineToggle,
-    this.onCombineConfirm,
+    required this.isSelectedForCombine,
+    required this.onCombineSelectionToggle,
     this.onSplitFleet,
     this.isSplitAllowed = false,
   });
 
   final _FleetRow row;
   final VoidCallback? onTap;
-  final bool isCombineMode;
-  final bool isCombineTarget;
   final bool isSelectedForCombine;
-  final bool isEligibleForCombine;
-  final VoidCallback? onCombineStart;
-  final VoidCallback? onCombineToggle;
-  final VoidCallback? onCombineConfirm;
+  final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
   final bool isSplitAllowed;
 
@@ -674,43 +757,19 @@ class _FleetExpansionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showCheckbox =
-        isCombineMode && !isCombineTarget && isEligibleForCombine;
-
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
         title: Row(
           children: [
-            if (showCheckbox) ...[
-              Checkbox(
-                value: isSelectedForCombine,
-                onChanged: (_) => onCombineToggle?.call(),
-              ),
-              const SizedBox(width: 8),
-            ],
+            Checkbox(
+              value: isSelectedForCombine,
+              onChanged: (_) => onCombineSelectionToggle(),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            const SizedBox(width: 4),
             Flexible(child: Text(row.label, overflow: TextOverflow.ellipsis)),
-            if (isCombineTarget) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'TARGET',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
             if (onTap != null) ...[
               const SizedBox(width: 4),
               IconButton(
@@ -727,7 +786,6 @@ class _FleetExpansionTile extends StatelessWidget {
           '${row.locationLabel}\nMission: ${row.missionLabel} · ${_summary()}',
         ),
         dense: true,
-        initiallyExpanded: isCombineMode,
         children: [
           if (row.shipCountsByType.isEmpty)
             const ListTile(title: Text('No ships in this fleet'), dense: true)
@@ -750,12 +808,12 @@ class _FleetExpansionTile extends StatelessWidget {
             ),
             dense: true,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (isSplitAllowed) ...[
+          if (isSplitAllowed)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                   CtNinePatchButton(
                     onPressed: onSplitFleet,
                     padding: const EdgeInsets.symmetric(
@@ -765,31 +823,9 @@ class _FleetExpansionTile extends StatelessWidget {
                     minHeight: 36,
                     child: const Text('Split'),
                   ),
-                  const SizedBox(width: 8),
                 ],
-                if (!row.isHomeFleet)
-                  CtNinePatchButton(
-                    onPressed: isCombineTarget
-                        ? onCombineConfirm
-                        : isCombineMode
-                        ? onCombineToggle
-                        : onCombineStart,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minHeight: 36,
-                    child: Text(
-                      isCombineTarget
-                          ? 'Confirm'
-                          : isCombineMode
-                          ? (isSelectedForCombine ? 'Remove' : 'Select')
-                          : 'Combine',
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
         ],
       ),
     );

@@ -7,59 +7,60 @@
 ## Purpose
 
 Players need to reorganize their fleets:
+
 - **Split**: Divide a fleet into two fleets (e.g., send a detachment on a separate mission).
-- **Combine**: Merge multiple fleets at the same location into a single fleet.
+- **Combine**: Merge **two or more selected** fleets that share the **same naval locality** (see below) into one fleet.
 
 ---
 
 ## Combine Fleets
 
-### Trigger
+### Trigger and layout
 
-Each non-Home Fleet row in the expanded state shows a **"Combine"** button.
+- The panel **title row** includes:
+  - A **Select all / Deselect all** control implemented as a **tristate header checkbox** (unchecked = none selected; checked = all fleets selected; indeterminate = partial selection). Interacting with it **selects every fleet row** or **clears all selection** (same behavior as typical “select all” patterns: from none or partial → select all; from all → deselect all).
+  - A **Combine** button (same family as other panel actions, e.g. nine-patch), placed in the title row next to that checkbox.
+- **No separate Cancel** for combine; clearing selection uses the header control or per-row checkboxes.
 
-### Behavior
+### Per-fleet selection
 
-1. **First tap on a fleet's Combine button**:
-   - The button changes to indicate the fleet is the **combine target**.
-   - Other fleets at the **same location** (same port province OR same sea zone) that are also owned by the human player become visually selectable (e.g., highlighted with a checkbox).
+- Every fleet row (including **Home Fleet**) shows a **checkbox** in the row header **at all times** (collapsed or expanded). Checking does not require expanding the row.
+- **Combine** is **enabled** only when:
+  - **At least two** fleets are checked, and
+  - Every checked fleet shares the **same combine locality**: either the **same sea zone** (fleets at sea) or the **same port province** (fleets in port). Ports are **not** mixed with sea zones for this rule—a fleet in port and a fleet at sea in an adjacent zone cannot combine.
+- **Combine** is **disabled** when fewer than two fleets are checked, or when checked fleets span more than one locality.
 
-2. **Selecting another fleet at the same location** (e.g. checkbox on its title row):
-   - That fleet is added to the selection set.
-   - Visual feedback shows all selected fleets.
+### Merge target and ship data
 
-3. **Tapping Confirm on the target fleet** (after selecting sources):
-   - All selected fleets (non-target sources) are merged into the **target fleet**.
-   - **Ship instances** (`id` + `typeId`) from each source fleet are **appended** to the target fleet’s instance list (each hull keeps its unique id).
-   - Source fleets (non-target) are **removed** from `WorldState.fleets`.
-   - The Home Fleet is **excluded** from combine operations.
-
-4. **Cancel**: Tapping elsewhere dismisses the combine mode without changes.
+- **Survivor fleet** (merge target):
+  - If **Home Fleet** is among the checked fleets, the **Home Fleet** is always the target (all other checked fleets merge **into** it).
+  - Otherwise, the target is the checked fleet that appears **first in panel display order** (same ordering as [naval-units-panel.md](naval-units-panel.md): region groups, Home Fleet section when present, then location nodes and stable fleet order within each node).
+- **Sources:** every **other** checked fleet, in **panel display order** after the target.
+- **Ship instances:** Append each source’s `ships` list onto the target’s list in that order; each hull keeps its unique instance `id` (no duplicate ids across fleets).
+- **Remove** every **source** fleet from `WorldState.fleets` after the merge.
+- **Mission:** The **surviving** fleet’s mission is set to **`none`** (missions from merged fleets do not carry over). Clear any mission-specific targets on the merged fleet if the model supports them.
 
 ### Rules
 
 | Rule | Description |
 |------|-------------|
-| Same location | Only fleets at the same port province OR same sea zone can be combined. |
-| Same owner | Only fleets owned by the human player. |
-| Home Fleet excluded | Home Fleet cannot be combined into or used as source. |
-| Empty fleets auto-deleted | After combining, source fleets with no ships (edge case) are removed. Home Fleet is never deleted even if empty. |
-| Target selection | The fleet whose Combine button was tapped first becomes the target. |
+| Same locality | Only fleets in the **same port province** or the **same sea zone** may be combined together in one action. |
+| Same owner | Only fleets owned by the human player are listed; combine only affects the player’s selection. |
+| Home Fleet | **May** be selected and combined. When checked with other fleets, Home Fleet is **always** the merge target. |
+| Empty fleets | After combining, any non-Home fleet with no ships is removed. Home Fleet is **never** deleted when empty. |
 
 ### Data changes
 
 ```dart
-// Before: Fleet A (target) + Fleet B (source), each with List<ShipInstance> ships
-// After: Fleet A.ships = [...A.ships, ...B.ships]; Fleet B removed from WorldState.fleets
+// Checked fleets at same locality: target T (Home if selected, else first in panel order among checked),
+// sources S1, S2, … in display order after T.
+// After: T.ships = [...T.ships, ...S1.ships, ...]; S1, S2, … removed; T.mission = none.
 ```
 
-### UI
+### UI notes
 
-- **Combine button**: Nine-patch button in the **expanded** fleet tile (scroll if needed in short panels), labeled "Combine".
-- **Selection state**: Checkbox appears next to each eligible fleet title. Selected fleets show a checked checkbox.
-- **Target indicator**: Target fleet shows a **TARGET** badge on the title row; its action button is **Confirm**.
-- **Ineligible fleets**: Fleets at different locations are not selectable (no checkbox).
-- **Expansion vs locate:** Tapping the fleet **header** expands or collapses the tile. **Locate fleet** runs only from the **location icon** in the header (not a whole-row tap).
+- **Locate fleet** remains on the **location icon** in the header (not the whole row), per [naval-units-panel.md](naval-units-panel.md) interaction with fleet management.
+- **Expansion vs locate:** Tapping the fleet **title text** (or default expansion affordance) expands or collapses the tile; the checkbox only toggles selection.
 
 ---
 
@@ -80,6 +81,7 @@ dual-list quantity movement. The naval split dialog configures this component
 with fleet-specific labels and validation.
 
 `CtTransferList` API requirements:
+
 - Inputs: left/right titles, optional subtitles, initial counts for both sides
 - Transfer controls: per-row one/all moves in both directions (`<`, `>`, `<<`, `>>`) on each list row (no separate “selected type” step)
 - Validation hook: `canConfirm(leftCounts, rightCounts)`
@@ -88,6 +90,7 @@ with fleet-specific labels and validation.
 - Customizable item label and empty-state labels
 
 Naval-specific behavior remains outside the component:
+
 - Home-fleet split rule override
 - Fleet location labeling
 - Conversion from right-side counts to the set of **ship instance ids** transferred to the new fleet
@@ -159,6 +162,7 @@ Naval-specific behavior remains outside the component:
 ## Empty Fleet Cleanup
 
 After any fleet operation (split or combine):
+
 - Fleets with an **empty** `ships` list are removed from `WorldState.fleets`.
 - Exception: The Home Fleet is **never deleted**, even when empty.
 
@@ -176,13 +180,21 @@ After any fleet operation (split or combine):
 
 ### Combine
 
-- **Given** two fleets at the same port province owned by the human player, **when** the user expands Fleet A, taps Combine, selects Fleet B via its checkbox, and taps Confirm on the target, **then** Fleet A’s instance list contains every hull from both fleets (each **instance id** appears once), Fleet B is removed, and the panel reflects these changes immediately.
+- **Given** two fleets in the **same port province** owned by the human player, **when** the user checks both and taps **Combine**, **then** the first-checked fleet in **panel order** among the selection (or **Home Fleet** if it is checked) receives every ship instance from the other, the source fleet is removed, the survivor’s mission is **`none`**, and the panel updates immediately.
 
-- **Given** three fleets at the same sea zone owned by the human player, **when** the user combines them, **then** the target fleet receives all ships, the two source fleets are removed, and the panel updates immediately.
+- **Given** the **Home Fleet** and another fleet **in port at the capital** (same locality), **when** the user checks both and taps **Combine**, **then** all ship instances merge **into the Home Fleet** regardless of panel order relative to the other fleet, the non-home fleet is removed, and the Home Fleet’s mission is **`none`**.
 
-- **Given** a fleet at a port province and another fleet at a different port province, **when** the user attempts to combine them, **then** the combine operation is not available between these fleets.
+- **Given** a fleet at a port province and another fleet at a **different** port or at **sea**, **when** the user checks both, **then** **Combine** remains **disabled** and no merge occurs until the selection is valid.
 
-- **Given** the Home Fleet is present, **when** the user views fleet options, **then** the Home Fleet does not show a Combine button.
+- **Given** the Naval Units panel is open, **when** fewer than two fleets are checked, **then** **Combine** is **disabled**.
+
+- **Given** the panel title **select-all** checkbox, **when** the user uses it to select all fleets then uses it again, **then** selection clears (deselect all).
+
+- **Given** **three or more** fleets sharing the **same port** or the **same sea zone**, **when** the user checks them and taps **Combine**, **then** one survivor fleet (Home if selected, else first in panel order) contains every ship in panel order, the other checked fleets are removed, the survivor’s mission is **`none`**, and the panel updates immediately.
+
+- **Given** two fleets **at sea** in **different** sea zones, **when** both are checked, **then** **Combine** stays **disabled**.
+
+- **Given** one fleet **at sea** and one **in port**, **when** both are checked, **then** **Combine** stays **disabled** (mixed locality).
 
 ### Split
 
@@ -210,16 +222,14 @@ After any fleet operation (split or combine):
 
 ### Stories
 
-1. **Combine Mode Active**: Shows a fleet row with Combine button pressed, other fleets at same location highlighted with checkboxes.
+1. **Combine selection**: Title row with header checkbox and Combine; several fleets with per-row checkboxes; Combine disabled until two+ at same locality.
 2. **Split Dialog Open**: Shows the split fleet modal dialog with ship transfer controls.
 3. **Post-Operation State**: Shows the panel after a combine/split operation.
 
 ### Test Coverage
 
-- Unit tests for combine logic (same location validation, ship aggregation).
-- Unit tests for split logic (minimum ship validation, new fleet creation).
-- Widget tests for combine mode UI (selection, target, confirmation).
-- Widget tests for split dialog (ship movement, confirm/cancel).
+- Unit tests for combine logic (same locality validation, ship aggregation, Home Fleet target priority, mission reset).
+- Widget tests for combine UI (selection, header select-all, disabled Combine when invalid).
 
 ---
 
@@ -235,7 +245,7 @@ After any fleet operation (split or combine):
 
 ### Key Implementation Details
 
-1. **Combine Mode State**: Managed via `_NavalUnitsPanelState` with `_combineTargetFleetId` and `_selectedForCombine` fields.
+1. **Combine selection**: `Set<String>` of canonical fleet ids (`homeFleetIdFor(player)` for Home Fleet rows; otherwise row `fleetId`).
 
 2. **Split Dialog**: `SplitFleetDialog` uses `CtDialogShell` for pixel-art framing, `CtNinePatchButton` for actions, and `CtPanel` for fleet panels.
 
@@ -245,10 +255,9 @@ After any fleet operation (split or combine):
 
 5. **State Propagation**: Changes are propagated via `onFleetsChanged` callback which calls the Riverpod `currentGameProvider.notifier.state`.
 
-### UI Changes
+### UI labels
 
-- **Split Button**: Shortened from "Split Fleet" to "Split" to save space
-- **Combine Button**: Shows "Select"/"Remove" during selection, "Confirm" for target
-- **TARGET badge**: Theme-colored badge next to target fleet name
-- **Checkboxes**: Appear on eligible fleets during combine mode
+- **Split** button: shortened from "Split Fleet" in-row.
+- **Combine**: single action in the panel title row (not per-row).
 
+GitHub tracking: [issue #1390](https://github.com/waigore/colonizethisv3/issues/1390) (naval combine UX: checkbox multi-select, locality rule, Home Fleet target).
