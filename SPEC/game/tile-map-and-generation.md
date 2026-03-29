@@ -35,6 +35,22 @@ Generation is a **multi-pass pipeline**: **land seeds** = one **continent seed**
 
 ---
 
+## Great Power starting grain (bootstrap)
+
+**When:** After the tile map for the relevant region is complete (**province assignment** finished) **and** each **Great Power** has a **capital tile** fixed (capital-choice phase). **Not** part of Pass 7 resource RNG — a **deterministic post-pass** on the grid and/or scenario overlay applied during **game setup**.
+
+**Who:** **Great Powers only.** Minor Nations and Tribes do **not** receive this pass.
+
+**What:** For each Great Power, select **exactly four** distinct **land** tiles in that player’s **capital province** (same **region** and **local province id** as the capital tile). Assign **resource `grain`** (subject to [resource-terrain-region-rules.md](resource-terrain-region-rules.md)); set **improvement level `1`** in world `tileState`. Tiles are chosen by **minimum Manhattan distance** from the capital tile coordinates; **tie-break:** lower **`y`**, then lower **`x`**. These placements are **guaranteed** and **independent** of any RNG resource from Pass 7 on the same cells (Pass 7 may have left another resource; the post-pass **replaces** those cells’ resource with `grain` as required).
+
+**Caps:** Bootstrap **`grain`** tiles **do not count** toward **any** generator or ruleset resource accounting — including the **multi-region compatible** share, **Pass 7** spawn weights / totals, per-resource frequency caps, or any other map-level resource budget.
+
+**Roads:** **Initial road networking** (see [capital-and-connectivity.md](capital-and-connectivity.md) § Init town roads) runs **after** this post-pass so **towns** and these **farms** gain **Road rule** connectivity where required. Tiles that are **4-adjacent** to a **connected town** already satisfy **Town rule** and need no extra road solely for connectivity.
+
+**Edge case:** If the capital province has **fewer than four** land cells that can legally host `grain`, the post-pass cannot satisfy the guarantee; The System **must** surface a **fatal setup error** with `logic:` diagnostics (exact message implementation-defined). Maps or rulesets used for shipping **must** ensure sufficient candidates (e.g. by province size and terrain mix).
+
+---
+
 ## Acceptance Criteria
 
 - Given map-generation input that specifies a region id, a province count `N`, a continent count `C`, and map parameters including a target tiles-per-province range  
@@ -48,3 +64,15 @@ Generation is a **multi-pass pipeline**: **land seeds** = one **continent seed**
 - Given generation input with a province count `N` and a continent count `C` for a region  
   When the System generates continents, places province seeds, and assigns provinces as described in [tile-map-gen-algorithm.md](../program/tile-map-gen-algorithm.md)  
   Then the System produces continents whose number of provinces is approximately `N/C` per continent (within a small integer tolerance) and derives province and sea-zone topology directly from the resulting grid without any separate hand-authored topology file.
+
+- Given a Great Power’s capital province contains at least **four** land tiles that may host resource `grain` per [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and the capital tile is fixed  
+  When the System runs the **Great Power starting grain (bootstrap)** post-pass then initial road networking per [capital-and-connectivity.md](capital-and-connectivity.md)  
+  Then the System assigns **exactly four** distinct tiles in that capital province with resource `grain`, improvement level **1**, selected by **minimum Manhattan distance** to the capital tile with tie-break **ascending `y` then `x`**, and those assignments are **omitted** from every resource-cap accounting rule in [tile-map-gen-resources.md](../program/tile-map-gen-resources.md)
+
+- Given the bootstrap post-pass assigns `grain` to a tile that previously held another resource from Pass 7  
+  When accounting for Pass 7 multi-region cap or any other map resource budget after the post-pass  
+  Then the **replaced** RNG resource **does not** count toward those caps and the **new** `grain` bootstrap tiles **also do not** count
+
+- Given a Great Power’s capital province contains **fewer than four** land tiles rules-legal for `grain`  
+  When the System runs the bootstrap post-pass  
+  Then the System **fails setup** with a **fatal error** and `logic:` diagnostics (implementation-defined message)

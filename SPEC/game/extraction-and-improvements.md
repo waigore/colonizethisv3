@@ -17,9 +17,25 @@ Extraction and connectivity use **tile keys** (format `regionId|localId|x|y`) an
 Each land tile in an owned province may have one extraction improvement (mine, farm, ranch, plantation, fur post, town, etc.) with an improvement level (0–4) and at most one resource (terrain-constrained per [resource-terrain-region-rules.md](resource-terrain-region-rules.md)).
 
 **Production** = min(improvement level, owner's tech-allowed max level).
-**Effective yield** = min(production, transport level, **town development level**, **transport level along path to capital**). See [capital-and-connectivity.md](capital-and-connectivity.md) for connectivity.
 
-Tech caps first, then transport caps. Example: level 4 farm, tech cap 3, transport 2 → 2 units/turn. The improvement stays at level 4; tech/transport upgrades or conquest can unlock more later.
+**Connectivity** (whether the tile may extract at all) is defined in [capital-and-connectivity.md](capital-and-connectivity.md); **`townDevelopmentLevel` does not determine connectivity.**
+
+### Extraction formula and town development cap
+
+Let **T** be a connected land tile in province **P** owned by the player. **Path transport cap** = minimum transport level along the chosen connectivity path to the capital, or the **maximum** of such minima if multiple paths exist (see [capital-and-connectivity.md](capital-and-connectivity.md)). **Tile transport** is the tile’s road/rail/port level per § Transport Level (Per Tile).
+
+**Effective yield** applies only if **T** is **connected** for extraction.
+
+1. **Capital province (`P` is the player’s capital province):**  
+   **Effective yield** = min(production, tile/path transport caps per connectivity resolver, **`P.townDevelopmentLevel`**). For **Great Powers**, **`P.townDevelopmentLevel`** is **`4`** at init and after capital reassignment (see [capital-and-connectivity.md](capital-and-connectivity.md) § Capital province town development (Great Powers)).
+
+2. **Non-capital province:**  
+   - If there exists a **road/rail path** from **T** to the **capital tile** using only **owned-territory** tiles with **transport level ≥ 1** (4-neighbor adjacency): **town development level does not limit** yield — **Effective yield** = min(production, tile/path transport caps).  
+   - **Else** ( **`T` is connected only via **Town rule** — 4-adjacent to a connected town — and not by the road-path rule above):  
+     - If **`P`’s town tile** is a **port tile** and that **port is connected to the capital** per [capital-and-connectivity.md](capital-and-connectivity.md) § Port connection to capital: **Effective yield** = min(production, tile/path transport caps, **`P.townDevelopmentLevel`**).  
+     - **Else** (inland **non-capital** town; not a port connected to the capital): **town development level does not limit yield** — **Effective yield** = min(production, tile/path transport caps).
+
+Tech caps first in production; transport caps use path and tile rules above. Example: level 4 farm, tech cap 3, transport 2 → production 3, then min with path cap → effective ≤ 2. The improvement stays at level 4; tech/transport upgrades or conquest can unlock more later.
 
 ### Improvement Naming
 
@@ -57,7 +73,7 @@ Acceptance criteria (naming only):
 
 ### Town and extraction
 
-Each province has one **town** tile assigned at game init (see [capital-and-connectivity.md](capital-and-connectivity.md) § Town per province). A tile's resources are extractable only if the tile is **connected to the capital** per connectivity rules. `townTileKey` is not a connectivity predicate. **Town development level** (raised by Builder `upgrade_town` work) and the **transport level** along valid capital paths limit extraction. If multiple paths exist from a tile to the capital, the **maximum** transport level path determines the cap.
+Each province has one **town** tile assigned at game init (see [capital-and-connectivity.md](capital-and-connectivity.md) § Town per province). A tile's resources are extractable only if the tile is **connected to the capital** per connectivity rules (**Road rule** or **Town rule**). **`townTileKey` does not by itself mean “connected”**; adjacency uses the Town rule in [capital-and-connectivity.md](capital-and-connectivity.md). **Town development level** (raised by Builder `upgrade_town` work) **limits yield** per § Extraction formula and town development cap; it **does not** decide connectivity. If multiple paths exist from a tile to the capital, the **maximum** path transport cap determines the transport constraint.
 
 ### Mineral Prospecting Gate
 
@@ -144,9 +160,25 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
   When the system computes extraction for that tile
   Then the production equals min(N, owner's tech-allowed max level for that terrain/resource)
 
-- Given a land tile with improvement level N and transport level T in an owned province that is connected to the capital and has town development level D
-  When the system computes effective yield for that tile
-  Then the effective yield equals min(N, T, D, transport level along path to capital)
+- Given a connected land tile in a Great Power's **capital province** with production `P` (from improvement and tech cap), path transport cap `MinTransport`, and that province's `townDevelopmentLevel` equal to `4`
+  When the system computes effective yield for that tile on turn 1
+  Then the effective yield equals `min(P, MinTransport, 4)` and any non-mineral resource (e.g. grain from a level-1 farm with tech cap ≥ 1) contributes at least what connectivity and transport allow up to that cap
+
+- Given a connected land tile in a **non-capital** province with production `P`, path transport cap `MinTransport`, and **a road/rail path** from that tile to the capital as in § Extraction formula and town development cap
+  When the system computes effective yield
+  Then **town development level does not reduce** the effective yield: the yield equals `min(P, MinTransport)` (subject to tile transport rules)
+
+- Given a connected land tile in a **non-capital** province with production `P`, path transport cap `MinTransport`, **no** road/rail path from that tile to the capital, connectivity **only** via **Town rule**, province town development level `D`, and the province **town tile is a port** connected to the capital per [capital-and-connectivity.md](capital-and-connectivity.md)
+  When the system computes effective yield
+  Then the effective yield equals `min(P, MinTransport, D)`
+
+- Given a connected land tile in a **non-capital** province with production `P`, path transport cap `MinTransport`, **no** road/rail path from that tile to the capital, connectivity **only** via **Town rule**, and the province **town is not** a port connected to the capital
+  When the system computes effective yield
+  Then **town development level does not reduce** yield: the effective yield equals `min(P, MinTransport)`
+
+- Given a new game where each Great Power receives four bootstrap `grain` tiles at improvement level `1` in the capital province per [tile-map-and-generation.md](tile-map-and-generation.md) § Great Power starting grain (bootstrap) and default tech allows level-1 extraction
+  When the system runs the **first** Extraction phase after setup
+  Then each Great Power's extraction totals include **exactly 4** units of commodity `grain` from those four tiles (land/same-region bucket), absent unrelated rules that would remove connectivity
 
 - Given a player attempts to build a level 2 road (transport level 2) on a tile
   When the system validates the build_road work order
@@ -192,9 +224,9 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
   When the system evaluates connectivity for overseas extraction
   Then that province is considered connected via sea transport using that port regardless of the province `townTileKey` location
 
-- Given a fixed game state where ownership, roads/rails, ports, sea topology, and blockade status are unchanged and only a province `townTileKey` value changes
-  When the system recomputes extraction connectivity
-  Then tile connectivity outcomes remain unchanged, and only town development level can affect extraction amounts
+- Given a fixed game state where ownership, roads/rails, ports, sea topology, blockade status, and all `townDevelopmentLevel` values are unchanged, and only a province `townTileKey` value changes coordinate
+  When the system recomputes connectivity and extraction
+  Then tiles that were connected **only** via **Town rule** to the old town coordinate may become disconnected or connect differently; `townDevelopmentLevel` **alone** still does not define connectivity
 
 - Given a tile's improvement level, transport level, or town development level changes
   When the next production phase runs
