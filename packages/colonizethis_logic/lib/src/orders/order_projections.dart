@@ -23,10 +23,10 @@ ProjectedEffects projectOrderEffects({
   required String playerId,
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
-  _log.d('logic: projectOrderEffects run for player $playerId');
+  _log.d('projectOrderEffects run for player $playerId');
   if (tileMapByRegion.isEmpty) {
     _log.d(
-      'logic: projectOrderEffects with empty tileMapByRegion; extraction will be zero',
+      'projectOrderEffects with empty tileMapByRegion; extraction will be zero',
     );
   }
   Map<String, Map<String, int>>? productionByRecipeByPlayerId;

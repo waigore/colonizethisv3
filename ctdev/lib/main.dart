@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 import 'ctdev_log.dart';
 import 'screens/init_game_screen.dart';
@@ -12,7 +12,7 @@ void main() {
   runZonedGuarded(
     () => runApp(const CtDevApp()),
     (Object error, StackTrace stackTrace) {
-      Logger().e('ctdev: uncaught error', error: error, stackTrace: stackTrace);
+      ctdevLogger().e('uncaught error', error: error, stackTrace: stackTrace);
     },
   );
 }

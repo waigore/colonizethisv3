@@ -59,7 +59,7 @@ GameSetupResult createGameFromGeneratedMaps({
   int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
-  _log.i('logic: game setup start gameId=$gameId');
+  _log.i('game setup start gameId=$gameId');
   final tileMapByRegion = {
     kRegionOldWorld: tileMapOldWorld,
     kRegionNewWorld: tileMapNewWorld,
@@ -129,8 +129,8 @@ GameSetupResult createGameFromGeneratedMaps({
           assignmentRandom: assignmentRandom,
         );
       } on StateError catch (e, st) {
-        _log.w('logic: OW assignment attempt $attempt failed: $e');
-        _log.d('logic: stack $st');
+        _log.w('OW assignment attempt $attempt failed: $e');
+        _log.d('stack $st');
         continue;
       }
       final ownersRepair = Map<String, String>.from(owOwner);
@@ -156,7 +156,7 @@ GameSetupResult createGameFromGeneratedMaps({
       );
     }
   } else {
-    _log.i('logic: OW assignment fast path (no GP land connectivity repair)');
+    _log.i('OW assignment fast path (no GP land connectivity repair)');
     owOwner = _assignOldWorldOwnershipContiguous(
       neighbours: owNeighbours,
       provinceIds: owProvinceIds,
@@ -434,7 +434,7 @@ GameSetupResult createGameFromGeneratedMaps({
     warpLinks: links,
   );
 
-  _log.i('logic: game setup end gameId=${game.id}');
+  _log.i('game setup end gameId=${game.id}');
   return GameSetupResult(
     game: game,
     tileMapByRegion: tileMapByRegion,
@@ -732,7 +732,7 @@ Game _assignProvinceTowns({
         return coastalCandidates.first;
       }
       _log.w(
-        'logic: seaboard town fallback for province=${p.id}: '
+        'seaboard town fallback for province=${p.id}: '
         'topology is sea-bound but no sea-zone-adjacent tile candidate found',
       );
     }
@@ -999,13 +999,13 @@ Game _applyNaming({
   );
 
   _log.i(
-    'logic: naming applied ow=${updatedWorld.oldWorld.provinces.length} '
+    'naming applied ow=${updatedWorld.oldWorld.provinces.length} '
     'nw=${updatedWorld.newWorld.provinces.length} players=${game.players.length} '
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {
     _log.d(
-      'logic: naming procedural fallback used count=$proceduralFallbackCount',
+      'naming procedural fallback used count=$proceduralFallbackCount',
     );
   }
 
@@ -1499,7 +1499,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   );
   if (pack == null) {
     throw StateError(
-      'logic: GP landmass pack unexpectedly null at budget $gpProvinceBudget',
+      'GP landmass pack unexpectedly null at budget $gpProvinceBudget',
     );
   }
   final gpLandmassAssignments = pack.gpLandmassAssignments;

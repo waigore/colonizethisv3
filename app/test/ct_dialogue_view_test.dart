@@ -1,7 +1,7 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jenny/jenny.dart';
-import 'package:logger/logger.dart';
 import 'package:jenny/src/structure/line_content.dart';
 
 import 'package:colonizethis_app/features/game/dialogue/ct_dialogue_view.dart';
@@ -11,7 +11,7 @@ void main() {
 
   test('CtDialogueView advanceLine completes line future and clears state',
       () async {
-    final view = CtDialogueView(logger: Logger());
+    final view = CtDialogueView(logger: appLogger('dialogue'));
 
     var stateCalls = 0;
     view.onStateChanged = (_, __) => stateCalls++;
@@ -37,7 +37,7 @@ void main() {
 
   test('CtDialogueView selectOption completes choice future with index',
       () async {
-    final view = CtDialogueView(logger: Logger());
+    final view = CtDialogueView(logger: appLogger('dialogue'));
 
     var lastIndex = -1;
     view.onStateChanged = (line, choice) {
@@ -65,7 +65,7 @@ void main() {
 
   test('CtDialogueView onDialogueFinish clears state and signals nulls',
       () async {
-    final view = CtDialogueView(logger: Logger());
+    final view = CtDialogueView(logger: appLogger('dialogue'));
 
     var nullCalls = 0;
     view.onStateChanged = (line, choice) {

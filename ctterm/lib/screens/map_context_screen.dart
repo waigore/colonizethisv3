@@ -2,12 +2,12 @@
 // SPEC/tui/ctterm.md, SPEC/tui/screens/map-context.md
 
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Map context screen showing detailed province information, map layers, and region navigation.
 class MapContextScreen extends StatefulComponent {
@@ -111,7 +111,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
       final idx = _regions.indexOf(_currentRegion);
       _currentRegion = _regions[(idx + 1) % _regions.length];
     });
-    _log.d('tui:map: region changed to $_currentRegion');
+    _log.d('region changed to $_currentRegion');
   }
 
   void _toggleLayer(int layer) {
@@ -132,7 +132,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
       }
     });
     _log.d(
-        'tui:map: layer toggled: terrain=$_showTerrain ownership=$_showOwnership towns=$_showTowns fog=$_showFog');
+        'layer toggled: terrain=$_showTerrain ownership=$_showOwnership towns=$_showTowns fog=$_showFog');
   }
 
   void _moveCursor(int dx, int dy) {
@@ -151,7 +151,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
     setState(() {
       _tileMode = !_tileMode;
     });
-    _log.d('tui:map: selection mode: ${_tileMode ? "tile" : "province"}');
+    _log.d('selection mode: ${_tileMode ? "tile" : "province"}');
   }
 
   /// Gets the currently selected province data.
@@ -276,7 +276,7 @@ class _MapContextScreenState extends State<MapContextScreen> {
 
         // Escape - go back
         if (key == LogicalKey.escape) {
-          _log.d('tui:nav: map context -> in-game shell');
+          _log.d('map context -> in-game shell');
           component.onNavigate(CttermRoute.inGameShell);
           return true;
         }

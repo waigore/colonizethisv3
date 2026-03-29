@@ -55,7 +55,7 @@ ProductionResult resolveProduction({
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      _log.w('logic: production skip unknown recipe id ${assignment.recipeId}');
+      _log.w('production skip unknown recipe id ${assignment.recipeId}');
       continue;
     }
     if (assignment.assignedLabour <= 0) continue;
@@ -64,7 +64,7 @@ ProductionResult resolveProduction({
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) {
       _log.w(
-        'logic: production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
+        'production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
       );
       continue;
     }
@@ -114,7 +114,7 @@ ProductionResult resolveProduction({
   }
 
   _log.d(
-    'logic: production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
+    'production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
   );
   return ProductionResult(
     stockpile: current,

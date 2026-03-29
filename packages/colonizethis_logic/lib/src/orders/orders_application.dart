@@ -312,7 +312,7 @@ Game applyBuildAndWorkOrders(
     void Function(List<Province>) setProvinces,
   ) {
     _log.d(
-      'logic: work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
+      'work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
     );
     switch (cw.workTarget) {
       case 'build_improvement':
@@ -435,7 +435,7 @@ Game applyBuildAndWorkOrders(
             s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
           } else {
             _log.d(
-              'logic: build_rail completion skipped unit=${u.id} reason=$reason',
+              'build_rail completion skipped unit=${u.id} reason=$reason',
             );
           }
         }
@@ -474,7 +474,7 @@ Game applyBuildAndWorkOrders(
           clearCurrentWork: true,
         );
         _log.d(
-          'logic: work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
+          'work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
         );
         continue;
       }
@@ -487,7 +487,7 @@ Game applyBuildAndWorkOrders(
             clearCurrentWork: true,
           );
           _log.d(
-            'logic: work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}',
+            'work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}',
           );
           continue;
         }
@@ -520,7 +520,7 @@ Game applyBuildAndWorkOrders(
           final toRemove = enemySpies.first.key;
           final removed = unitsById[toRemove];
           if (removed?.currentWork != null) {
-            _log.d('logic: work cancelled unit=$toRemove reason=unit dead');
+            _log.d('work cancelled unit=$toRemove reason=unit dead');
           }
           unitsById.remove(toRemove);
         }
@@ -790,7 +790,7 @@ void _runWorkPhase(
         final totalTurns = config.totalTurnsFn();
 
         _log.d(
-          'logic: work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
+          'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
           order.unitId,
@@ -859,7 +859,7 @@ void _runWorkPhase(
           hasValidTarget) {
         const totalTurns = 5;
         _log.d(
-          'logic: work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
+          'work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
           order.unitId,
@@ -883,7 +883,7 @@ void _runWorkPhase(
           hasValidTarget) {
         const totalTurns = 0;
         _log.d(
-          'logic: work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
+          'work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
           order.unitId,
@@ -942,7 +942,7 @@ void _runWorkPhase(
           if (maxTiles < 1) maxTiles = 1;
           final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
           _log.d(
-            'logic: work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
+            'work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
           );
           updateUnit(
             order.unitId,
@@ -973,13 +973,13 @@ void _runWorkPhase(
         if (fortLevel == 1 &&
             player.techUnlocked?['mine_engineering'] != true) {
           _log.d(
-            'logic: build_fort skipped - Mine Engineering required for fort level 2',
+            'build_fort skipped - Mine Engineering required for fort level 2',
           );
           continue;
         }
         if (fortLevel == 2 && player.techUnlocked?['modern_forts'] != true) {
           _log.d(
-            'logic: build_fort skipped - Modern Forts required for fort level 3',
+            'build_fort skipped - Modern Forts required for fort level 3',
           );
           continue;
         }
@@ -996,7 +996,7 @@ void _runWorkPhase(
           terrain: terrain,
         );
         if (railReason != null) {
-          _log.d('logic: build_rail skipped - $railReason');
+          _log.d('build_rail skipped - $railReason');
           continue;
         }
         if (applyStandardWorkOrder('build_rail')) continue;
@@ -1092,7 +1092,7 @@ void _propagateRoadToAdjacentCapitalOrPort({
 
     if (isCapital || isPort) {
       _log.d(
-        'logic: build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey',
+        'build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey',
       );
       final currentLevel = tileState.roadLevel(adjacentTileKey);
       // Only upgrade, never downgrade.

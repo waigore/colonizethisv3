@@ -1,6 +1,6 @@
 // Units Screen: manage military and civilian unit orders. SPEC/tui/screens/units.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -9,7 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show neighborProvinceIdsInRegion;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Units screen for managing unit stacks and issuing orders.
 class UnitsScreen extends StatefulComponent {
@@ -145,7 +145,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
           _inputMode = 'none';
           _feedbackMessage = '';
         });
-        _log.d('tui:nav: cancelled input mode');
+        _log.d('cancelled input mode');
         return true;
       }
       component.onNavigate(CttermRoute.inGameShell);
@@ -195,7 +195,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
     // Enter/Space: select unit (show detail)
     if (key == LogicalKey.enter || key == LogicalKey.space) {
       // For now, just show the unit detail
-      _log.d('tui:units: selected unit ${units[_selectedIndex].id}');
+      _log.d('selected unit ${units[_selectedIndex].id}');
       return true;
     }
 
@@ -213,7 +213,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
           _feedbackMessage = 'ERROR: Selected unit cannot attack';
           _feedbackColor = Colors.red;
         });
-        _log.w('tui:units: attack rejected - ${unit.type} cannot initiate combat');
+        _log.w('attack rejected - ${unit.type} cannot initiate combat');
         return true;
       }
       _startAttackOrder(unit);
@@ -344,7 +344,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       _feedbackMessage = 'Move to province:';
       _feedbackColor = Colors.yellow;
     });
-    _log.d('tui:units: start move order for ${unit.id}');
+    _log.d('start move order for ${unit.id}');
   }
 
   void _startAttackOrder(Unit unit) {
@@ -353,7 +353,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
         _feedbackMessage = 'ERROR: Selected unit cannot attack';
         _feedbackColor = Colors.red;
       });
-      _log.w('tui:units: startAttackOrder called for non-combat unit ${unit.id} (${unit.type})');
+      _log.w('startAttackOrder called for non-combat unit ${unit.id} (${unit.type})');
       return;
     }
     // Use only enemy-controlled adjacent provinces for attack targeting
@@ -371,7 +371,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       _feedbackMessage = 'Select enemy province to attack:';
       _feedbackColor = Colors.yellow;
     });
-    _log.d('tui:units: start attack order for ${unit.id}');
+    _log.d('start attack order for ${unit.id}');
   }
 
   void _issueMoveOrder(Unit unit, String targetProvince) {
@@ -413,7 +413,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       _feedbackMessage = 'Move order accepted';
       _feedbackColor = Colors.green;
     });
-    _log.i('tui:units: move order accepted for ${unit.id} -> $targetProvince');
+    _log.i('move order accepted for ${unit.id} -> $targetProvince');
   }
 
   void _issueAttackOrder(Unit unit, String targetProvince) {
@@ -451,7 +451,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
         _feedbackMessage = 'Invalid: cannot attack your own province';
         _feedbackColor = Colors.red;
       });
-      _log.w('tui:units: attack rejected - target ${targetProvince} owned by player ${playerId}');
+      _log.w('attack rejected - target ${targetProvince} owned by player ${playerId}');
       return;
     }
 
@@ -483,7 +483,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       _feedbackMessage = 'Attack order accepted';
       _feedbackColor = Colors.green;
     });
-    _log.i('tui:units: attack order accepted for ${unit.id} -> $targetProvince');
+    _log.i('attack order accepted for ${unit.id} -> $targetProvince');
   }
 
   void _clearOrders(Unit unit) {
@@ -509,7 +509,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
         _feedbackMessage = 'Orders cleared';
         _feedbackColor = Colors.cyan;
       });
-      _log.i('tui:units: cleared orders for ${unit.id}');
+      _log.i('cleared orders for ${unit.id}');
     } else {
       setState(() {
         _feedbackMessage = 'No pending orders to clear';

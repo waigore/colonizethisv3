@@ -1,13 +1,13 @@
 // Pending overtures: accept/reject diplomatic offers during turn resolution.
 // SPEC/program/turn-resolution-phases.md, SPEC/game/diplomacy.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Screen shown when turn resolution blocks on the human player accepting or
 /// rejecting diplomatic overtures from other players.
@@ -138,7 +138,7 @@ class _PendingOverturesScreenState extends State<PendingOverturesScreen> {
           accepted: _accepted[i],
         ));
       }
-      _log.d('tui:overtures: submitting ${decisions.length} decision(s)');
+      _log.d('submitting ${decisions.length} decision(s)');
       component.onDecisions(decisions);
       return true;
     }

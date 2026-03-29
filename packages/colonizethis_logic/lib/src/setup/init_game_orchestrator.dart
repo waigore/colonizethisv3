@@ -90,7 +90,7 @@ InitGameResult runInitGame({
   }
 
   _log.i(
-    'logic: init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+    'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
   // Derive an effective seed: non-zero config seeds are used as-is for
   // reproducible runs; a zero seed means "choose a time-based seed".
@@ -115,7 +115,7 @@ InitGameResult runInitGame({
     skipFillLakes: options.skipFillLakes,
   );
   final gen = generateRegion ?? defaultTileMapRegionGenerator;
-  _log.d('logic: init game generating OW map');
+  _log.d('init game generating OW map');
   final (tileMapOW, topoOW) = gen(
     params: paramsOW,
     numProvinces: config.numProvincesOldWorld,
@@ -124,7 +124,7 @@ InitGameResult runInitGame({
     resourceRules: ResourceRules.defaultRules,
   );
 
-  _log.d('logic: init game generating NW map');
+  _log.d('init game generating NW map');
   final sizeNW = computeGridSizeFromParams(
     config.numProvincesNewWorld,
     mapGenParams,
@@ -240,7 +240,7 @@ InitGameResult runInitGame({
   // Phase 6 full AI: populate hidden agendas before first AI order generation. SPEC: game-setup-pipeline.md step 9, ai-planner.md § Phase 6.
   game = assignHiddenAgendasForGame(game);
 
-  _log.i('logic: init game end seed=$effectiveSeed gameId=${game.id}');
+  _log.i('init game end seed=$effectiveSeed gameId=${game.id}');
   return InitGameResult(
     game: game,
     mapPngBytes: mapPngBytes,

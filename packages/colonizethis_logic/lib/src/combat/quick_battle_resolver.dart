@@ -35,7 +35,7 @@ QuickBattleResult resolveQuickBattle(
   List<QuickBattleRoundActions>? roundActions,
 }) {
   _qbLog.d(
-    'logic: quick_battle start province=${input.provinceId} '
+    'quick_battle start province=${input.provinceId} '
     'seed=${input.seed} rounds=${input.maxRounds}',
   );
   final rng = Random(input.seed);
@@ -114,7 +114,7 @@ QuickBattleResult resolveQuickBattle(
           useVirtualEmplaced: useVirtualEmplaced,
         );
         _qbLog.d(
-          'logic: quick_battle end winner=${result.winner.name} '
+          'quick_battle end winner=${result.winner.name} '
           'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
         );
         return result;
@@ -157,7 +157,7 @@ QuickBattleResult resolveQuickBattle(
           useVirtualEmplaced: useVirtualEmplaced,
         );
         _qbLog.d(
-          'logic: quick_battle end winner=${result.winner.name} '
+          'quick_battle end winner=${result.winner.name} '
           'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
         );
         return result;
@@ -200,7 +200,7 @@ QuickBattleResult resolveQuickBattle(
         useVirtualEmplaced: useVirtualEmplaced,
       );
       _qbLog.d(
-        'logic: quick_battle end winner=${result.winner.name} '
+        'quick_battle end winner=${result.winner.name} '
         'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
       );
       return result;
@@ -216,7 +216,7 @@ QuickBattleResult resolveQuickBattle(
         useVirtualEmplaced: useVirtualEmplaced,
       );
       _qbLog.d(
-        'logic: quick_battle end winner=${result.winner.name} '
+        'quick_battle end winner=${result.winner.name} '
         'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
       );
       return result;
@@ -244,7 +244,7 @@ QuickBattleResult resolveQuickBattle(
       useVirtualEmplaced: useVirtualEmplaced,
     );
     _qbLog.d(
-      'logic: quick_battle end winner=${result.winner.name} '
+      'quick_battle end winner=${result.winner.name} '
       'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
     );
     return result;
@@ -260,7 +260,7 @@ QuickBattleResult resolveQuickBattle(
       useVirtualEmplaced: useVirtualEmplaced,
     );
     _qbLog.d(
-      'logic: quick_battle end winner=${result.winner.name} '
+      'quick_battle end winner=${result.winner.name} '
       'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
     );
     return result;
@@ -275,7 +275,7 @@ QuickBattleResult resolveQuickBattle(
     useVirtualEmplaced: useVirtualEmplaced,
   );
   _qbLog.d(
-    'logic: quick_battle end winner=${result.winner.name} '
+    'quick_battle end winner=${result.winner.name} '
     'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
   );
   return result;

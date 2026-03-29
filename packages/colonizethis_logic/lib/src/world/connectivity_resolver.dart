@@ -77,7 +77,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
   _log.d(
-    'logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
+    'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
   final provinceIdsByType = provinceNodeIds(topology);
   final blockadedByPlayer =
@@ -89,7 +89,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
       _log.d(
-        'logic: connectivity resolve player=${player.id} skipped (no capital)',
+        'connectivity resolve player=${player.id} skipped (no capital)',
       );
       result[player.id] = ConnectivityResult(connected: {});
       continue;
@@ -110,7 +110,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final summary = result.entries
       .map((e) => '${e.key}:${e.value.connected.length}')
       .join(' ');
-  _log.d('logic: connectivity resolve end $summary');
+  _log.d('connectivity resolve end $summary');
   return result;
 }
 
