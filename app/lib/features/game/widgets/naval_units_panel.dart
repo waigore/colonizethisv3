@@ -478,14 +478,19 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     return null;
   }
 
-  void _onHeaderSelectAllChanged(bool? next, List<_FleetRow> flat) {
+  /// Select-all header: from none or partial → select every row; from all → clear.
+  /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
+  void _onHeaderSelectAllTapped(List<_FleetRow> flat) {
     setState(() {
-      if (next == true) {
+      final ids = flat.map(_selectionFleetId).toSet();
+      final allSelected =
+          ids.isNotEmpty && ids.every(_selectedFleetIds.contains);
+      if (allSelected) {
+        _selectedFleetIds.clear();
+      } else {
         _selectedFleetIds
           ..clear()
-          ..addAll(flat.map(_selectionFleetId));
-      } else {
-        _selectedFleetIds.clear();
+          ..addAll(ids);
       }
     });
   }
@@ -656,7 +661,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             child: Checkbox(
               tristate: true,
               value: headerCheckbox,
-              onChanged: (v) => _onHeaderSelectAllChanged(v, flat),
+              onChanged: (_) => _onHeaderSelectAllTapped(flat),
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
