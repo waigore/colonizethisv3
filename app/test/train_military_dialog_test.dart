@@ -63,7 +63,7 @@ void main() {
     required Game game,
     required String humanPlayerId,
     Orders currentOrders = const Orders(),
-    void Function(List<BuildUnitOrder>)? onOrdersChanged,
+    AppEventBus? bus,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -71,7 +71,7 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           currentOrders: currentOrders,
-          onOrdersChanged: onOrdersChanged ?? (_) {},
+          bus: bus ?? AppEventBus.create(),
         ),
       ),
     );
@@ -120,6 +120,11 @@ void main() {
   ) async {
     List<BuildUnitOrder>? capturedOrders;
     final richGame = gameWithMilitaryResources();
+    final bus = AppEventBus.create();
+    final sub = bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
+      capturedOrders = e.orders;
+    });
+    addTearDown(sub.cancel);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -133,9 +138,7 @@ void main() {
                     game: richGame,
                     humanPlayerId: humanPlayerId,
                     currentOrders: const Orders(),
-                    onOrdersChanged: (orders) {
-                      capturedOrders = orders;
-                    },
+                    bus: bus,
                   ),
                 );
               },
