@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 import 'package:logger/logger.dart';
 
+import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -222,6 +223,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     if (_loadError != null) {
       return Stack(
         children: [
@@ -238,12 +240,12 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Could not load intervention dialogue: $_loadError',
+                        l10n.game_intervention_loadError(_loadError.toString()),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Submit all responses as “Do naught” to continue.',
+                        l10n.game_intervention_degradedHint,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
@@ -251,7 +253,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
                         alignment: Alignment.centerRight,
                         child: CtNinePatchButton(
                           onPressed: _degradedSubmitDoNothing,
-                          child: const Text('Continue'),
+                          child: Text(l10n.game_intervention_continue),
                         ),
                       ),
                     ],
@@ -305,7 +307,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
                   alignment: Alignment.centerRight,
                   child: CtNinePatchButton(
                     onPressed: () => _view!.advanceLine(),
-                    child: const Text('Continue'),
+                    child: Text(l10n.game_intervention_continue),
                   ),
                 ),
               ] else if (choice != null) ...[
@@ -335,30 +337,38 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Thy resolution (${_promptIndex + 1} of ${widget.prompts.length})',
+                l10n.game_intervention_resolutionProgress(
+                  _promptIndex + 1,
+                  widget.prompts.length,
+                ),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 12),
               Text(
-                '${_factionDisplayName(widget.game, prompt.aggressorGpId)} '
-                'against ${_factionDisplayName(widget.game, prompt.defenderMinorOrTribeId)}. '
-                'Thou speakest for ${_factionDisplayName(widget.game, prompt.interveningGpId)}.',
+                l10n.game_intervention_situation(
+                  _factionDisplayName(widget.game, prompt.aggressorGpId),
+                  _factionDisplayName(
+                    widget.game,
+                    prompt.defenderMinorOrTribeId,
+                  ),
+                  _factionDisplayName(widget.game, prompt.interveningGpId),
+                ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
               CtNinePatchButton(
                 onPressed: () => _pick(InterventionChoice.intervene),
-                child: const Text('Intervene with force'),
+                child: Text(l10n.game_intervention_intervene),
               ),
               const SizedBox(height: 8),
               CtNinePatchButton(
                 onPressed: () => _pick(InterventionChoice.doNothing),
-                child: const Text('Do naught'),
+                child: Text(l10n.game_intervention_doNothing),
               ),
               const SizedBox(height: 8),
               CtNinePatchButton(
                 onPressed: () => _pick(InterventionChoice.protest),
-                child: const Text('Diplomatic protest'),
+                child: Text(l10n.game_intervention_protest),
               ),
             ],
           ),
