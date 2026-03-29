@@ -79,7 +79,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   }
   if (entries.isNotEmpty) {
     _log.d(
-      'data: evidence for declareWar actor=$actorGpId target=$targetFactionId entries=${entries.length}',
+      'evidence for declareWar actor=$actorGpId target=$targetFactionId entries=${entries.length}',
     );
   }
   return entries;
@@ -110,7 +110,7 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
     );
   }
   _log.d(
-    'data: evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}',
+    'evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}',
   );
   return entries;
 }
@@ -148,7 +148,7 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
   }
   if (entries.isNotEmpty) {
     _log.d(
-      'data: evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}',
+      'evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}',
     );
   }
   return entries;
@@ -180,7 +180,7 @@ List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
   }
   if (entries.isNotEmpty) {
     _log.d(
-      'data: evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}',
+      'evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}',
     );
   }
   return entries;

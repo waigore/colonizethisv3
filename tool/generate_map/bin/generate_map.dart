@@ -6,15 +6,15 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = mapLogger();
 
 void _errExit(String message) {
   stderr.writeln(message);
-  _log.w('map: $message');
+  _log.w(message);
   exit(1);
 }
 
@@ -286,8 +286,10 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     continentBufferTiles: mapGenParams.continentBufferTiles,
   );
 
-  _log.i('map: === Map generation ===');
-  _log.i('map: Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})');
+  _log.i('=== Map generation ===');
+  _log.i(
+    'Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})',
+  );
   stdout.writeln('Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})');
   List<(int x, int y)>? landSeeds;
   List<int>? landSeedContinentIndices;
@@ -297,7 +299,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     numContinents: args.numContinents,
     regionId: args.regionId,
     resourceRules: ResourceRules.defaultRules,
-    onLog: (msg) => _log.i('map: $msg'),
+    onLog: _log.i,
     onLandSeedsPlaced: (s, indices) {
       landSeeds = List.from(s);
       landSeedContinentIndices = List.from(indices);
@@ -307,7 +309,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
 
   final tileCounts = computeTileCountsPerRegion(tileMapResult);
   final centroids = computeCentroidsPerRegion(tileMapResult);
-  _log.i('map: Tile map seed: ${args.seedUsed}');
+  _log.i('Tile map seed: ${args.seedUsed}');
 
   if (args.withTileMapImage) {
     final cellSize = args.tileSize;
@@ -335,10 +337,10 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
       );
     }
     final opened = openInDefaultViewer(imagePath);
-    _log.i('map: Tile map image: $imagePath');
+    _log.i('Tile map image: $imagePath');
     stdout.writeln('Tile map image: $imagePath');
     if (!opened) {
-      _log.w('map: Could not open in viewer. Saved to: $imagePath');
+      _log.w('Could not open in viewer. Saved to: $imagePath');
     }
   }
 
@@ -361,7 +363,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     );
     final dotFile = dotPath ?? _tempDotPath();
     File(dotFile).writeAsStringSync(dotContent);
-    _log.i('map: Topology graph (DOT): $dotFile');
+    _log.i('Topology graph (DOT): $dotFile');
     stdout.writeln('Topology graph (DOT): $dotFile');
 
     try {
@@ -369,9 +371,9 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
       final proc = Process.runSync('neato', ['-n', '-Tpng', '-o', pngPath, dotFile]);
       if (proc.exitCode == 0) {
         final opened = openInDefaultViewer(pngPath);
-        _log.i('map: Topology graph (PNG): $pngPath');
+        _log.i('Topology graph (PNG): $pngPath');
         if (!opened) {
-          _log.w('map: Could not open topology graph in viewer. Saved to: $pngPath');
+          _log.w('Could not open topology graph in viewer. Saved to: $pngPath');
         }
       } else {
         _warnGraphviz();
@@ -428,7 +430,7 @@ String _tempDotPath() {
 void _warnGraphviz() {
   const msg = 'Warning: Graphviz not installed; run `brew install graphviz` to render topology graph to PNG.';
   stderr.writeln(msg);
-  _log.w('map: $msg');
+  _log.w(msg);
 }
 
 void _printUsage() {
