@@ -127,6 +127,7 @@ melos run generate_map -- [options]
 - `--seed-before-assignment` — use legacy land assignment; default off
 - `--skip-fill-lakes` — skip Pass 4 (fill lakes); default off
 - `--continent-buffer N` — minimum sea tiles between continents (default: 2)
+- `--write-tile-map-json <path>` — write `TileMapResult` JSON (`width`, `height`, `grid`; optional `terrainGrid` / `resourceGrid` when present) for tooling (e.g. Wang tile preview packer)
 
 **Output**
 
@@ -289,9 +290,37 @@ Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_t
 
 ---
 
+## Python: wang_incremental_64.py (incremental Wang tiles)
+
+**64×64** plains↔sea corner-Wang generator: **192×192** cross **inpaint-v3** (optional **`init_guide`** merged into **`inpainting_image`**; **`--no-init-image`** sends bare composite); arms and **center fill bands** use **`incremental_state.json`** generated set + **edge-signature** rules (**opposite** edge for arms, **same** edge for center bands; **no** `contracts_128/`). Missing **`tile_00`** / **`tile_15`** **auto-seeded**; **`--init`** writes initial state. **Second pass:** **`--refine-center-island II`** re-inpaints only the inner **32×32** of an existing **`tile_II.png`** on a **64×64** canvas (outer **16px** ring kept); default prompt treats that ring as **ground truth** for thematic continuity inward (override with **`--description`**). Run **`python3`** from repo root. Spec: [SPEC/ui/pytool-image-tools.md](../SPEC/ui/pytool-image-tools.md) § **wang_incremental_64.py**.
+
+**Example**
+
+```bash
+export PIXELLAB_API_KEY=…
+python3 pytool/wang_incremental_64.py --init --max-tiles 1
+python3 pytool/wang_incremental_64.py --refine-center-island 6 -v
+```
+
+Default **`--run-dir`** is **`app/assets/images/terrain/base_64/wang_incremental`** (override with **`--run-dir`** when needed).
+
+---
+
+## Python: wang_reference_legal_layout_64.py (legal reference grid)
+
+**4×4** **`wang_index`** permutation for **`reference_layout.json`** so **internal** sheet edges match **corner Wang** shared vertices (unlike row-major atlas order). Optional **`--update-reference`** rebuilds **`reference.png`** from **`tiles/`**. Stdlib solver; Pillow only for PNG rebuild. Spec: [SPEC/ui/tileset/wang-reference-legal-layout-64.md](../SPEC/ui/tileset/wang-reference-legal-layout-64.md), [SPEC/ui/pytool-image-tools.md](../SPEC/ui/pytool-image-tools.md) § **wang_reference_legal_layout_64.py**.
+
+**Example**
+
+```bash
+python3 pytool/wang_reference_legal_layout_64.py --run-dir app/assets/images/terrain/base_64/wang_incremental --seed 0 --update-reference
+```
+
+---
+
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
 
 **Invocation**
 
