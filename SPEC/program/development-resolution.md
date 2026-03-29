@@ -24,13 +24,13 @@
   - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for transport level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
   - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
   - Look up:
-    - `totalTurns` for this action from ruleset config (higher levels → more turns; fort and rail slower than level-1 road/improvement).
-    - Material **costs** per action.
+    - `totalTurns` for this action using `totalTurnsForWork` in `packages/colonizethis_data` `work_order_costs.dart`, applied from `applyBuildAndWorkOrders` for standard material-backed targets (`build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `upgrade_town`). **`explore`** uses the province-scaled turn count computed in that application path (see [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)). **`steal_tech`** uses 5 turns. **`counter_spy`** is ongoing (see loop below). **`purchase_land`** and **`prospect`** do not use this `currentWork` duration path in the build-phase application (see application code and fog spec).
+    - Material **costs** per action from `work_order_materialCost` / related helpers in the same module (and treasury rules for `purchase_land`).
   - If validation passes and the player has sufficient materials (or no material cost for that target):
-    - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled). Look up costs from ruleset/config.
+    - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled).
     - Enforce **per-player tile exclusivity** for development and purchase work: if another Builder, Engineer, or Merchant unit owned by the same player already has `currentWork` targeting that `targetTileKey`, the new work order must have been rejected earlier and is not applied here.
     - Set unit `status = working`, `currentWork = (target, targetTileKey, totalTurns, remainingTurns = totalTurns)`, and **unit.tileKey = targetTileKey** (civilian unit is considered on the target tile for the turn).
-  - `totalTurns` comes from ruleset config (default 1); config can vary by action and level (e.g. higher improvement/fort levels take more turns).
+  - Durations are code-defined in `totalTurnsForWork` (and the `explore` formula where applicable); `build_fort` scales with current fort level (e.g. longer builds for higher fort levels).
 
 ---
 
@@ -42,7 +42,7 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
    - If unit is dead or tile is no longer owned by the player, **cancel** work: clear `currentWork`, set `status = idle`; costs are not refunded.
    - Otherwise, decrement `remainingTurns` by 1.
 2. When `remainingTurns` reaches 0, apply the action's effect:
-   - `build_improvement`: increase improvement level for `tileKey` by 1, clamped by terrain and tech caps.
+   - `build_improvement`: set stored improvement level to `min(currentLevel + 1, 4)` (global max improvement level per [extraction-and-improvements.md](../game/extraction-and-improvements.md)). Tech-allowed extraction cap and tile eligibility are enforced **only when the work order is accepted**; completion does **not** recompute those caps. Effective extraction still uses `min(improvement level, tech cap, …)` each turn per that GDD.
    - `upgrade_town`: increase the province's **town development level** by 1 (not generic improvement level on the tile); used in extraction formula per [capital-and-connectivity.md](../game/capital-and-connectivity.md).
    - `build_road`: set or upgrade transport level for `tileKey` (0→1→2; level 2 requires Road Construction tech) and, if applicable, adjacent capital/port tiles per [capital-and-connectivity.md](../game/capital-and-connectivity.md). "If applicable" means: when the target tile is adjacent (4-neighbour) to a tile that is either the player's capital or a port, the transport level is also applied to that adjacent tile (upgrade only, never downgrade).
    - `build_port`: create/update a `(provinceId, seaZoneId) → tileKey` mapping in `portsByProvinceSeaboard` and ensure the port tile has transport level 4.
@@ -78,10 +78,39 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 ### Acceptance criteria
 
-- **Work assign:** Validation covers unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability; on accept, materials are deducted at assign (no refund if work is later cancelled); unit gets `currentWork` set and `status = working`.
-- **build_improvement validation:** The order engine rejects build_improvement when the target tile has no resource, when the tile's improvement level is already 4, or when the player's tech-allowed extraction cap is less than (current improvement level + 1).
-- **Build/Work phase loop:** Each turn, for each working civilian: if unit is dead or the tile is no longer owned by the player (e.g. conquest; see #376), cancel work (clear `currentWork`, set `status = idle`); otherwise decrement `remainingTurns`; when it reaches 0, apply the action effect then set `status = idle` and clear `currentWork`.
-- **Player-initiated cancel:** When the player confirms cancel for a unit with in-progress work, the system clears that unit's `currentWork` and sets `status = idle`; materials are not refunded. Pending work orders for that unit are removed from the current turn's orders. Implementation may use a cancel-work order applied at the start of Build/Work phase or a direct game-state update per TDD.
-- **build_port:** Completion requires topology to be defined. If topology is `null`, the build_port completion has no effect—no port is registered in `portsByProvinceSeaboard` and the transport level is not set on the tile. Therefore, build_port must only be offered/completed when topology is available. Port key uses full province id per [world-model-identity.md](../game/world-model-identity.md).
-- **Shared use:** The same TurnResolver and development resolution logic are used in the main game and in sim_game.
+- **Work assign (validation and materials):** Given a civilian `WorkOrder` that passes order-engine validation for unit type, target tile (exists, ownership, terrain eligibility), tech prerequisites, and material availability  
+  When the system applies that order in the Build/Work application path  
+  Then the system deducts materials at assign time (no refund if work is later cancelled), sets the unit `status` to `working`, and sets `currentWork` with `remainingTurns == totalTurns`.
+
+- **Work assign (`totalTurns` source):** Given a standard material-backed work target handled by `applyStandardWorkOrder` (e.g. `build_improvement`, `build_road`, `build_fort`)  
+  When the system assigns that work  
+  Then `currentWork.totalTurns` equals `totalTurnsForWork` from `colonizethis_data` `work_order_costs.dart` for that target and its level arguments (e.g. fort level for `build_fort`).
+
+- **build_improvement validation:** Given a `build_improvement` work order  
+  When the order engine validates it  
+  Then the engine rejects the order if the target tile has no resource, if the tile's improvement level is already 4, or if the player's tech-allowed extraction cap is strictly less than (current improvement level + 1).
+
+- **build_improvement completion (stored level):** Given a unit completes `build_improvement` on a tile whose stored improvement level is `N` with `0 <= N <= 3`  
+  When `remainingTurns` reaches 0 and the effect is applied  
+  Then the stored improvement level becomes `N + 1` (and never exceeds 4).
+
+- **build_improvement completion (no assign-time re-check):** Given a unit has in-progress `build_improvement` on a tile at stored level 3  
+  When `remainingTurns` reaches 0 and the effect is applied  
+  Then the system sets stored improvement level to 4 without re-evaluating the player's tech-allowed extraction cap at completion (cap was enforced when the order was accepted; extraction yield still follows `min(level, tech cap, …)` per GDD).
+
+- **Build/Work phase loop:** Given a civilian with `status = working` and `currentWork != null`  
+  When the Build/Work phase runs  
+  Then if the unit is dead or the tile is no longer owned by the player, the system clears `currentWork` and sets `status = idle` with no material refund; otherwise it decrements `remainingTurns` by 1, and when `remainingTurns` reaches 0 it applies the action effect, then sets `status = idle` and clears `currentWork`.
+
+- **Player-initiated cancel:** Given a unit with in-progress work  
+  When the player confirms cancel  
+  Then the system clears that unit's `currentWork`, sets `status = idle`, and does not refund materials; pending work orders for that unit are removed from the current turn's orders. Implementation may use a cancel-work order at the start of Build/Work phase or a direct game-state update per TDD.
+
+- **build_port:** Given `build_port` work completes  
+  When topology is `null`  
+  Then the system does not register a port in `portsByProvinceSeaboard` and does not set transport level on the tile from that completion. Port keys use full province id per [world-model-identity.md](../game/world-model-identity.md).
+
+- **Shared use:** Given the same `WorkOrder` inputs  
+  When the main game or `sim_game` resolves the Build/Work phase  
+  Then both use the same turn resolution / development application logic for durations, costs, and completion effects.
 

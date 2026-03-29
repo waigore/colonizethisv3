@@ -152,8 +152,25 @@ void main() {
       );
     });
 
-    test('OpenPauseMenuPanelEvent equal when both use null callbacks', () {
+    test('OpenPauseMenuPanelEvent equality', () {
       expect(const OpenPauseMenuPanelEvent(), const OpenPauseMenuPanelEvent());
+    });
+
+    test('NavigateToShellEvent equality', () {
+      expect(const NavigateToShellEvent(), const NavigateToShellEvent());
+    });
+
+    test('CombatModeChosenEvent equality', () {
+      expect(
+        const CombatModeChosenEvent(CombatMode.quickBattle),
+        const CombatModeChosenEvent(CombatMode.quickBattle),
+      );
+    });
+
+    test('LocateMapTileEvent locates tile only (no panel close on event)', () {
+      const e = LocateMapTileEvent(tileKey: 'oldWorld|1,1', regionId: 'oldWorld');
+      expect(e.tileKey, 'oldWorld|1,1');
+      expect(e.regionId, 'oldWorld');
     });
 
     test('StartTargetSelectionEvent equal for same params', () {

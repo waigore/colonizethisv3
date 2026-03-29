@@ -12,6 +12,7 @@ import '../config/themes.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
+import '../features/game/logic/naval_fleet_split_apply.dart';
 import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
@@ -419,7 +420,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: richGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -454,7 +455,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: noTechGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -488,7 +489,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: poorGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -1362,7 +1363,7 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
                   game: richGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -1390,6 +1391,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   late Game _game;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
+  StreamSubscription<NavalSplitFleetRequestedEvent>? _navalSplitSub;
 
   @override
   void initState() {
@@ -1401,11 +1403,21 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
       if (!mounted) return;
       setState(() => _game = e.game);
     });
+    _navalSplitSub = _navalBus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+      final next = applyNavalSplitFleet(
+        game: _game,
+        humanPlayerId: e.humanPlayerId,
+        originalFleetId: e.originalFleetId,
+        shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+      );
+      _navalBus.emit(NavalFleetsUpdatedEvent(game: next));
+    });
   }
 
   @override
   void dispose() {
     _navalSub?.cancel();
+    _navalSplitSub?.cancel();
     super.dispose();
   }
 
