@@ -29,12 +29,16 @@ class _EventHandlingWrapper extends StatefulWidget {
 }
 
 class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _sub;
+  StreamSubscription? _confirmSub;
+  StreamSubscription? _closeSub;
 
   @override
   void initState() {
     super.initState();
-    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
+    _closeSub = widget.bus.on<ClosePanelEvent>().listen((_) {
+      widget.navigatorKey.currentState?.maybePop();
+    });
+    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
       final nav = widget.navigatorKey.currentState;
       if (nav == null) return;
       final result = await showDialog<bool>(
@@ -60,7 +64,8 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _confirmSub?.cancel();
+    _closeSub?.cancel();
     super.dispose();
   }
 
@@ -88,7 +93,6 @@ void main() {
     Orders currentOrders = const Orders(),
     Map<String, List<String>> availableWorkTargets = const {},
     AppEventBus? bus,
-    void Function(WorkOrder order)? onAddWorkOrder,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -104,7 +108,6 @@ void main() {
             currentOrders: currentOrders,
             availableWorkTargets: availableWorkTargets,
             bus: resolvedBus,
-            onAddWorkOrder: onAddWorkOrder,
           ),
         ),
       ),
@@ -286,6 +289,7 @@ void main() {
       final trainButton = find.text('Train');
       expect(trainButton, findsOneWidget);
       await tester.tap(trainButton);
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(openDialogEvent, isNotNull);

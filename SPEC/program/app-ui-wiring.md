@@ -62,8 +62,8 @@ For `train_civilians` and `train_military`, shared order/count orchestration mus
 
 | ID | Widget | Status |
 |----|--------|--------|
-| `quick_battle_result` | `QuickBattleResultDialog` | planned (or local if combat UI stays internal) |
-| `combat_mode_choice` | `CombatModeChoiceDialog` | same |
+| `quick_battle_result` | `QuickBattleResultDialog` | `quickBattleResultDialogId` |
+| `combat_mode_choice` | `CombatModeChoiceDialog` (`CombatModeChosenEvent` on choice) | `combatModeChoiceDialogId` |
 
 **Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
 
@@ -86,6 +86,8 @@ Handled by **`AppEventHandler`** via **`pushNamed`**. Common names:
 | `Routes.technology` | `TechnologyScreen` |
 
 Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart`).
+
+**Return to main menu from in-game / victory:** emit **`NavigateToShellEvent`**; **`AppEventHandler`** pops until **`Routes.shell`** or **`pushNamedAndRemoveUntil`** as needed. Do not call **`Navigator.popUntil`** from **`GameScreen`** / victory UI for that flow.
 
 ---
 
@@ -110,7 +112,6 @@ Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialog
 - `grant_or_subsidy`, diplomacy detail nav/back, shell new-game leader + load-game nav, macOS debug log via bus (see [app-event-bus.md](app-event-bus.md) for service emissions).
 
 ### Optional
-- Combat dialogs: bus vs local per **When to use the bus vs local**.
 - New shared panels: prefer **typed** `UIActionEvent` subclasses over **`OpenPanelEvent(panelId)`**.
 
 ---
@@ -127,8 +128,9 @@ Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialog
 ### Typed panels and decoupling
 
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
-- Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` directly for that action).
-- Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `OpenDialogEvent(trainMilitaryDialogId)` (panel does not call `showDialog` directly for that action).
+- Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` or `Navigator.maybePop` on the handler-owned sheet for that action).
+- Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainMilitaryDialogId)` under the same rules.
+- Given a units sheet should close before the map reacts, When the player triggers locate or work-target selection from that sheet, Then the system emits `ClosePanelEvent` before `LocateMapTileEvent` or `StartCivilianWorkTargetSelectionEvent`; the map widget does not call `Navigator.maybePop` for that teardown.
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps Grant Aid or Set Subsidy, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
 

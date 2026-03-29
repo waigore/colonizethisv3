@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
@@ -30,6 +32,12 @@ const String grantOrSubsidyDialogId = 'grant_or_subsidy';
 
 /// [OpenDialogEvent] id for [NewGameLeaderSelectionDialog]. SPEC/program/app-ui-wiring.md.
 const String newGameLeaderSelectionDialogId = 'new_game_leader_selection';
+
+/// [OpenDialogEvent] id for [CombatModeChoiceDialog]. SPEC/program/app-ui-wiring.md.
+const String combatModeChoiceDialogId = 'combat_mode_choice';
+
+/// [OpenDialogEvent] id for [QuickBattleResultDialog]. SPEC/program/app-ui-wiring.md.
+const String quickBattleResultDialogId = 'quick_battle_result';
 
 final _logShell = appLogger('shell');
 final _logEvent = appLogger('event');
@@ -243,6 +251,30 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             targetFactionId: targetFactionId,
             isSubsidy: isSubsidy,
             bus: bus,
+          );
+        },
+        combatModeChoiceDialogId: (ctx, params) {
+          final container = ProviderScope.containerOf(ctx);
+          final bus = container.read(appEventBusProvider);
+          final provinceName = params?['provinceName'] as String? ?? '';
+          final isCapitalSiege = params?['isCapitalSiege'] as bool? ?? false;
+          return CombatModeChoiceDialog(
+            bus: bus,
+            provinceName: provinceName,
+            isCapitalSiege: isCapitalSiege,
+          );
+        },
+        quickBattleResultDialogId: (ctx, params) {
+          final result = params?['result'] as QuickBattleResult?;
+          if (result == null) {
+            return const SizedBox.shrink();
+          }
+          final attackerName = params?['attackerName'] as String? ?? 'Attacker';
+          final defenderName = params?['defenderName'] as String? ?? 'Defender';
+          return QuickBattleResultDialog(
+            result: result,
+            attackerName: attackerName,
+            defenderName: defenderName,
           );
         },
       },

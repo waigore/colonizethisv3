@@ -499,6 +499,7 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Train'));
+        await tester.pump();
         await tester.pumpAndSettle();
 
         expect(find.byType(TrainCiviliansDialog), findsOneWidget);

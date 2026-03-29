@@ -12,6 +12,7 @@
 // Panel requests: prefer typed subclasses below (SPEC/program/app-ui-wiring.md).
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
+import 'combat_mode.dart';
 import 'game.dart';
 import 'orders.dart';
 
@@ -66,6 +67,12 @@ class PopNavigationEvent extends UIActionEvent {
   const PopNavigationEvent();
 }
 
+/// Return to the main menu shell, clearing the game route stack.
+/// Handled only by the app-layer event handler (`AppEventHandler`). SPEC/program/app-ui-wiring.md.
+class NavigateToShellEvent extends UIActionEvent {
+  const NavigateToShellEvent();
+}
+
 /// Request to open a side panel or overlay.
 class OpenPanelEvent extends UIActionEvent {
   const OpenPanelEvent(this.panelId, [this.params]);
@@ -79,11 +86,9 @@ class ClosePanelEvent extends UIActionEvent {
 }
 
 /// In-game pause menu bottom sheet. Handled by the shell-level event handler (app layer).
+/// Menu actions emit [ClosePanelEvent] / [NavigateToRouteEvent]; no callbacks on this event.
 class OpenPauseMenuPanelEvent extends UIActionEvent {
-  const OpenPauseMenuPanelEvent({this.onDebugLog, this.onResume});
-
-  final void Function()? onDebugLog;
-  final void Function()? onResume;
+  const OpenPauseMenuPanelEvent();
 }
 
 /// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod.
@@ -103,30 +108,28 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
   const OpenNavalUnitsPanelEvent();
 }
 
-/// Request to center/highlight a map tile, optionally dismissing the active panel.
+/// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]
+/// before this event (same synchronous turn or after [SchedulerBinding] frame); do not dismiss sheets from the map widget.
 class LocateMapTileEvent extends UIActionEvent {
   const LocateMapTileEvent({
     required this.tileKey,
     required this.regionId,
-    this.closeCurrentPanel = false,
   });
 
   final String tileKey;
   final String regionId;
-  final bool closeCurrentPanel;
 }
 
 /// Request to start civilian target-selection mode from the units panel.
+/// Emit [ClosePanelEvent] first when the civilian units sheet should close.
 class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {
   const StartCivilianWorkTargetSelectionEvent({
     required this.unitId,
     required this.workTarget,
-    this.closeCurrentPanel = true,
   });
 
   final String unitId;
   final String workTarget;
-  final bool closeCurrentPanel;
 }
 
 /// Emitted when a typed units panel route is dismissed.
@@ -153,6 +156,13 @@ class StartTargetSelectionEvent extends UIActionEvent {
 /// Cancel any active target-selection mode.
 class CancelTargetSelectionEvent extends UIActionEvent {
   const CancelTargetSelectionEvent();
+}
+
+/// Emitted when the user chooses auto-resolve or quick battle in [CombatModeChoiceDialog].
+class CombatModeChosenEvent extends UIActionEvent {
+  const CombatModeChosenEvent(this.mode);
+
+  final CombatMode mode;
 }
 
 /// Request to open the province/sea zone detail overlay for [provinceId].

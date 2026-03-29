@@ -46,7 +46,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
-  StreamSubscription<ct_models.AppEvent>? _busSubscription;
+  final List<StreamSubscription<dynamic>> _busSubscriptions = [];
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -56,28 +56,31 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   void initState() {
     super.initState();
     final bus = ref.read(appEventBusProvider);
-    _busSubscription = bus.stream.listen((event) {
-      if (event is ct_models.OpenProvinceDetailPanelEvent) {
+    _busSubscriptions.addAll([
+      bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
+        if (!mounted) return;
         setState(() {
           // Town icon tap will be handled by the province panel provider
         });
-      } else if (event is ct_models.LocateMapTileEvent) {
-        _locateTile(event.tileKey, event.regionId, closePanel: event.closeCurrentPanel);
-      } else if (event is ct_models.StartCivilianWorkTargetSelectionEvent) {
-        _startWorkTargetSelection(
-          event.unitId,
-          event.workTarget,
-          closePanel: event.closeCurrentPanel,
-        );
-      } else if (event is ct_models.UnitsPanelClosedEvent) {
+      }),
+      bus.on<ct_models.LocateMapTileEvent>().listen(
+        (e) => _locateTile(e.tileKey, e.regionId),
+      ),
+      bus.on<ct_models.StartCivilianWorkTargetSelectionEvent>().listen(
+        (e) => _startWorkTargetSelection(e.unitId, e.workTarget),
+      ),
+      bus.on<ct_models.UnitsPanelClosedEvent>().listen((_) {
         ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
-      }
-    });
+      }),
+    ]);
   }
 
   @override
   void dispose() {
-    _busSubscription?.cancel();
+    for (final s in _busSubscriptions) {
+      s.cancel();
+    }
+    _busSubscriptions.clear();
     super.dispose();
   }
 
@@ -166,7 +169,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  void _locateTile(String tileKey, String regionId, {required bool closePanel}) {
+  void _locateTile(String tileKey, String regionId) {
     ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
       _centerOnTileKey = tileKey;
@@ -176,9 +179,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _regionIndex = 0;
       }
     });
-    if (closePanel) {
-      Navigator.of(context).maybePop();
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _centerOnTileKey = null);
     });
@@ -194,20 +194,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     return null;
   }
 
-  void _startWorkTargetSelection(
-    String unitId,
-    String workTarget, {
-    required bool closePanel,
-  }) {
+  void _startWorkTargetSelection(String unitId, String workTarget) {
     final unit = _findUnitById(unitId);
     if (unit == null) return;
     setState(() {
       _workTargetSelection = (unit: unit, workTarget: workTarget);
       _computeValidTileKeysForSelection();
     });
-    if (closePanel) {
-      Navigator.of(context).maybePop();
-    }
   }
 
   void _onTileSelectedForWork(String tileKey) {
