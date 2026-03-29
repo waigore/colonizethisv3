@@ -17,9 +17,7 @@ import '../world/unit_lookup.dart';
 
 export 'order_suggestion_helpers.dart';
 
-final _log = logicLogger();
-
-const String _kOrderSuggestionLogPrefix = 'logic/order_suggestion';
+final _log = logicLogger('order_suggestion');
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
@@ -30,7 +28,7 @@ List<MoveOrder> suggestMoveOrders(
   Orders currentOrders,
 ) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestMoveOrders player=${view.playerId}',
+    'suggestMoveOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
@@ -138,14 +136,14 @@ List<MoveOrder> suggestMoveOrders(
   });
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestMoveOrders player=$playerId candidates=${suggestions.length}',
+    'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+    'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
   );
   if (suggestions.isEmpty)
     _log.w(
-      '$_kOrderSuggestionLogPrefix: suggestMoveOrders no candidates player=$playerId',
+      'suggestMoveOrders no candidates player=$playerId',
     );
   return suggestions;
 }
@@ -165,7 +163,7 @@ List<WorkOrder> suggestWorkOrders(
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=${view.playerId}',
+    'suggestWorkOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <WorkOrder>[];
@@ -208,7 +206,7 @@ List<WorkOrder> suggestWorkOrders(
         tileKeysByRegion[regionId]?[provinceId] ?? const <String>[];
 
     _log.d(
-      '$_kOrderSuggestionLogPrefix: suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
+      'suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
     );
 
     // Explorers: explore/prospect in their current province only; visibility rules apply.
@@ -340,12 +338,12 @@ List<WorkOrder> suggestWorkOrders(
           }
           if (accepted != null) {
             _log.d(
-              '$_kOrderSuggestionLogPrefix: suggestWorkOrders candidate=$accepted',
+              'suggestWorkOrders candidate=$accepted',
             );
             suggestions.add(accepted);
           } else {
             _log.d(
-              '$_kOrderSuggestionLogPrefix: suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
+              'suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
             );
           }
         }
@@ -446,14 +444,14 @@ List<WorkOrder> suggestWorkOrders(
   });
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestWorkOrders player=$playerId candidates=${suggestions.length}',
+    'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
+    'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
   if (suggestions.isEmpty)
     _log.w(
-      '$_kOrderSuggestionLogPrefix: suggestWorkOrders no candidates player=$playerId',
+      'suggestWorkOrders no candidates player=$playerId',
     );
   return suggestions;
 }
@@ -466,7 +464,7 @@ List<BuildUnitOrder> suggestBuildOrders(
   Orders currentOrders,
 ) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestBuildOrders player=${view.playerId}',
+    'suggestBuildOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final player = view.player;
@@ -475,7 +473,7 @@ List<BuildUnitOrder> suggestBuildOrders(
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
     _log.w(
-      '$_kOrderSuggestionLogPrefix: suggestBuildOrders no capital player=$playerId',
+      'suggestBuildOrders no capital player=$playerId',
     );
     return suggestions;
   }
@@ -524,14 +522,14 @@ List<BuildUnitOrder> suggestBuildOrders(
   suggestions.sort((a, b) => a.unitType.compareTo(b.unitType));
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestBuildOrders player=$playerId candidates=${suggestions.length}',
+    'suggestBuildOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}',
+    'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}',
   );
   if (suggestions.isEmpty)
     _log.w(
-      '$_kOrderSuggestionLogPrefix: suggestBuildOrders no candidates player=$playerId',
+      'suggestBuildOrders no candidates player=$playerId',
     );
   return suggestions;
 }
@@ -546,7 +544,7 @@ List<ResearchOrder> suggestResearchOrders(
   Orders currentOrders,
 ) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestResearchOrders player=${view.playerId}',
+    'suggestResearchOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final player = view.player;
@@ -597,10 +595,10 @@ List<ResearchOrder> suggestResearchOrders(
   }
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestResearchOrders player=$playerId candidates=${suggestions.length}',
+    'suggestResearchOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").toList()}',
+    'suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").toList()}',
   );
   return suggestions;
 }
@@ -696,7 +694,7 @@ Set<String> getValidWorkOrderTileKeys(
     }
   }
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}',
+    'getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}',
   );
   return valid;
 }
@@ -720,25 +718,25 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != view.playerId) {
     _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player',
+      'getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player',
     );
     return {};
   }
   if (unit.currentWork != null) {
     _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit has current work',
+      'getValidWorkOrderTileKeysWithVisibility unit has current work',
     );
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) {
     _log.d(
-      '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}',
+      'getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}',
     );
     return {};
   }
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
+    'getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
   );
 
   final playerId = view.playerId;
@@ -759,7 +757,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   final sortedVisible = _sortedVisibleWorkTargetCandidates(view, raw);
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
+    'getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
   );
 
   final valid = <String>{};
@@ -786,7 +784,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   }
 
   _log.d(
-    '$_kOrderSuggestionLogPrefix: getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${sortedVisible.length} visible candidates)',
+    'getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${sortedVisible.length} visible candidates)',
   );
   return valid;
 }
@@ -1220,7 +1218,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   Orders currentOrders,
 ) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=${view.playerId}',
+    'suggestNavalMoveOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
@@ -1323,10 +1321,10 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     return keyA.compareTo(keyB);
   });
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
+    'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").toList()}',
+    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").toList()}',
   );
   return suggestions;
 }
@@ -1339,7 +1337,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   Orders currentOrders,
 ) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=${view.playerId}',
+    'suggestNavalMissionOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
@@ -1373,10 +1371,10 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     return a.mission.compareTo(b.mission);
   });
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
+    'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").toList()}',
+    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").toList()}',
   );
   return suggestions;
 }
@@ -1600,7 +1598,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=${view.playerId}',
+    'suggestDiplomaticOrders player=${view.playerId}',
   );
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
@@ -1734,10 +1732,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     return (a.amount ?? 0).compareTo(b.amount ?? 0);
   });
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
+    'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    '$_kOrderSuggestionLogPrefix: suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
+    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
   );
   return suggestions;
 }
