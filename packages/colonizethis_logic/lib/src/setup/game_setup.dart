@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
 import 'gp_land_connectivity_repair.dart';
+import 'gp_starting_grain.dart';
 import 'init_town_roads.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
@@ -376,11 +377,21 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapByRegion: tileMapByRegion,
   );
 
+  // Great Power starting grain (bootstrap). SPEC/game/tile-map-and-generation.md.
+  final gpGrain = applyGreatPowerStartingGrainBootstrap(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    resourceRules: ResourceRules.defaultRules,
+  );
+  game = gpGrain.game;
+  tileMapByRegion[kRegionOldWorld] = gpGrain.tileMap;
+
   // 7d.bis Init town → capital roads (per-region via config). SPEC/game/capital-and-connectivity.md.
   game = applyInitTownRoadsToCapitals(
     game: game,
     config: config,
     tileMapByRegion: tileMapByRegion,
+    bootstrapGrainTileKeysByPlayerId: gpGrain.grainKeysByPlayerId,
   );
 
   // Apply historically inspired naming from default ruleset (after capitals are set).
