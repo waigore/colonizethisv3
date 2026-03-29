@@ -7,6 +7,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
@@ -216,17 +217,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             game: game,
             humanPlayerId: humanPlayerId,
             currentOrders: orders,
-            onOrdersChanged: (newOrders) {
-              final o = container.read(currentOrdersProvider);
-              container
-                  .read(currentOrdersProvider.notifier)
-                  .state = _mergeTrainCivilianOrdersForPlayer(
-                current: o,
-                game: game,
-                humanPlayerId: humanPlayerId,
-                newFromDialog: newOrders,
-              );
-            },
+            bus: container.read(appEventBusProvider),
           );
         },
         trainMilitaryDialogId: (ctx, _) {
@@ -241,17 +232,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             game: game,
             humanPlayerId: humanPlayerId,
             currentOrders: orders,
-            onOrdersChanged: (newOrders) {
-              final o = container.read(currentOrdersProvider);
-              container
-                  .read(currentOrdersProvider.notifier)
-                  .state = _mergeTrainMilitaryOrdersForPlayer(
-                current: o,
-                game: game,
-                humanPlayerId: humanPlayerId,
-                newFromDialog: newOrders,
-              );
-            },
+            bus: container.read(appEventBusProvider),
           );
         },
         grantOrSubsidyDialogId: (ctx, params) {
@@ -316,6 +297,43 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       }),
       bus.on<NavalFleetsUpdatedEvent>().listen((e) {
         ref.read(currentGameProvider.notifier).setGame(e.game);
+      }),
+      bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final newGame = applyNavalSplitFleet(
+          game: g,
+          humanPlayerId: e.humanPlayerId,
+          originalFleetId: e.originalFleetId,
+          shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+        );
+        bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+      }),
+      bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final pid = _humanPlayerId(g);
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state =
+            _mergeTrainCivilianOrdersForPlayer(
+          current: o,
+          game: g,
+          humanPlayerId: pid,
+          newFromDialog: e.orders,
+        );
+      }),
+      bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final pid = _humanPlayerId(g);
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state =
+            _mergeTrainMilitaryOrdersForPlayer(
+          current: o,
+          game: g,
+          humanPlayerId: pid,
+          newFromDialog: e.orders,
+        );
       }),
     ]);
     _logEvent.d(

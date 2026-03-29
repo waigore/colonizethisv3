@@ -16,13 +16,13 @@ class TrainCiviliansDialog extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.currentOrders,
-    required this.onOrdersChanged,
+    required this.bus,
   });
 
   final Game game;
   final String humanPlayerId;
   final Orders currentOrders;
-  final void Function(List<BuildUnitOrder> orders) onOrdersChanged;
+  final AppEventBus bus;
 
   @override
   State<TrainCiviliansDialog> createState() => _TrainCiviliansDialogState();
@@ -135,7 +135,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
       capitalProvinceId: capital,
       isMilitary: false,
     );
-    widget.onOrdersChanged(orders);
+    widget.bus.emit(TrainCivilianBuildOrdersCommittedEvent(orders: orders));
   }
 
   String _techRequiredLabel(String unitType) {

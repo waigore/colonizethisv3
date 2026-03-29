@@ -589,55 +589,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         game: widget.game,
         humanPlayerId: widget.humanPlayerId,
         isHomeFleet: row.isHomeFleet,
-        onConfirm: (shipInstanceIds) {
-          _performSplit(original, shipInstanceIds);
-        },
+        bus: widget.bus,
       ),
     );
-  }
-
-  void _performSplit(Fleet originalFleet, List<String> shipInstanceIdsToNew) {
-    if (shipInstanceIdsToNew.isEmpty) return;
-
-    final idSet = shipInstanceIdsToNew.toSet();
-    final shipsToNewFleet = originalFleet.ships
-        .where((s) => idSet.contains(s.id))
-        .toList();
-    final remainingShips = originalFleet.ships
-        .where((s) => !idSet.contains(s.id))
-        .toList();
-
-    final allFleetIds = widget.game.worldState.fleets
-        .map((f) => int.tryParse(f.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
-        .toList();
-    final maxId = allFleetIds.isEmpty
-        ? 0
-        : allFleetIds.reduce((a, b) => a > b ? a : b);
-    final newFleetId = '${maxId + 1}';
-
-    final newFleet = Fleet(
-      id: newFleetId,
-      ownerId: widget.humanPlayerId,
-      seaZoneId: originalFleet.seaZoneId,
-      inPortAtProvinceId: originalFleet.inPortAtProvinceId,
-      regionId: originalFleet.regionId,
-      ships: shipsToNewFleet,
-      mission: FleetMission.none,
-    );
-
-    final updatedOriginal = originalFleet.copyWith(ships: remainingShips);
-
-    final List<Fleet> updatedFleets = [
-      ...widget.game.worldState.fleets.where((f) => f.id != originalFleet.id),
-      if (remainingShips.isNotEmpty) updatedOriginal,
-      newFleet,
-    ];
-
-    final newGame = widget.game.copyWith(
-      worldState: widget.game.worldState.copyWith(fleets: updatedFleets),
-    );
-
-    widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
   @override
