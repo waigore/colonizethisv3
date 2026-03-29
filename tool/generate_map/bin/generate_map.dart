@@ -42,6 +42,7 @@ class ParsedMapArgs {
     this.topologyGraphPath,
     this.worldStatePath,
     this.tileSize,
+    this.writeTileMapJsonPath,
   });
 
   final int numProvinces;
@@ -60,6 +61,8 @@ class ParsedMapArgs {
   final String? topologyGraphPath;
   final String? worldStatePath;
   final int? tileSize;
+  /// When set, writes [TileMapResult.toJson] after generation (grid only; terrain/resource optional).
+  final String? writeTileMapJsonPath;
 }
 
 /// Pure argument parsing helper. Validates all arguments and returns parsed values.
@@ -80,6 +83,7 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
   var skipFillLakes = false;
   int? continentBufferOverride;
   int? tileSizeOverride;
+  String? writeTileMapJsonPath;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -222,6 +226,13 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
         _errExit('Error: --tile-size requires a positive integer, got: $value');
       }
       tileSizeOverride = parsed;
+    } else if (arg == '--write-tile-map-json' && i + 1 < arguments.length) {
+      writeTileMapJsonPath = arguments[++i];
+    } else if (arg.startsWith('--write-tile-map-json=')) {
+      writeTileMapJsonPath = arg.substring('--write-tile-map-json='.length).trim();
+      if (writeTileMapJsonPath.isEmpty) {
+        _errExit('Error: --write-tile-map-json= requires a non-empty path');
+      }
     }
   }
 
@@ -247,6 +258,7 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
     topologyGraphPath: topologyGraphPath,
     worldStatePath: worldStatePath,
     tileSize: tileSizeOverride,
+    writeTileMapJsonPath: writeTileMapJsonPath,
   );
 }
 
@@ -310,6 +322,17 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
   final tileCounts = computeTileCountsPerRegion(tileMapResult);
   final centroids = computeCentroidsPerRegion(tileMapResult);
   _log.i('Tile map seed: ${args.seedUsed}');
+
+  final jsonOut = args.writeTileMapJsonPath;
+  if (jsonOut != null && jsonOut.isNotEmpty) {
+    final outFile = File(jsonOut);
+    outFile.parent.createSync(recursive: true);
+    outFile.writeAsStringSync(
+      const JsonEncoder.withIndent('  ').convert(tileMapResult.toJson()),
+    );
+    _log.i('map: Tile map JSON: ${outFile.absolute.path}');
+    stdout.writeln('Tile map JSON: ${outFile.absolute.path}');
+  }
 
   if (args.withTileMapImage) {
     final cellSize = args.tileSize;
@@ -455,6 +478,7 @@ void _printUsage() {
   print('  --seed-before-assignment  Use legacy land assignment (default: off)');
   print('  --skip-fill-lakes  Skip Pass 4 (fill lakes); default off');
   print('  --continent-buffer N  Min sea tiles between continents (default: 2)');
+  print('  --write-tile-map-json <path>  Write TileMapResult JSON (grid; optional terrain/resource)');
 }
 
 void _interactiveLoop(
