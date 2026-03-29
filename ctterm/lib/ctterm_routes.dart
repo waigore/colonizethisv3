@@ -24,6 +24,8 @@ enum CttermRoute {
   pendingOvertures,
   /// Human ally must join or refuse call to arms. SPEC/game/diplomacy.md.
   pendingCallToArms,
+  /// Diplomacy-phase intervention choices (GP vs Minor/Tribe). SPEC/tui/screens/pending-intervention.md.
+  pendingIntervention,
   /// Debug log viewer. SPEC/program/debug-log-viewer.md.
   debugLogViewer,
 }
@@ -73,6 +75,8 @@ extension CttermRouteScreenId on CttermRoute {
         return '100019';
       case CttermRoute.pendingCallToArms:
         return '100021';
+      case CttermRoute.pendingIntervention:
+        return '100022';
       case CttermRoute.debugLogViewer:
         return '100020';
     }

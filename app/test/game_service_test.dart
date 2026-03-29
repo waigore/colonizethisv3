@@ -48,6 +48,40 @@ class _PendingOverturesGameService extends GameService {
   }
 }
 
+class _PendingInterventionGameService extends GameService {
+  _PendingInterventionGameService(super.box, super.adapter);
+
+  @override
+  TurnResolutionResult runTurnResolution(
+    Game current, {
+    Orders? orders,
+    Orders? aiOrders,
+    MapTopology? topology,
+    Map<String, TileMapResult>? tileMapByRegion,
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final humanId = current.players.firstWhere((p) => p.isHuman).id;
+    final prompts = <Object>[
+      InterventionPrompt(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor_x',
+        interveningGpId: humanId,
+      ),
+    ];
+    eventBus?.emit(InterventionRequiredEvent(prompts: prompts));
+    return TurnResolutionPendingIntervention(
+      game: current,
+      pendingInterventions: [
+        InterventionPrompt(
+          aggressorGpId: 'gp2',
+          defenderMinorOrTribeId: 'minor_x',
+          interveningGpId: humanId,
+        ),
+      ],
+    );
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -137,6 +171,43 @@ void main() {
         final offer = event.overtures.first as OvertureOffer;
         expect(offer.offererGpId, 'gp2');
         expect(offer.stage, OvertureStage.tradeConsulate);
+      },
+    );
+
+    test(
+      'runTurnResolution returns TurnResolutionPendingIntervention and emits InterventionRequiredEvent',
+      () async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        final service = _PendingInterventionGameService(box, adapter);
+        service.eventBus = bus;
+
+        final game = Game(
+          id: 'g_intervention_test',
+          worldState: const WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          ],
+        );
+
+        final received = <AppEvent>[];
+        bus.on<InterventionRequiredEvent>().listen(received.add);
+
+        final result = service.runTurnResolution(game);
+
+        await pumpEventQueue();
+        expect(result, isA<TurnResolutionPendingIntervention>());
+        expect(received, hasLength(1));
+        final event = received.first as InterventionRequiredEvent;
+        expect(event.prompts, hasLength(1));
+        final prompt = event.prompts.first as InterventionPrompt;
+        expect(prompt.aggressorGpId, 'gp2');
+        expect(prompt.interveningGpId, 'gp1');
       },
     );
 
