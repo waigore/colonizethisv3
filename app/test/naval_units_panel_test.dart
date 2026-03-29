@@ -1656,6 +1656,688 @@ void main() {
       },
     );
 
+    testWidgets(
+      'AC: Two fleets in the same sea zone combine; mission becomes none',
+      (WidgetTester tester) async {
+        const humanId = 'gp_same_sea_combine';
+        const capProvince = 'oldWorld|cap1';
+
+        final sameSeaGame = Game(
+          id: 'g_same_sea_combine',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'coast',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Coast',
+                ),
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'sea_1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 'zone_alpha',
+                inPortAtProvinceId: null,
+                ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
+                mission: FleetMission.patrol,
+              ),
+              Fleet(
+                id: 'sea_2',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 'zone_alpha',
+                inPortAtProvinceId: null,
+                ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
+              ),
+            ],
+            portsByProvinceSeaboard: {
+              'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+            },
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+                'oldWorld|coast': ['oldWorld|coast|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 3,
+          ),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Same-sea combine',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? updated;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          updated = e;
+        });
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(game: sameSeaGame, humanPlayerId: humanId, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final finder1 = find.widgetWithText(ExpansionTile, 'Fleet sea_1');
+        final finder2 = find.widgetWithText(ExpansionTile, 'Fleet sea_2');
+        expect(finder1, findsOneWidget);
+        expect(finder2, findsOneWidget);
+
+        await tester.tap(
+          find.descendant(of: finder1, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: finder2, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        final combineBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        );
+        expect(combineBtn.enabled, isTrue);
+
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+
+        expect(updated, isNotNull);
+        final fleetsAfter = updated!.game.worldState.fleets;
+        expect(fleetsAfter.length, 1);
+        final survivor = fleetsAfter.single;
+        expect(survivor.id, 'sea_1');
+        final shipIds = survivor.ships.map((s) => s.id).toList()..sort();
+        expect(shipIds, ['ss1', 'ss2']);
+        expect(survivor.mission, FleetMission.none);
+      },
+    );
+
+    testWidgets(
+      'AC: Combining two non-home fleets clears non-none missions on survivor',
+      (WidgetTester tester) async {
+        const humanId = 'gp_mission_clear';
+        const capProvince = 'oldWorld|cap1';
+        const mergePort = 'oldWorld|mergeport';
+
+        final missionGame = Game(
+          id: 'g_mission_clear',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+                Province(
+                  id: 'mergeport',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Merge Port',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'm1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'ms1', typeId: 'carrack')],
+                mission: FleetMission.patrol,
+              ),
+              Fleet(
+                id: 'm2',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'ms2', typeId: 'fluyte')],
+                mission: FleetMission.blockade,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 3,
+          ),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Mission clear tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? updated;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          updated = e;
+        });
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(game: missionGame, humanPlayerId: humanId, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final t1 = find.widgetWithText(ExpansionTile, 'Fleet m1');
+        final t2 = find.widgetWithText(ExpansionTile, 'Fleet m2');
+        await tester.tap(
+          find.descendant(of: t1, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: t2, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+
+        expect(updated, isNotNull);
+        final merged = updated!.game.worldState.fleets
+            .firstWhere((f) => f.id == 'm1');
+        expect(merged.mission, FleetMission.none);
+      },
+    );
+
+    testWidgets(
+      'AC: Partial row selection shows indeterminate header; header tap selects all',
+      (WidgetTester tester) async {
+        const humanId = 'gp_partial_header';
+        const mergePort = 'oldWorld|mergeport';
+
+        // No capital => no synthetic Home Fleet row; select-all stays one locality.
+        final partialGame = Game(
+          id: 'g_partial_header',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'mergeport',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Merge Port',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'p1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'ps1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'p2',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'ps2', typeId: 'fluyte')],
+              ),
+              Fleet(
+                id: 'p3',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'ps3', typeId: 'carrack')],
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                mergePort: ['oldWorld|mergeport|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 4,
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Partial header tester',
+              isHuman: true,
+              treasury: 0,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: partialGame, humanPlayerId: humanId),
+        );
+        await tester.pumpAndSettle();
+
+        final headerCheckboxFinder = find.descendant(
+          of: find.byType(NavalUnitsPanel),
+          matching: find.byWidgetPredicate(
+            (w) => w is Checkbox && w.tristate == true,
+          ),
+        );
+
+        final tile1 = find.widgetWithText(ExpansionTile, 'Fleet p1');
+        await tester.tap(
+          find.descendant(of: tile1, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<Checkbox>(headerCheckboxFinder).value, isNull);
+
+        await tester.tap(headerCheckboxFinder);
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<Checkbox>(headerCheckboxFinder).value, isTrue);
+        for (final label in ['Fleet p1', 'Fleet p2', 'Fleet p3']) {
+          final tile = find.widgetWithText(ExpansionTile, label);
+          expect(tile, findsOneWidget);
+          final cb = find.descendant(
+            of: tile,
+            matching: find.byType(Checkbox),
+          );
+          await tester.ensureVisible(cb);
+          expect(tester.widget<Checkbox>(cb).value, isTrue);
+        }
+
+        final combineBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        );
+        expect(combineBtn.enabled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC: Three-fleet combine survivor is first in panel order regardless of check order',
+      (WidgetTester tester) async {
+        const humanId = 'gp_reverse_check';
+        const capProvince = 'oldWorld|cap1';
+        const mergePort = 'oldWorld|mergeport';
+
+        final revGame = Game(
+          id: 'g_reverse_check',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+                Province(
+                  id: 'mergeport',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Merge Port',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'r1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'rs1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'r2',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'rs2', typeId: 'fluyte')],
+              ),
+              Fleet(
+                id: 'r3',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'rs3', typeId: 'carrack')],
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 4,
+          ),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Reverse check tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? updated;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          updated = e;
+        });
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(game: revGame, humanPlayerId: humanId, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        for (final label in ['Fleet r3', 'Fleet r2', 'Fleet r1']) {
+          final tile = find.widgetWithText(ExpansionTile, label);
+          expect(tile, findsOneWidget);
+          final cb = find.descendant(
+            of: tile,
+            matching: find.byType(Checkbox),
+          );
+          await tester.scrollUntilVisible(cb, 120);
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(cb);
+          await tester.tap(cb);
+          await tester.pumpAndSettle();
+        }
+
+        final combineFinder = find.widgetWithText(
+          CtNinePatchButton,
+          'Combine',
+        );
+        await tester.scrollUntilVisible(combineFinder, 120);
+        await tester.pumpAndSettle();
+        await tester.tap(combineFinder);
+        await tester.pumpAndSettle();
+
+        expect(updated, isNotNull);
+        final fleetsAfter = updated!.game.worldState.fleets;
+        expect(fleetsAfter.length, 1);
+        final survivor = fleetsAfter.single;
+        expect(survivor.id, 'r1');
+        expect(
+          survivor.ships.map((s) => s.id).toList(),
+          ['rs1', 'rs2', 'rs3'],
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Updating game prunes combine selection to fleets that still exist',
+      (WidgetTester tester) async {
+        const humanId = 'gp_prune_sel';
+        const capProvince = 'oldWorld|cap1';
+        const mergePort = 'oldWorld|mergeport';
+
+        WorldState stateWithTwo(String keep, String drop) => WorldState(
+              turnState:
+                  const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(
+                    id: 'cap1',
+                    regionId: 'oldWorld',
+                    ownerId: humanId,
+                    displayName: 'Capital',
+                  ),
+                  Province(
+                    id: 'mergeport',
+                    regionId: 'oldWorld',
+                    ownerId: humanId,
+                    displayName: 'Merge Port',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              fleets: [
+                Fleet(
+                  id: keep,
+                  ownerId: humanId,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: mergePort,
+                  ships: const [ShipInstance(id: 'ks1', typeId: 'carrack')],
+                ),
+                Fleet(
+                  id: drop,
+                  ownerId: humanId,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: mergePort,
+                  ships: const [ShipInstance(id: 'ks2', typeId: 'fluyte')],
+                ),
+              ],
+              tileKeysByRegionAndProvince: {
+                'oldWorld': {
+                  capProvince: ['oldWorld|cap1|0|0'],
+                },
+              },
+              nextShipInstanceSeq: 3,
+            );
+
+        final gameTwo = Game(
+          id: 'g_prune_two',
+          worldState: stateWithTwo('stays', 'removed'),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Prune tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        final gameOne = Game(
+          id: 'g_prune_one',
+          worldState: gameTwo.worldState.copyWith(
+            fleets: [
+              gameTwo.worldState.fleets
+                  .firstWhere((f) => f.id == 'stays'),
+            ],
+          ),
+          players: gameTwo.players,
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: gameTwo, humanPlayerId: humanId),
+        );
+        await tester.pumpAndSettle();
+
+        final tileStays =
+            find.widgetWithText(ExpansionTile, 'Fleet stays');
+        final tileRemoved =
+            find.widgetWithText(ExpansionTile, 'Fleet removed');
+        await tester.tap(
+          find.descendant(of: tileStays, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: tileRemoved, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.pumpWidget(
+          buildPanel(game: gameOne, humanPlayerId: humanId),
+        );
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        final staysCb = find.descendant(
+          of: tileStays,
+          matching: find.byType(Checkbox),
+        );
+        final removedFinder =
+            find.widgetWithText(ExpansionTile, 'Fleet removed');
+        expect(removedFinder, findsNothing);
+        expect(tester.widget<Checkbox>(staysCb).value, isTrue);
+
+        final combineBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        );
+        expect(combineBtn.enabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'AC: Row checkboxes toggle selection without expanding the fleet tile',
+      (WidgetTester tester) async {
+        const humanId = 'gp_collapsed_cb';
+        const capProvince = 'oldWorld|cap1';
+        const mergePort = 'oldWorld|mergeport';
+
+        final collapsedGame = Game(
+          id: 'g_collapsed_cb',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+                Province(
+                  id: 'mergeport',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Merge Port',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'col_a',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'cs1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'col_b',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: mergePort,
+                ships: const [ShipInstance(id: 'cs2', typeId: 'fluyte')],
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 3,
+          ),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Collapsed cb tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? updated;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          updated = e;
+        });
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(game: collapsedGame, humanPlayerId: humanId, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final tileA = find.widgetWithText(ExpansionTile, 'Fleet col_a');
+        final tileB = find.widgetWithText(ExpansionTile, 'Fleet col_b');
+
+        expect(
+          find.descendant(of: tileA, matching: find.text('Split')),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: tileB, matching: find.text('Split')),
+          findsNothing,
+        );
+
+        await tester.tap(
+          find.descendant(of: tileA, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: tileB, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.descendant(of: tileA, matching: find.text('Split')),
+          findsNothing,
+        );
+
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+
+        expect(updated, isNotNull);
+        final fleetsAfter = updated!.game.worldState.fleets;
+        final merged = fleetsAfter.firstWhere((f) => f.id == 'col_a');
+        final mergedIds = merged.ships.map((s) => s.id).toList()..sort();
+        expect(mergedIds, ['cs1', 'cs2']);
+      },
+    );
+
     testWidgets('AC: Beachhead mission appears in status line', (
       WidgetTester tester,
     ) async {
