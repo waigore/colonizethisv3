@@ -7,7 +7,12 @@ void main() {
     test('returns only valid mood values', () {
       for (final current in kPortraitMoodValues) {
         for (final delta in [-1.0, 0.0, 1.0]) {
-          final next = computeNextNegotiationMood(current, delta.toDouble(), 0, 0);
+          final next = computeNextNegotiationMood(
+            current,
+            delta.toDouble(),
+            0,
+            0,
+          );
           expect(kPortraitMoodValues, contains(next));
         }
       }
@@ -49,6 +54,34 @@ void main() {
       expect(kPortraitMoodValues, contains('impatient'));
       expect(kPortraitMoodValues, contains('irritated'));
       expect(kPortraitMoodValues, contains('dismissive'));
+    });
+  });
+
+  group('buildNegotiationMoodTransitionEvent', () {
+    test('emits PortraitMoodEvent when mood changes', () {
+      final event = buildNegotiationMoodTransitionEvent(
+        leaderId: 'gp1',
+        currentMood: 'considering',
+        offerQualityDelta: -0.8,
+        stallCounter: 0,
+        seed: 0,
+      );
+      expect(event, isNotNull);
+      expect(event!.leaderId, 'gp1');
+      expect(event.fromMood, 'considering');
+      expect(event.toMood, anyOf('irritated', 'dismissive'));
+      expect(event.durationMs, kNegotiationMoodTransitionDurationMs);
+    });
+
+    test('returns null when mood does not change', () {
+      final event = buildNegotiationMoodTransitionEvent(
+        leaderId: 'gp1',
+        currentMood: 'calculating',
+        offerQualityDelta: 0.0,
+        stallCounter: 2,
+        seed: 42,
+      );
+      expect(event, isNull);
     });
   });
 }

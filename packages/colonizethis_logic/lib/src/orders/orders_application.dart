@@ -436,9 +436,7 @@ Game applyBuildAndWorkOrders(
           if (reason == null) {
             s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
           } else {
-            _log.d(
-              'build_rail completion skipped unit=${u.id} reason=$reason',
-            );
+            _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
           }
         }
         break;
@@ -521,6 +519,19 @@ Game applyBuildAndWorkOrders(
         if (enemySpies.isNotEmpty && rand.nextDouble() < killChance) {
           final toRemove = enemySpies.first.key;
           final removed = unitsById[toRemove];
+          if (s.onDialogue != null && removed != null) {
+            final events = dialogueEventsForReactiveSpiesCaught(
+              s.game,
+              speakerId: u.ownerId,
+              caughtSpyOwnerId: removed.ownerId,
+              provinceId: provinceId,
+              turnNumber: s.game.worldState.turnState.turnNumber,
+              seed: s.game.globalGameSeed ?? 0,
+            );
+            for (final e in events) {
+              s.onDialogue!(e);
+            }
+          }
           if (removed?.currentWork != null) {
             _log.d('work cancelled unit=$toRemove reason=unit dead');
           }
@@ -980,9 +991,7 @@ void _runWorkPhase(
           continue;
         }
         if (fortLevel == 2 && player.techUnlocked?['modern_forts'] != true) {
-          _log.d(
-            'build_fort skipped - Modern Forts required for fort level 3',
-          );
+          _log.d('build_fort skipped - Modern Forts required for fort level 3');
           continue;
         }
         if (applyStandardWorkOrder('build_fort')) continue;
