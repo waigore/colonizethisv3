@@ -1,8 +1,11 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   Game gameWithMode(CombatMode mode) {
     return Game(
       id: 'g1',
