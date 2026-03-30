@@ -273,6 +273,7 @@ TurnResolutionResult resolveTurnForGame({
             turn,
             eventBus,
             onGameEvent,
+            onDialogue,
           );
           break;
         }
@@ -376,6 +377,7 @@ TurnResolutionResult resolveTurnForGame({
             turn,
             eventBus,
             onGameEvent,
+            onDialogue,
           );
           break;
         }
@@ -741,8 +743,7 @@ Game _runProductionPhase(
   for (final player in game.players) {
     final assignments =
         defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
-    final idleLabour =
-        idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
+    final idleLabour = idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
     final result = resolveProduction(
       stockpile: player.stockpile,
       workers: player.workerPool,
@@ -775,8 +776,10 @@ Game _runConsumptionPhase(
   final updatedPlayers = <Player>[];
 
   for (final player in game.players) {
-    final regimentCounts =
-        regimentTypeCountsForPlayer(game.worldState, player.id);
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
     final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
 
     final result = resolveConsumption(
@@ -1050,8 +1053,40 @@ Game _runCombatPhase(
   };
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
+  final preBattleDialogueSeed =
+      (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
   _log.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
+  if (onDialogue != null && battles.isNotEmpty) {
+    for (final ctx in battles) {
+      final attackerIds = ctx.attackers.map((a) => a.factionId).toList()
+        ..sort();
+      final capitalThreatened = dialogueEventsForCapitalThreatened(
+        state,
+        capitalOwnerId: ctx.defenderFactionId,
+        provinceId: ctx.provinceId,
+        attackerFactionIds: attackerIds,
+        turnNumber: turn,
+        seed: preBattleDialogueSeed,
+      );
+      for (final e in capitalThreatened) {
+        onDialogue(e);
+      }
+      for (final attackerId in attackerIds) {
+        final reactive = dialogueEventsForReactiveHumanAttack(
+          state,
+          attackerFactionId: attackerId,
+          defenderFactionId: ctx.defenderFactionId,
+          provinceId: ctx.provinceId,
+          turnNumber: turn,
+          seed: preBattleDialogueSeed,
+        );
+        for (final e in reactive) {
+          onDialogue(e);
+        }
+      }
+    }
+  }
   _log.i(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
