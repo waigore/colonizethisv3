@@ -16,6 +16,8 @@ Per Imperialism II: "commodities produced in these terrain tiles move to your wa
 3. **Consumption:** Workers, military, and navy consume food (and worker luxuries per tier). Strike rules: [workers-and-population.md](workers-and-population.md).
 4. **Production:** Industry consumes commodities (inputs) from the **post-Consumption** stockpile and uses **idle labour** (`WorkerIdleCounts`) to produce materials. Outputs are added to stockpile. Labour is **not** removed from the WorkerPool by production itself; each turn’s production is capped by **assigned labour** and by idle labour for that turn (per workers-and-population.md and [economy-models.md](../program/economy-models.md)).
 
+For UI preview of upcoming stockpile changes in the production panel, the same four-phase order above is used by a dry-run projection API; preview must not use allocation-only recipe arithmetic.
+
 ### Capacity
 Capacity for all commodities is infinite; no limit on the amount of each commodity for the player.
 

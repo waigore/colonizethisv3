@@ -33,6 +33,19 @@ void main() {
     double width = 800,
     double height = 500,
   }) {
+    final netDeltasByCommodity = <String, int>{};
+    for (final entry in desiredOutputByRecipe.entries) {
+      final recipe = ProductionRecipesCatalog.byId[entry.key];
+      if (recipe == null) continue;
+      for (final input in recipe.inputQuantities.entries) {
+        netDeltasByCommodity[input.key] =
+            (netDeltasByCommodity[input.key] ?? 0) -
+            (input.value * entry.value);
+      }
+      netDeltasByCommodity[recipe.outputCommodityId] =
+          (netDeltasByCommodity[recipe.outputCommodityId] ?? 0) +
+          (recipe.outputQuantity * entry.value);
+    }
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
@@ -42,6 +55,7 @@ void main() {
             game: game,
             player: player,
             desiredOutputByRecipe: desiredOutputByRecipe,
+            netDeltasByCommodity: netDeltasByCommodity,
             onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
           ),
         ),
@@ -113,10 +127,7 @@ void main() {
             .widgetList<CtSlider>(find.byType(CtSlider))
             .toList();
         expect(sliders, isNotEmpty);
-        expect(
-          sliders.every((s) => s.comfortHeadroomActive),
-          isTrue,
-        );
+        expect(sliders.every((s) => s.comfortHeadroomActive), isTrue);
       },
     );
 
@@ -340,22 +351,23 @@ void main() {
       expect(find.text('grain'), findsOneWidget);
     });
 
-    testWidgets('ResourceLabelInline reserves space when commodity has no icon asset', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ResourceLabelInline(commodityId: 'no_ui_icon_commodity'),
+    testWidgets(
+      'ResourceLabelInline reserves space when commodity has no icon asset',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: ResourceLabelInline(commodityId: 'no_ui_icon_commodity'),
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(StrictAssetIcon), findsNothing);
-      expect(find.text('no_ui_icon_commodity'), findsOneWidget);
-      expect(find.byType(ResourceIcon), findsOneWidget);
-    });
+        expect(find.byType(StrictAssetIcon), findsNothing);
+        expect(find.text('no_ui_icon_commodity'), findsOneWidget);
+        expect(find.byType(ResourceIcon), findsOneWidget);
+      },
+    );
   });
 
   group('WorkerIcon', () {
