@@ -20,6 +20,7 @@ StrategicGoal selectPrimaryGoal(
   AIWorldSnapshot snapshot,
   AIConfig config,
   int goalSeed,
+  {required String nationId, required int turn}
 ) {
   final weights = getGoalWeightsForLeader(config.leaderId);
   final thresholds = getThresholdsForLeader(config.leaderId);
@@ -78,6 +79,34 @@ StrategicGoal selectPrimaryGoal(
       break;
     }
   }
-  _log.i('selected primaryGoal=$selected');
+  final majorConstraint = switch (selected) {
+    StrategicGoal.defend => snapshot.threats.capitalThreatened
+        ? 'capitalThreatened'
+        : snapshot.threats.atWarWith.isNotEmpty
+            ? 'atWarWith'
+            : 'none',
+    StrategicGoal.expand => snapshot.opportunities.unclaimedProvinces > 0
+        ? 'unclaimedProvinces'
+        : snapshot.economy.workerCount < 3
+            ? 'lowWorkerCount'
+            : 'none',
+    StrategicGoal.conquer => agendaConquerModifier(config.hiddenAgendaId) != 0
+        ? 'hiddenAgendaConquerModifier'
+        : (thresholds.warLikelihood - 50) != 0
+            ? 'warLikelihoodThreshold'
+            : 'none',
+    StrategicGoal.diplomacy =>
+      agendaDiplomacyModifier(config.hiddenAgendaId) != 0
+          ? 'hiddenAgendaDiplomacyModifier'
+          : ((thresholds.peaceTendency + thresholds.allianceTendency) ~/
+                      2) !=
+                  50
+              ? 'peaceAllianceTendency'
+              : 'none',
+    _ => 'none',
+  };
+  _log.i(
+    'selected primaryGoal=$selected nationId=$nationId turn=$turn majorConstraint=$majorConstraint',
+  );
   return selected;
 }

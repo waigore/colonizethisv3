@@ -557,8 +557,13 @@ class TileMapGenerator {
       resourceGrid: resourceGrid,
     );
     final topology = inferTopologyFromTileMap(result, regionId);
+    final provincesCount =
+        topology.nodes.where((n) => n.type == TopologyNodeType.province).length;
+    // Topology inference only yields `province` and `seaZone` nodes, so the
+    // realized continent count is the generator input.
+    final continentsCount = numContinents;
     _log.i(
-      'TileMapGenerator.generate end regionId=$regionId provinces=${topology.nodes.where((n) => n.type == TopologyNodeType.province).length}',
+      'TileMapGenerator.generate end regionId=$regionId provinces=$provincesCount continents=$continentsCount success=true',
     );
     return (result, topology);
   }
