@@ -43,9 +43,7 @@ Map<String, ExtractionTotals> computeExtraction({
       continue;
     }
     final pathTransportCap = cr!.pathTransportCap;
-    final roadRuleTiles = cr.connectedByRoadRule.isEmpty
-        ? cr.connected
-        : cr.connectedByRoadRule;
+    final roadRuleTiles = cr.connectedByRoadRule;
     final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
@@ -102,8 +100,7 @@ Map<String, ExtractionTotals> computeExtraction({
 
       final production =
           (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
-      var effective =
-          (production < pathCap ? production : pathCap).clamp(0, 4);
+      var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
 
       final isCapitalProvince = provinceId == player.capitalProvinceId;
       final usesRoadRule = roadRuleTiles.contains(tileKey);
