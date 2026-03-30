@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
@@ -41,6 +42,18 @@ const String quickBattleResultDialogId = 'quick_battle_result';
 
 final _logShell = appLogger('shell');
 final _logEvent = appLogger('event');
+
+/// Applies a chosen combat mode to the current game session state.
+@visibleForTesting
+Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
+  if (currentGame == null) {
+    return null;
+  }
+  if (currentGame.defaultCombatMode == chosenMode) {
+    return currentGame;
+  }
+  return currentGame.copyWith(defaultCombatMode: chosenMode);
+}
 
 /// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
 /// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
@@ -314,8 +327,9 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         if (g == null) return;
         final pid = _humanPlayerId(g);
         final o = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state =
-            _mergeTrainCivilianOrdersForPlayer(
+        ref
+            .read(currentOrdersProvider.notifier)
+            .state = _mergeTrainCivilianOrdersForPlayer(
           current: o,
           game: g,
           humanPlayerId: pid,
@@ -327,18 +341,33 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         if (g == null) return;
         final pid = _humanPlayerId(g);
         final o = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state =
-            _mergeTrainMilitaryOrdersForPlayer(
+        ref
+            .read(currentOrdersProvider.notifier)
+            .state = _mergeTrainMilitaryOrdersForPlayer(
           current: o,
           game: g,
           humanPlayerId: pid,
           newFromDialog: e.orders,
         );
       }),
+      bus.on<CombatModeChosenEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        final updated = applyCombatModeChoiceToGame(g, e.mode);
+        if (updated == null) {
+          _logEvent.w(
+            'CombatModeChosenEvent received without an active game; ignoring',
+          );
+          return;
+        }
+        if (identical(updated, g)) {
+          return;
+        }
+        ref.read(currentGameProvider.notifier).setGame(updated);
+        ref.read(gameServiceProvider).saveGame(updated);
+        _logEvent.i('combat: set default combat mode to ${e.mode.name}');
+      }),
     ]);
-    _logEvent.d(
-      'AppEventHandler bound; session command listeners attached',
-    );
+    _logEvent.d('AppEventHandler bound; session command listeners attached');
   }
 
   void _showSnackBar(ShowSnackBarEvent event) {
