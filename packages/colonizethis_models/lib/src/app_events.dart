@@ -252,6 +252,28 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   final List<BuildUnitOrder> orders;
 }
 
+/// Negotiation UI mood input for portrait transitions.
+///
+/// UI supplies deterministic negotiation inputs; session listeners compute the
+/// next mood and emit [PortraitMoodEvent] when the mood changes.
+class NegotiationMoodUpdateEvent extends SessionCommandEvent {
+  const NegotiationMoodUpdateEvent({
+    required this.leaderId,
+    required this.currentMood,
+    required this.offerQualityDelta,
+    required this.stallCounter,
+    required this.seed,
+    this.durationMs = 1200,
+  });
+
+  final String leaderId;
+  final String currentMood;
+  final double offerQualityDelta;
+  final int stallCounter;
+  final int seed;
+  final int durationMs;
+}
+
 // ---------------------------------------------------------------------------
 // UISystemEvent — emitted by any layer to request transient system feedback.
 // ---------------------------------------------------------------------------
