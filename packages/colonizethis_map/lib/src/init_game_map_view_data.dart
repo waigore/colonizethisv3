@@ -97,6 +97,23 @@ class UnitMarkerView {
   final String ownerFactionId;
 }
 
+/// Province-level unit-presence counts for map labels.
+class ProvinceUnitPresenceView {
+  const ProvinceUnitPresenceView({
+    required this.civilianCount,
+    required this.regimentCount,
+    required this.shipCount,
+    required this.intelVisible,
+  });
+
+  final int civilianCount;
+  final int regimentCount;
+  final int shipCount;
+
+  /// Whether the active player view is allowed to know class presence.
+  final bool intelVisible;
+}
+
 /// Port marker location for a province/sea zone tile.
 class PortMarkerView {
   const PortMarkerView({
@@ -184,6 +201,7 @@ class RegionMapViewData {
     this.unitMarkers = const [],
     this.warpMarkers = const [],
     this.townMarkers = const [],
+    this.provinceUnitPresenceByProvinceId = const {},
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -219,6 +237,9 @@ class RegionMapViewData {
 
   /// Unit/army markers (province→representative tile) for Units overlay.
   final List<UnitMarkerView> unitMarkers;
+
+  /// Province full id -> class presence counts/intel gate for map labels.
+  final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;
 
   /// Convenience accessor for cell at (x, y).
   CellViewData cellAt(int x, int y) => cells[y * width + x];
