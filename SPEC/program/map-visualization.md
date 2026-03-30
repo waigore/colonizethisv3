@@ -48,7 +48,17 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model). `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+
+For province-name overlays, `RegionMapViewData` may also carry province-level unit-presence data keyed by full province id:
+
+- `provinceUnitPresenceByProvinceId[provinceId] = { civilianCount, regimentCount, shipCount, intelVisible }`
+- Counts are non-negative integers representing class presence for the active player view.
+- `intelVisible` indicates whether the active player is allowed to know class presence for that province under fog/intel rules.
+- UI maps counts to icons using threshold `count > 0`; when `intelVisible = false`, UI renders no class icons for that province.
+- Values are refreshed at turn start after turn resolution and player-view rebuild.
+
+`InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base px per tile; UI may scale.
 
 ---
 
@@ -117,3 +127,6 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Given** a `Game` with at least one player in `Game.players`, **when** a tool builds a player-constrained map view for that game using `buildInitGameMapViewData`, **then** the tool uses the first player (`game.players.first`) as the source of `playerView` and sets `CellViewData.visibility` based on that player’s view.
 - **Given** an `InitGameMapViewData` whose `CellViewData.visibility` values are populated from a `playerView`, **when** a consumer requests a **full visibility** view, **then** the consumer renders all tiles as if they were `TileVisibility.visible`, regardless of stored `visibility` values.
 - **Given** `renderInitGameMapToPng` renders a region where a land cell has local province id `L` and the owning province exists in `Game` with prefixed id `R|L` and non-empty `ownerId`, **when** the renderer resolves ownership color for that cell, **then** the renderer uses `R|L` (not `L`) for ownership lookup and fills the land cell with the owner faction color (not fallback grey).
+- **Given** a player-constrained `RegionMapViewData` includes `provinceUnitPresenceByProvinceId` for province `P` with `intelVisible = true`, **when** UI consumers evaluate map label presence icons, **then** they treat each class as present iff its count (`civilianCount`, `regimentCount`, `shipCount`) is greater than zero.
+- **Given** a player-constrained `RegionMapViewData` includes `provinceUnitPresenceByProvinceId` for province `P` with `intelVisible = false`, **when** UI consumers evaluate map label presence icons, **then** they treat all classes as not renderable for `P` regardless of stored counts.
+- **Given** turn resolution completes and the game advances to a new turn, **when** the view builder produces the next turn's `RegionMapViewData`, **then** `provinceUnitPresenceByProvinceId` values are recomputed from post-resolution state and the active player's fog/intel constraints.

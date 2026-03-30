@@ -113,6 +113,7 @@ Per [world-model-identity.md](world-model-identity.md):
 ## Interactions
 
 - **App map (Flutter):** Province and sea-zone topology strokes and political border strokes are drawn only along edges where at least one adjacent tile is not **unknown** from the player’s view, except in the map widget’s **full visibility** mode (debug/tooling), which draws all boundaries. Mapping: game **unknown** → `CellViewData.visibility` **`unrevealed`**; **revealed** / **fogged** / **fully visible** → non-`unrevealed` in the view model. See [map-widget.md](../ui/map-widget.md) § Layer model and Visibility modes.
+- **App map province labels:** Unit-presence label icons (civilian/regiment/ship) use player-constrained intel; when PlayerView for a province does not expose class-presence knowledge, the map renders no presence icons for that province even if hidden world state contains units there. See [map-widget.md](../ui/map-widget.md) and [player-view.md](../program/player-view.md).
 
 - Civilian units: [civilian-units.md](civilian-units.md)
 - Ship coastal reveal: [ships-and-naval.md](ships-and-naval.md)
