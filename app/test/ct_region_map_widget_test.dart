@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
@@ -25,6 +26,7 @@ void main() {
       await terrainTilesetCache.load();
       await resourceIconCache.load();
       await townIconCache.load();
+      await provinceLabelIconCache.load();
     });
 
     testWidgets(
@@ -50,6 +52,23 @@ void main() {
         expect(tester.takeException(), isA<StateError>());
       },
       timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'required province label presence icon assets exist and are non-empty',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        for (final iconId in kProvinceLabelIconIds) {
+          final path = 'assets/icons/ui_icon_$iconId.png';
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Province label icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
 
     testWidgets(
@@ -1009,12 +1028,7 @@ void main() {
               terrainType: land.terrainType,
               ownerFactionId: land.ownerFactionId,
             ),
-            const CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 's1',
-              isSea: true,
-            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
             CellViewData(
               x: 0,
               y: 1,

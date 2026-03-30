@@ -268,6 +268,34 @@ RegionMapViewData _buildRegionViewData({
 
   // Unit markers: one per unit, placed at province representative tile.
   final unitMarkers = <UnitMarkerView>[];
+  final provincePresenceById = <String, ProvinceUnitPresenceView>{};
+  for (final p in provinces) {
+    provincePresenceById[p.id] = const ProvinceUnitPresenceView(
+      civilianCount: 0,
+      regimentCount: 0,
+      shipCount: 0,
+      intelVisible: false,
+    );
+  }
+
+  // Province intel visibility: true when any tile in that province is currently visible.
+  for (final cell in cells) {
+    if (cell.isSea || cell.visibility != TileVisibility.visible) {
+      continue;
+    }
+    final fullProvinceId = ProvinceId.full(regionId, cell.regionCellId);
+    final current = provincePresenceById[fullProvinceId];
+    if (current == null) {
+      continue;
+    }
+    provincePresenceById[fullProvinceId] = ProvinceUnitPresenceView(
+      civilianCount: current.civilianCount,
+      regimentCount: current.regimentCount,
+      shipCount: current.shipCount,
+      intelVisible: true,
+    );
+  }
+
   final regionUnits = isOldWorld
       ? game.worldState.oldWorld.units
       : game.worldState.newWorld.units;
@@ -278,6 +306,18 @@ RegionMapViewData _buildRegionViewData({
         UnitMarkerView(x: tile.$1, y: tile.$2, ownerFactionId: u.ownerId),
       );
     }
+
+    final current = provincePresenceById[u.locationProvinceId];
+    if (current == null) {
+      continue;
+    }
+    final isRegiment = isMilitaryUnit(u.type);
+    provincePresenceById[u.locationProvinceId] = ProvinceUnitPresenceView(
+      civilianCount: current.civilianCount + (isRegiment ? 0 : 1),
+      regimentCount: current.regimentCount + (isRegiment ? 1 : 0),
+      shipCount: current.shipCount,
+      intelVisible: current.intelVisible,
+    );
   }
 
   // Port markers from world state.
@@ -439,6 +479,27 @@ RegionMapViewData _buildRegionViewData({
     }
   }
 
+  // Ship presence counts by in-port province.
+  for (final fleet in game.worldState.fleets) {
+    if (fleet.regionId != regionId || !fleet.isInPort) {
+      continue;
+    }
+    final provinceId = fleet.inPortAtProvinceId;
+    if (provinceId == null) {
+      continue;
+    }
+    final current = provincePresenceById[provinceId];
+    if (current == null) {
+      continue;
+    }
+    provincePresenceById[provinceId] = ProvinceUnitPresenceView(
+      civilianCount: current.civilianCount,
+      regimentCount: current.regimentCount,
+      shipCount: current.shipCount + fleet.ships.length,
+      intelVisible: current.intelVisible,
+    );
+  }
+
   return RegionMapViewData(
     regionId: regionId,
     width: tileMap.width,
@@ -453,5 +514,6 @@ RegionMapViewData _buildRegionViewData({
     unitMarkers: unitMarkers,
     warpMarkers: warpMarkers,
     townMarkers: towns,
+    provinceUnitPresenceByProvinceId: provincePresenceById,
   );
 }
