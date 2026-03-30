@@ -56,7 +56,7 @@ Render and data rules:
 - **Fog/intel gate:** if current player intel does not permit knowledge of class presence in that province, render no class icons for that province (even if hidden world state has units there).
 - **Layout:** default is inline with the province name; when horizontal space is insufficient, wrap the icons to a second line below the province name while keeping class order.
 - **Interaction:** icons are decorative only (no counts, no direct command actions).
-- **Semantics:** map widget may expose semantic labels/tooltips describing class presence for accessibility.
+- **Semantics:** map widget may expose semantic labels/tooltips describing class presence for accessibility, but icon-level semantics are optional because these indicators are decorative and non-interactive.
 - **Refresh cadence:** label icon data is recomputed at turn start after turn resolution.
 
 ### Base overlay paint order (Z-order, bottom → top)
