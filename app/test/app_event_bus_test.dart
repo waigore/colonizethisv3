@@ -208,6 +208,43 @@ void main() {
         ),
       );
     });
+
+    test('NegotiationMoodUpdateEvent equal for same params', () {
+      expect(
+        const NegotiationMoodUpdateEvent(
+          leaderId: 'ai1',
+          currentMood: 'considering',
+          offerQualityDelta: 0.4,
+          stallCounter: 1,
+          seed: 7,
+        ),
+        const NegotiationMoodUpdateEvent(
+          leaderId: 'ai1',
+          currentMood: 'considering',
+          offerQualityDelta: 0.4,
+          stallCounter: 1,
+          seed: 7,
+        ),
+      );
+      expect(
+        const NegotiationMoodUpdateEvent(
+          leaderId: 'ai1',
+          currentMood: 'considering',
+          offerQualityDelta: 0.4,
+          stallCounter: 1,
+          seed: 7,
+        ),
+        isNot(
+          const NegotiationMoodUpdateEvent(
+            leaderId: 'ai1',
+            currentMood: 'considering',
+            offerQualityDelta: -0.4,
+            stallCounter: 1,
+            seed: 7,
+          ),
+        ),
+      );
+    });
   });
 
   group('UISystemEvent equality', () {
