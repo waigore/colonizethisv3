@@ -2,7 +2,6 @@
 // SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -28,12 +27,20 @@ class _SeededProductionDesiredOutputNotifier
 void main() {
   suppressLogsForTests();
 
-  late Game demoGame;
+  late Game isolatedGame;
   late Player fullPlayer;
 
   setUpAll(() {
-    demoGame = demoGameForOverlay;
     fullPlayer = fullAvailabilityProductionPlayer();
+    isolatedGame = Game(
+      id: 'production-integration',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: [fullPlayer],
+    );
   });
 
   Widget _buildScreen({
@@ -43,7 +50,9 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(demoGame)),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(isolatedGame),
+        ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
           ref.onDispose(bus.dispose);
@@ -61,9 +70,11 @@ void main() {
         home: MediaQuery(
           data: MediaQueryData(size: Size(width, height)),
           child: ProductionScreen(
-            game: demoGame,
+            game: isolatedGame,
             player: fullPlayer,
             attachGameToUiListener: false,
+            panelTopologyOverride: const MapTopology(),
+            panelTileMapByRegionOverride: null,
           ),
         ),
       ),
@@ -84,7 +95,7 @@ void main() {
         expect(find.textContaining('Timber:'), findsOneWidget);
         expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
         expect(find.textContaining('Lumber:'), findsOneWidget);
-        expect(find.textContaining(r'(+5)'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
       },
     );
 

@@ -14,12 +14,16 @@ class ProductionPanel extends StatelessWidget {
     super.key,
     required this.game,
     required this.player,
+    required this.topology,
+    this.tileMapByRegion,
     required this.desiredOutputByRecipe,
     required this.onDesiredOutputChanged,
   });
 
   final Game game;
   final Player player;
+  final MapTopology topology;
+  final Map<String, TileMapResult>? tileMapByRegion;
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
@@ -58,6 +62,9 @@ class ProductionPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _AvailableSubpanel(
+              game: game,
+              topology: topology,
+              tileMapByRegion: tileMapByRegion,
               player: player,
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
@@ -84,6 +91,9 @@ class ProductionPanel extends StatelessWidget {
           Expanded(
             flex: 1,
             child: _AvailableSubpanel(
+              game: game,
+              topology: topology,
+              tileMapByRegion: tileMapByRegion,
               player: player,
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
@@ -109,6 +119,9 @@ class ProductionPanel extends StatelessWidget {
 
 class _AvailableSubpanel extends StatelessWidget {
   const _AvailableSubpanel({
+    required this.game,
+    required this.topology,
+    this.tileMapByRegion,
     required this.player,
     required this.effectiveLabour,
     required this.inputCommodityIds,
@@ -116,26 +129,25 @@ class _AvailableSubpanel extends StatelessWidget {
     required this.desiredOutputByRecipe,
   });
 
+  final Game game;
+  final MapTopology topology;
+  final Map<String, TileMapResult>? tileMapByRegion;
   final Player player;
   final int effectiveLabour;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> desiredOutputByRecipe;
 
-  Map<String, int> _computeNetChanges() {
-    final changes = <String, int>{};
-    for (final entry in desiredOutputByRecipe.entries) {
-      final recipe = ProductionRecipesCatalog.byId[entry.key];
-      if (recipe == null) continue;
-      for (final input in recipe.inputQuantities.entries) {
-        changes[input.key] =
-            (changes[input.key] ?? 0) - (input.value * entry.value);
-      }
-      changes[recipe.outputCommodityId] =
-          (changes[recipe.outputCommodityId] ?? 0) +
-          (recipe.outputQuantity * entry.value);
-    }
-    return changes;
+  Map<String, int> _netChangesForAvailable() {
+    return previewStockpileNetDeltaByCommodityForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      tileMapByRegion: tileMapByRegion,
+      defaultAssignmentsByPlayerId: {
+        player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+      },
+    );
   }
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
@@ -206,7 +218,7 @@ class _AvailableSubpanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final netChanges = _computeNetChanges();
+    final netChanges = _netChangesForAvailable();
 
     final rawMaterials = CommodityCatalog.all
         .where(

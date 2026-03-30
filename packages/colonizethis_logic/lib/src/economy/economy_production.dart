@@ -16,6 +16,23 @@ class AssignedRecipe {
   final int assignedLabour;
 }
 
+/// Builds production assignments from the production panel’s desired output
+/// per recipe (units of output). SPEC/ui/production-panel.md.
+List<AssignedRecipe> assignedRecipesFromDesiredOutput(
+  Map<String, int> desiredByRecipe,
+) {
+  final list = <AssignedRecipe>[];
+  for (final entry in desiredByRecipe.entries) {
+    if (entry.value <= 0) continue;
+    final recipe = ProductionRecipesCatalog.byId[entry.key];
+    if (recipe == null) continue;
+    final labour = entry.value * recipe.labourPerOutput;
+    if (labour <= 0) continue;
+    list.add(AssignedRecipe(recipeId: entry.key, assignedLabour: labour));
+  }
+  return list;
+}
+
 class ProductionResult {
   const ProductionResult({
     required this.stockpile,

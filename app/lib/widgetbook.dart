@@ -769,6 +769,8 @@ class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
       child: ProductionPanel(
         game: game,
         player: player,
+        topology: const MapTopology(),
+        tileMapByRegion: null,
         desiredOutputByRecipe: _desiredOutputByRecipe,
         onDesiredOutputChanged: (next) =>
             setState(() => _desiredOutputByRecipe = next),
