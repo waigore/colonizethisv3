@@ -2,14 +2,16 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 import '../ctdev_log.dart';
 import '../debug_map_painter.dart';
 import '../player_view_map_painter.dart';
 import '../sim_game_controller.dart';
+
+final _runningGameLog = ctdevLogger('running_game');
 
 /// Running Game Screen: sim game with control bar and tabs.
 class RunningGameScreen extends StatefulWidget {
@@ -109,7 +111,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.resolveFromPendingOrders();
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: resolve turn failed', error: e, stackTrace: st);
+      _runningGameLog.e('resolve turn failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
@@ -123,7 +125,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.stepFullTurn();
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: step full turn failed', error: e, stackTrace: st);
+      _runningGameLog.e('step full turn failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
@@ -137,7 +139,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.fastForward(turns: 10);
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: fast-forward failed', error: e, stackTrace: st);
+      _runningGameLog.e('fast-forward failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);

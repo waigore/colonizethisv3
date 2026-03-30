@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
@@ -19,6 +18,7 @@ import '../../../widgets/game_to_ui_bus_listener.dart';
 
 import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
+import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
@@ -27,15 +27,7 @@ import 'victory_overlay.dart';
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 /// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
 void _showPauseMenu(AppEventBus bus) {
-  bus.emit(
-    OpenPauseMenuPanelEvent(
-      onDebugLog: () {
-        bus.emit(const ClosePanelEvent());
-        bus.emit(NavigateToRouteEvent(Routes.debugLog));
-      },
-      onResume: () => bus.emit(const ClosePanelEvent()),
-    ),
-  );
+  bus.emit(const OpenPauseMenuPanelEvent());
 }
 
 Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
@@ -77,18 +69,24 @@ Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
   return shouldExit ?? false;
 }
 
-void _navigateToMainMenu(BuildContext context) {
-  var foundShellRoute = false;
-  final navigator = Navigator.of(context);
-  navigator.popUntil((route) {
-    final matches = route.settings.name == Routes.shell;
-    if (matches) {
-      foundShellRoute = true;
-    }
-    return matches;
-  });
-  if (!foundShellRoute) {
-    navigator.pushNamedAndRemoveUntil(Routes.shell, (route) => false);
+void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
+  final gameN = ref.read(currentGameProvider.notifier);
+  final ordersN = ref.read(currentOrdersProvider.notifier);
+  final dipN = ref.read(pendingDiplomacyProvider.notifier);
+  switch (result) {
+    case TurnResolutionComplete():
+      gameN.setGame(result.game);
+      ordersN.clear();
+      dipN.clear();
+    case TurnResolutionPendingOvertures():
+      gameN.setGame(result.game);
+      dipN.setOvertures(result.pendingOvertures);
+    case TurnResolutionPendingIntervention():
+      gameN.setGame(result.game);
+      dipN.setIntervention(result.pendingInterventions);
+    case TurnResolutionPendingCallToArms():
+      gameN.setGame(result.game);
+      dipN.setCallToArms(result.pendingCallToArms);
   }
 }
 
@@ -105,8 +103,7 @@ class GameScreen extends ConsumerWidget {
         game != null && victory == null && mapViewData == null;
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
-    final pendingOvertures = ref.watch(pendingOverturesProvider);
-    final pendingCallToArms = ref.watch(pendingCallToArmsProvider);
+    final pendingDiplomacy = ref.watch(pendingDiplomacyProvider);
     Widget content = Stack(
       children: [
         if (mapViewData != null && game != null)
@@ -131,20 +128,7 @@ class GameScreen extends ConsumerWidget {
                 final service = ref.read(gameServiceProvider);
                 final orders = ref.read(currentOrdersProvider);
                 final result = service.runTurnResolution(game, orders: orders);
-                if (result is TurnResolutionComplete) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref.read(currentOrdersProvider.notifier).clear();
-                } else if (result is TurnResolutionPendingOvertures) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref
-                      .read(pendingOverturesProvider.notifier)
-                      .setPending(result.pendingOvertures);
-                } else if (result is TurnResolutionPendingCallToArms) {
-                  ref.read(currentGameProvider.notifier).setGame(result.game);
-                  ref
-                      .read(pendingCallToArmsProvider.notifier)
-                      .setPending(result.pendingCallToArms);
-                }
+                _applyTurnResolutionResult(ref, result);
               },
               child: Text(
                 appL10n(context).game_nextTurnButton(
@@ -159,7 +143,11 @@ class GameScreen extends ConsumerWidget {
           ),
         ],
         if (game != null && victory != null)
-          VictoryOverlay(game: game, victory: victory),
+          VictoryOverlay(
+            game: game,
+            victory: victory,
+            bus: ref.read(appEventBusProvider),
+          ),
       ],
     );
 
@@ -176,73 +164,61 @@ class GameScreen extends ConsumerWidget {
       );
     }
 
-    if (game != null &&
-        pendingOvertures != null &&
-        pendingOvertures.isNotEmpty) {
-      content = OvertureDialogueOverlay(
-        game: game,
-        pendingOvertures: pendingOvertures,
-        onDecisions: (decisions) {
-          final service = ref.read(gameServiceProvider);
-          final orders = ref.read(currentOrdersProvider);
-          final result = service.resumeOvertureDecisions(
-            game,
-            pendingOvertures,
-            decisions,
-            orders,
+    if (game != null && pendingDiplomacy != null) {
+      switch (pendingDiplomacy) {
+        case PendingDiplomacyOvertures(:final offers) when offers.isNotEmpty:
+          content = OvertureDialogueOverlay(
+            game: game,
+            pendingOvertures: offers,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeOvertureDecisions(
+                game,
+                offers,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
           );
-          ref.read(pendingOverturesProvider.notifier).clear();
-          if (result is TurnResolutionComplete) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref.read(currentOrdersProvider.notifier).clear();
-          } else if (result is TurnResolutionPendingOvertures) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingOverturesProvider.notifier)
-                .setPending(result.pendingOvertures);
-          } else if (result is TurnResolutionPendingCallToArms) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingCallToArmsProvider.notifier)
-                .setPending(result.pendingCallToArms);
-          }
-        },
-        child: content,
-      );
-    }
-
-    if (game != null &&
-        pendingCallToArms != null &&
-        pendingCallToArms.isNotEmpty) {
-      content = CallToArmsDialogueOverlay(
-        game: game,
-        pending: pendingCallToArms,
-        onDecisions: (decisions) {
-          final service = ref.read(gameServiceProvider);
-          final orders = ref.read(currentOrdersProvider);
-          final result = service.resumeCallToArmsDecisions(
-            game,
-            decisions,
-            orders,
+        case PendingDiplomacyIntervention(:final prompts)
+            when prompts.isNotEmpty:
+          content = InterventionDialogueOverlay(
+            game: game,
+            prompts: prompts,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeInterventionDecisions(
+                game,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
           );
-          ref.read(pendingCallToArmsProvider.notifier).clear();
-          if (result is TurnResolutionComplete) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref.read(currentOrdersProvider.notifier).clear();
-          } else if (result is TurnResolutionPendingOvertures) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingOverturesProvider.notifier)
-                .setPending(result.pendingOvertures);
-          } else if (result is TurnResolutionPendingCallToArms) {
-            ref.read(currentGameProvider.notifier).setGame(result.game);
-            ref
-                .read(pendingCallToArmsProvider.notifier)
-                .setPending(result.pendingCallToArms);
-          }
-        },
-        child: content,
-      );
+        case PendingDiplomacyCallToArms(:final pending) when pending.isNotEmpty:
+          content = CallToArmsDialogueOverlay(
+            game: game,
+            pending: pending,
+            onDecisions: (decisions) {
+              final service = ref.read(gameServiceProvider);
+              final orders = ref.read(currentOrdersProvider);
+              final result = service.resumeCallToArmsDecisions(
+                game,
+                decisions,
+                orders,
+              );
+              _applyTurnResolutionResult(ref, result);
+            },
+            child: content,
+          );
+        case _:
+          break;
+      }
     }
 
     return PopScope(
@@ -251,7 +227,7 @@ class GameScreen extends ConsumerWidget {
         if (didPop || !context.mounted) return;
         final shouldExit = await _showExitToMainMenuConfirmDialog(context);
         if (!shouldExit || !context.mounted) return;
-        _navigateToMainMenu(context);
+        ref.read(appEventBusProvider).emit(const NavigateToShellEvent());
       },
       child: CtScreenShell(
         title: appL10n(context).game_screenTitle,

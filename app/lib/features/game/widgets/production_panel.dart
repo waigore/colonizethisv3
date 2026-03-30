@@ -15,12 +15,14 @@ class ProductionPanel extends StatelessWidget {
     required this.game,
     required this.player,
     required this.desiredOutputByRecipe,
+    required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
   });
 
   final Game game;
   final Player player;
   final Map<String, int> desiredOutputByRecipe;
+  final Map<String, int> netDeltasByCommodity;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
   static Set<String> get _inputCommodityIds {
@@ -37,8 +39,10 @@ class ProductionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final regimentCounts =
-        regimentTypeCountsForPlayer(game.worldState, player.id);
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
     final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
@@ -62,7 +66,7 @@ class ProductionPanel extends StatelessWidget {
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
-              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
             ),
             const SizedBox(height: 24),
             _AllocationSubpanel(
@@ -88,7 +92,7 @@ class ProductionPanel extends StatelessWidget {
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
-              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
             ),
           ),
           const SizedBox(width: 24),
@@ -113,30 +117,14 @@ class _AvailableSubpanel extends StatelessWidget {
     required this.effectiveLabour,
     required this.inputCommodityIds,
     required this.outputCommodityIds,
-    required this.desiredOutputByRecipe,
+    required this.netDeltasByCommodity,
   });
 
   final Player player;
   final int effectiveLabour;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
-  final Map<String, int> desiredOutputByRecipe;
-
-  Map<String, int> _computeNetChanges() {
-    final changes = <String, int>{};
-    for (final entry in desiredOutputByRecipe.entries) {
-      final recipe = ProductionRecipesCatalog.byId[entry.key];
-      if (recipe == null) continue;
-      for (final input in recipe.inputQuantities.entries) {
-        changes[input.key] =
-            (changes[input.key] ?? 0) - (input.value * entry.value);
-      }
-      changes[recipe.outputCommodityId] =
-          (changes[recipe.outputCommodityId] ?? 0) +
-          (recipe.outputQuantity * entry.value);
-    }
-    return changes;
-  }
+  final Map<String, int> netDeltasByCommodity;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     return Row(
@@ -160,20 +148,25 @@ class _AvailableSubpanel extends StatelessWidget {
     Map<String, int> netChanges,
     ThemeData theme,
   ) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: commodities.map((c) {
-        final qty = player.stockpile.quantityOf(c.id);
-        final change = netChanges[c.id] ?? 0;
-        return _buildCommodityRow(c, qty, change, theme);
-      }).toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: commodities.map((c) {
+          final qty = player.stockpile.quantityOf(c.id);
+          final change = netChanges[c.id] ?? 0;
+          return SizedBox(
+            width: constraints.maxWidth,
+            child: _buildCommodityRow(c, qty, change, theme),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildWorkerRow(String workerType, int count, ThemeData theme) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
         WorkerIcon(workerType: workerType, size: 16),
         const SizedBox(width: 4),
@@ -206,7 +199,7 @@ class _AvailableSubpanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final netChanges = _computeNetChanges();
+    final netChanges = netDeltasByCommodity;
 
     final rawMaterials = CommodityCatalog.all
         .where(
@@ -249,21 +242,23 @@ class _AvailableSubpanel extends StatelessWidget {
             const SizedBox(height: 12),
             Text('Workers', style: theme.textTheme.labelMedium),
             const SizedBox(height: 4),
-            Wrap(
-              spacing: 16,
-              runSpacing: 4,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildWorkerRow('peasant', player.workerPool.peasants, theme),
+                const SizedBox(height: 4),
                 _buildWorkerRow(
                   'apprentice',
                   player.workerPool.apprentices,
                   theme,
                 ),
+                const SizedBox(height: 4),
                 _buildWorkerRow(
                   'journeyman',
                   player.workerPool.journeymen,
                   theme,
                 ),
+                const SizedBox(height: 4),
                 _buildWorkerRow('master', player.workerPool.masters, theme),
               ],
             ),

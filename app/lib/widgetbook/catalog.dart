@@ -12,6 +12,7 @@ import '../config/themes.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
+import '../features/game/logic/naval_fleet_split_apply.dart';
 import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
@@ -19,6 +20,7 @@ import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/widgets/technology_screen.dart';
+import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../widgets/debug_init_game.dart';
@@ -67,6 +69,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...navalUnitsPanelDirectories,
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
+        ...interventionDialogueDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -417,7 +420,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: richGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -452,7 +455,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: noTechGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -486,7 +489,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
                   game: poorGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -591,6 +594,63 @@ List<WidgetbookNode> get techTreeDirectories => [
             home: Scaffold(
               appBar: AppBar(title: const Text('Tech Tree')),
               body: TechTreeWidget(game: midGame, player: midGamePlayer),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
+/// Intervention blocking dialogue. SPEC/ui/screens/pending-intervention-overlay.md.
+List<WidgetbookNode> get interventionDialogueDirectories => [
+  WidgetbookFolder(
+    name: 'Dialogue',
+    children: [
+      WidgetbookUseCase(
+        name: 'InterventionDialogueOverlay',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_iv',
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(
+                id: 'spain',
+                displayName: 'Spain',
+                isHuman: false,
+                treasury: 0,
+              ),
+              Player(
+                id: 'portugal',
+                displayName: 'Portugal',
+                isHuman: true,
+                treasury: 0,
+              ),
+            ],
+            minorNations: const [
+              MinorNation(id: 'minorca', displayName: 'Minorca'),
+            ],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            home: Scaffold(
+              body: InterventionDialogueOverlay(
+                game: game,
+                prompts: const [
+                  InterventionPrompt(
+                    aggressorGpId: 'spain',
+                    defenderMinorOrTribeId: 'minorca',
+                    interveningGpId: 'portugal',
+                  ),
+                ],
+                skipIntroForTest: true,
+                onDecisions: (_) {},
+                child: const Center(child: Text('Game shell')),
+              ),
             ),
           );
         },
@@ -818,6 +878,7 @@ class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
         game: game,
         player: player,
         desiredOutputByRecipe: _desiredOutputByRecipe,
+        netDeltasByCommodity: const {},
         onDesiredOutputChanged: (next) =>
             setState(() => _desiredOutputByRecipe = next),
       ),
@@ -1303,7 +1364,7 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
                   game: richGame,
                   humanPlayerId: humanPlayerId,
                   currentOrders: const Orders(),
-                  onOrdersChanged: (_) {},
+                  bus: AppEventBus.create(),
                 ),
               ),
             ),
@@ -1331,6 +1392,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   late Game _game;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
+  StreamSubscription<NavalSplitFleetRequestedEvent>? _navalSplitSub;
 
   @override
   void initState() {
@@ -1342,11 +1404,21 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
       if (!mounted) return;
       setState(() => _game = e.game);
     });
+    _navalSplitSub = _navalBus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+      final next = applyNavalSplitFleet(
+        game: _game,
+        humanPlayerId: e.humanPlayerId,
+        originalFleetId: e.originalFleetId,
+        shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+      );
+      _navalBus.emit(NavalFleetsUpdatedEvent(game: next));
+    });
   }
 
   @override
   void dispose() {
     _navalSub?.cancel();
+    _navalSplitSub?.cancel();
     super.dispose();
   }
 

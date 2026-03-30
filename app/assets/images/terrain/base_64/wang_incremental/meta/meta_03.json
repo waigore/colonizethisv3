@@ -1,0 +1,41 @@
+{
+  "wang_index": 3,
+  "layout_row": 0,
+  "layout_col": 3,
+  "k": 4,
+  "donors": {
+    "n": 0,
+    "e": 7,
+    "s": 15,
+    "w": 1
+  },
+  "arm_sources": {
+    "n": "tile_00",
+    "e": "tile_07",
+    "s": "tile_15",
+    "w": "tile_01"
+  },
+  "arms_inpaint_open": [],
+  "signatures": {
+    "n": "SS",
+    "e": "SP",
+    "s": "PP",
+    "w": "SP"
+  },
+  "api_canvas": 192,
+  "tool_version": "1.6.3",
+  "crop_to_mask": true,
+  "description_verbatim": true,
+  "description": "pixel art high-detail top-down orthographic strategy map terrain seamlessly extend grassland plains and open sea from kept corners and edges into the masked region blend gradually across the boundary over several pixels matching local hue value and grain avoid abrupt color steps bright rims or sharp cutoffs natural shoreline where land meets sea match palette texture and pixel-scale detail of kept areas no visible seam",
+  "plains_base": "/Users/waigore/Documents/GitHub/colonizethisv3_7/app/assets/images/terrain/base_64/plains_base_64_v5.png",
+  "sea_base": "/Users/waigore/Documents/GitHub/colonizethisv3_7/app/assets/images/terrain/base_64/sea_base_64.png",
+  "composite": "intermediate/composite_03.png",
+  "mask": "intermediate/mask_03.png",
+  "anchors": "intermediate/anchors_03.png",
+  "init_guide": "intermediate/init_guide_03.png",
+  "init_image_strength": 450,
+  "init_baked_into_inpaint_input": true,
+  "inpainting_input": "intermediate/init_guide_03.png",
+  "output": "tiles/tile_03.png",
+  "job_id": "5812e080-a021-4095-b33a-623a305781cb"
+}

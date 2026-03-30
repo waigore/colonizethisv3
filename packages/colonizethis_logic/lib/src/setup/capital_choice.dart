@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
 /// setCapital validates province is sea-bound, sets player capital, and
@@ -258,6 +260,49 @@ WorldState applyCapitalPortAndRoad(
   );
 }
 
+/// SPEC/game/capital-and-connectivity § Capital province town development (Great Powers).
+/// [capitalProvinceId] may be full (`regionId|localId`) or local only; match by local id
+/// within [regionId].
+WorldState applyGreatPowerCapitalProvinceTownDevelopment(
+  WorldState worldState,
+  String regionId,
+  String capitalProvinceId,
+) {
+  final localTarget = ProvinceId.isPrefixed(capitalProvinceId)
+      ? ProvinceId.localIdFrom(capitalProvinceId)
+      : capitalProvinceId;
+
+  if (regionId == kRegionOldWorld) {
+    final region = worldState.oldWorld;
+    final provinces = region.provinces
+        .map(
+          (p) =>
+              ProvinceId.localIdFrom(p.id) == localTarget
+              ? p.copyWith(townDevelopmentLevel: 4)
+              : p,
+        )
+        .toList();
+    return worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: region.units),
+    );
+  }
+  if (regionId == kRegionNewWorld) {
+    final region = worldState.newWorld;
+    final provinces = region.provinces
+        .map(
+          (p) =>
+              ProvinceId.localIdFrom(p.id) == localTarget
+              ? p.copyWith(townDevelopmentLevel: 4)
+              : p,
+        )
+        .toList();
+    return worldState.copyWith(
+      newWorld: RegionData(provinces: provinces, units: region.units),
+    );
+  }
+  return worldState;
+}
+
 TileMapState _setRoadLevelMax(
   TileMapState tileState,
   String tileKey,
@@ -288,12 +333,17 @@ Game setCapital({
     );
   }
 
-  final worldState = applyCapitalPortAndRoad(
+  var worldState = applyCapitalPortAndRoad(
     game.worldState,
     provinceId,
     tile,
     topology,
     tileMapByRegion,
+  );
+  worldState = applyGreatPowerCapitalProvinceTownDevelopment(
+    worldState,
+    tile.regionId,
+    provinceId,
   );
 
   final updatedPlayers = game.players.map((p) {

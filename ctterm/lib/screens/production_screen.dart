@@ -1,13 +1,13 @@
 // Production Screen: manage resource extraction, stockpile, and production. SPEC/tui/screens/production.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Production recipe definition for display.
 class ProductionRecipe {
@@ -309,7 +309,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
 
     // Escape: back to shell
     if (key == LogicalKey.escape) {
-      _log.d('tui:nav: Production -> shell');
+      _log.d('Production -> shell');
       component.onNavigate(CttermRoute.inGameShell);
       return true;
     }

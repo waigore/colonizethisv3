@@ -9,7 +9,9 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
+import 'region_map_boundary_visibility.dart';
 import 'resource_icon_cache.dart';
+import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
 
@@ -32,6 +34,45 @@ const double _provinceLabelMaxWidthPx = 120;
 const double _provinceLabelFontSizePx = 11;
 const double _provinceLabelPlatePaddingPx = 4;
 const Color _provinceLabelPlateColor = Color.fromRGBO(0, 0, 0, 0.55);
+const double _provinceLabelIconRenderedPx = 12;
+const double _provinceLabelIconGapPx = 3;
+const double _provinceLabelTextIconGapPx = 4;
+
+/// Resolves map province-label presence icon ids from province presence data.
+///
+/// Order is always civilian, regiment, ship. Icons are suppressed when intel is
+/// not visible or count is zero.
+List<String> resolveProvinceLabelPresenceIconIds(
+  ProvinceUnitPresenceView? presence,
+) {
+  final showPresenceIcons = presence != null && presence.intelVisible;
+  if (!showPresenceIcons) {
+    return const <String>[];
+  }
+  return <String>[
+    if (presence.civilianCount > 0) 'map_presence_civilian',
+    if (presence.regimentCount > 0) 'map_presence_regiment',
+    if (presence.shipCount > 0) 'map_presence_ship',
+  ];
+}
+
+/// Returns true when province-name text + icons should wrap icons to line 2.
+bool shouldWrapProvinceLabelPresenceIcons({
+  required double textWidthPx,
+  required int iconCount,
+  double maxWidthPx = _provinceLabelMaxWidthPx,
+  double iconRenderedPx = _provinceLabelIconRenderedPx,
+  double iconGapPx = _provinceLabelIconGapPx,
+  double textIconGapPx = _provinceLabelTextIconGapPx,
+}) {
+  if (iconCount <= 0) {
+    return false;
+  }
+  final iconsWidth =
+      (iconCount * iconRenderedPx) + ((iconCount - 1) * iconGapPx);
+  final singleLineContentWidth = textWidthPx + textIconGapPx + iconsWidth;
+  return singleLineContentWidth > maxWidthPx;
+}
 
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
@@ -170,10 +211,16 @@ class CtRegionMapComponent extends PositionComponent {
   String? _hoveredProvinceId;
   double _hoverAnimationT = 0.0;
 
+  /// When true, topology/political border segments and hover glow segments are
+  /// omitted unless at least one adjacent tile is not unrevealed. SPEC/ui/map-widget.md.
+  bool get _gateMapBoundariesByVisibility =>
+      visibilityMode == CtMapVisibilityMode.playerConstrained;
+
   RegionMapViewData? _provinceLabelsRegionRef;
   double? _provinceLabelsCellSize;
   CtMapVisibilityMode? _provinceLabelsVisibilityMode;
-  List<({double cx, double cy, String text})>? _provinceLabelsCached;
+  List<({double cx, double cy, String text, String provinceId})>?
+  _provinceLabelsCached;
 
   @override
   Future<void> onLoad() async {
@@ -186,6 +233,7 @@ class CtRegionMapComponent extends PositionComponent {
       terrainTilesetCache.load(),
       resourceIconCache.load(),
       townIconCache.load(),
+      provinceLabelIconCache.load(),
     ]);
     _log.i(
       'TerrainTilesetCache loaded. '
@@ -193,7 +241,8 @@ class CtRegionMapComponent extends PositionComponent {
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
       'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
       'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
-      'TownIconCache loaded: ${townIconCache.isLoaded}',
+      'TownIconCache loaded: ${townIconCache.isLoaded}. '
+      'ProvinceLabelIconCache loaded: ${provinceLabelIconCache.isLoaded}',
     );
     size = Vector2(region.width * cellSize, region.height * cellSize);
   }
@@ -405,7 +454,8 @@ class CtRegionMapComponent extends PositionComponent {
     _provinceLabelsCached = _computeProvinceLabels();
   }
 
-  List<({double cx, double cy, String text})> _computeProvinceLabels() {
+  List<({double cx, double cy, String text, String provinceId})>
+  _computeProvinceLabels() {
     final byLocalId = <String, List<CellViewData>>{};
     for (final cell in region.cells) {
       if (cell.isSea) continue;
@@ -415,7 +465,7 @@ class CtRegionMapComponent extends PositionComponent {
       }
       byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
     }
-    final out = <({double cx, double cy, String text})>[];
+    final out = <({double cx, double cy, String text, String provinceId})>[];
     for (final e in byLocalId.entries) {
       final cells = e.value;
       if (cells.isEmpty) continue;
@@ -437,7 +487,12 @@ class CtRegionMapComponent extends PositionComponent {
         }
       }
       final text = name ?? e.key;
-      out.add((cx: cx, cy: cy, text: text));
+      out.add((
+        cx: cx,
+        cy: cy,
+        text: text,
+        provinceId: '${region.regionId}|${e.key}',
+      ));
     }
     return out;
   }
@@ -465,6 +520,13 @@ class CtRegionMapComponent extends PositionComponent {
     final platePaint = Paint()..color = _provinceLabelPlateColor;
 
     for (final item in labels) {
+      final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
+      final iconIds = resolveProvinceLabelPresenceIconIds(presence);
+      final iconCount = iconIds.length;
+      final iconsWidth = iconCount > 0
+          ? (iconCount * _provinceLabelIconRenderedPx) +
+                ((iconCount - 1) * _provinceLabelIconGapPx)
+          : 0.0;
       final tp = TextPainter(
         text: TextSpan(text: item.text, style: textStyle),
         textDirection: TextDirection.ltr,
@@ -474,9 +536,21 @@ class CtRegionMapComponent extends PositionComponent {
 
       final tw = tp.width;
       final th = tp.height;
+      final singleLineContentWidth =
+          tw + (iconCount > 0 ? _provinceLabelTextIconGapPx + iconsWidth : 0);
+      final wrapIconsToSecondLine = shouldWrapProvinceLabelPresenceIcons(
+        textWidthPx: tw,
+        iconCount: iconCount,
+      );
+      final contentWidth = wrapIconsToSecondLine
+          ? math.max(tw, iconsWidth)
+          : singleLineContentWidth;
+      final contentHeight = wrapIconsToSecondLine
+          ? th + _provinceLabelTextIconGapPx + _provinceLabelIconRenderedPx
+          : math.max(th, _provinceLabelIconRenderedPx);
       const pad = _provinceLabelPlatePaddingPx;
-      final bw = tw + pad * 2;
-      final bh = th + pad * 2;
+      final bw = contentWidth + pad * 2;
+      final bh = contentHeight + pad * 2;
 
       canvas.save();
       canvas.translate(item.cx, item.cy);
@@ -486,8 +560,66 @@ class CtRegionMapComponent extends PositionComponent {
         const Radius.circular(4),
       );
       canvas.drawRRect(rect, platePaint);
-      tp.paint(canvas, Offset(-tw / 2, -th / 2));
+
+      if (wrapIconsToSecondLine) {
+        tp.paint(canvas, Offset(-tw / 2, -contentHeight / 2));
+        final iconTop = -contentHeight / 2 + th + _provinceLabelTextIconGapPx;
+        _paintProvinceLabelIconsRow(
+          canvas: canvas,
+          iconIds: iconIds,
+          top: iconTop,
+          rowWidth: iconsWidth,
+        );
+      } else {
+        final textLeft = iconCount > 0
+            ? -(singleLineContentWidth / 2)
+            : -tw / 2;
+        final textTop = -th / 2;
+        tp.paint(canvas, Offset(textLeft, textTop));
+        if (iconCount > 0) {
+          final iconLeft = textLeft + tw + _provinceLabelTextIconGapPx;
+          _paintProvinceLabelIconsRow(
+            canvas: canvas,
+            iconIds: iconIds,
+            left: iconLeft,
+            top: -_provinceLabelIconRenderedPx / 2,
+            rowWidth: iconsWidth,
+          );
+        }
+      }
       canvas.restore();
+    }
+  }
+
+  void _paintProvinceLabelIconsRow({
+    required Canvas canvas,
+    required List<String> iconIds,
+    required double top,
+    required double rowWidth,
+    double? left,
+  }) {
+    if (iconIds.isEmpty) return;
+    final srcRect = Rect.fromLTWH(
+      0,
+      0,
+      ProvinceLabelIconCache.iconSize,
+      ProvinceLabelIconCache.iconSize,
+    );
+    var x = left ?? (-rowWidth / 2);
+    for (final iconId in iconIds) {
+      final icon = provinceLabelIconCache.getIcon(iconId);
+      if (icon == null) {
+        x += _provinceLabelIconRenderedPx + _provinceLabelIconGapPx;
+        continue;
+      }
+      final dstRect = Rect.fromLTWH(
+        x,
+        top,
+        _provinceLabelIconRenderedPx,
+        _provinceLabelIconRenderedPx,
+      );
+      canvas.drawImageRect(icon, srcRect, dstRect, Paint());
+      x += _provinceLabelIconRenderedPx + _provinceLabelIconGapPx;
     }
   }
 
@@ -899,7 +1031,8 @@ class CtRegionMapComponent extends PositionComponent {
             BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
         baseLayerDisplayMode ==
             BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
-    final showRoadLabels = baseLayerDisplayMode ==
+    final showRoadLabels =
+        baseLayerDisplayMode ==
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
 
     // Z-order: resource icons, then improvement labels, then road labels
@@ -955,12 +1088,7 @@ class CtRegionMapComponent extends PositionComponent {
         }
         final imp = cell.improvementLevel ?? 0;
         if (imp <= 0) continue;
-        _paintTileCornerLabel(
-          canvas,
-          cell,
-          'I$imp',
-          alignEnd: false,
-        );
+        _paintTileCornerLabel(canvas, cell, 'I$imp', alignEnd: false);
       }
     }
 
@@ -973,12 +1101,7 @@ class CtRegionMapComponent extends PositionComponent {
         }
         final road = cell.roadLevel ?? 0;
         if (road <= 0) continue;
-        _paintTileCornerLabel(
-          canvas,
-          cell,
-          'R$road',
-          alignEnd: true,
-        );
+        _paintTileCornerLabel(canvas, cell, 'R$road', alignEnd: true);
       }
     }
   }
@@ -1026,23 +1149,35 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (right.regionCellId != provinceId) {
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (bottom.regionCellId != provinceId) {
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }
@@ -1094,25 +1229,37 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (cell.regionCellId != right.regionCellId) {
-            paint.color = _provinceBorderColor(cell, right);
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              paint.color = _provinceBorderColor(cell, right);
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (cell.regionCellId != bottom.regionCellId) {
-            paint.color = _provinceBorderColor(cell, bottom);
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              paint.color = _provinceBorderColor(cell, bottom);
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }
@@ -1141,23 +1288,35 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (!right.isSea && (right.ownerFactionId ?? '') != owner) {
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (!bottom.isSea && (bottom.ownerFactionId ?? '') != owner) {
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }
@@ -1191,8 +1350,9 @@ class CtRegionMapComponent extends PositionComponent {
         }
       }
 
-      final String townIconId =
-          town.touchesSea ? 'town_coastal' : 'town_inland';
+      final String townIconId = town.touchesSea
+          ? 'town_coastal'
+          : 'town_inland';
       _paintTownIconAt(
         canvas,
         cell: cell,
@@ -1213,13 +1373,7 @@ class CtRegionMapComponent extends PositionComponent {
           continue;
         }
       }
-      _paintTownIconAt(
-        canvas,
-        cell: portCell,
-        cx: px,
-        cy: py,
-        icon: 'port',
-      );
+      _paintTownIconAt(canvas, cell: portCell, cx: px, cy: py, icon: 'port');
     }
   }
 

@@ -290,7 +290,7 @@ NavalBattleResult resolveSeaBattle(
   }
 
   _log.d(
-    'logic: naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
+    'naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
     'outcome=${outcome.name} retreat1=$side1Retreated retreat2=$side2Retreated',
   );
 

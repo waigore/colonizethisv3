@@ -197,37 +197,3 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   }
 }
 
-/// Shows a dialog to enter amount for Grant Aid or Set Subsidy, then calls [onSubmitted].
-void showGrantOrSubsidyDialog({
-  required BuildContext context,
-  required Game game,
-  required String humanPlayerId,
-  required String targetFactionId,
-  required bool isSubsidy,
-  required void Function(int amount) onSubmitted,
-}) {
-  final treasury = _treasuryFor(game, humanPlayerId);
-
-  showDialog<void>(
-    context: context,
-    builder: (ctx) => CtDialogShell(
-      child: _GrantSubsidyAmountBody(
-        title: isSubsidy ? 'Set subsidy' : 'Grant aid',
-        treasury: treasury,
-        isSubsidy: isSubsidy,
-        onCancel: () => Navigator.of(ctx).pop(),
-        onSubmit: (amount) {
-          Navigator.of(ctx).pop();
-          onSubmitted(amount);
-        },
-      ),
-    ),
-  );
-}
-
-int _treasuryFor(Game game, String playerId) {
-  for (final p in game.players) {
-    if (p.id == playerId) return p.treasury;
-  }
-  return 0;
-}

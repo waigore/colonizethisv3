@@ -1,11 +1,13 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-/// Pause menu content for [OpenPanelEvent] id `pause_menu`.
-/// Params: `onDebugLog`, `onResume` as [VoidCallback] (typically emit bus events).
-class PauseMenuPanel extends StatelessWidget {
-  const PauseMenuPanel({super.key, required this.params});
+import '../../../config/routes.dart';
 
-  final Map<String, Object?>? params;
+/// Pause menu content for [OpenPauseMenuPanelEvent]. Emits bus follow-up events only.
+class PauseMenuPanel extends StatelessWidget {
+  const PauseMenuPanel({super.key, required this.bus});
+
+  final AppEventBus bus;
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +18,15 @@ class PauseMenuPanel extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.list),
             title: const Text('Debug log'),
-            onTap: () => (params?['onDebugLog'] as VoidCallback?)?.call(),
+            onTap: () {
+              bus.emit(const ClosePanelEvent());
+              bus.emit(const NavigateToRouteEvent(Routes.debugLog));
+            },
           ),
           ListTile(
             leading: const Icon(Icons.play_arrow),
             title: const Text('Resume'),
-            onTap: () => (params?['onResume'] as VoidCallback?)?.call(),
+            onTap: () => bus.emit(const ClosePanelEvent()),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
+import '../setup/town_capital_occupancy.dart';
 import '../world/province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
@@ -12,6 +13,7 @@ Game applyCapitalReassignmentAfterCombat(
   Game state,
   MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   Game game = state;
   for (final player in state.players) {
@@ -38,7 +40,7 @@ Game applyCapitalReassignmentAfterCombat(
       }).toList();
       game = game.copyWith(players: updatedPlayers);
       _log.i(
-        'logic: player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
+        'player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
       );
       continue;
     }
@@ -54,7 +56,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: StateError(msg),
         stackTrace: StackTrace.current,
       );
@@ -67,7 +69,7 @@ Game applyCapitalReassignmentAfterCombat(
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: err,
         stackTrace: StackTrace.current,
       );
@@ -81,7 +83,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: e,
         stackTrace: st,
       );
@@ -98,14 +100,34 @@ Game applyCapitalReassignmentAfterCombat(
         provinceId: newProvinceId,
         tile: tile,
       );
+      game = game.copyWith(
+        worldState: applyGreatPowerCapitalProvinceTownDevelopment(
+          game.worldState,
+          regionId,
+          newProvinceId,
+        ),
+      );
+      final newCapKey = tile.toTileKey();
+      final strip = stripResourcesAndExtractionImprovementsOnTileKeys(
+        game,
+        tileMapByRegion,
+        [newCapKey],
+      );
+      game = strip.$1;
+      final stripMaps = strip.$2;
+      if (stripMaps != null && tileMapByRegion != null) {
+        for (final e in stripMaps.entries) {
+          tileMapByRegion[e.key] = e.value;
+        }
+      }
       _log.i(
-        'logic: player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
+        'player ${player.id} capital reassigned to $newProvinceId ($newCapKey) after loss',
       );
     } catch (e, st) {
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
       _log.e(
-        'logic: $msg',
+        '$msg',
         error: e,
         stackTrace: st,
       );

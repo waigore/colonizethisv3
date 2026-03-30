@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,6 +19,9 @@ class _GameMapCache {
   final Map<String, MapTopology> topologyByRegion;
   final List<WarpLink>? warpLinks;
 }
+
+/// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
+final _mapGenPassLog = mapLogger('tile_map');
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn uses cached map data when available.
@@ -404,6 +408,7 @@ class GameService {
       numContinents: cfg.continentCount,
       regionId: 'oldWorld',
       resourceRules: ResourceRules.defaultRules,
+      onLog: _mapGenPassLog.d,
     );
   }
 
@@ -428,6 +433,7 @@ class GameService {
       numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
       regionId: 'newWorld',
       resourceRules: ResourceRules.defaultRules,
+      onLog: _mapGenPassLog.d,
     );
   }
 

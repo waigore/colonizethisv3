@@ -29,12 +29,16 @@ class _EventHandlingWrapper extends StatefulWidget {
 }
 
 class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _sub;
+  StreamSubscription? _confirmSub;
+  StreamSubscription? _closeSub;
 
   @override
   void initState() {
     super.initState();
-    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
+    _closeSub = widget.bus.on<ClosePanelEvent>().listen((_) {
+      widget.navigatorKey.currentState?.maybePop();
+    });
+    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
       final nav = widget.navigatorKey.currentState;
       if (nav == null) return;
       final result = await showDialog<bool>(
@@ -60,7 +64,8 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _confirmSub?.cancel();
+    _closeSub?.cancel();
     super.dispose();
   }
 
@@ -88,7 +93,6 @@ void main() {
     Orders currentOrders = const Orders(),
     Map<String, List<String>> availableWorkTargets = const {},
     AppEventBus? bus,
-    void Function(WorkOrder order)? onAddWorkOrder,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -104,7 +108,6 @@ void main() {
             currentOrders: currentOrders,
             availableWorkTargets: availableWorkTargets,
             bus: resolvedBus,
-            onAddWorkOrder: onAddWorkOrder,
           ),
         ),
       ),
@@ -286,11 +289,101 @@ void main() {
       final trainButton = find.text('Train');
       expect(trainButton, findsOneWidget);
       await tester.tap(trainButton);
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(openDialogEvent, isNotNull);
       expect(openDialogEvent!.dialogId, trainCiviliansDialogId);
     });
+
+    testWidgets(
+      'AC: tapping civilian row emits ClosePanelEvent before LocateMapTileEvent',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        final sequence = <Type>[];
+        bus.stream.listen((e) => sequence.add(e.runtimeType));
+
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final listTiles = find.byType(ListTile);
+        if (listTiles.evaluate().isEmpty) return;
+        await tester.tap(listTiles.first);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(
+          sequence.indexOf(ClosePanelEvent),
+          lessThan(sequence.indexOf(LocateMapTileEvent)),
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: assign target emits ClosePanelEvent before StartCivilianWorkTargetSelectionEvent',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        final sequence = <Type>[];
+        bus.stream.listen((e) => sequence.add(e.runtimeType));
+
+        final units = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ];
+        final idleCivilians = units.where(
+          (u) =>
+              u.ownerId == humanPlayerIdWithUnits &&
+              u.tileKey != null &&
+              _isCivilian(u) &&
+              u.currentWork == null,
+        );
+        if (idleCivilians.isEmpty) return;
+
+        final availableWorkTargets = <String, List<String>>{};
+        for (final u in idleCivilians) {
+          final allowed = workOrderTargetsByUnitType[u.type] ?? const <String>[];
+          if (allowed.isNotEmpty) {
+            availableWorkTargets[u.id] = [allowed.first];
+          }
+        }
+        if (availableWorkTargets.isEmpty) return;
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            bus: bus,
+            availableWorkTargets: availableWorkTargets,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final assignButton = find.text('Assign');
+        if (assignButton.evaluate().isEmpty) return;
+        await tester.tap(assignButton.first);
+        await tester.pumpAndSettle();
+
+        final enabledTargetTile = find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byWidgetPredicate(
+            (w) => w is ListTile && w.enabled == true,
+          ),
+        );
+        if (enabledTargetTile.evaluate().isEmpty) return;
+        final targetTile = tester.widget<ListTile>(enabledTargetTile.first);
+        expect(targetTile.onTap, isNotNull);
+        targetTile.onTap!();
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(
+          sequence.indexOf(ClosePanelEvent),
+          lessThan(sequence.indexOf(StartCivilianWorkTargetSelectionEvent)),
+        );
+      },
+    );
 
     testWidgets(
       'Cancel on pending row shows confirm dialog; Yes emits RemovePendingWorkOrderRequestedEvent',

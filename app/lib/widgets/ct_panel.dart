@@ -1,6 +1,6 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flame/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 /// Pixel-art panel using the same nine-patch as buttons/dialogs.
 /// Replace [Card] with this for framed content sections.
@@ -47,8 +47,8 @@ class CtPanel extends StatelessWidget {
             child: child,
           ),
           errorBuilder: (_) {
-            Logger().w(
-              'ui: panel nine-patch asset not found, using fallback',
+            appLogger('ui').w(
+              'panel nine-patch asset not found, using fallback',
             );
             return _FallbackPanel(
               color: fallbackColor,

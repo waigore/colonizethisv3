@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   nocterm: ^0.4.4
+  colonizethis_logger: any
   logger: ^2.0.2
   basic_logger: ^0.2.2
   basic_logger_file: ^0.1.3

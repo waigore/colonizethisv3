@@ -2,7 +2,6 @@
 // SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -28,12 +27,20 @@ class _SeededProductionDesiredOutputNotifier
 void main() {
   suppressLogsForTests();
 
-  late Game demoGame;
+  late Game isolatedGame;
   late Player fullPlayer;
 
   setUpAll(() {
-    demoGame = demoGameForOverlay;
     fullPlayer = fullAvailabilityProductionPlayer();
+    isolatedGame = Game(
+      id: 'production-integration',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: [fullPlayer],
+    );
   });
 
   Widget _buildScreen({
@@ -43,27 +50,28 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(demoGame)),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(isolatedGame),
+        ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
           ref.onDispose(bus.dispose);
           return bus;
         }),
         if (initialDesiredOutput != null)
-          productionDesiredOutputProvider
-              .overrideWith(() {
-                return _SeededProductionDesiredOutputNotifier(
-                  initialDesiredOutput,
-                );
-              }),
+          productionDesiredOutputProvider.overrideWith(
+            () => _SeededProductionDesiredOutputNotifier(initialDesiredOutput),
+          ),
       ],
       child: MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(size: Size(width, height)),
           child: ProductionScreen(
-            game: demoGame,
+            game: isolatedGame,
             player: fullPlayer,
             attachGameToUiListener: false,
+            panelTopologyOverride: const MapTopology(),
+            panelTileMapByRegionOverride: null,
           ),
         ),
       ),
@@ -74,8 +82,6 @@ void main() {
     testWidgets(
       'preseeded provider state is reflected in Available net changes',
       (WidgetTester tester) async {
-        // 5 runs of lumber_from_timber consume 10 timber and produce 5 lumber,
-        // matching expectations from ProductionPanel tests.
         await tester.pumpWidget(
           _buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
         );
@@ -84,7 +90,7 @@ void main() {
         expect(find.textContaining('Timber:'), findsOneWidget);
         expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
         expect(find.textContaining('Lumber:'), findsOneWidget);
-        expect(find.textContaining(r'(+5)'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
       },
     );
 
@@ -94,8 +100,6 @@ void main() {
         await tester.pumpWidget(_buildScreen());
         await tester.pumpAndSettle();
 
-        // Initially there should be no net change annotations like "(-" or "(+"
-        // for timber; after dragging a slider, they should appear.
         expect(find.textContaining('Timber:'), findsOneWidget);
 
         final sliders = find.byType(CtSlider);
@@ -104,15 +108,9 @@ void main() {
         await tester.drag(sliders.first, const Offset(80, 0));
         await tester.pumpAndSettle();
 
-        // After the drag, the provider has been updated and the screen rebuilt,
-        // so net changes should now be visible.
         expect(find.textContaining('Timber:'), findsOneWidget);
-        expect(
-          find.textContaining(RegExp(r'\(|\+|-')),
-          findsWidgets,
-        );
+        expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
       },
     );
   });
 }
-

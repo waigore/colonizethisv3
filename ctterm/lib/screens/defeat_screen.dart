@@ -1,11 +1,11 @@
 // Defeat screen: shown when human player loses. SPEC/tui/ctterm.md, SPEC/game/victory.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Defeat screen: shown when another Great Power wins the game.
 /// 
@@ -60,10 +60,10 @@ class _DefeatScreenState extends State<DefeatScreen> {
         // Confirm selection
         if (event.logicalKey == LogicalKey.enter || c == 'e') {
           if (_selectedOption == 'menu') {
-            _log.d('tui:nav: Defeat -> main menu');
+            _log.d('Defeat -> main menu');
             component.onExitToMainMenu();
           } else {
-            _log.d('tui:nav: Defeat -> final map');
+            _log.d('Defeat -> final map');
             component.onNavigate(CttermRoute.inGameShell);
           }
           return true;

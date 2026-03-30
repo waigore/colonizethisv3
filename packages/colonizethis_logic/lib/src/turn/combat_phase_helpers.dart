@@ -12,6 +12,7 @@ import '../combat/quick_battle_resolver.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
+import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 
 final _combatPhaseLog = logicLogger();
@@ -32,7 +33,7 @@ Game runOneLandBattle(
   final attackerUnitsTotal =
       ctx.attackers.fold<int>(0, (s, a) => s + a.unitIds.length);
   _combatPhaseLog.i(
-    'logic: combat battle_start turn=$turn battleIndex=$battleIndex '
+    'combat battle_start turn=$turn battleIndex=$battleIndex '
     'regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'defenderFactionId=${ctx.defenderFactionId} attackerSides=${ctx.attackers.length} '
     'attackerUnitsTotal=$attackerUnitsTotal mode=${mode.name}',
@@ -61,7 +62,7 @@ Game runOneLandBattle(
         qbResult.winner == QuickBattleWinner.attacker &&
         ctx.attackers.isNotEmpty;
     _combatPhaseLog.i(
-      'logic: combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
+      'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'mode=quickBattle winner=${qbResult.winner.name} provinceFlipped=$qbFlipped '
       'attCasualties=${qbResult.attackerCasualties.length} '
       'defCasualties=${qbResult.defenderCasualties.length}',
@@ -151,14 +152,17 @@ Game runOneLandBattle(
   }
   // Emit combat_result event for this battle
   if (onGameEvent != null && winnerId != null && ctx.attackers.isNotEmpty) {
-    onGameEvent(CombatResultEvent(
-      provinceId: ctx.provinceId,
-      attackerId: ctx.attackers.first.factionId,
-      defenderId: ctx.defenderFactionId,
-      winnerId: winnerId,
-      turnNumber: turn,
-      casualties: casualties,
-    ));
+    deliverGameEvent(
+      CombatResultEvent(
+        provinceId: ctx.provinceId,
+        attackerId: ctx.attackers.first.factionId,
+        defenderId: ctx.defenderFactionId,
+        winnerId: winnerId,
+        turnNumber: turn,
+        casualties: casualties,
+      ),
+      onGameEvent: onGameEvent,
+    );
   }
 
   return state;

@@ -6,7 +6,7 @@
 
 ## Purpose
 
-The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. The panel:
+The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. **Split** and **combine** fleet actions (checkbox multi-select, locality rules, Home Fleet merge target) are specified in [naval-units-fleet-management.md](naval-units-fleet-management.md). The panel:
 
 - Lists fleets grouped by **region** and by **location** (in port at a province vs at sea in a sea zone).
 - Always shows the **Home Fleet** as a special entry at the top for the player’s capital, even when it currently has zero ships.

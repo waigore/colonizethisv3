@@ -5,34 +5,19 @@ import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
 /// Dialog for choosing combat mode (Auto-Resolve vs Quick Battle).
+/// Open via `OpenDialogEvent('combat_mode_choice', params)` registered in `app_event_handler_scope.dart`.
 /// SPEC/program/quick-battle-resolution. Capital sieges force Quick Battle.
 class CombatModeChoiceDialog extends StatelessWidget {
   const CombatModeChoiceDialog({
     super.key,
+    required this.bus,
     required this.provinceName,
     required this.isCapitalSiege,
-    this.defaultMode = CombatMode.autoResolve,
   });
 
+  final AppEventBus bus;
   final String provinceName;
   final bool isCapitalSiege;
-  final CombatMode defaultMode;
-
-  static Future<CombatMode?> show(
-    BuildContext context, {
-    required String provinceName,
-    required bool isCapitalSiege,
-    CombatMode defaultMode = CombatMode.autoResolve,
-  }) {
-    return showDialog<CombatMode>(
-      context: context,
-      builder: (context) => CombatModeChoiceDialog(
-        provinceName: provinceName,
-        isCapitalSiege: isCapitalSiege,
-        defaultMode: defaultMode,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +43,18 @@ class CombatModeChoiceDialog extends StatelessWidget {
             children: [
               if (!isCapitalSiege)
                 CtNinePatchButton(
-                  onPressed: () =>
-                      Navigator.pop(context, CombatMode.autoResolve),
+                  onPressed: () {
+                    bus.emit(const CombatModeChosenEvent(CombatMode.autoResolve));
+                    Navigator.of(context).pop();
+                  },
                   child: const Text('Auto-Resolve'),
                 ),
               if (!isCapitalSiege) const SizedBox(width: 8),
               CtNinePatchButton(
-                onPressed: () =>
-                    Navigator.pop(context, CombatMode.quickBattle),
+                onPressed: () {
+                  bus.emit(const CombatModeChosenEvent(CombatMode.quickBattle));
+                  Navigator.of(context).pop();
+                },
                 child: const Text('Quick Battle'),
               ),
             ],

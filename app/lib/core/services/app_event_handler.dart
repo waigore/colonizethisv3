@@ -22,11 +22,12 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 
+import '../../config/routes.dart';
 import '../../features/game/flame/game_screen_shared.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
@@ -38,7 +39,7 @@ import '../../providers/games_provider.dart';
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
-final _log = Logger();
+final _log = appLogger('event');
 
 class AppEventHandler {
   AppEventHandler({
@@ -94,6 +95,8 @@ class AppEventHandler {
       _showConfirmDialog(event, nav);
     } else if (event is NavigateToRouteEvent) {
       nav?.pushNamed(event.route, arguments: event.arguments);
+    } else if (event is NavigateToShellEvent) {
+      _navigateToShell(nav);
     } else if (event is PopNavigationEvent) {
       nav?.pop();
     } else if (event is OpenPauseMenuPanelEvent) {
@@ -167,7 +170,7 @@ class AppEventHandler {
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
-      _log.e('ui:app_event: ConfirmDialog failed', error: e, stackTrace: st);
+      _log.e('ConfirmDialog failed', error: e, stackTrace: st);
       event.result(false);
       return false;
     }
@@ -193,10 +196,23 @@ class AppEventHandler {
     if (nav == null) return;
     await showModalBottomSheet<void>(
       context: nav.context,
-      builder: (ctx) => PauseMenuPanel(
-        params: {'onDebugLog': event.onDebugLog, 'onResume': event.onResume},
-      ),
+      builder: (ctx) => PauseMenuPanel(bus: _bus),
     );
+  }
+
+  void _navigateToShell(NavigatorState? nav) {
+    if (nav == null) return;
+    var foundShellRoute = false;
+    nav.popUntil((route) {
+      final matches = route.settings.name == Routes.shell;
+      if (matches) {
+        foundShellRoute = true;
+      }
+      return matches;
+    });
+    if (!foundShellRoute) {
+      nav.pushNamedAndRemoveUntil(Routes.shell, (route) => false);
+    }
   }
 
   Future<void> _openCivilianUnitsPanel(

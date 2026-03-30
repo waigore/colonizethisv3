@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:colonizethis_test/test.dart';
 
@@ -335,5 +336,50 @@ void main() {
       final args = generate_map.parseMapArguments(['--seed', '12345']);
       expect(args.seedUsed, 12345);
     });
+
+    test('parses --write-tile-map-json', () {
+      final args = generate_map.parseMapArguments([
+        '--write-tile-map-json',
+        '/tmp/tm.json',
+      ]);
+      expect(args.writeTileMapJsonPath, '/tmp/tm.json');
+    });
+
+    test('parses --write-tile-map-json=', () {
+      final args = generate_map.parseMapArguments([
+        '--write-tile-map-json=out/tile_map.json',
+      ]);
+      expect(args.writeTileMapJsonPath, 'out/tile_map.json');
+    });
+  });
+
+  test('writes TileMapResult JSON when --write-tile-map-json is set', () async {
+    final dir = await Directory.systemTemp.createTemp('genmap_json_');
+    final outPath = p.join(dir.path, 'tile_map.json');
+    final result = await Process.run(
+      'dart',
+      [
+        'run',
+        'generate_map',
+        '--provinces',
+        '4',
+        '--continents',
+        '2',
+        '--seed',
+        '7',
+        '--write-tile-map-json',
+        outPath,
+      ],
+      runInShell: false,
+      workingDirectory: _packageRoot,
+    );
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    final file = File(outPath);
+    expect(file.existsSync(), isTrue);
+    final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+    expect(decoded['width'], isA<int>());
+    expect(decoded['height'], isA<int>());
+    expect(decoded['grid'], isA<List<dynamic>>());
+    await dir.delete(recursive: true);
   });
 }

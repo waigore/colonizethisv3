@@ -1,13 +1,13 @@
 // Diplomacy Screen: manage relations with other powers. SPEC/tui/screens/diplomacy.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Faction type for display.
 enum FactionType { greatPower, minorNation, tribe }
@@ -197,7 +197,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
 
     // Escape to go back
     if (key == LogicalKey.escape || c == 'b') {
-      _log.d('tui:nav: diplomacy -> in-game shell');
+      _log.d('diplomacy -> in-game shell');
       component.onNavigate(CttermRoute.inGameShell);
       return true;
     }
@@ -454,7 +454,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     ));
     _updateSelectedFactionRelationState(RelationState.atWar);
     _setStatus('Declared war on ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: declared war on $targetId');
+    _log.d('declared war on $targetId');
   }
 
   void _handleOfferPeace() {
@@ -492,7 +492,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     // Do NOT update UI to AT_PEACE immediately - wait for turn resolution
     // For GP-GP, peace requires mutual agreement
     _setStatus('Peace offer sent to ${_selectedFaction!.name} (pending resolution)');
-    _log.d('tui:diplomacy: peace offer sent to $targetId');
+    _log.d('peace offer sent to $targetId');
   }
 
   void _handleAlliance() {
@@ -515,7 +515,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       targetFactionId: targetId,
     ));
     _setStatus('Proposed alliance with ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: proposed alliance with $targetId');
+    _log.d('proposed alliance with $targetId');
   }
 
   void _handleEstablishOverture(OvertureStage stage) {
@@ -572,7 +572,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
     _updateSelectedFactionOvertureStage(stage);
     final stageName = _getOvertureStageDisplayName(stage);
     _setStatus('Established $stageName with $factionName');
-    _log.d('tui:diplomacy: established $stage with $targetId');
+    _log.d('established $stage with $targetId');
   }
 
   String _getOvertureStageDisplayName(OvertureStage stage) {
@@ -625,7 +625,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       overtureStage: OvertureStage.joinEmpire,
     ));
     _setStatus('Joining empire: ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: joining empire with $targetId');
+    _log.d('joining empire with $targetId');
   }
 
   int _getProvinceCount(String factionId) {
@@ -671,7 +671,7 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       amount: aidAmount,
     ));
     _setStatus('Granted £$aidAmount to ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: grant aid $aidAmount to $targetId');
+    _log.d('grant aid $aidAmount to $targetId');
   }
 
   void _handleSetSubsidy() {
@@ -698,11 +698,11 @@ class _DiplomacyScreenState extends State<DiplomacyScreen> {
       amount: subsidyAmount,
     ));
     _setStatus('Set subsidy: £$subsidyAmount to ${_selectedFaction!.name}');
-    _log.d('tui:diplomacy: set subsidy $subsidyAmount to $targetId');
+    _log.d('set subsidy $subsidyAmount to $targetId');
   }
 
   void _handleIntervention(InterventionChoice choice) {
-    _log.d('tui:diplomacy: intervention choice $choice for minor $_interventionMinorId');
+    _log.d('intervention choice $choice for minor $_interventionMinorId');
     setState(() {
       _showIntervention = false;
       _setStatus('Intervention: $choice');

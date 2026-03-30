@@ -8,6 +8,11 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+    show
+        resolveProvinceLabelPresenceIconIds,
+        shouldWrapProvinceLabelPresenceIcons;
+import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
@@ -25,6 +30,7 @@ void main() {
       await terrainTilesetCache.load();
       await resourceIconCache.load();
       await townIconCache.load();
+      await provinceLabelIconCache.load();
     });
 
     testWidgets(
@@ -50,6 +56,180 @@ void main() {
         expect(tester.takeException(), isA<StateError>());
       },
       timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'required province label presence icon assets exist and are non-empty',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        for (final iconId in kProvinceLabelIconIds) {
+          final path = 'assets/icons/ui_icon_$iconId.png';
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Province label icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'province presence icon resolver enforces intel gate, zero suppression, and class order',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          resolveProvinceLabelPresenceIconIds(null),
+          isEmpty,
+          reason: 'Null presence should suppress all icons',
+        );
+        expect(
+          resolveProvinceLabelPresenceIconIds(
+            const ProvinceUnitPresenceView(
+              civilianCount: 1,
+              regimentCount: 1,
+              shipCount: 1,
+              intelVisible: false,
+            ),
+          ),
+          isEmpty,
+          reason: 'Hidden intel should suppress all icons',
+        );
+        expect(
+          resolveProvinceLabelPresenceIconIds(
+            const ProvinceUnitPresenceView(
+              civilianCount: 1,
+              regimentCount: 2,
+              shipCount: 3,
+              intelVisible: true,
+            ),
+          ),
+          const [
+            'map_presence_civilian',
+            'map_presence_regiment',
+            'map_presence_ship',
+          ],
+        );
+        expect(
+          resolveProvinceLabelPresenceIconIds(
+            const ProvinceUnitPresenceView(
+              civilianCount: 0,
+              regimentCount: 4,
+              shipCount: 0,
+              intelVisible: true,
+            ),
+          ),
+          const ['map_presence_regiment'],
+          reason: 'Only >0 classes should render',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'presence icon wrap helper moves icons to second line only when width is insufficient',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 20, iconCount: 0),
+          isFalse,
+        );
+        expect(
+          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 60, iconCount: 2),
+          isFalse,
+          reason: 'Content fits one line',
+        );
+        expect(
+          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 110, iconCount: 3),
+          isTrue,
+          reason: 'Content should wrap to second line when too wide',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'didUpdateWidget refreshes map region presence data after rebuild',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final localProvinceId = base.cells.firstWhere((c) => !c.isSea).regionCellId;
+        final fullProvinceId = '${base.regionId}|$localProvinceId';
+
+        RegionMapViewData withPresence({
+          required int civilianCount,
+          required int regimentCount,
+          required int shipCount,
+          required bool intelVisible,
+        }) {
+          return RegionMapViewData(
+            regionId: base.regionId,
+            width: base.width,
+            height: base.height,
+            cellSize: base.cellSize,
+            cells: base.cells,
+            capitalMarkers: base.capitalMarkers,
+            portMarkers: base.portMarkers,
+            factionColors: base.factionColors,
+            greatPowerFactionIds: base.greatPowerFactionIds,
+            terrainColors: base.terrainColors,
+            unitMarkers: base.unitMarkers,
+            warpMarkers: base.warpMarkers,
+            townMarkers: base.townMarkers,
+            provinceUnitPresenceByProvinceId: {
+              ...base.provinceUnitPresenceByProvinceId,
+              fullProvinceId: ProvinceUnitPresenceView(
+                civilianCount: civilianCount,
+                regimentCount: regimentCount,
+                shipCount: shipCount,
+                intelVisible: intelVisible,
+              ),
+            },
+          );
+        }
+
+        final initial = withPresence(
+          civilianCount: 0,
+          regimentCount: 0,
+          shipCount: 0,
+          intelVisible: true,
+        );
+        final refreshed = withPresence(
+          civilianCount: 1,
+          regimentCount: 1,
+          shipCount: 1,
+          intelVisible: true,
+        );
+
+        await tester.pumpWidget(ctRegionMapTestHarness(region: initial));
+        await tester.pump();
+
+        final gameWidgetFinder = find.byWidgetPredicate(
+          (w) => w.runtimeType.toString().startsWith('GameWidget<'),
+        );
+        expect(gameWidgetFinder, findsOneWidget);
+        final beforeWidget = tester.widget(gameWidgetFinder);
+        final beforeRegion = (beforeWidget as dynamic).game.region as RegionMapViewData;
+        final beforePresence = beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        expect(beforePresence, isNotNull);
+        expect(beforePresence!.civilianCount, 0);
+        expect(beforePresence.regimentCount, 0);
+        expect(beforePresence.shipCount, 0);
+
+        await tester.pumpWidget(ctRegionMapTestHarness(region: refreshed));
+        await tester.pump();
+
+        final afterWidget = tester.widget(gameWidgetFinder);
+        final afterRegion = (afterWidget as dynamic).game.region as RegionMapViewData;
+        final afterPresence = afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        expect(afterPresence, isNotNull);
+        expect(afterPresence!.civilianCount, 1);
+        expect(afterPresence.regimentCount, 1);
+        expect(afterPresence.shipCount, 1);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
 
     testWidgets(
@@ -1009,12 +1189,7 @@ void main() {
               terrainType: land.terrainType,
               ownerFactionId: land.ownerFactionId,
             ),
-            const CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 's1',
-              isSea: true,
-            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
             CellViewData(
               x: 0,
               y: 1,

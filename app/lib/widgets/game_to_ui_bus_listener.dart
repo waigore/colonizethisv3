@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,7 @@ class GameToUIBusListener extends ConsumerStatefulWidget {
 
 class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
   StreamSubscription<TurnResolutionCompleteEvent>? _turnSub;
+  StreamSubscription<NegotiationMoodUpdateEvent>? _negotiationMoodSub;
 
   @override
   void didChangeDependencies() {
@@ -36,6 +38,11 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
         ref.read(appEventBusProvider).on<TurnResolutionCompleteEvent>().listen(
               _onTurnResolutionComplete,
             );
+    _negotiationMoodSub ??=
+        ref
+            .read(appEventBusProvider)
+            .on<NegotiationMoodUpdateEvent>()
+            .listen(_onNegotiationMoodUpdate);
   }
 
   void _onTurnResolutionComplete(TurnResolutionCompleteEvent event) {
@@ -53,9 +60,24 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
     ref.read(currentGameProvider.notifier).setGame(reloaded);
   }
 
+  void _onNegotiationMoodUpdate(NegotiationMoodUpdateEvent event) {
+    if (!mounted) return;
+    final transition = buildNegotiationMoodTransitionEvent(
+      leaderId: event.leaderId,
+      currentMood: event.currentMood,
+      offerQualityDelta: event.offerQualityDelta,
+      stallCounter: event.stallCounter,
+      seed: event.seed,
+      durationMs: event.durationMs,
+    );
+    if (transition == null) return;
+    ref.read(appEventBusProvider).emit(transition);
+  }
+
   @override
   void dispose() {
     _turnSub?.cancel();
+    _negotiationMoodSub?.cancel();
     super.dispose();
   }
 

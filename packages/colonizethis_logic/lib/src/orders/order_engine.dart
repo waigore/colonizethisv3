@@ -156,7 +156,7 @@ class OrderEngine {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
     _appendOrder(playerId, order, getter, updater);
-    _log.d('logic: validating orders with context player=$playerId');
+    _log.d('validating orders with context player=$playerId');
     final results = validatePlayerOrdersWithContext(
       game,
       topology,
@@ -169,7 +169,7 @@ class OrderEngine {
     final r = results.last;
     if (!r.isAccepted)
       _log.w(
-        'logic: $orderLabel order rejected player=$playerId reason=${r.reason}',
+        '$orderLabel order rejected player=$playerId reason=${r.reason}',
       );
     return r;
   }
@@ -570,7 +570,7 @@ class OrderEngine {
     final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
     if (tileMaps.isEmpty) {
       _log.d(
-        'logic: projectedEffects called with no tileMapByRegion; expected extraction will be zero',
+        'projectedEffects called with no tileMapByRegion; expected extraction will be zero',
       );
     }
     return projectOrderEffects(

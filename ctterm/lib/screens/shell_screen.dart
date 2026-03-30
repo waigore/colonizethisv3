@@ -1,6 +1,6 @@
 // Navigation shell: switches on route and shows Main Menu or stub. SPEC/tui/ctterm.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -23,6 +23,7 @@ import 'package:ctterm/screens/diplomacy_screen.dart';
 import 'package:ctterm/screens/technology_screen.dart';
 import 'package:ctterm/screens/pause_options_screen.dart';
 import 'package:ctterm/screens/pending_call_to_arms_screen.dart';
+import 'package:ctterm/screens/pending_intervention_screen.dart';
 import 'package:ctterm/screens/pending_overtures_screen.dart';
 import 'package:ctterm/screens/debug_log_viewer_screen.dart';
 import 'package:ctterm/save_service.dart';
@@ -30,7 +31,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Displays the current route (Main Menu or a stub) and handles back/exit.
 class ShellScreen extends StatefulComponent {
@@ -60,10 +61,13 @@ class ShellScreen extends StatefulComponent {
     this.debugLogViewerReturnRoute,
     this.pendingOvertures,
     this.pendingCallToArms,
+    this.pendingInterventions,
     this.onTurnResolutionPending,
     this.onTurnResolutionPendingCallToArms,
+    this.onTurnResolutionPendingIntervention,
     this.onOvertureDecisions,
     this.onCallToArmsDecisions,
+    this.onInterventionDecisions,
     this.showGameStartIntro = false,
     this.onIntroDismissed,
   });
@@ -136,6 +140,9 @@ class ShellScreen extends StatefulComponent {
   /// When non-null, human ally must respond to call to arms. SPEC/game/diplomacy.md.
   final List<CallToArmsPending>? pendingCallToArms;
 
+  /// When non-null, human must choose intervention per prompt. SPEC/tui/screens/pending-intervention.md.
+  final List<InterventionPrompt>? pendingInterventions;
+
   /// Called when resolve returns pending; app should navigate to pendingOvertures and show prompt.
   final void Function(Game game, List<OvertureOffer> pending)?
       onTurnResolutionPending;
@@ -144,11 +151,18 @@ class ShellScreen extends StatefulComponent {
   final void Function(Game game, List<CallToArmsPending> pending)?
       onTurnResolutionPendingCallToArms;
 
+  /// Called when resolve returns pending intervention.
+  final void Function(Game game, List<InterventionPrompt> pending)?
+      onTurnResolutionPendingIntervention;
+
   /// Called when user submits accept/reject decisions; app resumes resolution and updates game or re-shows pending.
   final void Function(List<OvertureDecision> decisions)? onOvertureDecisions;
 
   /// Called when user submits call to arms decisions.
   final void Function(List<CallToArmsDecision> decisions)? onCallToArmsDecisions;
+
+  /// Called when user submits intervention decisions.
+  final void Function(List<InterventionDecision> decisions)? onInterventionDecisions;
 
   /// When true, in-game shell shows game-start intro overlay until dismissed. SPEC/ai/dialogue-management.md.
   final bool showGameStartIntro;
@@ -166,7 +180,7 @@ class _ShellScreenState extends State<ShellScreen> {
   void _triggerVictory() {
     final game = component.game;
     final turn = game?.victory?.turnNumber ?? 1;
-    _log.d('tui:game: victory triggered, turn $turn');
+    _log.d('victory triggered, turn $turn');
     component.onNavigate(CttermRoute.victory);
   }
 
@@ -176,7 +190,7 @@ class _ShellScreenState extends State<ShellScreen> {
     final game = component.game;
     final turn = game?.victory?.turnNumber ?? 1;
     final winnerId = game?.victory?.winnerPlayerId;
-    _log.d('tui:game: defeat triggered, turn $turn, winner=$winnerId');
+    _log.d('defeat triggered, turn $turn, winner=$winnerId');
     component.onNavigate(CttermRoute.defeat);
   }
 
@@ -191,13 +205,13 @@ class _ShellScreenState extends State<ShellScreen> {
               component.route == CttermRoute.loadGame ||
               component.route == CttermRoute.settings ||
               component.route == CttermRoute.generatingWorld) {
-            _log.d('tui:nav: Esc -> main menu');
+            _log.d('Esc -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
             return true;
           }
           // In-game panels: Esc -> back to in-game shell (so Escape works even if panel does not receive key)
           if (component.route == CttermRoute.debugLogViewer) {
-            _log.d('tui:nav: Esc -> from debug log viewer');
+            _log.d('Esc -> from debug log viewer');
             component.onNavigate(
                 component.debugLogViewerReturnRoute ?? CttermRoute.mainMenu);
             return true;
@@ -212,7 +226,7 @@ class _ShellScreenState extends State<ShellScreen> {
               component.route == CttermRoute.technology ||
               component.route == CttermRoute.victoryProgress ||
               component.route == CttermRoute.pauseOptions) {
-            _log.d('tui:nav: Esc -> in-game shell');
+            _log.d('Esc -> in-game shell');
             component.onNavigate(CttermRoute.inGameShell);
             return true;
           }
@@ -266,7 +280,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return GameSetupScreen(
           onStartGame:
               (orderedGpIdsForSlots, leaderVariantByGpId, enforceFairGp) {
-            _log.d('tui:nav: Game Setup complete -> generating world');
+            _log.d('Game Setup complete -> generating world');
             component.onPrepareNewGame?.call(
               orderedGpIdsForSlots,
               leaderVariantByGpId,
@@ -280,12 +294,12 @@ class _ShellScreenState extends State<ShellScreen> {
         return LoadGameScreen(
           dataDirOverride: component.dataDirOverride,
           onLoad: (gameId) async {
-            _log.d('tui:nav: Load gameId=$gameId');
+            _log.d('Load gameId=$gameId');
             // Use the app's loadGame callback to load and navigate
             await component.onLoadGame?.call(gameId);
           },
           onDelete: (gameId) async {
-            _log.i('tui:save: deleting gameId=$gameId');
+            _log.i('deleting gameId=$gameId');
             // Import is already at top, just use deleteSave
             await deleteSave(gameId, component.dataDirOverride);
           },
@@ -317,11 +331,11 @@ class _ShellScreenState extends State<ShellScreen> {
           onEndTurn: () async {
             final game = component.game;
             if (game == null) {
-              _log.w('tui:game: no game to process turn');
+              _log.w('no game to process turn');
               return;
             }
             _log.d(
-                'tui:game: processing turn ${game.worldState.turnState.turnNumber}');
+                'processing turn ${game.worldState.turnState.turnNumber}');
 
             final currentOrders = component.orders ?? const Orders();
             final topology = component.combinedTopology ?? const MapTopology();
@@ -335,14 +349,23 @@ class _ShellScreenState extends State<ShellScreen> {
             );
             if (result is TurnResolutionPendingOvertures) {
               _log.d(
-                  'tui:game: turn resolution pending ${result.pendingOvertures.length} overture(s)');
+                  'turn resolution pending ${result.pendingOvertures.length} overture(s)');
               component.onTurnResolutionPending
                   ?.call(result.game, result.pendingOvertures);
               return;
             }
+            if (result is TurnResolutionPendingIntervention) {
+              _log.d(
+                  'turn resolution pending ${result.pendingInterventions.length} intervention(s)');
+              component.onTurnResolutionPendingIntervention?.call(
+                result.game,
+                result.pendingInterventions,
+              );
+              return;
+            }
             if (result is TurnResolutionPendingCallToArms) {
               _log.d(
-                  'tui:game: turn resolution pending ${result.pendingCallToArms.length} call(s) to arms');
+                  'turn resolution pending ${result.pendingCallToArms.length} call(s) to arms');
               component.onTurnResolutionPendingCallToArms
                   ?.call(result.game, result.pendingCallToArms);
               return;
@@ -350,12 +373,12 @@ class _ShellScreenState extends State<ShellScreen> {
             final nextGame = requireTurnResolutionComplete(result);
             component.onTurnProcessed?.call(nextGame);
             _log.i(
-                'tui:game: turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
+                'turn processed, now turn ${nextGame.worldState.turnState.turnNumber}');
           },
           onVictory: _triggerVictory,
           onDefeat: _triggerDefeat,
           onExitToMainMenu: () {
-            _log.d('tui:nav: exit to main menu');
+            _log.d('exit to main menu');
             component.onClearGame?.call();
             component.onNavigate(CttermRoute.mainMenu);
           },
@@ -440,7 +463,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return VictoryScreen(
           onNavigate: component.onNavigate,
           onExitToMainMenu: () {
-            _log.d('tui:nav: Victory -> main menu');
+            _log.d('Victory -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
           },
           victoryType: victory?.type.name ?? 'Military',
@@ -457,7 +480,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return DefeatScreen(
           onNavigate: component.onNavigate,
           onExitToMainMenu: () {
-            _log.d('tui:nav: Defeat -> main menu');
+            _log.d('Defeat -> main menu');
             component.onNavigate(CttermRoute.mainMenu);
           },
           winnerName: victory?.winnerPlayerId ?? 'AI Player',
@@ -469,7 +492,7 @@ class _ShellScreenState extends State<ShellScreen> {
         return PauseOptionsScreen(
           onNavigate: component.onNavigate,
           onExitToMainMenu: () {
-            _log.d('tui:nav: exit to main menu from pause');
+            _log.d('exit to main menu from pause');
             component.onClearGame?.call();
             component.onNavigate(CttermRoute.mainMenu);
           },
@@ -488,7 +511,7 @@ class _ShellScreenState extends State<ShellScreen> {
             pending.isEmpty ||
             onDecisions == null) {
           _log.w(
-              'tui:nav: pendingOvertures route with missing game/pending/onDecisions');
+              'pendingOvertures route with missing game/pending/onDecisions');
           return const Padding(
               padding: EdgeInsets.all(1), child: Text('No pending overtures.'));
         }
@@ -506,7 +529,7 @@ class _ShellScreenState extends State<ShellScreen> {
             ctaPending.isEmpty ||
             onCta == null) {
           _log.w(
-              'tui:nav: pendingCallToArms route with missing game/pending/onDecisions');
+              'pendingCallToArms route with missing game/pending/onDecisions');
           return const Padding(
             padding: EdgeInsets.all(1),
             child: Text('No pending call to arms.'),
@@ -516,6 +539,26 @@ class _ShellScreenState extends State<ShellScreen> {
           game: ctaGame,
           pending: ctaPending,
           onDecisions: onCta,
+        );
+      case CttermRoute.pendingIntervention:
+        final ivGame = component.game;
+        final ivPending = component.pendingInterventions;
+        final onIv = component.onInterventionDecisions;
+        if (ivGame == null ||
+            ivPending == null ||
+            ivPending.isEmpty ||
+            onIv == null) {
+          _log.w(
+              'pendingIntervention route with missing game/pending/onDecisions');
+          return const Padding(
+            padding: EdgeInsets.all(1),
+            child: Text('No pending intervention.'),
+          );
+        }
+        return PendingInterventionScreen(
+          game: ivGame,
+          prompts: ivPending,
+          onDecisions: onIv,
         );
     }
   }

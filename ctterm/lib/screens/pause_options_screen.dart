@@ -1,11 +1,11 @@
 // Pause/Options screen. SPEC/tui/screens/pause-options.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Pause menu with exit to main menu and settings options.
 class PauseOptionsScreen extends StatefulComponent {
@@ -95,7 +95,7 @@ class _PauseOptionsScreenState extends State<PauseOptionsScreen> {
     // Handle exit confirmation
     if (_showExitConfirm) {
       if (c == 'y' || key == LogicalKey.enter) {
-        _log.d('tui:nav: exiting to main menu from pause');
+        _log.d('exiting to main menu from pause');
         component.onExitToMainMenu();
         return true;
       } else if (c == 'n' || key == LogicalKey.escape) {

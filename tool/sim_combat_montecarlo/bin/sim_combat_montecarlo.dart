@@ -7,10 +7,10 @@ import 'dart:io';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = logicLogger('sim_combat_montecarlo');
 
 /// Fixed defender effective military level for sim (SPEC: same for all script types).
 const int _simDefenderEffectiveLevel = 4;
@@ -40,25 +40,25 @@ void main(List<String> arguments) {
     } else if (arg == '--trials' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null || v < 1) {
-        _errExit('logic: sim_combat_montecarlo: --trials must be a positive integer');
+        _errExit('--trials must be a positive integer');
       }
       trials = v!;
     } else if (arg.startsWith('--trials=')) {
       final v = int.tryParse(arg.substring('--trials='.length).trim());
       if (v == null || v < 1) {
-        _errExit('logic: sim_combat_montecarlo: --trials must be a positive integer');
+        _errExit('--trials must be a positive integer');
       }
       trials = v!;
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null) {
-        _errExit('logic: sim_combat_montecarlo: --seed requires an integer');
+        _errExit('--seed requires an integer');
       }
       seed = v;
     } else if (arg.startsWith('--seed=')) {
       final v = int.tryParse(arg.substring('--seed='.length).trim());
       if (v == null) {
-        _errExit('logic: sim_combat_montecarlo: --seed requires an integer');
+        _errExit('--seed requires an integer');
       }
       seed = v;
     } else if (arg == '--output' && i + 1 < arguments.length) {
@@ -73,30 +73,30 @@ void main(List<String> arguments) {
   }
 
   if (scriptPath == null || scriptPath.isEmpty) {
-    _log.e('logic: sim_combat_montecarlo: --script <path> is required');
+    _log.e('--script <path> is required');
     _log.i(_usage);
-    stderr.writeln('logic: sim_combat_montecarlo: --script <path> is required');
+    stderr.writeln('--script <path> is required');
     stderr.writeln(_usage);
     exit(1);
   }
 
   final file = File(scriptPath);
   if (!file.existsSync()) {
-    _errExit('logic: sim_combat_montecarlo: script file not found: $scriptPath');
+    _errExit('script file not found: $scriptPath');
   }
 
   Map<String, dynamic> decoded;
   try {
     decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
   } catch (e, st) {
-    _log.e('logic: sim_combat_montecarlo: malformed script JSON', error: e, stackTrace: st);
-    stderr.writeln('logic: sim_combat_montecarlo: malformed script JSON: $e');
+    _log.e('malformed script JSON', error: e, stackTrace: st);
+    stderr.writeln('malformed script JSON: $e');
     exit(1);
   }
   final metadata = decoded['metadata'] as String? ?? 'sim_combat_montecarlo';
   final battlesRaw = decoded['battles'];
   if (battlesRaw is! List<dynamic>) {
-    _errExit('logic: sim_combat_montecarlo: script must have "battles" array');
+    _errExit('script must have "battles" array');
   }
   final baseSeed = seed ?? DateTime.now().millisecondsSinceEpoch;
 
@@ -105,7 +105,7 @@ void main(List<String> arguments) {
   for (var idx = 0; idx < battlesRaw.length; idx++) {
     final entry = battlesRaw[idx];
     if (entry is! Map) {
-      _errExit('logic: sim_combat_montecarlo: battle $idx must be an object');
+      _errExit('battle $idx must be an object');
     }
     final b = Map<String, dynamic>.from(entry as Map);
     _validateBattleKeys(b, idx);
@@ -122,7 +122,7 @@ void main(List<String> arguments) {
     final terrain = provinceRaw['terrain'] as String? ?? 'plains';
 
     if (fortLevel < 0 || fortLevel > 3) {
-      _errExit('logic: sim_combat_montecarlo: battle $id: fortLevel must be 0-3, got $fortLevel');
+      _errExit('battle $id: fortLevel must be 0-3, got $fortLevel');
     }
 
     var attWins = 0;
@@ -195,11 +195,11 @@ void main(List<String> arguments) {
 
   final outPath = outputPath ?? 'sim_combat_montecarlo.md';
   File(outPath).writeAsStringSync(markdown);
-  _log.i('logic: sim_combat_montecarlo: wrote Markdown report to ${File(outPath).absolute.path}');
+  _log.i('wrote Markdown report to ${File(outPath).absolute.path}');
 
   if (jsonOutputPath != null && jsonOutputPath.isNotEmpty) {
     File(jsonOutputPath).writeAsStringSync(jsonEncode(aggregatedResults));
-    _log.i('logic: sim_combat_montecarlo: wrote JSON log to ${File(jsonOutputPath).absolute.path}');
+    _log.i('wrote JSON log to ${File(jsonOutputPath).absolute.path}');
   }
 }
 
@@ -208,25 +208,25 @@ void _validateBattleKeys(Map<String, dynamic> b, int idx) {
   final idVal = b['id'];
   if (idVal == null || idVal is! String) {
     _errExit(
-      'logic: sim_combat_montecarlo: battle $idx: required key "id" missing or not a string',
+      'battle $idx: required key "id" missing or not a string',
     );
   }
   final att = b['attacker'];
   if (att == null || att is! Map) {
     _errExit(
-      'logic: sim_combat_montecarlo: battle $idx: required key "attacker" missing or not an object',
+      'battle $idx: required key "attacker" missing or not an object',
     );
   }
   final def = b['defender'];
   if (def == null || def is! Map) {
     _errExit(
-      'logic: sim_combat_montecarlo: battle $idx: required key "defender" missing or not an object',
+      'battle $idx: required key "defender" missing or not an object',
     );
   }
   final prov = b['province'];
   if (prov == null || prov is! Map) {
     _errExit(
-      'logic: sim_combat_montecarlo: battle $idx: required key "province" missing or not an object',
+      'battle $idx: required key "province" missing or not an object',
     );
   }
 }
@@ -242,7 +242,7 @@ List<Unit> _parseUnits(
     final u = Map<String, dynamic>.from(unitsRaw[i] as Map);
     final type = u['type'] as String? ?? 'peasant_levies';
     if (regimentStatsById(type) == null) {
-      _errExit('logic: sim_combat_montecarlo: battle $battleId: unknown unit type "$type"');
+      _errExit('battle $battleId: unknown unit type "$type"');
     }
     final medals = (u['medals'] as int?) ?? 0;
     units.add(Unit(

@@ -28,8 +28,12 @@ Map<String, ExtractionTotals> computeExtraction({
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, ConnectivityResult> connectivityResult,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
+
+  /// When set, only these tile keys contribute (must still be in [ConnectivityResult.connected]).
+  /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
+  Set<String>? restrictToTileKeys,
 }) {
-  _log.d('logic: extraction compute start players=${game.players.length}');
+  _log.d('extraction compute start players=${game.players.length}');
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
@@ -39,6 +43,8 @@ Map<String, ExtractionTotals> computeExtraction({
       continue;
     }
     final pathTransportCap = cr!.pathTransportCap;
+    final roadRuleTiles = cr.connectedByRoadRule;
+    final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
     final techCap = techCapForPlayer(player.id);
@@ -50,6 +56,9 @@ Map<String, ExtractionTotals> computeExtraction({
         game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
 
     for (final tileKey in connected) {
+      if (restrictToTileKeys != null && !restrictToTileKeys.contains(tileKey)) {
+        continue;
+      }
       final parts = tileKey.split('|');
       if (parts.length != 4) continue;
       final regionId = parts[0];
@@ -76,27 +85,40 @@ Map<String, ExtractionTotals> computeExtraction({
       final province = regionData?.provinces
           .where((p) => p.id == provinceId)
           .firstOrNull;
-      final townDevelopmentCap = province?.townDevelopmentLevel ?? 4;
+      final townDevelopmentCap = province?.townDevelopmentLevel ?? 0;
+      final townTileKey = province?.townTileKey;
+      final townTileIsPort =
+          townTileKey != null && portTileKeys.contains(townTileKey);
 
       final improvementLevel = game.worldState.tileState
           .improvementLevel(tileKey)
           .clamp(0, 4);
       final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-      final isPort = game.worldState.portsByProvinceSeaboard.values.contains(
-        tileKey,
-      );
+      final isPort = portTileKeys.contains(tileKey);
       final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
       final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
 
       final production =
           (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
-      final effective = (production < pathCap ? production : pathCap).clamp(
-        0,
-        4,
-      );
-      final effectiveCapped =
-          (effective < townDevelopmentCap ? effective : townDevelopmentCap)
-              .clamp(0, 4);
+      var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
+
+      final isCapitalProvince = provinceId == player.capitalProvinceId;
+      final usesRoadRule = roadRuleTiles.contains(tileKey);
+      if (isCapitalProvince) {
+        effective =
+            (effective < townDevelopmentCap ? effective : townDevelopmentCap)
+                .clamp(0, 4);
+      } else if (usesRoadRule) {
+        // Non-capital + Road rule: town development does not cap yield.
+      } else {
+        // Town rule only (non-capital).
+        if (townTileIsPort) {
+          effective =
+              (effective < townDevelopmentCap ? effective : townDevelopmentCap)
+                  .clamp(0, 4);
+        }
+      }
+      final effectiveCapped = effective;
       if (effectiveCapped <= 0) continue;
 
       if (regionId == capitalRegionId) {
@@ -122,7 +144,7 @@ Map<String, ExtractionTotals> computeExtraction({
     (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
   );
   _log.d(
-    'logic: extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
+    'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );
   return out;
 }

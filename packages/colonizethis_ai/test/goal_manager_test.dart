@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   group('selectPrimaryGoal', () {
@@ -16,7 +17,13 @@ void main() {
         personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
-      final goal = selectPrimaryGoal(snapshot, config, 42);
+      final goal = selectPrimaryGoal(
+        snapshot,
+        config,
+        42,
+        nationId: 'gp1',
+        turn: 0,
+      );
       expect(goal, isNotNull);
       expect(StrategicGoal.values.contains(goal), isTrue);
     });
@@ -34,7 +41,13 @@ void main() {
         personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
-      final goal = selectPrimaryGoal(snapshot, config, 1);
+      final goal = selectPrimaryGoal(
+        snapshot,
+        config,
+        1,
+        nationId: 'gp1',
+        turn: 1,
+      );
       expect(StrategicGoal.values.contains(goal), isTrue);
     });
 
@@ -51,7 +64,13 @@ void main() {
         personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
-      final goal = selectPrimaryGoal(snapshot, config, 2);
+      final goal = selectPrimaryGoal(
+        snapshot,
+        config,
+        2,
+        nationId: 'gp1',
+        turn: 2,
+      );
       expect(StrategicGoal.values.contains(goal), isTrue);
     });
 
@@ -68,7 +87,13 @@ void main() {
         personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
-      final goal = selectPrimaryGoal(snapshot, config, 3);
+      final goal = selectPrimaryGoal(
+        snapshot,
+        config,
+        3,
+        nationId: 'gp1',
+        turn: 3,
+      );
       expect(StrategicGoal.values.contains(goal), isTrue);
     });
 
@@ -85,8 +110,68 @@ void main() {
         personalityId: 'victoria',
         hiddenAgendaId: 'peacemaker',
       );
-      final goal = selectPrimaryGoal(snapshot, config, 4);
+      final goal = selectPrimaryGoal(
+        snapshot,
+        config,
+        4,
+        nationId: 'gp1',
+        turn: 4,
+      );
       expect(StrategicGoal.values.contains(goal), isTrue);
+    });
+
+    test(
+        'logs selected primaryGoal with nationId, turn, and majorConstraint at info',
+        () {
+      final capturedEvents = <LogEvent>[];
+      void listener(LogEvent e) => capturedEvents.add(e);
+
+      Logger.addLogListener(listener);
+      Logger.level = Level.info;
+
+      try {
+        const nationId = 'gp1';
+        const turn = 7;
+
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(
+            atWarWith: ['gp2'],
+            capitalThreatened: true,
+          ),
+          opportunities: OpportunitySummary(unclaimedProvinces: 0),
+          economy: EconomySummary(workerCount: 10),
+          relations: {},
+        );
+        const config = AIConfig(
+          leaderId: 'frederick',
+          personalityId: 'frederick',
+          hiddenAgendaId: 'peacemaker',
+        );
+
+        final goal = selectPrimaryGoal(
+          snapshot,
+          config,
+          0,
+          nationId: nationId,
+          turn: turn,
+        );
+
+        final infoLines = capturedEvents
+            .where((e) => e.message.contains('selected primaryGoal='))
+            .map((e) => e.message)
+            .toList();
+        expect(infoLines, hasLength(1));
+
+        final line = infoLines.single;
+        expect(line, contains('nationId=$nationId'));
+        expect(line, contains('turn=$turn'));
+        expect(line, contains('majorConstraint=capitalThreatened'));
+        expect(line, contains('selected primaryGoal=$goal'));
+      } finally {
+        Logger.removeLogListener(listener);
+        Logger.level = Level.info;
+      }
     });
   });
 }

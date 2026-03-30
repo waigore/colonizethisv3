@@ -10,14 +10,22 @@ void main() {
 
   late ct_models.Game game;
   late String winnerPlayerId;
+  late ct_models.AppEventBus victoryTestBus;
 
   setUp(() {
+    ct_models.AppEventBus.reset();
+    victoryTestBus = ct_models.AppEventBus.create();
     game = getDebugInitGameResult().game;
     winnerPlayerId = game.players.first.id;
   });
 
+  tearDown(() {
+    ct_models.AppEventBus.reset();
+  });
+
   Widget buildVictoryRoute({
     required ct_models.VictoryState victory,
+    ct_models.AppEventBus? bus,
   }) {
     return Scaffold(
       body: Stack(
@@ -25,6 +33,7 @@ void main() {
           VictoryOverlay(
             game: game,
             victory: victory,
+            bus: bus ?? victoryTestBus,
           ),
         ],
       ),
@@ -71,7 +80,8 @@ void main() {
     expect(find.text('Military victory'), findsNothing);
   });
 
-  testWidgets('VictoryOverlay "Return to main menu" pops to first route',
+  testWidgets(
+      'VictoryOverlay "Return to main menu" emits NavigateToShellEvent',
       (WidgetTester tester) async {
     final victory = ct_models.VictoryState(
       winnerPlayerId: winnerPlayerId,
@@ -79,29 +89,23 @@ void main() {
       turnNumber: 3,
     );
 
-    final navigatorKey = GlobalKey<NavigatorState>();
+    ct_models.NavigateToShellEvent? emitted;
+    final sub = victoryTestBus.on<ct_models.NavigateToShellEvent>().listen(
+      (e) => emitted = e,
+    );
+    addTearDown(sub.cancel);
+
     await tester.pumpWidget(
       MaterialApp(
-        navigatorKey: navigatorKey,
-        initialRoute: '/',
-        routes: {
-          '/': (_) => const Scaffold(body: Text('Home')),
-          '/victory': (_) => buildVictoryRoute(victory: victory),
-        },
+        home: buildVictoryRoute(victory: victory, bus: victoryTestBus),
       ),
     );
     await tester.pumpAndSettle();
 
-    navigatorKey.currentState!.pushNamed('/victory');
-    await tester.pumpAndSettle();
-    expect(find.text('Home'), findsNothing);
-    expect(find.text('Military victory'), findsOneWidget);
-
     await tester.tap(find.text('Return to main menu'));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Military victory'), findsNothing);
+    expect(emitted, isA<ct_models.NavigateToShellEvent>());
   });
 }
 

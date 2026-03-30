@@ -309,6 +309,60 @@
   "game_callToArms_submit": "Submit",
   "@game_callToArms_submit": {
     "description": "Submit all call-to-arms choices."
+  },
+
+  "game_intervention_loadError": "Could not load intervention dialogue: {error}",
+  "@game_intervention_loadError": {
+    "description": "Error banner when intervention Yarn fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Exception or error object string."
+      }
+    }
+  },
+  "game_intervention_degradedHint": "Submit all responses as \"Do naught\" to continue.",
+  "@game_intervention_degradedHint": {
+    "description": "Explains degraded intervention flow when dialogue asset is missing."
+  },
+  "game_intervention_continue": "Continue",
+  "@game_intervention_continue": {
+    "description": "Advance intervention Yarn line or exit degraded error dialog."
+  },
+  "game_intervention_resolutionProgress": "Thy resolution ({current} of {total})",
+  "@game_intervention_resolutionProgress": {
+    "description": "Header showing which intervention prompt is active.",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "1-based index of the current prompt."
+      },
+      "total": {
+        "type": "int",
+        "description": "Total number of intervention prompts."
+      }
+    }
+  },
+  "game_intervention_situation": "{aggressor} against {defender}. Thou speakest for {intervening}.",
+  "@game_intervention_situation": {
+    "description": "One-line summary of the war and which GP the player decides for.",
+    "placeholders": {
+      "aggressor": {"type": "String"},
+      "defender": {"type": "String"},
+      "intervening": {"type": "String"}
+    }
+  },
+  "game_intervention_intervene": "Intervene with force",
+  "@game_intervention_intervene": {
+    "description": "Button: military intervention on behalf of the defender."
+  },
+  "game_intervention_doNothing": "Do naught",
+  "@game_intervention_doNothing": {
+    "description": "Button: decline to intervene."
+  },
+  "game_intervention_protest": "Diplomatic protest",
+  "@game_intervention_protest": {
+    "description": "Button: formal protest without military action."
   }
 }
 

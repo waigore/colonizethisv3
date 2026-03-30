@@ -1,6 +1,6 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flame/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 /// Pixel-art dialog shell using a nine-patch frame. SPEC/ui/buttons-nine-patch.md (reuse canon).
 ///
@@ -74,8 +74,8 @@ class CtDialogShell extends StatelessWidget {
                   child: child,
                 ),
                 errorBuilder: (_) {
-                  Logger().w(
-                    'ui: dialog nine-patch asset not found, using fallback frame',
+                  appLogger('ui').w(
+                    'dialog nine-patch asset not found, using fallback frame',
                   );
                   return _FallbackDialogFrame(
                     color: fallbackColor,

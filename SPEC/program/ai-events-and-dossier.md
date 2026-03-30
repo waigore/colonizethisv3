@@ -21,7 +21,7 @@ Internal record appended when an action matches an evidence rule. Fields: observ
 ### Dialogue and Mood
 1. AI calls `onDialogue(DialogueEvent)` and `onMood(PortraitMoodEvent)` callbacks during order generation.
 2. Caller guarantees deterministic invocation order.
-3. **Negotiation mood:** App updates offer state and stall count; mood state machine computes next mood and emits event on transition. Inputs deterministic for replay.
+3. **Negotiation mood:** App updates offer state and stall count; mood state machine computes next mood and emits event on transition. Inputs deterministic for replay. Canonical integration helper computes `toMood` with `computeNextNegotiationMood` and emits `PortraitMoodEvent` when `toMood != currentMood`.
 4. UI subscribes and resolves to text/portrait assets. No asset paths in events.
 
 ### Evidence and Dossier

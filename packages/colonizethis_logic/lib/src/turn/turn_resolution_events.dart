@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 
@@ -14,8 +15,19 @@ void emitResearchCompleteEvents(
   int turn,
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
+  void Function(DialogueEvent)? onDialogue,
 ) {
-  for (final player in stateAfter.players) {
+  final hadTechBefore = <String>{};
+  for (final p in stateBefore.players) {
+    final unlocked = p.techUnlocked ?? const <String, bool>{};
+    for (final e in unlocked.entries) {
+      if (e.value) hadTechBefore.add(e.key);
+    }
+  }
+  final firstDiscoveriesThisTurn = <String>{};
+  final sortedPlayers = List<Player>.from(stateAfter.players)
+    ..sort((a, b) => a.id.compareTo(b.id));
+  for (final player in sortedPlayers) {
     final unlocked = player.techUnlocked ?? {};
     final current = unlocked.entries
         .where((e) => e.value)
@@ -33,8 +45,30 @@ void emitResearchCompleteEvents(
           techId: tech,
           turnNumber: turn,
         );
-        eventBus?.publish(event);
-        onGameEvent?.call(event);
+        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+        if (onDialogue != null) {
+          final eventDialogue = dialogueEventsForTechDiscovered(
+            stateAfter,
+            discovererId: player.id,
+            techId: tech,
+            turnNumber: turn,
+            seed: turn,
+          );
+          for (final e in eventDialogue) onDialogue(e);
+          final isFirst =
+              !hadTechBefore.contains(tech) &&
+              firstDiscoveriesThisTurn.add(tech);
+          if (isFirst) {
+            final reactive = dialogueEventsForReactiveTechFirst(
+              stateAfter,
+              discovererId: player.id,
+              techId: tech,
+              turnNumber: turn,
+              seed: turn,
+            );
+            for (final e in reactive) onDialogue(e);
+          }
+        }
       }
     }
   }
@@ -57,8 +91,7 @@ void emitDiplomacyChangeEvents(
         changeType: rel.state.name,
         turnNumber: turn,
       );
-      eventBus?.publish(event);
-      onGameEvent?.call(event);
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
     }
   }
 }
@@ -70,6 +103,7 @@ void emitProvinceCapturedEvents(
   int turn,
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
+  void Function(DialogueEvent)? onDialogue,
 ) {
   for (final region in [
     stateAfter.worldState.oldWorld,
@@ -84,8 +118,20 @@ void emitProvinceCapturedEvents(
           newOwnerId: prov.ownerId ?? '',
           turnNumber: turn,
         );
-        eventBus?.publish(event);
-        onGameEvent?.call(event);
+        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      }
+      if (onDialogue != null &&
+          prov.ownerId != null &&
+          prov.ownerId!.isNotEmpty) {
+        final colonyDialogue = dialogueEventsForColonyFounded(
+          stateAfter,
+          provinceId: prov.id,
+          previousOwnerId: previousOwner,
+          newOwnerId: prov.ownerId!,
+          turnNumber: turn,
+          seed: turn,
+        );
+        for (final e in colonyDialogue) onDialogue(e);
       }
     }
   }
@@ -104,7 +150,6 @@ void emitVictorySetEvent(
       victoryType: state.victory!.type.name,
       turnNumber: turn,
     );
-    eventBus?.publish(event);
-    onGameEvent?.call(event);
+    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
   }
 }

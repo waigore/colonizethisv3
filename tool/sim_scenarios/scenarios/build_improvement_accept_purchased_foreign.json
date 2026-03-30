@@ -1,6 +1,6 @@
 {
   "name": "build_improvement_accept_purchased_foreign",
-  "description": "SPEC/game/extraction-and-improvements.md, SPEC/program/development-resolution.md, SPEC/program/orders.md: build_improvement work order accepted when target tile is in a foreign province that has been purchased by the player (under player control via purchasedTilesByTileKey). Order engine must accept; after resolution the tile shows an improvement.",
+  "description": "SPEC/game/extraction-and-improvements.md, SPEC/program/development-resolution.md, SPEC/program/orders.md: build_improvement work order accepted when target tile is in a foreign province that has been purchased by the player (under player control via purchasedTilesByTileKey). Order engine must accept; after resolution the tile shows an improvement. Two land tiles per province so gp2 capital/town is not the build target (town/capital occupancy strips extraction on those tiles).",
   "init": {
     "type": "fromTopology",
     "config": {
@@ -12,7 +12,10 @@
       "tribeCount": 0
     },
     "oldWorld": {
-      "grid": [["p1", "sea1"], ["p2", "sea1"]],
+      "grid": [
+        ["p1", "sea1", "p2"],
+        ["p1", "sea1", "p2"]
+      ],
       "nodes": [
         {"id": "p1", "regionId": "oldWorld", "type": "province"},
         {"id": "p2", "regionId": "oldWorld", "type": "province"},
@@ -22,7 +25,10 @@
         {"id1": "p1", "id2": "sea1"},
         {"id1": "p2", "id2": "sea1"}
       ],
-      "resourceGrid": [["grain", null], ["grain", null]]
+      "resourceGrid": [
+        ["grain", null, "grain"],
+        ["grain", null, "grain"]
+      ]
     }
   },
   "setup": {
@@ -30,10 +36,10 @@
     "initialStockpile": {"gp1": {"lumber": 2, "castIron": 2}},
     "initialTileState": {
       "oldWorld|p1|0|0": {"improvementLevel": 0, "roadLevel": 1},
-      "oldWorld|p2|0|1": {"improvementLevel": 0, "roadLevel": 1}
+      "oldWorld|p2|2|1": {"improvementLevel": 0, "roadLevel": 1}
     },
     "purchasedTilesByTileKey": {
-      "oldWorld|p2|0|1": "gp1"
+      "oldWorld|p2|2|1": "gp1"
     }
   },
   "turns": [
@@ -45,7 +51,7 @@
           "type": "work",
           "unit": "gp1_builder_1",
           "workType": "build_improvement",
-          "targetTileKey": "oldWorld|p2|0|1"
+          "targetTileKey": "oldWorld|p2|2|1"
         }
       ]
     },
@@ -54,7 +60,7 @@
   "assertions": [
     {
       "turn": 2,
-      "tileKey": "oldWorld|p2|0|1",
+      "tileKey": "oldWorld|p2|2|1",
       "tileImprovementLevel": 1
     }
   ]

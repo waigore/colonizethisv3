@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 /// Default maximum number of log entries to retain (oldest dropped when exceeded).
 const int defaultMaxEntries = 5000;
 
-/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game).
+/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game, app).
 /// Used for filter options in the viewer.
 const List<String> knownPrefixes = [
   'ctdev',
@@ -16,6 +16,7 @@ const List<String> knownPrefixes = [
   'save',
   'game',
   'tui',
+  'app',
 ];
 
 /// Standard log levels for filter options.
@@ -42,12 +43,24 @@ class SessionLogEntry {
   final Object? error;
   final StackTrace? stackTrace;
 
-  /// Prefix derived from message (e.g. "logic: foo" -> "logic"). Empty if no colon prefix.
+  /// Filter bucket for [getFiltered] and viewer presets ([knownPrefixes]).
+  ///
+  /// Plain tags: `"logic: foo"` → `logic`. Dotted factory tags such as
+  /// `"ctdev.running_game: foo"` map to the first segment when it is listed in
+  /// [knownPrefixes] (here `ctdev`); otherwise the full tag before `:` is used.
   String get prefix {
     final msg = message;
     final colon = msg.indexOf(':');
     if (colon <= 0) return '';
-    return msg.substring(0, colon).trim().toLowerCase();
+    final full = msg.substring(0, colon).trim().toLowerCase();
+    final dot = full.indexOf('.');
+    if (dot > 0) {
+      final head = full.substring(0, dot);
+      if (knownPrefixes.contains(head)) {
+        return head;
+      }
+    }
+    return full;
   }
 
   /// Formatted main line: timestamp level message.
