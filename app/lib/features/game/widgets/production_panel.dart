@@ -128,14 +128,16 @@ class _AvailableSubpanel extends StatelessWidget {
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     return Row(
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         ResourceIcon(commodityId: c.id, size: 16),
         const SizedBox(width: 4),
-        Text(
-          '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
-          style: theme.textTheme.bodySmall,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: Text(
+            '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -163,10 +165,12 @@ class _AvailableSubpanel extends StatelessWidget {
       children: [
         WorkerIcon(workerType: workerType, size: 16),
         const SizedBox(width: 4),
-        Text(
-          '${_workerDisplayName(workerType)}: $count',
-          style: theme.textTheme.bodySmall,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: Text(
+            '${_workerDisplayName(workerType)}: $count',
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

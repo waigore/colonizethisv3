@@ -48,6 +48,8 @@ Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects
 
 - `extractionByCommodity` — projected extraction per commodity
 
+**Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which run Extraction → Riches-to-treasury → Consumption → Production on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
+
 ---
 
 ## Per-player projection

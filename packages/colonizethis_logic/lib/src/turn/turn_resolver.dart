@@ -840,6 +840,51 @@ Game _runRichesToTreasuryPhase(Game game) {
   return game.copyWith(players: updatedPlayers);
 }
 
+/// Runs Extraction → Riches-to-treasury → Consumption → Production only, in
+/// SPEC/program/turn-resolution-phases.md order.
+///
+/// Does not mutate [game]. Does not advance the turn or run other phases.
+/// Used for UI stockpile previews (e.g. production panel). Player order and
+/// extraction seeding match [_runExtractionPhase] so overseas interception
+/// matches a full turn for the same starting state.
+///
+/// When [extractedByPlayerId] is non-empty, extraction uses
+/// [applyExtractionForPlayers] only (same override path as full resolution).
+Game applyEconomyPhasesForPreview({
+  required Game game,
+  required MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  var state = game;
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
+  state = _runExtractionPhase(
+    state,
+    topology,
+    tileMapByRegion,
+    extractedByPlayerId,
+  );
+  state = _runRichesToTreasuryPhase(state);
+  state = _runConsumptionPhase(
+    state,
+    landFeedingCoverageByPlayerId,
+    navalFeedingCoverageByPlayerId,
+    idleLabourByPlayerId,
+  );
+  state = _runProductionPhase(
+    state,
+    defaultAssignments,
+    defaultAssignmentsByPlayerId,
+    idleLabourByPlayerId,
+    null,
+  );
+  return state;
+}
+
 Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
   var state = game;
 

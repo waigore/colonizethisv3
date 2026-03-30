@@ -18,8 +18,6 @@ final productionDesiredOutputProvider =
     );
 
 /// Builds [AssignedRecipe] list from desired output map for the turn resolver.
-List<AssignedRecipe> desiredOutputToAssignments(
-  Map<String, int> desiredByRecipe,
-) {
+List<AssignedRecipe> desiredOutputToAssignments(Map<String, int> desiredByRecipe) {
   return assignedRecipesFromDesiredOutput(desiredByRecipe);
 }

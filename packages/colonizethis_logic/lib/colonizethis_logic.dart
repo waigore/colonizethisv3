@@ -41,6 +41,7 @@ export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
+export 'src/economy/economy_stockpile_preview.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_economy.dart';
@@ -50,7 +51,6 @@ export 'src/orders/order_engine.dart';
 export 'src/orders/order_merge.dart';
 export 'src/orders/projected_effects.dart';
 export 'src/orders/order_projections.dart';
-export 'src/orders/economy_stockpile_preview.dart';
 export 'src/orders/order_suggestion.dart';
 export 'src/orders/order_suggestion.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;

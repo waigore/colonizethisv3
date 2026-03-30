@@ -28,11 +28,13 @@ void main() {
 
   Widget buildPanel({
     required Player player,
+    Game? gameOverride,
     Map<String, int> desiredOutputByRecipe = const {},
     ValueChanged<Map<String, int>>? onDesiredOutputChanged,
     double width = 800,
     double height = 500,
   }) {
+    final displayGame = gameOverride ?? game;
     final netDeltasByCommodity = <String, int>{};
     for (final entry in desiredOutputByRecipe.entries) {
       final recipe = ProductionRecipesCatalog.byId[entry.key];
@@ -52,7 +54,7 @@ void main() {
           width: width,
           height: height,
           child: ProductionPanel(
-            game: game,
+            game: displayGame,
             player: player,
             desiredOutputByRecipe: desiredOutputByRecipe,
             netDeltasByCommodity: netDeltasByCommodity,
@@ -209,9 +211,19 @@ void main() {
     testWidgets('Net changes shown when allocations exist', (
       WidgetTester tester,
     ) async {
+      final isolatedGame = Game(
+        id: 'production-panel-net',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [fullPlayer],
+      );
       await tester.pumpWidget(
         buildPanel(
           player: fullPlayer,
+          gameOverride: isolatedGame,
           desiredOutputByRecipe: {'lumber_from_timber': 5},
         ),
       );
@@ -220,7 +232,7 @@ void main() {
       expect(find.textContaining('Timber:'), findsOneWidget);
       expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
       expect(find.textContaining('Lumber:'), findsOneWidget);
-      expect(find.textContaining(r'(+5)'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
     });
 
     testWidgets('Partial availability: sliders capped by achievable runs', (
