@@ -14,7 +14,7 @@ Extraction and connectivity use **tile keys** (format `regionId|localId|x|y`) an
 
 ### Extraction Formula
 
-Each land tile in an owned province may have one extraction improvement (mine, farm, ranch, plantation, fur post, town, etc.) with an improvement level (0–4) and at most one resource (terrain-constrained per [resource-terrain-region-rules.md](resource-terrain-region-rules.md)).
+Each land tile in an owned province may have one extraction improvement (mine, farm, ranch, plantation, fur post, etc.) with an improvement level (0–4) and at most one resource (terrain-constrained per [resource-terrain-region-rules.md](resource-terrain-region-rules.md)), **except** tiles that are a **capital** or a province **town** (`townTileKey`): those tiles **never** hold a terrain resource or extraction improvement; only **roads / rail / ports** apply ([tile-map-and-generation.md](tile-map-and-generation.md) § Town and capital tile occupancy).
 
 **Production** = min(improvement level, owner's tech-allowed max level).
 

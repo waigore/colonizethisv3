@@ -1,6 +1,6 @@
 {
   "name": "build_improvement_accept",
-  "description": "SPEC/game/extraction-and-improvements.md: build_improvement accepted when tile has resource, level < 4, and player has tech for next level. Asserts order accepted (turn 1 improvement 0) and tile shows Farm at turn 2; completion to level 1 covered by unit tests.",
+  "description": "SPEC/game/extraction-and-improvements.md: build_improvement accepted when tile has resource, level < 4, and player has tech for next level. Asserts order accepted (turn 1 improvement 0) and tile shows Farm at turn 2; completion to level 1 covered by unit tests. Two land tiles in p1 so the target is not capital/town (town/capital occupancy strips resources on those tiles).",
   "init": {
     "type": "fromTopology",
     "config": {
@@ -12,20 +12,20 @@
       "tribeCount": 0
     },
     "oldWorld": {
-      "grid": [["p1", "sea1"]],
+      "grid": [["p1", "sea1"], ["p1", "sea1"]],
       "nodes": [
         {"id": "p1", "regionId": "oldWorld", "type": "province"},
         {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
       ],
       "edges": [{"id1": "p1", "id2": "sea1"}],
-      "resourceGrid": [["grain", null]]
+      "resourceGrid": [["grain", null], ["grain", null]]
     }
   },
   "setup": {
     "initialTech": {"gp1": ["gathering_3"]},
     "initialStockpile": {"gp1": {"lumber": 2, "castIron": 2}},
     "initialTileState": {
-      "oldWorld|p1|0|0": {"improvementLevel": 0, "roadLevel": 1}
+      "oldWorld|p1|0|1": {"improvementLevel": 0, "roadLevel": 1}
     }
   },
   "turns": [
@@ -37,14 +37,14 @@
           "type": "work",
           "unit": "gp1_builder_0",
           "workType": "build_improvement",
-          "targetTileKey": "oldWorld|p1|0|0"
+          "targetTileKey": "oldWorld|p1|0|1"
         }
       ]
     },
     { "turn": 2, "orders": [] }
   ],
   "assertions": [
-    {"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileImprovementLevel": 0},
-    {"turn": 2, "tileKey": "oldWorld|p1|0|0", "tileImprovementName": "Farm"}
+    {"turn": 1, "tileKey": "oldWorld|p1|0|1", "tileImprovementLevel": 0},
+    {"turn": 2, "tileKey": "oldWorld|p1|0|1", "tileImprovementName": "Farm"}
   ]
 }

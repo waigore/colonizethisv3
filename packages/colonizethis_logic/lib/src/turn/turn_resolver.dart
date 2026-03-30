@@ -185,7 +185,7 @@ TurnResolutionResult resolveTurnForGame({
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. Reassignment does not use [tileMapByRegion].
+  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. When [tileMapByRegion] is non-null, combat capital reassignment also clears terrain resources and extraction improvements on the new capital tile per SPEC/game/tile-map-and-generation.md § Town and capital tile occupancy.
   Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -1088,6 +1088,7 @@ Game _runCombatPhase(
     state,
     topology,
     topologyByRegion: topologyByRegion,
+    tileMapByRegion: tileMapByRegion,
   );
   // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
   state = applyGreatPowerFall(state, previousCapitalByPlayer);

@@ -11,6 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'capital_choice.dart';
 import 'gp_land_connectivity_repair.dart';
 import 'gp_starting_grain.dart';
+import 'town_capital_occupancy.dart';
 import 'init_town_roads.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
@@ -376,6 +377,21 @@ GameSetupResult createGameFromGeneratedMaps({
     topologyByRegion: topologyByRegion,
     tileMapByRegion: tileMapByRegion,
   );
+
+  // Strip RNG/resources and extraction improvements from town and capital tiles only.
+  // SPEC/game/tile-map-and-generation.md § Town/capital occupancy.
+  final strip = stripResourcesAndExtractionImprovementsOnTileKeys(
+    game,
+    tileMapByRegion,
+    collectTownAndCapitalTileKeys(game),
+  );
+  game = strip.$1;
+  final strippedMaps = strip.$2;
+  if (strippedMaps != null) {
+    for (final e in strippedMaps.entries) {
+      tileMapByRegion[e.key] = e.value;
+    }
+  }
 
   // Great Power starting grain (bootstrap). SPEC/game/tile-map-and-generation.md.
   final gpGrain = applyGreatPowerStartingGrainBootstrap(
