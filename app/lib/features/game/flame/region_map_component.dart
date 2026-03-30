@@ -9,6 +9,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
+import 'region_map_boundary_visibility.dart';
 import 'resource_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
@@ -166,6 +167,11 @@ class CtRegionMapComponent extends PositionComponent {
   int? _hoveredTileY;
   String? _hoveredProvinceId;
   double _hoverAnimationT = 0.0;
+
+  /// When true, topology/political border segments and hover glow segments are
+  /// omitted unless at least one adjacent tile is not unrevealed. SPEC/ui/map-widget.md.
+  bool get _gateMapBoundariesByVisibility =>
+      visibilityMode == CtMapVisibilityMode.playerConstrained;
 
   RegionMapViewData? _provinceLabelsRegionRef;
   double? _provinceLabelsCellSize;
@@ -1023,23 +1029,35 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (right.regionCellId != provinceId) {
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (bottom.regionCellId != provinceId) {
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }
@@ -1091,25 +1109,37 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (cell.regionCellId != right.regionCellId) {
-            paint.color = _provinceBorderColor(cell, right);
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              paint.color = _provinceBorderColor(cell, right);
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (cell.regionCellId != bottom.regionCellId) {
-            paint.color = _provinceBorderColor(cell, bottom);
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              paint.color = _provinceBorderColor(cell, bottom);
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }
@@ -1138,23 +1168,35 @@ class CtRegionMapComponent extends PositionComponent {
         if (x + 1 < region.width) {
           final right = region.cellAt(x + 1, y);
           if (!right.isSea && (right.ownerFactionId ?? '') != owner) {
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: right.visibility,
+            )) {
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
           }
         }
         if (y + 1 < region.height) {
           final bottom = region.cellAt(x, y + 1);
           if (!bottom.isSea && (bottom.ownerFactionId ?? '') != owner) {
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              paint,
-            );
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              visibilityA: cell.visibility,
+              visibilityB: bottom.visibility,
+            )) {
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
           }
         }
       }

@@ -112,6 +112,8 @@ Per [world-model-identity.md](world-model-identity.md):
 
 ## Interactions
 
+- **App map (Flutter):** Province and sea-zone topology strokes and political border strokes are drawn only along edges where at least one adjacent tile is not **unknown** from the player’s view, except in the map widget’s **full visibility** mode (debug/tooling), which draws all boundaries. Mapping: game **unknown** → `CellViewData.visibility` **`unrevealed`**; **revealed** / **fogged** / **fully visible** → non-`unrevealed` in the view model. See [map-widget.md](../ui/map-widget.md) § Layer model and Visibility modes.
+
 - Civilian units: [civilian-units.md](civilian-units.md)
 - Ship coastal reveal: [ships-and-naval.md](ships-and-naval.md)
 - Resource/terrain rules: [resource-terrain-region-rules.md](resource-terrain-region-rules.md)
@@ -132,6 +134,7 @@ Per [world-model-identity.md](world-model-identity.md):
 - **Extraction gating:** Minerals extractable only from connected, prospected tiles for that player; non-minerals unchanged.
 - **Implementation:** Visibility resolution, Spy timer, and PlayerView construction: [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
 - **Coastal sea zone visibility:** For each Great Power, all tiles in sea zones adjacent (P–S) to provinces they fully own are fully visible; recalculated every turn in End-of-turn after fog decay; only direct ownership; overrides unknown/fogged for those tiles.
+- **App map boundaries:** In player-constrained map mode, topology and political strokes follow [map-widget.md](../ui/map-widget.md) (edges gated unless at least one adjacent tile is known to the player).
 
 ### Given–When–Then acceptance criteria
 
