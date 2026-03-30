@@ -13,6 +13,7 @@
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'combat_mode.dart';
+import 'diplomacy.dart';
 import 'game.dart';
 import 'orders.dart';
 
@@ -111,10 +112,7 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
 /// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]
 /// before this event (same synchronous turn or after [SchedulerBinding] frame); do not dismiss sheets from the map widget.
 class LocateMapTileEvent extends UIActionEvent {
-  const LocateMapTileEvent({
-    required this.tileKey,
-    required this.regionId,
-  });
+  const LocateMapTileEvent({required this.tileKey, required this.regionId});
 
   final String tileKey;
   final String regionId;
@@ -252,6 +250,31 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   final List<BuildUnitOrder> orders;
 }
 
+/// Request to append one diplomatic order for [playerId] in current-turn draft.
+class AppendDiplomaticOrderRequestedEvent extends SessionCommandEvent {
+  AppendDiplomaticOrderRequestedEvent({
+    required this.playerId,
+    required this.order,
+  });
+
+  final String playerId;
+  final DiplomaticOrder order;
+}
+
+/// Request to remove one pending diplomatic order by [type] and [targetFactionId]
+/// for [playerId] in current-turn draft.
+class RemoveDiplomaticOrderRequestedEvent extends SessionCommandEvent {
+  RemoveDiplomaticOrderRequestedEvent({
+    required this.playerId,
+    required this.type,
+    required this.targetFactionId,
+  });
+
+  final String playerId;
+  final DiplomaticOrderType type;
+  final String targetFactionId;
+}
+
 // ---------------------------------------------------------------------------
 // UISystemEvent — emitted by any layer to request transient system feedback.
 // ---------------------------------------------------------------------------
@@ -330,6 +353,7 @@ class InterventionRequiredEvent extends GameToUIEvent {
 /// Emitted when human ally must accept or refuse call to arms after a GP war declaration.
 class CallToArmsRequiredEvent extends GameToUIEvent {
   const CallToArmsRequiredEvent({required this.pending});
+
   /// [CallToArmsPending] from colonizethis_logic (kept as Object to avoid package cycle).
   final List<Object> pending;
 }

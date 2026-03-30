@@ -221,7 +221,6 @@ class DiplomacyPanel extends StatelessWidget {
     required this.humanPlayerId,
     required this.topology,
     required this.currentOrders,
-    required this.onOrdersChanged,
     required this.bus,
     this.onClose,
   });
@@ -230,7 +229,6 @@ class DiplomacyPanel extends StatelessWidget {
   final String humanPlayerId;
   final MapTopology topology;
   final Orders currentOrders;
-  final void Function(Orders) onOrdersChanged;
   final AppEventBus bus;
   final VoidCallback? onClose;
 
@@ -369,9 +367,9 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
-    onOrdersChanged(
-      currentOrders.removeDiplomaticOrderForPlayer(
-        humanPlayerId,
+    bus.emit(
+      RemoveDiplomaticOrderRequestedEvent(
+        playerId: humanPlayerId,
         type: type,
         targetFactionId: targetFactionId,
       ),
@@ -392,8 +390,11 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _appendOrder(DiplomaticOrder order) {
-    onOrdersChanged(
-      currentOrders.appendDiplomaticOrderForPlayer(humanPlayerId, order),
+    bus.emit(
+      AppendDiplomaticOrderRequestedEvent(
+        playerId: humanPlayerId,
+        order: order,
+      ),
     );
   }
 }
@@ -466,9 +467,9 @@ class _DiplomacyRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
                 ),
               ],
               if (data.pendingGrantAmount != null) ...[

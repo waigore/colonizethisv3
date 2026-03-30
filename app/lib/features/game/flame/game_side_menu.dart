@@ -5,9 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/app_assets.dart';
 import '../../../config/routes.dart';
 import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
@@ -53,9 +50,6 @@ class GameSideMenu extends ConsumerWidget {
   }
 
   List<Widget> _buildEmpireMenuButtons(BuildContext context, WidgetRef ref) {
-    final orders = ref.read(currentOrdersProvider);
-    final mapData = ref.read(gameServiceProvider).getMapData(game.id);
-    final topology = mapData?.combinedTopology ?? MapTopology();
     final bus = ref.read(appEventBusProvider);
 
     return [
@@ -112,8 +106,6 @@ class GameSideMenu extends ConsumerWidget {
                 ct_models.NavigateToRouteEvent(Routes.diplomacy, {
                   'game': game,
                   'humanPlayerId': humanPlayerId,
-                  'topology': topology,
-                  'currentOrders': orders,
                 }),
               );
         },
@@ -130,7 +122,6 @@ class GameSideMenu extends ConsumerWidget {
                 ct_models.NavigateToRouteEvent(Routes.technology, {
                   'game': game,
                   'humanPlayerId': humanPlayerId,
-                  'currentOrders': orders,
                 }),
               );
         },

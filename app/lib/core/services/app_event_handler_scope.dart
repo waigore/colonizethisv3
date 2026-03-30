@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_order_helpers.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
@@ -349,6 +350,20 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
           humanPlayerId: pid,
           newFromDialog: e.orders,
         );
+      }),
+      bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = current
+            .appendDiplomaticOrderForPlayer(e.playerId, e.order);
+      }),
+      bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = current
+            .removeDiplomaticOrderForPlayer(
+              e.playerId,
+              type: e.type,
+              targetFactionId: e.targetFactionId,
+            );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
         final g = ref.read(currentGameProvider);

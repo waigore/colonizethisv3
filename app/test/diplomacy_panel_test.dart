@@ -106,58 +106,11 @@ Future<void> _preWarmFlameImageCache() async {
   }
 }
 
-class _PanelWrapper extends StatefulWidget {
-  const _PanelWrapper({
-    required this.game,
-    required this.humanPlayerId,
-    required this.topology,
-    required this.initialOrders,
-    required this.bus,
-    this.onOrdersChanged,
-  });
-
-  final Game game;
-  final String humanPlayerId;
-  final MapTopology topology;
-  final Orders initialOrders;
-  final AppEventBus bus;
-  final void Function(Orders)? onOrdersChanged;
-
-  @override
-  State<_PanelWrapper> createState() => _PanelWrapperState();
-}
-
-class _PanelWrapperState extends State<_PanelWrapper> {
-  late Orders _orders;
-
-  @override
-  void initState() {
-    super.initState();
-    _orders = widget.initialOrders;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DiplomacyPanel(
-      game: widget.game,
-      humanPlayerId: widget.humanPlayerId,
-      topology: widget.topology,
-      currentOrders: _orders,
-      bus: widget.bus,
-      onOrdersChanged: (o) {
-        setState(() => _orders = o);
-        widget.onOrdersChanged?.call(o);
-      },
-    );
-  }
-}
-
 Widget buildPanel({
   required Game game,
   required String humanPlayerId,
   required MapTopology topology,
   Orders currentOrders = const Orders(),
-  void Function(Orders)? onOrdersChanged,
   AppEventBus? bus,
 }) {
   final panelBus = bus ?? AppEventBus();
@@ -168,13 +121,12 @@ Widget buildPanel({
       body: _EventHandlingWrapper(
         bus: panelBus,
         navigatorKey: navigatorKey,
-        child: _PanelWrapper(
+        child: DiplomacyPanel(
           game: game,
           humanPlayerId: humanPlayerId,
           topology: topology,
-          initialOrders: currentOrders,
+          currentOrders: currentOrders,
           bus: panelBus,
-          onOrdersChanged: onOrdersChanged,
         ),
       ),
     ),
@@ -332,13 +284,17 @@ void main() {
     testWidgets(
       'AC: Tapping no-param action shows confirm dialog, Confirm submits order',
       (WidgetTester tester) async {
-        Orders? captured;
+        final bus = AppEventBus.create();
+        final events = <AppendDiplomaticOrderRequestedEvent>[];
+        final sub = bus.on<AppendDiplomaticOrderRequestedEvent>().listen(
+          events.add,
+        );
         await tester.pumpWidget(
           buildPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
-            onOrdersChanged: (o) => captured = o,
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -351,18 +307,11 @@ void main() {
           expect(find.text('Cancel'), findsWidgets);
           await tester.tap(find.text('OK'));
           await tester.pumpAndSettle();
-          expect(captured, isNotNull);
-          expect(
-            captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-            hasLength(greaterThanOrEqualTo(1)),
-          );
-          expect(
-            captured!.diplomaticOrdersByPlayerId[humanPlayerId]!.any(
-              (o) => o.type == DiplomaticOrderType.declareWar,
-            ),
-            isTrue,
-          );
+          expect(events, hasLength(1));
+          expect(events.first.playerId, humanPlayerId);
+          expect(events.first.order.type, DiplomaticOrderType.declareWar);
         }
+        await sub.cancel();
       },
     );
 
@@ -394,13 +343,17 @@ void main() {
     testWidgets(
       'AC: Tapping Cancel in confirm dialog dismisses without submitting',
       (WidgetTester tester) async {
-        Orders? captured;
+        final bus = AppEventBus.create();
+        final events = <AppendDiplomaticOrderRequestedEvent>[];
+        final sub = bus.on<AppendDiplomaticOrderRequestedEvent>().listen(
+          events.add,
+        );
         await tester.pumpWidget(
           buildPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
-            onOrdersChanged: (o) => captured = o,
+            bus: bus,
           ),
         );
         await tester.pumpAndSettle();
@@ -413,8 +366,9 @@ void main() {
           final cancelBtn = find.widgetWithText(TextButton, 'Cancel');
           await tester.tap(cancelBtn.first);
           await tester.pumpAndSettle();
-          expect(captured, isNull);
+          expect(events, isEmpty);
         }
+        await sub.cancel();
       },
     );
 
@@ -461,7 +415,11 @@ void main() {
     testWidgets('AC: Tapping Cancel removes the pending order', (
       WidgetTester tester,
     ) async {
-      Orders? captured;
+      final bus = AppEventBus.create();
+      final events = <RemoveDiplomaticOrderRequestedEvent>[];
+      final sub = bus.on<RemoveDiplomaticOrderRequestedEvent>().listen(
+        events.add,
+      );
       final otherGp = gameWithFactions.players.firstWhere(
         (p) => p.id != humanPlayerId,
       );
@@ -481,7 +439,7 @@ void main() {
           humanPlayerId: humanPlayerId,
           topology: topology,
           currentOrders: initialOrders,
-          onOrdersChanged: (o) => captured = o,
+          bus: bus,
         ),
       );
       await tester.pumpAndSettle();
@@ -489,10 +447,11 @@ void main() {
       expect(find.text('Cancel'), findsWidgets);
       await tester.tap(find.text('Cancel').first);
       await tester.pumpAndSettle();
-      expect(
-        captured!.diplomaticOrdersByPlayerId[humanPlayerId] ?? [],
-        isEmpty,
-      );
+      expect(events, hasLength(1));
+      expect(events.first.playerId, humanPlayerId);
+      expect(events.first.type, DiplomaticOrderType.declareWar);
+      expect(events.first.targetFactionId, otherGp.id);
+      await sub.cancel();
     });
 
     testWidgets('AC: Empty state when no factions discovered', (

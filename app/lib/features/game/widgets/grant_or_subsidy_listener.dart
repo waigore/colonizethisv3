@@ -11,13 +11,13 @@ class GrantOrSubsidyListener extends StatefulWidget {
     super.key,
     required this.bus,
     required this.game,
-    required this.onConfirmed,
+    required this.humanPlayerId,
     required this.child,
   });
 
   final AppEventBus bus;
   final Game game;
-  final void Function(DiplomaticOrder order) onConfirmed;
+  final String humanPlayerId;
   final Widget child;
 
   @override
@@ -54,11 +54,14 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
               final orderType = event.isSubsidy
                   ? DiplomaticOrderType.setSubsidy
                   : DiplomaticOrderType.grantAid;
-              widget.onConfirmed(
-                DiplomaticOrder(
-                  type: orderType,
-                  targetFactionId: event.targetFactionId,
-                  amount: event.amount,
+              widget.bus.emit(
+                AppendDiplomaticOrderRequestedEvent(
+                  playerId: widget.humanPlayerId,
+                  order: DiplomaticOrder(
+                    type: orderType,
+                    targetFactionId: event.targetFactionId,
+                    amount: event.amount,
+                  ),
                 ),
               );
             }

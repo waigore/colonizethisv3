@@ -66,61 +66,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
   Widget build(BuildContext context) => widget.child;
 }
 
-class _PendingOrderShell extends StatefulWidget {
-  const _PendingOrderShell({
-    required this.game,
-    required this.humanPlayerId,
-    required this.topology,
-  });
-
-  final Game game;
-  final String humanPlayerId;
-  final MapTopology topology;
-
-  @override
-  State<_PendingOrderShell> createState() => _PendingOrderShellState();
-}
-
-class _PendingOrderShellState extends State<_PendingOrderShell> {
-  late Orders _orders;
-
-  Orders get ordersSnapshot => _orders;
-
-  @override
-  void initState() {
-    super.initState();
-    final targetId = widget.game.players
-        .firstWhere((p) => p.id != widget.humanPlayerId)
-        .id;
-    _orders = Orders(
-      diplomaticOrdersByPlayerId: {
-        widget.humanPlayerId: [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: targetId,
-          ),
-        ],
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: DiplomacyPanel(
-          game: widget.game,
-          humanPlayerId: widget.humanPlayerId,
-          topology: widget.topology,
-          currentOrders: _orders,
-          onOrdersChanged: (o) => setState(() => _orders = o),
-          bus: AppEventBus(),
-        ),
-      ),
-    );
-  }
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -148,7 +93,6 @@ void main() {
             humanPlayerId: humanId,
             topology: MapTopology(),
             currentOrders: const Orders(),
-            onOrdersChanged: (_) {},
             bus: AppEventBus(),
           ),
         ),
@@ -180,7 +124,6 @@ void main() {
                 humanPlayerId: humanId,
                 topology: r.combinedTopology,
                 currentOrders: const Orders(),
-                onOrdersChanged: (_) {},
                 bus: bus,
               ),
             ),
@@ -210,33 +153,47 @@ void main() {
       final r = getDebugInitGameResult();
       final game = r.game;
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final targetId = game.players.firstWhere((p) => p.id != humanId).id;
+      final bus = AppEventBus.create();
+      final events = <RemoveDiplomaticOrderRequestedEvent>[];
+      final sub = bus.on<RemoveDiplomaticOrderRequestedEvent>().listen(
+        events.add,
+      );
+      final initialOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: targetId,
+            ),
+          ],
+        },
+      );
 
       await tester.pumpWidget(
-        _PendingOrderShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: r.combinedTopology,
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: r.combinedTopology,
+              currentOrders: initialOrders,
+              bus: bus,
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();
-
-      final state = tester.state<_PendingOrderShellState>(
-        find.byType(_PendingOrderShell),
-      );
-      expect(
-        state.ordersSnapshot.diplomaticOrdersByPlayerId[humanId],
-        isNotEmpty,
-      );
 
       final cancelOnPatch = find.widgetWithText(CtNinePatchButton, 'Cancel');
       expect(cancelOnPatch, findsWidgets);
       await tester.tap(cancelOnPatch.first);
       await tester.pumpAndSettle();
-
-      expect(
-        state.ordersSnapshot.diplomaticOrdersByPlayerId[humanId] ?? [],
-        isEmpty,
-      );
+      expect(events, hasLength(1));
+      expect(events.first.playerId, humanId);
+      expect(events.first.type, DiplomaticOrderType.declareWar);
+      expect(events.first.targetFactionId, targetId);
+      await sub.cancel();
     },
   );
 }
