@@ -225,9 +225,9 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
   When the system finishes capital and town setup for that player  
   Then `P_cap.townDevelopmentLevel` equals `4`.
 
-- Given a new game for which the tile map and Great Power capitals are initialized per [tile-map-and-generation.md](tile-map-and-generation.md) § Great Power starting grain (bootstrap)  
+- Given a new game for which the tile map and Great Power capitals are initialized per [tile-map-and-generation.md](tile-map-and-generation.md) § Great Power starting grain (bootstrap) and § Town and capital tile occupancy  
   When setup completes initial road networking after that bootstrap  
-  Then each Great Power has exactly four land tiles in its **capital province** with resource id `grain`, improvement level `1`, terrain and resource legality per [resource-terrain-region-rules.md](resource-terrain-region-rules.md), chosen by **closest Manhattan distance** from that player's capital tile coordinates with deterministic tie-break **ascending `y` then ascending `x`**, and those four placements are excluded from **all** resource caps per that section; each such tile is connected for extraction by turn 1 (Road rule or Town rule) after init roads run.
+  Then each Great Power has exactly four **eligible** land tiles (excluding capital/town) in its **capital province** with resource id `grain`, improvement level `1`, terrain and resource legality per [resource-terrain-region-rules.md](resource-terrain-region-rules.md), chosen by **closest Manhattan distance** from that player's capital tile coordinates among **eligible** tiles with deterministic tie-break **ascending `y` then ascending `x`**, and those four placements are excluded from **all** resource caps per that section; each such tile is connected for extraction by turn 1 (Road rule or Town rule) after init roads run; the **capital/town** tile has **no** terrain resource and **no** extraction improvement.
 
 - Given a Great Power player has a connected province chain from the capital to a remote province and then loses ownership of a province `P_cut` that lies on all road or rail paths between the capital and some other province’s town tile  
   When the system recomputes connectivity during the next extraction phase  

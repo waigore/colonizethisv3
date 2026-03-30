@@ -5,6 +5,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'town_capital_occupancy.dart';
 
 final _log = logicLogger();
 
@@ -17,12 +18,13 @@ class GreatPowerGrainBootstrapError implements Exception {
   String toString() => 'GreatPowerGrainBootstrapError: $message';
 }
 
-/// Four closest **land** cells in the capital province by Manhattan distance;
-/// tie-break ascending y, then x. Tile keys `regionId|localId|x|y`.
-/// Exposed for tests and diagnostics (SPEC § Great Power starting grain).
+/// Closest **land** cells in the capital province by Manhattan distance;
+/// tie-break ascending y, then x. Skips [forbiddenTileKeys] (town/capital tiles).
+/// Tile keys `regionId|localId|x|y`. Exposed for tests (SPEC § Great Power starting grain).
 List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
   required TileMapResult map,
   required CapitalTile capital,
+  Set<String> forbiddenTileKeys = const {},
 }) {
   final regionId = capital.regionId;
   final localId = ProvinceId.localIdFrom(capital.provinceId);
@@ -32,6 +34,7 @@ List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
       if (map.cell(x, y) != localId) continue;
       final dist = (x - capital.x).abs() + (y - capital.y).abs();
       final key = CapitalTile.tileKey(regionId, capital.provinceId, x, y);
+      if (forbiddenTileKeys.contains(key)) continue;
       ranked.add((dist, y, x, key));
     }
   }
@@ -60,7 +63,7 @@ applyGreatPowerStartingGrainBootstrap({
 }) {
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
-  if (terrain == null || resGrid == null) {
+    if (terrain == null || resGrid == null) {
     _log.i(
       'logic: skip Great Power grain bootstrap (missing terrain or resource grid)',
     );
@@ -70,6 +73,8 @@ applyGreatPowerStartingGrainBootstrap({
       grainKeysByPlayerId: const {},
     );
   }
+
+  final forbidden = collectTownAndCapitalTileKeys(game);
 
   var map = tileMapOldWorld;
   var ws = game.worldState;
@@ -84,11 +89,12 @@ applyGreatPowerStartingGrainBootstrap({
     final pickedKeys = selectGreatPowerBootstrapGrainTileKeysLandOnly(
       map: map,
       capital: cap,
+      forbiddenTileKeys: forbidden,
     );
     if (pickedKeys.length < 4) {
       throw GreatPowerGrainBootstrapError(
         'player ${player.id} capital province $capProv has only ${pickedKeys.length} '
-        'land tiles (need 4)',
+        'eligible land tiles excluding town/capital (need 4)',
       );
     }
 
