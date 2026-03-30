@@ -100,4 +100,136 @@ void main() {
       expect(find.text('turn:2'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'Given negotiation mood input When mood changes Then emits PortraitMoodEvent',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'g_bus_mood_1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+
+      final adapter = GameSaveAdapter();
+      adapter.save(gamesBox, game);
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final moodEvents = <PortraitMoodEvent>[];
+      final moodSub = bus.portraitMoodEvents.listen(moodEvents.add);
+      addTearDown(moodSub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith((ref) {
+              final svc = GameService(gamesBox, adapter);
+              svc.eventBus = bus;
+              return svc;
+            }),
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          ],
+          child: const MaterialApp(
+            home: GameToUIBusListener(
+              gameId: 'g_bus_mood_1',
+              child: SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      bus.emit(
+        const NegotiationMoodUpdateEvent(
+          leaderId: 'ai1',
+          currentMood: 'considering',
+          offerQualityDelta: -0.8,
+          stallCounter: 0,
+          seed: 0,
+          durationMs: 900,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(moodEvents, hasLength(1));
+      expect(moodEvents.single.leaderId, 'ai1');
+      expect(moodEvents.single.fromMood, 'considering');
+      expect(moodEvents.single.toMood, anyOf('irritated', 'dismissive'));
+      expect(moodEvents.single.durationMs, 900);
+    },
+  );
+
+  testWidgets(
+    'Given negotiation mood input When mood does not change Then emits no PortraitMoodEvent',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'g_bus_mood_2',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+
+      final adapter = GameSaveAdapter();
+      adapter.save(gamesBox, game);
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final moodEvents = <PortraitMoodEvent>[];
+      final moodSub = bus.portraitMoodEvents.listen(moodEvents.add);
+      addTearDown(moodSub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith((ref) {
+              final svc = GameService(gamesBox, adapter);
+              svc.eventBus = bus;
+              return svc;
+            }),
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          ],
+          child: const MaterialApp(
+            home: GameToUIBusListener(
+              gameId: 'g_bus_mood_2',
+              child: SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      bus.emit(
+        const NegotiationMoodUpdateEvent(
+          leaderId: 'ai1',
+          currentMood: 'calculating',
+          offerQualityDelta: 0.0,
+          stallCounter: 2,
+          seed: 1,
+          durationMs: 900,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(moodEvents, isEmpty);
+    },
+  );
 }

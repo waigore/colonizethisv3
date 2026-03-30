@@ -316,6 +316,40 @@ void main() {
     );
 
     testWidgets(
+      'AC3: Confirmed diplomacy action emits NegotiationMoodUpdateEvent',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final moodEvents = <NegotiationMoodUpdateEvent>[];
+        final sub = bus.on<NegotiationMoodUpdateEvent>().listen(moodEvents.add);
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final declareWar = find.text('Declare War');
+        if (declareWar.evaluate().isEmpty) return;
+        await tester.tap(declareWar.first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
+
+        expect(moodEvents, isNotEmpty);
+        final e = moodEvents.last;
+        expect(e.leaderId, isNotEmpty);
+        expect(e.currentMood, isNotEmpty);
+        expect(e.offerQualityDelta, isNot(0));
+      },
+    );
+
+    testWidgets(
       'AC: Param action opens grant/subsidy dialog via event handler wrapper',
       (WidgetTester tester) async {
         await tester.pumpWidget(

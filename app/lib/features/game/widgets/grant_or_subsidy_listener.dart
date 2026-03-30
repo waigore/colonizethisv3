@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,8 @@ class GrantOrSubsidyListener extends StatefulWidget {
 
 class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
   StreamSubscription? _sub;
+  StreamSubscription<PortraitMoodEvent>? _moodSub;
+  final Map<String, String> _moodByLeaderId = <String, String>{};
 
   String _targetName(String factionId) {
     final p = widget.game.playerById(factionId);
@@ -42,6 +45,9 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
   @override
   void initState() {
     super.initState();
+    _moodSub = widget.bus.on<PortraitMoodEvent>().listen((event) {
+      _moodByLeaderId[event.leaderId] = event.toMood;
+    });
     _sub = widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
       final targetName = _targetName(event.targetFactionId);
       final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
@@ -64,6 +70,19 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
                   ),
                 ),
               );
+              final turn = widget.game.worldState.turnState.turnNumber;
+              final base = widget.game.globalGameSeed ?? 0;
+              final currentMood =
+                  _moodByLeaderId[event.targetFactionId] ?? kDefaultMood;
+              widget.bus.emit(
+                NegotiationMoodUpdateEvent(
+                  leaderId: event.targetFactionId,
+                  currentMood: currentMood,
+                  offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
+                  stallCounter: 0,
+                  seed: base ^ (turn * 0x9E3779B1) ^ event.amount,
+                ),
+              );
             }
           },
         ),
@@ -74,6 +93,7 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
   @override
   void dispose() {
     _sub?.cancel();
+    _moodSub?.cancel();
     super.dispose();
   }
 
