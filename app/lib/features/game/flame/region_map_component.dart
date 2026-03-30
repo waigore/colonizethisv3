@@ -35,6 +35,42 @@ const double _provinceLabelIconRenderedPx = 12;
 const double _provinceLabelIconGapPx = 3;
 const double _provinceLabelTextIconGapPx = 4;
 
+/// Resolves map province-label presence icon ids from province presence data.
+///
+/// Order is always civilian, regiment, ship. Icons are suppressed when intel is
+/// not visible or count is zero.
+List<String> resolveProvinceLabelPresenceIconIds(
+  ProvinceUnitPresenceView? presence,
+) {
+  final showPresenceIcons = presence != null && presence.intelVisible;
+  if (!showPresenceIcons) {
+    return const <String>[];
+  }
+  return <String>[
+    if (presence.civilianCount > 0) 'map_presence_civilian',
+    if (presence.regimentCount > 0) 'map_presence_regiment',
+    if (presence.shipCount > 0) 'map_presence_ship',
+  ];
+}
+
+/// Returns true when province-name text + icons should wrap icons to line 2.
+bool shouldWrapProvinceLabelPresenceIcons({
+  required double textWidthPx,
+  required int iconCount,
+  double maxWidthPx = _provinceLabelMaxWidthPx,
+  double iconRenderedPx = _provinceLabelIconRenderedPx,
+  double iconGapPx = _provinceLabelIconGapPx,
+  double textIconGapPx = _provinceLabelTextIconGapPx,
+}) {
+  if (iconCount <= 0) {
+    return false;
+  }
+  final iconsWidth =
+      (iconCount * iconRenderedPx) + ((iconCount - 1) * iconGapPx);
+  final singleLineContentWidth = textWidthPx + textIconGapPx + iconsWidth;
+  return singleLineContentWidth > maxWidthPx;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -482,15 +518,7 @@ class CtRegionMapComponent extends PositionComponent {
 
     for (final item in labels) {
       final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
-      final showPresenceIcons =
-          presence != null && presence.intelVisible == true;
-      final iconIds = <String>[
-        if (showPresenceIcons && presence.civilianCount > 0)
-          'map_presence_civilian',
-        if (showPresenceIcons && presence.regimentCount > 0)
-          'map_presence_regiment',
-        if (showPresenceIcons && presence.shipCount > 0) 'map_presence_ship',
-      ];
+      final iconIds = resolveProvinceLabelPresenceIconIds(presence);
       final iconCount = iconIds.length;
       final iconsWidth = iconCount > 0
           ? (iconCount * _provinceLabelIconRenderedPx) +
@@ -507,8 +535,10 @@ class CtRegionMapComponent extends PositionComponent {
       final th = tp.height;
       final singleLineContentWidth =
           tw + (iconCount > 0 ? _provinceLabelTextIconGapPx + iconsWidth : 0);
-      final wrapIconsToSecondLine =
-          iconCount > 0 && singleLineContentWidth > _provinceLabelMaxWidthPx;
+      final wrapIconsToSecondLine = shouldWrapProvinceLabelPresenceIcons(
+        textWidthPx: tw,
+        iconCount: iconCount,
+      );
       final contentWidth = wrapIconsToSecondLine
           ? math.max(tw, iconsWidth)
           : singleLineContentWidth;
