@@ -1,8 +1,11 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/features/game/flame/region_map_boundary_visibility.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('regionMapDrawBoundaryBetweenAdjacentCells', () {
     test('full visibility mode does not gate (gateByUnrevealedTiles false)', () {
       expect(
