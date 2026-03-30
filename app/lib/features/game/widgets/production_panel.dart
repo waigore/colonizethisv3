@@ -128,14 +128,16 @@ class _AvailableSubpanel extends StatelessWidget {
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     return Row(
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         ResourceIcon(commodityId: c.id, size: 16),
         const SizedBox(width: 4),
-        Text(
-          '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
-          style: theme.textTheme.bodySmall,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: Text(
+            '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -146,27 +148,34 @@ class _AvailableSubpanel extends StatelessWidget {
     Map<String, int> netChanges,
     ThemeData theme,
   ) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: commodities.map((c) {
-        final qty = player.stockpile.quantityOf(c.id);
-        final change = netChanges[c.id] ?? 0;
-        return _buildCommodityRow(c, qty, change, theme);
-      }).toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: commodities.map((c) {
+          final qty = player.stockpile.quantityOf(c.id);
+          final change = netChanges[c.id] ?? 0;
+          return SizedBox(
+            width: constraints.maxWidth,
+            child: _buildCommodityRow(c, qty, change, theme),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildWorkerRow(String workerType, int count, ThemeData theme) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
         WorkerIcon(workerType: workerType, size: 16),
         const SizedBox(width: 4),
-        Text(
-          '${_workerDisplayName(workerType)}: $count',
-          style: theme.textTheme.bodySmall,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: Text(
+            '${_workerDisplayName(workerType)}: $count',
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -233,21 +242,23 @@ class _AvailableSubpanel extends StatelessWidget {
             const SizedBox(height: 12),
             Text('Workers', style: theme.textTheme.labelMedium),
             const SizedBox(height: 4),
-            Wrap(
-              spacing: 16,
-              runSpacing: 4,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildWorkerRow('peasant', player.workerPool.peasants, theme),
+                const SizedBox(height: 4),
                 _buildWorkerRow(
                   'apprentice',
                   player.workerPool.apprentices,
                   theme,
                 ),
+                const SizedBox(height: 4),
                 _buildWorkerRow(
                   'journeyman',
                   player.workerPool.journeymen,
                   theme,
                 ),
+                const SizedBox(height: 4),
                 _buildWorkerRow('master', player.workerPool.masters, theme),
               ],
             ),

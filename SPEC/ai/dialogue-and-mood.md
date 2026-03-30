@@ -13,7 +13,7 @@ AI emits **events** that describe what to say and which mood to show. The UI (or
 ## Dialogue categories
 
 - **diplomatic** — Declaration of war, peace offer, alliance proposal, trade agreement, warning, demand, insult, compliment.
-- **reactive** — Response to player action (forts on border, attack on ally, tech first, colony founded, threat ignored, gift, spies caught).
+- **reactive** — Response to player action (forts on border, attack on ally, attack on minor, attack on tribe, tech first, colony founded, threat ignored, gift, spies caught).
 - **event** — Commentary on game events (battle won/lost, colony founded, tech discovered, capital threatened, era transition).
 - **agenda** — Hint at hidden motivation (personality + hidden agenda flavour).
 - **negotiation** — Lines during active deal-making, keyed by mood and situation (opening, counter_offer, accepting, rejecting).
@@ -87,6 +87,29 @@ Agenda-flavoured dialogue (optional commentary on a leader's hidden agenda) is e
 - **PortraitMoodEvent:** When negotiation mood transitions; optionally when opening/closing diplomacy screen with a base mood.
 
 Emission is synchronous from AI turn or from resolution hooks; no async side effects. Order of events is deterministic for replay.
+
+---
+
+## Situation coverage matrix (implementation truth table)
+
+Canonical `situation` strings are stable for `dialogueKeyForEvent`.
+
+| Category | Situation | Status | Hook | Notes |
+|---|---|---|---|---|
+| reactive | forts_on_border | implemented | build/work fort completion | Human-built fort adjacent to AI-owned province. |
+| reactive | attack_on_ally | implemented | combat phase detection | Human attacks faction that is allied with an AI speaker. |
+| reactive | attack_on_minor | implemented | combat phase detection | Human attacks a Minor Nation province. |
+| reactive | attack_on_tribe | implemented | combat phase detection | Human attacks a Tribe province. |
+| reactive | tech_first | implemented | research-complete detection | Human is first faction in match to unlock a tech. |
+| reactive | spies_caught | implemented | counter-spy kill resolution | AI owner of target province speaks when human spy is removed by counter-spy. |
+| reactive | colony_founded | deferred | n/a | Not separately observable as a player-action hook in current turn pipeline. |
+| reactive | threat_ignored | deferred | n/a | No canonical "threat issued/ignored" state transition is currently recorded. |
+| reactive | gift | deferred | n/a | No distinct gift action hook currently exists in diplomacy resolution. |
+| event | battle_won / battle_lost | implemented | land/naval battle resolution | Existing deterministic event dialogue path. |
+| event | era_change | implemented | end-of-turn era transition | Existing deterministic event dialogue path. |
+| event | tech_discovered | implemented | research-complete detection | AI discoverer emits commentary. |
+| event | capital_threatened | implemented | combat conflict pre-resolution | AI capital is targeted by at least one human attacker this turn. |
+| event | colony_founded | implemented | province ownership transition | Province owner changes from null to AI in New World. |
 
 ---
 

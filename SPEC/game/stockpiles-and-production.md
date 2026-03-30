@@ -46,6 +46,10 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
   When the System executes the Consumption phase  
   Then the System deducts required food and materials from the player’s central stockpile in the specified order, applies food and luxury strike rules **without removing workers** for missing food, and does not attempt to deduct from any non-existent per-province storage.
 
+- Given a Great Power’s current `Game` state, map topology and tile maps as used for turn resolution, and that player’s production assignment derived from the production panel’s desired-output sliders  
+  When the UI layer requests a per-commodity stockpile delta preview for that player before the player ends the turn  
+  Then the System computes the delta as the difference in that player’s central stockpile after and before applying **only** the phases Extraction → Riches-to-treasury → Consumption → Production in order, using the same rules as live turn resolution (including combined land/overseas extraction delivery, riches removal from the stockpile, consumption, then production with post-consumption idle labour), and returns **no entry** for commodities whose net change is zero.
+
 ---
 
 ## Interactions

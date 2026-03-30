@@ -1,7 +1,6 @@
 // Full-screen Production screen. SPEC/ui/production-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show MapTopology, TileMapResult;
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,8 @@ class ProductionScreen extends ConsumerWidget {
     required this.game,
     required this.player,
     this.attachGameToUiListener = true,
+    this.panelTopologyOverride,
+    this.panelTileMapByRegionOverride,
   });
 
   final Game game;
@@ -26,6 +27,13 @@ class ProductionScreen extends ConsumerWidget {
   /// When true (default), [GameToUIBusListener] subscribes to turn-complete events.
   /// Set false in isolated widget tests where the listener tree affects layout.
   final bool attachGameToUiListener;
+
+  /// When set, the production panel uses this topology instead of
+  /// [GameService.getMapData] (avoids Hive in tests).
+  final MapTopology? panelTopologyOverride;
+
+  /// Optional tile maps when [panelTopologyOverride] is set.
+  final Map<String, TileMapResult>? panelTileMapByRegionOverride;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,14 +60,24 @@ class ProductionScreen extends ConsumerWidget {
         final displayPlayer = displayGame.players.firstWhere(
           (p) => p.id == player.id,
         );
-        final netDeltasByCommodity =
-            previewStockpileNetDeltaByCommodityForPlayer(
-              game: displayGame,
-              playerId: displayPlayer.id,
-              topology: topology,
-              tileMapByRegion: tileMapByRegion,
-              desiredOutputByRecipe: desiredOutputByRecipe,
-            );
+        final MapTopology panelTopology;
+        final Map<String, TileMapResult>? panelTileMaps;
+        if (panelTopologyOverride != null) {
+          panelTopology = panelTopologyOverride!;
+          panelTileMaps = panelTileMapByRegionOverride;
+        } else {
+          panelTopology = topology;
+          panelTileMaps = tileMapByRegion;
+        }
+        final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
+          game: displayGame,
+          topology: panelTopology,
+          playerId: displayPlayer.id,
+          tileMapByRegion: panelTileMaps,
+          defaultAssignmentsByPlayerId: {
+            displayPlayer.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+          },
+        );
         return ProductionPanel(
           game: displayGame,
           player: displayPlayer,
