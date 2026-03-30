@@ -38,7 +38,13 @@ StrategicOrderResult generateStrategicOrders({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
-  final primaryGoal = selectPrimaryGoal(snapshot, config, seeds.goalSeed);
+  final primaryGoal = selectPrimaryGoal(
+    snapshot,
+    config,
+    seeds.goalSeed,
+    nationId: nationId,
+    turn: turn,
+  );
   _log.d('primaryGoal=$primaryGoal');
   final economyPlan = runEconomyPlanner(
     game: game,
