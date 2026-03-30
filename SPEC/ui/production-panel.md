@@ -31,7 +31,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 
 ## Data
 
-- **Available:** From `Player.stockpile`, `Player.workerPool`. Effective labour from logic (`effectiveLabourForWorkers`). Commodity list from [commodity-catalog.md](../game/commodity-catalog.md); recipes from [production-recipes.md](../game/production-recipes.md).
+- **Available:** Base quantities from `Player.stockpile` and worker counts from `Player.workerPool`. Parenthetical commodity deltas come from the program stockpile preview API in [order-projections.md](../program/order-projections.md): `previewStockpileNetDeltaByCommodityForPlayer(...)` running economy phases `Extraction -> Riches-to-treasury -> Consumption -> Production` for the viewed player with current desired outputs. Effective labour line uses logic (`effectiveLabourForWorkers`) for current-state display.
 - **Allocation:** UI holds desired output per recipe (recipe id → integer ≥ 0). Converted to `List<AssignedRecipe>` for the turn resolver: for each recipe, `assignedLabour = desiredOutput * recipe.labourPerOutput`.
 
 ## Behaviour
@@ -40,7 +40,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - **Reset:** A "Reset" button clears all slider allocations to zero.
 - **Validation:** Slider max = same **max** as the affordance readout: min of labour headroom (excluding this recipe) and each input’s stock headroom (excluding this recipe), after subtracting **other** recipes’ committed inputs/labour; then clamp 0–`kProductionAllocationSliderCap` (50). Recalculates on **any** allocation change. No desired output above that max. If **total** required labour > effective labour, show error styling and “capped next turn” message.
 - **Affordance bottleneck:** Tightest of labour + **all** recipe inputs (catalog display names; labour label **Labour**). **Ties:** first tied **input** in `inputQuantities` iteration order; if no input ties, **Labour**.
-- **Net Changes:** The Available panel displays expected net change for each commodity based on current allocations, shown in parentheses (positive for production, negative for consumption).
+- **Net Changes:** The Available panel displays expected per-commodity net stockpile change from the preview API (not allocation-only recipe math), shown in parentheses (positive for increase, negative for decrease).
 - **Comfort headroom (slider track):** On each recipe slider, the track segment from the **thumb to the max** end may use a **deeper purple** than the filled (0→thumb) segment. This is a **comfort signal** only (colour cue; no extra icon). It is **on** when all of the following hold: (1) **desired output < max** for that row (including **desired = 0** when **max > 0**); (2) **strict slack** on **labour** available to this row after other recipes: `remainingLabour > desired × labourPerOutput`; (3) **strict slack** on **every recipe input**: for each input commodity, `remainingStock (after other recipes) > desired × inputPerOutput`. If any check fails, the thumb→max segment uses the default unfilled track styling. Recalculates whenever allocations or stock change. **Colours:** Filled segment = existing primary (semi-transparent); comfort segment = **deeper purple** than the filled segment (fixed UI purple, not theme primary).
 - When the player advances the turn, the app passes the current allocation as production assignments for the human player to the turn resolver (`defaultAssignmentsByPlayerId`). Assignment is not persisted in the save (app state only) unless extended later.
 - The turn resolver still runs as many complete recipe runs as inputs and labour allow (per production-recipes.md).
@@ -49,6 +49,8 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 
 - **Available:** Food / Raw Materials / Manufactured in **3-column** grids (icon, name, qty, net change in parentheses); Workers **2-column** + effective labour; icons 32×32 per [game-toolbar-icons.md](game-toolbar-icons.md).
 - **Allocation:** Each recipe: output icon + name; inputs in parentheses; **right-aligned** `max · bottleneck` (not clipped by panel frame); slider row with **right-aligned** desired number. **max** equals slider cap (Behaviour). Changing **any** recipe’s allocation updates **every** row’s **max** / **bottleneck**. **Comfort headroom:** thumb→max track segment is deeper purple iff Behaviour **Comfort headroom** rules are satisfied; otherwise default track colour.
+- **Preview parity:** Given map data from `GameService` cache for the current game and a viewed player, when the Production screen renders Available rows, then each parenthetical delta equals the corresponding commodity value from `previewStockpileNetDeltaByCommodityForPlayer(...)` for that player and current desired outputs.
+- **Zero-delta formatting:** Given a commodity whose preview net delta is 0, when the Available row renders, then the row omits the parenthetical delta text.
 - **Reset** clears all sliders. **Next turn** passes human assignments to the turn resolver. **Labour line** uses error colour + cap message when total required labour > effective.
 - **Narrow (<600 dp):** stack subpanels, scroll, keep grid column counts. **Wide (≥600 dp):** Available | Allocation in a row.
 

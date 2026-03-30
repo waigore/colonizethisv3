@@ -878,6 +878,7 @@ class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
         game: game,
         player: player,
         desiredOutputByRecipe: _desiredOutputByRecipe,
+        netDeltasByCommodity: const {},
         onDesiredOutputChanged: (next) =>
             setState(() => _desiredOutputByRecipe = next),
       ),
