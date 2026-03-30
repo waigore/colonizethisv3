@@ -1,6 +1,7 @@
 // Full-screen Production screen. SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +45,18 @@ class ProductionScreen extends ConsumerWidget {
         final desiredOutputByRecipe = shellRef.watch(
           productionDesiredOutputProvider,
         );
+        var topology = MapTopology();
+        Map<String, TileMapResult> tileMapByRegion = const {};
+        try {
+          final gameService = shellRef.watch(gameServiceProvider);
+          final loaded = gameService.getMapData(displayGame.id);
+          if (loaded != null) {
+            topology = loaded.combinedTopology;
+            tileMapByRegion = loaded.tileMapByRegion;
+          }
+        } on Object {
+          // Widget tests may not initialize Hive-backed game service providers.
+        }
         final displayPlayer = displayGame.players.firstWhere(
           (p) => p.id == player.id,
         );
@@ -53,18 +66,23 @@ class ProductionScreen extends ConsumerWidget {
           panelTopology = panelTopologyOverride!;
           panelTileMaps = panelTileMapByRegionOverride;
         } else {
-          final mapData = shellRef.read(gameServiceProvider).getMapData(
-                displayGame.id,
-              );
-          panelTopology = mapData?.combinedTopology ?? const MapTopology();
-          panelTileMaps = mapData?.tileMapByRegion;
+          panelTopology = topology;
+          panelTileMaps = tileMapByRegion;
         }
+        final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
+          game: displayGame,
+          topology: panelTopology,
+          playerId: displayPlayer.id,
+          tileMapByRegion: panelTileMaps,
+          defaultAssignmentsByPlayerId: {
+            displayPlayer.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+          },
+        );
         return ProductionPanel(
           game: displayGame,
           player: displayPlayer,
-          topology: panelTopology,
-          tileMapByRegion: panelTileMaps,
           desiredOutputByRecipe: desiredOutputByRecipe,
+          netDeltasByCommodity: netDeltasByCommodity,
           onDesiredOutputChanged: (next) {
             shellRef
                 .read(productionDesiredOutputProvider.notifier)

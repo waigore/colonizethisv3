@@ -17,6 +17,10 @@ colonizethis_logic (extend OrderEngine or a dedicated service) provides an API t
 - `MapTopology` — for movement and extraction
 - `Map<String, TileMapResult> tileMapByRegion` — for extraction (required; empty map yields no extraction)
 - Optional: `defaultAssignments` for production phase
+- For production-panel stockpile preview:
+  - `String playerId` — viewed player id
+  - `Map<String, int> desiredOutputByRecipe` — desired output sliders (recipe id → output units) for the viewed player only
+  - Optional `Map<String, Map<CommodityId, int>> extractedByPlayerId` for tests/debug previews with known extraction totals (when omitted, extraction is resolved from tile maps + connectivity)
 
 ---
 
@@ -38,6 +42,7 @@ colonizethis_logic (extend OrderEngine or a dedicated service) provides an API t
 - `unitLocations` — map of unit id → province id after movement
 
 - `productionByRecipe` — when projection runs with production assignments (`defaultAssignments`), recipe id → quantity produced for the projected player (optional; null or empty when no assignments or production skipped).
+- `stockpileNetDeltaByCommodity` (production panel preview): per-commodity net delta `after - before` after the economy preview phases below for the viewed player.
 
 Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects` but are not yet populated):
 
@@ -55,6 +60,27 @@ When projecting for a single player: merge that player's orders with empty or pl
 
 ---
 
+## Production panel stockpile preview phases
+
+For the production-panel Available-grid parenthetical deltas, the projection is not allocation-only arithmetic. The projection runs the same economy semantics as live resolver for these phases and order:
+
+1. `Extraction` (land + overseas delivered by cargo/interception ordering)
+2. `Riches-to-treasury`
+3. `Consumption`
+4. `Production`
+
+All non-viewed players use empty production assignments in this preview path unless another caller explicitly sets assignments for them.
+
+---
+
 ## Determinism
 
 Same inputs → same outputs. No RNG in the projection path unless the turn resolver uses a seed; if so, the projection must use a fixed or passed seed for reproducibility.
+
+---
+
+## Acceptance Criteria
+
+- Given a loaded game, topology, and `tileMapByRegion` (or an explicit `extractedByPlayerId` override), when `previewStockpileNetDeltaByCommodityForPlayer` runs for player `P`, then for every commodity id `c`, the returned delta equals `stockpileAfter[c] - stockpileBefore[c]` where `stockpileAfter` is from applying exactly `Extraction -> Riches-to-treasury -> Consumption -> Production` preview phases for `P`.
+- Given `desiredOutputByRecipe` for player `P`, when `assignedRecipesFromDesiredOutput` runs, then it returns only assignments with positive labour and known recipe ids, with `assignedLabour = desiredOutput * labourPerOutput` for each returned recipe.
+- Given a game with multiple players and only player `P` has desired output entries, when `previewStockpileNetDeltaByCommodityForPlayer` runs, then production assignments for every non-`P` player are treated as empty for this preview.

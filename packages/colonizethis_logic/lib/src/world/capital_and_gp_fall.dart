@@ -3,6 +3,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
+import '../setup/town_capital_occupancy.dart';
 import '../world/province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
@@ -12,6 +13,7 @@ Game applyCapitalReassignmentAfterCombat(
   Game state,
   MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   Game game = state;
   for (final player in state.players) {
@@ -105,8 +107,21 @@ Game applyCapitalReassignmentAfterCombat(
           newProvinceId,
         ),
       );
+      final newCapKey = tile.toTileKey();
+      final strip = stripResourcesAndExtractionImprovementsOnTileKeys(
+        game,
+        tileMapByRegion,
+        [newCapKey],
+      );
+      game = strip.$1;
+      final stripMaps = strip.$2;
+      if (stripMaps != null && tileMapByRegion != null) {
+        for (final e in stripMaps.entries) {
+          tileMapByRegion[e.key] = e.value;
+        }
+      }
       _log.i(
-        'player ${player.id} capital reassigned to $newProvinceId (${tile.toTileKey()}) after loss',
+        'player ${player.id} capital reassigned to $newProvinceId ($newCapKey) after loss',
       );
     } catch (e, st) {
       final msg =

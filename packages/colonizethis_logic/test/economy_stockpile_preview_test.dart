@@ -1,7 +1,7 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
@@ -79,7 +79,7 @@ void main() {
     });
 
     test('production only: net reflects recipe IO after consumption', () {
-      var stockpile = const Stockpile()
+      final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 50)
           .applyDelta(CommodityCatalog.meat.id, 50)
           .applyDelta(CommodityCatalog.timber.id, 20);
@@ -97,8 +97,8 @@ void main() {
         topology: const MapTopology(),
         playerId: 'p1',
         defaultAssignmentsByPlayerId: {
-          'p1': [
-            const AssignedRecipe(
+          'p1': const [
+            AssignedRecipe(
               recipeId: 'lumber_from_timber',
               assignedLabour: 10,
             ),
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('combined: extraction + riches + consumption + production', () {
-      var stockpile = const Stockpile()
+      final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 100)
           .applyDelta(CommodityCatalog.meat.id, 100)
           .applyDelta(CommodityCatalog.timber.id, 20)
@@ -150,8 +150,8 @@ void main() {
           'p1': {CommodityCatalog.grain.id: 5},
         },
         defaultAssignmentsByPlayerId: {
-          'p1': [
-            const AssignedRecipe(
+          'p1': const [
+            AssignedRecipe(
               recipeId: 'lumber_from_timber',
               assignedLabour: 4,
             ),
@@ -159,10 +159,8 @@ void main() {
         },
       );
       expect(delta[CommodityCatalog.gems.id], -1);
-      // Effective labour after upkeep is 2 → one lumber run (timber −2, lumber +1).
       expect(delta[CommodityCatalog.timber.id], -2);
       expect(delta[CommodityCatalog.lumber.id], 1);
-      // +5 extraction, −1 regiment, −2 peasants → +2 grain vs start (100 → 102).
       expect(delta[CommodityCatalog.grain.id], 2);
     });
   });

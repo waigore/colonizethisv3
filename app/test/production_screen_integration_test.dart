@@ -59,12 +59,9 @@ void main() {
           return bus;
         }),
         if (initialDesiredOutput != null)
-          productionDesiredOutputProvider
-              .overrideWith(() {
-                return _SeededProductionDesiredOutputNotifier(
-                  initialDesiredOutput,
-                );
-              }),
+          productionDesiredOutputProvider.overrideWith(
+            () => _SeededProductionDesiredOutputNotifier(initialDesiredOutput),
+          ),
       ],
       child: MaterialApp(
         home: MediaQuery(
@@ -85,8 +82,6 @@ void main() {
     testWidgets(
       'preseeded provider state is reflected in Available net changes',
       (WidgetTester tester) async {
-        // 5 runs of lumber_from_timber consume 10 timber and produce 5 lumber,
-        // matching expectations from ProductionPanel tests.
         await tester.pumpWidget(
           _buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
         );
@@ -105,8 +100,6 @@ void main() {
         await tester.pumpWidget(_buildScreen());
         await tester.pumpAndSettle();
 
-        // Initially there should be no net change annotations like "(-" or "(+"
-        // for timber; after dragging a slider, they should appear.
         expect(find.textContaining('Timber:'), findsOneWidget);
 
         final sliders = find.byType(CtSlider);
@@ -115,15 +108,9 @@ void main() {
         await tester.drag(sliders.first, const Offset(80, 0));
         await tester.pumpAndSettle();
 
-        // After the drag, the provider has been updated and the screen rebuilt,
-        // so net changes should now be visible.
         expect(find.textContaining('Timber:'), findsOneWidget);
-        expect(
-          find.textContaining(RegExp(r'\(|\+|-')),
-          findsWidgets,
-        );
+        expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
       },
     );
   });
 }
-

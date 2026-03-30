@@ -64,16 +64,79 @@ void main() {
         for (final p in setup.game.players) {
           final cap = p.capitalTile;
           expect(cap, isNotNull);
+          final capKey = cap!.toTileKey();
+          final forbidden = collectTownAndCapitalTileKeys(setup.game);
+          expect(forbidden.contains(capKey), true);
           final pred = selectGreatPowerBootstrapGrainTileKeysLandOnly(
-            map: tileByRegion[cap!.regionId]!,
+            map: tileByRegion[cap.regionId]!,
             capital: cap,
+            forbiddenTileKeys: forbidden,
           );
           expect(pred.length, 4);
+          expect(pred.contains(capKey), false, reason: 'capital/town is not a farm');
+
+          for (final ct in <CapitalTile?>[
+            ...setup.game.players.map((p) => p.capitalTile),
+            ...setup.game.minorNations.map((m) => m.capitalTile),
+            ...setup.game.tribes.map((t) => t.capitalTile),
+          ]) {
+            if (ct == null) continue;
+            final ck = ct.toTileKey();
+            expect(
+              setup.tileMapByRegion[ct.regionId]!.resourceAt(ct.x, ct.y),
+              isNull,
+              reason: 'no terrain resource on capital $ck seed=$seed',
+            );
+            expect(
+              setup.game.worldState.tileState.improvementLevel(ck),
+              0,
+              reason: 'no extraction improvement on capital $ck seed=$seed',
+            );
+          }
 
           final ws = setup.game.worldState;
           for (final k in pred) {
             expect(ws.resourceByTileKey[k], 'grain');
             expect(ws.tileState.improvementLevel(k), 1);
+          }
+
+          for (final prov in ws.oldWorld.provinces) {
+            final tk = prov.townTileKey;
+            if (tk == null || tk.isEmpty) continue;
+            final parts = tk.split('|');
+            if (parts.length != 4) continue;
+            final rid = parts[0];
+            final x = int.parse(parts[2]);
+            final y = int.parse(parts[3]);
+            expect(
+              tileByRegion[rid]!.resourceAt(x, y),
+              isNull,
+              reason: 'no resource on town $tk seed=$seed',
+            );
+            expect(
+              ws.tileState.improvementLevel(tk),
+              0,
+              reason: 'no extraction improvement on town $tk seed=$seed',
+            );
+          }
+          for (final prov in ws.newWorld.provinces) {
+            final tk = prov.townTileKey;
+            if (tk == null || tk.isEmpty) continue;
+            final parts = tk.split('|');
+            if (parts.length != 4) continue;
+            final rid = parts[0];
+            final x = int.parse(parts[2]);
+            final y = int.parse(parts[3]);
+            expect(
+              tileByRegion[rid]!.resourceAt(x, y),
+              isNull,
+              reason: 'NW no resource on town $tk seed=$seed',
+            );
+            expect(
+              ws.tileState.improvementLevel(tk),
+              0,
+              reason: 'NW no extraction improvement on town $tk seed=$seed',
+            );
           }
 
           final connectivity = resolveConnectivity(

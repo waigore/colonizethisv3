@@ -2523,113 +2523,114 @@ void main() {
       },
     );
 
-    testWidgets('AC: Non-Home fleet is removed when empty after split', (
-      WidgetTester tester,
-    ) async {
-      const humanId = 'gp_nonhome_removed';
-      const capProvince = 'oldWorld|cap1';
-      final homeId = homeFleetIdFor(humanId);
+    testWidgets(
+      'AC: Non-Home fleet split cannot empty original (Confirm Split disabled)',
+      (WidgetTester tester) async {
+        const humanId = 'gp_nonhome_removed';
+        const capProvince = 'oldWorld|cap1';
+        final homeId = homeFleetIdFor(humanId);
 
-      final nonHomeRemovedGame = Game(
-        id: 'g_nonhome_removed',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'cap1',
-                regionId: 'oldWorld',
+        final nonHomeSplitGame = Game(
+          id: 'g_nonhome_removed',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
                 ownerId: humanId,
-                displayName: 'Capital',
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'split_me',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
               ),
             ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+              },
+            },
+            nextShipInstanceSeq: 3,
           ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: homeId,
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: capProvince,
-              ships: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
-            ),
-            Fleet(
-              id: 'split_me',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: capProvince,
-              ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Non-home removed tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
             ),
           ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              capProvince: ['oldWorld|cap1|0|0'],
-            },
-          },
-          nextShipInstanceSeq: 3,
-        ),
-        players: [
-          Player(
-            id: humanId,
-            displayName: 'Non-home removed tester',
-            isHuman: true,
-            capitalProvinceId: capProvince,
-            capitalTile: const CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capProvince,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
+        );
 
-      final bus = AppEventBus.create();
-      NavalFleetsUpdatedEvent? updated;
-      final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-        updated = e;
-      });
-      final subSplit = wireNavalSplitForWidgetTest(
-        bus: bus,
-        gameSnapshot: () => nonHomeRemovedGame,
-      );
-      addTearDown(sub.cancel);
-      addTearDown(subSplit.cancel);
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? updated;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          updated = e;
+        });
+        final subSplit = wireNavalSplitForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => nonHomeSplitGame,
+        );
+        addTearDown(sub.cancel);
+        addTearDown(subSplit.cancel);
 
-      await tester.pumpWidget(
-        buildPanel(game: nonHomeRemovedGame, humanPlayerId: humanId, bus: bus),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildPanel(game: nonHomeSplitGame, humanPlayerId: humanId, bus: bus),
+        );
+        await tester.pumpAndSettle();
 
-      final fleetFinder = find.widgetWithText(ExpansionTile, 'Fleet split_me');
-      expect(fleetFinder, findsOneWidget);
+        final fleetFinder = find.widgetWithText(ExpansionTile, 'Fleet split_me');
+        expect(fleetFinder, findsOneWidget);
 
-      await tester.ensureVisible(fleetFinder);
-      await tester.tap(fleetFinder);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(fleetFinder);
+        await tester.tap(fleetFinder);
+        await tester.pumpAndSettle();
 
-      final splitButton = find.text('Split');
-      expect(splitButton, findsOneWidget);
-      await tester.tap(splitButton);
-      await tester.pumpAndSettle();
+        final splitButton = find.text('Split');
+        expect(splitButton, findsOneWidget);
+        await tester.ensureVisible(splitButton);
+        await tester.pumpAndSettle();
+        await tester.tap(splitButton);
+        await tester.pumpAndSettle();
 
-      final fleet = nonHomeRemovedGame.worldState.fleets.firstWhere(
-        (f) => f.id == 'split_me',
-      );
-      expect(fleet.ships.length, 1);
+        final fleet = nonHomeSplitGame.worldState.fleets.firstWhere(
+          (f) => f.id == 'split_me',
+        );
+        expect(fleet.ships.length, 1);
 
-      await tester.tap(
-        find.byKey(CtTransferListKeys.leftMoveOne(fleet.ships.first.typeId)),
-      );
-      await tester.pump();
+        await tester.tap(
+          find.byKey(CtTransferListKeys.leftMoveOne(fleet.ships.first.typeId)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Confirm Split'));
-      await tester.pumpAndSettle();
-
-      expect(updated, isNotNull);
-      final fleetsAfter = updated!.game.worldState.fleets;
-      expect(fleetsAfter.any((f) => f.id == 'split_me'), isFalse);
-      expect(fleetsAfter.where((f) => f.id == homeId).first.ships.length, 2);
-    });
+        final confirmBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+        );
+        expect(confirmBtn.enabled, isFalse);
+        expect(updated, isNull);
+      },
+    );
   });
 }

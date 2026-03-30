@@ -14,17 +14,15 @@ class ProductionPanel extends StatelessWidget {
     super.key,
     required this.game,
     required this.player,
-    required this.topology,
-    this.tileMapByRegion,
     required this.desiredOutputByRecipe,
+    required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
   });
 
   final Game game;
   final Player player;
-  final MapTopology topology;
-  final Map<String, TileMapResult>? tileMapByRegion;
   final Map<String, int> desiredOutputByRecipe;
+  final Map<String, int> netDeltasByCommodity;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
   static Set<String> get _inputCommodityIds {
@@ -41,8 +39,10 @@ class ProductionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final regimentCounts =
-        regimentTypeCountsForPlayer(game.worldState, player.id);
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
     final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
@@ -62,14 +62,11 @@ class ProductionPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _AvailableSubpanel(
-              game: game,
-              topology: topology,
-              tileMapByRegion: tileMapByRegion,
               player: player,
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
-              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
             ),
             const SizedBox(height: 24),
             _AllocationSubpanel(
@@ -91,14 +88,11 @@ class ProductionPanel extends StatelessWidget {
           Expanded(
             flex: 1,
             child: _AvailableSubpanel(
-              game: game,
-              topology: topology,
-              tileMapByRegion: tileMapByRegion,
               player: player,
               effectiveLabour: effectiveLabour,
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
-              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
             ),
           ),
           const SizedBox(width: 24),
@@ -119,36 +113,18 @@ class ProductionPanel extends StatelessWidget {
 
 class _AvailableSubpanel extends StatelessWidget {
   const _AvailableSubpanel({
-    required this.game,
-    required this.topology,
-    this.tileMapByRegion,
     required this.player,
     required this.effectiveLabour,
     required this.inputCommodityIds,
     required this.outputCommodityIds,
-    required this.desiredOutputByRecipe,
+    required this.netDeltasByCommodity,
   });
 
-  final Game game;
-  final MapTopology topology;
-  final Map<String, TileMapResult>? tileMapByRegion;
   final Player player;
   final int effectiveLabour;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
-  final Map<String, int> desiredOutputByRecipe;
-
-  Map<String, int> _netChangesForAvailable() {
-    return previewStockpileNetDeltaByCommodityForPlayer(
-      game: game,
-      topology: topology,
-      playerId: player.id,
-      tileMapByRegion: tileMapByRegion,
-      defaultAssignmentsByPlayerId: {
-        player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
-      },
-    );
-  }
+  final Map<String, int> netDeltasByCommodity;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     return Row(
@@ -218,7 +194,7 @@ class _AvailableSubpanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final netChanges = _netChangesForAvailable();
+    final netChanges = netDeltasByCommodity;
 
     final rawMaterials = CommodityCatalog.all
         .where(
