@@ -131,7 +131,7 @@ ConsumptionResult resolveConsumption({
     shipCountsById: shipCountsById,
   );
   _log.d(
-    'logic: consumption totalRegiments=${alloc.totalRegiments} '
+    'consumption totalRegiments=${alloc.totalRegiments} '
     'fullyFedRegiments=${alloc.fullyFedRegiments} '
     'totalShips=${alloc.totalShips} fullyFedShips=${alloc.fullyFedShips} '
     'idlePeasants=${alloc.idleLabour.peasants}',

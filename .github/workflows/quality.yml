@@ -188,6 +188,13 @@ jobs:
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
+      - name: Wang incremental assets gate (Python)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends python3-pil
+          cd pytool && python3 test_wang_incremental_assets_and_preview.py
+
       - name: Test colonizethis_models (Dart)
         if: needs.changes.outputs.tests == 'true'
         env:

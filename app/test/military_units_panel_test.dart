@@ -158,6 +158,7 @@ void main() {
       final listTiles = find.byType(ListTile);
       if (listTiles.evaluate().isEmpty) return;
       await tester.tap(listTiles.first);
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(locateEvent, isNotNull);
@@ -197,10 +198,32 @@ void main() {
       final trainButton = find.text('Train');
       expect(trainButton, findsOneWidget);
       await tester.tap(trainButton);
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(openDialogEvent, isNotNull);
       expect(openDialogEvent!.dialogId, trainMilitaryDialogId);
+    });
+
+    testWidgets(
+      'AC: Tapping locate emits ClosePanelEvent before LocateMapTileEvent',
+      (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      final sequence = <Type>[];
+      bus.stream.listen((e) => sequence.add(e.runtimeType));
+
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      );
+      await tester.pumpAndSettle();
+
+      final listTiles = find.byType(ListTile);
+      if (listTiles.evaluate().isEmpty) return;
+      await tester.tap(listTiles.first);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(sequence.indexOf(ClosePanelEvent), lessThan(sequence.indexOf(LocateMapTileEvent)));
     });
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {

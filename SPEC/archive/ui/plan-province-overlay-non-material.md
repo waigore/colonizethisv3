@@ -1,3 +1,9 @@
+# [Archived — completed] Plan: Province/Sea Zone Detail Overlay (non-Material)
+
+**Status:** This implementation plan is **complete**. Source of truth for behaviour and style is [`province-sea-zone-detail-overlay.md`](../../ui/province-sea-zone-detail-overlay.md) (§ Style / implementation) and `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart`. Retained for history only.
+
+---
+
 # Plan: Convert Province/Sea Zone Detail Overlay to Non-Material (Pixel-Art Friendly)
 
 **Goal:** Remove Material design from `ProvinceSeaZoneDetailOverlay` so it works well with pixel art (UXD 02). The overlay will use only non-Material widgets and explicit styling.
@@ -60,7 +66,7 @@
 
 ## 6. Spec Update
 
-- In `SPEC/ui/province-sea-zone-detail-overlay.md`, add a short **Style** or **Implementation notes** bullet:
+- In [`province-sea-zone-detail-overlay.md`](../../ui/province-sea-zone-detail-overlay.md), add a short **Style** or **Implementation notes** bullet:
   - “Overlay uses non-Material, pixel-art friendly components: CtPanel, custom tab strip, explicit text styles (no Material Card/TabBar/IconButton).”
 
 ---
@@ -76,7 +82,7 @@
 
 ## 8. Implementation Order
 
-1. **Spec:** Update `SPEC/ui/province-sea-zone-detail-overlay.md` with the style note.
+1. **Spec:** Update [`province-sea-zone-detail-overlay.md`](../../ui/province-sea-zone-detail-overlay.md) with the style note.
 2. **CtTabStrip:** Add `app/lib/widgets/ct_tab_strip.dart` (stateful: tabLabels, tabViews, internal selectedIndex; pixel-art styling).
 3. **Overlay data:** Change `_OverlayContent` to use `List<String> tabLabels` instead of `List<Widget> tabs`; update `_provinceContent` and `_seaZoneContent` to pass labels and same `tabViews`.
 4. **Overlay shell:** Replace Card with Padding + CtPanel; replace header title style with constant; replace IconButton with custom close (Key); in narrow branch, use CtTabStrip(tabLabels, tabViews) instead of DefaultTabController/TabBar/TabBarView.
@@ -95,4 +101,4 @@
 
 ## 10. Acceptance (from spec, unchanged)
 
-All existing overlay AC in `SPEC/ui/province-sea-zone-detail-overlay.md` still hold; the only behavioral change is that the close control and tabs are non-Material and pixel-art friendly. No change to open/close/switch/hover behavior or content.
+All existing overlay AC in [`province-sea-zone-detail-overlay.md`](../../ui/province-sea-zone-detail-overlay.md) still hold; the only behavioral change is that the close control and tabs are non-Material and pixel-art friendly. No change to open/close/switch/hover behavior or content.

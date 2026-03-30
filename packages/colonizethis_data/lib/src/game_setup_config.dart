@@ -35,7 +35,7 @@ class GameSetupConfig {
        assert(minProvincesPerMinor >= 0),
        assert(numProvincesNewWorld >= 1) {
     _log.d(
-      'data: GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
+      'GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
     );
   }
 

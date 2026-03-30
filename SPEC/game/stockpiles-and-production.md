@@ -16,6 +16,8 @@ Per Imperialism II: "commodities produced in these terrain tiles move to your wa
 3. **Consumption:** Workers, military, and navy consume food (and worker luxuries per tier). Strike rules: [workers-and-population.md](workers-and-population.md).
 4. **Production:** Industry consumes commodities (inputs) from the **post-Consumption** stockpile and uses **idle labour** (`WorkerIdleCounts`) to produce materials. Outputs are added to stockpile. Labour is **not** removed from the WorkerPool by production itself; each turn’s production is capped by **assigned labour** and by idle labour for that turn (per workers-and-population.md and [economy-models.md](../program/economy-models.md)).
 
+For UI preview of upcoming stockpile changes in the production panel, the same four-phase order above is used by a dry-run projection API; preview must not use allocation-only recipe arithmetic.
+
 ### Capacity
 Capacity for all commodities is infinite; no limit on the amount of each commodity for the player.
 
@@ -43,6 +45,10 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
 - Given a player has workers and other consumers (such as army and navy) that require food and materials as described in [workers-and-population.md](workers-and-population.md)  
   When the System executes the Consumption phase  
   Then the System deducts required food and materials from the player’s central stockpile in the specified order, applies food and luxury strike rules **without removing workers** for missing food, and does not attempt to deduct from any non-existent per-province storage.
+
+- Given a Great Power’s current `Game` state, map topology and tile maps as used for turn resolution, and that player’s production assignment derived from the production panel’s desired-output sliders  
+  When the UI layer requests a per-commodity stockpile delta preview for that player before the player ends the turn  
+  Then the System computes the delta as the difference in that player’s central stockpile after and before applying **only** the phases Extraction → Riches-to-treasury → Consumption → Production in order, using the same rules as live turn resolution (including combined land/overseas extraction delivery, riches removal from the stockpile, consumption, then production with post-consumption idle labour), and returns **no entry** for commodities whose net change is zero.
 
 ---
 

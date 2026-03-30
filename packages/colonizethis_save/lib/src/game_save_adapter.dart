@@ -15,26 +15,26 @@ const String _suffixWarpLinks = '_warpLinks';
 class GameSaveAdapter {
   /// Saves [game] to [box]. Key = game.id, value = game.toJson().
   void save(Box<dynamic> box, Game game) {
-    _log.i('save: saving gameId=${game.id}');
+    _log.i('saving gameId=${game.id}');
     box.put(game.id, game.toJson());
-    _log.i('save: saved gameId=${game.id}');
+    _log.i('saved gameId=${game.id}');
   }
 
   /// Loads game by [gameId]. Returns null if not found or invalid.
   Game? load(Box<dynamic> box, String gameId) {
-    _log.i('save: loading gameId=$gameId');
+    _log.i('loading gameId=$gameId');
     final raw = box.get(gameId);
     if (raw == null) {
-      _log.w('save: gameId=$gameId not found');
+      _log.w('gameId=$gameId not found');
       return null;
     }
     try {
       final map = Map<String, dynamic>.from(raw as Map);
       final game = Game.fromJson(map);
-      _log.i('save: loaded gameId=$gameId');
+      _log.i('loaded gameId=$gameId');
       return game;
     } catch (e, st) {
-      _log.e('save: load failed gameId=$gameId', error: e, stackTrace: st);
+      _log.e('load failed gameId=$gameId', error: e, stackTrace: st);
       return null;
     }
   }
@@ -97,7 +97,7 @@ class GameSaveAdapter {
     required MapTopology combinedTopology,
     List<WarpLink>? warpLinks,
   }) {
-    _log.d('save: saving map data gameId=$gameId');
+    _log.d('saving map data gameId=$gameId');
     box.put(
       gameId + _suffixTileMapByRegion,
       tileMapByRegion.map((k, v) => MapEntry(k, v.toJson())),
@@ -113,7 +113,7 @@ class GameSaveAdapter {
         warpLinks.map((l) => l.toJson()).toList(),
       );
     }
-    _log.d('save: saved map data gameId=$gameId');
+    _log.d('saved map data gameId=$gameId');
   }
 
   /// Loads map data for [gameId]. Returns null if any key is missing (legacy save).
@@ -155,7 +155,7 @@ class GameSaveAdapter {
             .map((l) => WarpLink.fromJson(Map<String, dynamic>.from(l as Map)))
             .toList();
       }
-      _log.d('save: loaded map data gameId=$gameId');
+      _log.d('loaded map data gameId=$gameId');
       return (
         tileMapByRegion: tileMapByRegion,
         topologyByRegion: topologyByRegion,
@@ -164,7 +164,7 @@ class GameSaveAdapter {
       );
     } catch (e, st) {
       _log.e(
-        'save: load map data failed gameId=$gameId',
+        'load map data failed gameId=$gameId',
         error: e,
         stackTrace: st,
       );

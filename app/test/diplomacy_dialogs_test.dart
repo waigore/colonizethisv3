@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
-  testWidgets('showGrantOrSubsidyDialog submits default valid grant amount',
+  testWidgets('GrantOrSubsidyDialog submits default valid grant amount',
       (WidgetTester tester) async {
     final game = getDebugInitGameResult().game;
     final humanPlayerId = game.players.first.id;
@@ -21,8 +21,12 @@ void main() {
         ? game.players[1].id
         : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
 
-    var submittedAmount = 0;
-    var submittedCalled = false;
+    final bus = AppEventBus.create();
+    GrantOrSubsidySubmittedEvent? submitted;
+    final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((e) {
+      submitted = e;
+    });
+    addTearDown(sub.cancel);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -31,16 +35,15 @@ void main() {
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
               onPressed: () {
-                showGrantOrSubsidyDialog(
+                showDialog<void>(
                   context: context,
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  targetFactionId: targetFactionId,
-                  isSubsidy: false,
-                  onSubmitted: (amount) {
-                    submittedAmount = amount;
-                    submittedCalled = true;
-                  },
+                  builder: (ctx) => GrantOrSubsidyDialog(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    targetFactionId: targetFactionId,
+                    isSubsidy: false,
+                    bus: bus,
+                  ),
                 );
               },
             ),
@@ -57,13 +60,14 @@ void main() {
     await tester.tap(find.widgetWithText(CtNinePatchButton, 'Submit'));
     await tester.pumpAndSettle();
 
-    expect(submittedCalled, isTrue);
-    expect(submittedAmount, 1000);
+    expect(submitted, isNotNull);
+    expect(submitted!.amount, 1000);
+    expect(submitted!.isSubsidy, isFalse);
     expect(find.text('Grant aid'), findsNothing);
   });
 
   testWidgets(
-      'showGrantOrSubsidyDialog submit disabled when treasury below minimum',
+      'GrantOrSubsidyDialog submit disabled when treasury below minimum',
       (WidgetTester tester) async {
     final base = getDebugInitGameResult().game;
     final humanPlayerId = base.players.first.id;
@@ -78,7 +82,12 @@ void main() {
       ],
     );
 
+    final bus = AppEventBus.create();
     var submittedCalled = false;
+    final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((_) {
+      submittedCalled = true;
+    });
+    addTearDown(sub.cancel);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -87,15 +96,15 @@ void main() {
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
               onPressed: () {
-                showGrantOrSubsidyDialog(
+                showDialog<void>(
                   context: context,
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  targetFactionId: targetFactionId,
-                  isSubsidy: false,
-                  onSubmitted: (_) {
-                    submittedCalled = true;
-                  },
+                  builder: (ctx) => GrantOrSubsidyDialog(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    targetFactionId: targetFactionId,
+                    isSubsidy: false,
+                    bus: bus,
+                  ),
                 );
               },
             ),
@@ -119,7 +128,7 @@ void main() {
     expect(find.text('Grant aid'), findsOneWidget);
   });
 
-  testWidgets('showGrantOrSubsidyDialog Cancel closes dialog',
+  testWidgets('GrantOrSubsidyDialog Cancel closes dialog',
       (WidgetTester tester) async {
     final game = getDebugInitGameResult().game;
     final humanPlayerId = game.players.first.id;
@@ -127,7 +136,12 @@ void main() {
         ? game.players[1].id
         : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
 
+    final bus = AppEventBus.create();
     var submittedCalled = false;
+    final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((_) {
+      submittedCalled = true;
+    });
+    addTearDown(sub.cancel);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -136,15 +150,15 @@ void main() {
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
               onPressed: () {
-                showGrantOrSubsidyDialog(
+                showDialog<void>(
                   context: context,
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  targetFactionId: targetFactionId,
-                  isSubsidy: false,
-                  onSubmitted: (_) {
-                    submittedCalled = true;
-                  },
+                  builder: (ctx) => GrantOrSubsidyDialog(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    targetFactionId: targetFactionId,
+                    isSubsidy: false,
+                    bus: bus,
+                  ),
                 );
               },
             ),

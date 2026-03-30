@@ -111,7 +111,7 @@ RegionData applyMoveOrdersToRegion(
         ordersForRegion++;
         ignored++;
         _log.d(
-          'logic: movement ignored reason=unit_not_found '
+          'movement ignored reason=unit_not_found '
           'unitId=${order.unitId} orderPlayerId=$playerId',
         );
         continue;
@@ -120,7 +120,7 @@ RegionData applyMoveOrdersToRegion(
       if (unit.ownerId != playerId) {
         ignored++;
         _log.d(
-          'logic: movement ignored reason=owner_mismatch '
+          'movement ignored reason=owner_mismatch '
           'unitId=${order.unitId} orderPlayerId=$playerId unitOwnerId=${unit.ownerId}',
         );
         continue;
@@ -131,7 +131,7 @@ RegionData applyMoveOrdersToRegion(
           ProvinceId.regionIdFrom(destProvinceId) != regionId) {
         ignored++;
         _log.d(
-          'logic: movement ignored reason=region_mismatch '
+          'movement ignored reason=region_mismatch '
           'unitId=${order.unitId} destRegion=${ProvinceId.regionIdFrom(destProvinceId)} '
           'expectedRegion=$regionId',
         );
@@ -154,7 +154,7 @@ RegionData applyMoveOrdersToRegion(
       if (!valid) {
         ignored++;
         _log.d(
-          'logic: movement ignored reason=invalid_adjacency '
+          'movement ignored reason=invalid_adjacency '
           'unitId=${order.unitId} from=$fromLocal to=$toLocal',
         );
         continue;
@@ -180,7 +180,7 @@ RegionData applyMoveOrdersToRegion(
   if (ordersForRegion > 0) {
     final regionLabel = regionId ?? 'unspecified';
     _log.i(
-      'logic: movement apply regionId=$regionLabel '
+      'movement apply regionId=$regionLabel '
       'orders=$ordersForRegion applied=$applied ignored=$ignored',
     );
   }

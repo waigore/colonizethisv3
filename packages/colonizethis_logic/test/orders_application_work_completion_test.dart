@@ -67,6 +67,99 @@ void main() {
     );
 
     test(
+      'build_improvement completion raises stored level from 3 to 4 (global max)',
+      () {
+        final tileState = TileMapState().setImprovement(tileKey, 3);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
+            tileState: tileState,
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          _ordersToTriggerProcessWork(),
+        );
+        expect(next.worldState.tileState.improvementLevel(tileKey), 4);
+      },
+    );
+
+    test(
+      'build_improvement completion does not re-apply extraction tech cap (#1291)',
+      () {
+        // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
+        expect(extractionCapForUnlocked(const {'saw_mill': true}), 2);
+        final tileState = TileMapState().setImprovement(tileKey, 3);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
+            tileState: tileState,
+          ),
+          players: const [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              techUnlocked: {'saw_mill': true},
+            ),
+          ],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          _ordersToTriggerProcessWork(),
+        );
+        expect(next.worldState.tileState.improvementLevel(tileKey), 4);
+      },
+    );
+
+    test(
       'work cancelled when province containing target tile is conquered (#376)',
       () {
         // Unit p1 is working on a tile in P1; province P1 is conquered by p2.

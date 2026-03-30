@@ -60,3 +60,6 @@ CtLogger gameLogger([String? subPrefix]) =>
 
 CtLogger appLogger([String? subPrefix]) =>
     subPrefix != null ? CtLogger('app.$subPrefix') : CtLogger('app');
+
+CtLogger ctdevLogger([String? subPrefix]) =>
+    subPrefix != null ? CtLogger('ctdev.$subPrefix') : CtLogger('ctdev');

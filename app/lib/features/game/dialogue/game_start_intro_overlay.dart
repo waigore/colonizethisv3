@@ -1,7 +1,7 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
-import 'package:logger/logger.dart';
 
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -21,7 +21,7 @@ class GameStartIntroOverlay extends StatefulWidget {
 
   final VoidCallback onDismissed;
   final Widget child;
-  final Logger? logger;
+  final CtLogger? logger;
   final AssetBundle? assetBundle;
 
   @override
@@ -44,7 +44,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
   }
 
   Future<void> _loadAndRun() async {
-    final log = widget.logger ?? Logger();
+    final log = widget.logger ?? appLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(_kIntroAsset);

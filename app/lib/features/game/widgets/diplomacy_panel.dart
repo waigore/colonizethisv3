@@ -1,9 +1,11 @@
 // Diplomacy panel. SPEC/ui/diplomacy-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
@@ -214,7 +216,7 @@ List<DiplomacyRowData> buildDiplomacyRows(
 }
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
-class DiplomacyPanel extends StatelessWidget {
+class DiplomacyPanel extends StatefulWidget {
   const DiplomacyPanel({
     super.key,
     required this.game,
@@ -235,12 +237,34 @@ class DiplomacyPanel extends StatelessWidget {
   final VoidCallback? onClose;
 
   @override
+  State<DiplomacyPanel> createState() => _DiplomacyPanelState();
+}
+
+class _DiplomacyPanelState extends State<DiplomacyPanel> {
+  final Map<String, String> _moodByLeaderId = <String, String>{};
+  StreamSubscription<PortraitMoodEvent>? _moodSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _moodSub = widget.bus.on<PortraitMoodEvent>().listen((event) {
+      _moodByLeaderId[event.leaderId] = event.toMood;
+    });
+  }
+
+  @override
+  void dispose() {
+    _moodSub?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final rows = buildDiplomacyRows(
-      game,
-      topology,
-      humanPlayerId,
-      currentOrders,
+      widget.game,
+      widget.topology,
+      widget.humanPlayerId,
+      widget.currentOrders,
     );
     final gps = rows.where((r) => r.kind == FactionKind.greatPower).toList();
     final minors = rows.where((r) => r.kind == FactionKind.minor).toList();
@@ -254,8 +278,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...gps.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -264,8 +288,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...minors.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -274,8 +298,8 @@ class DiplomacyPanel extends StatelessWidget {
           ...tribes.map(
             (r) => _DiplomacyRow(
               data: r,
-              onAction: (order) => _submitOrDialog(context, order),
-              onTap: () => _openDetail(context, r),
+              onAction: _submitOrDialog,
+              onTap: () => _openDetail(r),
             ),
           ),
         ],
@@ -303,14 +327,21 @@ class DiplomacyPanel extends StatelessWidget {
     );
   }
 
-  void _submitOrDialog(BuildContext context, DiplomaticOrder order) {
+  void _submitOrDialog(DiplomaticOrder order) {
     final pending =
-        currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
+        widget.currentOrders.diplomaticOrdersByPlayerId[widget.humanPlayerId] ??
+        [];
     final alreadyPending = pending.any(
       (o) => o.type == order.type && o.targetFactionId == order.targetFactionId,
     );
     if (alreadyPending) {
       _removeOrder(order.type, order.targetFactionId);
+      _emitNegotiationMood(
+        leaderId: order.targetFactionId,
+        offerQualityDelta: -0.25,
+        stallCounter: pending.length,
+        discriminator: '${order.type.name}:cancel',
+      );
       return;
     }
     final needsParams =
@@ -319,15 +350,15 @@ class DiplomacyPanel extends StatelessWidget {
         (order.type == DiplomaticOrderType.establishOverture &&
             order.overtureStage != null);
     if (needsParams) {
-      _showDialogForOrder(context, order);
+      _showDialogForOrder(order);
     } else {
-      _showConfirmDialog(context, order);
+      _showConfirmDialog(order);
     }
   }
 
-  void _showConfirmDialog(BuildContext context, DiplomaticOrder order) {
+  void _showConfirmDialog(DiplomaticOrder order) {
     final actionLabel = diplomacyActionLabel(order);
-    bus.emit(
+    widget.bus.emit(
       ConfirmDialogEvent(
         title: actionLabel,
         message:
@@ -335,6 +366,12 @@ class DiplomacyPanel extends StatelessWidget {
         onResult: (confirmed) {
           if (confirmed) {
             _appendOrder(order);
+            _emitNegotiationMood(
+              leaderId: order.targetFactionId,
+              offerQualityDelta: _offerQualityDeltaFor(order.type),
+              stallCounter: _pendingCountForTarget(order.targetFactionId),
+              discriminator: order.type.name,
+            );
           }
         },
       ),
@@ -342,21 +379,21 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   String _targetName(String factionId) {
-    final p = game.playerById(factionId);
+    final p = widget.game.playerById(factionId);
     if (p != null) return p.displayName;
-    for (final m in game.minorNations) {
+    for (final m in widget.game.minorNations) {
       if (m.id == factionId) return m.displayName ?? factionId;
     }
-    for (final t in game.tribes) {
+    for (final t in widget.game.tribes) {
       if (t.id == factionId) return t.displayName ?? factionId;
     }
     return factionId;
   }
 
-  void _showDialogForOrder(BuildContext context, DiplomaticOrder order) {
+  void _showDialogForOrder(DiplomaticOrder order) {
     if (order.type == DiplomaticOrderType.grantAid ||
         order.type == DiplomaticOrderType.setSubsidy) {
-      bus.emit(
+      widget.bus.emit(
         OpenDialogEvent(grantOrSubsidyDialogId, {
           'targetFactionId': order.targetFactionId,
           'isSubsidy': order.type == DiplomaticOrderType.setSubsidy,
@@ -364,25 +401,25 @@ class DiplomacyPanel extends StatelessWidget {
       );
     } else if (order.type == DiplomaticOrderType.establishOverture &&
         order.overtureStage != null) {
-      _showConfirmDialog(context, order);
+      _showConfirmDialog(order);
     }
   }
 
   void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
-    onOrdersChanged(
-      currentOrders.removeDiplomaticOrderForPlayer(
-        humanPlayerId,
+    widget.onOrdersChanged(
+      widget.currentOrders.removeDiplomaticOrderForPlayer(
+        widget.humanPlayerId,
         type: type,
         targetFactionId: targetFactionId,
       ),
     );
   }
 
-  void _openDetail(BuildContext context, DiplomacyRowData row) {
-    bus.emit(
+  void _openDetail(DiplomacyRowData row) {
+    widget.bus.emit(
       NavigateToRouteEvent(Routes.diplomacyDetail, {
-        'game': game,
-        'humanPlayerId': humanPlayerId,
+        'game': widget.game,
+        'humanPlayerId': widget.humanPlayerId,
         'factionId': row.factionId,
         'factionDisplayName': row.displayName,
         'kind': row.kind,
@@ -392,8 +429,73 @@ class DiplomacyPanel extends StatelessWidget {
   }
 
   void _appendOrder(DiplomaticOrder order) {
-    onOrdersChanged(
-      currentOrders.appendDiplomaticOrderForPlayer(humanPlayerId, order),
+    widget.onOrdersChanged(
+      widget.currentOrders.appendDiplomaticOrderForPlayer(
+        widget.humanPlayerId,
+        order,
+      ),
+    );
+  }
+
+  int _pendingCountForTarget(String targetFactionId) {
+    final list =
+        widget.currentOrders.diplomaticOrdersByPlayerId[widget.humanPlayerId] ??
+        const <DiplomaticOrder>[];
+    return list.where((o) => o.targetFactionId == targetFactionId).length;
+  }
+
+  double _offerQualityDeltaFor(DiplomaticOrderType type) {
+    switch (type) {
+      case DiplomaticOrderType.declareWar:
+        return -0.8;
+      case DiplomaticOrderType.offerPeace:
+        return 0.6;
+      case DiplomaticOrderType.alliance:
+        return 0.4;
+      case DiplomaticOrderType.establishOverture:
+        return 0.5;
+      case DiplomaticOrderType.grantAid:
+        return 0.7;
+      case DiplomaticOrderType.setSubsidy:
+        return 0.5;
+    }
+  }
+
+  int _stableSeed({
+    required String leaderId,
+    required String discriminator,
+    required int stallCounter,
+  }) {
+    final turn = widget.game.worldState.turnState.turnNumber;
+    final base = widget.game.globalGameSeed ?? 0;
+    final text = '$leaderId|$discriminator|$stallCounter|$turn';
+    var hash = 0x811C9DC5;
+    for (final code in text.codeUnits) {
+      hash ^= code;
+      hash = (hash * 0x01000193) & 0x7fffffff;
+    }
+    return base ^ hash;
+  }
+
+  void _emitNegotiationMood({
+    required String leaderId,
+    required double offerQualityDelta,
+    required int stallCounter,
+    required String discriminator,
+  }) {
+    final currentMood = _moodByLeaderId[leaderId] ?? kDefaultMood;
+    widget.bus.emit(
+      NegotiationMoodUpdateEvent(
+        leaderId: leaderId,
+        currentMood: currentMood,
+        offerQualityDelta: offerQualityDelta,
+        stallCounter: stallCounter,
+        seed: _stableSeed(
+          leaderId: leaderId,
+          discriminator: discriminator,
+          stallCounter: stallCounter,
+        ),
+      ),
     );
   }
 }

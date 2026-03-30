@@ -10,11 +10,13 @@ class VictoryOverlay extends StatefulWidget {
   const VictoryOverlay({
     required this.game,
     required this.victory,
+    required this.bus,
     super.key,
   });
 
   final ct_models.Game game;
   final ct_models.VictoryState victory;
+  final ct_models.AppEventBus bus;
 
   @override
   State<VictoryOverlay> createState() => _VictoryOverlayState();
@@ -33,6 +35,7 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
           child: VictoryPanel(
             game: widget.game,
             victory: widget.victory,
+            bus: widget.bus,
             onViewFinalState: () => setState(() => _dismissed = true),
           ),
         ),
@@ -45,12 +48,14 @@ class VictoryPanel extends StatelessWidget {
   const VictoryPanel({
     required this.game,
     required this.victory,
+    required this.bus,
     this.onViewFinalState,
     super.key,
   });
 
   final ct_models.Game game;
   final ct_models.VictoryState victory;
+  final ct_models.AppEventBus bus;
   final VoidCallback? onViewFinalState;
 
   @override
@@ -85,9 +90,7 @@ class VictoryPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CtNinePatchButton(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  onPressed: () => bus.emit(const ct_models.NavigateToShellEvent()),
                   child: const Text('Return to main menu'),
                 ),
                 const SizedBox(width: 12),

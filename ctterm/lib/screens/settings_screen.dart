@@ -1,9 +1,9 @@
 // Settings screen. SPEC/tui/ctterm.md, SPEC/tui/screens/settings.md.
 
-import 'package:logger/logger.dart' as log_pkg;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final log_pkg.Logger _log = log_pkg.Logger();
+final _log = tuiLogger();
 
 /// Available terminal themes.
 enum TerminalTheme {
@@ -40,12 +40,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _selectedTheme = component.initialTheme ?? TerminalTheme.dark;
-    _log.d('tui:settings: init, theme=${_selectedTheme.name}');
+    _log.d('init, theme=${_selectedTheme.name}');
   }
 
   void _selectTheme(TerminalTheme theme) {
     setState(() => _selectedTheme = theme);
-    _log.d('tui:settings: theme selected=${theme.name}');
+    _log.d('theme selected=${theme.name}');
     // Notify parent to apply theme
     component.onThemeChanged?.call(theme);
   }

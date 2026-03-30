@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
@@ -30,7 +34,26 @@ const String grantOrSubsidyDialogId = 'grant_or_subsidy';
 /// [OpenDialogEvent] id for [NewGameLeaderSelectionDialog]. SPEC/program/app-ui-wiring.md.
 const String newGameLeaderSelectionDialogId = 'new_game_leader_selection';
 
-final _log = Logger();
+/// [OpenDialogEvent] id for [CombatModeChoiceDialog]. SPEC/program/app-ui-wiring.md.
+const String combatModeChoiceDialogId = 'combat_mode_choice';
+
+/// [OpenDialogEvent] id for [QuickBattleResultDialog]. SPEC/program/app-ui-wiring.md.
+const String quickBattleResultDialogId = 'quick_battle_result';
+
+final _logShell = appLogger('shell');
+final _logEvent = appLogger('event');
+
+/// Applies a chosen combat mode to the current game session state.
+@visibleForTesting
+Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
+  if (currentGame == null) {
+    return null;
+  }
+  if (currentGame.defaultCombatMode == chosenMode) {
+    return currentGame;
+  }
+  return currentGame.copyWith(defaultCombatMode: chosenMode);
+}
 
 /// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
 /// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
@@ -164,8 +187,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                 ) {
                   final navCtx = appNavigatorKey.currentContext;
                   if (navCtx == null) {
-                    _log.w(
-                      'shell: appNavigatorKey has no context; skipping new game setup',
+                    _logShell.w(
+                      'appNavigatorKey has no context; skipping new game setup',
                     );
                     return;
                   }
@@ -207,17 +230,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             game: game,
             humanPlayerId: humanPlayerId,
             currentOrders: orders,
-            onOrdersChanged: (newOrders) {
-              final o = container.read(currentOrdersProvider);
-              container
-                  .read(currentOrdersProvider.notifier)
-                  .state = _mergeTrainCivilianOrdersForPlayer(
-                current: o,
-                game: game,
-                humanPlayerId: humanPlayerId,
-                newFromDialog: newOrders,
-              );
-            },
+            bus: container.read(appEventBusProvider),
           );
         },
         trainMilitaryDialogId: (ctx, _) {
@@ -232,17 +245,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             game: game,
             humanPlayerId: humanPlayerId,
             currentOrders: orders,
-            onOrdersChanged: (newOrders) {
-              final o = container.read(currentOrdersProvider);
-              container
-                  .read(currentOrdersProvider.notifier)
-                  .state = _mergeTrainMilitaryOrdersForPlayer(
-                current: o,
-                game: game,
-                humanPlayerId: humanPlayerId,
-                newFromDialog: newOrders,
-              );
-            },
+            bus: container.read(appEventBusProvider),
           );
         },
         grantOrSubsidyDialogId: (ctx, params) {
@@ -261,6 +264,30 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             targetFactionId: targetFactionId,
             isSubsidy: isSubsidy,
             bus: bus,
+          );
+        },
+        combatModeChoiceDialogId: (ctx, params) {
+          final container = ProviderScope.containerOf(ctx);
+          final bus = container.read(appEventBusProvider);
+          final provinceName = params?['provinceName'] as String? ?? '';
+          final isCapitalSiege = params?['isCapitalSiege'] as bool? ?? false;
+          return CombatModeChoiceDialog(
+            bus: bus,
+            provinceName: provinceName,
+            isCapitalSiege: isCapitalSiege,
+          );
+        },
+        quickBattleResultDialogId: (ctx, params) {
+          final result = params?['result'] as QuickBattleResult?;
+          if (result == null) {
+            return const SizedBox.shrink();
+          }
+          final attackerName = params?['attackerName'] as String? ?? 'Attacker';
+          final defenderName = params?['defenderName'] as String? ?? 'Defender';
+          return QuickBattleResultDialog(
+            result: result,
+            attackerName: attackerName,
+            defenderName: defenderName,
           );
         },
       },
@@ -284,10 +311,63 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       bus.on<NavalFleetsUpdatedEvent>().listen((e) {
         ref.read(currentGameProvider.notifier).setGame(e.game);
       }),
+      bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final newGame = applyNavalSplitFleet(
+          game: g,
+          humanPlayerId: e.humanPlayerId,
+          originalFleetId: e.originalFleetId,
+          shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+        );
+        bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+      }),
+      bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final pid = _humanPlayerId(g);
+        final o = ref.read(currentOrdersProvider);
+        ref
+            .read(currentOrdersProvider.notifier)
+            .state = _mergeTrainCivilianOrdersForPlayer(
+          current: o,
+          game: g,
+          humanPlayerId: pid,
+          newFromDialog: e.orders,
+        );
+      }),
+      bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final pid = _humanPlayerId(g);
+        final o = ref.read(currentOrdersProvider);
+        ref
+            .read(currentOrdersProvider.notifier)
+            .state = _mergeTrainMilitaryOrdersForPlayer(
+          current: o,
+          game: g,
+          humanPlayerId: pid,
+          newFromDialog: e.orders,
+        );
+      }),
+      bus.on<CombatModeChosenEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        final updated = applyCombatModeChoiceToGame(g, e.mode);
+        if (updated == null) {
+          _logEvent.w(
+            'CombatModeChosenEvent received without an active game; ignoring',
+          );
+          return;
+        }
+        if (identical(updated, g)) {
+          return;
+        }
+        ref.read(currentGameProvider.notifier).setGame(updated);
+        ref.read(gameServiceProvider).saveGame(updated);
+        _logEvent.i('combat: set default combat mode to ${e.mode.name}');
+      }),
     ]);
-    _log.d(
-      'ui:app_event: AppEventHandler bound; session command listeners attached',
-    );
+    _logEvent.d('AppEventHandler bound; session command listeners attached');
   }
 
   void _showSnackBar(ShowSnackBarEvent event) {

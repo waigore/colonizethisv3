@@ -13,14 +13,21 @@ final _log = logicLogger();
 /// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
 /// capped by min transport level along path to town then to capital; [pathTransportCap]
 /// is that cap (max over paths of min road level on path).
+///
+/// [connectedByRoadRule] is the tile set before § Town rule expansion (Road rule + sea
+/// port wiring per resolver). Used for extraction town-development caps.
 class ConnectivityResult {
   const ConnectivityResult({
     required this.connected,
     this.pathTransportCap = const {},
+    this.connectedByRoadRule = const {},
   });
 
   final Set<String> connected;
   final Map<String, int> pathTransportCap;
+
+  /// Tiles reachable under Road rule + overseas/port phases **before** 4-adjacent town closure.
+  final Set<String> connectedByRoadRule;
 }
 
 /// Resolves which tiles are connected to each player's capital. SPEC/game/capital-and-connectivity.
@@ -77,7 +84,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
   _log.d(
-    'logic: connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
+    'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
   final provinceIdsByType = provinceNodeIds(topology);
   final blockadedByPlayer =
@@ -89,9 +96,9 @@ Map<String, ConnectivityResult> resolveConnectivity({
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
       _log.d(
-        'logic: connectivity resolve player=${player.id} skipped (no capital)',
+        'connectivity resolve player=${player.id} skipped (no capital)',
       );
-      result[player.id] = ConnectivityResult(connected: {});
+      result[player.id] = const ConnectivityResult(connected: {});
       continue;
     }
 
@@ -110,7 +117,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final summary = result.entries
       .map((e) => '${e.key}:${e.value.connected.length}')
       .join(' ');
-  _log.d('logic: connectivity resolve end $summary');
+  _log.d('connectivity resolve end $summary');
   return result;
 }
 
@@ -189,7 +196,9 @@ bool _isCapitalTileOnSeaboard(
     final ny = capital.y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) return true;
     final cellId = map.cell(nx, ny);
-    if (!provinceIdsByType.contains(cellId)) return true;
+    if (!_isLandProvinceGridCell(cellId, capital.regionId, provinceIdsByType)) {
+      return true;
+    }
   }
   return false;
 }
@@ -450,7 +459,81 @@ ConnectivityResult _connectedTilesForPlayer({
     }
   }
 
-  return ConnectivityResult(connected: connected, pathTransportCap: pathCap);
+  final connectedByRoadRule = Set<String>.from(connected);
+  _applyTownRuleConnectivityClosure(
+    game: game,
+    playerId: playerId,
+    owned: owned,
+    tileMapByRegion: tileMapByRegion,
+    provinceIdsByType: provinceIdsByType,
+    worldState: worldState,
+    connected: connected,
+    pathCap: pathCap,
+  );
+
+  return ConnectivityResult(
+    connected: connected,
+    pathTransportCap: pathCap,
+    connectedByRoadRule: connectedByRoadRule,
+  );
+}
+
+/// § Connectivity (Game Rule) Town rule: 4-adjacent to a connected town in the **same** province.
+void _applyTownRuleConnectivityClosure({
+  required Game game,
+  required String playerId,
+  required Set<String> owned,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Set<String> provinceIdsByType,
+  required WorldState worldState,
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+}) {
+  var changed = true;
+  while (changed) {
+    changed = false;
+    for (final province in allProvinces(game.worldState)) {
+      if (province.ownerId != playerId) continue;
+      final tk = province.townTileKey;
+      if (tk == null || !connected.contains(tk)) continue;
+      final parts = tk.split('|');
+      if (parts.length != 4) continue;
+      final regionId = parts[0];
+      final localProv = parts[1];
+      final tx = int.tryParse(parts[2]) ?? -1;
+      final ty = int.tryParse(parts[3]) ?? -1;
+      if (tx < 0 || ty < 0) continue;
+      final map = tileMapByRegion[regionId];
+      if (map == null) continue;
+      for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+        final nx = tx + d.$1;
+        final ny = ty + d.$2;
+        if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
+        final cell = map.cell(nx, ny);
+        if (!_isLandProvinceGridCell(cell, regionId, provinceIdsByType)) {
+          continue;
+        }
+        if (cell != localProv) continue;
+        final nKey = CapitalTile.tileKey(regionId, province.id, nx, ny);
+        if (connected.contains(nKey)) continue;
+        connected.add(nKey);
+        pathCap[nKey] = pathCap[tk] ?? _transportLevelAtTile(worldState, tk);
+        changed = true;
+      }
+    }
+  }
+}
+
+/// Tile grids use local province ids (`p2`); [buildCombinedTopology] uses prefixed node ids (`oldWorld|p2`).
+bool _isLandProvinceGridCell(
+  String localCellId,
+  String regionId,
+  Set<String> landProvinceNodeIds,
+) {
+  if (landProvinceNodeIds.contains(localCellId)) return true;
+  return landProvinceNodeIds.contains(
+    ProvinceId.full(regionId, localCellId),
+  );
 }
 
 /// Adjacent tile keys (4-neighbour). Includes tiles in same or neighbouring provinces (any land cell). Tile key uses neighbour's province id.
@@ -470,7 +553,7 @@ List<String> _adjacentTileKeys(
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
     final cellId = map.cell(nx, ny);
-    if (!provinceIdsByType.contains(cellId)) continue;
+    if (!_isLandProvinceGridCell(cellId, regionId, provinceIdsByType)) continue;
     final fullProvinceId = '$regionId|$cellId';
     out.add(CapitalTile.tileKey(regionId, fullProvinceId, nx, ny));
   }

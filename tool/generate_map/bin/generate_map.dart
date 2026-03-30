@@ -6,15 +6,15 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = mapLogger();
 
 void _errExit(String message) {
   stderr.writeln(message);
-  _log.w('map: $message');
+  _log.w(message);
   exit(1);
 }
 
@@ -42,6 +42,7 @@ class ParsedMapArgs {
     this.topologyGraphPath,
     this.worldStatePath,
     this.tileSize,
+    this.writeTileMapJsonPath,
   });
 
   final int numProvinces;
@@ -60,6 +61,8 @@ class ParsedMapArgs {
   final String? topologyGraphPath;
   final String? worldStatePath;
   final int? tileSize;
+  /// When set, writes [TileMapResult.toJson] after generation (grid only; terrain/resource optional).
+  final String? writeTileMapJsonPath;
 }
 
 /// Pure argument parsing helper. Validates all arguments and returns parsed values.
@@ -80,6 +83,7 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
   var skipFillLakes = false;
   int? continentBufferOverride;
   int? tileSizeOverride;
+  String? writeTileMapJsonPath;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -222,6 +226,13 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
         _errExit('Error: --tile-size requires a positive integer, got: $value');
       }
       tileSizeOverride = parsed;
+    } else if (arg == '--write-tile-map-json' && i + 1 < arguments.length) {
+      writeTileMapJsonPath = arguments[++i];
+    } else if (arg.startsWith('--write-tile-map-json=')) {
+      writeTileMapJsonPath = arg.substring('--write-tile-map-json='.length).trim();
+      if (writeTileMapJsonPath.isEmpty) {
+        _errExit('Error: --write-tile-map-json= requires a non-empty path');
+      }
     }
   }
 
@@ -247,6 +258,7 @@ ParsedMapArgs parseMapArguments(List<String> arguments) {
     topologyGraphPath: topologyGraphPath,
     worldStatePath: worldStatePath,
     tileSize: tileSizeOverride,
+    writeTileMapJsonPath: writeTileMapJsonPath,
   );
 }
 
@@ -286,8 +298,10 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     continentBufferTiles: mapGenParams.continentBufferTiles,
   );
 
-  _log.i('map: === Map generation ===');
-  _log.i('map: Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})');
+  _log.i('=== Map generation ===');
+  _log.i(
+    'Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})',
+  );
   stdout.writeln('Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})');
   List<(int x, int y)>? landSeeds;
   List<int>? landSeedContinentIndices;
@@ -297,7 +311,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     numContinents: args.numContinents,
     regionId: args.regionId,
     resourceRules: ResourceRules.defaultRules,
-    onLog: (msg) => _log.i('map: $msg'),
+    onLog: _log.i,
     onLandSeedsPlaced: (s, indices) {
       landSeeds = List.from(s);
       landSeedContinentIndices = List.from(indices);
@@ -307,7 +321,18 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
 
   final tileCounts = computeTileCountsPerRegion(tileMapResult);
   final centroids = computeCentroidsPerRegion(tileMapResult);
-  _log.i('map: Tile map seed: ${args.seedUsed}');
+  _log.i('Tile map seed: ${args.seedUsed}');
+
+  final jsonOut = args.writeTileMapJsonPath;
+  if (jsonOut != null && jsonOut.isNotEmpty) {
+    final outFile = File(jsonOut);
+    outFile.parent.createSync(recursive: true);
+    outFile.writeAsStringSync(
+      const JsonEncoder.withIndent('  ').convert(tileMapResult.toJson()),
+    );
+    _log.i('map: Tile map JSON: ${outFile.absolute.path}');
+    stdout.writeln('Tile map JSON: ${outFile.absolute.path}');
+  }
 
   if (args.withTileMapImage) {
     final cellSize = args.tileSize;
@@ -335,10 +360,10 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
       );
     }
     final opened = openInDefaultViewer(imagePath);
-    _log.i('map: Tile map image: $imagePath');
+    _log.i('Tile map image: $imagePath');
     stdout.writeln('Tile map image: $imagePath');
     if (!opened) {
-      _log.w('map: Could not open in viewer. Saved to: $imagePath');
+      _log.w('Could not open in viewer. Saved to: $imagePath');
     }
   }
 
@@ -361,7 +386,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     );
     final dotFile = dotPath ?? _tempDotPath();
     File(dotFile).writeAsStringSync(dotContent);
-    _log.i('map: Topology graph (DOT): $dotFile');
+    _log.i('Topology graph (DOT): $dotFile');
     stdout.writeln('Topology graph (DOT): $dotFile');
 
     try {
@@ -369,9 +394,9 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
       final proc = Process.runSync('neato', ['-n', '-Tpng', '-o', pngPath, dotFile]);
       if (proc.exitCode == 0) {
         final opened = openInDefaultViewer(pngPath);
-        _log.i('map: Topology graph (PNG): $pngPath');
+        _log.i('Topology graph (PNG): $pngPath');
         if (!opened) {
-          _log.w('map: Could not open topology graph in viewer. Saved to: $pngPath');
+          _log.w('Could not open topology graph in viewer. Saved to: $pngPath');
         }
       } else {
         _warnGraphviz();
@@ -428,7 +453,7 @@ String _tempDotPath() {
 void _warnGraphviz() {
   const msg = 'Warning: Graphviz not installed; run `brew install graphviz` to render topology graph to PNG.';
   stderr.writeln(msg);
-  _log.w('map: $msg');
+  _log.w(msg);
 }
 
 void _printUsage() {
@@ -453,6 +478,7 @@ void _printUsage() {
   print('  --seed-before-assignment  Use legacy land assignment (default: off)');
   print('  --skip-fill-lakes  Skip Pass 4 (fill lakes); default off');
   print('  --continent-buffer N  Min sea tiles between continents (default: 2)');
+  print('  --write-tile-map-json <path>  Write TileMapResult JSON (grid; optional terrain/resource)');
 }
 
 void _interactiveLoop(

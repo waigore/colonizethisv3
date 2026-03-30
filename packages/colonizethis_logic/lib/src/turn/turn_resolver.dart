@@ -185,7 +185,7 @@ TurnResolutionResult resolveTurnForGame({
   required Orders orders,
   Map<String, TileMapResult>? tileMapByRegion,
 
-  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. Reassignment does not use [tileMapByRegion].
+  /// Per-region topology for capital reassignment sea-bound checks (SPEC/game/world-model-identity). When set, reassignment uses [topologyByRegion][regionId] for each player's region instead of combined [topology]. Callers with multi-region (e.g. app, ctdev) should pass this. When [tileMapByRegion] is non-null, combat capital reassignment also clears terrain resources and extraction improvements on the new capital tile per SPEC/game/tile-map-and-generation.md § Town and capital tile occupancy.
   Map<String, MapTopology>? topologyByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -218,7 +218,7 @@ TurnResolutionResult resolveTurnForGame({
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  _log.i('logic: turn $turn resolve start');
+  _log.i('turn $turn resolve start');
   Game state = game;
   final landFeedingCoverageByPlayerId = <String, double>{};
   final navalFeedingCoverageByPlayerId = <String, double>{};
@@ -230,7 +230,7 @@ TurnResolutionResult resolveTurnForGame({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
-    _log.d('logic: phase ${phase.name} start');
+    _log.d('phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
         // Orders are assumed to already be attached to the Game or passed in.
@@ -273,6 +273,7 @@ TurnResolutionResult resolveTurnForGame({
             turn,
             eventBus,
             onGameEvent,
+            onDialogue,
           );
           break;
         }
@@ -318,7 +319,7 @@ TurnResolutionResult resolveTurnForGame({
               );
             }
             throw StateError(
-              'logic: diplomacy pending but no pending lists populated',
+              'diplomacy pending but no pending lists populated',
             );
           }
           state = diploResult.game;
@@ -376,6 +377,7 @@ TurnResolutionResult resolveTurnForGame({
             turn,
             eventBus,
             onGameEvent,
+            onDialogue,
           );
           break;
         }
@@ -400,10 +402,10 @@ TurnResolutionResult resolveTurnForGame({
           break;
         }
     }
-    _log.d('logic: phase ${phase.name} end');
+    _log.d('phase ${phase.name} end');
   }
 
-  _log.i('logic: turn $turn resolve end');
+  _log.i('turn $turn resolve end');
   return TurnResolutionComplete(state);
 }
 
@@ -557,8 +559,7 @@ void _filterOrderList<T>(
         orderSummary: orderSummary(order),
         reasonCode: r.reason!,
       );
-      eventBus?.publish(event);
-      onGameEvent?.call(event);
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
     }
   }
 }
@@ -742,8 +743,7 @@ Game _runProductionPhase(
   for (final player in game.players) {
     final assignments =
         defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
-    final idleLabour =
-        idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
+    final idleLabour = idleLabourByPlayerId[player.id] ?? WorkerIdleCounts.zero;
     final result = resolveProduction(
       stockpile: player.stockpile,
       workers: player.workerPool,
@@ -776,8 +776,10 @@ Game _runConsumptionPhase(
   final updatedPlayers = <Player>[];
 
   for (final player in game.players) {
-    final regimentCounts =
-        regimentTypeCountsForPlayer(game.worldState, player.id);
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
     final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
 
     final result = resolveConsumption(
@@ -836,6 +838,51 @@ Game _runRichesToTreasuryPhase(Game game) {
   }
 
   return game.copyWith(players: updatedPlayers);
+}
+
+/// Runs Extraction → Riches-to-treasury → Consumption → Production only, in
+/// SPEC/program/turn-resolution-phases.md order.
+///
+/// Does not mutate [game]. Does not advance the turn or run other phases.
+/// Used for UI stockpile previews (e.g. production panel). Player order and
+/// extraction seeding match [_runExtractionPhase] so overseas interception
+/// matches a full turn for the same starting state.
+///
+/// When [extractedByPlayerId] is non-empty, extraction uses
+/// [applyExtractionForPlayers] only (same override path as full resolution).
+Game applyEconomyPhasesForPreview({
+  required Game game,
+  required MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  var state = game;
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
+  state = _runExtractionPhase(
+    state,
+    topology,
+    tileMapByRegion,
+    extractedByPlayerId,
+  );
+  state = _runRichesToTreasuryPhase(state);
+  state = _runConsumptionPhase(
+    state,
+    landFeedingCoverageByPlayerId,
+    navalFeedingCoverageByPlayerId,
+    idleLabourByPlayerId,
+  );
+  state = _runProductionPhase(
+    state,
+    defaultAssignments,
+    defaultAssignmentsByPlayerId,
+    idleLabourByPlayerId,
+    null,
+  );
+  return state;
 }
 
 Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
@@ -1051,10 +1098,42 @@ Game _runCombatPhase(
   };
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
-  _log.i('logic: combat conflict_detection start turn=$turn');
+  final preBattleDialogueSeed =
+      (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
+  _log.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
+  if (onDialogue != null && battles.isNotEmpty) {
+    for (final ctx in battles) {
+      final attackerIds = ctx.attackers.map((a) => a.factionId).toList()
+        ..sort();
+      final capitalThreatened = dialogueEventsForCapitalThreatened(
+        state,
+        capitalOwnerId: ctx.defenderFactionId,
+        provinceId: ctx.provinceId,
+        attackerFactionIds: attackerIds,
+        turnNumber: turn,
+        seed: preBattleDialogueSeed,
+      );
+      for (final e in capitalThreatened) {
+        onDialogue(e);
+      }
+      for (final attackerId in attackerIds) {
+        final reactive = dialogueEventsForReactiveHumanAttack(
+          state,
+          attackerFactionId: attackerId,
+          defenderFactionId: ctx.defenderFactionId,
+          provinceId: ctx.provinceId,
+          turnNumber: turn,
+          seed: preBattleDialogueSeed,
+        );
+        for (final e in reactive) {
+          onDialogue(e);
+        }
+      }
+    }
+  }
   _log.i(
-    'logic: combat conflict_detection end turn=$turn battleContexts=${battles.length}',
+    'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
@@ -1089,6 +1168,7 @@ Game _runCombatPhase(
     state,
     topology,
     topologyByRegion: topologyByRegion,
+    tileMapByRegion: tileMapByRegion,
   );
   // Great Power fall: any GP that lost its original capital and has no port provinces left forfeits.
   state = applyGreatPowerFall(state, previousCapitalByPlayer);

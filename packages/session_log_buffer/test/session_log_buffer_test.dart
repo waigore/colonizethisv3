@@ -48,6 +48,17 @@ void main() {
       expect(filtered, isEmpty);
     });
 
+    test('dotted logger tag buckets under known top-level prefix for filters', () {
+      final buffer = SessionLogBuffer.instance;
+      buffer.add(LogEvent(Level.info, 'ctdev.running_game: started'));
+      expect(buffer.entries.first.prefix, 'ctdev');
+      final filtered = buffer.getFiltered(
+        selectedPrefixes: {'ctdev'},
+        selectedLevels: {Level.info},
+      );
+      expect(filtered.length, 1);
+    });
+
     test('getFiltered with non-matching level returns empty', () {
       final buffer = SessionLogBuffer.instance;
       buffer.add(LogEvent(Level.debug, 'logic: test'));

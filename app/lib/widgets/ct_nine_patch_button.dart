@@ -1,6 +1,6 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flame/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 /// Nine-patch button using Flame's [NineTileBoxWidget]. SPEC/ui/buttons-nine-patch.md.
 ///
@@ -95,8 +95,8 @@ class CtNinePatchButton extends StatelessWidget {
                   child: child,
                 ),
                 errorBuilder: (_) {
-                  Logger().w(
-                    'logic: nine-patch button asset not found, using fallback',
+                  appLogger('ui').w(
+                    'nine-patch button asset not found, using fallback',
                   );
                   return _FallbackButton(
                     color: fallbackColor,

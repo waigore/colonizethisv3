@@ -16,6 +16,23 @@ class AssignedRecipe {
   final int assignedLabour;
 }
 
+/// Builds production assignments from the production panel’s desired output
+/// per recipe (units of output). SPEC/ui/production-panel.md.
+List<AssignedRecipe> assignedRecipesFromDesiredOutput(
+  Map<String, int> desiredByRecipe,
+) {
+  final list = <AssignedRecipe>[];
+  for (final entry in desiredByRecipe.entries) {
+    if (entry.value <= 0) continue;
+    final recipe = ProductionRecipesCatalog.byId[entry.key];
+    if (recipe == null) continue;
+    final labour = entry.value * recipe.labourPerOutput;
+    if (labour <= 0) continue;
+    list.add(AssignedRecipe(recipeId: entry.key, assignedLabour: labour));
+  }
+  return list;
+}
+
 class ProductionResult {
   const ProductionResult({
     required this.stockpile,
@@ -55,7 +72,7 @@ ProductionResult resolveProduction({
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      _log.w('logic: production skip unknown recipe id ${assignment.recipeId}');
+      _log.w('production skip unknown recipe id ${assignment.recipeId}');
       continue;
     }
     if (assignment.assignedLabour <= 0) continue;
@@ -64,7 +81,7 @@ ProductionResult resolveProduction({
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) {
       _log.w(
-        'logic: production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
+        'production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
       );
       continue;
     }
@@ -114,7 +131,7 @@ ProductionResult resolveProduction({
   }
 
   _log.d(
-    'logic: production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
+    'production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
   );
   return ProductionResult(
     stockpile: current,

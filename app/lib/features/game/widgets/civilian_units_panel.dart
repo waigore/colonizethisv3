@@ -87,7 +87,6 @@ class CivilianUnitsPanel extends StatelessWidget {
     required this.bus,
     this.currentOrders = const Orders(),
     this.availableWorkTargets = const {},
-    this.onAddWorkOrder,
   });
 
   final Game game;
@@ -99,8 +98,6 @@ class CivilianUnitsPanel extends StatelessWidget {
 
   /// Available work targets per unit (computed at turn start). Work targets not in this list are grayed out.
   final Map<String, List<String>> availableWorkTargets;
-
-  final void Function(WorkOrder order)? onAddWorkOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -122,8 +119,10 @@ class CivilianUnitsPanel extends StatelessWidget {
       actions: [
         CtNinePatchButton(
           onPressed: () {
-            Navigator.of(context).maybePop();
-            bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+            bus.emit(const ClosePanelEvent());
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+            });
           },
           child: const Text('Train'),
         ),
@@ -140,7 +139,6 @@ class CivilianUnitsPanel extends StatelessWidget {
               availableWorkTargets: availableWorkTargets,
               humanPlayerId: humanPlayerId,
               bus: bus,
-              onAddWorkOrder: onAddWorkOrder,
             ),
           ),
         ],
@@ -154,7 +152,6 @@ class CivilianUnitsPanel extends StatelessWidget {
               availableWorkTargets: availableWorkTargets,
               humanPlayerId: humanPlayerId,
               bus: bus,
-              onAddWorkOrder: onAddWorkOrder,
             ),
           ),
         ],
@@ -172,7 +169,6 @@ class _UnitRow extends StatelessWidget {
     required this.availableWorkTargets,
     required this.humanPlayerId,
     required this.bus,
-    this.onAddWorkOrder,
   });
 
   final Unit unit;
@@ -181,7 +177,6 @@ class _UnitRow extends StatelessWidget {
   final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
   final AppEventBus bus;
-  final void Function(WorkOrder order)? onAddWorkOrder;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -283,12 +278,15 @@ class _UnitRow extends StatelessWidget {
                 onTap: available.contains(target)
                     ? () {
                         Navigator.of(ctx).pop();
-                        bus.emit(
-                          StartCivilianWorkTargetSelectionEvent(
-                            unitId: unit.id,
-                            workTarget: target,
-                          ),
-                        );
+                        bus.emit(const ClosePanelEvent());
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          bus.emit(
+                            StartCivilianWorkTargetSelectionEvent(
+                              unitId: unit.id,
+                              workTarget: target,
+                            ),
+                          );
+                        });
                       }
                     : null,
               ),
@@ -351,13 +349,15 @@ class _UnitRow extends StatelessWidget {
               final tileKey = unit.tileKey!;
               final regionId = Unit.regionIdFromTileKey(tileKey);
               if (regionId == null) return;
-              bus.emit(
-                LocateMapTileEvent(
-                  tileKey: tileKey,
-                  regionId: regionId,
-                  closeCurrentPanel: true,
-                ),
-              );
+              bus.emit(const ClosePanelEvent());
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                bus.emit(
+                  LocateMapTileEvent(
+                    tileKey: tileKey,
+                    regionId: regionId,
+                  ),
+                );
+              });
             },
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

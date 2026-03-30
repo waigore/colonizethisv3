@@ -13,10 +13,10 @@ final _log = logicLogger();
 Game resolveResearchPhase(Game game, Orders orders) {
   final turn = game.worldState.turnState.turnNumber;
   final researchByPlayer = orders.researchOrdersByPlayerId;
-  _log.i('logic: research phase start turn=$turn');
+  _log.i('research phase start turn=$turn');
 
   if (researchByPlayer.isEmpty) {
-    _log.i('logic: research phase end turn=$turn playersWithOrders=0');
+    _log.i('research phase end turn=$turn playersWithOrders=0');
     return game;
   }
 
@@ -35,7 +35,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
     final slots = player.researchSlots ?? defaultResearchSlots;
     if (slots <= 0) {
       _log.i(
-        'logic: research apply turn=$turn playerId=${player.id} '
+        'research apply turn=$turn playerId=${player.id} '
         'orders=${playerOrders.length} skipped=true reason=no_research_slots',
       );
       updatedPlayers.add(player);
@@ -169,7 +169,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final treasuryDelta = treasury - player.treasury;
     _log.i(
-      'logic: research apply turn=$turn playerId=${player.id} '
+      'research apply turn=$turn playerId=${player.id} '
       'orders=${playerOrders.length} treasuryDelta=$treasuryDelta '
       'completedTechs=${toUnlock.length} inProgressTechs=${nextProgress.length}',
     );
@@ -186,7 +186,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
   }
 
   _log.i(
-    'logic: research phase end turn=$turn playersWithOrders=$playersWithOrders',
+    'research phase end turn=$turn playersWithOrders=$playersWithOrders',
   );
   return game.copyWith(players: updatedPlayers);
 }

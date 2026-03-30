@@ -271,8 +271,10 @@ class MilitaryUnitsPanel extends StatelessWidget {
       actions: [
         CtNinePatchButton(
           onPressed: () {
-            Navigator.of(context).maybePop();
-            bus.emit(OpenDialogEvent(trainMilitaryDialogId));
+            bus.emit(const ClosePanelEvent());
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              bus.emit(OpenDialogEvent(trainMilitaryDialogId));
+            });
           },
           child: const Text('Train'),
         ),
@@ -292,13 +294,17 @@ class MilitaryUnitsPanel extends StatelessWidget {
                   row: row,
                   onTap: row.tileKey == null
                       ? null
-                      : () => bus.emit(
-                          LocateMapTileEvent(
-                            tileKey: row.tileKey!,
-                            regionId: row.regionId,
-                            closeCurrentPanel: true,
-                          ),
-                        ),
+                      : () {
+                          bus.emit(const ClosePanelEvent());
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            bus.emit(
+                              LocateMapTileEvent(
+                                tileKey: row.tileKey!,
+                                regionId: row.regionId,
+                              ),
+                            );
+                          });
+                        },
                 ),
             if (loc is _SeaZoneLocationNode)
               for (final row in loc.rows)
@@ -306,13 +312,17 @@ class MilitaryUnitsPanel extends StatelessWidget {
                   row: row,
                   onTap: row.tileKey == null
                       ? null
-                      : () => bus.emit(
-                          LocateMapTileEvent(
-                            tileKey: row.tileKey!,
-                            regionId: row.regionId,
-                            closeCurrentPanel: true,
-                          ),
-                        ),
+                      : () {
+                          bus.emit(const ClosePanelEvent());
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            bus.emit(
+                              LocateMapTileEvent(
+                                tileKey: row.tileKey!,
+                                regionId: row.regionId,
+                              ),
+                            );
+                          });
+                        },
                 ),
           ],
         ],
