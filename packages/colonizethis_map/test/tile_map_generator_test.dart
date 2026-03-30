@@ -109,6 +109,49 @@ void main() {
       expect(topology.nodes.length, greaterThanOrEqualTo(2));
     });
 
+    test(
+        'TileMapGenerator.generate emits end info with continents and success',
+        () {
+      final capturedEvents = <LogEvent>[];
+      void listener(LogEvent e) => capturedEvents.add(e);
+      Logger.addLogListener(listener);
+      Logger.level = Level.info;
+
+      try {
+        final params =
+            TileMapParams(width: 20, height: 15, seed: 1, seaFraction: 0.6);
+        final gen = TileMapGenerator(params: params);
+
+        final (_, topology) = gen.generate(
+          numProvinces: 3,
+          numContinents: 2,
+          regionId: 'r1',
+        );
+
+        final expectedProvinces = topology.nodes
+            .where((n) => n.type == TopologyNodeType.province)
+            .length;
+        const expectedContinents = 2;
+
+        final endMessages = capturedEvents
+            .where(
+              (e) => e.message.contains('TileMapGenerator.generate end'),
+            )
+            .map((e) => e.message)
+            .toList();
+        expect(endMessages.length, 1);
+
+        final endLine = endMessages.single;
+        expect(endLine, contains('regionId=r1'));
+        expect(endLine, contains('provinces=$expectedProvinces'));
+        expect(endLine, contains('continents=$expectedContinents'));
+        expect(endLine, contains('success=true'));
+      } finally {
+        Logger.removeLogListener(listener);
+        Logger.level = Level.info;
+      }
+    });
+
     test('two adjacent regions touch in grid', () {
       final params = TileMapParams(width: 30, height: 30, seed: 42, maxEnforceIterations: 5, seaFraction: 0.6);
       final (result, _) = TileMapGenerator(params: params).generate(
