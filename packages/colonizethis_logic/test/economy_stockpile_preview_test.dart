@@ -161,5 +161,142 @@ void main() {
         expect(deltas, expected);
       },
     );
+
+    test('explicit extracted override takes precedence over tile-map extraction', () {
+      final game = _singlePlayerGame(
+        stockpile: const Stockpile(quantities: {'timber': 2}),
+        workerPool: WorkerPool.empty,
+      );
+
+      final projected = previewStockpileNetDeltaByCommodityForPlayer(
+        game: game,
+        playerId: 'p1',
+        topology: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        ),
+        tileMapByRegion: {
+          'oldWorld': TileMapResult(
+            width: 1,
+            height: 1,
+            grid: [
+              ['p1'],
+            ],
+          ),
+        },
+        extractedByPlayerId: const {
+          'p1': {'timber': 5},
+        },
+      );
+
+      expect(projected['timber'], 5);
+    });
+
+    test(
+      'multi-player preview leaves non-viewed players with empty production assignments',
+      () {
+        final game = Game(
+          id: 'g-multi',
+          worldState: const WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+          ),
+          players: const [
+            Player(
+              id: 'p1',
+              displayName: 'Human',
+              isHuman: true,
+              stockpile: Stockpile(quantities: {'timber': 2}),
+              workerPool: WorkerPool(apprentices: 1),
+            ),
+            Player(
+              id: 'p2',
+              displayName: 'AI',
+              isHuman: false,
+              stockpile: Stockpile(quantities: {'timber': 2}),
+              workerPool: WorkerPool(apprentices: 1),
+            ),
+          ],
+        );
+
+        final assignmentsByPlayerId = <String, List<AssignedRecipe>>{
+          for (final p in game.players) p.id: const <AssignedRecipe>[],
+        };
+        assignmentsByPlayerId['p1'] = assignedRecipesFromDesiredOutput(const {
+          'lumber_from_timber': 1,
+        });
+
+        final after = applyEconomyPhasesForPreview(
+          game: game,
+          topology: const MapTopology(),
+          tileMapByRegion: const {},
+          assignmentsByPlayerId: assignmentsByPlayerId,
+          extractedByPlayerId: const {
+            'p1': {'grain': 1, 'refinedSugar': 1},
+            'p2': {'grain': 1, 'refinedSugar': 1},
+          },
+        );
+
+        final p2Before = game.playerById('p2')!;
+        final p2After = after.playerById('p2')!;
+        expect(p2After.stockpile.quantityOf('lumber'), 0);
+        expect(
+          p2After.stockpile.quantityOf('timber'),
+          p2Before.stockpile.quantityOf('timber'),
+        );
+      },
+    );
+
+    test('assigned recipes ignores invalid and non-positive desired output', () {
+      final assignments = assignedRecipesFromDesiredOutput(const {
+        'lumber_from_timber': 2,
+        'not_a_recipe': 4,
+        'fabric_from_wool': 0,
+        'furniture_from_lumber': -3,
+      });
+
+      expect(assignments, hasLength(1));
+      expect(assignments.first.recipeId, 'lumber_from_timber');
+      expect(assignments.first.assignedLabour, 4);
+    });
+
+    test('preview returns empty map for unknown player id', () {
+      final game = _singlePlayerGame(
+        stockpile: const Stockpile(quantities: {'timber': 2}),
+        workerPool: WorkerPool.empty,
+      );
+
+      final deltas = previewStockpileNetDeltaByCommodityForPlayer(
+        game: game,
+        playerId: 'missing-player',
+        topology: const MapTopology(),
+        tileMapByRegion: const {},
+      );
+
+      expect(deltas, isEmpty);
+    });
+
+    test('consumption can remove commodity entirely and emits negative delta', () {
+      final game = _singlePlayerGame(
+        stockpile: const Stockpile(quantities: {'grain': 1}),
+        workerPool: const WorkerPool(peasants: 2),
+      );
+
+      final deltas = previewStockpileNetDeltaByCommodityForPlayer(
+        game: game,
+        playerId: 'p1',
+        topology: const MapTopology(),
+        tileMapByRegion: const {},
+      );
+
+      expect(deltas['grain'], -1);
+    });
   });
 }
