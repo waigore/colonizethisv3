@@ -323,7 +323,7 @@ _buildNavalTree(Game game, String humanPlayerId) {
         final locationLabel =
             '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
         homeFleetRow = _FleetRow(
-          fleetId: 'home_fleet',
+          fleetId: homeFleetIdFor(humanPlayerId),
           label: 'Home Fleet',
           locationLabel: locationLabel,
           regionId: regionId,
