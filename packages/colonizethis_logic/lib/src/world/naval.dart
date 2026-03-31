@@ -3,6 +3,26 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
+/// True when a dock order targeting [dockFullProvinceId] is the player's capital;
+/// such a move merges into the Home Fleet. SPEC/game/ships-and-naval.md § Home Fleet.
+bool dockOrderTargetsPlayerCapital(
+  Game game,
+  String playerId,
+  String dockFullProvinceId,
+) {
+  String? cap;
+  for (final p in game.players) {
+    if (p.id == playerId) {
+      cap = p.capitalProvinceId;
+      break;
+    }
+  }
+  if (cap == null || cap.isEmpty) return false;
+  if (ProvinceId.isPrefixed(cap)) return cap == dockFullProvinceId;
+  return ProvinceId.full(ProvinceId.regionIdFrom(dockFullProvinceId), cap) ==
+      dockFullProvinceId;
+}
+
 /// Home fleet id convention for a Great Power. SPEC/game/ships-and-naval.md.
 String homeFleetIdFor(String playerId) => 'fleet_$playerId';
 

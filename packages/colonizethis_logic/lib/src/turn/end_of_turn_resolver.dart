@@ -44,8 +44,14 @@ Game runEndOfTurnPhase(
     ),
   );
   var nextVisibility = applyFogDecay(stateForFog);
+  nextVisibility = applyDistantSeaZoneFogRevert(
+    stateForFog,
+    nextVisibility,
+    topology,
+    topologyByRegion: topologyByRegion,
+  );
   nextVisibility = applyCoastalSeaZoneFullVisibility(
-    game,
+    stateForFog,
     nextVisibility,
     topology,
     topologyByRegion: topologyByRegion,

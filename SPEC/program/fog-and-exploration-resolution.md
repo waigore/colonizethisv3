@@ -56,6 +56,14 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 4. Set each of those tile keys to `fullyVisible` for that player in `WorldState.playerVisibilityByTile` (overrides unknown or fogged).
 5. **Runs twice:** (a) during Game Setup, immediately after initial visibility assignment, so players can see adjacent sea zones from turn 0; and (b) during End-of-turn after fog decay, so visibility remains consistent after ownership changes. Tribes and Minor Nations do not get this rule.
 
+**Distant sea zone fog** (End-of-turn phase, after Explorer/Spy fog decay, **before** coastal sea zone full visibility):
+
+1. For each Great Power player and each sea zone S in each region (from topology sea-zone nodes in that region):
+   - **Skip** S if there exists a province P with a **P–S** edge to S (same regional topology slice) such that `P` is **fully owned** by that player.
+   - **Skip** S if that player has **any fleet at sea** in S (`Fleet.seaZoneId == S`, `Fleet.regionId` matches S’s region, `fleet.ownerId == playerId`). Fleets **in port** do not count for this check.
+   - Otherwise, for each water tile key in S from `tileKeysByRegionAndProvince[regionId][seaZoneLocalId]`, set visibility to **fogged** unless the tile is **unknown** (leave unknown unchanged).
+2. **Ordering:** This step runs after `applyFogDecay` and **before** `applyCoastalSeaZoneFullVisibility` so coastal waters return to full visibility when the player owns adjacent land.
+
 **Ship reveal** (Naval Movement phase):
 
 1. When fleet enters sea zone S, set all coastal land tiles of adjacent provinces to revealed for that player.
@@ -76,7 +84,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 | Game Setup | Initial visibility (OW: own fully visible, others fogged; NW: unknown); **coastal sea zone full visibility** (for each GP, set all tiles in sea zones adjacent to owned provinces to fullyVisible) |
 | Naval Movement | Ship reveal (coastal land tiles → revealed) |
 | Build/Work | Exploration progress; prospect resolution |
-| End-of-turn | Fog decay (Spy timer + Explorer/Spy); **coastal sea zone full visibility** (for each GP, set all tiles in sea zones adjacent to owned provinces to fullyVisible) |
+| End-of-turn | Fog decay (Spy timer + Explorer/Spy); **distant sea zone fog** (sea zones not adjacent to owned coast and with no player fleet at sea in that zone → water tiles fogged, unknown unchanged); **coastal sea zone full visibility** (for each GP, set all tiles in sea zones adjacent to owned provinces to fullyVisible) |
 
 **Upstream:** World state (provinces, tile map, units, owners).
 
@@ -99,8 +107,10 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 - **Prospecting:** Prospect work orders validate that the target tile is mineral-eligible per game rules, is not already in that player's `playerProspectedTiles`, and meets visibility (province at least fogged); on application the tile is added to the player's prospected set in WorldState and does not change visibility by itself. Order validation uses the same mineral-eligibility helper as application (including optional per-region tile maps when provided at validation time).
 - **Spy reveal and decay:** While a Spy is present in a non-owner province, that province is fully visible to the Spy's owner via PlayerView; when the Spy leaves, a per-(player, province) timer (duration = Spy fog decay turns, **fixed at 5 for MVP**) is started **only if the province is owned by another faction** and, when it reaches 0, tiles in that province decay to fogged for that player. Spy timers MUST NOT be created for a player's own provinces and MUST NOT change visibility in own provinces.
 - **Explorer/Spy fog decay:** At end of turn, for each other-faction province where the player previously had Explorer/Spy presence, if no Explorer/Spy remains and no Spy timer is active, all tiles in that province decay to fogged while preserving last-known state.
-- **Ship reveal and integration:** When a fleet enters a sea zone, coastal tiles of adjacent provinces become revealed for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
+- **Ship reveal and integration:** When a fleet enters a sea zone, coastal tiles of adjacent provinces become **revealed** and **water** tiles in that sea zone become **fully visible** for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
 - **Coastal sea zone full visibility:** During Game Setup (after initial visibility) and every turn in End-of-turn (after fog decay), for each Great Power (including human): all tiles in sea zones that are adjacent (P–S in topology) to provinces that player fully owns are set to fullyVisible in WorldState; PlayerView reflects this; Tribes and Minor Nations do not receive this rule.
+
+- **Distant sea zone fog:** given a Great Power player, a sea zone S in region R, and water tile keys for S in `tileKeysByRegionAndProvince`, when End-of-turn runs after Movement and S is **not** P–S adjacent to any province owned by that player and that player has **no** fleet **at sea** in S, then every such water tile that is **not** `unknown` in that player’s visibility map is set to **fogged** before the coastal sea zone visibility pass; when that player **does** have a fleet **at sea** in S, water tiles in S are **not** forced to fogged by this rule solely due to lack of adjacent owned coast.
 
 ### Additional Given–When–Then acceptance criteria
 
@@ -115,6 +125,14 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 - Given a Great Power owns a coastal province \(P\) and sea zone \(S\) is adjacent to \(P\) (P–S edge in topology) and the tile map has at least one tile in \(S\)  
   When game setup completes (before turn 0)  
   Then every tile key that belongs to sea zone \(S\) (second segment of tile key = \(S\)'s local id in that region) is set to `fullyVisible` for that player in `WorldState.playerVisibilityByTile`.
+
+- Given a Great Power \(G\) owns no province with a P–S edge to sea zone \(S\) in region \(R\), and \(G\) has no fleet at sea in \(S\), and a water tile \(T\) in \(S\) is listed in `tileKeysByRegionAndProvince` for \(R\) with key \(S\), and \(G\)’s visibility for \(T\) is `fullyVisible`  
+  When the system completes the End-of-turn **distant sea zone fog** step (before coastal sea zone full visibility)  
+  Then \(G\)’s visibility for \(T\) in `WorldState.playerVisibilityByTile` is `fogged`.
+
+- Given a Great Power \(G\) has a fleet at sea in sea zone \(S\) (same region as \(S\)) and \(G\) owns no coastal province adjacent to \(S\)  
+  When the system completes the End-of-turn **distant sea zone fog** step  
+  Then \(G\)’s visibility for water tiles in \(S\) is not set to `fogged` by that step solely because of missing adjacent owned coast (fleet presence preserves open-water visibility until the fleet leaves).
 
 - Given a Great Power owns a coastal province \(P\) and sea zone \(S\) is adjacent to \(P\) (P–S edge in topology) and the tile map has at least one tile in \(S\)  
   When the system runs the End-of-turn phase including the coastal sea zone full visibility step  

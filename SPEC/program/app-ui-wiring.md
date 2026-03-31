@@ -69,6 +69,8 @@ For `train_civilians` and `train_military`, shared order/count orchestration mus
 
 **Split fleet:** `NavalUnitsPanel` uses local `showDialog` for `SplitFleetDialog`, but the dialog commits via **`NavalSplitFleetRequestedEvent`** → `AppEventHandlerScope` (applies `applyNavalSplitFleet`, then emits **`NavalFleetsUpdatedEvent`**) so the dialog does not receive panel merge callbacks. Widgetbook / tests without the shell wire the same request event or listen for `NavalFleetsUpdatedEvent` only.
 
+**Move fleet:** `NavalUnitsPanel` uses local `showDialog` for `MoveFleetDialog`. On confirm, emit **`NavalMoveFleetRequestedEvent`** → `AppEventHandlerScope` updates **`currentOrdersProvider`** via **`applyNavalMoveOrderForPlayer`** (replaces any prior naval move for that fleet and removes naval mission orders for that fleet from the draft). No merge callback into the dialog.
+
 **Train at-capital dialogs:** `TrainCiviliansDialog` / `TrainMilitaryDialog` emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** on close; `AppEventHandlerScope` merges into orders. No `onOrdersChanged` callback from the shell into the dialog.
 
 ---

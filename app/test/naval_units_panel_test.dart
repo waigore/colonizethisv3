@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -103,6 +104,7 @@ void main() {
     required Game game,
     required String humanPlayerId,
     AppEventBus? bus,
+    MapTopology topology = const MapTopology(),
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
@@ -111,6 +113,7 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           bus: resolvedBus,
+          topology: topology,
         ),
       ),
     );
@@ -891,6 +894,7 @@ void main() {
                       game: game,
                       humanPlayerId: humanId,
                       bus: bus,
+                      topology: getDebugInitGameResult().combinedTopology,
                     ),
                   ),
                 ],
