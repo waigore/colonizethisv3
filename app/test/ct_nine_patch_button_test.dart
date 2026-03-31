@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final ninePatchFallbackPng = base64Decode(
