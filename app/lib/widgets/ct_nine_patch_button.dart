@@ -54,20 +54,11 @@ class CtNinePatchButton extends StatelessWidget {
         child: InkWell(
           onTap: enabled ? onPressed : null,
           child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double? width = constraints.maxWidth.isFinite
-                  ? constraints.maxWidth
-                  : null;
-              final double? height = constraints.maxHeight.isFinite &&
-                      constraints.maxHeight >= minHeight
-                  ? constraints.maxHeight
-                  : null;
+            builder: (context, _) {
               return NineTileBoxWidget.asset(
                 path: _kAssetPath,
                 tileSize: _tileSize,
                 destTileSize: destTileSize,
-                width: width,
-                height: height,
                 padding: padding ??
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Center(
