@@ -230,7 +230,7 @@ TurnResolutionResult resolveTurnForGame({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
-    _log.d('phase ${phase.name} start');
+    _log.i('phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
         // Orders are assumed to already be attached to the Game or passed in.
@@ -402,7 +402,7 @@ TurnResolutionResult resolveTurnForGame({
           break;
         }
     }
-    _log.d('phase ${phase.name} end');
+    _log.i('phase ${phase.name} end');
   }
 
   _log.i('turn $turn resolve end');
