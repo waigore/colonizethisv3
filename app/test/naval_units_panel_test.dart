@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
+import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -2495,6 +2496,49 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+      'AC: Non-home fleet Move action opens MoveFleetDialog without framework exceptions',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+        final nonHomeFleets = game.worldState.fleets
+            .where(
+              (f) =>
+                  f.ownerId == humanId &&
+                  f.shipTypeIds.isNotEmpty &&
+                  f.id != homeFleetIdFor(humanId),
+            )
+            .toList();
+        if (nonHomeFleets.isEmpty) return;
+        final targetFleet = nonHomeFleets.first;
+
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: humanId),
+        );
+        await tester.pumpAndSettle();
+
+        final fleetTile = find.widgetWithText(
+          ExpansionTile,
+          'Fleet ${targetFleet.id}',
+        );
+        expect(fleetTile, findsOneWidget);
+        await tester.ensureVisible(fleetTile);
+        await tester.tap(fleetTile);
+        await tester.pumpAndSettle();
+
+        final moveButton = find.descendant(
+          of: fleetTile,
+          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        );
+        expect(moveButton, findsOneWidget);
+        await tester.ensureVisible(moveButton);
+        await tester.tap(moveButton);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MoveFleetDialog), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
