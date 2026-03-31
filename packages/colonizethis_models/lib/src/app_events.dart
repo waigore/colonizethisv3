@@ -238,6 +238,18 @@ class NavalSplitFleetRequestedEvent extends SessionCommandEvent {
   final List<String> shipInstanceIdsToNewFleet;
 }
 
+/// Move fleet dialog confirm: shell merges [moveOrder] into current-turn draft orders.
+/// SPEC/program/app-ui-wiring.md.
+class NavalMoveFleetRequestedEvent extends SessionCommandEvent {
+  NavalMoveFleetRequestedEvent({
+    required this.humanPlayerId,
+    required this.moveOrder,
+  });
+
+  final String humanPlayerId;
+  final NavalMoveOrder moveOrder;
+}
+
 /// Train civilians dialog close: shell merges into current-turn orders draft.
 class TrainCivilianBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainCivilianBuildOrdersCommittedEvent({required this.orders});

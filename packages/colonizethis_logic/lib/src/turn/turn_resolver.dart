@@ -19,6 +19,7 @@ import '../economy/economy_riches_to_treasury.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/minor_military_parity.dart';
 import '../world/movement.dart';
+import '../orders/draft_orders_mutations.dart';
 import '../orders/orders_application.dart';
 import '../economy/resource_extractor.dart';
 import '../economy/sea_transport.dart';
@@ -975,7 +976,11 @@ Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
   }
 
   // Naval mission assignment. Phase 6. Apply after moves so fleet position is final.
-  final missionOrders = orders.navalMissionOrdersByPlayerId;
+  // Fleets with a naval move this turn do not apply a naval mission order.
+  final missionOrders = navalMissionOrdersRespectingNavalMoves(
+    orders.navalMissionOrdersByPlayerId,
+    orders.navalMoveOrdersByPlayerId,
+  );
   // Always apply so we run the clearing pass for blockades when not at war.
   state = applyNavalMissionOrders(state, missionOrders);
 

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../utils/map_location_resolver.dart';
+import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
@@ -388,11 +389,13 @@ class NavalUnitsPanel extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.bus,
+    required this.topology,
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
+  final MapTopology topology;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -594,6 +597,29 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
+  void _openMoveFleetDialog(_FleetRow row) {
+    if (row.isHomeFleet) return;
+    Fleet? fleet;
+    for (final f in widget.game.worldState.fleets) {
+      if (f.id == row.fleetId) {
+        fleet = f;
+        break;
+      }
+    }
+    final nonNullFleet = fleet;
+    if (nonNullFleet == null) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => MoveFleetDialog(
+        game: widget.game,
+        topology: widget.topology,
+        humanPlayerId: widget.humanPlayerId,
+        fleet: nonNullFleet,
+        bus: widget.bus,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
@@ -651,6 +677,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               onCombineSelectionToggle: () =>
                   _toggleFleetSelection(group.homeFleet!),
               onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+              onMoveFleet: null,
               isSplitAllowed: true,
             ),
           for (final loc in group.locations) ...[
@@ -674,6 +701,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 ),
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
                 onSplitFleet: () => _openSplitDialog(row),
+                onMoveFleet: () => _openMoveFleetDialog(row),
                 isSplitAllowed: true,
               ),
           ],
@@ -691,6 +719,7 @@ class _FleetExpansionTile extends StatelessWidget {
     required this.isSelectedForCombine,
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
+    this.onMoveFleet,
     this.isSplitAllowed = false,
   });
 
@@ -699,6 +728,7 @@ class _FleetExpansionTile extends StatelessWidget {
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
+  final VoidCallback? onMoveFleet;
   final bool isSplitAllowed;
 
   String _summary() {
@@ -773,6 +803,18 @@ class _FleetExpansionTile extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (onMoveFleet != null) ...[
+                    CtNinePatchButton(
+                      onPressed: onMoveFleet,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      minHeight: 36,
+                      child: const Text('Move'),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   CtNinePatchButton(
                     onPressed: onSplitFleet,
                     padding: const EdgeInsets.symmetric(

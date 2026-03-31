@@ -207,3 +207,99 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
   return result;
 }
 
+bool _seaZoneHasOwnedCoastalProvinceForPlayer(
+  Game game,
+  String playerId,
+  String regionId,
+  String seaZoneLocalId,
+  MapTopology regionTopology,
+) {
+  final adjacentLocal = provinceIdsAdjacentToSeaZone(
+    regionTopology,
+    seaZoneLocalId,
+    regionId: regionId,
+  );
+  for (final localPid in adjacentLocal) {
+    final full = ProvinceId.full(regionId, localPid);
+    final p = tryGetProvince(game.worldState, full);
+    if (p != null && p.ownerId == playerId) return true;
+  }
+  return false;
+}
+
+bool _playerHasFleetAtSeaInZone(
+  Game game,
+  String playerId,
+  String regionId,
+  String seaZoneLocalId,
+) {
+  for (final f in game.worldState.fleets) {
+    if (f.ownerId != playerId) continue;
+    if (!f.isAtSea || f.seaZoneId != seaZoneLocalId) continue;
+    if (f.regionId != regionId) continue;
+    return true;
+  }
+  return false;
+}
+
+/// For each Great Power, every sea zone that is **not** adjacent (P–S) to a
+/// province that player **fully owns**, and where that player has **no** fleet
+/// **at sea** in that zone: set all **water** tiles in that zone to **fogged**
+/// (tiles currently **unknown** are unchanged).
+///
+/// Runs after Explorer/Spy fog decay and **before** coastal sea zone full
+/// visibility. SPEC/program/fog-and-exploration-resolution.md § Distant sea zone fog.
+Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
+  Game game,
+  Map<String, Map<String, String>> visibility,
+  MapTopology topology, {
+  Map<String, MapTopology>? topologyByRegion,
+}) {
+  final gpIds = game.players.map((p) => p.id).toSet();
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final result = <String, Map<String, String>>{};
+  for (final entry in visibility.entries) {
+    result[entry.key] = Map<String, String>.from(entry.value);
+  }
+
+  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
+    final regionTopology = _topologyForRegion(topology, topologyByRegion, regionId);
+    final seaZoneIds = regionTopology.nodes
+        .where((n) => n.type == TopologyNodeType.seaZone)
+        .map((n) => n.id);
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) continue;
+
+    for (final player in game.players) {
+      if (!gpIds.contains(player.id)) continue;
+      final playerId = player.id;
+      final vis = result[playerId];
+      if (vis == null) continue;
+
+      for (final seaZoneId in seaZoneIds) {
+        if (_seaZoneHasOwnedCoastalProvinceForPlayer(
+          game,
+          playerId,
+          regionId,
+          seaZoneId,
+          regionTopology,
+        )) {
+          continue;
+        }
+        if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
+          continue;
+        }
+        final keys = regionTileKeys[seaZoneId];
+        if (keys == null) continue;
+        for (final tk in keys) {
+          final cur = vis[tk];
+          if (cur == null || cur == VisibilityLevel.unknown.name) continue;
+          vis[tk] = VisibilityLevel.fogged.name;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+

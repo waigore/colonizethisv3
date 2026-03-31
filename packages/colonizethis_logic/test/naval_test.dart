@@ -53,6 +53,7 @@ void main() {
       const provinceLocalId = 'p1';
       const fullProvinceId = '$ow|$provinceLocalId';
       const tileKey = '$fullProvinceId|0|0';
+      const tileSea2 = '$ow|sea2|0|0';
 
       final revealTopology = MapTopology(
         nodes: const [
@@ -91,6 +92,7 @@ void main() {
           tileKeysByRegionAndProvince: const {
             ow: {
               fullProvinceId: [tileKey],
+              'sea2': [tileSea2],
             },
           },
           playerVisibilityByTile: const {
@@ -117,6 +119,10 @@ void main() {
       expect(
         next.worldState.playerVisibilityByTile['gp1']?[tileKey],
         VisibilityLevel.revealed.name,
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['gp1']?[tileSea2],
+        VisibilityLevel.fullyVisible.name,
       );
     });
 
