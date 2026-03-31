@@ -404,9 +404,9 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
   }
 
   void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
-    bus.emit(
+    widget.bus.emit(
       RemoveDiplomaticOrderRequestedEvent(
-        playerId: humanPlayerId,
+        playerId: widget.humanPlayerId,
         type: type,
         targetFactionId: targetFactionId,
       ),
@@ -427,9 +427,9 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
   }
 
   void _appendOrder(DiplomaticOrder order) {
-    bus.emit(
+    widget.bus.emit(
       AppendDiplomaticOrderRequestedEvent(
-        playerId: humanPlayerId,
+        playerId: widget.humanPlayerId,
         order: order,
       ),
     );
