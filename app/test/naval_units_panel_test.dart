@@ -2423,6 +2423,79 @@ void main() {
       expect(find.text('No naval units'), findsOneWidget);
     });
 
+    testWidgets('AC: Home Fleet row does not show Move action', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_move_home';
+      const capProvince = 'oldWorld|cap1';
+      final homeId = homeFleetIdFor(humanId);
+
+      final moveHomeGame = Game(
+        id: 'g_move_home',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'cap1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: homeId,
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: capProvince,
+              ships: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              capProvince: ['oldWorld|cap1|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Move Home Test',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: moveHomeGame, humanPlayerId: humanId),
+      );
+      await tester.pumpAndSettle();
+
+      final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
+      expect(homeTile, findsOneWidget);
+
+      await tester.tap(homeTile);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: homeTile,
+          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        ),
+        findsNothing,
+      );
+    });
+
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
       (WidgetTester tester) async {

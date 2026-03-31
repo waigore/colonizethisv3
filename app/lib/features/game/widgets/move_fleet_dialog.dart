@@ -5,7 +5,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../utils/map_location_resolver.dart';
 import 'units/shared/units_panel_region_label.dart';
 
@@ -222,7 +221,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        CtNinePatchButton(
+        TextButton(
           onPressed: _selected == null
               ? null
               : () {
@@ -234,8 +233,6 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                   );
                   Navigator.pop(context);
                 },
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          minHeight: 40,
           child: const Text('Confirm'),
         ),
       ],
