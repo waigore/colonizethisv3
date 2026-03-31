@@ -63,7 +63,7 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 
 - **`UIActionEvent`** — dialogs, navigation, panels, map locate/selection intents, grants/subsidy submit; concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**.
-- **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**, **`NavalSplitFleetRequestedEvent`**, **`TrainCivilianBuildOrdersCommittedEvent`**, **`TrainMilitaryBuildOrdersCommittedEvent`**.
+- **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**, **`NavalSplitFleetRequestedEvent`**, **`NavalMoveFleetRequestedEvent`** (naval panel → current‑turn orders draft), **`TrainCivilianBuildOrdersCommittedEvent`**, **`TrainMilitaryBuildOrdersCommittedEvent`**.
 - **`UISystemEvent`** — snackbar, overlay, notify.
 - **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`InterventionRequiredEvent`**, **`CallToArmsRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
 

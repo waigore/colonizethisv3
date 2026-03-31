@@ -107,7 +107,7 @@ Like military and civilian **units**, each ship **hull** in play has a **stable 
 
 ## Ship Reveal Mechanic
 
-When a fleet **enters** a sea zone (move order), all **coastal land tiles** of provinces adjacent to that sea zone are set to **revealed** for that player. This enables Explorer deployment to New World (at least one coastal tile must be revealed first). Reference: I2 03-units-civilian — "first terrain tile is uncovered when a ship enters a sea zone adjacent to the New World."
+When a fleet **enters** a sea zone (move order), all **coastal land tiles** of provinces adjacent to that sea zone are set to **revealed** for that player, and all **water** tiles in that sea zone are set **fully visible** for that player (see [fog-and-exploration.md](fog-and-exploration.md) § Distant sea zone fog for End-of-turn re-fog when no owned adjacent coast and no fleet at sea there). This enables Explorer deployment to New World (at least one coastal tile must be revealed first). Reference: I2 03-units-civilian — "first terrain tile is uncovered when a ship enters a sea zone adjacent to the New World."
 
 Province identity for visibility updates must use **full** province id (`regionId|localId`) and **region-scoped** lookup (only provinces in the destination sea zone's region); see [world-model-identity.md](world-model-identity.md).
 
@@ -123,10 +123,12 @@ The **home fleet** is a special fleet for each Great Power:
 
 ### Membership and state
 
-- A ship is either **part of the home fleet** (in port at capital) or **part of a sea‑going fleet** (at sea or in port at another owned province); membership is mutually exclusive.
+- **Only the Home Fleet** may be **in port at the capital province**. Sea‑going fleets **never** remain docked at the capital; any naval **move** that **docks at the capital** resolves by **merging** that fleet’s ships into the Home Fleet and **removing** the sea‑going fleet (same merge semantics as combine: instance ids preserved, no duplicates).
+- A ship is either **part of the home fleet** (in port at capital) or **part of a sea‑going fleet** (at sea or in port at **non‑capital** owned provinces); membership is mutually exclusive.
 - Ships **enter** the home fleet when:
   - They are built as naval units via `BuildUnitOrder` (default spawn into the home fleet in port at the capital), or
-  - A `join home fleet` order resolves successfully during turn resolution, moving ships from a sea‑going fleet that is **in port at the capital province** into the home fleet.
+  - A naval **move** order **docks** at the player’s **capital province** during turn resolution, or
+  - A `join home fleet` order resolves successfully when a sea‑going fleet is **in port at the capital** (legacy or transitional saves only; under normal rules no sea‑going fleet occupies the capital port).
 - Ships **leave** the home fleet when they receive a naval move or mission order that creates or updates a non‑home fleet (a fleet that can move and receive missions).
 
 ### Missions and movement

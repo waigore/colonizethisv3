@@ -322,6 +322,14 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         );
         bus.emit(NavalFleetsUpdatedEvent(game: newGame));
       }),
+      bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = applyNavalMoveOrderForPlayer(
+          o,
+          e.humanPlayerId,
+          e.moveOrder,
+        );
+      }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
         if (g == null) return;

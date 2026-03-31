@@ -601,6 +601,7 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           );
         },
@@ -1282,6 +1283,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   String? _centerOnTileKey;
   bool _showProvinceNames = true;
   late Game _game;
+  late MapTopology _combinedTopology;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
   StreamSubscription<NavalSplitFleetRequestedEvent>? _navalSplitSub;
@@ -1291,6 +1293,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
     super.initState();
     final result = getDebugInitGameResult();
     _game = result.game;
+    _combinedTopology = result.combinedTopology;
     _navalBus = AppEventBus.create();
     _navalSub = _navalBus.on<NavalFleetsUpdatedEvent>().listen((e) {
       if (!mounted) return;
@@ -1399,6 +1402,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
               game: _game,
               humanPlayerId: humanPlayerId,
               bus: _navalBus,
+              topology: _combinedTopology,
             ),
           ),
         ],
