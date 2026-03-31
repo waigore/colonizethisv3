@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   group('GameEventBus', () {
@@ -198,6 +199,55 @@ void main() {
           turnNumber: 1,
         ),
       );
+    });
+
+    test('publish logs event line with event type and summary', () async {
+      final capturedEvents = <LogEvent>[];
+      void listener(LogEvent event) => capturedEvents.add(event);
+      Logger.addLogListener(listener);
+      addTearDown(() => Logger.removeLogListener(listener));
+
+      bus.publish(
+        DiplomacyChangeEvent(
+          actorId: 'gp1',
+          targetId: 'gp2',
+          changeType: 'peace',
+          turnNumber: 2,
+        ),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      final line = capturedEvents
+          .where((e) => e.level == Level.info)
+          .map((e) => e.message.toString())
+          .firstWhere((m) => m.contains('logic: event=DiplomacyChangeEvent'));
+      expect(line, contains('turn=2'));
+      expect(line, contains('actorId=gp1'));
+      expect(line, contains('targetId=gp2'));
+      expect(line, contains('changeType=peace'));
+    });
+
+    test('publish truncates long event summaries with marker', () async {
+      final capturedEvents = <LogEvent>[];
+      void listener(LogEvent event) => capturedEvents.add(event);
+      Logger.addLogListener(listener);
+      addTearDown(() => Logger.removeLogListener(listener));
+
+      final longSummary = List.filled(600, 'x').join();
+      bus.publish(
+        OrderRejectedEvent(
+          playerId: 'gp1',
+          orderSummary: longSummary,
+          reasonCode: 'invalid_order',
+        ),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      final line = capturedEvents
+          .where((e) => e.level == Level.info)
+          .map((e) => e.message.toString())
+          .firstWhere((m) => m.contains('logic: event=OrderRejectedEvent'));
+      expect(line, contains('truncated=true'));
     });
   });
 }
