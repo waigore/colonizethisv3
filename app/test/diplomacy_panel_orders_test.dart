@@ -71,11 +71,13 @@ class _PendingOrderShell extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.topology,
+    required this.bus,
   });
 
   final Game game;
   final String humanPlayerId;
   final MapTopology topology;
+  final AppEventBus bus;
 
   @override
   State<_PendingOrderShell> createState() => _PendingOrderShellState();
@@ -114,7 +116,7 @@ class _PendingOrderShellState extends State<_PendingOrderShell> {
           topology: widget.topology,
           currentOrders: _orders,
           onOrdersChanged: (o) => setState(() => _orders = o),
-          bus: AppEventBus(),
+          bus: widget.bus,
         ),
       ),
     );
@@ -123,6 +125,10 @@ class _PendingOrderShellState extends State<_PendingOrderShell> {
 
 void main() {
   suppressLogsForTests();
+
+  setUp(() {
+    AppEventBus.reset();
+  });
 
   testWidgets('DiplomacyPanel shows empty state when no factions discovered', (
     WidgetTester tester,
@@ -149,7 +155,7 @@ void main() {
             topology: MapTopology(),
             currentOrders: const Orders(),
             onOrdersChanged: (_) {},
-            bus: AppEventBus(),
+            bus: AppEventBus.create(),
           ),
         ),
       ),
@@ -165,7 +171,7 @@ void main() {
       final r = getDebugInitGameResult();
       final game = r.game;
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus();
+      final bus = AppEventBus.create();
       final navigatorKey = GlobalKey<NavigatorState>();
 
       await tester.pumpWidget(
@@ -210,12 +216,14 @@ void main() {
       final r = getDebugInitGameResult();
       final game = r.game;
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final bus = AppEventBus.create();
 
       await tester.pumpWidget(
         _PendingOrderShell(
           game: game,
           humanPlayerId: humanId,
           topology: r.combinedTopology,
+          bus: bus,
         ),
       );
       await tester.pumpAndSettle();

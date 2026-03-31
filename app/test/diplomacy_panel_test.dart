@@ -160,7 +160,7 @@ Widget buildPanel({
   void Function(Orders)? onOrdersChanged,
   AppEventBus? bus,
 }) {
-  final panelBus = bus ?? AppEventBus();
+  final panelBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
   return MaterialApp(
     navigatorKey: navigatorKey,
@@ -212,6 +212,10 @@ void main() {
   late Game gameWithNoDiscovered;
   late String humanPlayerId;
   late MapTopology topology;
+
+  setUp(() {
+    AppEventBus.reset();
+  });
 
   setUpAll(() async {
     await _preWarmFlameImageCache();
@@ -345,6 +349,7 @@ void main() {
 
         final declareWar = find.text('Declare War');
         if (declareWar.evaluate().isNotEmpty) {
+          await tester.ensureVisible(declareWar.first);
           await tester.tap(declareWar.first);
           await tester.pumpAndSettle();
           expect(find.text('OK'), findsOneWidget);
@@ -441,6 +446,7 @@ void main() {
 
         final declareWar = find.text('Declare War');
         if (declareWar.evaluate().isNotEmpty) {
+          await tester.ensureVisible(declareWar.first);
           await tester.tap(declareWar.first);
           await tester.pumpAndSettle();
           expect(find.text('OK'), findsOneWidget);
