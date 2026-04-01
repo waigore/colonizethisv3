@@ -33,6 +33,8 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 
 **Labels:** The capital province (dock), when listed, should indicate that the fleet **joins the Home Fleet** when the order resolves (per GDD).
 
+**Acceptance — Move fleet with combined topology (in port):** Given a sea-going fleet **in port** at a **coastal** province (prefixed `inPortAtProvinceId`, seabound per map topology) and the panel uses the same **combined** world topology as turn resolution (prefixed node/edge ids per [map-data.md](../program/map-data.md)), when the player opens **Move fleet**, then the dialog shows **at least one** row under **Sea zones** (legal adjacent sea zones for undock) and does **not** show the sole empty-state message *No adjacent sea zones (check map topology).* when adjacency exists.
+
 ---
 
 ## Scope: which fleets are shown

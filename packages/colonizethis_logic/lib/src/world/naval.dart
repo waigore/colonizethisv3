@@ -69,8 +69,12 @@ String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
 
 /// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet and build_port.
 ///
-/// [provinceId] is the local province id (e.g. p1). When [regionId] is provided, lookup is
-/// region-scoped per SPEC/game/world-model-identity.md (required for multi-region world).
+/// [provinceId] is usually the **local** province id (e.g. `p1`). When [provinceId] is already
+/// prefixed (`regionId|localId`), it is used as-is for lookup. When [regionId] is provided,
+/// lookup is region-scoped per SPEC/game/world-model-identity.md.
+///
+/// Supports both **per-region** topology (node/edge ids are local) and **combined** topology
+/// from [buildCombinedTopology] (prefixed node/edge ids). SPEC/program/map-data.md.
 /// When [regionId] is null, uses first matching node (single-region or legacy).
 String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? regionId}) {
   if (regionId != null) {
@@ -80,11 +84,26 @@ String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? r
     }
     final regionNodes = nodesByRegionAndId[regionId];
     if (regionNodes == null) return null;
-    final provinceNode = regionNodes[provinceId];
-    if (provinceNode == null || provinceNode.type != TopologyNodeType.province) return null;
+    final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
+        ? provinceId
+        : ProvinceId.full(regionId, provinceId);
+    var provinceNode = regionNodes[primaryProvinceKey];
+    if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
+      provinceNode = regionNodes[provinceId];
+    }
+    if (provinceNode == null || provinceNode.type != TopologyNodeType.province) {
+      return null;
+    }
     for (final e in topology.edges) {
-      if (e.id1 != provinceId && e.id2 != provinceId) continue;
-      final other = e.id1 == provinceId ? e.id2 : e.id1;
+      String? other;
+      if (e.id1 == primaryProvinceKey || e.id2 == primaryProvinceKey) {
+        other = e.id1 == primaryProvinceKey ? e.id2 : e.id1;
+      } else if (!ProvinceId.isPrefixed(provinceId) &&
+          (e.id1 == provinceId || e.id2 == provinceId)) {
+        other = e.id1 == provinceId ? e.id2 : e.id1;
+      } else {
+        continue;
+      }
       final otherNode = regionNodes[other];
       if (otherNode?.type == TopologyNodeType.seaZone) return other;
     }
