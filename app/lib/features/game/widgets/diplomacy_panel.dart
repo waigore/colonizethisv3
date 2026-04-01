@@ -223,7 +223,6 @@ class DiplomacyPanel extends StatefulWidget {
     required this.humanPlayerId,
     required this.topology,
     required this.currentOrders,
-    required this.onOrdersChanged,
     required this.bus,
     this.onClose,
   });
@@ -232,7 +231,6 @@ class DiplomacyPanel extends StatefulWidget {
   final String humanPlayerId;
   final MapTopology topology;
   final Orders currentOrders;
-  final void Function(Orders) onOrdersChanged;
   final AppEventBus bus;
   final VoidCallback? onClose;
 
@@ -406,9 +404,9 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
   }
 
   void _removeOrder(DiplomaticOrderType type, String targetFactionId) {
-    widget.onOrdersChanged(
-      widget.currentOrders.removeDiplomaticOrderForPlayer(
-        widget.humanPlayerId,
+    widget.bus.emit(
+      RemoveDiplomaticOrderRequestedEvent(
+        playerId: widget.humanPlayerId,
         type: type,
         targetFactionId: targetFactionId,
       ),
@@ -429,10 +427,10 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
   }
 
   void _appendOrder(DiplomaticOrder order) {
-    widget.onOrdersChanged(
-      widget.currentOrders.appendDiplomaticOrderForPlayer(
-        widget.humanPlayerId,
-        order,
+    widget.bus.emit(
+      AppendDiplomaticOrderRequestedEvent(
+        playerId: widget.humanPlayerId,
+        order: order,
       ),
     );
   }
@@ -568,9 +566,9 @@ class _DiplomacyRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
                 ),
               ],
               if (data.pendingGrantAmount != null) ...[

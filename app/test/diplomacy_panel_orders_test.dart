@@ -86,8 +86,6 @@ class _PendingOrderShell extends StatefulWidget {
 class _PendingOrderShellState extends State<_PendingOrderShell> {
   late Orders _orders;
 
-  Orders get ordersSnapshot => _orders;
-
   @override
   void initState() {
     super.initState();
@@ -115,7 +113,6 @@ class _PendingOrderShellState extends State<_PendingOrderShell> {
           humanPlayerId: widget.humanPlayerId,
           topology: widget.topology,
           currentOrders: _orders,
-          onOrdersChanged: (o) => setState(() => _orders = o),
           bus: widget.bus,
         ),
       ),
@@ -154,7 +151,6 @@ void main() {
             humanPlayerId: humanId,
             topology: MapTopology(),
             currentOrders: const Orders(),
-            onOrdersChanged: (_) {},
             bus: AppEventBus.create(),
           ),
         ),
@@ -186,7 +182,6 @@ void main() {
                 humanPlayerId: humanId,
                 topology: r.combinedTopology,
                 currentOrders: const Orders(),
-                onOrdersChanged: (_) {},
                 bus: bus,
               ),
             ),
@@ -217,6 +212,10 @@ void main() {
       final game = r.game;
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
+      final removeEvents = <RemoveDiplomaticOrderRequestedEvent>[];
+      final sub = bus.on<RemoveDiplomaticOrderRequestedEvent>().listen(
+        removeEvents.add,
+      );
 
       await tester.pumpWidget(
         _PendingOrderShell(
@@ -228,23 +227,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final state = tester.state<_PendingOrderShellState>(
-        find.byType(_PendingOrderShell),
-      );
-      expect(
-        state.ordersSnapshot.diplomaticOrdersByPlayerId[humanId],
-        isNotEmpty,
-      );
-
       final cancelOnPatch = find.widgetWithText(CtNinePatchButton, 'Cancel');
       expect(cancelOnPatch, findsWidgets);
       await tester.tap(cancelOnPatch.first);
       await tester.pumpAndSettle();
-
-      expect(
-        state.ordersSnapshot.diplomaticOrdersByPlayerId[humanId] ?? [],
-        isEmpty,
-      );
+      expect(removeEvents, hasLength(1));
+      await sub.cancel();
     },
   );
 }
