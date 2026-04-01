@@ -479,7 +479,12 @@ void main() {
         defenderFactionId: 'def',
         defenderUnitIds: ['d1'],
         attackers: [
-          AttackingSide(factionId: 'att', unitIds: ['a1', 'a2']),
+          AttackingSide(
+            factionId: 'att',
+            unitIds: ['a1', 'a2'],
+            generalId: 'g-att',
+            generalMedals: 1,
+          ),
         ],
         fortLevel: 0,
         terrain: 'plains',

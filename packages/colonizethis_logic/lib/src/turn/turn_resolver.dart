@@ -1196,10 +1196,15 @@ Game _runCombatPhase(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();
+  final boundBattles = bindGeneralsForCombatPhase(
+    game: state,
+    contexts: battles,
+    ledger: combatGeneralLedger,
+  );
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
   var battleIndex = 0;
-  for (final ctx in battles) {
+  for (final ctx in boundBattles) {
     final mode = resolveCombatModeForBattle(
       state,
       ctx,

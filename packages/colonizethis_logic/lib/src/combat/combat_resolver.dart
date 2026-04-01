@@ -62,36 +62,23 @@ Game resolveBattleContext(
   var provinceOwnerId = ctx.defenderFactionId;
   var generalsById = {for (final g in game.generals) g.id: g};
   final battleRng = battleAssignmentRng(game, ctx);
-  final generalAssignment = assignGeneralsForBattleContext(
-    game: game,
-    ctx: ctx,
-    rng: battleRng,
-    ledger: ledger,
-  );
-
   final attackerSidesWithMedals = ctx.attackers.map((att) {
-    final assigned = generalAssignment.attackerByFactionId[att.factionId];
-    return _AttackingSideInBattle(
-      side: att.copyWith(generalMedals: assigned?.medals ?? 0),
-      assignedGeneralId: assigned?.generalId,
-    );
+    return _AttackingSideInBattle(side: att, assignedGeneralId: att.generalId);
   }).toList();
-  _sortAttackersByInitiative(
-    attackerSidesWithMedals,
-    unitsById,
-    battleRng,
-  );
-  var currentDefenderGeneralId = generalAssignment.defenderGeneralId;
-  var currentDefenderMedals = generalAssignment.defenderMedals;
+  _sortAttackersByInitiative(attackerSidesWithMedals, unitsById, battleRng);
+  var currentDefenderGeneralId = ctx.defenderGeneralId;
+  var currentDefenderMedals = ctx.defenderGeneralMedals;
 
   final allCasualties = <String>[];
   String? survivingAttackerFactionId;
 
   final initialDefenderCount = ctx.defenderUnitIds.length;
 
-  for (var attackerIndex = 0;
-      attackerIndex < attackerSidesWithMedals.length;
-      attackerIndex++) {
+  for (
+    var attackerIndex = 0;
+    attackerIndex < attackerSidesWithMedals.length;
+    attackerIndex++
+  ) {
     final attacker = attackerSidesWithMedals[attackerIndex];
     if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
       break;
@@ -118,25 +105,37 @@ Game resolveBattleContext(
 
     // Deployment limit per side. SPEC/game/military-generals.md.
     final attackerLimit = _deploymentLimitForFaction(
-        game, attacker.side.factionId, attacker.side.generalMedals);
-    final defenderLimit =
-        _deploymentLimitForFaction(game, defenderFactionId, currentDefenderMedals);
+      game,
+      attacker.side.factionId,
+      attacker.side.generalMedals,
+    );
+    final defenderLimit = _deploymentLimitForFaction(
+      game,
+      defenderFactionId,
+      currentDefenderMedals,
+    );
     final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
     final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
 
-    final defenderEffectiveLevel =
-        _defenderEffectiveLevel(game, defenderFactionId);
+    final defenderEffectiveLevel = _defenderEffectiveLevel(
+      game,
+      defenderFactionId,
+    );
     final attackerCoverage =
         feedingCoverageByPlayerId[attacker.side.factionId] ?? 1.0;
     final defenderCoverage =
         feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
-    final attackerLeaderMult =
-        leaderBonusForFaction(game, attacker.side.factionId);
+    final attackerLeaderMult = leaderBonusForFaction(
+      game,
+      attacker.side.factionId,
+    );
     final defenderLeaderMult = leaderBonusForFaction(game, defenderFactionId);
-    final attackerGeneralMorale =
-        moraleMultiplierForGeneralMedals(attacker.side.generalMedals);
-    final defenderGeneralMorale =
-        moraleMultiplierForGeneralMedals(currentDefenderMedals);
+    final attackerGeneralMorale = moraleMultiplierForGeneralMedals(
+      attacker.side.generalMedals,
+    );
+    final defenderGeneralMorale = moraleMultiplierForGeneralMedals(
+      currentDefenderMedals,
+    );
     final outcome = resolveEngagement(
       attackerUnits: cappedAttackerUnits,
       defenderUnits: cappedDefenderUnits,
@@ -146,10 +145,10 @@ Game resolveBattleContext(
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
       attackerMoraleMultiplier:
           moraleMultiplierForFeedingCoverage(attackerCoverage) *
-              attackerGeneralMorale,
+          attackerGeneralMorale,
       defenderMoraleMultiplier:
           moraleMultiplierForFeedingCoverage(defenderCoverage) *
-              defenderGeneralMorale,
+          defenderGeneralMorale,
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
@@ -183,7 +182,8 @@ Game resolveBattleContext(
         defenderFactionId = attacker.side.factionId;
         provinceOwnerId = attacker.side.factionId;
         currentDefenderGeneralId = attacker.assignedGeneralId;
-        currentDefenderMedals = attacker.side.generalMedals +
+        currentDefenderMedals =
+            attacker.side.generalMedals +
             (attacker.assignedGeneralId != null ? 1 : 0);
         if (currentDefenderMedals > 4) currentDefenderMedals = 4;
         break;
@@ -203,17 +203,24 @@ Game resolveBattleContext(
       case EngagementResult.mutualAnnihilation:
         defenderFactionId = provinceOwnerId;
         survivingAttackerFactionId = null;
-        final remainingAttackers =
-            attackerSidesWithMedals.skip(attackerIndex + 1).toList();
+        final remainingAttackers = attackerSidesWithMedals
+            .skip(attackerIndex + 1)
+            .toList();
         if (remainingAttackers.isNotEmpty) {
-          final recoverCount = (initialDefenderCount * 0.2)
-              .ceil()
-              .clamp(1, initialDefenderCount);
+          final recoverCount = (initialDefenderCount * 0.2).ceil().clamp(
+            1,
+            initialDefenderCount,
+          );
           final garrisonTypes = _garrisonTypesForFaction(
-              game, provinceOwnerId, defenderEffectiveLevel);
-          for (var i = 0;
-              i < recoverCount && defenderUnitIds.length < recoverCount;
-              i++) {
+            game,
+            provinceOwnerId,
+            defenderEffectiveLevel,
+          );
+          for (
+            var i = 0;
+            i < recoverCount && defenderUnitIds.length < recoverCount;
+            i++
+          ) {
             final type = garrisonTypes[i % garrisonTypes.length];
             final id = 'recover_${ctx.provinceId}_$i';
             defenderUnitIds.add(id);
@@ -264,15 +271,17 @@ Game resolveBattleContext(
       survivingAttackerFactionId,
       ctx.provinceId,
     );
-    final updatedPurchased =
-        _clearPurchasedTilesForProvince(newWorldState, ctx.provinceId);
+    final updatedPurchased = _clearPurchasedTilesForProvince(
+      newWorldState,
+      ctx.provinceId,
+    );
     newWorldState = newWorldState.copyWith(
       spyRevealTurnsByPlayer: timers,
       purchasedTilesByTileKey: updatedPurchased,
     );
   }
 
-  recordAttackCommandersForResolvedBattle(ctx, generalAssignment, ledger);
+  recordAttackCommandersForResolvedBattle(ctx, null, ledger);
 
   var result = game.copyWith(
     worldState: newWorldState,
@@ -298,8 +307,9 @@ Game resolveBattleContext(
   required String? survivingAttackerFactionId,
   required List<String> defenderUnitIds,
 }) {
-  final survivingUnits =
-      region.units.where((u) => !allCasualties.contains(u.id)).toList();
+  final survivingUnits = region.units
+      .where((u) => !allCasualties.contains(u.id))
+      .toList();
 
   var updatedProvinces = region.provinces;
   var ownerId = provinceOwnerId;
@@ -320,10 +330,7 @@ Game resolveBattleContext(
         (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id),
       )
       .toList();
-  var finalUnits = [
-    ...survivingUnits,
-    ...recoveredUnits,
-  ];
+  var finalUnits = [...survivingUnits, ...recoveredUnits];
 
   // If the province changed hands during this battle, remove civilian units
   // in that province that do not belong to the new owner.
@@ -337,10 +344,7 @@ Game resolveBattleContext(
     }).toList();
   }
 
-  final newRegion = RegionData(
-    provinces: updatedProvinces,
-    units: finalUnits,
-  );
+  final newRegion = RegionData(provinces: updatedProvinces, units: finalUnits);
   return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
 }
 
@@ -393,9 +397,11 @@ void _sortAttackersByInitiative(
     final totalB = b.side.unitIds.length;
     final shareA = totalA > 0 ? cavA / totalA : 0.0;
     final shareB = totalB > 0 ? cavB / totalB : 0.0;
-    final initA = shareA * initiativeCavalryShareWeight +
+    final initA =
+        shareA * initiativeCavalryShareWeight +
         a.side.generalMedals * initiativeGeneralMedalWeight;
-    final initB = shareB * initiativeCavalryShareWeight +
+    final initB =
+        shareB * initiativeCavalryShareWeight +
         b.side.generalMedals * initiativeGeneralMedalWeight;
     final cmp = initB.compareTo(initA);
     if (cmp != 0) return cmp;
@@ -440,8 +446,8 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
 int _deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
   final baseLimit =
       game.playerById(factionId)?.techUnlocked?[kTechIdNationalism] == true
-          ? deploymentLimitWithNationalism
-          : deploymentLimitBase;
+      ? deploymentLimitWithNationalism
+      : deploymentLimitBase;
   return baseLimit + generalMedals;
 }
 
@@ -473,17 +479,16 @@ EngagementOutcome resolveEngagement({
   double defenderLeaderMultiplier = 1.0,
 }) {
   final attStr = aggregateStrength(attackerUnits, 4);
-  var defStr = aggregateStrength(
-    defenderUnits,
-    defenderEffectiveMilitaryLevel,
-  );
+  var defStr = aggregateStrength(defenderUnits, defenderEffectiveMilitaryLevel);
 
   final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
-  var effAtt = attStr *
+  var effAtt =
+      attStr *
       terrainMod.$1 *
       attackerMoraleMultiplier *
       attackerLeaderMultiplier;
-  var effDef = defStr *
+  var effDef =
+      defStr *
       terrainMod.$2 *
       defenderMoraleMultiplier *
       defenderLeaderMultiplier;
@@ -585,18 +590,20 @@ EngagementOutcome _buildOutcome({
   bool bluntAttackerVictory = false,
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation,
 }) {
-  final attLoss = (attackerUnits.length * attLossFrac)
-      .ceil()
-      .clamp(0, attackerUnits.length);
-  final defLoss = (defenderUnits.length * defLossFrac)
-      .ceil()
-      .clamp(0, defenderUnits.length);
+  final attLoss = (attackerUnits.length * attLossFrac).ceil().clamp(
+    0,
+    attackerUnits.length,
+  );
+  final defLoss = (defenderUnits.length * defLossFrac).ceil().clamp(
+    0,
+    defenderUnits.length,
+  );
 
   final attackerCasualties = [
-    for (var i = 0; i < attLoss; i++) attackerUnits[i].id
+    for (var i = 0; i < attLoss; i++) attackerUnits[i].id,
   ];
   final defenderCasualties = [
-    for (var i = 0; i < defLoss; i++) defenderUnits[i].id
+    for (var i = 0; i < defLoss; i++) defenderUnits[i].id,
   ];
 
   final attSurvivors = attackerUnits.length - attLoss;
