@@ -19,6 +19,8 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/sea_zone_name_resolver.dart';
+
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
 /// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
@@ -37,6 +39,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   final Game game;
   final RegionMapViewData region;
+
   /// Human player's fog / visibility projection for foreign civilian gating.
   final PlayerView playerView;
   final String displayId;
@@ -60,11 +63,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 600;
     final content = _isSeaZone(displayId)
-        ? _seaZoneContent(
-            game: game,
-            region: region,
-            seaZoneId: displayId,
-          )
+        ? _seaZoneContent(game: game, region: region, seaZoneId: displayId)
         : _provinceContent(
             game: game,
             region: region,
@@ -201,7 +200,8 @@ _OverlayContent _provinceContent({
   final parts = provinceId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
   final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
-  final isFullyUnrevealed = region.regionId == regionId &&
+  final isFullyUnrevealed =
+      region.regionId == regionId &&
       !region.cells.any(
         (c) =>
             c.regionCellId == localProvinceId &&
@@ -265,8 +265,9 @@ _OverlayContent _provinceContent({
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
-  final units =
-      regionData.units.where((u) => u.locationProvinceId == provinceId).toList();
+  final units = regionData.units
+      .where((u) => u.locationProvinceId == provinceId)
+      .toList();
   final military = units.where((u) => isMilitaryUnit(u.type)).toList();
   final civilian = units.where((u) => !isMilitaryUnit(u.type)).toList();
   final visibleCivilianCount = civilian
@@ -279,13 +280,17 @@ _OverlayContent _provinceContent({
       )
       .length;
   final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
-  final tileKeys = game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ?? [];
+  final tileKeys =
+      game.worldState.tileKeysByRegionAndProvince[region
+          .regionId]?[provinceId] ??
+      [];
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
 
   final tilesToProspect = <String>[];
-  final improvementsBuilt = <({String tileKey, int x, int y, String name, int level})>[];
+  final improvementsBuilt =
+      <({String tileKey, int x, int y, String name, int level})>[];
   final improvementsAvailable = <({String tileKey, int x, int y})>[];
   final resources = <String>{};
 
@@ -344,10 +349,17 @@ _OverlayContent _provinceContent({
     region: region,
     onHighlightTile: onHighlightTile,
   );
-  final militarySection =
-      _buildMilitarySectionByOwner(game, military, humanPlayerId);
-  final civilianSection =
-      _buildCivilianSectionFiltered(game, civilian, humanPlayerId, playerView);
+  final militarySection = _buildMilitarySectionByOwner(
+    game,
+    military,
+    humanPlayerId,
+  );
+  final civilianSection = _buildCivilianSectionFiltered(
+    game,
+    civilian,
+    humanPlayerId,
+    playerView,
+  );
   final naval = _buildNavalSection(game, fleetsInPort);
 
   const tabLabels = [
@@ -378,7 +390,11 @@ _OverlayContent _provinceContent({
       naval,
     ],
   );
-  return _OverlayContent(tabLabels: tabLabels, tabViews: tabViews, sections: sections);
+  return _OverlayContent(
+    tabLabels: tabLabels,
+    tabViews: tabViews,
+    sections: sections,
+  );
 }
 
 String _improvementBaseNameForPlayer({
@@ -429,10 +445,7 @@ Widget _buildTileSection({
   String? selectedTileKey,
 }) {
   if (selectedTileKey == null) {
-    return _buildSection(
-      'Tile',
-      const Text('Click a tile to see details.'),
-    );
+    return _buildSection('Tile', const Text('Click a tile to see details.'));
   }
   final parts = selectedTileKey.split('|');
   if (parts.length < 4 || parts[0] != region.regionId) {
@@ -444,7 +457,7 @@ Widget _buildTileSection({
     return _buildSection('Tile', const Text('—'));
   }
   final cell = region.cellAt(x, y);
-   if (cell.visibility == TileVisibility.unrevealed) {
+  if (cell.visibility == TileVisibility.unrevealed) {
     return _buildSection(
       'Tile',
       const Column(
@@ -468,14 +481,18 @@ Widget _buildTileSection({
   final terrainStr = cell.terrainType?.name ?? cell.terrainTypeId ?? '—';
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
   final visLevel = playerView.visibilityForTile(selectedTileKey);
-  final resourceVisible =
-      resourceIdVisibleInPlayerView(playerView, selectedTileKey, resourceRaw);
+  final resourceVisible = resourceIdVisibleInPlayerView(
+    playerView,
+    selectedTileKey,
+    resourceRaw,
+  );
   final resourceLabel = resourceVisible ?? '—';
   final prospectable = cell.terrainType != null
       ? isProspectableTerrain(cell.terrainType!)
       : isProspectableTerrainId(cell.terrainTypeId);
-  final prospectedLabel =
-      !prospectable ? '—' : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
+  final prospectedLabel = !prospectable
+      ? '—'
+      : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
   final roadLabel = roadLevel == null
@@ -494,28 +511,31 @@ Widget _buildTileSection({
     visibleResourceId: resourceVisible,
   );
 
-  return _buildSection('Tile', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text('Coordinates: ($x, $y)'),
-      Text('Terrain: $terrainStr'),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Text('Resource: '),
-          if (resourceVisible != null)
-            ResourceLabelInline(commodityId: resourceVisible)
-          else
-            Text(resourceLabel),
-        ],
-      ),
-      Text('Prospected: $prospectedLabel'),
-      Text('Improvement: $improvementLine'),
-      Text('Road / railroad: $roadLabel'),
-      Text('Civilian units (province): $civilianCount'),
-    ],
-  ));
+  return _buildSection(
+    'Tile',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Coordinates: ($x, $y)'),
+        Text('Terrain: $terrainStr'),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text('Resource: '),
+            if (resourceVisible != null)
+              ResourceLabelInline(commodityId: resourceVisible)
+            else
+              Text(resourceLabel),
+          ],
+        ),
+        Text('Prospected: $prospectedLabel'),
+        Text('Improvement: $improvementLine'),
+        Text('Road / railroad: $roadLabel'),
+        Text('Civilian units (province): $civilianCount'),
+      ],
+    ),
+  );
 }
 
 _OverlayContent _seaZoneContent({
@@ -530,10 +550,12 @@ _OverlayContent _seaZoneContent({
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)
       .toList();
 
-  final political = _buildSection(
-    'Political',
-    Text('Sea zone: $seaZoneId'),
+  final seaName = seaZoneDisplayName(
+    game: game,
+    regionId: regionId,
+    seaZoneId: localSeaZoneId,
   );
+  final political = _buildSection('Political', Text('Sea zone: $seaName'));
   final naval = _buildNavalSection(game, fleets);
 
   const tabLabels = ['Political', 'Naval'];
@@ -543,7 +565,11 @@ _OverlayContent _seaZoneContent({
     mainAxisSize: MainAxisSize.min,
     children: [political, naval],
   );
-  return _OverlayContent(tabLabels: tabLabels, tabViews: tabViews, sections: sections);
+  return _OverlayContent(
+    tabLabels: tabLabels,
+    tabViews: tabViews,
+    sections: sections,
+  );
 }
 
 Province? _findProvince(Game game, String provinceId) {
@@ -603,90 +629,108 @@ String _improvementNameForResource(String? resourceId) {
   }
 }
 
-Widget _buildPoliticalSection({required String name, required String ownerName}) {
-  return _buildSection('Political', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text('Name: $name'),
-      Text('Owner: $ownerName'),
-    ],
-  ));
+Widget _buildPoliticalSection({
+  required String name,
+  required String ownerName,
+}) {
+  return _buildSection(
+    'Political',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [Text('Name: $name'), Text('Owner: $ownerName')],
+    ),
+  );
 }
 
 Widget _buildEconomicSection({
   required List<String> resources,
   required List<String> tilesToProspect,
-  required List<({String tileKey, int x, int y, String name, int level})> improvementsBuilt,
+  required List<({String tileKey, int x, int y, String name, int level})>
+  improvementsBuilt,
   required List<({String tileKey, int x, int y})> improvementsAvailable,
   required RegionMapViewData region,
   void Function(String?)? onHighlightTile,
 }) {
   final sortedResourceIds = [...resources]..sort();
-  return _buildSection('Economic', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Resources: '),
-          Expanded(
-            child: sortedResourceIds.isEmpty
-                ? const Text('—')
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: sortedResourceIds
-                        .map(
-                          (id) => ResourceLabelInline(commodityId: id),
-                        )
-                        .toList(),
-                  ),
-          ),
-        ],
-      ),
-      Text('Tiles to prospect: ${tilesToProspect.length}'),
-      if (tilesToProspect.isNotEmpty)
-        Wrap(
-          spacing: 4,
-          children: tilesToProspect.take(10).map((tk) {
-            final parts = tk.split('|');
-            final x = parts.length >= 4 ? parts[2] : '?';
-            final y = parts.length >= 4 ? parts[3] : '?';
-            final tileKey = tk;
-            return MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (_) => onHighlightTile?.call(tileKey),
-              onExit: (_) => onHighlightTile?.call(null),
-              child: Text('($x,$y)', style: const TextStyle(decoration: TextDecoration.underline)),
-            );
-          }).toList(),
+  return _buildSection(
+    'Economic',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resources: '),
+            Expanded(
+              child: sortedResourceIds.isEmpty
+                  ? const Text('—')
+                  : Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: sortedResourceIds
+                          .map((id) => ResourceLabelInline(commodityId: id))
+                          .toList(),
+                    ),
+            ),
+          ],
         ),
-      Text('Improvements built:'),
-      ...improvementsBuilt.take(8).map((e) => MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => onHighlightTile?.call(e.tileKey),
-            onExit: (_) => onHighlightTile?.call(null),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text('${e.name} L${e.level} at (${e.x},${e.y})'),
+        Text('Tiles to prospect: ${tilesToProspect.length}'),
+        if (tilesToProspect.isNotEmpty)
+          Wrap(
+            spacing: 4,
+            children: tilesToProspect.take(10).map((tk) {
+              final parts = tk.split('|');
+              final x = parts.length >= 4 ? parts[2] : '?';
+              final y = parts.length >= 4 ? parts[3] : '?';
+              final tileKey = tk;
+              return MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => onHighlightTile?.call(tileKey),
+                onExit: (_) => onHighlightTile?.call(null),
+                child: Text(
+                  '($x,$y)',
+                  style: const TextStyle(decoration: TextDecoration.underline),
+                ),
+              );
+            }).toList(),
+          ),
+        Text('Improvements built:'),
+        ...improvementsBuilt
+            .take(8)
+            .map(
+              (e) => MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => onHighlightTile?.call(e.tileKey),
+                onExit: (_) => onHighlightTile?.call(null),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text('${e.name} L${e.level} at (${e.x},${e.y})'),
+                ),
+              ),
             ),
-          )),
-      if (improvementsBuilt.isEmpty) const Padding(padding: EdgeInsets.only(left: 8), child: Text('—')),
-      Text('Improvements available:'),
-      ...improvementsAvailable.take(8).map((e) => MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => onHighlightTile?.call(e.tileKey),
-            onExit: (_) => onHighlightTile?.call(null),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text('(${e.x},${e.y})'),
+        if (improvementsBuilt.isEmpty)
+          const Padding(padding: EdgeInsets.only(left: 8), child: Text('—')),
+        Text('Improvements available:'),
+        ...improvementsAvailable
+            .take(8)
+            .map(
+              (e) => MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => onHighlightTile?.call(e.tileKey),
+                onExit: (_) => onHighlightTile?.call(null),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text('(${e.x},${e.y})'),
+                ),
+              ),
             ),
-          )),
-      if (improvementsAvailable.isEmpty) const Padding(padding: EdgeInsets.only(left: 8), child: Text('—')),
-    ],
-  ));
+        if (improvementsAvailable.isEmpty)
+          const Padding(padding: EdgeInsets.only(left: 8), child: Text('—')),
+      ],
+    ),
+  );
 }
 
 Widget _buildMilitarySectionByOwner(
@@ -769,27 +813,31 @@ Widget _buildCivilianSectionFiltered(
 }
 
 Widget _buildNavalSection(Game game, List<Fleet> fleets) {
-  return _buildSection('Naval', Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      if (fleets.isEmpty)
-        const Text('—')
-      else
-        ...fleets.map((f) {
-          final ownerName = _ownerName(game, f.ownerId);
-          final byType = <String, int>{};
-          for (final s in f.ships) {
-            byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
-          }
-          final fleetLabel =
-              f.id == homeFleetIdFor(f.ownerId) ? 'Home fleet' : 'Fleet ${f.id}';
-          return Text(
-            '$ownerName — $fleetLabel: ${byType.entries.map((e) => '${e.key}×${e.value}').join(', ')}',
-          );
-        }),
-    ],
-  ));
+  return _buildSection(
+    'Naval',
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (fleets.isEmpty)
+          const Text('—')
+        else
+          ...fleets.map((f) {
+            final ownerName = _ownerName(game, f.ownerId);
+            final byType = <String, int>{};
+            for (final s in f.ships) {
+              byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
+            }
+            final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
+                ? 'Home fleet'
+                : 'Fleet ${f.id}';
+            return Text(
+              '$ownerName — $fleetLabel: ${byType.entries.map((e) => '${e.key}×${e.value}').join(', ')}',
+            );
+          }),
+      ],
+    ),
+  );
 }
 
 Widget _buildSection(String title, Widget child) {
@@ -812,9 +860,6 @@ class _ObfuscatedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildSection(
-      '',
-      const Text('???'),
-    );
+    return _buildSection('', const Text('???'));
   }
 }

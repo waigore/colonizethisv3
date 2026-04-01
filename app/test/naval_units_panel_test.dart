@@ -231,6 +231,70 @@ void main() {
       expect(find.textContaining('Strength:'), findsAtLeastNWidgets(1));
     });
 
+    testWidgets('sea-zone labels use world-state display names', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_named_sea';
+      const capProvince = 'oldWorld|cap1';
+      const zoneId = 'zone_alpha';
+      final namedSeaGame = Game(
+        id: 'named-sea',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'cap1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'sea_named',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: zoneId,
+              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+            ),
+          ],
+          seaZoneDisplayNameById: const {
+            'oldWorld|zone_alpha': 'Caribbean Sea',
+          },
+          portsByProvinceSeaboard: const {
+            'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
+          },
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              capProvince: ['oldWorld|cap1|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Named Sea Tester',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        buildPanel(game: namedSeaGame, humanPlayerId: humanId),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Caribbean Sea'), findsWidgets);
+    });
+
     testWidgets(
       'sections render for fleets in both regions and locate button passes region id',
       (WidgetTester tester) async {
@@ -2512,9 +2576,7 @@ void main() {
         if (nonHomeFleets.isEmpty) return;
         final targetFleet = nonHomeFleets.first;
 
-        await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: humanId),
-        );
+        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
         await tester.pumpAndSettle();
 
         final fleetTile = find.widgetWithText(
@@ -2722,7 +2784,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final fleetFinder = find.widgetWithText(ExpansionTile, 'Fleet split_me');
+        final fleetFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet split_me',
+        );
         expect(fleetFinder, findsOneWidget);
 
         await tester.ensureVisible(fleetFinder);

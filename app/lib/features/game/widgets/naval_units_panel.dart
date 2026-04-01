@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../utils/map_location_resolver.dart';
+import '../utils/sea_zone_name_resolver.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
@@ -251,9 +252,11 @@ _buildNavalTree(Game game, String humanPlayerId) {
         final zoneKey = seaZoneId.contains('|')
             ? seaZoneId
             : '$regionId|$seaZoneId';
-        final zoneLabel = zoneKey.contains('|')
-            ? zoneKey.split('|').last
-            : zoneKey;
+        final zoneLabel = seaZoneDisplayName(
+          game: game,
+          regionId: regionId,
+          seaZoneId: zoneKey,
+        );
         locationLabel = '${unitsPanelRegionLabel(regionId)} — $zoneLabel';
         tileKey = tileKeyForSeaZoneLocation(game, regionId, zoneKey);
         locationKey = 'sea:$zoneKey';
@@ -358,9 +361,11 @@ _buildNavalTree(Game game, String humanPlayerId) {
 
     final seaZoneKeys = seas.keys.toList()..sort();
     for (final zoneKey in seaZoneKeys) {
-      final zoneLabel = zoneKey.contains('|')
-          ? zoneKey.split('|').last
-          : zoneKey;
+      final zoneLabel = seaZoneDisplayName(
+        game: game,
+        regionId: regionId,
+        seaZoneId: zoneKey,
+      );
       final fleets = seas[zoneKey]!..sort((a, b) => a.label.compareTo(b.label));
       locations.add(
         _SeaZoneLocationNode(

@@ -19,6 +19,7 @@ class WorldState {
     this.spyRevealTurnsByPlayer = const {},
     this.purchasedTilesByTileKey = const {},
     this.resourceByTileKey = const {},
+    this.seaZoneDisplayNameById = const {},
     this.nextShipInstanceSeq = 1,
     this.armies = const [],
     this.nextArmySeq = 1,
@@ -59,6 +60,9 @@ class WorldState {
   /// Resource (commodity id) per tile key. Populated at game setup from tile map. Used for purchase_land validation.
   final Map<String, String> resourceByTileKey;
 
+  /// Sea-zone display name by prefixed sea-zone id ("regionId|localSeaZoneId").
+  final Map<String, String> seaZoneDisplayNameById;
+
   /// Next index for minting `ship_<n>` instance ids. At least [inferNextShipInstanceSeqFromFleets](fleets).
   /// SPEC/game/ships-and-naval.md.
   final int nextShipInstanceSeq;
@@ -70,44 +74,52 @@ class WorldState {
   final int nextArmySeq;
 
   Map<String, dynamic> toJson() => {
-        'turnState': turnState.toJson(),
-        'oldWorld': oldWorld.toJson(),
-        'newWorld': newWorld.toJson(),
-        'tileState': tileState.toJson(),
-        'portsByProvinceSeaboard': portsByProvinceSeaboard,
-        if (playerVisibilityByTile.isNotEmpty)
-          'playerVisibilityByTile': playerVisibilityByTile,
-        if (playerProspectedTiles.isNotEmpty)
-          'playerProspectedTiles': playerProspectedTiles.map(
-            (playerId, tiles) => MapEntry(playerId, tiles.toList()),
-          ),
-        if (fleets.isNotEmpty) 'fleets': fleets.map((e) => e.toJson()).toList(),
-        if (tileKeysByRegionAndProvince.isNotEmpty)
-          'tileKeysByRegionAndProvince': tileKeysByRegionAndProvince.map(
-            (regionId, byProvince) => MapEntry(
-              regionId,
-              byProvince.map((provinceId, keys) => MapEntry(provinceId, keys)),
-            ),
-          ),
-        if (spyRevealTurnsByPlayer.isNotEmpty) 'spyRevealTurnsByPlayer': spyRevealTurnsByPlayer,
-        if (purchasedTilesByTileKey.isNotEmpty) 'purchasedTilesByTileKey': purchasedTilesByTileKey,
-        if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
-        'nextShipInstanceSeq': nextShipInstanceSeq,
-        if (armies.isNotEmpty) 'armies': armies.map((e) => e.toJson()).toList(),
-        if (nextArmySeq != 1) 'nextArmySeq': nextArmySeq,
-      };
+    'turnState': turnState.toJson(),
+    'oldWorld': oldWorld.toJson(),
+    'newWorld': newWorld.toJson(),
+    'tileState': tileState.toJson(),
+    'portsByProvinceSeaboard': portsByProvinceSeaboard,
+    if (playerVisibilityByTile.isNotEmpty)
+      'playerVisibilityByTile': playerVisibilityByTile,
+    if (playerProspectedTiles.isNotEmpty)
+      'playerProspectedTiles': playerProspectedTiles.map(
+        (playerId, tiles) => MapEntry(playerId, tiles.toList()),
+      ),
+    if (fleets.isNotEmpty) 'fleets': fleets.map((e) => e.toJson()).toList(),
+    if (tileKeysByRegionAndProvince.isNotEmpty)
+      'tileKeysByRegionAndProvince': tileKeysByRegionAndProvince.map(
+        (regionId, byProvince) => MapEntry(
+          regionId,
+          byProvince.map((provinceId, keys) => MapEntry(provinceId, keys)),
+        ),
+      ),
+    if (spyRevealTurnsByPlayer.isNotEmpty)
+      'spyRevealTurnsByPlayer': spyRevealTurnsByPlayer,
+    if (purchasedTilesByTileKey.isNotEmpty)
+      'purchasedTilesByTileKey': purchasedTilesByTileKey,
+    if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
+    if (seaZoneDisplayNameById.isNotEmpty)
+      'seaZoneDisplayNameById': seaZoneDisplayNameById,
+    'nextShipInstanceSeq': nextShipInstanceSeq,
+    if (armies.isNotEmpty) 'armies': armies.map((e) => e.toJson()).toList(),
+    if (nextArmySeq != 1) 'nextArmySeq': nextArmySeq,
+  };
 
   static WorldState fromJson(Map<String, dynamic> json) {
     final tileStateRaw = json['tileState'];
     final tileState = tileStateRaw is Map<String, dynamic>
         ? TileMapState.fromJson(tileStateRaw)
         : TileMapState.fromJson(
-            tileStateRaw is Map ? Map<String, dynamic>.from(tileStateRaw) : null);
+            tileStateRaw is Map
+                ? Map<String, dynamic>.from(tileStateRaw)
+                : null,
+          );
 
     final portsRaw = json['portsByProvinceSeaboard'];
     final ports = portsRaw is Map
         ? Map<String, String>.from(
-            portsRaw.map((k, v) => MapEntry(k.toString(), v.toString())))
+            portsRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
+          )
         : <String, String>{};
 
     final visRaw = json['playerVisibilityByTile'];
@@ -116,9 +128,7 @@ class WorldState {
       visRaw.forEach((playerId, value) {
         if (value is Map) {
           visibility[playerId.toString()] = Map<String, String>.from(
-            value.map(
-              (k, v) => MapEntry(k.toString(), v.toString()),
-            ),
+            value.map((k, v) => MapEntry(k.toString(), v.toString())),
           );
         }
       });
@@ -163,8 +173,9 @@ class WorldState {
           final inner = <String, List<String>>{};
           byProvince.forEach((provinceId, keys) {
             if (keys is List) {
-              inner[provinceId.toString()] =
-                  keys.map((e) => e.toString()).toList();
+              inner[provinceId.toString()] = keys
+                  .map((e) => e.toString())
+                  .toList();
             }
           });
           tileKeysByRegionAndProvince[regionId.toString()] = inner;
@@ -178,7 +189,8 @@ class WorldState {
       spyRevealRaw.forEach((playerId, inner) {
         if (inner is Map) {
           spyRevealTurnsByPlayer[playerId.toString()] = inner.map(
-            (k, v) => MapEntry(k.toString(), (v is int) ? v : (v as num).toInt()),
+            (k, v) =>
+                MapEntry(k.toString(), (v is int) ? v : (v as num).toInt()),
           );
         }
       });
@@ -187,19 +199,34 @@ class WorldState {
     final purchasedRaw = json['purchasedTilesByTileKey'];
     final purchasedTilesByTileKey = purchasedRaw is Map
         ? Map<String, String>.from(
-            purchasedRaw.map((k, v) => MapEntry(k.toString(), v.toString())))
+            purchasedRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
+          )
         : <String, String>{};
 
     final resourceRaw = json['resourceByTileKey'];
     final resourceByTileKey = resourceRaw is Map
         ? Map<String, String>.from(
-            resourceRaw.map((k, v) => MapEntry(k.toString(), v.toString())))
+            resourceRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
+          )
+        : <String, String>{};
+
+    final seaNamesRaw = json['seaZoneDisplayNameById'];
+    final seaZoneDisplayNameById = seaNamesRaw is Map
+        ? Map<String, String>.from(
+            seaNamesRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
+          )
         : <String, String>{};
 
     return WorldState(
-      turnState: TurnState.fromJson(Map<String, dynamic>.from(json['turnState'] as Map)),
-      oldWorld: RegionData.fromJson(Map<String, dynamic>.from(json['oldWorld'] as Map)),
-      newWorld: RegionData.fromJson(Map<String, dynamic>.from(json['newWorld'] as Map)),
+      turnState: TurnState.fromJson(
+        Map<String, dynamic>.from(json['turnState'] as Map),
+      ),
+      oldWorld: RegionData.fromJson(
+        Map<String, dynamic>.from(json['oldWorld'] as Map),
+      ),
+      newWorld: RegionData.fromJson(
+        Map<String, dynamic>.from(json['newWorld'] as Map),
+      ),
       tileState: tileState,
       portsByProvinceSeaboard: ports,
       playerVisibilityByTile: visibility,
@@ -210,6 +237,7 @@ class WorldState {
       spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
       purchasedTilesByTileKey: purchasedTilesByTileKey,
       resourceByTileKey: resourceByTileKey,
+      seaZoneDisplayNameById: seaZoneDisplayNameById,
       armies: armies,
       nextArmySeq: nextArmySeq,
     );
@@ -228,6 +256,7 @@ class WorldState {
     Map<String, Map<String, int>>? spyRevealTurnsByPlayer,
     Map<String, String>? purchasedTilesByTileKey,
     Map<String, String>? resourceByTileKey,
+    Map<String, String>? seaZoneDisplayNameById,
     int? nextShipInstanceSeq,
     List<Army>? armies,
     int? nextArmySeq,
@@ -237,15 +266,22 @@ class WorldState {
       oldWorld: oldWorld ?? this.oldWorld,
       newWorld: newWorld ?? this.newWorld,
       tileState: tileState ?? this.tileState,
-      portsByProvinceSeaboard: portsByProvinceSeaboard ?? this.portsByProvinceSeaboard,
-      playerVisibilityByTile: playerVisibilityByTile ?? this.playerVisibilityByTile,
-      playerProspectedTiles: playerProspectedTiles ?? this.playerProspectedTiles,
+      portsByProvinceSeaboard:
+          portsByProvinceSeaboard ?? this.portsByProvinceSeaboard,
+      playerVisibilityByTile:
+          playerVisibilityByTile ?? this.playerVisibilityByTile,
+      playerProspectedTiles:
+          playerProspectedTiles ?? this.playerProspectedTiles,
       fleets: fleets ?? this.fleets,
       tileKeysByRegionAndProvince:
           tileKeysByRegionAndProvince ?? this.tileKeysByRegionAndProvince,
-      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer ?? this.spyRevealTurnsByPlayer,
-      purchasedTilesByTileKey: purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
+      spyRevealTurnsByPlayer:
+          spyRevealTurnsByPlayer ?? this.spyRevealTurnsByPlayer,
+      purchasedTilesByTileKey:
+          purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
       resourceByTileKey: resourceByTileKey ?? this.resourceByTileKey,
+      seaZoneDisplayNameById:
+          seaZoneDisplayNameById ?? this.seaZoneDisplayNameById,
       nextShipInstanceSeq: nextShipInstanceSeq ?? this.nextShipInstanceSeq,
       armies: armies ?? this.armies,
       nextArmySeq: nextArmySeq ?? this.nextArmySeq,
@@ -262,52 +298,69 @@ class WorldState {
           newWorld == other.newWorld &&
           tileState == other.tileState &&
           _mapEquals(portsByProvinceSeaboard, other.portsByProvinceSeaboard) &&
-          _nestedStringMapEquals(playerVisibilityByTile, other.playerVisibilityByTile) &&
+          _nestedStringMapEquals(
+            playerVisibilityByTile,
+            other.playerVisibilityByTile,
+          ) &&
           _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
           _listEqualsFleet(fleets, other.fleets) &&
           _tileKeysByRegionEquals(
-              tileKeysByRegionAndProvince, other.tileKeysByRegionAndProvince) &&
-          _spyRevealEquals(spyRevealTurnsByPlayer, other.spyRevealTurnsByPlayer) &&
+            tileKeysByRegionAndProvince,
+            other.tileKeysByRegionAndProvince,
+          ) &&
+          _spyRevealEquals(
+            spyRevealTurnsByPlayer,
+            other.spyRevealTurnsByPlayer,
+          ) &&
           _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
           _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
+          _mapEquals(seaZoneDisplayNameById, other.seaZoneDisplayNameById) &&
           nextShipInstanceSeq == other.nextShipInstanceSeq &&
           _listEqualsArmy(armies, other.armies) &&
           nextArmySeq == other.nextArmySeq;
 
   @override
   int get hashCode => Object.hash(
-        turnState,
-        oldWorld,
-        newWorld,
-        tileState,
-        Object.hashAll(portsByProvinceSeaboard.entries),
-        Object.hashAll(
-          playerVisibilityByTile.entries.map(
-            (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
+    turnState,
+    oldWorld,
+    newWorld,
+    tileState,
+    Object.hashAll(portsByProvinceSeaboard.entries),
+    Object.hashAll(
+      playerVisibilityByTile.entries.map(
+        (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
+      ),
+    ),
+    Object.hashAll(
+      playerProspectedTiles.entries.map(
+        (e) => Object.hash(e.key, Object.hashAll(e.value)),
+      ),
+    ),
+    Object.hashAll(fleets),
+    Object.hashAll(
+      tileKeysByRegionAndProvince.entries.map(
+        (e) => Object.hash(
+          e.key,
+          Object.hashAll(
+            e.value.entries.map(
+              (e2) => Object.hash(e2.key, Object.hashAll(e2.value)),
+            ),
           ),
         ),
-        Object.hashAll(
-          playerProspectedTiles.entries.map(
-            (e) => Object.hash(e.key, Object.hashAll(e.value)),
-          ),
-        ),
-        Object.hashAll(fleets),
-        Object.hashAll(
-          tileKeysByRegionAndProvince.entries.map(
-            (e) => Object.hash(e.key, Object.hashAll(e.value.entries.map(
-                  (e2) => Object.hash(e2.key, Object.hashAll(e2.value)),
-                ))),
-          ),
-        ),
-        Object.hashAll(spyRevealTurnsByPlayer.entries.map(
-          (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
-        )),
-        Object.hashAll(purchasedTilesByTileKey.entries),
-        Object.hashAll(resourceByTileKey.entries),
-        nextShipInstanceSeq,
-        Object.hashAll(armies),
-        nextArmySeq,
-      );
+      ),
+    ),
+    Object.hashAll(
+      spyRevealTurnsByPlayer.entries.map(
+        (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
+      ),
+    ),
+    Object.hashAll(purchasedTilesByTileKey.entries),
+    Object.hashAll(resourceByTileKey.entries),
+    Object.hashAll(seaZoneDisplayNameById.entries),
+    nextShipInstanceSeq,
+    Object.hashAll(armies),
+    nextArmySeq,
+  );
 
   static bool _tileKeysByRegionEquals(
     Map<String, Map<String, List<String>>> a,
@@ -383,7 +436,8 @@ class WorldState {
     if (a.length != b.length) return false;
     for (final entry in a.entries) {
       final otherInner = b[entry.key];
-      if (otherInner == null || otherInner.length != entry.value.length) return false;
+      if (otherInner == null || otherInner.length != entry.value.length)
+        return false;
       for (final innerEntry in entry.value.entries) {
         if (otherInner[innerEntry.key] != innerEntry.value) return false;
       }
@@ -408,4 +462,3 @@ class WorldState {
     return true;
   }
 }
-

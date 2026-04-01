@@ -139,7 +139,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 ## Data and identity
 
 - **Province lookup:** Always use **prefixed province ids** (`regionId|localId`) when resolving provinces from fleet location or Home Fleet capital per [world-model-identity.md](../game/world-model-identity.md). Display **province names** (e.g. `Province.displayName`) and **never raw province ids** to the user.
-- **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet; where that id is local to the region, the UI derives a display name from that id or from a mapping. When showing a sea zone, always include the **region label** with it.
+- **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet and displayed via sea-zone display names stored in world state (prefixed `regionId|seaZoneId` key). The UI must show the resolved sea-zone display name (not raw id) and include the **region label** with it.
 - **Home Fleet detection:** The Home Fleet is identified via the rules in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet): it is the fleet in port at the capital province that cannot move and whose mission is effectively none. Implementation may use a dedicated flag if provided by the model, but behaviour must remain consistent with the spec.
 
 ---
@@ -177,6 +177,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
 - **Given** the Naval Units panel is open and the human player’s Home Fleet exists in port at the capital province, **when** the user views the Home Fleet row in the capital region group, **then** the UI layer shows the fleet name “Home Fleet”, the location as the capital’s province name with the correct region label, the mission as “None”, and a ships summary that reflects the fleet’s current ship count (including `Total ships: 0` when it has no ships).
 
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
+
+- **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
 
 - **Given** the Naval Units panel is open and the human player has at least one fleet, **when** the user views the list of fleets, **then** fleets are grouped by region with a heading per region, port and sea-zone locations under each region are ordered stably (e.g. by display name), and fleets within each location are shown in a stable order, with the capital region’s Home Fleet section pinned first in that region.
 

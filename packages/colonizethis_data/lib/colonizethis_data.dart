@@ -7,6 +7,7 @@ export 'src/quick_battle_config.dart';
 export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
 export 'src/naming_rules.dart';
+export 'src/sea_zone_naming.dart';
 export 'src/map_topology.dart';
 export 'src/tech_definition.dart';
 export 'src/tech_extraction.dart';

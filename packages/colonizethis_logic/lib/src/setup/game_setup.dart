@@ -417,6 +417,7 @@ GameSetupResult createGameFromGeneratedMaps({
     selectedGreatPowerIds: config.selectedGreatPowerIds,
     leaderVariantByGpId: config.leaderVariantByGpId,
     namingSeed: namingSeed ?? config.seed,
+    topologyByRegion: topologyByRegion,
   );
 
   // Compute 1-character political glyphs per faction for political map layer.
@@ -810,6 +811,7 @@ Game _applyNaming({
   required List<String> selectedGreatPowerIds,
   required Map<String, String> leaderVariantByGpId,
   required int namingSeed,
+  required Map<String, MapTopology> topologyByRegion,
 }) {
   final naming = defaultNamingConfig;
   final owProvinces = game.worldState.oldWorld.provinces;
@@ -1025,6 +1027,18 @@ Game _applyNaming({
       provinces: nwById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
       units: game.worldState.newWorld.units,
     ),
+    seaZoneDisplayNameById: {
+      ...buildSeaZoneDisplayNamesForRegion(
+        topology: topologyByRegion[kRegionOldWorld] ?? const MapTopology(),
+        regionId: kRegionOldWorld,
+        namingSeed: namingSeed,
+      ),
+      ...buildSeaZoneDisplayNamesForRegion(
+        topology: topologyByRegion[kRegionNewWorld] ?? const MapTopology(),
+        regionId: kRegionNewWorld,
+        namingSeed: namingSeed,
+      ),
+    },
   );
 
   _log.i(
@@ -1033,9 +1047,7 @@ Game _applyNaming({
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {
-    _log.d(
-      'naming procedural fallback used count=$proceduralFallbackCount',
-    );
+    _log.d('naming procedural fallback used count=$proceduralFallbackCount');
   }
 
   return game.copyWith(
