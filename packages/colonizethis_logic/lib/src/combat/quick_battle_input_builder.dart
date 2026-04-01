@@ -12,10 +12,6 @@ import 'quick_battle_emplaced_builder.dart';
 /// Uses simple auto-deploy: all units in CENTER FRONT.
 /// Passes leader multipliers from Game players (SPEC/game/leader-bonuses.md).
 ///
-/// When [battleAssignment] is null, assignment is computed with an empty
-/// [CombatPhaseGeneralLedger] (isolated battle). Callers in the Combat phase
-/// should pass the result of [assignGeneralsForBattleContext] with the phase ledger.
-///
 /// Primary attacker medals: first entry in [BattleContext.attackers] only
 /// (same faction id as [QuickBattleInput.attackerFactionId]).
 QuickBattleInput buildQuickBattleInput(
@@ -24,13 +20,6 @@ QuickBattleInput buildQuickBattleInput(
   int seed = 0,
   BattleGeneralAssignment? battleAssignment,
 }) {
-  final assignment = battleAssignment ??
-      assignGeneralsForBattleContext(
-        game: game,
-        ctx: ctx,
-        rng: battleAssignmentRng(game, ctx),
-        ledger: CombatPhaseGeneralLedger(),
-      );
   final region = ctx.regionId == kRegionOldWorld
       ? game.worldState.oldWorld
       : game.worldState.newWorld;
@@ -51,12 +40,14 @@ QuickBattleInput buildQuickBattleInput(
   for (final att in ctx.attackers) {
     allAttackerIds.addAll(att.unitIds.where((id) => unitsById.containsKey(id)));
   }
-  final primaryFactionId = ctx.attackers.first.factionId;
-  final primaryAssigned =
-      assignment.attackerByFactionId[primaryFactionId] ??
-          const AssignedGeneralForBattle(generalId: null, medals: 0);
-  final attackerGeneralMedals = primaryAssigned.medals;
-  final defenderGeneralMedals = assignment.defenderMedals;
+  final attackerGeneralMedals = battleAssignment != null
+      ? (battleAssignment
+                .attackerByFactionId[ctx.attackers.first.factionId]
+                ?.medals ??
+            (ctx.attackers.isNotEmpty ? ctx.attackers.first.generalMedals : 0))
+      : (ctx.attackers.isNotEmpty ? ctx.attackers.first.generalMedals : 0);
+  final defenderGeneralMedals =
+      battleAssignment?.defenderMedals ?? ctx.defenderGeneralMedals;
   final attGroups = [
     QuickBattleGroup(
       lane: QuickBattleLane.center,
