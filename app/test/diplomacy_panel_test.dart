@@ -1,13 +1,15 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/cache.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,16 +95,42 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
   Widget build(BuildContext context) => widget.child;
 }
 
-Future<void> _preWarmFlameImageCache() async {
+Future<void> _mockNinePatchAssetForTests() async {
+  final fallbackBytes = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=',
+  );
+  var ninePatchBytes = fallbackBytes;
+  for (final candidate in <String>[
+    'app/assets/images/ui_button_nine_patch.png',
+    'assets/images/ui_button_nine_patch.png',
+  ]) {
+    final file = File(candidate);
+    if (await file.exists()) {
+      ninePatchBytes = await file.readAsBytes();
+      break;
+    }
+  }
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMessageHandler('flutter/assets', (message) async {
+        final key = const StringCodec().decodeMessage(message);
+        if (key == 'assets/images/ui_button_nine_patch.png') {
+          return ByteData.view(Uint8List.fromList(ninePatchBytes).buffer);
+        }
+        return null;
+      });
+}
+
+Future<void> _preWarmPanelNinePatchForTests() async {
   try {
-    final bytes = await rootBundle.load(
-      'assets/images/ui_button_nine_patch.png',
-    );
+    final bytes =
+        await rootBundle.load('assets/images/ui_button_nine_patch.png');
     final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
     final frame = await codec.getNextFrame();
     Flame.images.add('ui_button_nine_patch.png', frame.image);
-  } catch (e) {
-    // Silently fail - the test might still work if the image is available later
+    Flame.images
+        .add('assets/images/ui_button_nine_patch.png', frame.image);
+  } catch (_) {
+    // Resilient when decode fails on some hosts.
   }
 }
 
@@ -159,6 +187,7 @@ Game _gameWithNoDiscoveredFactions() {
 
 void main() {
   suppressLogsForTests();
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   late Game gameWithFactions;
   late Game gameWithNoDiscovered;
@@ -170,7 +199,8 @@ void main() {
   });
 
   setUpAll(() async {
-    await _preWarmFlameImageCache();
+    await _mockNinePatchAssetForTests();
+    await _preWarmPanelNinePatchForTests();
     final result = getDebugInitGameResult();
     gameWithFactions = result.game;
     topology = result.combinedTopology;
@@ -178,6 +208,11 @@ void main() {
         ? gameWithFactions.players.first.id
         : 'gp1';
     gameWithNoDiscovered = _gameWithNoDiscoveredFactions();
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', null);
   });
 
   group('DiplomacyPanel', () {
@@ -289,10 +324,12 @@ void main() {
       'AC: Tapping no-param action shows confirm dialog, Confirm submits order',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
         final events = <AppendDiplomaticOrderRequestedEvent>[];
         final sub = bus.on<AppendDiplomaticOrderRequestedEvent>().listen(
           events.add,
         );
+        addTearDown(sub.cancel);
         await tester.pumpWidget(
           buildPanel(
             game: gameWithFactions,
@@ -316,7 +353,6 @@ void main() {
           expect(events.first.playerId, humanPlayerId);
           expect(events.first.order.type, DiplomaticOrderType.declareWar);
         }
-        await sub.cancel();
       },
     );
 
@@ -383,10 +419,12 @@ void main() {
       'AC: Tapping Cancel in confirm dialog dismisses without submitting',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
         final events = <AppendDiplomaticOrderRequestedEvent>[];
         final sub = bus.on<AppendDiplomaticOrderRequestedEvent>().listen(
           events.add,
         );
+        addTearDown(sub.cancel);
         await tester.pumpWidget(
           buildPanel(
             game: gameWithFactions,
@@ -408,7 +446,6 @@ void main() {
           await tester.pumpAndSettle();
           expect(events, isEmpty);
         }
-        await sub.cancel();
       },
     );
 
@@ -456,10 +493,12 @@ void main() {
       WidgetTester tester,
     ) async {
       final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
       final events = <RemoveDiplomaticOrderRequestedEvent>[];
       final sub = bus.on<RemoveDiplomaticOrderRequestedEvent>().listen(
         events.add,
       );
+      addTearDown(sub.cancel);
       final otherGp = gameWithFactions.players.firstWhere(
         (p) => p.id != humanPlayerId,
       );
@@ -491,7 +530,6 @@ void main() {
       expect(events.first.playerId, humanPlayerId);
       expect(events.first.type, DiplomaticOrderType.declareWar);
       expect(events.first.targetFactionId, otherGp.id);
-      await sub.cancel();
     });
 
     testWidgets('AC: Empty state when no factions discovered', (
