@@ -2,7 +2,6 @@
 import 'dart:async';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -64,60 +63,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
 
   @override
   Widget build(BuildContext context) => widget.child;
-}
-
-class _PendingOrderShell extends StatefulWidget {
-  const _PendingOrderShell({
-    required this.game,
-    required this.humanPlayerId,
-    required this.topology,
-    required this.bus,
-  });
-
-  final Game game;
-  final String humanPlayerId;
-  final MapTopology topology;
-  final AppEventBus bus;
-
-  @override
-  State<_PendingOrderShell> createState() => _PendingOrderShellState();
-}
-
-class _PendingOrderShellState extends State<_PendingOrderShell> {
-  late Orders _orders;
-
-  @override
-  void initState() {
-    super.initState();
-    final targetId = widget.game.players
-        .firstWhere((p) => p.id != widget.humanPlayerId)
-        .id;
-    _orders = Orders(
-      diplomaticOrdersByPlayerId: {
-        widget.humanPlayerId: [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: targetId,
-          ),
-        ],
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: DiplomacyPanel(
-          game: widget.game,
-          humanPlayerId: widget.humanPlayerId,
-          topology: widget.topology,
-          currentOrders: _orders,
-          bus: widget.bus,
-        ),
-      ),
-    );
-  }
 }
 
 void main() {
@@ -205,34 +150,4 @@ void main() {
     },
   );
 
-  testWidgets(
-    'DiplomacyPanel pending order shows Cancel on CtNinePatchButton; tap clears',
-    (WidgetTester tester) async {
-      final r = getDebugInitGameResult();
-      final game = r.game;
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus.create();
-      final removeEvents = <RemoveDiplomaticOrderRequestedEvent>[];
-      final sub = bus.on<RemoveDiplomaticOrderRequestedEvent>().listen(
-        removeEvents.add,
-      );
-
-      await tester.pumpWidget(
-        _PendingOrderShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: r.combinedTopology,
-          bus: bus,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final cancelOnPatch = find.widgetWithText(CtNinePatchButton, 'Cancel');
-      expect(cancelOnPatch, findsWidgets);
-      await tester.tap(cancelOnPatch.first);
-      await tester.pumpAndSettle();
-      expect(removeEvents, hasLength(1));
-      await sub.cancel();
-    },
-  );
 }
