@@ -55,6 +55,7 @@ Personality also adjusts **thresholds** used by planners:
 - **Peace tendency** — Willingness to accept peace offers (Victoria high, Napoleon lower).
 - **Alliance tendency** — Likelihood to accept/offer alliances and maintain them (Victoria high, Napoleon low).
 - **Research preference** — Weights per tech category (naval, military, economic, exploration) so that e.g. Isabella favors exploration techs.
+- **War desire shaping** — Personality war/peace tendencies bias how the diplomacy planner interprets computed war-desire and improve-relations desire, but must not bypass hard diplomacy constraints (relation gate, legal-order checks, cooldowns).
 
 These are applied when scoring actions (e.g. declare war, accept peace, choose research slot). Combined with hidden agenda modifiers (see [hidden-agendas.md](hidden-agendas.md)).
 

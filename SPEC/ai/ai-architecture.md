@@ -48,6 +48,13 @@ AI uses the order suggestion API and applies:
   - **Prefer enemy:** When choosing among valid move candidates, score moves into enemy (at-war) territory higher than moves into unowned or own territory; weighted selection then prefers enemy/contested. Default bonus +20 to score when destination owner is at war with the mover.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
+- **Diplomacy (Full AI):**
+  - Compute a per-pair `warDesireScore` (0..100) for GP↔target where target can be GP, Minor, or Tribe.
+  - Use the same composite power basis as diplomacy power score (military + province + naval) for strength ratio.
+  - Compute improve-relations desire as `100 - warDesireScore`.
+  - Keep relation gate for war declarations.
+  - Apply per GP-target pair cooldowns for war-declare and improve-relations retries.
+  - While at war, recompute war desire each turn to decide continue-war vs offer-peace bias and adjust desired territory objective.
 - **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 Seeded randomness selects among acceptable candidates; personality weights bias selection.

@@ -20,9 +20,10 @@ All AI randomness flows from these seeds. Same save + seeds → same orders and 
 
 ### When to Use Each Phase
 
-- **Phase 4 (Minimal / Simple Heuristics):** Default for the main game. Use for all AI-controlled Great Powers in standard gameplay. Suitable for production and casual play.
+- **Phase 4 (Minimal / Simple Heuristics):** Legacy/default heuristics path retained for compatibility and diagnostics.
 
 - **Phase 6 (Full AI):** Advanced AI for simulation, testing, or optional hard mode. Used by ctdev Sim Game when "Use Full AI" is enabled. May be offered as an optional setting in the main game (e.g., "Advanced AI" difficulty toggle). Note: Full AI requires hidden agenda assignment at game setup (see below).
+- **Main app turn flow:** Main app turn advancement uses Phase 6 Full AI order generation for AI-controlled Great Powers (human orders merged with full-AI orders before turn resolution).
 
 ### Phase 4 (Minimal)
 1. Build PlayerView for each AI GP.
@@ -59,6 +60,7 @@ When full AI (Phase 6) runs, the economy planner produces **production assignmen
 - **Seeding and determinism:** Per-AI seeds and per-turn `turnSeed` (with documented sub-seeds) are the only randomness inputs; given the same game state and seeds, AIPlanner produces the same strategic and tactical decisions.
 - **Phase 4 behaviour:** Minimal AI uses PlayerView and the order suggestion API with the documented category order and caps; it does not construct raw orders, and Quick Battle actions depend only on `tacticalSeed` and battle state.
 - **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec. Games using full AI have hidden agendas assigned at setup/init; the caller (game setup or sim controller) invokes `assignHiddenAgendasForGame` before the first `generateOrdersForPlayerFullAI` call.
+- **Full AI diplomacy scoring:** For GP↔GP and GP↔Minor/Tribe pairs, full AI computes per-pair war desire and inverse improve-relations desire using composite power ratio (military + province + naval), relation factors, legal relation gate, and per GP-target cooldowns; wartime re-evaluation influences continue-war vs offer-peace output.
 - **Order merge:** Merged order list preserves stable ordering (player → unit → type), respects human precedence, emits at most one AI order per unit, and is fully validated and deterministic.
 
 ## Constraints

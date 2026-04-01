@@ -1,8 +1,9 @@
 export 'game_screen_shared.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flame/game.dart';
+import 'package:flame/game.dart' hide Game;
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,6 +91,23 @@ void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
   }
 }
 
+TurnResolutionResult resolveNextTurnForGameScreen({
+  required Game game,
+  required Orders orders,
+  required MapTopology? topologyForAi,
+  required TurnResolutionResult Function({
+    required Orders orders,
+    Orders? aiOrders,
+  })
+  runTurnResolution,
+}) {
+  final aiOrders = switch (topologyForAi) {
+    null => null,
+    _ => generateOrdersForGameFullAI(game, topologyForAi).orders,
+  };
+  return runTurnResolution(orders: orders, aiOrders: aiOrders);
+}
+
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
@@ -127,7 +145,19 @@ class GameScreen extends ConsumerWidget {
               onPressed: () {
                 final service = ref.read(gameServiceProvider);
                 final orders = ref.read(currentOrdersProvider);
-                final result = service.runTurnResolution(game, orders: orders);
+                final mapData = service.getMapData(game.id);
+                final result = resolveNextTurnForGameScreen(
+                  game: game,
+                  orders: orders,
+                  topologyForAi: mapData?.combinedTopology,
+                  runTurnResolution:
+                      ({required Orders orders, Orders? aiOrders}) =>
+                          service.runTurnResolution(
+                            game,
+                            orders: orders,
+                            aiOrders: aiOrders,
+                          ),
+                );
                 _applyTurnResolutionResult(ref, result);
               },
               child: Text(
