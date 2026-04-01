@@ -24,7 +24,7 @@ The military units panel is a single place to see every **army** (composition of
 
 ## Scope: naval (fleets)
 
-Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (region, Home Fleet, ports, sea zones), ship-type rows, missions, **Move** for sea-going fleets, fleet split/combine. **Do not** merge naval rows into army rows; the panel contains **two** subsections (land armies | naval fleets) or one tree with clear **Land** / **Naval** branches per [empire-buttons.md](empire-buttons.md) layout constraints.
+Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (region, Home Fleet, ports, sea zones), ship-type rows, missions, **Move** for sea-going fleets, fleet split/combine. Sea-zone location headers in this panel use sea-zone display names from world-state sea-zone naming (prefixed key), not raw ids. **Do not** merge naval rows into army rows; the panel contains **two** subsections (land armies | naval fleets) or one tree with clear **Land** / **Naval** branches per [empire-buttons.md](empire-buttons.md) layout constraints.
 
 ---
 

@@ -245,23 +245,31 @@ void main() {
     testWidgets(
       'AC: Tapping locate emits ClosePanelEvent before LocateMapTileEvent',
       (WidgetTester tester) async {
-      final bus = AppEventBus.create();
-      final sequence = <Type>[];
-      bus.stream.listen((e) => sequence.add(e.runtimeType));
+        final bus = AppEventBus.create();
+        final sequence = <Type>[];
+        bus.stream.listen((e) => sequence.add(e.runtimeType));
 
-      await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
-      await tester.tap(listTiles.first);
-      await tester.pump();
-      await tester.pumpAndSettle();
+        final listTiles = find.byType(ListTile);
+        if (listTiles.evaluate().isEmpty) return;
+        await tester.tap(listTiles.first);
+        await tester.pump();
+        await tester.pumpAndSettle();
 
-      expect(sequence.indexOf(ClosePanelEvent), lessThan(sequence.indexOf(LocateMapTileEvent)));
-    });
+        expect(
+          sequence.indexOf(ClosePanelEvent),
+          lessThan(sequence.indexOf(LocateMapTileEvent)),
+        );
+      },
+    );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -697,93 +705,96 @@ void main() {
   });
 
   group('Army management (bus events)', () {
-    testWidgets('Combine emits ArmyCombineRequestedEvent when two armies selected', (
-      WidgetTester tester,
-    ) async {
-      ArmyCombineRequestedEvent? captured;
-      final bus = AppEventBus.create();
-      bus.on<ArmyCombineRequestedEvent>().listen((e) => captured = e);
+    testWidgets(
+      'Combine emits ArmyCombineRequestedEvent when two armies selected',
+      (WidgetTester tester) async {
+        ArmyCombineRequestedEvent? captured;
+        final bus = AppEventBus.create();
+        bus.on<ArmyCombineRequestedEvent>().listen((e) => captured = e);
 
-      const playerId = 'gp_combine';
-      const p = 'oldWorld|p2';
-      final game = Game(
-        id: 'gc',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: p,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'tk',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'uu1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: p,
-              ),
-              Unit(
-                id: 'uu2',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: p,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'ax',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['uu1'],
-              isHomeArmy: false,
+        const playerId = 'gp_combine';
+        const p = 'oldWorld|p2';
+        final game = Game(
+          id: 'gc',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: p,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                  townTileKey: 'tk',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'uu1',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+                Unit(
+                  id: 'uu2',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+              ],
             ),
-            Army(
-              id: 'ay',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['uu2'],
-              isHomeArmy: false,
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'ax',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['uu1'],
+                isHomeArmy: false,
+              ),
+              Army(
+                id: 'ay',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['uu2'],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                p: ['tk'],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'C',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|cap',
             ),
           ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {p: ['tk']},
-          },
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'C',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|cap',
-          ),
-        ],
-      );
+        );
 
-      await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: playerId, bus: bus),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: playerId, bus: bus),
+        );
+        await tester.pumpAndSettle();
 
-      final checks = find.byType(Checkbox);
-      expect(checks, findsNWidgets(3));
-      await tester.tap(checks.at(1));
-      await tester.tap(checks.at(2));
-      await tester.pumpAndSettle();
+        final checks = find.byType(Checkbox);
+        expect(checks, findsNWidgets(3));
+        await tester.tap(checks.at(1));
+        await tester.tap(checks.at(2));
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Combine'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Combine'));
+        await tester.pumpAndSettle();
 
-      expect(captured, isNotNull);
-      expect(captured!.armyIds.length, 2);
-    });
+        expect(captured, isNotNull);
+        expect(captured!.armyIds.length, 2);
+      },
+    );
 
     testWidgets('Move confirms ArmyMoveRequestedEvent', (
       WidgetTester tester,
@@ -808,9 +819,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3'),
-        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
       );
       final game = Game(
         id: 'gm',
@@ -847,7 +856,9 @@ void main() {
             ),
           ],
           tileKeysByRegionAndProvince: {
-            'oldWorld': {p: ['tk']},
+            'oldWorld': {
+              p: ['tk'],
+            },
           },
         ),
         players: [
