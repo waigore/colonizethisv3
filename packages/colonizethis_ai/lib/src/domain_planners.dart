@@ -506,13 +506,58 @@ Orders _runDiplomacyPlanner({
   );
   if (diploCandidates.isEmpty) return orders;
 
+  final scores = computeDiplomaticCandidateScores(
+    candidates: diploCandidates,
+    nationId: nationId,
+    game: game,
+    snapshot: snapshot,
+    config: config,
+  );
+
+  final candidateDesc = diploCandidates
+      .map(
+        (o) =>
+            '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
+      )
+      .toList();
+  _log.d(
+    'diplomacy eval nationId=$nationId hiddenAgendaId=${config.hiddenAgendaId} '
+    'candidates=$candidateDesc scores=$scores',
+  );
+
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
+  final rng = math.Random(seeds.diplomacySeed);
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < scores.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
+  final chosen = diploCandidates[idx];
+  _log.i(
+    'diplomacy chosen nationId=$nationId '
+    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
+  );
+  return _appendDiplomaticOrders(orders, nationId, [chosen]);
+}
+
+/// Pre–weighted-random scores for diplomatic order candidates (0 = suppressed).
+/// Exposed for deterministic tests; [runDomainPlanners] uses the same values.
+List<int> computeDiplomaticCandidateScores({
+  required List<DiplomaticOrder> candidates,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+}) {
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.leaderId);
   final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
-  final warCooldownTurns = 4;
-  final improveRelationsCooldownTurns = 2;
+  const warCooldownTurns = 4;
+  const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
-  final scores = diploCandidates.map((o) {
+  return candidates.map((o) {
     var s = 50;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
@@ -616,33 +661,6 @@ Orders _runDiplomacyPlanner({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
-
-  final candidateDesc = diploCandidates
-      .map(
-        (o) =>
-            '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
-      )
-      .toList();
-  _log.d(
-    'diplomacy eval nationId=$nationId hiddenAgendaId=$agendaId '
-    'candidates=$candidateDesc scores=$scores',
-  );
-
-  final total = scores.reduce((a, b) => a + b);
-  if (total <= 0) return orders;
-  final rng = math.Random(seeds.diplomacySeed);
-  var r = rng.nextDouble() * total;
-  var idx = 0;
-  for (; idx < scores.length && r > scores[idx]; idx++) {
-    r -= scores[idx];
-  }
-  if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
-  final chosen = diploCandidates[idx];
-  _log.i(
-    'diplomacy chosen nationId=$nationId '
-    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
-  );
-  return _appendDiplomaticOrders(orders, nationId, [chosen]);
 }
 
 int computeWarDesireScore({
