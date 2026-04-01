@@ -20,6 +20,15 @@ void main() {
       expect(s4.quantityOf('grain'), 0);
     });
 
+    test('applyDelta has no upper cap on quantity (strategic stockpile)', () {
+      const s = Stockpile();
+      const large = 2000000;
+      final s2 = s.applyDelta('iron', large);
+      expect(s2.quantityOf('iron'), large);
+      final s3 = s2.applyDelta('iron', 1);
+      expect(s3.quantityOf('iron'), large + 1);
+    });
+
     test('merge sums quantities', () {
       final a = const Stockpile().applyDelta('grain', 2);
       final b = const Stockpile().applyDelta('grain', 3).applyDelta('iron', 1);

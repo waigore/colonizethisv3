@@ -39,7 +39,7 @@ Sea transport applies this cargo-hold limit in two steps each turn:
 2. **Trade / exports (open market shipments):**  
    If any cargoHolds remain after step (1), allocate that remaining capacity to trade/export shipments for that player, using the same per-category priority ordering (or an explicit trade-priority rule when defined). Once capacity is exhausted, additional trade/export orders are not shipped this turn.
 
-Validation: do not exceed stockpile capacity (per [commodity-catalog](../game/commodity-catalog.md)); sea transport must only add to or remove from the **central stockpile**, never from per-province storage.
+**Central stockpile storage** is unbounded by design ([commodity-catalog](../game/commodity-catalog.md), [stockpiles-and-production](../game/stockpiles-and-production.md)): it abstracts a nation’s strategic pool, not warehouse capacity. Auto-transport does not clamp additions against a storage maximum. Sea transport must only add to or remove from the **central stockpile**, never from per-province commodity storage.
 
 **Priority ordering within categories in case of limited cargo capacity**
 
@@ -71,9 +71,9 @@ Player stockpile updated with land totals (all) and overseas totals (up to cargo
   When auto-transport runs  
   Then it allocates overseas quantities to the central stockpile by category priority (food, raw materials, riches, manufactured/advanced per `CommodityCategory`), does not exceed the effective cargo-hold capacity, and leaves any undelivered overseas quantities outside the central stockpile for that turn.
 
-- **Stockpile capacity:** Given a commodity catalog that defines stockpile capacity for one or more commodities and a player whose stockpile is near capacity  
-  When auto-transport adds land and overseas quantities  
-  Then it never increases any commodity above its configured capacity in the central stockpile (this constraint may be stubbed or logged until #40 is fully implemented, but the spec requires that capacity is not exceeded).
+- **Unbounded central stockpile:** Given per-player land and overseas extraction totals and a current central stockpile with no storage maximum defined in game rules  
+  When auto-transport applies land totals then overseas totals already limited only by cargo-hold throughput  
+  Then it adds the full land extraction to the central stockpile and adds the full overseas-delivered amounts (post cargo-hold allocation and any upstream interception) with no additional clamping against a warehouse or per-commodity storage cap.
 
 - **Trade interception:** Given overseas extraction and trade/export shipments for a player and that naval trade/transport interception has reduced delivered cargo per [naval-movement-resolution.md](naval-movement-resolution.md) § Trade/Transport Interception  
   When auto-transport applies sea transport for that turn  
