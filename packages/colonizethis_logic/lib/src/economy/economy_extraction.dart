@@ -2,14 +2,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
+/// SPEC/game/stockpiles-and-production.md
 /// SPEC/program/auto-transport.md
 ///
 /// World-level extraction from tiles/provinces is resolved elsewhere; this
 /// helper applies per-commodity extracted quantities to a player's stockpile
-/// with auto-transport semantics (all to central stockpile).
+/// with auto-transport semantics (all to central stockpile). The stockpile is
+/// a strategic abstraction with no warehouse capacity clamp — see
+/// stockpiles-and-production § Strategic abstraction.
 
 /// Applies [extracted] commodity quantities to [stockpile], returning the
 /// updated stockpile. Negative values in [extracted] are treated as zero.
+/// There is no maximum stockpile size; deltas add without storage caps.
 Stockpile applyExtractionToStockpile(
   Stockpile stockpile,
   Map<CommodityId, int> extracted,

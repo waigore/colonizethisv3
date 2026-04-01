@@ -10,7 +10,7 @@ Defines core data structures for the player economy: stockpiles, worker pools, a
 
 ### Stockpile
 
-Per-player map of commodity id → quantity. No per-province storage. Extraction, production, and consumption all operate on this structure.
+Per-player map of commodity id → quantity. No per-province storage. Extraction, production, and consumption all operate on this structure. The type models a **strategic national resource pool**; **warehouse logistics** are not simulated ([stockpiles-and-production.md](../game/stockpiles-and-production.md) § Strategic abstraction). Quantities are unbounded aside from integer limits.
 
 ### WorkerPool
 

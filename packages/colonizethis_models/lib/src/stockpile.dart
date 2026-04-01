@@ -2,9 +2,11 @@
 /// SPEC/game/stockpiles-and-production.md
 /// SPEC/program/economy-models.md
 ///
-/// In Phase 2 the stockpile is a map of commodity id → quantity,
-/// where `commodityId` is the canonical string id from
-/// `SPEC/game/commodity-catalog.md`.
+/// Models a national **strategic** resource pool; warehouse logistics are not
+/// simulated. Quantities are unbounded (no storage cap) aside from [int] range.
+///
+/// Map of commodity id → quantity, where [CommodityId] is the canonical string
+/// id from `SPEC/game/commodity-catalog.md`.
 typedef CommodityId = String;
 
 class Stockpile {
