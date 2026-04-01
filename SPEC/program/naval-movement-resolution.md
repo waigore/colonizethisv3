@@ -67,6 +67,7 @@ BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs 
 
 - **Phase:** Movement phase (alongside land movement); interception in Naval Interception & Naval Combat step ([turn-resolution-phases.md](turn-resolution-phases.md)). Trade interception during Extraction/Trade.
 - **Upstream:** Fleet orders from [orders.md](orders.md); topology from map data.
+- **Combined topology:** Runtime graph is **combined** `MapTopology` (prefixed node/edge ids per [map-data.md](map-data.md)). For a fleet **in port**, resolving the adjacent sea zone (undock, validation, UI move picks) uses `seaZoneIdForProvince` and related helpers; those lookups must succeed for **local province id + regionId** against that graph, not only against per-region local-id graphs.
 - **Downstream:** Updated fleet locations and visibility in WorldState; BattleContextSea to [naval-combat-resolution.md](naval-combat-resolution.md); cargo reductions to [auto-transport.md](auto-transport.md).
 
 ## Constraints

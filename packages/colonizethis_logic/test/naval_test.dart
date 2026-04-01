@@ -194,6 +194,38 @@ void main() {
         );
         expect(seaZoneIdForProvince(inland, 'p1'), isNull);
       });
+
+      test(
+        'supports combined topology: prefixed node ids and edges (app/turn resolver graph)',
+        () {
+          const ow = 'oldWorld';
+          final combined = MapTopology(
+            nodes: [
+              TopologyNode(
+                id: '$ow|cap',
+                regionId: ow,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: '$ow|sea1',
+                regionId: ow,
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: [
+              TopologyEdge(id1: '$ow|cap', id2: '$ow|sea1'),
+            ],
+          );
+          expect(
+            seaZoneIdForProvince(combined, 'cap', regionId: ow),
+            '$ow|sea1',
+          );
+          expect(
+            seaZoneIdForProvince(combined, '$ow|cap', regionId: ow),
+            '$ow|sea1',
+          );
+        },
+      );
     });
 
     group('provinceIdsAdjacentToSeaZone', () {
