@@ -436,7 +436,7 @@ void main() {
     );
 
     test(
-      'move order accepted when destination not adjacent but own province',
+      'civilian move order accepted when destination not adjacent but own province',
       () {
         const ow = 'oldWorld';
         final topology = MapTopology(
@@ -475,7 +475,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'musketeers',
+                  type: 'Builder',
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                 ),

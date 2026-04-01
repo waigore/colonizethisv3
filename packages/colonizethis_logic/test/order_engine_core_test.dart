@@ -117,7 +117,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'musketeers',
+                type: 'Builder',
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -300,7 +300,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'musketeers',
+                type: 'Builder',
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -436,6 +436,16 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: fieldArmyIdFor('p1', '$ow|P1'),
+              ownerId: 'p1',
+              regionId: ow,
+              stationedProvinceId: '$ow|P1',
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
           playerVisibilityByTile: const {
             'p1': {
               'oldWorld|P1|0|0': 'fullyVisible',
@@ -452,9 +462,12 @@ void main() {
       );
 
       final engine = OrderEngine();
-      engine.addMoveOrder(
+      engine.addArmyMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        ArmyMoveOrder(
+          armyId: fieldArmyIdFor('p1', '$ow|P1'),
+          destinationProvinceId: '$ow|P2',
+        ),
       );
 
       final results = engine.validatePlayerOrdersWithContext(
@@ -504,6 +517,16 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: fieldArmyIdFor('p1', '$ow|P1'),
+                ownerId: 'p1',
+                regionId: ow,
+                stationedProvinceId: '$ow|P1',
+                regimentUnitIds: const ['u1'],
+                isHomeArmy: false,
+              ),
+            ],
             playerVisibilityByTile: const {
               'p1': {
                 'oldWorld|P1|0|0': 'fullyVisible',
@@ -527,9 +550,12 @@ void main() {
               targetFactionId: 'p2',
             ),
           )
-          ..addMoveOrder(
+          ..addArmyMoveOrder(
             'p1',
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+            ArmyMoveOrder(
+              armyId: fieldArmyIdFor('p1', '$ow|P1'),
+              destinationProvinceId: '$ow|P2',
+            ),
           );
 
         final results = engine.validatePlayerOrdersWithContext(
@@ -538,8 +564,10 @@ void main() {
           'p1',
         );
         expect(results.length, 2);
-        expect(results[0].status, OrderValidationStatus.accepted);
-        expect(results[1].status, OrderValidationStatus.accepted);
+        expect(
+          results.every((r) => r.status == OrderValidationStatus.accepted),
+          isTrue,
+        );
       },
     );
 

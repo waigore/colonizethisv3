@@ -600,7 +600,7 @@ void main() {
         );
 
         const ow = 'oldWorld';
-        final game = Game(
+        final gameBase = Game(
           id: 'g1',
           worldState: WorldState(
             turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -628,11 +628,15 @@ void main() {
           ),
           players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
         );
+        final game = ensureMilitaryArmiesForGame(gameBase);
 
         final engine = OrderEngine();
-        engine.addMoveOrder(
+        engine.addArmyMoveOrder(
           'p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+          ArmyMoveOrder(
+            armyId: fieldArmyIdFor('p1', '$ow|P1'),
+            destinationProvinceId: '$ow|P2',
+          ),
         );
 
         final next = requireTurnResolutionComplete(
@@ -682,7 +686,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'musketeers',
+                  type: 'Builder',
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                 ),
