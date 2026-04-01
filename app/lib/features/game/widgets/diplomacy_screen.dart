@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/app_event_bus_provider.dart';
+import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
-import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel.dart';
 import 'grant_or_subsidy_listener.dart';
 
@@ -16,16 +17,10 @@ class DiplomacyScreen extends ConsumerWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
-    required this.topology,
-    required this.onOrdersChanged,
-    this.currentOrders = const Orders(),
   });
 
   final Game game;
   final String humanPlayerId;
-  final MapTopology topology;
-  final Orders currentOrders;
-  final void Function(Orders orders) onOrdersChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,23 +29,26 @@ class DiplomacyScreen extends ConsumerWidget {
       game: game,
       title: 'Diplomacy',
       bodyBuilder: (context, shellRef, displayGame) {
+        final orders = shellRef.watch(currentOrdersProvider);
+        MapTopology topology = const MapTopology();
+        try {
+          final gameService = shellRef.watch(gameServiceProvider);
+          final loaded = gameService.getMapData(displayGame.id);
+          if (loaded != null) {
+            topology = loaded.combinedTopology;
+          }
+        } on Object {
+          // Widget tests may not initialize Hive-backed game service providers.
+        }
         return GrantOrSubsidyListener(
           bus: bus,
           game: displayGame,
-          onConfirmed: (order) {
-            onOrdersChanged(
-              currentOrders.appendDiplomaticOrderForPlayer(
-                humanPlayerId,
-                order,
-              ),
-            );
-          },
+          humanPlayerId: humanPlayerId,
           child: DiplomacyPanel(
             game: displayGame,
             humanPlayerId: humanPlayerId,
             topology: topology,
-            currentOrders: currentOrders,
-            onOrdersChanged: onOrdersChanged,
+            currentOrders: orders,
             bus: bus,
           ),
         );

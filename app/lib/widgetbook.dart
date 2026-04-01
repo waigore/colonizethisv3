@@ -469,7 +469,6 @@ List<WidgetbookNode> get productionPanelDirectories => [
               humanPlayerId: humanPlayerId,
               topology: result.combinedTopology,
               currentOrders: const Orders(),
-              onOrdersChanged: (_) {},
               bus: AppEventBus(),
             ),
           );
