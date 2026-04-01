@@ -5,6 +5,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/army_ids.dart';
 import '../dossier/event_dialogue.dart';
 import '../economy/build_cost.dart';
 import 'build_rail_work_rules.dart';
@@ -18,6 +19,50 @@ import '../world/tile_control.dart';
 import '../world/unit_lookup.dart';
 
 final _log = logicLogger();
+
+void _appendMilitaryRegimentToArmy(
+  _BuildWorkState state,
+  Player player,
+  String spawnProvinceId,
+  String newUnitId,
+) {
+  final cap = player.capitalProvinceId;
+  final atHome =
+      cap != null &&
+      (spawnProvinceId == cap ||
+          (ProvinceId.regionIdFrom(spawnProvinceId) ==
+                  ProvinceId.regionIdFrom(cap) &&
+              ProvinceId.localIdFrom(spawnProvinceId) ==
+                  ProvinceId.localIdFrom(cap)));
+  final armyId = atHome
+      ? homeArmyIdFor(player.id)
+      : fieldArmyIdFor(player.id, spawnProvinceId);
+  final ws = state.game.worldState;
+  final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
+  final idx =
+      ws.armies.indexWhere((a) => a.id == armyId && a.ownerId == player.id);
+  if (idx >= 0) {
+    final a = ws.armies[idx];
+    final updated = a.copyWith(
+      regimentUnitIds: [...a.regimentUnitIds, newUnitId],
+    );
+    final next = List<Army>.from(ws.armies)..[idx] = updated;
+    state.game = state.game.copyWith(worldState: ws.copyWith(armies: next));
+    return;
+  }
+  final stationed = atHome ? cap : spawnProvinceId;
+  final newArmy = Army(
+    id: armyId,
+    ownerId: player.id,
+    regionId: regionId,
+    stationedProvinceId: stationed,
+    regimentUnitIds: [newUnitId],
+    isHomeArmy: atHome,
+  );
+  final next = [...ws.armies, newArmy]
+    ..sort((a, b) => a.id.compareTo(b.id));
+  state.game = state.game.copyWith(worldState: ws.copyWith(armies: next));
+}
 
 /// Counter-spy: per-turn kill chance = (friendlySpies * [counterSpyKillChancePercentPerSpy])%,
 /// capped at [counterSpyKillChanceCapPercent]%. SPEC: work order resolution.
@@ -205,6 +250,10 @@ void _runBuildPhase(_BuildWorkState state) {
         state.newUnitsById[newUnit.id] = newUnit;
       } else {
         state.oldUnitsById[newUnit.id] = newUnit;
+      }
+
+      if (category == BuildUnitCategory.military) {
+        _appendMilitaryRegimentToArmy(state, player, spawnProvinceId, newUnit.id);
       }
     }
 

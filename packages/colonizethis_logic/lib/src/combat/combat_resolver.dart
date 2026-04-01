@@ -5,6 +5,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/army_migration.dart';
 import '../world/fog_resolution.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
@@ -273,12 +274,16 @@ Game resolveBattleContext(
 
   recordAttackCommandersForResolvedBattle(ctx, generalAssignment, ledger);
 
-  return game.copyWith(
+  var result = game.copyWith(
     worldState: newWorldState,
     generals: game.generals
         .map((g) => generalsById[g.id] ?? g)
         .toList(growable: false),
   );
+  result = result.copyWith(
+    worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
+  );
+  return result;
 }
 
 /// Builds post-battle region state: applies casualties, garrison recovery,

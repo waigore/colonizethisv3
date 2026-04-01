@@ -2,11 +2,11 @@
 
 ## Overview
 
-Auto-resolved combat triggers when units move into enemy-controlled provinces. Battles are deterministic, with initiative-ordered multi-attacker chains resolved per province.
+Auto-resolved combat triggers when **armies** move into enemy-controlled provinces ([military-armies.md](military-armies.md)); all regiments in the attacking army attack together. Battles are deterministic, with initiative-ordered multi-attacker chains resolved per province.
 
 ## Rules
 
-**Trigger:** A unit's move ending in an enemy-owned province constitutes an attack. Only Great Powers initiate; Minor Nations and Tribes defend only. Province ids used in conflict detection, battle context construction, and combat resolution follow [world-model-identity.md](world-model-identity.md): all province ids are the prefixed `regionId|localId` form, not bare local ids.
+**Trigger:** An **army** move ending in an enemy-owned province constitutes an attack (all regiments in that army participate). Only Great Powers initiate; Minor Nations and Tribes defend only. Province ids used in conflict detection, battle context construction, and combat resolution follow [world-model-identity.md](world-model-identity.md): all province ids are the prefixed `regionId|localId` form, not bare local ids.
 
 **Attacker / Defender:** Attacker = faction that moved in. Defender = province owner (tie-break: lowest faction id). One defender per province; multiple attackers possible.
 
@@ -24,12 +24,12 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
 
 **Outcomes:** Attacker victory (defender eliminated → province flips), defender victory (attacker eliminated, no change), stalemate (both survive, no flip), mutual annihilation (both wiped; defender recovers 20% rounded up of initial regiments if further attackers remain, otherwise ungarrisoned).
 
-**Province Flip:** Immediate on defender elimination, before later same-province battles. Connectivity/extraction recompute next turn.
+**Province Flip:** After **defender armies are eliminated** (no defending regiments remain in the province for the defender faction). Army casualties and army removal are applied **before** ownership flips; see [military-armies.md](military-armies.md). Flip is immediate when the defender has no regiments left, before later same-province battles in the chain. Connectivity/extraction recompute next turn.
 
 ## Acceptance Criteria
 
-- Given a province owned by a defending faction with fort level between 0 and 3 inclusive and at least one defending regiment  
-  When a Great Power moves at least one attacking regiment into that province and the move ends in that province  
+- Given a province owned by a defending faction with fort level between 0 and 3 inclusive and at least one defending regiment (via a defending army)  
+  When a Great Power moves an **attacking army** into that province and the move ends in that province  
   Then the system starts a combat resolution for that province, designates the moving faction as the attacker, designates the province owner (or, on ownership ties, the lowest faction id) as the defender, and selects `Field` battle mode when fort level = 0 or `Siege` battle mode when fort level ≥ 1.
 
 - Given one defender and two or more attacking factions each with at least one regiment in the same province  
@@ -40,7 +40,7 @@ Auto-resolved combat triggers when units move into enemy-controlled provinces. B
   When the system executes the multi-attacker chain for that province  
   Then the system first resolves a battle between the defender and the highest-initiative attacker, and for each subsequent attacker it resolves a new battle between the previous battle’s winner (without healing or regenerating regiments) and the next attacker in the ordered list until either all attackers are eliminated or the defender side is eliminated.
 
-- Given a side in combat has no uncommitted assignable general for a BattleContext  
+- Given a side in combat has no assignable general after **pre-Combat army–general binding** for that engagement  
   When the system derives `generalMedals` for initiative and combat modifiers  
   Then the system derives fallback medals from that side’s leader combat multiplier using this mapping: multiplier `>= 1.25` => 4 medals, `>= 1.20` => 3 medals, `>= 1.15` => 2 medals, `>= 1.10` => 1 medal, else 0 medals.
 

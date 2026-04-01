@@ -269,10 +269,12 @@ class AppEventHandler {
           }
           final humanPlayerId = _humanPlayerId(game);
           final bus = ref.watch(appEventBusProvider);
+          final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           return MilitaryUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
+            topology: mapData?.combinedTopology ?? const MapTopology(),
           );
         },
       ),

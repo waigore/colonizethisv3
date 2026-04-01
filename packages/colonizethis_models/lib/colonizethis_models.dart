@@ -1,6 +1,7 @@
 /// Shared data models, schemas, serialization. SPEC/game/world-model, SPEC/program/turn-resolution.
 library colonizethis_models;
 
+export 'src/army.dart';
 export 'src/capital_tile.dart';
 export 'src/diplomacy.dart';
 export 'src/fleet.dart';

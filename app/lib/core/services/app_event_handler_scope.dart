@@ -330,6 +330,38 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
           e.moveOrder,
         );
       }),
+      bus.on<LandArmiesUpdatedEvent>().listen((e) {
+        ref.read(currentGameProvider.notifier).setGame(e.game);
+      }),
+      bus.on<ArmyCombineRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final next = applyArmyCombine(
+          game: g,
+          playerId: e.humanPlayerId,
+          armyIds: e.armyIds,
+        );
+        bus.emit(LandArmiesUpdatedEvent(game: next));
+      }),
+      bus.on<ArmySplitRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final next = applyArmySplit(
+          game: g,
+          playerId: e.humanPlayerId,
+          sourceArmyId: e.sourceArmyId,
+          unitIdsToMove: e.unitIdsToMove,
+        );
+        bus.emit(LandArmiesUpdatedEvent(game: next));
+      }),
+      bus.on<ArmyMoveRequestedEvent>().listen((e) {
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = applyArmyMoveOrderForPlayer(
+          o,
+          e.humanPlayerId,
+          e.moveOrder,
+        );
+      }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
         if (g == null) return;

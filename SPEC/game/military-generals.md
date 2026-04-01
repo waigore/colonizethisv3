@@ -1,12 +1,12 @@
 # Military Generals, Armies, and Regiment Economy
 
-**SPEC/game** — Generals, general cap, assignment, medals, and regiment costs. Part of land military design. See [military-units.md](military-units.md). Combat: [combat.md](combat.md). Province identity: [world-model-identity.md](world-model-identity.md).
+**SPEC/game** — Generals, general cap, **pre-combat assignment to armies**, medals, and regiment costs. Part of land military design. **Armies (containers, movement, split/combine):** [military-armies.md](military-armies.md). Regiments: [military-units.md](military-units.md). Combat: [combat.md](combat.md). Province identity: [world-model-identity.md](world-model-identity.md).
 
 ---
 
 ## Generals
 
-Generals are **purely abstract entities**. They have no province, no map location, and are not tied to any stack or tile. They exist only as a per-faction pool of commanders used at combat time.
+Generals are **purely abstract entities**. They have no province, no map location, and are not tied to a tile. They exist as a per-faction pool of commanders. **Binding to forces** happens only through **pre-combat assignment to armies** ([military-armies.md](military-armies.md)), not through permanent map stacks.
 
 ### Count and tech-gated cap
 
@@ -20,18 +20,20 @@ Each Great Power has a **general cap**: the maximum (and minimum) number of gene
   The faction’s **general cap** is `capBase`. When the cap increases (e.g. from 1 to 2), the system immediately creates additional generals so that total general count equals the new cap; new generals start at 0 medals. **Stacking:** `national_bureaucracy` and `improved_infantry_tactics` do not stack—only one of them is required for cap 3; researching both does not increase the cap further.
 - **Scope:** The cap is per faction (global), not per region.
 
-### Assignment
+### Assignment (pre-Combat phase)
 
-Generals are **not** assigned to provinces or stacks by default. Assignment is **required and automated at combat time**:
+Generals are **not** permanently assigned to provinces. **Immediately before the Combat phase begins** — after Movement and Minor Regiment Upgrade, before any land battle is resolved — the system runs **general–army binding** for every faction that will participate in land combat this phase:
 
-- **When attacking:** A faction that orders an attack (move into an enemy province) must commit one general to that attack. The system chooses **one general at random** from that faction’s generals who are not already committed to another battle this turn. That general is “assigned” to that attacking force for the **duration of that battle only**. This **caps the number of attacks** a faction can make in one turn: at most one attack per general (so at most general cap attacks per turn).
-- **When defending:** When a province owned by the faction is attacked, the system automatically assigns **one general at random** from that faction’s generals who are not already committed to another battle this turn. If the faction has **no uncommitted general**, the province **may still be defended** and uses fallback `generalMedals` derived from leader combat multiplier: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
+- **Attacking armies:** Each **army** that moved into a hostile/neutral province (or otherwise triggers an attack engagement this turn per combat rules) must receive **one** general from that faction’s pool, chosen **at random** from generals **not already bound** to another **attacking** army this phase. Binding lasts for the **Combat phase** (all that army’s engagements in that phase). This preserves the **attack cap:** at most **one distinct attacking army** per general per Combat phase for offensive binding (equivalently: at most `general cap` simultaneous offensive army commitments when generals are available).
+- **Defending armies:** For each **defending army** present in a province where a land battle will occur, the system assigns **one** general at random from generals not already bound to another **defending** army this phase **when** a general is required for that army’s side. If **no** general is available for a defending side, that side uses fallback `generalMedals` from leader combat multiplier: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
 
-**Defender general modeling:** Defender generals are modeled in combat resolution symmetrically with attackers. Defender assigned medals (or fallback medals when no uncommitted general exists) apply to deployment limit, morale aura, and initiative effects.
+**Defender general in province:** When multiple defending armies of the same faction share a province, combat uses **one** defender medal value for the merged defender side: the **primary defending army**’s bound general (see [military-armies.md](military-armies.md)); if that army has no binding, use fallback for the side.
 
-**Commitment lifetime:** A general is committed only for the duration of one battle. When that battle’s resolution completes, the generals assigned to that battle (attacker and defender) are **freed**. If there is a subsequent battle in the same turn (e.g. another province), the assignment process runs again and any general may be assigned, including one who was just in a previous battle.
+**Medal effects** (deployment limit, morale aura, initiative) use the **army-bound** general for each attacking army; ledger and Quick Battle rules in [combat-resolution.md](../program/combat-resolution.md) refer to **army** and `generalId` on each attacking side, not ad-hoc per-battle random picks after the pre-Combat binding step.
 
-Assignment is only for applying general bonuses in combat (deployment limit, initiative, morale aura). It does not imply any map location.
+**Commitment lifetime:** Bindings for the Combat phase are **released** when the Combat phase ends. A general may be rebound in a later turn.
+
+Assignment applies only combat modifiers; it does not place generals on the map.
 
 ### Medals
 
@@ -103,11 +105,12 @@ Per-regiment values follow the same era/category progression as the tactical sta
 
 ---
 
-## Armies and Movement
+## Armies and movement (summary)
 
-- **Army (for combat):** In a given battle, an “army” is the set of regiments on one side (attacker or defender) plus, if available, the one general assigned to that side for that battle. Generals are assigned at combat resolution time as above; they are not pre-assigned to provinces or stacks on the map.
-- **Location:** Regiments are always located in a province. A player's regiments must be in provinces they own when at peace. Movement into a non-owned province is an attack and requires committing a general for that attack (subject to the attack cap).
-- **Movement into non-owned province:** Moving regiments into a province the player does not own is an act of war. War declaration is triggered during turn resolution (Diplomacy phase) before Movement; combat and province-flip logic apply when units enter enemy-held territory. See [combat.md](combat.md) and [movement.md](../program/movement.md).
+Persistent **armies** (containers of regiment ids, one province per army) are defined in [military-armies.md](military-armies.md). **Combat-side** “army” in battle is built from those regiments plus the **pre-bound** general for each **attacking army** and the **primary defending army**’s general for the defender side.
+
+- **Location:** Regiments are always in a province via their army’s station. Movement orders are **per army**; all regiments in the army move together.
+- **Movement into non-owned province:** Still an act of war; war declaration runs in Diplomacy before Movement. **General** commitment is expressed through pre-Combat binding to **attacking armies** (subject to cap). See [combat.md](combat.md) and [movement.md](../program/movement.md).
 
 Province ids use the prefixed form and lookup rules in [world-model-identity.md](world-model-identity.md).
 
@@ -143,17 +146,11 @@ Province ids use the prefixed form and lookup rules in [world-model-identity.md]
   When the system updates general cap from tech state  
   Then the general cap remains 3; researching both techs does not increase the cap further.
 
-- Given a Great Power with G generals and no attacks or defenses yet committed this turn  
-  When the player orders an attack (move into an enemy province)  
-  Then the system selects one general at random from that faction’s G generals, commits that general to that attack for this turn, and allows the attack to proceed; the number of attacks that faction may order this turn is at most G.
+- Given a Great Power with G generals at the start of the Combat phase and K distinct **attacking armies** of that faction that will enter land combat this phase, when the system runs **pre-Combat general–army binding**, then the system assigns a distinct general to each of up to min(K, G) of those armies chosen at random from the pool, and any further attacking army beyond that receives **fallback** attacker medals (leader mapping) with no `generalId` for the ledger.
 
-- Given a Great Power that has already committed all G of its generals to attacks or defenses this turn and leader combat multiplier `L`  
-  When an enemy attack targets another province owned by that faction  
-  Then the system allows the province to be defended with fallback defender general medals derived from `L` using this mapping: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
+- Given a defending faction whose generals are all already bound to other **defending** armies this Combat phase and leader combat multiplier `L`, when a land battle still requires defender medals for that side, then the system uses fallback defender general medals derived from `L` using this mapping: `>=1.25 => 4`, `>=1.20 => 3`, `>=1.15 => 2`, `>=1.10 => 1`, else `0`.
 
-- Given a province owned by a faction with at least one uncommitted general and under attack  
-  When the system resolves the defender side for that battle  
-  Then the system selects one uncommitted general at random, commits that general to this defense for this turn, and uses that general’s medals for deployment limit, initiative, and morale aura for the defender.
+- Given a defending army in a province under land attack and at least one general still eligible for **defender** binding this Combat phase, when the system runs pre-Combat binding for that army, then the system assigns one such general at random to that army and uses that general’s medals (via the primary-army rule in [military-armies.md](military-armies.md) when merged) for deployment limit, initiative, and morale aura for the defender side.
 
 - Given a general who commanded the winning side of a battle and has current medals M less than 4  
   When the system records the battle outcome  
@@ -171,13 +168,9 @@ Province ids use the prefixed form and lookup rules in [world-model-identity.md]
   When the system applies deployment limit and modifier rules  
   Then the system caps participating regiments per side to base (10, or 12 with Nationalism tech) + that side’s assigned general medals (or 0 if no general), and applies initiative and morale aura per [combat.md](combat.md) and [combat-resolution.md](../program/combat-resolution.md).
 
-- Given a faction id that owns one or more `General` records in game state (any such faction, not only a Great Power)  
-  When the Combat phase runs multiple land battles in one turn and that faction attacks more than once  
-  Then the system applies the phase ledger in [combat-resolution.md](../program/combat-resolution.md) §3 so a general who already commanded an attack this phase is not assigned as the attacking commander again that phase; if no unassigned general remains for another attack, the attacking side uses fallback medals only.
+- Given a faction id that owns one or more `General` records in game state (any such faction, not only a Great Power), when the Combat phase runs multiple land battles and that faction fields multiple **attacking armies**, then the system applies the phase ledger in [combat-resolution.md](../program/combat-resolution.md) §3 so a general already bound to an attacking army this phase is not bound to another attacking army in the same phase; if no general remains for another attacking army, that army’s attacking side uses fallback medals only.
 
-- Given Quick Battle is selected for a land battle  
-  When the system builds Quick Battle input from the same `BattleContext` and phase ledger as auto-resolve would use  
-  Then attacker and defender general medal inputs match the assignment + fallback rules in [combat-resolution.md](../program/combat-resolution.md) §3, with the primary attacker defined as the first `BattleContext.attackers` entry.
+- Given Quick Battle is selected for a land battle, when the system builds Quick Battle input from the same `BattleContext`, pre-Combat bindings, and phase ledger as auto-resolve would use, then attacker and defender general medal inputs match the pre-Combat binding + fallback rules in [combat-resolution.md](../program/combat-resolution.md) §3, with the primary attacker defined as the first `BattleContext.attackers` entry.
 
 ---
 
@@ -194,9 +187,9 @@ Each acceptance criterion above has a matching scenario file under `tool/sim_sce
 | national_bureaucracy or improved_infantry_tactics → cap 3 | military_generals_cap_three.json |
 | nationalism → cap 4 | military_generals_cap_four_nationalism.json |
 | national_bureaucracy + improved_infantry_tactics: cap stays 3 (no stack) | military_generals_cap_three_no_stack.json |
-| At most G attacks per turn (one general per attack) | military_generals_attack_cap.json |
-| Defend with 0 general medals when no uncommitted general | military_generals_defend_without_general.json |
-| Defender gets uncommitted general at random | military_generals_defender_assigned.json |
+| At most G attacking armies bound to distinct generals per Combat phase | military_generals_attack_cap.json (update for armies) |
+| Defend with fallback when no defender general available | military_generals_defend_without_general.json |
+| Defender army gets bound general when pool allows | military_generals_defender_assigned.json |
 | Winning general gains +1 medal (max 4) | military_generals_medal_gain_win.json |
 | Winning general at 4 medals stays at 4 | military_generals_medal_cap_four.json |
 | Losing / stalemate: general medals unchanged | military_generals_medal_no_gain_loss.json |

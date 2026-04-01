@@ -1,3 +1,4 @@
+import 'army.dart';
 import 'fleet.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
@@ -19,6 +20,8 @@ class WorldState {
     this.purchasedTilesByTileKey = const {},
     this.resourceByTileKey = const {},
     this.nextShipInstanceSeq = 1,
+    this.armies = const [],
+    this.nextArmySeq = 1,
   });
 
   final TurnState turnState;
@@ -60,6 +63,12 @@ class WorldState {
   /// SPEC/game/ships-and-naval.md.
   final int nextShipInstanceSeq;
 
+  /// Land armies (regiment containers). SPEC/game/military-armies.md.
+  final List<Army> armies;
+
+  /// Monotonic counter for minting non-home army ids (e.g. split armies).
+  final int nextArmySeq;
+
   Map<String, dynamic> toJson() => {
         'turnState': turnState.toJson(),
         'oldWorld': oldWorld.toJson(),
@@ -84,6 +93,8 @@ class WorldState {
         if (purchasedTilesByTileKey.isNotEmpty) 'purchasedTilesByTileKey': purchasedTilesByTileKey,
         if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
         'nextShipInstanceSeq': nextShipInstanceSeq,
+        if (armies.isNotEmpty) 'armies': armies.map((e) => e.toJson()).toList(),
+        if (nextArmySeq != 1) 'nextArmySeq': nextArmySeq,
       };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -135,6 +146,14 @@ class WorldState {
     final nextShipInstanceSeq = storedSeq is int
         ? (storedSeq >= inferredSeq ? storedSeq : inferredSeq)
         : inferredSeq;
+
+    final armiesRaw = json['armies'] as List<dynamic>? ?? [];
+    final armies = armiesRaw
+        .map((e) => Army.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+
+    final storedArmySeq = json['nextArmySeq'];
+    final nextArmySeq = storedArmySeq is int ? storedArmySeq : 1;
 
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];
     final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
@@ -191,6 +210,8 @@ class WorldState {
       spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
       purchasedTilesByTileKey: purchasedTilesByTileKey,
       resourceByTileKey: resourceByTileKey,
+      armies: armies,
+      nextArmySeq: nextArmySeq,
     );
   }
 
@@ -208,6 +229,8 @@ class WorldState {
     Map<String, String>? purchasedTilesByTileKey,
     Map<String, String>? resourceByTileKey,
     int? nextShipInstanceSeq,
+    List<Army>? armies,
+    int? nextArmySeq,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -224,6 +247,8 @@ class WorldState {
       purchasedTilesByTileKey: purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
       resourceByTileKey: resourceByTileKey ?? this.resourceByTileKey,
       nextShipInstanceSeq: nextShipInstanceSeq ?? this.nextShipInstanceSeq,
+      armies: armies ?? this.armies,
+      nextArmySeq: nextArmySeq ?? this.nextArmySeq,
     );
   }
 
@@ -245,7 +270,9 @@ class WorldState {
           _spyRevealEquals(spyRevealTurnsByPlayer, other.spyRevealTurnsByPlayer) &&
           _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
           _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
-          nextShipInstanceSeq == other.nextShipInstanceSeq;
+          nextShipInstanceSeq == other.nextShipInstanceSeq &&
+          _listEqualsArmy(armies, other.armies) &&
+          nextArmySeq == other.nextArmySeq;
 
   @override
   int get hashCode => Object.hash(
@@ -278,6 +305,8 @@ class WorldState {
         Object.hashAll(purchasedTilesByTileKey.entries),
         Object.hashAll(resourceByTileKey.entries),
         nextShipInstanceSeq,
+        Object.hashAll(armies),
+        nextArmySeq,
       );
 
   static bool _tileKeysByRegionEquals(
@@ -302,6 +331,14 @@ class WorldState {
   }
 
   static bool _listEqualsString(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static bool _listEqualsArmy(List<Army> a, List<Army> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;

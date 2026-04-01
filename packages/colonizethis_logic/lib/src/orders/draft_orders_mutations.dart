@@ -29,6 +29,25 @@ Orders applyNavalMoveOrderForPlayer(
   );
 }
 
+/// Replaces any prior army move for the same [armyId] for this turn draft.
+/// SPEC/game/military-armies.md.
+Orders applyArmyMoveOrderForPlayer(
+  Orders orders,
+  String playerId,
+  ArmyMoveOrder newOrder,
+) {
+  final next = List<ArmyMoveOrder>.from(
+    orders.armyMoveOrdersByPlayerId[playerId] ?? const [],
+  )..removeWhere((o) => o.armyId == newOrder.armyId);
+  next.add(newOrder);
+  return orders.copyWith(
+    armyMoveOrdersByPlayerId: {
+      ...orders.armyMoveOrdersByPlayerId,
+      playerId: next,
+    },
+  );
+}
+
 /// Drops naval mission orders for fleets that have a naval move order this turn.
 /// SPEC/program/naval-movement-resolution.md.
 Map<String, List<NavalMissionOrder>> navalMissionOrdersRespectingNavalMoves(
