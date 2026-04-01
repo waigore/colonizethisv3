@@ -1,6 +1,6 @@
 {
   "name": "gp_fall_after_capital_and_ports_lost",
-  "description": "Great Power fall: two OW sea-bound provinces; gp1 capital in P1, gp2 capital in P2. gp2 attacks P1 with 2 regiments vs 1, conquers it, and gp1 has no remaining port provinces; GP fall transfers any remaining gp1 provinces to gp2. Assert both P1 and P2 owned by gp2 after turn 1.",
+  "description": "Great Power fall: OW provinces with ports; gp1 capital in P1, gp2 capital in P2. gp2 attacks P1 from adjacent non-capital P3 with 2 regiments vs 1, conquers it, and gp1 has no remaining port provinces; GP fall transfers any remaining gp1 provinces to gp2. Assert both P1 and P2 owned by gp2 after turn 1.",
   "init": {
     "type": "fromTopology",
     "config": {
@@ -12,15 +12,18 @@
       }
     },
     "oldWorld": {
-      "grid": [["P1", "sea1", "P2"]],
+      "grid": [["P1", "sea1", "P2", "P3"]],
       "nodes": [
         { "id": "P1", "regionId": "oldWorld", "type": "province" },
         { "id": "P2", "regionId": "oldWorld", "type": "province" },
+        { "id": "P3", "regionId": "oldWorld", "type": "province" },
         { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
       ],
       "edges": [
         { "id1": "P1", "id2": "sea1" },
         { "id1": "P2", "id2": "sea1" },
+        { "id1": "P3", "id2": "sea1" },
+        { "id1": "P1", "id2": "P3" },
         { "id1": "P1", "id2": "P2" }
       ]
     }
@@ -28,7 +31,7 @@
   "setup": {
     "units": [
       { "player": "gp1", "type": "peasant_levies", "province": "oldWorld|P1", "count": 1 },
-      { "player": "gp2", "type": "peasant_levies", "province": "oldWorld|P2", "count": 2 }
+      { "player": "gp2", "type": "peasant_levies", "province": "oldWorld|P3", "count": 2 }
     ]
   },
   "turns": [

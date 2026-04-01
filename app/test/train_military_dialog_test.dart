@@ -197,6 +197,7 @@ void main() {
                     game: richGame,
                     humanPlayerId: humanPlayerId,
                     bus: ref.watch(appEventBusProvider),
+                    topology: const MapTopology(),
                   );
                 },
               ),

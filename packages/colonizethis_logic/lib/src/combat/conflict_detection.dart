@@ -77,6 +77,24 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       }
     }
 
+    final armyById = {for (final a in game.worldState.armies) a.id: a};
+    for (final entry in orders.armyMoveOrdersByPlayerId.entries) {
+      final factionId = entry.key;
+      if (!gpIds.contains(factionId)) continue;
+      for (final order in entry.value) {
+        final army = armyById[order.armyId];
+        if (army == null || army.ownerId != factionId) continue;
+        if (army.isHomeArmy) continue;
+        final destFull = ProvinceId.isPrefixed(order.destinationProvinceId)
+            ? order.destinationProvinceId
+            : ProvinceId.full(
+                ProvinceId.regionIdFrom(army.stationedProvinceId),
+                order.destinationProvinceId,
+              );
+        movedIntoByFaction.putIfAbsent(destFull, () => {}).add(factionId);
+      }
+    }
+
     final provinceById = {for (final p in region.provinces) p.id: p};
 
     for (final entry in unitsByProvince.entries) {

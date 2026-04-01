@@ -570,6 +570,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           );
         },
@@ -1207,6 +1208,7 @@ class _MilitaryPanelWithMapStoryState
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           ),
         ],

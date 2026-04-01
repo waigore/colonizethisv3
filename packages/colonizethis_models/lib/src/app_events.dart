@@ -250,6 +250,49 @@ class NavalMoveFleetRequestedEvent extends SessionCommandEvent {
   final NavalMoveOrder moveOrder;
 }
 
+/// Military units panel: game state updated after army split/combine.
+/// SPEC/program/app-ui-wiring.md.
+class LandArmiesUpdatedEvent extends SessionCommandEvent {
+  LandArmiesUpdatedEvent({required this.game});
+
+  final Game game;
+}
+
+/// Combine selected armies in the same province (shell applies colonizethis_logic).
+class ArmyCombineRequestedEvent extends SessionCommandEvent {
+  ArmyCombineRequestedEvent({
+    required this.humanPlayerId,
+    required this.armyIds,
+  });
+
+  final String humanPlayerId;
+  final List<String> armyIds;
+}
+
+/// Split confirmed from split-army dialog (shell applies colonizethis_logic).
+class ArmySplitRequestedEvent extends SessionCommandEvent {
+  ArmySplitRequestedEvent({
+    required this.humanPlayerId,
+    required this.sourceArmyId,
+    required this.unitIdsToMove,
+  });
+
+  final String humanPlayerId;
+  final String sourceArmyId;
+  final List<String> unitIdsToMove;
+}
+
+/// Move army dialog confirm: merges [moveOrder] into current-turn draft orders.
+class ArmyMoveRequestedEvent extends SessionCommandEvent {
+  ArmyMoveRequestedEvent({
+    required this.humanPlayerId,
+    required this.moveOrder,
+  });
+
+  final String humanPlayerId;
+  final ArmyMoveOrder moveOrder;
+}
+
 /// Train civilians dialog close: shell merges into current-turn orders draft.
 class TrainCivilianBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainCivilianBuildOrdersCommittedEvent({required this.orders});

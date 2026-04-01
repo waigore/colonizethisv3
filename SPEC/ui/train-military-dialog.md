@@ -6,7 +6,7 @@
 
 ## Purpose
 
-The Train Military dialog lets the player queue military regiment build orders in a single modal flow. It mirrors the civilian training UX pattern: one row per trainable type, +/- steppers, optional reset, and order creation on dialog close. Trained regiments spawn at the player's capital province and appear after turn resolution (next turn from the player's perspective).
+The Train Military dialog lets the player queue military regiment build orders in a single modal flow. It mirrors the civilian training UX pattern: one row per trainable type, +/- steppers, optional reset, and order creation on dialog close. Trained regiments **join the player’s Home Army** at the capital ([military-armies.md](../game/military-armies.md)) and appear after turn resolution (next turn from the player's perspective).
 
 ---
 

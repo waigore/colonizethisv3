@@ -1,0 +1,351 @@
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  group('applyArmyMoveOrderForPlayer', () {
+    test('last order per armyId wins', () {
+      const pid = 'gp1';
+      const armyId = 'army_field';
+      var orders = const Orders();
+      orders = applyArmyMoveOrderForPlayer(
+        orders,
+        pid,
+        const ArmyMoveOrder(
+          armyId: armyId,
+          destinationProvinceId: 'oldWorld|p1',
+        ),
+      );
+      orders = applyArmyMoveOrderForPlayer(
+        orders,
+        pid,
+        const ArmyMoveOrder(
+          armyId: armyId,
+          destinationProvinceId: 'oldWorld|p2',
+        ),
+      );
+      final list = orders.armyMoveOrdersByPlayerId[pid]!;
+      expect(list.length, 1);
+      expect(list.single.destinationProvinceId, 'oldWorld|p2');
+    });
+  });
+
+  group('applyArmyMoveOrdersToRegion', () {
+    test('moves all regiments to adjacent province', () {
+      const p1 = 'oldWorld|a';
+      const p2 = 'oldWorld|b';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|a',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|b',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|a', id2: 'oldWorld|b')],
+      );
+      const playerId = 'gp1';
+      final u1 = Unit(
+        id: 'r1',
+        type: 'musketeers',
+        ownerId: playerId,
+        locationProvinceId: p1,
+      );
+      final u2 = Unit(
+        id: 'r2',
+        type: 'pikemen',
+        ownerId: playerId,
+        locationProvinceId: p1,
+      );
+      var ws = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: p1, regionId: 'oldWorld', ownerId: playerId),
+            Province(id: p2, regionId: 'oldWorld', ownerId: playerId),
+          ],
+          units: [u1, u2],
+        ),
+        newWorld: const RegionData(),
+        armies: [
+          Army(
+            id: 'afield',
+            ownerId: playerId,
+            regionId: 'oldWorld',
+            stationedProvinceId: p1,
+            regimentUnitIds: const ['r1', 'r2'],
+            isHomeArmy: false,
+          ),
+        ],
+      );
+
+      ws = applyArmyMoveOrdersToRegion(
+        ws,
+        topology,
+        {
+          playerId: [
+            const ArmyMoveOrder(
+              armyId: 'afield',
+              destinationProvinceId: p2,
+            ),
+          ],
+        },
+        regionId: 'oldWorld',
+      );
+
+      final moved = ws.oldWorld.units.where((u) => u.id == 'r1' || u.id == 'r2').toList();
+      expect(moved.every((u) => u.locationProvinceId == p2), isTrue);
+      final army = ws.armies.where((a) => a.id == 'afield').single;
+      expect(army.stationedProvinceId, p2);
+    });
+
+    test('ignores home army move order', () {
+      const cap = 'oldWorld|cap';
+      const p2 = 'oldWorld|b';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|cap',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|b',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|cap', id2: 'oldWorld|b')],
+      );
+      const playerId = 'gp1';
+      final hid = homeArmyIdFor(playerId);
+      final u1 = Unit(
+        id: 'r1',
+        type: 'musketeers',
+        ownerId: playerId,
+        locationProvinceId: cap,
+      );
+      var ws = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: cap, regionId: 'oldWorld', ownerId: playerId),
+            Province(id: p2, regionId: 'oldWorld', ownerId: playerId),
+          ],
+          units: [u1],
+        ),
+        newWorld: const RegionData(),
+        armies: [
+          Army(
+            id: hid,
+            ownerId: playerId,
+            regionId: 'oldWorld',
+            stationedProvinceId: cap,
+            regimentUnitIds: const ['r1'],
+            isHomeArmy: true,
+          ),
+        ],
+      );
+
+      ws = applyArmyMoveOrdersToRegion(
+        ws,
+        topology,
+        {
+          playerId: [
+            ArmyMoveOrder(
+              armyId: hid,
+              destinationProvinceId: p2,
+            ),
+          ],
+        },
+        regionId: 'oldWorld',
+      );
+
+      expect(ws.oldWorld.units.single.locationProvinceId, cap);
+      expect(ws.armies.single.stationedProvinceId, cap);
+    });
+  });
+
+  group('applyArmyCombine and applyArmySplit', () {
+    test('combine merges two armies in same province', () {
+      const p = 'oldWorld|p1';
+      const playerId = 'gp1';
+      var game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [Province(id: p, regionId: 'oldWorld', ownerId: playerId)],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'a1',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+            Army(
+              id: 'a2',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['u2'],
+              isHomeArmy: false,
+            ),
+          ],
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'P',
+            capitalProvinceId: p,
+            isHuman: true,
+          ),
+        ],
+      );
+
+      game = applyArmyCombine(
+        game: game,
+        playerId: playerId,
+        armyIds: const ['a1', 'a2'],
+      );
+
+      expect(game.worldState.armies.length, 1);
+      expect(
+        game.worldState.armies.single.regimentUnitIds,
+        ['u1', 'u2'],
+      );
+    });
+
+    test('split moves subset to new army', () {
+      const p = 'oldWorld|p1';
+      const playerId = 'gp1';
+      var game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'src',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['u1', 'u2', 'u3'],
+              isHomeArmy: false,
+            ),
+          ],
+          nextArmySeq: 5,
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'P',
+            capitalProvinceId: p,
+            isHuman: true,
+          ),
+        ],
+      );
+
+      game = applyArmySplit(
+        game: game,
+        playerId: playerId,
+        sourceArmyId: 'src',
+        unitIdsToMove: const ['u2'],
+      );
+
+      expect(game.worldState.armies.length, 2);
+      final src =
+          game.worldState.armies.where((a) => a.id == 'src').single;
+      final spun =
+          game.worldState.armies.where((a) => a.id != 'src').single;
+      expect(src.regimentUnitIds, ['u1', 'u3']);
+      expect(spun.regimentUnitIds, ['u2']);
+      expect(spun.stationedProvinceId, p);
+    });
+  });
+
+  group('ensureMilitaryArmiesForGame', () {
+    test('creates home army for player with capital', () {
+      const cap = 'oldWorld|cap';
+      const playerId = 'gp1';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: cap, regionId: 'oldWorld', ownerId: playerId),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: const [],
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'P',
+            capitalProvinceId: cap,
+            isHuman: true,
+          ),
+        ],
+      );
+
+      final next = ensureMilitaryArmiesForGame(game);
+      final hid = homeArmyIdFor(playerId);
+      expect(
+        next.worldState.armies.any((a) => a.id == hid && a.isHomeArmy),
+        isTrue,
+      );
+    });
+  });
+
+  group('reconcileArmiesAfterUnitsChanged', () {
+    test('drops dead regiment ids from armies', () {
+      const p = 'oldWorld|p1';
+      const playerId = 'gp1';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(units: []),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'src',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['gone'],
+              isHomeArmy: false,
+            ),
+          ],
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'P',
+            capitalProvinceId: p,
+            isHuman: true,
+          ),
+        ],
+      );
+
+      final ws = reconcileArmiesAfterUnitsChanged(game.worldState, game);
+      expect(ws.armies.where((a) => a.id == 'src'), isEmpty);
+    });
+  });
+}

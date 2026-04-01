@@ -14,7 +14,7 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 **Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, adjacency, tech per [orders.md](orders.md)).
 
-**Scope:** The engine validates **move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
+**Scope:** The engine validates **move** (civilian), **army move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
 **Rule:** Validate in **submission order**. First failure rejects that order and all after it. Orders 1..N-1 remain.
 
@@ -26,13 +26,13 @@ Returns validation results (accepted / rejected with reason) for UI feedback.
 
 Move and work-order validation are delegated to dedicated components for single-responsibility and reuse:
 
-- **MoveValidator** (`validators/move_validator.dart`): Validates move orders per [orders.md](orders.md) § Move orders. Checks unit ownership, region/adjacency, civilian vs Great Power (Spy allowed), civilian vs Minor/Tribe (Explorer/Merchant/Spy allowed), war declaration for GP provinces, war declaration for military into Minor/Tribe provinces, and visibility. Used by OrderEngine in `validatePlayerOrdersWithContext` when validating move orders.
+- **MoveValidator** (`validators/move_validator.dart`): Validates **civilian** `MoveOrder` per [orders.md](orders.md). Checks unit ownership, region/adjacency, civilian vs Great Power (Spy allowed), civilian vs Minor/Tribe (Explorer/Merchant/Spy allowed), war declaration for GP provinces, war declaration into Minor/Tribe provinces, and visibility. **ArmyMoveOrder** validation (army ownership, Home Army capital lock, same adjacency/ownership rules as land movement) lives in the same module or a dedicated `ArmyMoveValidator` per TDD. Used by OrderEngine when validating orders.
 
 - **WorkOrderCostCalculator** (`validators/work_order_cost_calculator.dart`): Computes work order material costs for a given target and tile (improvement/fort/road level). Returns null for steal_tech, counter_spy, purchase_land. Used by OrderEngine for work-order cost validation and for projecting work-order costs in the same validation pass.
 
 **Build validation (naval):** Build orders for naval units are validated for treasury, stockpile, and the **unlocking tech** for that ship type when applicable (see [tech-tree-naval.md](../game/tech-tree-naval.md)); starting ships such as Carrack have no prerequisite. OrderEngine validates before accepting.
 
-**Build validation (spawn province):** Build orders resolve an effective spawn province before affordability checks. For civilian/military, `spawnProvinceId` is optional and falls back to player's capital if empty/invalid/not owned by the player. For naval, spawn always resolves to capital home fleet and `spawnProvinceId` is ignored. If no capital exists, build is rejected.
+**Build validation (spawn province):** Build orders resolve an effective spawn province before affordability checks for **civilian** builds. **Military:** new regiments attach to **Home Army** at capital; `spawnProvinceId` is ignored unless TDD extends location choice. For naval, spawn always resolves to capital home fleet and `spawnProvinceId` is ignored. If no capital exists, military/naval build is rejected.
 
 ---
 
@@ -83,7 +83,7 @@ Submission order is stable. Merge uses stable ordering (player id, order type, o
 
 ## Supplying Research and Diplomatic Orders (Caller Contract)
 
-The OrderEngine validates and stores **move, build, work, diplomatic, naval move, and naval mission** orders via `addMoveOrder`, `addBuildOrder`, `addWorkOrder`, `addDiplomaticOrder`, `addNavalMoveOrder`, and `addNavalMissionOrder`. **Research orders are not added to the engine**; they are validated and applied in the Research phase (TurnResolver) per [research-resolution.md](research-resolution.md).
+The OrderEngine validates and stores **move (civilian), army move, build, work, diplomatic, naval move, and naval mission** orders via `addMoveOrder`, `addArmyMoveOrder`, `addBuildOrder`, `addWorkOrder`, `addDiplomaticOrder`, `addNavalMoveOrder`, and `addNavalMissionOrder` (exact method names per TDD). **Research orders are not added to the engine**; they are validated and applied in the Research phase (TurnResolver) per [research-resolution.md](research-resolution.md).
 
 ### Research Orders
 
@@ -102,7 +102,8 @@ The OrderEngine validates and stores **move, build, work, diplomatic, naval move
 
 | Order Type | OrderEngine Method | Stored in Engine | Supplied To Resolver Via |
 |------------|-------------------|------------------|-------------------------|
-| Move | `addMoveOrder` | Yes | `orderEngine.orders` |
+| Move (civilian) | `addMoveOrder` | Yes | `orderEngine.orders` |
+| Army move | `addArmyMoveOrder` | Yes | `orderEngine.orders` |
 | Build | `addBuildOrder` | Yes | `orderEngine.orders` |
 | Work | `addWorkOrder` | Yes | `orderEngine.orders` |
 | Naval Move | `addNavalMoveOrder` | Yes | `orderEngine.orders` |
@@ -117,7 +118,7 @@ The OrderEngine validates and stores **move, build, work, diplomatic, naval move
 - **Validation:** On add/remove with context, the full list for that player is validated in submission order; first rejection rejects that order and all subsequent; validation results (accepted/rejected + reason) are returned for UI.
 - **Diplomatic validation:** Diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, GrantAid, SetSubsidy) are validated by the engine with the same submission-order semantics as other orders. At a minimum, Declare War and Offer Peace respect current relationState preconditions, overtures respect the overture-stage chain and treasury costs, GrantAid requires an Embassy and SetSubsidy requires at least a Consulate, and `Establish Overture` orders targeting a faction currently at `AT_WAR` with the player are rejected and do not deduct treasury.
 - **Research orders:** Research orders are **not** added to OrderEngine; they are supplied separately via `Orders.researchOrdersByPlayerId` and validated/applied in the Research phase (TurnResolver).
-- **Caller contract:** The caller (app or ctdev) supplies move/build/work/diplomatic/naval orders via OrderEngine methods; research orders are collected separately and passed to the resolver via `Orders.researchOrdersByPlayerId`.
+- **Caller contract:** The caller (app or ctdev) supplies civilian move, army move, build, work, diplomatic, and naval orders via OrderEngine methods; research orders are collected separately and passed to the resolver via `Orders.researchOrdersByPlayerId`.
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for MVP and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.

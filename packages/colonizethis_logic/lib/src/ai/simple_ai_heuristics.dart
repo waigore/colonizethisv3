@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../orders/order_suggestion.dart';
+import '../world/army_migration.dart';
 import '../world/player_view.dart';
 
 final _log = logicLogger();
@@ -49,32 +50,35 @@ Orders generateOrdersWithSimpleHeuristics(
     return const Orders();
   }
 
+  final g = ensureMilitaryArmiesForGame(game);
   final rng = math.Random(turnSeed);
   var current = const Orders();
-  final view = buildPlayerView(game, topology, player.id);
+  final view = buildPlayerView(g, topology, player.id);
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
-    final moveSuggestions = suggestMoveOrders(view, game, topology, current);
+    final moveSuggestions = suggestMoveOrders(view, g, topology, current);
+    final armyMoveSuggestions =
+        suggestArmyMoveOrders(view, g, topology, current);
     final workSuggestions = suggestWorkOrders(
       view,
-      game,
+      g,
       topology,
       current,
       tileMapByRegion: tileMapByRegion,
     );
-    final buildSuggestions = suggestBuildOrders(view, game, topology, current);
+    final buildSuggestions = suggestBuildOrders(view, g, topology, current);
     final researchSuggestions = suggestResearchOrders(
       view,
-      game,
+      g,
       topology,
       current,
     );
 
     final categories = <_SuggestionCategory>[];
-    if (moveSuggestions.isNotEmpty) {
+    if (moveSuggestions.isNotEmpty || armyMoveSuggestions.isNotEmpty) {
       categories.add(_SuggestionCategory.moves);
     }
     if (workSuggestions.isNotEmpty) {
@@ -94,21 +98,57 @@ Orders generateOrdersWithSimpleHeuristics(
 
     switch (chosenCategory) {
       case _SuggestionCategory.moves:
-        final idx = rng.nextInt(moveSuggestions.length);
-        final chosen = moveSuggestions[idx];
-        final list = List<MoveOrder>.from(
-          current.moveOrdersByPlayerId[player.id] ?? const [],
-        )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: {
-            ...current.moveOrdersByPlayerId,
-            player.id: list,
-          },
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
-        );
+        if (moveSuggestions.isEmpty) {
+          final idx = rng.nextInt(armyMoveSuggestions.length);
+          final chosen = armyMoveSuggestions[idx];
+          final list = List<ArmyMoveOrder>.from(
+            current.armyMoveOrdersByPlayerId[player.id] ?? const [],
+          )..add(chosen);
+          current = current.copyWith(
+            armyMoveOrdersByPlayerId: {
+              ...current.armyMoveOrdersByPlayerId,
+              player.id: list,
+            },
+          );
+        } else if (armyMoveSuggestions.isEmpty) {
+          final idx = rng.nextInt(moveSuggestions.length);
+          final chosen = moveSuggestions[idx];
+          final list = List<MoveOrder>.from(
+            current.moveOrdersByPlayerId[player.id] ?? const [],
+          )..add(chosen);
+          current = current.copyWith(
+            moveOrdersByPlayerId: {
+              ...current.moveOrdersByPlayerId,
+              player.id: list,
+            },
+          );
+        } else {
+          if (rng.nextBool()) {
+            final idx = rng.nextInt(moveSuggestions.length);
+            final chosen = moveSuggestions[idx];
+            final list = List<MoveOrder>.from(
+              current.moveOrdersByPlayerId[player.id] ?? const [],
+            )..add(chosen);
+            current = current.copyWith(
+              moveOrdersByPlayerId: {
+                ...current.moveOrdersByPlayerId,
+                player.id: list,
+              },
+            );
+          } else {
+            final idx = rng.nextInt(armyMoveSuggestions.length);
+            final chosen = armyMoveSuggestions[idx];
+            final list = List<ArmyMoveOrder>.from(
+              current.armyMoveOrdersByPlayerId[player.id] ?? const [],
+            )..add(chosen);
+            current = current.copyWith(
+              armyMoveOrdersByPlayerId: {
+                ...current.armyMoveOrdersByPlayerId,
+                player.id: list,
+              },
+            );
+          }
+        }
         break;
       case _SuggestionCategory.work:
         final idx = rng.nextInt(workSuggestions.length);
@@ -116,15 +156,11 @@ Orders generateOrdersWithSimpleHeuristics(
         final list = List<WorkOrder>.from(
           current.workOrdersByPlayerId[player.id] ?? const [],
         )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
+        current = current.copyWith(
           workOrdersByPlayerId: {
             ...current.workOrdersByPlayerId,
             player.id: list,
           },
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
         );
         break;
       case _SuggestionCategory.build:
@@ -133,15 +169,11 @@ Orders generateOrdersWithSimpleHeuristics(
         final list = List<BuildUnitOrder>.from(
           current.buildUnitOrdersByPlayerId[player.id] ?? const [],
         )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
+        current = current.copyWith(
           buildUnitOrdersByPlayerId: {
             ...current.buildUnitOrdersByPlayerId,
             player.id: list,
           },
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
         );
         break;
       case _SuggestionCategory.research:
@@ -151,11 +183,7 @@ Orders generateOrdersWithSimpleHeuristics(
           ...current.researchOrdersByPlayerId[player.id] ?? const [],
           chosen,
         ];
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
+        current = current.copyWith(
           researchOrdersByPlayerId: {
             ...current.researchOrdersByPlayerId,
             player.id: list,
@@ -166,15 +194,24 @@ Orders generateOrdersWithSimpleHeuristics(
   }
 
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final researchByPlayer = <String, List<ResearchOrder>>{};
 
   final rawMoves = current.moveOrdersByPlayerId[player.id];
   if (rawMoves != null && rawMoves.isNotEmpty) {
-    final filtered = filterMoveOrdersByDiplomacy(game, player.id, rawMoves);
+    final filtered = filterMoveOrdersByDiplomacy(g, player.id, rawMoves);
     if (filtered.isNotEmpty) {
       moveByPlayer[player.id] = filtered;
+    }
+  }
+  final rawArmyMoves = current.armyMoveOrdersByPlayerId[player.id];
+  if (rawArmyMoves != null && rawArmyMoves.isNotEmpty) {
+    final filtered =
+        filterArmyMoveOrdersByDiplomacy(g, player.id, rawArmyMoves);
+    if (filtered.isNotEmpty) {
+      armyMoveByPlayer[player.id] = filtered;
     }
   }
   if (current.buildUnitOrdersByPlayerId.containsKey(player.id)) {
@@ -194,15 +231,17 @@ Orders generateOrdersWithSimpleHeuristics(
   }
 
   final m = moveByPlayer[player.id]?.length ?? 0;
+  final a = armyMoveByPlayer[player.id]?.length ?? 0;
   final b = buildByPlayer[player.id]?.length ?? 0;
   final w = workByPlayer[player.id]?.length ?? 0;
   final r = researchByPlayer[player.id]?.length ?? 0;
   _log.i(
-    'simple heuristics generated orders player=${player.id} move=$m build=$b work=$w research=$r',
+    'simple heuristics generated orders player=${player.id} move=$m armyMove=$a build=$b work=$w research=$r',
   );
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
+    armyMoveOrdersByPlayerId: armyMoveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: const {},

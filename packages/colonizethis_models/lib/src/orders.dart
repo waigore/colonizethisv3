@@ -6,6 +6,7 @@ import 'diplomacy.dart';
 class Orders {
   const Orders({
     this.moveOrdersByPlayerId = const {},
+    this.armyMoveOrdersByPlayerId = const {},
     this.buildUnitOrdersByPlayerId = const {},
     this.workOrdersByPlayerId = const {},
     this.diplomaticOrdersByPlayerId = const {},
@@ -16,6 +17,8 @@ class Orders {
 
   /// Player id -> list of move orders.
   final Map<String, List<MoveOrder>> moveOrdersByPlayerId;
+  /// Player id -> land army move orders. SPEC/game/military-armies.md.
+  final Map<String, List<ArmyMoveOrder>> armyMoveOrdersByPlayerId;
   /// Player id -> list of build-unit orders.
   final Map<String, List<BuildUnitOrder>> buildUnitOrdersByPlayerId;
   /// Player id -> list of work orders.
@@ -36,6 +39,13 @@ class Orders {
             orders.map((o) => o.toJson()).toList(),
           ),
         ),
+        if (armyMoveOrdersByPlayerId.isNotEmpty)
+          'armyMoveOrdersByPlayerId': armyMoveOrdersByPlayerId.map(
+            (playerId, orders) => MapEntry(
+              playerId,
+              orders.map((o) => o.toJson()).toList(),
+            ),
+          ),
         'buildUnitOrdersByPlayerId': buildUnitOrdersByPlayerId.map(
           (playerId, orders) => MapEntry(
             playerId,
@@ -87,6 +97,16 @@ class Orders {
           .map((e) => MoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
       moveByPlayerId[playerId] = list;
+    });
+
+    final armyMoveRaw = json['armyMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final armyMoveByPlayerId = <String, List<ArmyMoveOrder>>{};
+    armyMoveRaw.forEach((key, value) {
+      final playerId = key.toString();
+      final list = (value as List<dynamic>? ?? [])
+          .map((e) => ArmyMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      armyMoveByPlayerId[playerId] = list;
     });
 
     final buildRaw = json['buildUnitOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
@@ -151,6 +171,7 @@ class Orders {
 
     return Orders(
       moveOrdersByPlayerId: moveByPlayerId,
+      armyMoveOrdersByPlayerId: armyMoveByPlayerId,
       buildUnitOrdersByPlayerId: buildByPlayerId,
       workOrdersByPlayerId: workByPlayerId,
       diplomaticOrdersByPlayerId: diploByPlayerId,
@@ -166,6 +187,7 @@ class Orders {
       other is Orders &&
           runtimeType == other.runtimeType &&
           _mapEquals(moveOrdersByPlayerId, other.moveOrdersByPlayerId) &&
+          _mapEquals(armyMoveOrdersByPlayerId, other.armyMoveOrdersByPlayerId) &&
           _mapEquals(buildUnitOrdersByPlayerId, other.buildUnitOrdersByPlayerId) &&
           _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
           _mapEquals(diplomaticOrdersByPlayerId, other.diplomaticOrdersByPlayerId) &&
@@ -178,6 +200,11 @@ class Orders {
         runtimeType,
         Object.hashAll(
           moveOrdersByPlayerId.entries.map(
+            (e) => Object.hashAll(e.value),
+          ),
+        ),
+        Object.hashAll(
+          armyMoveOrdersByPlayerId.entries.map(
             (e) => Object.hashAll(e.value),
           ),
         ),
@@ -215,6 +242,7 @@ class Orders {
 
   Orders copyWith({
     Map<String, List<MoveOrder>>? moveOrdersByPlayerId,
+    Map<String, List<ArmyMoveOrder>>? armyMoveOrdersByPlayerId,
     Map<String, List<BuildUnitOrder>>? buildUnitOrdersByPlayerId,
     Map<String, List<WorkOrder>>? workOrdersByPlayerId,
     Map<String, List<DiplomaticOrder>>? diplomaticOrdersByPlayerId,
@@ -224,6 +252,8 @@ class Orders {
   }) =>
       Orders(
         moveOrdersByPlayerId: moveOrdersByPlayerId ?? this.moveOrdersByPlayerId,
+        armyMoveOrdersByPlayerId:
+            armyMoveOrdersByPlayerId ?? this.armyMoveOrdersByPlayerId,
         buildUnitOrdersByPlayerId:
             buildUnitOrdersByPlayerId ?? this.buildUnitOrdersByPlayerId,
         workOrdersByPlayerId: workOrdersByPlayerId ?? this.workOrdersByPlayerId,
@@ -285,6 +315,40 @@ class MoveOrder {
 
   @override
   int get hashCode => Object.hash(unitId, destinationProvinceId);
+}
+
+/// Move an army (all its regiments) to a province. SPEC/game/military-armies.md.
+class ArmyMoveOrder {
+  const ArmyMoveOrder({
+    required this.armyId,
+    required this.destinationProvinceId,
+  });
+
+  final String armyId;
+  final String destinationProvinceId;
+
+  Map<String, dynamic> toJson() => {
+        'armyId': armyId,
+        'destinationProvinceId': destinationProvinceId,
+      };
+
+  static ArmyMoveOrder fromJson(Map<String, dynamic> json) {
+    return ArmyMoveOrder(
+      armyId: json['armyId'] as String,
+      destinationProvinceId: json['destinationProvinceId'] as String,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ArmyMoveOrder &&
+          runtimeType == other.runtimeType &&
+          armyId == other.armyId &&
+          destinationProvinceId == other.destinationProvinceId;
+
+  @override
+  int get hashCode => Object.hash(armyId, destinationProvinceId);
 }
 
 /// Move a fleet to an adjacent sea zone or dock at a port. Phase 5. SPEC/program/naval-movement-resolution.md.

@@ -78,6 +78,10 @@ export 'src/ai/sim_game_ai.dart';
 export 'src/ai/simple_ai_heuristics.dart';
 
 // World
+export 'src/world/army_commands.dart';
+export 'src/world/army_ids.dart';
+export 'src/world/army_migration.dart';
+export 'src/world/army_movement.dart';
 export 'src/world/capital_reassignment_fatal.dart';
 export 'src/world/connectivity_resolver.dart';
 export 'src/world/unit_lookup.dart';

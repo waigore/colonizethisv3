@@ -43,6 +43,7 @@ void _addOrdersIfNonEmpty<T>(
 /// Respects diplomacy: no attacks against factions at peace.
 Orders generateOrdersForGame(Game game, MapTopology topology) {
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final researchByPlayer = <String, List<ResearchOrder>>{};
@@ -51,6 +52,11 @@ Orders generateOrdersForGame(Game game, MapTopology topology) {
     if (!isAiControlled(game, player.id)) continue;
     final ordersForPlayer = generateOrdersForPlayer(game, topology, player.id);
     _addOrdersIfNonEmpty(moveByPlayer, player.id, ordersForPlayer.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      armyMoveByPlayer,
+      player.id,
+      ordersForPlayer.armyMoveOrdersByPlayerId[player.id],
+    );
     _addOrdersIfNonEmpty(buildByPlayer, player.id, ordersForPlayer.buildUnitOrdersByPlayerId[player.id]);
     _addOrdersIfNonEmpty(workByPlayer, player.id, ordersForPlayer.workOrdersByPlayerId[player.id]);
     _addOrdersIfNonEmpty(researchByPlayer, player.id, ordersForPlayer.researchOrdersByPlayerId[player.id]);
@@ -58,6 +64,7 @@ Orders generateOrdersForGame(Game game, MapTopology topology) {
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
+    armyMoveOrdersByPlayerId: armyMoveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: const {},
@@ -134,6 +141,7 @@ FullAIResult generateOrdersForGameFullAI(
   void Function(PortraitMoodEvent)? onMood,
 }) {
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final researchByPlayer = <String, List<ResearchOrder>>{};
@@ -154,6 +162,11 @@ FullAIResult generateOrdersForGameFullAI(
     );
     economyPlansByPlayerId[player.id] = result.economyPlan;
     _addOrdersIfNonEmpty(moveByPlayer, player.id, result.orders.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      armyMoveByPlayer,
+      player.id,
+      result.orders.armyMoveOrdersByPlayerId[player.id],
+    );
     _addOrdersIfNonEmpty(buildByPlayer, player.id, result.orders.buildUnitOrdersByPlayerId[player.id]);
     _addOrdersIfNonEmpty(workByPlayer, player.id, result.orders.workOrdersByPlayerId[player.id]);
     _addOrdersIfNonEmpty(researchByPlayer, player.id, result.orders.researchOrdersByPlayerId[player.id]);
@@ -165,6 +178,7 @@ FullAIResult generateOrdersForGameFullAI(
   return FullAIResult(
     orders: Orders(
       moveOrdersByPlayerId: moveByPlayer,
+      armyMoveOrdersByPlayerId: armyMoveByPlayer,
       buildUnitOrdersByPlayerId: buildByPlayer,
       workOrdersByPlayerId: workByPlayer,
       diplomaticOrdersByPlayerId: diploByPlayer,

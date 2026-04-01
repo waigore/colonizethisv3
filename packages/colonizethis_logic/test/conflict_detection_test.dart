@@ -334,5 +334,64 @@ void main() {
       expect(battles.length, 1);
       expect(battles[0].regionId, nw);
     });
+
+    test('army move order contributes moved-in attacker detection', () {
+      const ow = 'oldWorld';
+      final p1 = '$ow|P1';
+      final game = Game(
+        id: 'g_army',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: p1, regionId: ow, ownerId: 'player2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'player1',
+                locationProvinceId: p1,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'pikemen',
+                ownerId: 'player2',
+                locationProvinceId: p1,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'arm_a',
+              ownerId: 'player1',
+              regionId: ow,
+              stationedProvinceId: p1,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
+        ),
+        players: [
+          Player(id: 'player1', displayName: 'P1', isHuman: true),
+          Player(id: 'player2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        armyMoveOrdersByPlayerId: {
+          'player1': [
+            ArmyMoveOrder(armyId: 'arm_a', destinationProvinceId: p1),
+          ],
+        },
+      );
+
+      final battles = detectConflicts(game, orders);
+      expect(battles.length, 1);
+      expect(battles[0].attackers.single.factionId, 'player1');
+      expect(battles[0].attackers.single.unitIds, ['u1']);
+    });
   });
 }

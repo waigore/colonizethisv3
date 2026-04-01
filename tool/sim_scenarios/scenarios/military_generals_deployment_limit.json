@@ -1,6 +1,6 @@
 {
   "name": "military_generals_deployment_limit",
-  "description": "SPEC/game/military-generals.md AC1: deployment limit caps participating regiments per side (base 10). Attacker has 15 units, defender 5; only 10 attackers participate so at least 5 attackers survive after victory.",
+  "description": "SPEC/game/military-generals.md AC1: deployment limit caps participating regiments per side (base 10). Attacker has 15 units from adjacent non-capital p3, defender 5 in p1; only 10 attackers participate so at least 5 attackers survive after victory.",
   "init": {
     "type": "fromTopology",
     "config": {
@@ -13,14 +13,16 @@
       }
     },
     "oldWorld": {
-      "grid": [["p1", "sea1", "p2"], ["p1", "sea1", "p2"]],
+      "grid": [["p1", "sea1", "p2", "p3"], ["p1", "sea1", "p2", "p3"]],
       "nodes": [
         {"id": "p1", "regionId": "oldWorld", "type": "province"},
         {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "p3", "regionId": "oldWorld", "type": "province"},
         {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
       ],
       "edges": [
         {"id1": "p1", "id2": "p2"},
+        {"id1": "p1", "id2": "p3"},
         {"id1": "p1", "id2": "sea1"},
         {"id1": "p2", "id2": "sea1"}
       ]
@@ -29,7 +31,7 @@
   "setup": {
     "units": [
       {"player": "gp1", "type": "peasant_levies", "province": "oldWorld|p1", "count": 5},
-      {"player": "gp2", "type": "peasant_levies", "province": "oldWorld|p2", "count": 15}
+      {"player": "gp2", "type": "peasant_levies", "province": "oldWorld|p3", "count": 15}
     ]
   },
   "turns": [

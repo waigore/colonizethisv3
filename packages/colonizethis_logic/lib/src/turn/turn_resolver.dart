@@ -18,6 +18,8 @@ import '../economy/economy_production.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/minor_military_parity.dart';
+import '../world/army_migration.dart';
+import '../world/army_movement.dart';
 import '../world/movement.dart';
 import '../orders/draft_orders_mutations.dart';
 import '../orders/orders_application.dart';
@@ -220,7 +222,7 @@ TurnResolutionResult resolveTurnForGame({
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('turn $turn resolve start');
-  Game state = game;
+  Game state = ensureMilitaryArmiesForGame(game);
   final landFeedingCoverageByPlayerId = <String, double>{};
   final navalFeedingCoverageByPlayerId = <String, double>{};
   final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
@@ -575,12 +577,14 @@ Orders _filterAcceptedOrdersForAllPlayers({
 }) {
   final original = engine.orders;
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
 
   final playerIds = <String>{
     ...original.moveOrdersByPlayerId.keys,
+    ...original.armyMoveOrdersByPlayerId.keys,
     ...original.buildUnitOrdersByPlayerId.keys,
     ...original.workOrdersByPlayerId.keys,
     ...original.diplomaticOrdersByPlayerId.keys,
@@ -588,13 +592,18 @@ Orders _filterAcceptedOrdersForAllPlayers({
 
   for (final playerId in playerIds) {
     final moves = original.moveOrdersByPlayerId[playerId] ?? const [];
+    final armyMoves = original.armyMoveOrdersByPlayerId[playerId] ?? const [];
     final builds = original.buildUnitOrdersByPlayerId[playerId] ?? const [];
     final works = original.workOrdersByPlayerId[playerId] ?? const [];
     final diplo =
         original.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
 
-    if (moves.isEmpty && builds.isEmpty && works.isEmpty && diplo.isEmpty) {
+    if (moves.isEmpty &&
+        armyMoves.isEmpty &&
+        builds.isEmpty &&
+        works.isEmpty &&
+        diplo.isEmpty) {
       continue;
     }
 
@@ -613,6 +622,17 @@ Orders _filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
       (m) => 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+      eventBus,
+      onGameEvent,
+    );
+    _filterOrderList<ArmyMoveOrder>(
+      playerId,
+      armyMoves,
+      results,
+      idxBox,
+      (pid, m) =>
+          armyMoveByPlayer.putIfAbsent(pid, () => <ArmyMoveOrder>[]).add(m),
+      (m) => 'Army move: ${m.armyId} -> ${m.destinationProvinceId}',
       eventBus,
       onGameEvent,
     );
@@ -659,6 +679,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
+    armyMoveOrdersByPlayerId: armyMoveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: diploByPlayer,
@@ -967,6 +988,40 @@ Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
         spyRevealTurnsByPlayer: spyTimers,
       ),
     );
+  }
+
+  // Land army movement (after civilian moves). SPEC/game/military-armies.md.
+  final armyMoveOrders = orders.armyMoveOrdersByPlayerId;
+  if (armyMoveOrders.isNotEmpty) {
+    bool isDestinationOwnedByPlayer(
+      String playerId,
+      String destFullProvinceId,
+    ) =>
+        tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
+        playerId;
+
+    final cross = applyCrossRegionArmyMovesWithinOwnedProvinces(
+      game: state,
+      worldState: state.worldState,
+      armyMoveOrdersByPlayerId: armyMoveOrders,
+    );
+    var ws = cross.worldState;
+    final remaining = cross.remainingArmyMoveOrdersByPlayerId;
+    ws = applyArmyMoveOrdersToRegion(
+      ws,
+      topology,
+      remaining,
+      regionId: kRegionOldWorld,
+      isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+    );
+    ws = applyArmyMoveOrdersToRegion(
+      ws,
+      topology,
+      remaining,
+      regionId: kRegionNewWorld,
+      isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+    );
+    state = state.copyWith(worldState: ws);
   }
 
   // Naval movement and ship reveal. SPEC/program/naval-movement-resolution.md.

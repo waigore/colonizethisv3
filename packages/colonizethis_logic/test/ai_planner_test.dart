@@ -192,10 +192,11 @@ void main() {
       );
 
       final orders = generateOrdersForGame(game, topology);
-      final moves = orders.moveOrdersByPlayerId['gp1'] ?? const [];
+      final armyMoves = orders.armyMoveOrdersByPlayerId['gp1'] ?? const [];
       final research = orders.researchOrdersByPlayerId['gp1'] ?? const [];
 
-      expect(moves, isNotEmpty, reason: 'AI should move into unowned neighboring province');
+      expect(armyMoves, isNotEmpty,
+          reason: 'AI should army-move into unowned neighboring province');
       expect(research, isNotEmpty, reason: 'AI should also pick at least one research target');
     });
 

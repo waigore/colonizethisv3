@@ -27,6 +27,11 @@ class MoveValidator {
     if (unit == null || unit.ownerId != playerId) {
       return OrderValidationResult.rejected('Invalid move');
     }
+    if (isMilitaryUnit(unit.type)) {
+      return OrderValidationResult.rejected(
+        'Military units move with armies; use army move',
+      );
+    }
     final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
         ? Unit.requireRegionIdFromTileKey(unit.tileKey)
         : ProvinceId.regionIdFrom(

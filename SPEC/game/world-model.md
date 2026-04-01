@@ -27,11 +27,11 @@ Each province **contains** terrain tiles (terrain type, optional resource, impro
 | Entity | Responsibility |
 |--------|----------------|
 | **Game** | Top-level. Game id, metadata, current **WorldState**, **Player**s (Great Powers), **Minor Nation**s, **Tribe**s, optional resolved config. May carry optional **greatPowerColorOverride** (runtime GP **player id** → RGB, seeded at setup from semantic slot order × GDD defaults) for display; when present, map visualizers and ctdev use it; when absent (legacy saves), tints may fall back to a generic palette. Carries **politicalGlyphByPlayerId** (map of faction id → 1-character political map glyph) used by ctterm and other UIs for the political ownership layer; glyphs are computed once during game setup and persisted in saves. |
-| **WorldState** | Snapshot. Turn state (phase, turn), region data (provinces, units), player visibility, prospected tiles, **spy reveal timers** (playerId → provinceKey → turns until fog returns), optional **purchased tiles** (tileKey → buyer playerId for Minor/Tribe tiles purchased by GP). See [fog-and-exploration.md](fog-and-exploration.md). |
+| **WorldState** | Snapshot. Turn state (phase, turn), region data (provinces, units), **armies** (land military: owner, stationed province, regiment id list — see [military-armies.md](military-armies.md)), **fleets** (naval), player visibility, prospected tiles, **spy reveal timers** (playerId → provinceKey → turns until fog returns), optional **purchased tiles** (tileKey → buyer playerId for Minor/Tribe tiles purchased by GP). See [fog-and-exploration.md](fog-and-exploration.md). |
 | **Province** | Land region. Id, region id, **owner** (faction id). Optional **townTileKey** (tile key of province's town for extraction). Tiles; neighbours from topology. |
 | **SeaZone** | Water region. Id, region id. Adjacency from topology. |
 | **Tile map** | Per-region 2D grid; cells → province or sea zone. |
-| **Unit** | Military or civilian. Owner, type. **Canonical placement** is `locationProvinceId`: when `tileKey` is non-empty, it is derived from the tile key (`regionId|localId`); otherwise the stored province applies (e.g. military without a tile). The model exposes only `locationProvinceId` (no separate public “raw” province field). **JSON:** the wire key remains `provinceId` for saves; it always reads/writes the **canonical** `locationProvinceId` (load normalizes drift for tile-based units). Naval uses fleet/sea zone as elsewhere in rules. |
+| **Unit** | Military or civilian. Owner, type. **Land military:** each regiment unit is a member of exactly one **army** (army holds regiment ids; regiment `locationProvinceId` matches the army’s stationed province). **Canonical placement** is `locationProvinceId`: when `tileKey` is non-empty, it is derived from the tile key (`regionId|localId`); otherwise the stored province applies (e.g. military without a tile). The model exposes only `locationProvinceId` (no separate public “raw” province field). **JSON:** the wire key remains `provinceId` for saves; it always reads/writes the **canonical** `locationProvinceId` (load normalizes drift for tile-based units). Naval uses fleet/sea zone as elsewhere in rules. |
 | **Player** | Great Power. Id, name, stockpile, capitalProvinceId, capitalTile. Orders and victory-eligible. See [factions.md](factions.md). |
 | **Orders** | Per–Great Power orders (movement, build). May be stub. |
 
@@ -58,6 +58,7 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 - Resource per tile only where region/terrain allows.
 - Turn state in WorldState; resolution takes WorldState in, returns new out. See [turn-resolution.md](../program/turn-resolution.md).
 - **Fleets:** Each ship hull in `WorldState.fleets` has a **unique instance id** within the save; fleet rows store instances with catalog `typeId`. Counts by type in UI or formulas are aggregations. See [ships-and-naval.md](ships-and-naval.md) § Ship instances.
+- **Armies:** Each land military regiment unit id appears in **exactly one** army’s member list in `WorldState.armies` (or equivalent per-region storage per TDD). Each army has a stable **army id** for the life of the save. See [military-armies.md](military-armies.md).
 
 ---
 
@@ -82,3 +83,5 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 - Given a WorldState with a valid turn state and region blobs (provinces and units)  
   When the System executes turn resolution as described in [turn-resolution.md](../program/turn-resolution.md)  
   Then the System treats the incoming WorldState as immutable input, produces a new WorldState with updated provinces and units according to the game rules, and keeps the invariant that each province has a region id and each unit has both an owner and a location in the resulting WorldState.
+
+- Given a WorldState that follows [military-armies.md](military-armies.md), when the System validates land military invariants, then every land military regiment unit id appears in exactly one army’s member list, each army has exactly one stationed province matching its regiments’ `locationProvinceId`, and each Great Power has exactly one Home Army at the capital when a capital exists.
