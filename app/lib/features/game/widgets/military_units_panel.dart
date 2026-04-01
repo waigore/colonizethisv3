@@ -9,6 +9,7 @@ import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../utils/map_location_resolver.dart';
+import '../utils/sea_zone_name_resolver.dart';
 import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
 import 'units/shared/location_section_header.dart';
@@ -74,10 +75,7 @@ abstract class _LocationNode {
 
 /// Province with one or more armies (land).
 class _ProvinceArmiesNode extends _LocationNode {
-  _ProvinceArmiesNode({
-    required this.province,
-    required this.armies,
-  });
+  _ProvinceArmiesNode({required this.province, required this.armies});
 
   final Province province;
   final List<_ArmyBlock> armies;
@@ -90,11 +88,7 @@ class _ProvinceArmiesNode extends _LocationNode {
 }
 
 class _ArmyBlock {
-  _ArmyBlock({
-    required this.army,
-    required this.rows,
-    required this.regionKey,
-  });
+  _ArmyBlock({required this.army, required this.rows, required this.regionKey});
 
   final Army army;
   final List<_RegimentTypeRow> rows;
@@ -183,16 +177,17 @@ List<_RegionMilitaryGroup> _buildMilitaryGroups(
     for (final u in game.worldState.newWorld.units) u.id: u,
   };
 
-  final armies = game.worldState.armies
-      .where((a) => a.ownerId == humanPlayerId)
-      .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
-      .toList()
-    ..sort((a, b) {
-      if (a.isHomeArmy != b.isHomeArmy) {
-        return a.isHomeArmy ? -1 : 1;
-      }
-      return a.id.compareTo(b.id);
-    });
+  final armies =
+      game.worldState.armies
+          .where((a) => a.ownerId == humanPlayerId)
+          .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
+          .toList()
+        ..sort((a, b) {
+          if (a.isHomeArmy != b.isHomeArmy) {
+            return a.isHomeArmy ? -1 : 1;
+          }
+          return a.id.compareTo(b.id);
+        });
 
   final result = <_RegionMilitaryGroup>[];
 
@@ -281,9 +276,11 @@ List<_RegionMilitaryGroup> _buildMilitaryGroups(
         }
         mission ??= f.mission;
       }
-      final zoneLabel = zoneKey.contains('|')
-          ? zoneKey.split('|').last
-          : zoneKey;
+      final zoneLabel = seaZoneDisplayName(
+        game: game,
+        regionId: regionKey,
+        seaZoneId: zoneKey,
+      );
       final tileKey = tileKeyForSeaZoneLocation(game, regionKey, zoneKey);
       final rows = <_ShipTypeRow>[];
       for (final typeId in shipTypeIds.keys.toList()..sort()) {
@@ -335,8 +332,9 @@ bool _canCombineArmySelection(
   Set<String> selectedArmyIds,
 ) {
   if (selectedArmyIds.length < 2) return false;
-  final selected =
-      flat.where((b) => selectedArmyIds.contains(b.army.id)).toList();
+  final selected = flat
+      .where((b) => selectedArmyIds.contains(b.army.id))
+      .toList();
   if (selected.length < 2) return false;
   final province = selected.first.army.stationedProvinceId;
   return selected.every((b) => b.army.stationedProvinceId == province);
@@ -491,12 +489,11 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
             for (final block in loc.armies)
               _ArmyExpansionTile(
                 block: block,
-                isSelectedForCombine:
-                    _selectedArmyIds.contains(block.army.id),
+                isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
                 onCombineSelectionToggle: () =>
                     _toggleArmySelection(block.army.id),
-                onLocate: block.rows.isNotEmpty &&
-                        block.rows.first.tileKey != null
+                onLocate:
+                    block.rows.isNotEmpty && block.rows.first.tileKey != null
                     ? () {
                         widget.bus.emit(const ClosePanelEvent());
                         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -512,7 +509,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
                 onSplit: block.army.regimentUnitIds.length >= 2
                     ? () => _openSplitDialog(block)
                     : null,
-                onMove: !block.army.isHomeArmy &&
+                onMove:
+                    !block.army.isHomeArmy &&
                         block.army.regimentUnitIds.isNotEmpty
                     ? () => _openMoveDialog(block)
                     : null,
@@ -585,10 +583,7 @@ class _ArmyExpansionTile extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Flexible(
-              child: Text(
-                _armyTitle(),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(_armyTitle(), overflow: TextOverflow.ellipsis),
             ),
             if (onLocate != null) ...[
               const SizedBox(width: 4),
@@ -609,13 +604,9 @@ class _ArmyExpansionTile extends StatelessWidget {
         dense: true,
         children: [
           if (block.rows.isEmpty)
-            const ListTile(
-              title: Text('No regiments assigned'),
-              dense: true,
-            )
+            const ListTile(title: Text('No regiments assigned'), dense: true)
           else ...[
-            for (final row in block.rows)
-              _RegimentRow(row: row, onTap: null),
+            for (final row in block.rows) _RegimentRow(row: row, onTap: null),
           ],
           Padding(
             padding: const EdgeInsets.all(8),

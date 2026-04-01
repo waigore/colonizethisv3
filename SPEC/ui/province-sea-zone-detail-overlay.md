@@ -73,7 +73,7 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 **Political / Economic / Naval:** Owner, **province resources** listed with **icon + id** per commodity label rule (see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)), prospects, improvements, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
 
-**Sea zone:** Political + Naval (fleets in zone).
+**Sea zone:** Political + Naval (fleets in zone). Political name must use sea-zone display name from world state (keyed by prefixed sea-zone id), not raw ids; if missing, fallback to id is allowed only as a defensive legacy path.
 
 ---
 
@@ -84,6 +84,7 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - Narrow full-width: max height ≤ `third` when parent does not already cap. Bottom slot height `third`: no overflow; tabs scroll. Narrow side rail: full rail height allowed. Desktop: side panel, scrollable.
 - Economic row hover updates `secondaryHighlightTileKey` and a non-orange map outline. Close sets `overlayOpen` false; tile tap may reopen.
 - Unrevealed / fully unrevealed province: `???` obfuscation per player view (unchanged).
+- Sea-zone political header text uses sea-zone display name from world-state sea-zone naming data for the selected prefixed sea-zone id (with raw id only as defensive fallback for legacy/missing data).
 
 ### Widgetbook
 
