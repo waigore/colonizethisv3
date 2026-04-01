@@ -66,6 +66,21 @@ void main() {
 
       expect(updated.quantityOf(CommodityCatalog.grain.id), 5);
     });
+
+    test(
+      'adds large extraction without storage cap (unbounded strategic stockpile)',
+      () {
+        const existing = 1000000;
+        const incoming = 500000;
+        var stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, existing);
+        final extracted = {CommodityCatalog.grain.id: incoming};
+
+        final updated = applyExtractionToStockpile(stockpile, extracted);
+
+        expect(updated.quantityOf(CommodityCatalog.grain.id), existing + incoming);
+      },
+    );
   });
 
   group('applyExtractionForPlayers', () {
