@@ -12,7 +12,9 @@
 
 ## Input
 
-**Per-player extracted quantities by commodity** — produced by the resource extractor (land = same-region totals, overseas = different-region totals). Player's current stockpile; optionally transport priorities from orders. No raw tile iteration inside transport.
+**Per-player extracted quantities by commodity** — produced by the resource extractor (land = same-region totals, overseas = different-region totals). Player's current stockpile. No raw tile iteration inside transport.
+
+**Sea cargo priority is not configurable:** Overseas allocation under cargo-hold limits uses a **single fixed** category order (see table below). The system does **not** read transport-priority preferences from player orders, AI, or rulesets, and implementations must **not** expose a per-player, per-faction, or per-ruleset override for this ordering. (GitHub #1290 — design decision: no order-driven priority.)
 
 ---
 
@@ -37,7 +39,7 @@ Sea transport applies this cargo-hold limit in two steps each turn:
 1. **Overseas extraction (cross-region transport, e.g. New World → Old World):**  
    Allocate overseas extraction totals to stockpile by **priority** (food, raw materials, riches, trade goods) until cargoHolds are exhausted; any remaining overseas extraction beyond cargoHolds is **not delivered** this turn (it stays in the source region and does not enter the central stockpile).
 2. **Trade / exports (open market shipments):**  
-   If any cargoHolds remain after step (1), allocate that remaining capacity to trade/export shipments for that player, using the same per-category priority ordering (or an explicit trade-priority rule when defined). Once capacity is exhausted, additional trade/export orders are not shipped this turn.
+   If any cargoHolds remain after step (1), allocate that remaining capacity to trade/export shipments for that player, using the **same fixed** per-category priority ordering as step (1). Once capacity is exhausted, additional trade/export orders are not shipped this turn.
 
 **Central stockpile storage** is unbounded by design ([commodity-catalog](../game/commodity-catalog.md), [stockpiles-and-production](../game/stockpiles-and-production.md)): it abstracts a nation’s strategic pool, not warehouse capacity. Auto-transport does not clamp additions against a storage maximum. Sea transport must only add to or remove from the **central stockpile**, never from per-province commodity storage.
 
@@ -69,7 +71,11 @@ Player stockpile updated with land totals (all) and overseas totals (up to cargo
 
 - **Sea transport and cargo cap:** Given per-player overseas extraction totals, a derived cargo-hold capacity from the player’s home fleet (in port at the capital; or a configured stub value when allowed by ruleset), and a current stockpile  
   When auto-transport runs  
-  Then it allocates overseas quantities to the central stockpile by category priority (food, raw materials, riches, manufactured/advanced per `CommodityCategory`), does not exceed the effective cargo-hold capacity, and leaves any undelivered overseas quantities outside the central stockpile for that turn.
+  Then it allocates overseas quantities to the central stockpile by the **fixed** category priority order (food, raw materials, riches, manufactured/advanced per `CommodityCategory`), does not exceed the effective cargo-hold capacity, and leaves any undelivered overseas quantities outside the central stockpile for that turn.
+
+- **Fixed sea priority (not configurable):** Given per-player overseas extraction totals and any player orders, AI plans, or ruleset configuration that might otherwise imply a custom shipment order  
+  When auto-transport allocates overseas delivery under cargo-hold limits (and when remaining capacity is used for trade/export in the same turn)  
+  Then the system uses **only** that fixed `CommodityCategory` order; the system does not apply order-driven or ruleset-driven overrides to sea cargo fill priority.
 
 - **Unbounded central stockpile:** Given per-player land and overseas extraction totals and a current central stockpile with no storage maximum defined in game rules  
   When auto-transport applies land totals then overseas totals already limited only by cargo-hold throughput  
