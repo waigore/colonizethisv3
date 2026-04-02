@@ -62,6 +62,7 @@ When full AI (Phase 6) runs, the economy planner produces **production assignmen
 - **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec. Games using full AI have hidden agendas assigned at setup/init; the caller (game setup or sim controller) invokes `assignHiddenAgendasForGame` before the first `generateOrdersForPlayerFullAI` call.
 - **Full AI diplomacy scoring:** For GP↔GP and GP↔Minor/Tribe pairs, full AI computes per-pair war desire and inverse improve-relations desire using composite power ratio (military + province + naval), relation factors, legal relation gate, and per GP-target cooldowns; wartime re-evaluation influences continue-war vs offer-peace output.
 - **Order merge:** Merged order list preserves stable ordering (player → unit → type), respects human precedence, emits at most one AI order per unit, and is fully validated and deterministic.
+- **Army move parity with human rules:** When AI emits `ArmyMoveOrder`, destination legality matches human rules from [movement.md](movement.md): any AI-owned province in any region is valid (cross-region allowed), and non-owned destinations follow normal adjacency/validation constraints.
 
 ## Constraints
 - AIPlanner only produces orders for AI-controlled GPs.

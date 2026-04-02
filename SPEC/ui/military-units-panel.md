@@ -18,6 +18,7 @@ The military units panel is a single place to see every **army** (composition of
 - **Grouping:** By **region**, then by **province** (stationed province). Under each province: **one row per army** (not one row per regiment type). **Order:** Region headings; within region, **Home Army** section first when capital is in that region; then **province** nodes (stable order by display name or id); within a province, armies in stable order (e.g. by army label or id).
 - **Row content (collapsed):** Army display name (or generated id label), **province + region** location, short composition summary (e.g. total regiments, strength summary if available from logic), optional **status** from aggregate regiment `Unit.status` (if any Working → show Working).
 - **Row content (expanded):** Table of **regiment types** with **counts**, **medals** (range per type if mixed), same pattern as prior regiment-type display but scoped to this army. **Split** / **Combine** per [military-units-army-management.md](military-units-army-management.md). **Move** control: **non-Home** armies only; **Home Army** does **not** show **Move** (cannot leave capital). Move flow emits a bus event; shell/logic applies `ArmyMoveOrder` per [orders.md](../program/orders.md).
+- **Move destination UX (armies):** On **Move**, the panel opens a local dialog with one **province dropdown grouped by region** (Old World / New World). Options include every **player-owned** province in any region except the army's current province. On confirm, emit `ArmyMoveRequestedEvent` with `ArmyMoveOrder.destinationProvinceId` in prefixed form.
 - **Excluded:** Civilian units. Armies/fleets owned by other factions.
 
 ---
@@ -59,6 +60,10 @@ Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (regi
 - Given an expanded **non-Home** army row, when the user views actions, then the UI layer shows **Move** and **Split Army** and does **not** omit **Move** for that army.
 
 - Given an expanded **Home Army** row, when the user views actions, then the UI layer shows **Split Army** (and **Combine** via checkbox rules) and does **not** show **Move**.
+
+- Given a non-Home army move dialog is open and the player owns provinces in `oldWorld` and `newWorld`, when the UI layer renders the destination control, then the UI layer shows one province dropdown grouped by region labels and includes owned destination provinces from both regions except the army's current province.
+
+- Given the current turn draft already contains an `ArmyMoveOrder` for army `A`, when the user confirms a new Move destination for army `A` from Military Units, then the UI layer emits `ArmyMoveRequestedEvent` and the System keeps only the newly confirmed `ArmyMoveOrder` for `A` in the draft.
 
 - Given the user selects **Combine** with two armies in the same province, when the operation completes, then the panel reflects merged armies without a full app restart.
 
