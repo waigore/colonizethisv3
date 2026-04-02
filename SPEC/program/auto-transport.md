@@ -14,6 +14,22 @@
 
 **Per-player extracted quantities by commodity** — produced by the resource extractor (land = same-region totals, overseas = different-region totals). Player's current stockpile. No raw tile iteration inside transport.
 
+---
+
+## Caller-supplied extraction override (`extractedByPlayerId`)
+
+When turn resolution (or economy preview) is invoked with a **non-empty** `Map<String, Map<CommodityId, int>> extractedByPlayerId`, the implementation applies those per-player commodity totals **directly** to each player’s central stockpile via `applyExtractionForPlayers` and **does not** run the normal extraction auto-transport pipeline for that turn. In particular, this path **intentionally bypasses**:
+
+- Connectivity resolution  
+- Per-tile resource extraction (`computeExtraction`)  
+- Land vs overseas split  
+- Cargo-hold allocation (`allocateOverseasToStockpile`)  
+- Trade/transport interception (`applyTradeInterception`)
+
+Callers using this override must therefore supply **already-final** delivered amounts (as if land and overseas processing were already complete). It is intended for tests, sim_economy, and similar controlled inputs—not for normal play when tile maps drive extraction.
+
+---
+
 **Sea cargo priority is not configurable:** Overseas allocation under cargo-hold limits uses a **single fixed** category order (see table below). The system does **not** read transport-priority preferences from player orders, AI, or rulesets, and implementations must **not** expose a per-player, per-faction, or per-ruleset override for this ordering. (GitHub #1290 — design decision: no order-driven priority.)
 
 ---

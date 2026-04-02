@@ -1,4 +1,7 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+final _log = logicLogger();
 
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
@@ -14,6 +17,21 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Applies [extracted] commodity quantities to [stockpile], returning the
 /// updated stockpile. Negative values in [extracted] are treated as zero.
 /// There is no maximum stockpile size; deltas add without storage caps.
+///
+/// Debug logging for land totals applied during extraction auto-transport.
+/// SPEC/program/auto-transport.md; grep token `extraction auto_transport land`.
+void logExtractionAutoTransportLand(
+  String playerId,
+  Map<CommodityId, int> land,
+) {
+  if (land.isEmpty) return;
+  final totalUnits = land.values.fold<int>(0, (a, b) => a + b);
+  final detail = land.entries.map((e) => '${e.key}=${e.value}').join(',');
+  _log.d(
+    'extraction auto_transport land playerId=$playerId totalUnits=$totalUnits detail=$detail',
+  );
+}
+
 Stockpile applyExtractionToStockpile(
   Stockpile stockpile,
   Map<CommodityId, int> extracted,
@@ -54,4 +72,3 @@ Game applyExtractionForPlayers(
 
   return game.copyWith(players: updatedPlayers);
 }
-
