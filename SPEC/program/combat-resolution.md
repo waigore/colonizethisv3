@@ -81,7 +81,7 @@ Per BattleContext:
    - Run per-engagement resolver.
    - Apply casualties to local views.
    - Interpret outcome per game/combat.md § Rules (Outcomes).
-   - On mutual annihilation with remaining attackers: recover garrison per game/combat.md § Configurable Values (Recovery %).
+   - On mutual annihilation with remaining attackers: recover garrison per game/combat.md — regiment **count** from Recovery % (§ Configurable Values) and regiment **type** from § Garrison recovery type (most-advanced infantry at defender effective era `E`, deterministic tie-break, `peasant_levies` fallback). Logic: `garrisonRecoveryRegimentTypeForEra` in `packages/colonizethis_data/.../combat_config.dart`; applied when `resolveBattleContext` spawns `recover_*` units.
 3. After chain completes, apply to world state in a single pass:
    - Remove casualty units.
    - Flip province ownership if defender eliminated per game/combat.md § Rules (Province Flip).
@@ -137,3 +137,7 @@ Structured **land** combat logs (`combat …` tokens after the `logic` prefix) a
 - Given `BattleContext.attackers` has a first entry for faction **A** with **M** attacker medals under §3 for that battle  
   When `buildQuickBattleInput` runs for that context  
   Then `attackerGeneralMedals` equals **M** for that primary attacker (first list entry), not a sum of `AttackingSide.generalMedals` from conflict detection alone.
+
+- Given an engagement ends in mutual annihilation, at least one attacker remains later in the multi-attacker chain, and the defending faction’s effective military era is **E** (per game/factions.md and resolver inputs)  
+  When `resolveBattleContext` applies garrison recovery  
+  Then every spawned recovered regiment’s `type` equals `garrisonRecoveryRegimentTypeForEra(E)` from `combat_config.dart` (same value as game/combat.md § Garrison recovery type).

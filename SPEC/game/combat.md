@@ -24,6 +24,8 @@ Auto-resolved combat triggers when **armies** move into enemy-controlled provinc
 
 **Outcomes:** Attacker victory (defender eliminated → province flips), defender victory (attacker eliminated, no change), stalemate (both survive, no flip), mutual annihilation (both wiped; defender recovers 20% rounded up of initial regiments if further attackers remain, otherwise ungarrisoned).
 
+**Garrison recovery type (mutual annihilation, chain continues):** Each recovered regiment uses the **same** regiment type: the defender faction’s **most advanced infantry** for its **effective military era** `E` (Great Power `E = 4`; Minor Nation / Tribe per [factions.md](factions.md)). **Infantry-eligible** catalog entries are those that are **not** cavalry and **not** artillery ([military-units.md](military-units.md) roster / `RegimentCategory`). **Advancement** is `FPN + FPM` on the catalog row for era `E` (matches auto-resolve strength basis). **Tie-break:** among types tied on `FPN + FPM`, choose the **lexicographically smallest** regiment `id` (ASCII). **Fallback:** if no infantry-eligible row exists for `E`, use `peasant_levies`. **Implementation:** `garrisonRecoveryRegimentTypeForEra` in `combat_config.dart`; applied in `resolveBattleContext` when spawning `recover_*` units.
+
 **Province Flip:** After **defender armies are eliminated** (no defending regiments remain in the province for the defender faction). Army casualties and army removal are applied **before** ownership flips; see [military-armies.md](military-armies.md). Flip is immediate when the defender has no regiments left, before later same-province battles in the chain. Connectivity/extraction recompute next turn.
 
 ## Acceptance Criteria
@@ -66,7 +68,15 @@ Auto-resolved combat triggers when **armies** move into enemy-controlled provinc
 
 - Given a combat where both the attacker side and the defender side lose all regiments in the final exchange, and there is at least one additional attacker faction remaining in the multi-attacker chain for that province  
   When the system completes the current attacker–defender exchange  
-  Then the system records a mutual annihilation outcome for that exchange, restores a new defending garrison equal to 20% of the defender’s initial regiment count in that battle rounded up, and continues the multi-attacker chain using this restored defending garrison against the next attacker faction.
+  Then the system records a mutual annihilation outcome for that exchange, restores a new defending garrison equal to 20% of the defender’s initial regiment count in that battle rounded up (minimum 1 regiment, at most that initial count), sets **every** recovered regiment’s type to the most advanced infantry type for the defending faction’s effective military era `E` per § Garrison recovery type, and continues the multi-attacker chain using this restored defending garrison against the next attacker faction.
+
+- Given mutual annihilation with remaining attackers and a defending faction whose effective military era is `E`, and the active ruleset’s regiment catalog contains at least one infantry-eligible row for era `E`  
+  When the system applies garrison recovery  
+  Then every recovered regiment’s type equals the catalog infantry-eligible row for era `E` with maximum `FPN + FPM`, using the lexicographically smallest `id` among rows tied on that sum.
+
+- Given mutual annihilation with remaining attackers and a defending faction whose effective military era is `E`, and the catalog has **no** infantry-eligible row for era `E`  
+  When the system applies garrison recovery  
+  Then every recovered regiment’s type is exactly `peasant_levies`.
 
 - Given a combat where both the attacker side and the defender side lose all regiments in the final exchange and there are no further attackers remaining in the multi-attacker chain  
   When the system completes combat resolution for that province  
@@ -78,7 +88,7 @@ Auto-resolved combat triggers when **armies** move into enemy-controlled provinc
 
 - Given two combat resolutions for the same province in the same game state with identical unit compositions, stats, modifiers, and move orders  
   When the system executes combat resolution for that province both times  
-  Then the system produces the same ordered sequence of battle pairings, the same winner for the overall province combat, the same casualty counts per faction and side, and the same province ownership outcome in both executions.
+  Then the system produces the same ordered sequence of battle pairings, the same winner for the overall province combat, the same casualty counts per faction and side, the same province ownership outcome in both executions, and the same regiment types for any mutual-annihilation recovered garrison regiments.
 
 ## Configurable Values
 
@@ -88,7 +98,8 @@ Auto-resolved combat triggers when **armies** move into enemy-controlled provinc
 | W_medal | 10.0 | Initiative medal weight; tuned so each general medal gives a noticeable but smaller boost than full cavalry share. Matches `initiativeGeneralMedalWeight` in `combat_config.dart`. |
 | Medal multipliers | 1.0 / 1.1 / 1.2 / 1.3 / 1.4 | Per medal level 0–4 |
 | DEF divisor | 9 | Durability scaling |
-| Recovery % | 20% (ceil) | Mutual-annihilation garrison |
+| Recovery % | 20% (ceil) | Mutual-annihilation garrison count (min 1, max initial defender count in that exchange) |
+| Garrison recovery type | Most-advanced infantry at era `E` | Per § Garrison recovery type; `garrisonRecoveryRegimentTypeForEra` in `combat_config.dart` |
 | Feeding modifiers | 1.0 / 0.75 / 0.5 | Coverage ≥ 1.0 / 0.5–1.0 / < 0.5; implemented via morale multiplier and **adopted as the intended rule** (no open question). |
 | Terrain modifiers | Per terrain type | In ruleset config |
 | Fort modifiers | Per fort level 0–3 | In ruleset config |
