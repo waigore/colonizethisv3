@@ -1,75 +1,71 @@
-// DiplomacyPanel order UI: empty state, confirm dialog, pending cancel.
-import 'dart:async';
+// DiplomacyPanel order UI + bus command emission coverage.
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
-class _EventHandlingWrapper extends StatefulWidget {
-  const _EventHandlingWrapper({
-    required this.bus,
-    required this.child,
-    required this.navigatorKey,
-  });
-
-  final AppEventBus bus;
-  final Widget child;
-  final GlobalKey<NavigatorState> navigatorKey;
-
-  @override
-  State<_EventHandlingWrapper> createState() => _EventHandlingWrapperState();
-}
-
-class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    _sub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
-      final nav = widget.navigatorKey.currentState;
-      if (nav == null) return;
-      final result = await showDialog<bool>(
-        context: nav.context,
-        builder: (ctx) => AlertDialog(
-          title: Text(event.title),
-          content: Text(event.message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(event.cancelLabel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(event.confirmLabel),
-            ),
-          ],
-        ),
-      );
-      event.result(result ?? false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
 void main() {
   suppressLogsForTests();
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final ninePatchFallbackPng = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=',
+  );
+  Uint8List ninePatchBytes = ninePatchFallbackPng;
+
+  setUpAll(() async {
+    final assetCandidates = <String>[
+      'app/assets/images/ui_button_nine_patch.png',
+      'assets/images/ui_button_nine_patch.png',
+    ];
+    for (final candidate in assetCandidates) {
+      final file = File(candidate);
+      if (await file.exists()) {
+        ninePatchBytes = await file.readAsBytes();
+        break;
+      }
+    }
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', (message) async {
+          final key = const StringCodec().decodeMessage(message);
+          if (key == 'assets/images/ui_button_nine_patch.png') {
+            return ByteData.view(ninePatchBytes.buffer);
+          }
+          return null;
+        });
+
+    try {
+      final bytes = await rootBundle.load(
+        'assets/images/ui_button_nine_patch.png',
+      );
+      final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      Flame.images.add('ui_button_nine_patch.png', frame.image);
+      Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
+    } catch (_) {
+      // Keep test resilient if this host cannot decode during prewarm.
+    }
+  });
 
   setUp(() {
     AppEventBus.reset();
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', null);
   });
 
   testWidgets('DiplomacyPanel shows empty state when no factions discovered', (
@@ -107,47 +103,109 @@ void main() {
   });
 
   testWidgets(
-    'DiplomacyPanel Declare War opens confirm dialog; Cancel dismisses',
+    'DiplomacyPanel confirm action emits AppendDiplomaticOrderRequestedEvent',
     (WidgetTester tester) async {
       final r = getDebugInitGameResult();
       final game = r.game;
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
-      final navigatorKey = GlobalKey<NavigatorState>();
+      final appendFuture = bus
+          .on<AppendDiplomaticOrderRequestedEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
+        event.result(true);
+      });
+      addTearDown(confirmSub.cancel);
 
       await tester.pumpWidget(
         MaterialApp(
-          navigatorKey: navigatorKey,
           home: Scaffold(
-            body: _EventHandlingWrapper(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: r.combinedTopology,
+              currentOrders: const Orders(),
               bus: bus,
-              navigatorKey: navigatorKey,
-              child: DiplomacyPanel(
-                game: game,
-                humanPlayerId: humanId,
-                topology: r.combinedTopology,
-                currentOrders: const Orders(),
-                bus: bus,
-              ),
             ),
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      final declareWar = find.text('Declare War');
-      if (declareWar.evaluate().isEmpty) {
-        return;
+      const actionLabels = <String>['Declare War', 'Offer Peace', 'Alliance'];
+      Finder? actionFinder;
+      for (final label in actionLabels) {
+        final candidate = find.text(label);
+        if (candidate.evaluate().isNotEmpty) {
+          actionFinder = candidate.first;
+          break;
+        }
       }
+      expect(
+        actionFinder,
+        isNotNull,
+        reason: 'Expected at least one non-parameter diplomacy action button',
+      );
 
-      await tester.ensureVisible(declareWar.first);
-      await tester.tap(declareWar.first);
-      await tester.pumpAndSettle();
+      await tester.ensureVisible(actionFinder!);
+      await tester.tap(actionFinder);
+      await tester.pump();
 
-      expect(find.text('OK'), findsWidgets);
-      await tester.tap(find.text('Cancel').last);
-      await tester.pumpAndSettle();
+      final event = await appendFuture;
+      expect(event.playerId, humanId);
     },
   );
 
+  testWidgets(
+    'DiplomacyPanel pending cancel emits RemoveDiplomaticOrderRequestedEvent',
+    (WidgetTester tester) async {
+      final r = getDebugInitGameResult();
+      final game = r.game;
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final target = game.players.firstWhere((p) => p.id != humanId).id;
+      final bus = AppEventBus.create();
+      final removeFuture = bus
+          .on<RemoveDiplomaticOrderRequestedEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      final currentOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          humanId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: target,
+            ),
+          ],
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanId,
+              topology: r.combinedTopology,
+              currentOrders: currentOrders,
+              bus: bus,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final cancelButton = find.text('Cancel').first;
+      await tester.ensureVisible(cancelButton);
+      await tester.tap(cancelButton);
+      await tester.pump();
+
+      final event = await removeFuture;
+      expect(event.playerId, humanId);
+      expect(event.type, DiplomaticOrderType.declareWar);
+      expect(event.targetFactionId, target);
+    },
+  );
 }
