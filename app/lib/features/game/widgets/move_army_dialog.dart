@@ -19,11 +19,7 @@ List<String> armyMoveDestinationFullProvinceIds({
   final fromLocal = ProvinceId.localIdFrom(fromFull);
   final out = <String>{};
 
-  for (final n in neighborProvinceIdsInRegion(
-    topology,
-    regionId,
-    fromLocal,
-  )) {
+  for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
   for (final p in allProvinces(game.worldState)) {
@@ -59,53 +55,92 @@ class MoveArmyDialog extends StatefulWidget {
 class _MoveArmyDialogState extends State<MoveArmyDialog> {
   String? _selected;
 
-  @override
-  void initState() {
-    super.initState();
+  List<({String regionId, String fullProvinceId, String label})>
+  _destinationEntries() {
     final destIds = armyMoveDestinationFullProvinceIds(
       game: widget.game,
       topology: widget.topology,
       humanPlayerId: widget.humanPlayerId,
       army: widget.army,
     );
-    if (destIds.isNotEmpty) {
-      _selected = destIds.first;
+    final out = <({String regionId, String fullProvinceId, String label})>[];
+    for (final id in destIds) {
+      final province = tryGetProvince(widget.game.worldState, id);
+      final label = province?.displayName ?? ProvinceId.localIdFrom(id);
+      out.add((
+        regionId: ProvinceId.regionIdFrom(id),
+        fullProvinceId: id,
+        label: label,
+      ));
+    }
+    out.sort((a, b) {
+      final regionCmp = a.regionId.compareTo(b.regionId);
+      if (regionCmp != 0) return regionCmp;
+      final labelCmp = a.label.compareTo(b.label);
+      if (labelCmp != 0) return labelCmp;
+      return a.fullProvinceId.compareTo(b.fullProvinceId);
+    });
+    return out;
+  }
+
+  List<DropdownMenuItem<String>> _groupedDropdownItems(
+    List<({String regionId, String fullProvinceId, String label})> entries,
+  ) {
+    final items = <DropdownMenuItem<String>>[];
+    String? currentRegion;
+    for (final entry in entries) {
+      if (entry.regionId != currentRegion) {
+        currentRegion = entry.regionId;
+        final regionLabel = unitsPanelRegionLabel(entry.regionId);
+        items.add(
+          DropdownMenuItem<String>(
+            enabled: false,
+            value: '__header__${entry.regionId}',
+            child: Text(
+              regionLabel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+      items.add(
+        DropdownMenuItem<String>(
+          value: entry.fullProvinceId,
+          child: Text(entry.label),
+        ),
+      );
+    }
+    return items;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final entries = _destinationEntries();
+    if (entries.isNotEmpty) {
+      _selected = entries.first.fullProvinceId;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final destIds = armyMoveDestinationFullProvinceIds(
-      game: widget.game,
-      topology: widget.topology,
-      humanPlayerId: widget.humanPlayerId,
-      army: widget.army,
-    );
+    final entries = _destinationEntries();
+    final items = _groupedDropdownItems(entries);
 
     return AlertDialog(
       title: Text('Move army ${widget.army.id}'),
       content: SizedBox(
         width: 320,
-        child: destIds.isEmpty
+        child: entries.isEmpty
             ? const Text('No valid destinations.')
-            : ListView.builder(
-                shrinkWrap: true,
-                itemCount: destIds.length,
-                itemBuilder: (ctx, i) {
-                  final id = destIds[i];
-                  final province = tryGetProvince(widget.game.worldState, id);
-                  final label =
-                      province?.displayName ?? ProvinceId.localIdFrom(id);
-                  final regionLabel =
-                      unitsPanelRegionLabel(ProvinceId.regionIdFrom(id));
-                  return RadioListTile<String>(
-                    title: Text(label),
-                    subtitle: Text('$regionLabel · $id'),
-                    value: id,
-                    groupValue: _selected,
-                    onChanged: (v) => setState(() => _selected = v),
-                  );
-                },
+            : DropdownButtonFormField<String>(
+                value: _selected,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Destination province',
+                ),
+                items: items,
+                onChanged: (v) => setState(() => _selected = v),
               ),
       ),
       actions: [

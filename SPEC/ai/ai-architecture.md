@@ -46,6 +46,7 @@ AI uses the order suggestion API and applies:
 - **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
   - **Filter:** All AI paths (simple heuristics and full-AI domain planner) must drop move orders whose destination is owned by a faction at peace with the mover (or by a Minor with no war). No move into at-peace or minor-without-war territory.
   - **Prefer enemy:** When choosing among valid move candidates, score moves into enemy (at-war) territory higher than moves into unowned or own territory; weighted selection then prefers enemy/contested. Default bonus +20 to score when destination owner is at war with the mover.
+  - **Army parity with human rules:** AI `ArmyMoveOrder` generation uses the same legality as human move assignment: any player-owned destination province is valid across regions (no adjacency requirement), while non-owned destinations require normal adjacency/war validation.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
 - **Diplomacy (Full AI):**
@@ -81,4 +82,5 @@ AI order generation runs so that orders are available for the **Orders** phase o
 - **Goal selection and domains:** Behavior tree or weighted goal selection drives strategy; utility AI (economy, military, diplomacy, research) scores candidates; personality and hidden agendas bias selection per § Rules.
 - **Province identity:** Movement targets, build provinces, and visibility use prefixed form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 - **Movement (filter and prefer):** Move orders are filtered by diplomacy (no move to at-peace or minor-without-war). Among valid moves, selection prefers moves into enemy/contested territory via configurable score bonus.
+- **Army movement parity:** AI-generated `ArmyMoveOrder` uses the same destination legality as human orders, including cross-region moves to any AI-owned province in prefixed province-id form.
 - **Difficulty:** Difficulty affects starting parameters and ruleset modifiers only, not AI logic or personality.
