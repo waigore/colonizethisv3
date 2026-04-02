@@ -38,6 +38,11 @@ void main() {
           'oldWorld|port_home|sea_local': 'oldWorld|port_home|0|0',
           'newWorld|port_nw|sea_nw': 'newWorld|port_nw|0|0',
         },
+        seaZoneDisplayNameById: const {
+          'oldWorld|sea_ow': 'Origin Sea',
+          'oldWorld|sea_local': 'Adjacent OW Sea',
+          'newWorld|sea_nw': 'Cross NW Sea',
+        },
       ),
       players: const [
         Player(
@@ -131,9 +136,9 @@ void main() {
     await openDialog(tester, bus: AppEventBus.create());
 
     expect(find.text('Sea zones'), findsOneWidget);
-    expect(find.text('$sameRegionAdjacentSea · Old World'), findsOneWidget);
+    expect(find.text('Adjacent OW Sea · Old World'), findsOneWidget);
     expect(
-      find.text('$crossRegionAdjacentSea · New World (cross-region)'),
+      find.text('Cross NW Sea · New World (cross-region)'),
       findsOneWidget,
     );
   });
@@ -150,7 +155,7 @@ void main() {
 
     await openDialog(tester, bus: bus);
 
-    await tester.tap(find.text('$crossRegionAdjacentSea · New World (cross-region)'));
+    await tester.tap(find.text('Cross NW Sea · New World (cross-region)'));
     await tester.pump();
     await tester.tap(find.text('Confirm'));
     await tester.pump();
@@ -253,6 +258,10 @@ void main() {
           ),
           newWorld: const RegionData(),
           portsByProvinceSeaboard: const {},
+          seaZoneDisplayNameById: const {
+            'oldWorld|sea1': 'First Sea',
+            'oldWorld|sea2': 'Second Sea',
+          },
         ),
         players: [
           Player(
@@ -311,7 +320,7 @@ void main() {
         findsNothing,
       );
       expect(find.text('Sea zones'), findsOneWidget);
-      expect(find.text('$ow|sea2 · Old World'), findsOneWidget);
+      expect(find.text('Second Sea · Old World'), findsOneWidget);
     },
   );
 }

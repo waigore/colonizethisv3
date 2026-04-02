@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/map_location_resolver.dart';
+import '../utils/sea_zone_name_resolver.dart';
 import 'units/shared/units_panel_region_label.dart';
 
 sealed class _MovePick {
@@ -108,7 +109,14 @@ List<_MovePick> _buildNavalMovePicks({
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
     final regLabel = unitsPanelRegionLabel(zReg);
     final cross = zReg != fleetSeaRegion;
-    final label = cross ? '$z · $regLabel (cross-region)' : '$z · $regLabel';
+    final zoneLabel = seaZoneDisplayName(
+      game: game,
+      regionId: zReg,
+      seaZoneId: z,
+    );
+    final label = cross
+        ? '$zoneLabel · $regLabel (cross-region)'
+        : '$zoneLabel · $regLabel';
     outSea.add(_PickSeaZone(seaZoneId: z, zoneRegionId: zReg, rowLabel: label));
   }
   outSea.sort((a, b) => a.rowLabel.compareTo(b.rowLabel));

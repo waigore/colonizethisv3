@@ -87,6 +87,57 @@ void main() {
       },
     );
 
+    testWidgets('naval location header uses sea-zone display name', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_mil_sea_label';
+      const cap = 'oldWorld|c1';
+      final miniGame = Game(
+        id: 'g_mil_sea_label',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'c1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Cap',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f_at_sea',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_x',
+              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+            ),
+          ],
+          seaZoneDisplayNameById: const {'oldWorld|zone_x': 'Mil Named Sea'},
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Mil Sea Tester',
+            isHuman: true,
+            capitalProvinceId: cap,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: cap,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(buildPanel(game: miniGame, humanPlayerId: humanId));
+      await tester.pump();
+      expect(find.textContaining('Mil Named Sea'), findsWidgets);
+    });
+
     testWidgets(
       'AC: When player has military units, tree shows regions and type rows',
       (WidgetTester tester) async {
