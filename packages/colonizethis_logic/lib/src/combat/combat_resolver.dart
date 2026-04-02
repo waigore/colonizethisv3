@@ -211,9 +211,7 @@ Game resolveBattleContext(
             1,
             initialDefenderCount,
           );
-          final garrisonTypes = _garrisonTypesForFaction(
-            game,
-            provinceOwnerId,
+          final recoveryType = garrisonRecoveryRegimentTypeForEra(
             defenderEffectiveLevel,
           );
           for (
@@ -221,7 +219,7 @@ Game resolveBattleContext(
             i < recoverCount && defenderUnitIds.length < recoverCount;
             i++
           ) {
-            final type = garrisonTypes[i % garrisonTypes.length];
+            final type = recoveryType;
             final id = 'recover_${ctx.provinceId}_$i';
             defenderUnitIds.add(id);
             final stubUnit = Unit(
@@ -449,19 +447,6 @@ int _deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
       ? deploymentLimitWithNationalism
       : deploymentLimitBase;
   return baseLimit + generalMedals;
-}
-
-List<String> _garrisonTypesForFaction(
-  Game game,
-  String factionId,
-  int effectiveLevel,
-) {
-  final eraTypes = regimentCatalog
-      .where((r) => r.era == effectiveLevel)
-      .map((r) => r.id)
-      .toList();
-  if (eraTypes.isEmpty) return ['peasant_levies'];
-  return eraTypes;
 }
 
 /// Resolves one engagement: attacker vs defender.

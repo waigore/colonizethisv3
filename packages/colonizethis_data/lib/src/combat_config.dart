@@ -28,6 +28,14 @@ class RegimentStats {
       category == RegimentCategory.lightCavalry ||
       category == RegimentCategory.spearCavalry ||
       category == RegimentCategory.heavyCavalry;
+
+  bool get isArtillery =>
+      category == RegimentCategory.lightArtillery ||
+      category == RegimentCategory.heavyArtillery;
+
+  /// Eligible for mutual-annihilation garrison recovery type: not cavalry, not artillery.
+  /// SPEC/game/combat.md (bowmen and other non-cav / non-arty roster types count).
+  bool get isEligibleGarrisonRecoveryInfantry => !isCavalry && !isArtillery;
 }
 
 /// Regiment category per Imperialism II military roster.
@@ -337,6 +345,40 @@ const List<RegimentStats> regimentCatalog = [
     era: 4,
   ),
 ];
+
+/// Deterministic pick for mutual-annihilation garrison recovery regiment type.
+/// Chooses maximum `(FPN + FPM)` among [eligible]; tie-break: lexicographically
+/// smallest `id`. Empty [eligible] is allowed (caller passes filtered catalog).
+/// SPEC/game/combat.md § Garrison recovery type.
+String selectGarrisonRecoveryRegimentType(Iterable<RegimentStats> eligible) {
+  RegimentStats? best;
+  for (final r in eligible) {
+    if (best == null) {
+      best = r;
+      continue;
+    }
+    final bestSum = best.fpn + best.fpm;
+    final sum = r.fpn + r.fpm;
+    if (sum > bestSum) {
+      best = r;
+    } else if (sum == bestSum && r.id.compareTo(best.id) < 0) {
+      best = r;
+    }
+  }
+  if (best == null) return 'peasant_levies';
+  return best.id;
+}
+
+/// Regiment id for recovered garrison units after mutual annihilation when the chain continues.
+/// Uses [regimentCatalog] entries for `era` in 1..4: eligible types are [RegimentStats.isEligibleGarrisonRecoveryInfantry].
+/// SPEC/game/combat.md § Garrison recovery type; implemented in `combat_resolver.dart`.
+String garrisonRecoveryRegimentTypeForEra(int era) {
+  final e = era.clamp(1, 4);
+  final eligible = regimentCatalog.where(
+    (r) => r.era == e && r.isEligibleGarrisonRecoveryInfantry,
+  );
+  return selectGarrisonRecoveryRegimentType(eligible);
+}
 
 /// Registry of regiment stats by id.
 RegimentStats? regimentStatsById(String id) {
