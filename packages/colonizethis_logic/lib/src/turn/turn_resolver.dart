@@ -725,9 +725,17 @@ Game _runExtractionPhase(
     final tot = extraction[player.id];
     if (tot != null) {
       stockpile = applyExtractionToStockpile(stockpile, tot.land);
+      logExtractionAutoTransportLand(player.id, tot.land);
+      final cargoHolds = cargoHoldsForHomeFleet(state, player.id);
       var overseasDelivered = allocateOverseasToStockpile(
         tot.overseas,
-        cargoHolds: cargoHoldsForHomeFleet(state, player.id),
+        cargoHolds: cargoHolds,
+      );
+      logExtractionAutoTransportOverseasAllocation(
+        playerId: player.id,
+        cargoHolds: cargoHolds,
+        overseasTotals: tot.overseas,
+        allocatedToStockpile: overseasDelivered,
       );
       if (overseasDelivered.isNotEmpty) {
         extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;

@@ -20,6 +20,8 @@ Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overture
 
 (1) **Connectivity:** Recompute per-player connectivity (see [extraction-pipeline.md](extraction-pipeline.md)). (2) **Extract:** Per-tile effective extraction: min(improvement, tech cap), then min(..., transport level); minerals only from prospected tiles per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); sum by commodity; separate same-region vs overseas. (3) **Land:** Add same-region totals to stockpile. (4) **Sea:** Allocate overseas totals by priority, capped by cargo holds derived from the player's home fleet (in port at capital; see [auto-transport.md](auto-transport.md)); add only the transported portion to stockpile. Reference: [capital-and-connectivity.md](../game/capital-and-connectivity.md), [extraction-pipeline.md](extraction-pipeline.md).
 
+**Override:** When `extractedByPlayerId` is **non-empty**, the phase applies `applyExtractionForPlayers` only: per-player maps are merged into central stockpiles with **no** connectivity, tile extraction, land/overseas split, cargo-hold cap, or interception. See [auto-transport.md](auto-transport.md) § Caller-supplied extraction override.
+
 ---
 
 ## Riches to treasury
