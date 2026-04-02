@@ -701,6 +701,9 @@ void main() {
     });
 
     group('mutual annihilation garrison recovery type', () {
+      // A second attacker with no unitIds keeps remainingAttackers non-empty
+      // (recovery triggers) while the resolver skips a follow-up engagement so
+      // recover_* units are not fought again in the same context.
       test(
         'great power defender: recovered regiments match most-advanced infantry era 4',
         () {
@@ -725,12 +728,6 @@ void main() {
                     id: 'aStrong',
                     type: 'rifle_infantry',
                     ownerId: 'att1',
-                    locationProvinceId: provinceId,
-                  ),
-                  Unit(
-                    id: 'aWeak',
-                    type: 'peasant_levies',
-                    ownerId: 'att2',
                     locationProvinceId: provinceId,
                   ),
                   Unit(
@@ -760,7 +757,7 @@ void main() {
                 unitIds: ['aStrong'],
                 generalMedals: 1,
               ),
-              AttackingSide(factionId: 'att2', unitIds: ['aWeak']),
+              AttackingSide(factionId: 'att2', unitIds: []),
             ],
             fortLevel: 0,
             terrain: 'plains',
@@ -807,12 +804,6 @@ void main() {
                     locationProvinceId: provinceId,
                   ),
                   Unit(
-                    id: 'aWeak',
-                    type: 'peasant_levies',
-                    ownerId: 'att2',
-                    locationProvinceId: provinceId,
-                  ),
-                  Unit(
                     id: 'd1',
                     type: 'grenadiers',
                     ownerId: 'minor1',
@@ -838,7 +829,7 @@ void main() {
                 unitIds: ['aStrong'],
                 generalMedals: 1,
               ),
-              AttackingSide(factionId: 'att2', unitIds: ['aWeak']),
+              AttackingSide(factionId: 'att2', unitIds: []),
             ],
             fortLevel: 0,
             terrain: 'plains',
@@ -874,12 +865,6 @@ void main() {
                   locationProvinceId: provinceId,
                 ),
                 Unit(
-                  id: 'aWeak',
-                  type: 'peasant_levies',
-                  ownerId: 'att2',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
                   id: 'd1',
                   type: 'pikemen',
                   ownerId: 'tr1',
@@ -905,7 +890,7 @@ void main() {
               unitIds: ['aStrong'],
               generalMedals: 1,
             ),
-            AttackingSide(factionId: 'att2', unitIds: ['aWeak']),
+            AttackingSide(factionId: 'att2', unitIds: []),
           ],
           fortLevel: 0,
           terrain: 'plains',
