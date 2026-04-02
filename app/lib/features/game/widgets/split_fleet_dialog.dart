@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
+import '../utils/sea_zone_name_resolver.dart';
 
 class SplitFleetDialog extends StatelessWidget {
   const SplitFleetDialog({
@@ -36,7 +37,13 @@ class SplitFleetDialog extends StatelessWidget {
       final localId = seaZoneId.contains('|')
           ? seaZoneId.split('|').last
           : seaZoneId;
-      return 'Region — $localId';
+      final zoneName = seaZoneDisplayName(
+        game: game,
+        regionId: fleet.regionId,
+        seaZoneId: localId,
+      );
+      final regionLabel = regionDisplayLabel(fleet.regionId);
+      return '$zoneName — $regionLabel';
     } else if (fleet.isInPort) {
       final inPortId = fleet.inPortAtProvinceId!;
       final provinceMap = <String, Province>{};
