@@ -37,31 +37,51 @@ void main() {
       expect(result, isNull);
     });
 
-    test('fresh GameService loads map from storage on getMapData and loadGame', () {
-      const gameId = 'persist_map';
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: ['england'],
-        continentCount: 1,
-        minorNationCount: 0,
-        tribeCount: 1,
-        numProvincesOldWorld: 3,
-        numProvincesNewWorld: 2,
+    test('loadGame returns null when required map data is missing', () {
+      const gameId = 'missing_map_data';
+      final game = Game(
+        id: gameId,
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
       );
-      final writer = GameService(box, GameSaveAdapter());
-      writer.createNewGame(id: gameId, config: config);
+      service.saveGame(game);
 
-      final reader = GameService(box, GameSaveAdapter());
-      final first = reader.getMapData(gameId);
-      expect(first, isNotNull);
-      expect(first!.combinedTopology, isNotNull);
-
-      final second = reader.getMapData(gameId);
-      expect(second, isNotNull);
-
-      final freshForLoad = GameService(box, GameSaveAdapter());
-      final loaded = freshForLoad.loadGame(gameId);
-      expect(loaded, isNotNull);
+      final loaded = service.loadGame(gameId);
+      expect(loaded, isNull);
     });
+
+    test(
+      'fresh GameService loads map from storage on getMapData and loadGame',
+      () {
+        const gameId = 'persist_map';
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final writer = GameService(box, GameSaveAdapter());
+        writer.createNewGame(id: gameId, config: config);
+
+        final reader = GameService(box, GameSaveAdapter());
+        final first = reader.getMapData(gameId);
+        expect(first, isNotNull);
+        expect(first!.combinedTopology, isNotNull);
+
+        final second = reader.getMapData(gameId);
+        expect(second, isNotNull);
+
+        final freshForLoad = GameService(box, GameSaveAdapter());
+        final loaded = freshForLoad.loadGame(gameId);
+        expect(loaded, isNotNull);
+      },
+    );
 
     test('runTurnResolution uses merge when aiOrders is non-null', () {
       const gameId = 'merge_ai';
@@ -96,4 +116,3 @@ void main() {
     });
   });
 }
-

@@ -49,13 +49,15 @@ final mapProvinceNamesVisibleProvider =
     );
 
 /// Map view data for the current game with player-constrained visibility.
-/// Null when no game, no map data (legacy save), or loading.
+/// Null when no game or loading.
 final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return null;
   final service = ref.watch(gameServiceProvider);
   final mapData = service.getMapData(game.id);
-  if (mapData == null) return null;
+  if (mapData == null) {
+    throw StateError('Missing required map data for gameId=${game.id}');
+  }
   final colorOverride = greatPowerColorOverrideFromGame(game);
 
   final humanPlayerId =
