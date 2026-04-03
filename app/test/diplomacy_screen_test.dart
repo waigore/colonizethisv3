@@ -17,36 +17,22 @@ void main() {
 
   late Game gameWithFactions;
   late String humanPlayerId;
-  late MapTopology topology;
 
   setUpAll(() {
     final result = getDebugInitGameResult();
     gameWithFactions = result.game;
-    topology = result.combinedTopology;
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';
   });
 
-  Widget buildScreen({
-    required Game game,
-    required String humanPlayerId,
-    required MapTopology topology,
-    Orders currentOrders = const Orders(),
-    void Function(Orders)? onOrdersChanged,
-  }) {
+  Widget buildScreen({required Game game, required String humanPlayerId}) {
     return ProviderScope(
       child: MaterialApp(
         home: Navigator(
           pages: [
             MaterialPage(
-              child: DiplomacyScreen(
-                game: game,
-                humanPlayerId: humanPlayerId,
-                topology: topology,
-                currentOrders: currentOrders,
-                onOrdersChanged: onOrdersChanged ?? (_) {},
-              ),
+              child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
             ),
           ],
           onPopPage: (_, __) => false,
@@ -60,11 +46,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildScreen(
-          game: gameWithFactions,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-        ),
+        buildScreen(game: gameWithFactions, humanPlayerId: humanPlayerId),
       );
       await tester.pumpAndSettle();
 
@@ -74,11 +56,7 @@ void main() {
 
     testWidgets('shows title Diplomacy', (WidgetTester tester) async {
       await tester.pumpWidget(
-        buildScreen(
-          game: gameWithFactions,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-        ),
+        buildScreen(game: gameWithFactions, humanPlayerId: humanPlayerId),
       );
       await tester.pumpAndSettle();
 
@@ -87,11 +65,7 @@ void main() {
 
     testWidgets('contains DiplomacyPanel content', (WidgetTester tester) async {
       await tester.pumpWidget(
-        buildScreen(
-          game: gameWithFactions,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-        ),
+        buildScreen(game: gameWithFactions, humanPlayerId: humanPlayerId),
       );
       await tester.pumpAndSettle();
 
@@ -114,8 +88,6 @@ void main() {
           builder: (_) => DiplomacyScreen(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
-            topology: topology,
-            onOrdersChanged: (_) {},
           ),
         ),
       );

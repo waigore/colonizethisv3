@@ -69,6 +69,10 @@ For `train_civilians` and `train_military`, shared order/count orchestration mus
 
 **Split fleet:** `NavalUnitsPanel` uses local `showDialog` for `SplitFleetDialog`, but the dialog commits via **`NavalSplitFleetRequestedEvent`** → `AppEventHandlerScope` (applies `applyNavalSplitFleet`, then emits **`NavalFleetsUpdatedEvent`**) so the dialog does not receive panel merge callbacks. Widgetbook / tests without the shell wire the same request event or listen for `NavalFleetsUpdatedEvent` only.
 
+**Move fleet:** `NavalUnitsPanel` uses local `showDialog` for `MoveFleetDialog`. On confirm, emit **`NavalMoveFleetRequestedEvent`** → `AppEventHandlerScope` updates **`currentOrdersProvider`** via **`applyNavalMoveOrderForPlayer`** (replaces any prior naval move for that fleet and removes naval mission orders for that fleet from the draft). No merge callback into the dialog.
+
+**Land armies (`MilitaryUnitsPanel`):** **Move army** uses local `showDialog` like naval move and confirms via **`ArmyMoveRequestedEvent`**. The dialog uses a province dropdown grouped by region labels and lists owned provinces across all regions (excluding current province). Handler applies **`ArmyMoveOrder`** for the player and **replaces** any prior army move for that army in the same draft. **Split** / **combine** use **`ArmySplitRequestedEvent`** / **`ArmyCombineRequestedEvent`** (names per [app-event-bus.md](app-event-bus.md)) → handler calls **colonizethis_logic** helpers that mutate `Game` / orders; panel refreshes from updated state. Same decoupling pattern as naval split (`NavalSplitFleetRequestedEvent`).
+
 **Train at-capital dialogs:** `TrainCiviliansDialog` / `TrainMilitaryDialog` emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** on close; `AppEventHandlerScope` merges into orders. No `onOrdersChanged` callback from the shell into the dialog.
 
 ---
@@ -88,21 +92,6 @@ Handled by **`AppEventHandler`** via **`pushNamed`**. Common names:
 Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart`).
 
 **Return to main menu from in-game / victory:** emit **`NavigateToShellEvent`**; **`AppEventHandler`** pops until **`Routes.shell`** or **`pushNamedAndRemoveUntil`** as needed. Do not call **`Navigator.popUntil`** from **`GameScreen`** / victory UI for that flow.
-
----
-
-## Game feature screen wrapper
-
-Game-bound feature screens under `app/lib/features/game/widgets/` should use a shared wrapper for repeated shell/listener/live-game orchestration.
-
-- Shared wrapper scope: full-screen feature routes (for example `TechnologyScreen`, `ProductionScreen`, `DiplomacyScreen`).
-- Shared wrapper responsibilities:
-  - resolve display game from route game vs `currentGameProvider` when ids match;
-  - wrap feature content with `CtScreenShell`;
-  - optionally attach `GameToUIBusListener` for the route game id (default attached; test-only override allowed).
-- `GameScreen` is excluded from this wrapper requirement because it owns Flame/map overlays and custom lifecycle concerns.
-
-Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialogs) remains in each feature screen.
 
 ---
 

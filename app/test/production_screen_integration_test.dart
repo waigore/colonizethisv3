@@ -1,7 +1,6 @@
 // Integration tests for ProductionScreen + productionDesiredOutputProvider.
 // SPEC/ui/production-panel.md.
 
-import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -13,6 +12,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'widget_test_pumps.dart';
+import 'production_panel_test_fixtures.dart';
 
 class _SeededProductionDesiredOutputNotifier
     extends ProductionDesiredOutputNotifier {
@@ -31,7 +33,7 @@ void main() {
   late Player fullPlayer;
 
   setUpAll(() {
-    fullPlayer = fullAvailabilityProductionPlayer();
+    fullPlayer = productionPanelTestFullPlayer();
     isolatedGame = Game(
       id: 'production-integration',
       worldState: WorldState(
@@ -85,7 +87,7 @@ void main() {
         await tester.pumpWidget(
           _buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
         );
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         expect(find.textContaining('Timber:'), findsOneWidget);
         expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
@@ -98,7 +100,7 @@ void main() {
       'moving a slider updates derived values via provider rebuild',
       (WidgetTester tester) async {
         await tester.pumpWidget(_buildScreen());
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         expect(find.textContaining('Timber:'), findsOneWidget);
 
@@ -106,11 +108,61 @@ void main() {
         expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
 
         await tester.drag(sliders.first, const Offset(80, 0));
-        await tester.pumpAndSettle();
+        await pumpSyncFrames(tester);
 
         expect(find.textContaining('Timber:'), findsOneWidget);
         expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
       },
     );
+
+    testWidgets('Breakdown dialog shows phase columns and live-updates from provider', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(_buildScreen());
+      await pumpSettleCapped(tester);
+
+      await tester.tap(find.text('Breakdown'));
+      await pumpSettleCapped(
+        tester,
+        timeout: const Duration(milliseconds: 800),
+      );
+
+      expect(find.text('Commodity breakdown'), findsOneWidget);
+      final tableFinder = find.byType(DataTable);
+      expect(tableFinder, findsOneWidget);
+      expect(
+        find.descendant(of: tableFinder, matching: find.text('Extraction')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: tableFinder,
+          matching: find.text('Riches to treasury'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tableFinder, matching: find.text('Consumption')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tableFinder, matching: find.text('Production')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tableFinder, matching: find.text('Total')),
+        findsOneWidget,
+      );
+
+      final screenContext = tester.element(find.byType(ProductionScreen));
+      final container = ProviderScope.containerOf(screenContext);
+      container
+          .read(productionDesiredOutputProvider.notifier)
+          .replaceAll({'lumber_from_timber': 2});
+      await pumpSyncFrames(tester);
+
+      expect(find.text('Commodity breakdown'), findsOneWidget);
+      expect(find.text('+2'), findsWidgets);
+    });
   });
 }

@@ -27,7 +27,7 @@ const double kNavalRetreatEnemyPatrol = 0.1;
 /// Enemy aggression when enemy is on Blockade.
 const double kNavalRetreatEnemyBlockade = 0.2;
 
-/// One side in a sea battle: owner, ship instances, optional mission for retreat aggression.
+/// One side in a sea battle: owner, ship instances, mission (used for retreat `enemyAggression` from opponent mission).
 class NavalBattleSide {
   const NavalBattleSide({
     required this.ownerId,
@@ -44,6 +44,8 @@ class NavalBattleSide {
 }
 
 /// Sea battle context for one zone. SPEC/program/naval-combat-resolution.md.
+///
+/// After [normalizeNavalBattleSidesForAttacker], [side1] is the **attacker** and [side2] is the **defender**.
 class BattleContextSea {
   const BattleContextSea({
     required this.seaZoneId,
@@ -54,6 +56,63 @@ class BattleContextSea {
   final String seaZoneId;
   final NavalBattleSide side1;
   final NavalBattleSide side2;
+}
+
+bool _ownerHadMovingFleetInZone(
+  Game game,
+  String seaZoneId,
+  String ownerId,
+  Set<String> movedFleetIds,
+) {
+  if (movedFleetIds.isEmpty) return false;
+  return game.worldState.fleets.any(
+    (f) =>
+        f.isAtSea &&
+        f.seaZoneId == seaZoneId &&
+        f.ownerId == ownerId &&
+        movedFleetIds.contains(f.id),
+  );
+}
+
+bool _isInterceptorMission(FleetMission m) =>
+    m == FleetMission.patrol || m == FleetMission.blockade;
+
+/// Orders [battle] so [side1] is the attacker and [side2] is the defender per SPEC/program/naval-combat-resolution.md.
+///
+/// Precedence: (1) If exactly one faction moved into the zone and the other is on Patrol or Blockade, the interceptor is the attacker. (2) Else if exactly one faction moved, the mover is the attacker. (3) Else (both moved, or neither) use lexicographically smaller `ownerId` as attacker for deterministic ordering.
+BattleContextSea normalizeNavalBattleSidesForAttacker(
+  BattleContextSea battle,
+  Game game,
+  Set<String> movedFleetIds,
+) {
+  final s1 = battle.side1;
+  final s2 = battle.side2;
+  final m1 = _ownerHadMovingFleetInZone(game, battle.seaZoneId, s1.ownerId, movedFleetIds);
+  final m2 = _ownerHadMovingFleetInZone(game, battle.seaZoneId, s2.ownerId, movedFleetIds);
+  final int1 = _isInterceptorMission(s1.mission);
+  final int2 = _isInterceptorMission(s2.mission);
+
+  final bool swap;
+  if (m1 && !m2 && int2) {
+    swap = true;
+  } else if (m2 && !m1 && int1) {
+    swap = false;
+  } else if (m1 && !m2) {
+    swap = false;
+  } else if (m2 && !m1) {
+    swap = true;
+  } else {
+    swap = s1.ownerId.compareTo(s2.ownerId) > 0;
+  }
+
+  if (!swap) {
+    return battle;
+  }
+  return BattleContextSea(
+    seaZoneId: battle.seaZoneId,
+    side1: s2,
+    side2: s1,
+  );
 }
 
 /// Conflict detection: returns contested sea zones with two hostile sides.
@@ -233,7 +292,7 @@ class NavalBattleResult {
 }
 
 /// Resolve one sea battle deterministically. Seed from game + zone for RNG.
-/// Applies retreat roll per SPEC/game/ships-and-naval.md (base 0.6 + speed advantage - enemy aggression).
+/// Applies retreat roll per SPEC/game/ships-and-naval.md (base 0.6 + speed advantage - enemy mission aggression term).
 NavalBattleResult resolveSeaBattle(
   BattleContextSea battle,
   int seed, {

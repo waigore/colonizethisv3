@@ -81,5 +81,63 @@ void main() {
       expect(fortDamageReduction[2], 0.45); // Stone
       expect(fortDamageReduction[3], 0.60); // Modern
     });
+
+    group('garrisonRecoveryRegimentTypeForEra', () {
+      test('era 4 picks guards (max FPN+FPM among infantry-eligible)', () {
+        expect(garrisonRecoveryRegimentTypeForEra(4), 'guards');
+      });
+
+      test('era 3 picks grenadiers', () {
+        expect(garrisonRecoveryRegimentTypeForEra(3), 'grenadiers');
+      });
+
+      test('era 2 picks musketeers', () {
+        expect(garrisonRecoveryRegimentTypeForEra(2), 'musketeers');
+      });
+
+      test('era 1 picks arquebusiers', () {
+        expect(garrisonRecoveryRegimentTypeForEra(1), 'arquebusiers');
+      });
+
+      test('clamps era into 1..4', () {
+        expect(garrisonRecoveryRegimentTypeForEra(0), 'arquebusiers');
+        expect(garrisonRecoveryRegimentTypeForEra(99), 'guards');
+      });
+
+      test(
+        'selectGarrisonRecoveryRegimentType tie-break uses lexicographic id',
+        () {
+          const a = RegimentStats(
+            id: 'zebra_inf',
+            fpn: 5,
+            fpm: 5,
+            rng: 1,
+            def: 3,
+            mvr: 3,
+            category: RegimentCategory.lightInfantry,
+            era: 1,
+          );
+          const b = RegimentStats(
+            id: 'alpha_inf',
+            fpn: 5,
+            fpm: 5,
+            rng: 1,
+            def: 3,
+            mvr: 3,
+            category: RegimentCategory.regularInfantry,
+            era: 1,
+          );
+          expect(selectGarrisonRecoveryRegimentType([a, b]), 'alpha_inf');
+          expect(selectGarrisonRecoveryRegimentType([b, a]), 'alpha_inf');
+        },
+      );
+
+      test(
+        'selectGarrisonRecoveryRegimentType empty yields peasant_levies',
+        () {
+          expect(selectGarrisonRecoveryRegimentType([]), 'peasant_levies');
+        },
+      );
+    });
   });
 }

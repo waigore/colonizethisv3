@@ -1,7 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/naval.dart';
+
+final _log = logicLogger();
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
@@ -52,6 +55,55 @@ Map<CommodityId, int> allocateOverseasToStockpile(
   }
 
   return delivered;
+}
+
+/// Debug logging for overseas cargo-cap allocation during extraction auto-transport.
+/// SPEC/program/auto-transport.md; grep token `extraction auto_transport overseas`.
+void logExtractionAutoTransportOverseasAllocation({
+  required String playerId,
+  required int cargoHolds,
+  required Map<CommodityId, int> overseasTotals,
+  required Map<CommodityId, int> allocatedToStockpile,
+}) {
+  if (overseasTotals.isEmpty) return;
+  final overseasTotalUnits = overseasTotals.values.fold<int>(
+    0,
+    (a, b) => a + b,
+  );
+  final allocatedUnits = allocatedToStockpile.values.fold<int>(
+    0,
+    (a, b) => a + b,
+  );
+  final detail = allocatedToStockpile.entries
+      .map((e) => '${e.key}=${e.value}')
+      .join(',');
+  _log.d(
+    'extraction auto_transport overseas cargo_cap playerId=$playerId '
+    'cargoHolds=$cargoHolds overseasTotalUnits=$overseasTotalUnits '
+    'allocatedUnits=$allocatedUnits allocatedDetail=$detail',
+  );
+}
+
+void _logExtractionAutoTransportInterception(
+  String playerId,
+  Map<CommodityId, int> before,
+  Map<CommodityId, int> after,
+) {
+  final beforeUnits = before.values.fold<int>(0, (s, v) => s + v);
+  final afterUnits = after.values.fold<int>(0, (s, v) => s + v);
+  final ids = {...before.keys, ...after.keys};
+  final deltas = <String>[];
+  for (final id in ids) {
+    final bv = before[id] ?? 0;
+    final av = after[id] ?? 0;
+    if (bv != av) deltas.add('$id $bv->$av');
+  }
+  final deltaStr = deltas.isEmpty ? 'none' : deltas.join(';');
+  _log.d(
+    'extraction auto_transport interception playerId=$playerId '
+    'deliveredBeforeUnits=$beforeUnits deliveredAfterUnits=$afterUnits '
+    'perCommodityDelta=$deltaStr',
+  );
 }
 
 /// Total cargo holds for [playerId] based on ships in the home fleet at the capital port.
@@ -124,13 +176,18 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
 }
 
 /// Intercept score and whether any enemy has Blockade mission.
-(int interceptScore, bool hasBlockade) _interceptScoreAndBlockade(List<Fleet> fleets, Set<String> enemyIds) {
+(int interceptScore, bool hasBlockade) _interceptScoreAndBlockade(
+  List<Fleet> fleets,
+  Set<String> enemyIds,
+) {
   var sum = 0;
   var hasBlockade = false;
   for (final f in fleets) {
-    if (!f.isAtSea) continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
+    if (!f.isAtSea)
+      continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
     if (!enemyIds.contains(f.ownerId)) continue;
-    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) continue;
+    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade)
+      continue;
     if (f.mission == FleetMission.blockade) hasBlockade = true;
     for (final typeId in f.shipTypeIds) {
       sum += NavalStatsCatalog.get(typeId).interceptRating;
@@ -194,19 +251,34 @@ TradeInterceptionResult applyTradeInterception(
 
   final enemies = _enemiesAtWar(game, playerId);
   if (enemies.isEmpty) {
+    final unchanged = Map<CommodityId, int>.from(overseasDelivered);
+    _logExtractionAutoTransportInterception(
+      playerId,
+      overseasDelivered,
+      unchanged,
+    );
     return TradeInterceptionResult(
-      reducedDelivered: Map<CommodityId, int>.from(overseasDelivered),
+      reducedDelivered: unchanged,
       updatedFleets: game.worldState.fleets,
     );
   }
 
   final fleets = game.worldState.fleets;
-  final (interceptScore, hasBlockade) = _interceptScoreAndBlockade(fleets, enemies);
+  final (interceptScore, hasBlockade) = _interceptScoreAndBlockade(
+    fleets,
+    enemies,
+  );
   final evasionScore = _evasionScoreForPlayer(fleets, playerId);
 
   if (interceptScore <= 0) {
+    final unchanged = Map<CommodityId, int>.from(overseasDelivered);
+    _logExtractionAutoTransportInterception(
+      playerId,
+      overseasDelivered,
+      unchanged,
+    );
     return TradeInterceptionResult(
-      reducedDelivered: Map<CommodityId, int>.from(overseasDelivered),
+      reducedDelivered: unchanged,
       updatedFleets: game.worldState.fleets,
     );
   }
@@ -215,8 +287,13 @@ TradeInterceptionResult applyTradeInterception(
   final ratio = total > 0 ? interceptScore / total : 1.0;
 
   // Escort protection: lossReduction = min(0.5, escortStrength/cargoStrength × 0.3). SPEC.
-  final (escortStrength, cargoStrength) = _escortAndCargoStrength(fleets, playerId, overseasDelivered);
-  final escortFactor = (escortStrength / cargoStrength * escortStrengthWeight).clamp(0.0, escortFactorMax);
+  final (escortStrength, cargoStrength) = _escortAndCargoStrength(
+    fleets,
+    playerId,
+    overseasDelivered,
+  );
+  final escortFactor = (escortStrength / cargoStrength * escortStrengthWeight)
+      .clamp(0.0, escortFactorMax);
 
   // Base before escort: used for cargo (with escort) and for ship loss (escort applied once per GDD).
   double baseBeforeEscort = actionFactorPatrol * ratio * civilianTargetBonus;
@@ -226,12 +303,14 @@ TradeInterceptionResult applyTradeInterception(
   double base = baseBeforeEscort * (1.0 - escortFactor);
 
   final pIntercept = (1.2 * base).clamp(0.1, 0.9);
-  final raidEfficiency = raidEfficiencyMin + ratio * (raidEfficiencyMax - raidEfficiencyMin);
+  final raidEfficiency =
+      raidEfficiencyMin + ratio * (raidEfficiencyMax - raidEfficiencyMin);
   final pCargoEffective = (pIntercept * raidEfficiency).clamp(0.0, 1.0);
 
   // GDD: shipLossChance = baseShipLoss × (1 - escortFactor) × civilianPenalty — escort applied once.
   final baseShipLoss = (0.4 * baseBeforeEscort).clamp(0.0, 1.0);
-  final pShip = (baseShipLoss * (1.0 - escortFactor) * civilianShipLossPenalty).clamp(0.02, 0.5);
+  final pShip = (baseShipLoss * (1.0 - escortFactor) * civilianShipLossPenalty)
+      .clamp(0.02, 0.5);
 
   final reducedDelivered = <CommodityId, int>{};
   for (final entry in overseasDelivered.entries) {
@@ -250,12 +329,19 @@ TradeInterceptionResult applyTradeInterception(
   final playerFleets = fleets.where((f) => f.ownerId == playerId).toList();
   var shipsToRemove = 0;
   for (final f in playerFleets) {
-    final merchantCount = f.shipTypeIds.where((id) => _merchantShipTypes.contains(id)).length;
+    final merchantCount = f.shipTypeIds
+        .where((id) => _merchantShipTypes.contains(id))
+        .length;
     for (var i = 0; i < merchantCount; i++) {
       if (nextInt(100) < (pShip * 100)) shipsToRemove++;
     }
   }
   if (shipsToRemove <= 0) {
+    _logExtractionAutoTransportInterception(
+      playerId,
+      overseasDelivered,
+      reducedDelivered,
+    );
     return TradeInterceptionResult(
       reducedDelivered: reducedDelivered,
       updatedFleets: game.worldState.fleets,
@@ -281,6 +367,11 @@ TradeInterceptionResult applyTradeInterception(
     }
   }
 
+  _logExtractionAutoTransportInterception(
+    playerId,
+    overseasDelivered,
+    reducedDelivered,
+  );
   return TradeInterceptionResult(
     reducedDelivered: reducedDelivered,
     updatedFleets: updatedFleets,

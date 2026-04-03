@@ -22,6 +22,7 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,7 @@ import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
 import '../../features/game/widgets/pause_menu_panel.dart';
 import '../../providers/app_event_bus_provider.dart';
+import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 
 typedef DialogBuilder =
@@ -267,10 +269,12 @@ class AppEventHandler {
           }
           final humanPlayerId = _humanPlayerId(game);
           final bus = ref.watch(appEventBusProvider);
+          final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           return MilitaryUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
+            topology: mapData?.combinedTopology ?? const MapTopology(),
           );
         },
       ),
@@ -292,10 +296,12 @@ class AppEventHandler {
           }
           final humanPlayerId = _humanPlayerId(game);
           final bus = ref.watch(appEventBusProvider);
+          final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           return NavalUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
+            topology: mapData?.combinedTopology ?? const MapTopology(),
           );
         },
       ),

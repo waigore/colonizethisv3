@@ -15,14 +15,19 @@ Resolves fleet movement orders, triggers ship-reveal for coastal provinces, and 
 
 **Movement:**
 
-1. For a fleet **at sea:** validate destination is adjacent (S↔S or P↔S) via topology. If destination is a **port** (P↔S), the target province must be **owned by the fleet owner**; otherwise reject. On apply: if moving to a sea zone, set fleet to that sea zone (at sea); if moving to a port, set fleet to in port at that province.
+1. For a fleet **at sea:** validate destination is adjacent (S↔S or P↔S) via topology. If destination is a **port** (P↔S), the target province must be **owned by the fleet owner**; otherwise reject. On apply: if moving to a sea zone, set fleet to that sea zone (at sea); if moving to a **non‑capital** port, set fleet to in port at that province. If moving to the player’s **capital** province, **merge** ships into the **Home Fleet** and **remove** the sea‑going fleet (see [ships-and-naval.md](../game/ships-and-naval.md) § Home Fleet).
 2. For a fleet **in port:** destination must be an adjacent sea zone (undock). On apply: set fleet to at sea in that sea zone.
 3. Trigger **ship reveal** when a fleet **enters** a sea zone (move to sea zone or undock into one).
 4. Home fleet cannot move; orders targeting it are no-ops.
+5. Applying a **successful naval move** for a sea‑going fleet clears that fleet’s **mission** and mission targets for the resulting state (`none` / null targets), including after merge into Home Fleet (Home Fleet remains mission `none`).
 
 **Ship Reveal:**
 
 On fleet entering sea zone S: for each province P with a P↔S edge (within the **destination sea zone's region** only), set coastal tiles of P to `revealed` for fleet owner. Province identity for which tiles to reveal must use full province id (`regionId|localId`) and region-scoped lookup per [world-model-identity.md](../game/world-model-identity.md). Updates visibility state per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
+
+Also on entering S: set all **water** tile keys belonging to S in `tileKeysByRegionAndProvince[regionId][S]` to **fully visible** for the fleet owner so open-ocean hexes are visible while the fleet is present; **End-of-turn** [distant sea zone fog](fog-and-exploration-resolution.md) may fog them again when no owned coast is adjacent and no fleet of that player is at sea in S.
+
+On fleet **docking** at a port province (including merge into Home Fleet at capital): set **all** tiles of that province listed in `tileKeysByRegionAndProvince` to `revealed` for the fleet owner (same visibility field names as elsewhere), so unrevealed coastal hinterland from fog is uncovered when the player brings a fleet into port.
 
 **Interception Checks:**
 
@@ -35,7 +40,14 @@ Only fleets **at sea** on Patrol or Blockade mission participate. For each such 
 5. `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
 6. On success, create a BattleContextSea and invoke [naval-combat-resolution.md](naval-combat-resolution.md).
 
-Exact numeric values in ruleset config; formula shape: mission factor × relative strength × tech/composition.
+For MVP, interception uses hardcoded constants in logic code (no ruleset lookup):
+
+- Patrol mission factor: `0.5` (`kNavalInterceptMissionFactorPatrol`).
+- Blockade mission factor: `0.9` (`kNavalInterceptMissionFactorBlockade`).
+- Clamp bounds: `[0.05, 0.85]`.
+- Formula: `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
+
+No additional interception tech/composition bonus path is applied in MVP; any such bonus is deferred.
 
 **Trade/Transport Interception:**
 
@@ -48,6 +60,16 @@ During Extraction/Trade phase, overseas cargo on home-fleet ships may be raided.
 5. `P_ship_sunk = clamp(0.4 × base × (1 - escortFactor), 0.02, 0.5)`.
 6. Reduce delivered quantities; remove sunk merchant ships from home fleet.
 
+For MVP, trade/transport interception also uses hardcoded constants in logic code (no ruleset lookup), including:
+
+- `civilianTargetBonus = 1.25`
+- `actionFactorPatrol = 0.5`
+- `blockadeBonusFactor = 1.5`
+- `escortFactorMax = 0.5`
+- `escortStrengthWeight = 0.3`
+- `civilianShipLossPenalty = 2.0`
+- `raidEfficiencyMin = 0.3`, `raidEfficiencyMax = 0.7`
+
 **Join home fleet:**
 
 A `join_home_fleet` order is valid only when the fleet is **in port at the player's capital province**. On apply: merge that fleet's ships into the home fleet and remove the sea-going fleet.
@@ -56,10 +78,13 @@ A `join_home_fleet` order is valid only when the fleet is **in port at the playe
 
 BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs from colonizethis_data ship economy catalog.
 
+**Orders draft (human):** Submitting a **naval move** for fleet **F** replaces any prior **naval move** for **F** and removes any **naval mission** order for **F** from the current-turn draft. During turn resolution, if fleet **F** has a **naval move** order, **naval mission** orders for **F** are not applied that turn (move takes precedence if both appear after merge).
+
 ## Integration
 
 - **Phase:** Movement phase (alongside land movement); interception in Naval Interception & Naval Combat step ([turn-resolution-phases.md](turn-resolution-phases.md)). Trade interception during Extraction/Trade.
 - **Upstream:** Fleet orders from [orders.md](orders.md); topology from map data.
+- **Combined topology:** Runtime graph is **combined** `MapTopology` (prefixed node/edge ids per [map-data.md](map-data.md)). For a fleet **in port**, resolving the adjacent sea zone (undock, validation, UI move picks) uses `seaZoneIdForProvince` and related helpers; those lookups must succeed for **local province id + regionId** against that graph, not only against per-region local-id graphs.
 - **Downstream:** Updated fleet locations and visibility in WorldState; BattleContextSea to [naval-combat-resolution.md](naval-combat-resolution.md); cargo reductions to [auto-transport.md](auto-transport.md).
 
 ## Constraints
@@ -67,3 +92,17 @@ BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs 
 - Deterministic for a given seed.
 - S↔S topology edges required from map generation.
 - Owned by colonizethis_logic; numeric config from colonizethis_data.
+
+## Acceptance Criteria
+
+- Given naval interception probability is computed for a fleet on `patrol` or `blockade` with fixed intercept and flee scores  
+  When the System resolves interception in MVP  
+  Then the System uses hardcoded mission factors (`patrol=0.5`, `blockade=0.9`) and computes `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)` with no ruleset lookup.
+
+- Given interception modifiers are evaluated in MVP  
+  When the System computes interception probability for fleet movement resolution  
+  Then the System does not apply any separate interception tech/composition bonus path, and treats those bonuses as deferred behavior.
+
+- Given trade/transport interception runs during Extraction/Trade for fixed seed and identical game state  
+  When the System applies cargo and ship-loss reduction formulas  
+  Then the System uses documented named code constants (including `civilianTargetBonus`, mission factors, escort constants, and raid-efficiency bounds) and produces deterministic outputs.

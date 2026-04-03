@@ -12,7 +12,28 @@ The naval units panel gives the player a single place to see every **fleet** the
 - Always shows the **Home Fleet** as a special entry at the top for the player’s capital, even when it currently has zero ships.
 - Shows **key info first** (fleet name, current location, mission, and a short composition summary).
 - Lets the player expand a fleet to see **ship composition and capabilities** (including Home Fleet cargo capacity).
+- Lets the player issue a **Move** order for each **sea‑going** fleet (see [Move fleet](#move-fleet)).
 - Centers the map on the selected fleet’s location and switches the region tab if needed so the player immediately sees where that fleet operates.
+
+---
+
+## Move fleet
+
+For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **expanded** row includes a **Move** button next to **Split**. The **Home Fleet** row does **not** show **Move** (cannot move).
+
+**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
+
+1. Sees two sections (**Sea zones** first, then **Provinces**), each a **sorted** list of **legal** destinations from the fleet’s **current** location per [ships-and-naval.md](../game/ships-and-naval.md) and [naval-movement-resolution.md](../program/naval-movement-resolution.md):
+   - **At sea:** all **adjacent** sea zones (including **warp** / cross‑region links); then all **owned** provinces the fleet may **dock** at from its current sea zone (topology P↔S). Destinations in a **different** region than the fleet’s current sea zone must be labeled so the player sees **cross‑region** (e.g. include the destination region label in the row text).
+   - **In port:** only **adjacent** sea zones for **undock**; the **Provinces** section is **empty** (no port‑to‑port moves).
+2. **Selects** one row (radio or single selection), then taps **Confirm** to submit (or **Cancel** to close without changing orders).
+3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → port tile adjacent to that zone per [map-widget.md](map-widget.md) / [map_location_resolver](military/naval panel contract).
+
+**Orders:** On confirm, the panel emits **`NavalMoveFleetRequestedEvent`** (see [app-ui-wiring.md](../program/app-ui-wiring.md)). The shell applies **`applyNavalMoveOrderForPlayer`** (colonizethis_logic): the new **naval move** replaces any prior **naval move** for that fleet and **removes** any **naval mission** order for that fleet from the current‑turn draft.
+
+**Labels:** The capital province (dock), when listed, should indicate that the fleet **joins the Home Fleet** when the order resolves (per GDD).
+
+**Acceptance — Move fleet with combined topology (in port):** Given a sea-going fleet **in port** at a **coastal** province (prefixed `inPortAtProvinceId`, seabound per map topology) and the panel uses the same **combined** world topology as turn resolution (prefixed node/edge ids per [map-data.md](../program/map-data.md)), when the player opens **Move fleet**, then the dialog shows **at least one** row under **Sea zones** (legal adjacent sea zones for undock) and does **not** show the sole empty-state message *No adjacent sea zones (check map topology).* when adjacency exists.
 
 ---
 
@@ -118,7 +139,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 ## Data and identity
 
 - **Province lookup:** Always use **prefixed province ids** (`regionId|localId`) when resolving provinces from fleet location or Home Fleet capital per [world-model-identity.md](../game/world-model-identity.md). Display **province names** (e.g. `Province.displayName`) and **never raw province ids** to the user.
-- **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet; where that id is local to the region, the UI derives a display name from that id or from a mapping. When showing a sea zone, always include the **region label** with it.
+- **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet and displayed via sea-zone display names stored in world state (prefixed `regionId|seaZoneId` key). The UI must show the resolved sea-zone display name (not raw id) and include the **region label** with it.
 - **Home Fleet detection:** The Home Fleet is identified via the rules in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet): it is the fleet in port at the capital province that cannot move and whose mission is effectively none. Implementation may use a dedicated flag if provided by the model, but behaviour must remain consistent with the spec.
 
 ---
@@ -157,9 +178,19 @@ The naval units panel participates in the Widgetbook catalog for review and test
 
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
 
+- **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
+
 - **Given** the Naval Units panel is open and the human player has at least one fleet, **when** the user views the list of fleets, **then** fleets are grouped by region with a heading per region, port and sea-zone locations under each region are ordered stably (e.g. by display name), and fleets within each location are shown in a stable order, with the capital region’s Home Fleet section pinned first in that region.
 
 - **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “Standalone” use case, **then** the UI layer displays only the Naval Units panel with demo or debug game data so that region grouping, Home Fleet pinning, collapsed vs expanded fleet rows, and composition/capabilities content can be verified in isolation.
 
 - **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “With map” use case, **then** the UI layer displays the Naval Units panel alongside a map built from a real generated map and initialized game (`getDebugInitGameResult()`), and clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets) while switching the region tab when necessary.
+
+- **Given** the Naval Units panel is open and a **sea‑going** fleet row is expanded, **when** the user views the row actions, **then** the UI layer shows a **Move** button (in addition to **Split**) and does **not** omit it for that fleet.
+
+- **Given** the Naval Units panel is open and the **Home Fleet** row is expanded, **when** the user views the row actions, **then** the UI layer does **not** show a **Move** button for the Home Fleet.
+
+- **Given** the Move dialog is open with at least one destination, **when** the user selects a destination and taps **Confirm**, **then** the UI layer emits **`NavalMoveFleetRequestedEvent`** with a **naval move** order matching the selection (sea zone id or dock province id per `NavalMoveOrder`) and closes the dialog.
+
+- **Given** the Move dialog is open, **when** the user taps **Cancel**, **then** the UI layer closes the dialog without emitting **`NavalMoveFleetRequestedEvent`**.
 

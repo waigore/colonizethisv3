@@ -13,7 +13,9 @@
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 
 import 'combat_mode.dart';
+import 'diplomacy.dart';
 import 'game.dart';
+import 'turn_news_digest.dart';
 import 'orders.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
@@ -238,6 +240,61 @@ class NavalSplitFleetRequestedEvent extends SessionCommandEvent {
   final List<String> shipInstanceIdsToNewFleet;
 }
 
+/// Move fleet dialog confirm: shell merges [moveOrder] into current-turn draft orders.
+/// SPEC/program/app-ui-wiring.md.
+class NavalMoveFleetRequestedEvent extends SessionCommandEvent {
+  NavalMoveFleetRequestedEvent({
+    required this.humanPlayerId,
+    required this.moveOrder,
+  });
+
+  final String humanPlayerId;
+  final NavalMoveOrder moveOrder;
+}
+
+/// Military units panel: game state updated after army split/combine.
+/// SPEC/program/app-ui-wiring.md.
+class LandArmiesUpdatedEvent extends SessionCommandEvent {
+  LandArmiesUpdatedEvent({required this.game});
+
+  final Game game;
+}
+
+/// Combine selected armies in the same province (shell applies colonizethis_logic).
+class ArmyCombineRequestedEvent extends SessionCommandEvent {
+  ArmyCombineRequestedEvent({
+    required this.humanPlayerId,
+    required this.armyIds,
+  });
+
+  final String humanPlayerId;
+  final List<String> armyIds;
+}
+
+/// Split confirmed from split-army dialog (shell applies colonizethis_logic).
+class ArmySplitRequestedEvent extends SessionCommandEvent {
+  ArmySplitRequestedEvent({
+    required this.humanPlayerId,
+    required this.sourceArmyId,
+    required this.unitIdsToMove,
+  });
+
+  final String humanPlayerId;
+  final String sourceArmyId;
+  final List<String> unitIdsToMove;
+}
+
+/// Move army dialog confirm: merges [moveOrder] into current-turn draft orders.
+class ArmyMoveRequestedEvent extends SessionCommandEvent {
+  ArmyMoveRequestedEvent({
+    required this.humanPlayerId,
+    required this.moveOrder,
+  });
+
+  final String humanPlayerId;
+  final ArmyMoveOrder moveOrder;
+}
+
 /// Train civilians dialog close: shell merges into current-turn orders draft.
 class TrainCivilianBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainCivilianBuildOrdersCommittedEvent({required this.orders});
@@ -250,6 +307,31 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainMilitaryBuildOrdersCommittedEvent({required this.orders});
 
   final List<BuildUnitOrder> orders;
+}
+
+/// Request to append one diplomatic order for [playerId] in current-turn draft.
+class AppendDiplomaticOrderRequestedEvent extends SessionCommandEvent {
+  AppendDiplomaticOrderRequestedEvent({
+    required this.playerId,
+    required this.order,
+  });
+
+  final String playerId;
+  final DiplomaticOrder order;
+}
+
+/// Request to remove one pending diplomatic order by [type] and [targetFactionId]
+/// for [playerId] in current-turn draft.
+class RemoveDiplomaticOrderRequestedEvent extends SessionCommandEvent {
+  RemoveDiplomaticOrderRequestedEvent({
+    required this.playerId,
+    required this.type,
+    required this.targetFactionId,
+  });
+
+  final String playerId;
+  final DiplomaticOrderType type;
+  final String targetFactionId;
 }
 
 /// Negotiation UI mood input for portrait transitions.
@@ -332,9 +414,12 @@ class TurnResolutionCompleteEvent extends GameToUIEvent {
   const TurnResolutionCompleteEvent({
     required this.gameId,
     required this.turnNumber,
+    this.turnNewsDigest,
   });
   final String gameId;
   final int turnNumber;
+  /// Prior-turn digest for the news dialog; null when victory was set this resolution.
+  final TurnNewsDigest? turnNewsDigest;
 }
 
 /// Emitted when overture decisions are required; UI should show overture dialog.

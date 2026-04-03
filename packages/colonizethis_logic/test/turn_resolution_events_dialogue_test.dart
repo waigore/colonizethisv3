@@ -1,6 +1,7 @@
-import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/src/turn/turn_resolution_events.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('turn resolution dialogue emissions', () {
@@ -126,5 +127,76 @@ void main() {
         );
       },
     );
+
+    group('emitProvinceCapturedEvents', () {
+      test(
+        'Given previous owner set and new owner null When emit Then no province_captured',
+        () {
+          const fullPid = 'oldWorld|P1';
+          final after = Game(
+            id: 'g',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: fullPid, regionId: 'oldWorld', ownerId: null),
+                ],
+              ),
+              newWorld: const RegionData(),
+            ),
+            players: const [
+              Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            ],
+          );
+          final captured = <GameEvent>[];
+          emitProvinceCapturedEvents(
+            {fullPid: 'gp1'},
+            after,
+            1,
+            null,
+            captured.add,
+            null,
+          );
+          expect(captured, isEmpty);
+        },
+      );
+
+      test('Given gp1 to gp2 When emit Then one ProvinceCapturedEvent', () {
+        const fullPid = 'oldWorld|P1';
+        final after = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: fullPid, regionId: 'oldWorld', ownerId: 'gp2'),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
+          ],
+        );
+        final captured = <GameEvent>[];
+        emitProvinceCapturedEvents(
+          {fullPid: 'gp1'},
+          after,
+          1,
+          null,
+          captured.add,
+          null,
+        );
+        expect(captured, hasLength(1));
+        final e = captured.single as ProvinceCapturedEvent;
+        expect(e.provinceId, fullPid);
+        expect(e.previousOwnerId, 'gp1');
+        expect(e.newOwnerId, 'gp2');
+      });
+    });
   });
 }

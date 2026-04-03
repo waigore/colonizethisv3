@@ -29,6 +29,14 @@ For each **Great Power** (including the human player), all tiles in sea zones th
 - **Application:** Applied twice: (1) during Game Setup, immediately after initial visibility assignment, so players can see adjacent sea zones from turn 0; and (2) every turn at turn resolution, **after** all phases that affect visibility: Movement (ship reveal), Combat (ownership change), Build/work (exploration, prospecting), End-of-turn fog decay. The coastal sea zone visibility step runs inEnd-of-turn after fog decay so visibility is consistent for all players before the turn advances.
 - **Scope:** Full game rule: authoritative visibility state and PlayerView are updated; map widget, order suggestions, and AI use the same visibility.
 
+### Distant sea zone fog (End-of-turn)
+
+For each **Great Power**, after Explorer/Spy fog decay each turn and **before** the coastal sea zone pass:
+
+A **sea zone** S (per region) reverts to **fogged** for that player for all **water** tiles in S **only when** both hold: (1) no province **fully owned** by that player has a **P–S** edge to S; and (2) that player has **no** fleet **at sea** in S (fleets **in port** do not count). Tiles that are **unknown** stay **unknown**.
+
+While a fleet **enters** S during Movement, that player’s water tiles in S are set **fully visible** until this rule applies (see [ships-and-naval.md](ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md), [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)).
+
 ### Initial Visibility
 
 - **Old World:** Starts fogged (own provinces fully visible); coastal sea zones adjacent to owned provinces are set to fully visible during Game Setup.

@@ -53,6 +53,7 @@ void main() {
       const provinceLocalId = 'p1';
       const fullProvinceId = '$ow|$provinceLocalId';
       const tileKey = '$fullProvinceId|0|0';
+      const tileSea2 = '$ow|sea2|0|0';
 
       final revealTopology = MapTopology(
         nodes: const [
@@ -91,6 +92,7 @@ void main() {
           tileKeysByRegionAndProvince: const {
             ow: {
               fullProvinceId: [tileKey],
+              'sea2': [tileSea2],
             },
           },
           playerVisibilityByTile: const {
@@ -117,6 +119,10 @@ void main() {
       expect(
         next.worldState.playerVisibilityByTile['gp1']?[tileKey],
         VisibilityLevel.revealed.name,
+      );
+      expect(
+        next.worldState.playerVisibilityByTile['gp1']?[tileSea2],
+        VisibilityLevel.fullyVisible.name,
       );
     });
 
@@ -188,6 +194,38 @@ void main() {
         );
         expect(seaZoneIdForProvince(inland, 'p1'), isNull);
       });
+
+      test(
+        'supports combined topology: prefixed node ids and edges (app/turn resolver graph)',
+        () {
+          const ow = 'oldWorld';
+          final combined = MapTopology(
+            nodes: [
+              TopologyNode(
+                id: '$ow|cap',
+                regionId: ow,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: '$ow|sea1',
+                regionId: ow,
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: [
+              TopologyEdge(id1: '$ow|cap', id2: '$ow|sea1'),
+            ],
+          );
+          expect(
+            seaZoneIdForProvince(combined, 'cap', regionId: ow),
+            '$ow|sea1',
+          );
+          expect(
+            seaZoneIdForProvince(combined, '$ow|cap', regionId: ow),
+            '$ow|sea1',
+          );
+        },
+      );
     });
 
     group('provinceIdsAdjacentToSeaZone', () {

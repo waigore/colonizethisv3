@@ -7,10 +7,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
+import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+Future<void> expandFirstArmyExpansion(WidgetTester tester) async {
+  final tiles = find.byType(ExpansionTile);
+  if (tiles.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(tiles.first);
+  await tester.pumpAndSettle();
+}
+
+Future<void> expandAllArmyExpansions(WidgetTester tester) async {
+  final finder = find.byType(ExpansionTile);
+  final n = finder.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    await tester.tap(finder.at(i));
+    await tester.pumpAndSettle();
+  }
+}
 
 void main() {
   suppressLogsForTests();
@@ -30,6 +49,7 @@ void main() {
     required Game game,
     required String humanPlayerId,
     AppEventBus? bus,
+    MapTopology? topology,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -37,6 +57,7 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           bus: bus ?? AppEventBus.create(),
+          topology: topology ?? const MapTopology(),
         ),
       ),
     );
@@ -66,6 +87,59 @@ void main() {
         expect(find.byType(ListTile), findsNothing);
       },
     );
+
+    testWidgets('naval location header uses sea-zone display name', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_mil_sea_label';
+      const cap = 'oldWorld|c1';
+      final miniGame = Game(
+        id: 'g_mil_sea_label',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'c1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Cap',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'f_at_sea',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_x',
+              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+            ),
+          ],
+          seaZoneDisplayNameById: const {'oldWorld|zone_x': 'Mil Named Sea'},
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Mil Sea Tester',
+            isHuman: true,
+            capitalProvinceId: cap,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: cap,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        buildPanel(game: miniGame, humanPlayerId: humanId),
+      );
+      await tester.pump();
+      expect(find.textContaining('Mil Named Sea'), findsWidgets);
+    });
 
     testWidgets(
       'AC: When player has military units, tree shows regions and type rows',
@@ -116,10 +190,27 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
-      expect(listTiles, findsAtLeastNWidgets(1));
-      expect(find.textContaining('Status:'), findsAtLeastNWidgets(1));
+      final militaryCount =
+          game.worldState.oldWorld.units
+              .where(
+                (u) =>
+                    u.ownerId == humanPlayerIdWithUnits &&
+                    isMilitaryUnit(u.type),
+              )
+              .length +
+          game.worldState.newWorld.units
+              .where(
+                (u) =>
+                    u.ownerId == humanPlayerIdWithUnits &&
+                    isMilitaryUnit(u.type),
+              )
+              .length;
+      if (militaryCount == 0) return;
+
+      // Army entries use ExpansionTile; subtitle includes "regiments ·".
+      expect(find.textContaining('regiments ·'), findsAtLeastNWidgets(1));
+      await expandAllArmyExpansions(tester);
+      expect(find.byType(ListTile), findsAtLeastNWidgets(1));
     });
 
     testWidgets(
@@ -208,23 +299,31 @@ void main() {
     testWidgets(
       'AC: Tapping locate emits ClosePanelEvent before LocateMapTileEvent',
       (WidgetTester tester) async {
-      final bus = AppEventBus.create();
-      final sequence = <Type>[];
-      bus.stream.listen((e) => sequence.add(e.runtimeType));
+        final bus = AppEventBus.create();
+        final sequence = <Type>[];
+        bus.stream.listen((e) => sequence.add(e.runtimeType));
 
-      await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
-      await tester.tap(listTiles.first);
-      await tester.pump();
-      await tester.pumpAndSettle();
+        final listTiles = find.byType(ListTile);
+        if (listTiles.evaluate().isEmpty) return;
+        await tester.tap(listTiles.first);
+        await tester.pump();
+        await tester.pumpAndSettle();
 
-      expect(sequence.indexOf(ClosePanelEvent), lessThan(sequence.indexOf(LocateMapTileEvent)));
-    });
+        expect(
+          sequence.indexOf(ClosePanelEvent),
+          lessThan(sequence.indexOf(LocateMapTileEvent)),
+        );
+      },
+    );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -504,6 +603,16 @@ void main() {
           ),
           newWorld: const RegionData(),
           fleets: [],
+          armies: [
+            Army(
+              id: 'army_mixed',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: 'lisbon',
+              regimentUnitIds: const ['u1', 'u2', 'u3'],
+              isHomeArmy: false,
+            ),
+          ],
           tileKeysByRegionAndProvince: {
             'oldWorld': {
               'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
@@ -517,6 +626,7 @@ void main() {
         buildPanel(game: gameWithMixedMedals, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
+      await expandFirstArmyExpansion(tester);
 
       expect(find.textContaining('Medals: 1–3'), findsOneWidget);
     });
@@ -561,6 +671,16 @@ void main() {
           ),
           newWorld: const RegionData(),
           fleets: [],
+          armies: [
+            Army(
+              id: 'army_w',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: 'lisbon',
+              regimentUnitIds: const ['u1', 'u2'],
+              isHomeArmy: false,
+            ),
+          ],
           tileKeysByRegionAndProvince: {
             'oldWorld': {
               'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
@@ -574,6 +694,7 @@ void main() {
         buildPanel(game: gameWithWorkingUnit, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
+      await expandFirstArmyExpansion(tester);
 
       expect(find.textContaining('Status: Working'), findsOneWidget);
     });
@@ -608,6 +729,16 @@ void main() {
           ),
           newWorld: const RegionData(),
           fleets: [],
+          armies: [
+            Army(
+              id: 'army_d',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: 'lisbon',
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
           tileKeysByRegionAndProvince: {
             'oldWorld': {
               'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
@@ -621,8 +752,400 @@ void main() {
         buildPanel(game: gameWithDoneUnit, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
+      await expandFirstArmyExpansion(tester);
 
       expect(find.textContaining('Status: Done'), findsOneWidget);
+    });
+  });
+
+  group('Army management (bus events)', () {
+    testWidgets('Home Army expansion does not show Move action', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'gp_home_no_move';
+      const cap = 'oldWorld|cap';
+      final game = Game(
+        id: 'ghm',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: cap,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                townTileKey: 'tk',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'u_home',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: cap,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'home_army',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: cap,
+              regimentUnitIds: const ['u_home'],
+              isHomeArmy: true,
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              cap: ['tk'],
+            },
+          },
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'Home',
+            isHuman: true,
+            capitalProvinceId: cap,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: playerId));
+      await tester.pumpAndSettle();
+
+      final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
+      expect(homeTile, findsOneWidget);
+      await tester.tap(homeTile);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: homeTile,
+          matching: find.widgetWithText(ElevatedButton, 'Move'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: homeTile, matching: find.text('Move')),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'Combine emits ArmyCombineRequestedEvent when two armies selected',
+      (WidgetTester tester) async {
+        ArmyCombineRequestedEvent? captured;
+        final bus = AppEventBus.create();
+        bus.on<ArmyCombineRequestedEvent>().listen((e) => captured = e);
+
+        const playerId = 'gp_combine';
+        const p = 'oldWorld|p2';
+        final game = Game(
+          id: 'gc',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: p,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                  townTileKey: 'tk',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'uu1',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+                Unit(
+                  id: 'uu2',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: p,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'ax',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['uu1'],
+                isHomeArmy: false,
+              ),
+              Army(
+                id: 'ay',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: p,
+                regimentUnitIds: const ['uu2'],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                p: ['tk'],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'C',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|cap',
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: game, humanPlayerId: playerId, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final checks = find.byType(Checkbox);
+        expect(checks, findsNWidgets(3));
+        await tester.tap(checks.at(1));
+        await tester.tap(checks.at(2));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Combine'));
+        await tester.pumpAndSettle();
+
+        expect(captured, isNotNull);
+        expect(captured!.armyIds.length, 2);
+      },
+    );
+
+    testWidgets('Move confirms ArmyMoveRequestedEvent', (
+      WidgetTester tester,
+    ) async {
+      ArmyMoveRequestedEvent? captured;
+      final bus = AppEventBus.create();
+      bus.on<ArmyMoveRequestedEvent>().listen((e) => captured = e);
+
+      const playerId = 'gp_move';
+      const p = 'oldWorld|p2';
+      const p3 = 'oldWorld|p3';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
+      );
+      final game = Game(
+        id: 'gm',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: p,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                townTileKey: 'tk',
+              ),
+              Province(id: p3, regionId: 'oldWorld', ownerId: playerId),
+            ],
+            units: [
+              Unit(
+                id: 'um1',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: p,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'amove',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['um1'],
+              isHomeArmy: false,
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              p: ['tk'],
+            },
+          },
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'M',
+            isHuman: true,
+            capitalProvinceId: p,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Army amove'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
+
+      expect(captured, isNotNull);
+      expect(captured!.moveOrder.armyId, 'amove');
+      expect(captured!.moveOrder.destinationProvinceId, p3);
+    });
+
+    testWidgets('Move dialog groups dropdown by region and emits selection', (
+      WidgetTester tester,
+    ) async {
+      ArmyMoveRequestedEvent? captured;
+      final bus = AppEventBus.create();
+      bus.on<ArmyMoveRequestedEvent>().listen((e) => captured = e);
+
+      const playerId = 'gp_move_grouped';
+      const from = 'oldWorld|p2';
+      const oldDest = 'oldWorld|p3';
+      const newDest = 'newWorld|n2';
+
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
+      );
+
+      final game = Game(
+        id: 'g_move_grouped',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: from,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                displayName: 'From',
+                townTileKey: 'tk_from',
+              ),
+              Province(
+                id: oldDest,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                displayName: 'Old Port',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: from,
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(
+                id: newDest,
+                regionId: 'newWorld',
+                ownerId: playerId,
+                displayName: 'New Port',
+              ),
+            ],
+          ),
+          armies: [
+            Army(
+              id: 'amove',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: from,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              from: ['tk_from'],
+            },
+          },
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'Grouped',
+            isHuman: true,
+            capitalProvinceId: from,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Army amove'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MoveArmyDialog), findsOneWidget);
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Old World').evaluate().isNotEmpty, isTrue);
+      expect(find.text('New World').evaluate().isNotEmpty, isTrue);
+
+      await tester.tap(find.text('New Port').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
+
+      expect(captured, isNotNull);
+      expect(captured!.moveOrder.armyId, 'amove');
+      expect(captured!.moveOrder.destinationProvinceId, newDest);
     });
   });
 }

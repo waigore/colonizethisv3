@@ -43,3 +43,27 @@ List<MoveOrder> filterMoveOrdersByDiplomacy(
   }
   return filtered;
 }
+
+/// Same diplomacy filter as [filterMoveOrdersByDiplomacy] for [ArmyMoveOrder].
+List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(
+  Game game,
+  String playerId,
+  List<ArmyMoveOrder> orders,
+) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  final filtered = <ArmyMoveOrder>[];
+  for (final m in orders) {
+    final destOwner = provinceOwner[m.destinationProvinceId];
+    if (destOwner == null || destOwner == playerId) {
+      filtered.add(m);
+      continue;
+    }
+    final rel = getRelation(game, playerId, destOwner);
+    if (rel != null && rel.atPeace) continue;
+    if (rel == null) {
+      if (game.minorNations.any((mn) => mn.id == destOwner)) continue;
+    }
+    filtered.add(m);
+  }
+  return filtered;
+}

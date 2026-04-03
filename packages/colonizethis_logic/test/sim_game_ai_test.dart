@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('defaultSimGameAi', () {
-    test('produces move orders only to adjacent provinces', () {
+    test('produces army move orders only to adjacent provinces', () {
       final topology = MapTopology(
         nodes: const [
           TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
@@ -66,12 +66,14 @@ void main() {
         baseSeed: 42,
       );
 
-      final moveOrders = orders.moveOrdersByPlayerId[player.id] ?? const [];
-      expect(moveOrders, isNotEmpty);
-      for (final mo in moveOrders) {
-        final unit = game.worldState.oldWorld.units
-            .firstWhere((u) => u.id == mo.unitId);
-        final fromLocal = ProvinceId.localIdFrom(unit.locationProvinceId);
+      final armyMoves =
+          orders.armyMoveOrdersByPlayerId[player.id] ?? const [];
+      expect(armyMoves, isNotEmpty);
+      final gameWithArmies = ensureMilitaryArmiesForGame(game);
+      for (final mo in armyMoves) {
+        final army = gameWithArmies.worldState.armies
+            .firstWhere((a) => a.id == mo.armyId);
+        final fromLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
         final toLocal = ProvinceId.localIdFrom(mo.destinationProvinceId);
         final isAdjacent = topology.edges.any(
           (e) =>

@@ -65,6 +65,7 @@ void main() {
       );
 
       expect(fake.suggestMoveCalls, greaterThan(0));
+      expect(fake.suggestArmyMoveCalls, greaterThan(0));
     });
 
     test('gameEventBusProvider returns GameEventBus instance', () {
@@ -77,6 +78,7 @@ void main() {
 
 final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
   int suggestMoveCalls = 0;
+  int suggestArmyMoveCalls = 0;
 
   @override
   List<BuildUnitOrder> suggestBuildOrders(
@@ -105,6 +107,17 @@ final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
     Orders currentOrders,
   ) {
     suggestMoveCalls++;
+    return const [];
+  }
+
+  @override
+  List<ArmyMoveOrder> suggestArmyMoveOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) {
+    suggestArmyMoveCalls++;
     return const [];
   }
 

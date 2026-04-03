@@ -53,7 +53,11 @@ class NavalCombatResultEvent extends GameEvent {
   final bool side2Retreated;
 }
 
-/// Province ownership changed.
+/// Province ownership changed (faction-to-faction handover).
+///
+/// When emitted from turn resolution (`emitProvinceCapturedEvents`),
+/// [previousOwnerId] and [newOwnerId] are both non-empty faction ids.
+/// See SPEC/game/world-model.md.
 class ProvinceCapturedEvent extends GameEvent {
   const ProvinceCapturedEvent({
     required this.provinceId,
@@ -64,7 +68,9 @@ class ProvinceCapturedEvent extends GameEvent {
 
   /// Province id in prefixed form (regionId|localId).
   final String provinceId;
+  /// Non-empty prior owner when emitted from turn resolution.
   final String? previousOwnerId;
+  /// Non-empty new owner when emitted from turn resolution.
   final String newOwnerId;
   final int turnNumber;
 }

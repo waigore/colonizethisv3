@@ -5,6 +5,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/army_migration.dart';
 import '../world/fog_resolution.dart';
 import 'conflict_detection.dart';
 
@@ -725,5 +726,10 @@ Game applyQuickBattleResultToGame(
     newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
   }
 
-  return game.copyWith(worldState: newWorldState);
+  var updatedGame = game.copyWith(worldState: newWorldState);
+  updatedGame = updatedGame.copyWith(
+    worldState:
+        reconcileArmiesAfterUnitsChanged(updatedGame.worldState, updatedGame),
+  );
+  return updatedGame;
 }

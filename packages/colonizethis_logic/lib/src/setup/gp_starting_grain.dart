@@ -55,7 +55,11 @@ List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
 ///
 /// When the OW map lacks [TileMapResult.terrainGrid] or [TileMapResult.resourceGrid],
 /// skips bootstrap (hand-made test maps). Generated maps include both.
-({Game game, TileMapResult tileMap, Map<String, List<String>> grainKeysByPlayerId})
+({
+  Game game,
+  TileMapResult tileMap,
+  Map<String, List<String>> grainKeysByPlayerId,
+})
 applyGreatPowerStartingGrainBootstrap({
   required Game game,
   required TileMapResult tileMapOldWorld,
@@ -63,9 +67,9 @@ applyGreatPowerStartingGrainBootstrap({
 }) {
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
-    if (terrain == null || resGrid == null) {
+  if (terrain == null || resGrid == null) {
     _log.i(
-      'logic: skip Great Power grain bootstrap (missing terrain or resource grid)',
+      'skip Great Power grain bootstrap (missing terrain or resource grid)',
     );
     return (
       game: game,
@@ -107,7 +111,10 @@ applyGreatPowerStartingGrainBootstrap({
       final x = int.parse(parts[2]);
       final y = int.parse(parts[3]);
       final t = map.terrainAt(x, y);
-      final allowedRegion = resourceRules.isAllowedInRegion(Resource.grain, cap.regionId);
+      final allowedRegion = resourceRules.isAllowedInRegion(
+        Resource.grain,
+        cap.regionId,
+      );
       final allowedTerrain =
           t != null && resourceRules.isAllowedOnTerrain(Resource.grain, t);
       if (!allowedRegion || !allowedTerrain) {

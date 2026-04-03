@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
+import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -103,6 +105,7 @@ void main() {
     required Game game,
     required String humanPlayerId,
     AppEventBus? bus,
+    MapTopology topology = const MapTopology(),
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
@@ -111,6 +114,7 @@ void main() {
           game: game,
           humanPlayerId: humanPlayerId,
           bus: resolvedBus,
+          topology: topology,
         ),
       ),
     );
@@ -225,6 +229,70 @@ void main() {
 
       // Expanded details should also show a Strength row.
       expect(find.textContaining('Strength:'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('sea-zone labels use world-state display names', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_named_sea';
+      const capProvince = 'oldWorld|cap1';
+      const zoneId = 'zone_alpha';
+      final namedSeaGame = Game(
+        id: 'named-sea',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'cap1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'sea_named',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: zoneId,
+              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+            ),
+          ],
+          seaZoneDisplayNameById: const {
+            'oldWorld|zone_alpha': 'Caribbean Sea',
+          },
+          portsByProvinceSeaboard: const {
+            'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
+          },
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              capProvince: ['oldWorld|cap1|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Named Sea Tester',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        buildPanel(game: namedSeaGame, humanPlayerId: humanId),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Caribbean Sea'), findsWidgets);
     });
 
     testWidgets(
@@ -891,6 +959,7 @@ void main() {
                       game: game,
                       humanPlayerId: humanId,
                       bus: bus,
+                      topology: getDebugInitGameResult().combinedTopology,
                     ),
                   ),
                 ],
@@ -2419,6 +2488,120 @@ void main() {
       expect(find.text('No naval units'), findsOneWidget);
     });
 
+    testWidgets('AC: Home Fleet row does not show Move action', (
+      WidgetTester tester,
+    ) async {
+      const humanId = 'gp_move_home';
+      const capProvince = 'oldWorld|cap1';
+      final homeId = homeFleetIdFor(humanId);
+
+      final moveHomeGame = Game(
+        id: 'g_move_home',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'cap1',
+                regionId: 'oldWorld',
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: homeId,
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: capProvince,
+              ships: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              capProvince: ['oldWorld|cap1|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Move Home Test',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(game: moveHomeGame, humanPlayerId: humanId),
+      );
+      await tester.pumpAndSettle();
+
+      final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
+      expect(homeTile, findsOneWidget);
+
+      await tester.tap(homeTile);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: homeTile,
+          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'AC: Non-home fleet Move action opens MoveFleetDialog without framework exceptions',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+        final nonHomeFleets = game.worldState.fleets
+            .where(
+              (f) =>
+                  f.ownerId == humanId &&
+                  f.shipTypeIds.isNotEmpty &&
+                  f.id != homeFleetIdFor(humanId),
+            )
+            .toList();
+        if (nonHomeFleets.isEmpty) return;
+        final targetFleet = nonHomeFleets.first;
+
+        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpAndSettle();
+
+        final fleetTile = find.widgetWithText(
+          ExpansionTile,
+          'Fleet ${targetFleet.id}',
+        );
+        expect(fleetTile, findsOneWidget);
+        await tester.ensureVisible(fleetTile);
+        await tester.tap(fleetTile);
+        await tester.pumpAndSettle();
+
+        final moveButton = find.descendant(
+          of: fleetTile,
+          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        );
+        expect(moveButton, findsOneWidget);
+        await tester.ensureVisible(moveButton);
+        await tester.tap(moveButton);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(MoveFleetDialog), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
       (WidgetTester tester) async {
@@ -2601,7 +2784,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final fleetFinder = find.widgetWithText(ExpansionTile, 'Fleet split_me');
+        final fleetFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet split_me',
+        );
         expect(fleetFinder, findsOneWidget);
 
         await tester.ensureVisible(fleetFinder);

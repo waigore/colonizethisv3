@@ -14,15 +14,20 @@ import '../setup/capital_choice.dart';
 import '../world/connectivity_resolver.dart';
 import '../economy/economy_consumption.dart';
 import '../economy/economy_extraction.dart';
+import '../economy/economy_preview_stockpile_phase.dart';
 import '../economy/economy_production.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/minor_military_parity.dart';
+import '../world/army_migration.dart';
+import '../world/army_movement.dart';
 import '../world/movement.dart';
+import '../orders/draft_orders_mutations.dart';
 import '../orders/orders_application.dart';
 import '../economy/resource_extractor.dart';
 import '../economy/sea_transport.dart';
 import 'research_resolver.dart';
+import 'turn_news_digest.dart';
 import '../world/naval.dart';
 import '../world/naval_resolution.dart';
 import '../dossier/evidence_rules.dart';
@@ -219,7 +224,8 @@ TurnResolutionResult resolveTurnForGame({
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('turn $turn resolve start');
-  Game state = game;
+  Game state = ensureMilitaryArmiesForGame(game);
+  final gameAtResolutionStart = state;
   final landFeedingCoverageByPlayerId = <String, double>{};
   final navalFeedingCoverageByPlayerId = <String, double>{};
   final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
@@ -230,7 +236,7 @@ TurnResolutionResult resolveTurnForGame({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
-    _log.d('phase ${phase.name} start');
+    _log.i('phase ${phase.name} start');
     switch (phase) {
       case TurnPhase.orders:
         // Orders are assumed to already be attached to the Game or passed in.
@@ -402,11 +408,18 @@ TurnResolutionResult resolveTurnForGame({
           break;
         }
     }
-    _log.d('phase ${phase.name} end');
+    _log.i('phase ${phase.name} end');
   }
 
   _log.i('turn $turn resolve end');
-  return TurnResolutionComplete(state);
+  final news = buildTurnNewsDigestForComplete(
+    start: gameAtResolutionStart,
+    end: state,
+  );
+  return TurnResolutionComplete(
+    news.game,
+    turnNewsDigest: news.digest,
+  );
 }
 
 /// Returns the game when [result] is [TurnResolutionComplete]; throws when pending.
@@ -574,12 +587,14 @@ Orders _filterAcceptedOrdersForAllPlayers({
 }) {
   final original = engine.orders;
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
 
   final playerIds = <String>{
     ...original.moveOrdersByPlayerId.keys,
+    ...original.armyMoveOrdersByPlayerId.keys,
     ...original.buildUnitOrdersByPlayerId.keys,
     ...original.workOrdersByPlayerId.keys,
     ...original.diplomaticOrdersByPlayerId.keys,
@@ -587,13 +602,18 @@ Orders _filterAcceptedOrdersForAllPlayers({
 
   for (final playerId in playerIds) {
     final moves = original.moveOrdersByPlayerId[playerId] ?? const [];
+    final armyMoves = original.armyMoveOrdersByPlayerId[playerId] ?? const [];
     final builds = original.buildUnitOrdersByPlayerId[playerId] ?? const [];
     final works = original.workOrdersByPlayerId[playerId] ?? const [];
     final diplo =
         original.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
 
-    if (moves.isEmpty && builds.isEmpty && works.isEmpty && diplo.isEmpty) {
+    if (moves.isEmpty &&
+        armyMoves.isEmpty &&
+        builds.isEmpty &&
+        works.isEmpty &&
+        diplo.isEmpty) {
       continue;
     }
 
@@ -612,6 +632,17 @@ Orders _filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
       (m) => 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+      eventBus,
+      onGameEvent,
+    );
+    _filterOrderList<ArmyMoveOrder>(
+      playerId,
+      armyMoves,
+      results,
+      idxBox,
+      (pid, m) =>
+          armyMoveByPlayer.putIfAbsent(pid, () => <ArmyMoveOrder>[]).add(m),
+      (m) => 'Army move: ${m.armyId} -> ${m.destinationProvinceId}',
       eventBus,
       onGameEvent,
     );
@@ -658,6 +689,7 @@ Orders _filterAcceptedOrdersForAllPlayers({
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
+    armyMoveOrdersByPlayerId: armyMoveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: diploByPlayer,
@@ -703,9 +735,17 @@ Game _runExtractionPhase(
     final tot = extraction[player.id];
     if (tot != null) {
       stockpile = applyExtractionToStockpile(stockpile, tot.land);
+      logExtractionAutoTransportLand(player.id, tot.land);
+      final cargoHolds = cargoHoldsForHomeFleet(state, player.id);
       var overseasDelivered = allocateOverseasToStockpile(
         tot.overseas,
-        cargoHolds: cargoHoldsForHomeFleet(state, player.id),
+        cargoHolds: cargoHolds,
+      );
+      logExtractionAutoTransportOverseasAllocation(
+        playerId: player.id,
+        cargoHolds: cargoHolds,
+        overseasTotals: tot.overseas,
+        allocatedToStockpile: overseasDelivered,
       );
       if (overseasDelivered.isNotEmpty) {
         extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
@@ -840,6 +880,104 @@ Game _runRichesToTreasuryPhase(Game game) {
   return game.copyWith(players: updatedPlayers);
 }
 
+Map<String, int> _stockpileCommodityDeltaMap(Stockpile before, Stockpile after) {
+  final keys = <String>{
+    ...before.quantities.keys,
+    ...after.quantities.keys,
+  };
+  final out = <String, int>{};
+  for (final k in keys) {
+    final d = after.quantityOf(k) - before.quantityOf(k);
+    if (d != 0) {
+      out[k] = d;
+    }
+  }
+  return out;
+}
+
+/// Per-phase stockpile commodity deltas for [playerId] when running the same
+/// preview pipeline as [applyEconomyPhasesForPreview]. Maps omit zero deltas.
+/// For each commodity id, the sum of the four phase maps equals that
+/// commodity’s net delta from the production-panel preview (same inputs).
+Map<EconomyPreviewStockpilePhase, Map<String, int>>
+economyPreviewStockpilePhaseDeltasForPlayer({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  final empty = {
+    for (final p in EconomyPreviewStockpilePhase.values) p: <String, int>{},
+  };
+  if (game.playerById(playerId) == null) {
+    return empty;
+  }
+
+  Stockpile stockpileForViewed(Game g) {
+    final p = g.playerById(playerId);
+    return p?.stockpile ?? const Stockpile();
+  }
+
+  var state = game;
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
+
+  final beforeExtraction = stockpileForViewed(state);
+  state = _runExtractionPhase(
+    state,
+    topology,
+    tileMapByRegion,
+    extractedByPlayerId,
+  );
+  final extraction = _stockpileCommodityDeltaMap(
+    beforeExtraction,
+    stockpileForViewed(state),
+  );
+
+  final beforeRiches = stockpileForViewed(state);
+  state = _runRichesToTreasuryPhase(state);
+  final richesToTreasury = _stockpileCommodityDeltaMap(
+    beforeRiches,
+    stockpileForViewed(state),
+  );
+
+  final beforeConsumption = stockpileForViewed(state);
+  state = _runConsumptionPhase(
+    state,
+    landFeedingCoverageByPlayerId,
+    navalFeedingCoverageByPlayerId,
+    idleLabourByPlayerId,
+  );
+  final consumption = _stockpileCommodityDeltaMap(
+    beforeConsumption,
+    stockpileForViewed(state),
+  );
+
+  final beforeProduction = stockpileForViewed(state);
+  state = _runProductionPhase(
+    state,
+    defaultAssignments,
+    defaultAssignmentsByPlayerId,
+    idleLabourByPlayerId,
+    null,
+  );
+  final production = _stockpileCommodityDeltaMap(
+    beforeProduction,
+    stockpileForViewed(state),
+  );
+
+  return {
+    EconomyPreviewStockpilePhase.extraction: extraction,
+    EconomyPreviewStockpilePhase.richesToTreasury: richesToTreasury,
+    EconomyPreviewStockpilePhase.consumption: consumption,
+    EconomyPreviewStockpilePhase.production: production,
+  };
+}
+
 /// Runs Extraction → Riches-to-treasury → Consumption → Production only, in
 /// SPEC/program/turn-resolution-phases.md order.
 ///
@@ -968,6 +1106,40 @@ Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
     );
   }
 
+  // Land army movement (after civilian moves). SPEC/game/military-armies.md.
+  final armyMoveOrders = orders.armyMoveOrdersByPlayerId;
+  if (armyMoveOrders.isNotEmpty) {
+    bool isDestinationOwnedByPlayer(
+      String playerId,
+      String destFullProvinceId,
+    ) =>
+        tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
+        playerId;
+
+    final cross = applyCrossRegionArmyMovesWithinOwnedProvinces(
+      game: state,
+      worldState: state.worldState,
+      armyMoveOrdersByPlayerId: armyMoveOrders,
+    );
+    var ws = cross.worldState;
+    final remaining = cross.remainingArmyMoveOrdersByPlayerId;
+    ws = applyArmyMoveOrdersToRegion(
+      ws,
+      topology,
+      remaining,
+      regionId: kRegionOldWorld,
+      isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+    );
+    ws = applyArmyMoveOrdersToRegion(
+      ws,
+      topology,
+      remaining,
+      regionId: kRegionNewWorld,
+      isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+    );
+    state = state.copyWith(worldState: ws);
+  }
+
   // Naval movement and ship reveal. SPEC/program/naval-movement-resolution.md.
   final navalOrders = orders.navalMoveOrdersByPlayerId;
   if (navalOrders.isNotEmpty) {
@@ -975,7 +1147,11 @@ Game _runMovementPhase(Game game, MapTopology topology, Orders orders) {
   }
 
   // Naval mission assignment. Phase 6. Apply after moves so fleet position is final.
-  final missionOrders = orders.navalMissionOrdersByPlayerId;
+  // Fleets with a naval move this turn do not apply a naval mission order.
+  final missionOrders = navalMissionOrdersRespectingNavalMoves(
+    orders.navalMissionOrdersByPlayerId,
+    orders.navalMoveOrdersByPlayerId,
+  );
   // Always apply so we run the clearing pass for blockades when not at war.
   state = applyNavalMissionOrders(state, missionOrders);
 
@@ -1136,10 +1312,15 @@ Game _runCombatPhase(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();
+  final boundBattles = bindGeneralsForCombatPhase(
+    game: state,
+    contexts: battles,
+    ledger: combatGeneralLedger,
+  );
   final defaultMode = game.defaultCombatMode ?? CombatMode.autoResolve;
   var seed = (game.globalGameSeed ?? 0) ^ (turn * 0x9E3779B1);
   var battleIndex = 0;
-  for (final ctx in battles) {
+  for (final ctx in boundBattles) {
     final mode = resolveCombatModeForBattle(
       state,
       ctx,

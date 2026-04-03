@@ -17,7 +17,7 @@ At least one phase exists; resolver advances turn number so that “next turn”
 
 ## Resolution Sequence
 
-**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)); when combat is in scope, the full phase list includes **Minor Regiment Upgrade** after Movement and before all combat phases, followed by naval combat phases and land **Combat**. Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces). The **Combat** phase takes WorldState after movement and pre-combat updates, runs conflict detection and the combat resolver, and applies casualties and province flips.
+**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)); when combat is in scope, the full phase list includes **Minor Regiment Upgrade** after Movement and before all combat phases, followed by naval combat phases and land **Combat**. Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve **civilian** `MoveOrder`s and **`ArmyMoveOrder`**s ([military-armies.md](../game/military-armies.md), [movement.md](movement.md)). The **Combat** phase takes WorldState after movement and pre-combat updates, runs conflict detection and the combat resolver, and applies casualties and province flips.
 
 **Stub:** Sequence and interfaces exist. Each phase can be no-op or minimal (e.g. end-of-turn advances turn number only) until economy, movement, and other logic are implemented.
 

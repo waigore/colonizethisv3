@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../utils/map_location_resolver.dart';
+import '../utils/sea_zone_name_resolver.dart';
+import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
@@ -250,9 +252,11 @@ _buildNavalTree(Game game, String humanPlayerId) {
         final zoneKey = seaZoneId.contains('|')
             ? seaZoneId
             : '$regionId|$seaZoneId';
-        final zoneLabel = zoneKey.contains('|')
-            ? zoneKey.split('|').last
-            : zoneKey;
+        final zoneLabel = seaZoneDisplayName(
+          game: game,
+          regionId: regionId,
+          seaZoneId: zoneKey,
+        );
         locationLabel = '${unitsPanelRegionLabel(regionId)} — $zoneLabel';
         tileKey = tileKeyForSeaZoneLocation(game, regionId, zoneKey);
         locationKey = 'sea:$zoneKey';
@@ -357,9 +361,11 @@ _buildNavalTree(Game game, String humanPlayerId) {
 
     final seaZoneKeys = seas.keys.toList()..sort();
     for (final zoneKey in seaZoneKeys) {
-      final zoneLabel = zoneKey.contains('|')
-          ? zoneKey.split('|').last
-          : zoneKey;
+      final zoneLabel = seaZoneDisplayName(
+        game: game,
+        regionId: regionId,
+        seaZoneId: zoneKey,
+      );
       final fleets = seas[zoneKey]!..sort((a, b) => a.label.compareTo(b.label));
       locations.add(
         _SeaZoneLocationNode(
@@ -388,11 +394,13 @@ class NavalUnitsPanel extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.bus,
+    required this.topology,
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
+  final MapTopology topology;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -594,6 +602,75 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
+  void _openMoveFleetDialog(_FleetRow row) {
+    if (row.isHomeFleet) return;
+    Fleet? fleet;
+    for (final f in widget.game.worldState.fleets) {
+      if (f.id == row.fleetId) {
+        fleet = f;
+        break;
+      }
+    }
+    final nonNullFleet = fleet;
+    if (nonNullFleet == null) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => MoveFleetDialog(
+        game: widget.game,
+        topology: widget.topology,
+        humanPlayerId: widget.humanPlayerId,
+        fleet: nonNullFleet,
+        bus: widget.bus,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game != widget.game) {
+      final flat = _flattenTree(
+        _buildNavalTree(widget.game, widget.humanPlayerId),
+      );
+      final valid = flat.map(_selectionFleetId).toSet();
+      final pruned = _selectedFleetIds.intersection(valid);
+      if (pruned.length != _selectedFleetIds.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _selectedFleetIds
+              ..clear()
+              ..addAll(pruned);
+          });
+        });
+      }
+    }
+  }
+
+  void _openSplitDialog(_FleetRow row) {
+    final id = _selectionFleetId(row);
+    Fleet? fleet;
+    for (final f in widget.game.worldState.fleets) {
+      if (f.id == id) {
+        fleet = f;
+        break;
+      }
+    }
+    if (fleet == null) return;
+
+    final original = fleet;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => SplitFleetDialog(
+        originalFleet: original,
+        game: widget.game,
+        humanPlayerId: widget.humanPlayerId,
+        isHomeFleet: row.isHomeFleet,
+        bus: widget.bus,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
@@ -651,6 +728,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               onCombineSelectionToggle: () =>
                   _toggleFleetSelection(group.homeFleet!),
               onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+              onMoveFleet: null,
               isSplitAllowed: true,
             ),
           for (final loc in group.locations) ...[
@@ -674,6 +752,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 ),
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
                 onSplitFleet: () => _openSplitDialog(row),
+                onMoveFleet: () => _openMoveFleetDialog(row),
                 isSplitAllowed: true,
               ),
           ],
@@ -691,6 +770,7 @@ class _FleetExpansionTile extends StatelessWidget {
     required this.isSelectedForCombine,
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
+    this.onMoveFleet,
     this.isSplitAllowed = false,
   });
 
@@ -699,6 +779,7 @@ class _FleetExpansionTile extends StatelessWidget {
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
+  final VoidCallback? onMoveFleet;
   final bool isSplitAllowed;
 
   String _summary() {
@@ -773,6 +854,18 @@ class _FleetExpansionTile extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (onMoveFleet != null) ...[
+                    CtNinePatchButton(
+                      onPressed: onMoveFleet,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      minHeight: 36,
+                      child: const Text('Move'),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   CtNinePatchButton(
                     onPressed: onSplitFleet,
                     padding: const EdgeInsets.symmetric(

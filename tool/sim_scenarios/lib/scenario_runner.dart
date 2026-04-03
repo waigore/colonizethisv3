@@ -43,10 +43,7 @@ class ScenarioResult {
 
 /// Result of a single turn within a scenario.
 class TurnResult {
-  const TurnResult({
-    required this.turnNumber,
-    required this.assertionResults,
-  });
+  const TurnResult({required this.turnNumber, required this.assertionResults});
 
   final int turnNumber;
   final List<AssertionResult> assertionResults;
@@ -67,10 +64,7 @@ class AssertionResult {
 
 /// Result of running multiple scenarios.
 class BatchResult {
-  const BatchResult({
-    required this.results,
-    required this.runTime,
-  });
+  const BatchResult({required this.results, required this.runTime});
 
   final List<ScenarioResult> results;
   final DateTime runTime;
@@ -83,8 +77,8 @@ class BatchResult {
 /// Runs scenarios.
 class ScenarioRunner {
   ScenarioRunner({GameFactory? gameFactory})
-      : gameFactory = gameFactory ?? GameFactory(),
-        verifier = StateVerifier();
+    : gameFactory = gameFactory ?? GameFactory(),
+      verifier = StateVerifier();
 
   final GameFactory gameFactory;
   final StateVerifier verifier;
@@ -114,16 +108,22 @@ class ScenarioRunner {
 
       // 3. Run each turn
       final turnResults = <int, TurnResult>{};
-      
+
       for (final turnScript in scenario.turns) {
+        final gameForTurn = ensureMilitaryArmiesForGame(currentContext.game);
+        final contextForTurn = ScenarioContext(
+          game: gameForTurn,
+          topology: currentContext.topology,
+          tileMapByRegion: currentContext.tileMapByRegion,
+        );
         // Parse orders
-        final orders = parseOrderCommands(turnScript.orders, currentContext.game);
-        
+        final orders = parseOrderCommands(turnScript.orders, gameForTurn);
+
         // Resolve turn (returns updated game). Use per-turn workerAssignments when
         // present; otherwise fall back to scenario-level productionAssignments.
         // When resolution blocks on human overture decisions, turnScript.overtureDecisions are applied.
         final nextGame = _resolveTurn(
-          currentContext,
+          contextForTurn,
           orders,
           scenario,
           turnScript.workerAssignments,
@@ -134,10 +134,14 @@ class ScenarioRunner {
           topology: currentContext.topology,
           tileMapByRegion: currentContext.tileMapByRegion,
         );
-        
+
         // Verify assertions for this turn
-        final assertionResults = _verifyTurnAssertions(currentContext.game, scenario.assertions, turnScript.turn);
-        
+        final assertionResults = _verifyTurnAssertions(
+          currentContext.game,
+          scenario.assertions,
+          turnScript.turn,
+        );
+
         turnResults[turnScript.turn] = TurnResult(
           turnNumber: turnScript.turn,
           assertionResults: assertionResults,
@@ -145,9 +149,11 @@ class ScenarioRunner {
       }
 
       // 4. Verify final assertions (those without turn specified)
-      final finalAssertions = scenario.assertions.where((a) => a.turn == null).toList();
+      final finalAssertions = scenario.assertions
+          .where((a) => a.turn == null)
+          .toList();
       final finalResult = verifier.verify(currentContext.game, finalAssertions);
-      
+
       final allFailures = <String>[];
       for (final tr in turnResults.values) {
         for (final ar in tr.assertionResults) {
@@ -178,17 +184,14 @@ class ScenarioRunner {
   Future<BatchResult> runAll(Directory dir) async {
     final scenarios = discoverScenarios(dir);
     final results = <ScenarioResult>[];
-    
+
     for (final scenario in scenarios) {
       print('Running scenario: ${scenario.name}...');
       final result = await run(scenario);
       results.add(result);
     }
 
-    return BatchResult(
-      results: results,
-      runTime: DateTime.now(),
-    );
+    return BatchResult(results: results, runTime: DateTime.now());
   }
 
   /// Runs a scenario from a file.
@@ -208,7 +211,9 @@ class ScenarioRunner {
     if (scenario.init.type == 'fresh') {
       GameInitResult result;
       if (scenario.init.config != null) {
-        result = await gameFactory.createFreshGameFromJson(scenario.init.config!);
+        result = await gameFactory.createFreshGameFromJson(
+          scenario.init.config!,
+        );
       } else {
         // Default fresh game
         result = await gameFactory.createFreshGame(GameSetupConfig(seed: 42));
@@ -276,26 +281,25 @@ class ScenarioRunner {
         units: [...game.worldState.newWorld.units, ...nwUnits],
       );
       game = game.copyWith(
-        worldState: game.worldState.copyWith(
-          oldWorld: newOw,
-          newWorld: newNw,
-        ),
+        worldState: game.worldState.copyWith(oldWorld: newOw, newWorld: newNw),
       );
     }
     if (setup.initialFleets != null && setup.initialFleets!.isNotEmpty) {
       final fleets = setup.initialFleets!
-          .map((f) => Fleet(
-                id: f.id,
-                ownerId: f.ownerId,
-                seaZoneId: f.seaZoneId,
-                inPortAtProvinceId: f.inPortAtProvinceId,
-                regionId: f.regionId,
-                shipTypeIds: f.shipTypeIds,
-                mission: FleetMission.values.firstWhere(
-                  (m) => m.name == f.mission,
-                  orElse: () => FleetMission.none,
-                ),
-              ))
+          .map(
+            (f) => Fleet(
+              id: f.id,
+              ownerId: f.ownerId,
+              seaZoneId: f.seaZoneId,
+              inPortAtProvinceId: f.inPortAtProvinceId,
+              regionId: f.regionId,
+              shipTypeIds: f.shipTypeIds,
+              mission: FleetMission.values.firstWhere(
+                (m) => m.name == f.mission,
+                orElse: () => FleetMission.none,
+              ),
+            ),
+          )
           .toList();
       game = game.copyWith(
         worldState: game.worldState.copyWith(fleets: fleets),
@@ -389,7 +393,10 @@ class ScenarioRunner {
         // SPEC/game/factions.md: parity uses max GP military level; set it from tech so Combat phase sees it.
         final militaryLevel = militaryLevelForUnlocked(techUnlocked);
         updatedPlayers.add(
-          player.copyWith(techUnlocked: techUnlocked, militaryLevel: militaryLevel),
+          player.copyWith(
+            techUnlocked: techUnlocked,
+            militaryLevel: militaryLevel,
+          ),
         );
       }
       game = game.copyWith(players: updatedPlayers);
@@ -397,7 +404,8 @@ class ScenarioRunner {
       // SPEC/game/military-generals.md: general cap from tech. Ensure each GP has exactly cap many generals.
       game = _applyGeneralCapFromTech(game);
     }
-    if (setup.defaultCombatMode != null && setup.defaultCombatMode!.isNotEmpty) {
+    if (setup.defaultCombatMode != null &&
+        setup.defaultCombatMode!.isNotEmpty) {
       final raw = setup.defaultCombatMode!.toLowerCase();
       final mode = (raw == 'quickbattle' || raw == 'quick_battle')
           ? CombatMode.quickBattle
@@ -422,7 +430,9 @@ class ScenarioRunner {
         game.worldState.purchasedTilesByTileKey,
       )..addAll(setup.purchasedTilesByTileKey!);
       game = game.copyWith(
-        worldState: game.worldState.copyWith(purchasedTilesByTileKey: purchased),
+        worldState: game.worldState.copyWith(
+          purchasedTilesByTileKey: purchased,
+        ),
       );
     }
     return game;
@@ -433,7 +443,9 @@ class ScenarioRunner {
     final t = techUnlocked ?? {};
     var cap = 1;
     if (t['organised_regiments'] == true) cap = 2;
-    if (t['national_bureaucracy'] == true || t['improved_infantry_tactics'] == true) cap = 3;
+    if (t['national_bureaucracy'] == true ||
+        t['improved_infantry_tactics'] == true)
+      cap = 3;
     if (t['nationalism'] == true) cap = 4;
     return cap;
   }
@@ -442,12 +454,16 @@ class ScenarioRunner {
     final newGenerals = <General>[];
     for (final player in game.players) {
       final cap = _generalCapFromTech(player.techUnlocked);
-      final existing = game.generals.where((g) => g.ownerId == player.id).toList();
+      final existing = game.generals
+          .where((g) => g.ownerId == player.id)
+          .toList();
       for (var i = 0; i < cap; i++) {
         if (i < existing.length) {
           newGenerals.add(existing[i]);
         } else {
-          newGenerals.add(General(id: '${player.id}_gen_$i', ownerId: player.id, medals: 0));
+          newGenerals.add(
+            General(id: '${player.id}_gen_$i', ownerId: player.id, medals: 0),
+          );
         }
       }
     }
@@ -472,7 +488,9 @@ class ScenarioRunner {
     if (setup.initialStockpile != null) {
       final s = setup.initialStockpile![player.id];
       if (s != null && s.isNotEmpty) {
-        p = p.copyWith(stockpile: Stockpile(quantities: Map<String, int>.from(s)));
+        p = p.copyWith(
+          stockpile: Stockpile(quantities: Map<String, int>.from(s)),
+        );
       }
     }
     return p;
@@ -493,16 +511,16 @@ class ScenarioRunner {
       throw StateError('Topology required for turn resolution');
     }
 
-    final defaultAssignments = workerAssignments != null &&
-            workerAssignments.isNotEmpty
+    final defaultAssignments =
+        workerAssignments != null && workerAssignments.isNotEmpty
         ? workerAssignments
-            .map(
-              (w) => AssignedRecipe(
-                recipeId: w.recipeId,
-                assignedLabour: w.assignedLabour,
-              ),
-            )
-            .toList()
+              .map(
+                (w) => AssignedRecipe(
+                  recipeId: w.recipeId,
+                  assignedLabour: w.assignedLabour,
+                ),
+              )
+              .toList()
         : _productionAssignments(scenario);
 
     final orderEngine = OrderEngine(initialOrders: orders);
@@ -580,7 +598,9 @@ class ScenarioRunner {
         );
         continue;
       }
-      throw StateError('Unhandled turn resolution result: ${result.runtimeType}');
+      throw StateError(
+        'Unhandled turn resolution result: ${result.runtimeType}',
+      );
     }
   }
 
@@ -589,10 +609,12 @@ class ScenarioRunner {
     final list = scenario.setup?.productionAssignments;
     if (list == null || list.isEmpty) return const [];
     return list
-        .map((a) => AssignedRecipe(
-              recipeId: a.recipeId,
-              assignedLabour: a.assignedLabour,
-            ))
+        .map(
+          (a) => AssignedRecipe(
+            recipeId: a.recipeId,
+            assignedLabour: a.assignedLabour,
+          ),
+        )
         .toList();
   }
 
@@ -603,16 +625,20 @@ class ScenarioRunner {
   ) {
     final turnAssertions = allAssertions.where((a) => a.turn == turn).toList();
     final results = <AssertionResult>[];
-    
+
     for (final assertion in turnAssertions) {
       final result = verifier.verify(game, [assertion], atTurn: turn);
-      results.add(AssertionResult(
-        assertion: assertion,
-        passed: result.passed,
-        failureMessage: result.failures.isNotEmpty ? result.failures.first : null,
-      ));
+      results.add(
+        AssertionResult(
+          assertion: assertion,
+          passed: result.passed,
+          failureMessage: result.failures.isNotEmpty
+              ? result.failures.first
+              : null,
+        ),
+      );
     }
-    
+
     return results;
   }
 }

@@ -330,7 +330,7 @@ MapGenerationResult runMapGeneration(ParsedMapArgs args) {
     outFile.writeAsStringSync(
       const JsonEncoder.withIndent('  ').convert(tileMapResult.toJson()),
     );
-    _log.i('map: Tile map JSON: ${outFile.absolute.path}');
+    _log.i('Tile map JSON: ${outFile.absolute.path}');
     stdout.writeln('Tile map JSON: ${outFile.absolute.path}');
   }
 

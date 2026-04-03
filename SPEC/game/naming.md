@@ -1,6 +1,6 @@
 # Naming and Historical Flavor
 
-**SPEC/game** — Historically inspired names for factions, provinces, and capitals. Technical config: [ruleset-config.md](../program/ruleset-config.md). World model: [world-model.md](world-model.md).
+**SPEC/game** — Historically inspired names for factions, provinces, capitals, and sea zones. Technical config: [ruleset-config.md](../program/ruleset-config.md). World model: [world-model.md](world-model.md).
 
 ---
 
@@ -23,6 +23,7 @@ Per active ruleset, naming config defines:
     - **Default map colour id:** semantic id is also the **colour identity** for that Great Power. GDD 09 defines a default RGB ownership colour per semantic id (e.g. `england` = red, `france` = dark blue). Tools such as ctdev present colour choices in terms of semantic ids; the runtime `Game` model and map view builders may re-key these colours to per-game `Player.id` values (e.g. `gp1`, `gp2`) during setup, but the source of truth for which colour “belongs” to which country remains the semantic id.
 - **Minor Nations:** `displayName` (e.g. Italy, Germany) and **province name pool** (default: **5** names per minor). The default ruleset has **6** entries per **GDD 09b (Minor Nations)**.
 - **Tribes:** `displayName` for New World peoples and **province name pool** (default: **5** names per tribe; historically inspired **Amerindian / indigenous** place or region names). The default ruleset has **10** entries per **GDD 09c (New World Tribes)**.
+- **Sea zones:** Region-specific display-name presets for sea zones. `oldWorld` uses well-known European and nearby Atlantic/Mediterranean sea names; `newWorld` uses well-known North/South American sea names. Sea-zone names are display-only and do not alter topology semantics.
 
 All names are **ruleset-driven**; game logic only consumes resolved naming data.
 
@@ -36,13 +37,14 @@ The **default** minor nation and tribe identities and province name pools are de
 
 **Province naming is mandatory** for all factions (Great Powers, Minor Nations, Tribes). After the Naming phase of game setup completes, every province stored in the starting `WorldState` has a non-null, non-empty `Province.displayName`. During earlier pipeline steps or in tooling, `Province.displayName` MAY be absent or null, but game logic MUST treat a missing name at the end of setup as a bug.
 
-Order: **after** province assignment and **after** capital auto-choice, assign province names and faction display names. All province ids used during naming (e.g. capital province id, owned-province lists) use the **prefixed** `regionId|localId` form per [world-model-identity.md](world-model-identity.md); naming logic must never look up provinces by bare local id.
+Order: during game setup/map creation, after province assignment and after capital auto-choice, assign province names, faction display names, and sea-zone display names. All province ids used during naming (e.g. capital province id, owned-province lists) use the **prefixed** `regionId|localId` form per [world-model-identity.md](world-model-identity.md); naming logic must never look up provinces by bare local id.
 
 - **Capital province:** Gets the faction’s capital name (`capitalCityName` for GPs; for minors and tribes, the capital province **always** receives the first entry of the province name pool).
 - **Other provinces:** Names are chosen **randomly** from the faction’s `provinceNamePool` using a RNG seeded from the game setup seed so that:
   - Same seed ⇒ same names (deterministic, reproducible).
   - Different seed ⇒ different names across games.
 - **Faction display names:** Great Powers get `countryName` (e.g. England, France); Minor Nations and Tribes get `displayName` from the naming config. These are applied to the game’s players, minorNations, and tribes so UI can show human-readable faction names.
+- **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). Assignment is deterministic from setup seed and region-specific list (`oldWorld` list for `oldWorld`, `newWorld` list for `newWorld`).
 
 Pool sizes: default ruleset uses **10** names per Great Power and **5** per Minor Nation and Tribe. Tribes use historically inspired **Amerindian / indigenous** place or region names.
 
@@ -50,6 +52,11 @@ Pool sizes: default ruleset uses **10** names per Great Power and **5** per Mino
 
 - **Great Powers and Minor Nations** start only in the Old World; province assignment assigns OW provinces only. **All** provinces owned by each GP or minor at setup are considered home and **must** be named (capital gets capital name, others from pool/fallback in deterministic order). No landmass or continent filter.
 - **Tribes** start only in the New World; all provinces owned by each tribe at setup are considered home and must be named the same way.
+- **Sea zones** are named per region graph node, not by merged water bodies. Each sea-zone node gets exactly one display name.
+
+### Sea-zone list overflow fallback
+
+When a region has more sea zones than unique preset names in that region list, setup must continue assigning names using deterministic suffixes derived from stable sea-zone ordering (for example appending a Roman or numeric ordinal). Overflow fallback must still produce non-empty names for all sea zones.
 
 ### Provinces acquired during play
 
@@ -77,8 +84,12 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
 
 - Given provinces have been assigned to factions during game setup per [game-setup.md](game-setup.md) and naming data has been loaded successfully  
   When the System assigns names in the Naming phase  
-  Then every province receives a non-null `Province.displayName`, capital provinces receive the configured capital city name for their faction or the first entry from the province name pool as specified, and other provinces draw names from their faction’s pool using a RNG seeded from the setup seed so that identical seeds yield identical name assignments.
+  Then every province receives a non-null `Province.displayName`, capital provinces receive the configured capital city name for their faction or the first entry from the province name pool as specified, other provinces draw names from their faction’s pool using a RNG seeded from the setup seed so that identical seeds yield identical name assignments, and every sea zone in each region receives a non-empty display name stored by prefixed sea-zone id.
 
 - Given a faction or province lacks a matching entry or usable name pool in the naming config (for example, when there are more tribes than configured entries or when a configured pool is empty)  
   When the System assigns names for that faction’s provinces  
   Then the System applies the deterministic fallback rules described here: for configured-but-empty entries, capital provinces may use faction `displayName` and non-capital provinces may use deterministic prefix+ordinal names; for factions with no usable naming entry or when a computed name would be empty, the System invokes the procedural stub+suffix algorithm to generate unique, reproducible names per province using a naming seed and faction/province context; in all cases, the System ensures that procedurally generated names are not reused across procedural names in the same game and still guarantees that every province ends the setup process with a non-empty `Province.displayName`.
+
+- Given a generated region has more sea-zone nodes than entries in that region’s sea-name preset list  
+  When the System assigns sea-zone display names during setup  
+  Then the System assigns deterministic suffixed fallback names for overflow sea zones, keeps names non-empty, and still assigns a display name to every sea-zone node.

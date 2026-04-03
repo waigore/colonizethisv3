@@ -12,13 +12,13 @@ class GrantOrSubsidyListener extends StatefulWidget {
     super.key,
     required this.bus,
     required this.game,
-    required this.onConfirmed,
+    required this.humanPlayerId,
     required this.child,
   });
 
   final AppEventBus bus;
   final Game game;
-  final void Function(DiplomaticOrder order) onConfirmed;
+  final String humanPlayerId;
   final Widget child;
 
   @override
@@ -60,6 +60,16 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
               final orderType = event.isSubsidy
                   ? DiplomaticOrderType.setSubsidy
                   : DiplomaticOrderType.grantAid;
+              widget.bus.emit(
+                AppendDiplomaticOrderRequestedEvent(
+                  playerId: widget.humanPlayerId,
+                  order: DiplomaticOrder(
+                    type: orderType,
+                    targetFactionId: event.targetFactionId,
+                    amount: event.amount,
+                  ),
+                ),
+              );
               final turn = widget.game.worldState.turnState.turnNumber;
               final base = widget.game.globalGameSeed ?? 0;
               final currentMood =
@@ -71,13 +81,6 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
                   offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
                   stallCounter: 0,
                   seed: base ^ (turn * 0x9E3779B1) ^ event.amount,
-                ),
-              );
-              widget.onConfirmed(
-                DiplomaticOrder(
-                  type: orderType,
-                  targetFactionId: event.targetFactionId,
-                  amount: event.amount,
                 ),
               );
             }

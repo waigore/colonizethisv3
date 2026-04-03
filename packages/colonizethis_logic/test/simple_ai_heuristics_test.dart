@@ -158,9 +158,9 @@ void main() {
         turnSeedForPlayer(game, 'gp1', 1),
       );
 
-      expect(orders.moveOrdersByPlayerId['gp1'], isNotNull);
-      for (final m in orders.moveOrdersByPlayerId['gp1']!) {
-        expect(m.unitId, equals('u1'));
+      expect(orders.armyMoveOrdersByPlayerId['gp1'], isNotNull);
+      for (final m in orders.armyMoveOrdersByPlayerId['gp1']!) {
+        expect(m.armyId, contains('gp1'));
         expect(m.destinationProvinceId, anyOf('oldWorld|P1', 'oldWorld|P2'));
       }
     });

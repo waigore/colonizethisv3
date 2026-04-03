@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/game/widgets/turn_news_dialog.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/game_service_provider.dart';
 import '../providers/games_provider.dart';
@@ -58,6 +59,21 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
       return;
     }
     ref.read(currentGameProvider.notifier).setGame(reloaded);
+    if (event.turnNumber >= 1 &&
+        event.turnNewsDigest != null &&
+        reloaded.victory == null) {
+      final digest = event.turnNewsDigest!;
+      final newTurn = event.turnNumber;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(appEventBusProvider).emit(
+              OpenDialogEvent(turnNewsDialogId, {
+                'digest': digest,
+                'newTurnNumber': newTurn,
+              }),
+            );
+      });
+    }
   }
 
   void _onNegotiationMoodUpdate(NegotiationMoodUpdateEvent event) {
