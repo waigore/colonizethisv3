@@ -22,6 +22,7 @@ export 'src/setup/province_name_fallback.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
+export 'src/turn/turn_news_digest.dart';
 
 // Combat
 export 'src/combat/battle_general_assignment.dart';

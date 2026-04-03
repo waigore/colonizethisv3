@@ -202,8 +202,10 @@ sealed class TurnResolutionResult {
 
 /// Turn resolution completed; [game] is the final state.
 class TurnResolutionComplete extends TurnResolutionResult {
-  const TurnResolutionComplete(this.game);
+  const TurnResolutionComplete(this.game, {this.turnNewsDigest});
   final Game game;
+  /// Null when [game.victory] was set this resolution (news dialog suppressed).
+  final TurnNewsDigest? turnNewsDigest;
 }
 
 /// Turn resolution suspended: [game] is state at suspension; [pendingOvertures]

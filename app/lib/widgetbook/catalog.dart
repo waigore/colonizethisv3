@@ -23,6 +23,8 @@ import '../features/game/widgets/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
+import '../features/game/widgets/turn_news_dialog.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/debug_map_visibility_story.dart';
@@ -70,6 +72,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
         ...interventionDialogueDirectories,
+        ...turnNewsDialogDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
@@ -649,6 +652,155 @@ List<WidgetbookNode> get interventionDialogueDirectories => [
                 skipIntroForTest: true,
                 onDecisions: (_) {},
                 child: const Center(child: Text('Game shell')),
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
+/// Turn news dialog. SPEC/ui/turn-news-dialog.md.
+List<WidgetbookNode> get turnNewsDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Turn news',
+    children: [
+      WidgetbookUseCase(
+        name: 'Sample lines',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_news',
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(
+                    id: 'oldWorld|P1',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp1',
+                    displayName: 'Sample Province',
+                  ),
+                ],
+              ),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(
+                id: 'gp1',
+                displayName: 'Spain',
+                isHuman: true,
+                treasury: 0,
+              ),
+              Player(
+                id: 'gp2',
+                displayName: 'Portugal',
+                isHuman: false,
+                treasury: 0,
+              ),
+            ],
+          );
+          final digest = TurnNewsDigest(
+            resolvedTurnNumber: 2,
+            lines: [
+              const TurnNewsDiplomacyLine(
+                factionIdA: 'gp1',
+                factionIdB: 'gp2',
+                kind: TurnNewsDiplomacyKind.war,
+              ),
+              const TurnNewsProvinceDiscoveredLine(provinceId: 'oldWorld|P1'),
+            ],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Center(
+                child: TurnNewsDialog(
+                  game: game,
+                  digest: digest,
+                  newTurnNumber: 3,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Empty digest',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_news_e',
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(
+                id: 'gp1',
+                displayName: 'Spain',
+                isHuman: true,
+                treasury: 0,
+              ),
+            ],
+          );
+          return MaterialApp(
+            theme: AppThemes.colonial,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Center(
+                child: TurnNewsDialog(
+                  game: game,
+                  digest: const TurnNewsDigest(
+                    resolvedTurnNumber: 1,
+                    lines: [],
+                  ),
+                  newTurnNumber: 2,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Mobile viewport',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_news_m',
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(
+                id: 'gp1',
+                displayName: 'Spain',
+                isHuman: true,
+                treasury: 0,
+              ),
+            ],
+          );
+          return mobileViewport(
+            context,
+            MaterialApp(
+              theme: AppThemes.colonial,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: Center(
+                  child: TurnNewsDialog(
+                    game: game,
+                    digest: const TurnNewsDigest(
+                      resolvedTurnNumber: 1,
+                      lines: [],
+                    ),
+                    newTurnNumber: 2,
+                  ),
+                ),
               ),
             ),
           );

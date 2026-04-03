@@ -358,6 +358,71 @@
   "game_intervention_protest": "Diplomatic protest",
   "@game_intervention_protest": {
     "description": "Button: formal protest without military action."
-  }
+  },
+  "turnNews_title": "Turn {turn}",
+  "@turnNews_title": {
+    "description": "Turn-start news dialog title; turn is the current turn after resolution.",
+    "placeholders": {
+      "turn": {"type": "int"}
+    }
+  },
+  "turnNews_empty": "No major events last turn.",
+  "@turnNews_empty": {
+    "description": "Shown when the prior-turn digest has no lines."
+  },
+  "turnNews_close": "Close",
+  "@turnNews_close": {
+    "description": "Button to dismiss the turn news dialog."
+  },
+  "turnNews_capture": "{province}: ownership changed from {prevOwner} to {newOwner}.",
+  "@turnNews_capture": {
+    "placeholders": {
+      "province": {"type": "String"},
+      "prevOwner": {"type": "String"},
+      "newOwner": {"type": "String"}
+    }
+  },
+  "turnNews_war": "{a} and {b} are now at war.",
+  "@turnNews_war": {
+    "placeholders": {
+      "a": {"type": "String"},
+      "b": {"type": "String"}
+    }
+  },
+  "turnNews_peace": "{a} and {b} are now at peace.",
+  "@turnNews_peace": {
+    "placeholders": {
+      "a": {"type": "String"},
+      "b": {"type": "String"}
+    }
+  },
+  "turnNews_overture": "{offerer} advanced relations with {target} ({stage}).",
+  "@turnNews_overture": {
+    "placeholders": {
+      "offerer": {"type": "String"},
+      "target": {"type": "String"},
+      "stage": {"type": "String"}
+    }
+  },
+  "turnNews_provinceDiscovered": "New reports chart {province}.",
+  "@turnNews_provinceDiscovered": {
+    "placeholders": {
+      "province": {"type": "String"}
+    }
+  },
+  "turnNews_seaDiscovered": "A fleet has entered {zone}.",
+  "@turnNews_seaDiscovered": {
+    "placeholders": {
+      "zone": {"type": "String"}
+    }
+  },
+  "turnNews_stage_tradeConsulate": "trade consulate",
+  "@turnNews_stage_tradeConsulate": {"description": "Overture stage label."},
+  "turnNews_stage_embassy": "embassy",
+  "@turnNews_stage_embassy": {"description": "Overture stage label."},
+  "turnNews_stage_nap": "non-aggression pact",
+  "@turnNews_stage_nap": {"description": "Overture stage label."},
+  "turnNews_stage_joinEmpire": "join empire",
+  "@turnNews_stage_joinEmpire": {"description": "Overture stage label."}
 }
 
