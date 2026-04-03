@@ -5,6 +5,9 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/game_to_ui_bus_listener.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -23,10 +26,30 @@ void main() {
   suppressLogsForTests();
 
   late Box<dynamic> gamesBox;
+  late GameSaveAdapter adapter;
+
+  void saveRequiredMapDataForGame(String gameId) {
+    final tileMap = TileMapResult(
+      width: 1,
+      height: 1,
+      grid: [
+        ['oldWorld|M1'],
+      ],
+    );
+    const topo = MapTopology(nodes: [], edges: []);
+    adapter.saveMapData(
+      gamesBox,
+      gameId,
+      tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+      topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+      combinedTopology: topo,
+    );
+  }
 
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_game_to_ui');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    adapter = GameSaveAdapter();
   });
 
   testWidgets(
@@ -50,8 +73,8 @@ void main() {
         ),
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
 
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -121,8 +144,8 @@ void main() {
         ),
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
 
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -190,8 +213,8 @@ void main() {
         ),
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
 
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -263,8 +286,8 @@ void main() {
         ),
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
 
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -331,8 +354,8 @@ void main() {
         ),
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
 
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -393,8 +416,8 @@ void main() {
         ],
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
 
@@ -461,8 +484,8 @@ void main() {
         ],
       );
 
-      final adapter = GameSaveAdapter();
       adapter.save(gamesBox, game);
+      saveRequiredMapDataForGame(game.id);
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
 
