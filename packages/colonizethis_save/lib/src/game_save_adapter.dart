@@ -11,7 +11,7 @@ const String _suffixCombinedTopology = '_combinedTopology';
 const String _suffixWarpLinks = '_warpLinks';
 
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
-/// Optional map data (tile maps, topology) can be stored per game for Load Savegame view. See SPEC/program/save-load.md.
+/// Map data (tile maps, topology) is required for playable saves. See SPEC/program/save-load.md.
 class GameSaveAdapter {
   /// Saves [game] to [box]. Key = game.id, value = game.toJson().
   void save(Box<dynamic> box, Game game) {
@@ -88,7 +88,7 @@ class GameSaveAdapter {
     return result;
   }
 
-  /// Saves map data for [gameId] so Load Savegame can build InitGameMapViewData. Optional; legacy saves have none.
+  /// Saves required map data for [gameId].
   void saveMapData(
     Box<dynamic> box,
     String gameId, {
@@ -116,20 +116,22 @@ class GameSaveAdapter {
     _log.d('saved map data gameId=$gameId');
   }
 
-  /// Loads map data for [gameId]. Returns null if any key is missing (legacy save).
-  /// Warp links are optional for backward compatibility with legacy saves.
+  /// Loads required map data for [gameId].
+  ///
+  /// Throws [StateError] when any required key is missing.
+  /// Throws [FormatException] when map data exists but is invalid.
   ({
     Map<String, TileMapResult> tileMapByRegion,
     Map<String, MapTopology> topologyByRegion,
     MapTopology combinedTopology,
     List<WarpLink>? warpLinks,
-  })?
+  })
   loadMapData(Box<dynamic> box, String gameId) {
     final tileRaw = box.get(gameId + _suffixTileMapByRegion);
     final topoRaw = box.get(gameId + _suffixTopologyByRegion);
     final combinedRaw = box.get(gameId + _suffixCombinedTopology);
     if (tileRaw == null || topoRaw == null || combinedRaw == null) {
-      return null;
+      throw StateError('Required map data missing for gameId=$gameId');
     }
     try {
       final tileMapByRegion = (tileRaw as Map).map<String, TileMapResult>(
@@ -163,12 +165,8 @@ class GameSaveAdapter {
         warpLinks: warpLinks,
       );
     } catch (e, st) {
-      _log.e(
-        'load map data failed gameId=$gameId',
-        error: e,
-        stackTrace: st,
-      );
-      return null;
+      _log.e('load map data failed gameId=$gameId', error: e, stackTrace: st);
+      throw FormatException('Invalid map data for gameId=$gameId');
     }
   }
 

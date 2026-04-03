@@ -77,6 +77,24 @@ void main() {
   });
 
   group('GameService event emission', () {
+    void saveRequiredMapDataForGame(String gameId) {
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['oldWorld|M1'],
+        ],
+      );
+      final topo = const MapTopology(nodes: [], edges: []);
+      adapter.saveMapData(
+        box,
+        gameId,
+        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+        topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+        combinedTopology: topo,
+      );
+    }
+
     test(
       'AppEventBus emits OvertureRequiredEvent synchronously and listener receives it',
       () async {
@@ -165,7 +183,12 @@ void main() {
           ),
           players: const [
             Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
-            Player(id: 'gp2', displayName: 'Aggressor', isHuman: false, treasury: 0),
+            Player(
+              id: 'gp2',
+              displayName: 'Aggressor',
+              isHuman: false,
+              treasury: 0,
+            ),
           ],
           minorNations: const [
             MinorNation(id: 'minor1', displayName: 'Minor 1'),
@@ -205,6 +228,7 @@ void main() {
 
         final received = <AppEvent>[];
         bus.on<InterventionRequiredEvent>().listen(received.add);
+        saveRequiredMapDataForGame(game.id);
 
         final result = service.runTurnResolution(game, orders: orders);
 

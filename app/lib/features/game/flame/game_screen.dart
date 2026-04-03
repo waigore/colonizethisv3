@@ -94,17 +94,14 @@ void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
 TurnResolutionResult resolveNextTurnForGameScreen({
   required Game game,
   required Orders orders,
-  required MapTopology? topologyForAi,
+  required MapTopology topologyForAi,
   required TurnResolutionResult Function({
     required Orders orders,
     Orders? aiOrders,
   })
   runTurnResolution,
 }) {
-  final aiOrders = switch (topologyForAi) {
-    null => null,
-    _ => generateOrdersForGameFullAI(game, topologyForAi).orders,
-  };
+  final aiOrders = generateOrdersForGameFullAI(game, topologyForAi).orders;
   return runTurnResolution(orders: orders, aiOrders: aiOrders);
 }
 
@@ -146,10 +143,15 @@ class GameScreen extends ConsumerWidget {
                 final service = ref.read(gameServiceProvider);
                 final orders = ref.read(currentOrdersProvider);
                 final mapData = service.getMapData(game.id);
+                if (mapData == null) {
+                  throw StateError(
+                    'Missing required map data for gameId=${game.id}',
+                  );
+                }
                 final result = resolveNextTurnForGameScreen(
                   game: game,
                   orders: orders,
-                  topologyForAi: mapData?.combinedTopology,
+                  topologyForAi: mapData.combinedTopology,
                   runTurnResolution:
                       ({required Orders orders, Orders? aiOrders}) =>
                           service.runTurnResolution(
