@@ -360,6 +360,9 @@ Game runNavalInterceptionCombatPhase(
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
   };
+  battles = [
+    for (final b in battles) normalizeNavalBattleSidesForAttacker(b, game, movedFleetIds),
+  ];
   var seed = (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * 0x9E3779B1);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);

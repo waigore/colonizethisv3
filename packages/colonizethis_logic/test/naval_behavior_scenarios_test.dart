@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart' show NavalCombatResultEvent;
 import 'package:colonizethis_logic/src/world/naval_resolution.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -6,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 Game _baseGame({
   required List<Fleet> fleets,
   required List<DiplomacyRelation> relations,
+  int globalGameSeed = 42,
 }) {
   return Game(
     id: 'g_naval',
@@ -21,12 +23,70 @@ Game _baseGame({
       Player(id: 'p3', displayName: 'C', isHuman: true),
     ],
     diplomacyRelations: relations,
-    globalGameSeed: 42,
+    globalGameSeed: globalGameSeed,
   );
 }
 
 void main() {
   group('naval behavior scenarios', () {
+    test(
+        'scenario: sole mover is side1 (attacker) in naval event when opponent is not Patrol/Blockade '
+        '(no interception roll; battle always proceeds)', () {
+      NavalCombatResultEvent? navalEvent;
+      final game = _baseGame(
+        fleets: [
+          Fleet(
+            id: 'f_mover',
+            ownerId: 'p1',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: const ['carrack', 'carrack'],
+            mission: FleetMission.none,
+          ),
+          Fleet(
+            id: 'f_other',
+            ownerId: 'p2',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: const ['fluyte', 'fluyte'],
+            mission: FleetMission.defend,
+          ),
+        ],
+        relations: [
+          DiplomacyRelation(
+            factionId1: 'p1',
+            factionId2: 'p2',
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+        ],
+        edges: [],
+      );
+
+      runNavalInterceptionCombatPhase(
+        game,
+        topology,
+        {
+          'p1': [
+            NavalMoveOrder(fleetId: 'f_mover', destinationSeaZoneId: 'sea1'),
+          ],
+        },
+        onGameEvent: (e) {
+          if (e is NavalCombatResultEvent) navalEvent = e;
+        },
+      );
+
+      expect(navalEvent, isNotNull);
+      final ev = navalEvent!;
+      expect(ev.side1OwnerId, 'p1');
+      expect(ev.side2OwnerId, 'p2');
+    });
+
     test('scenario: post-battle fleets preserve mission', () {
       final game = _baseGame(
         fleets: [
