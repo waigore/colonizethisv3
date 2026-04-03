@@ -626,52 +626,6 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }
 
   @override
-  void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.game != widget.game) {
-      final flat = _flattenTree(
-        _buildNavalTree(widget.game, widget.humanPlayerId),
-      );
-      final valid = flat.map(_selectionFleetId).toSet();
-      final pruned = _selectedFleetIds.intersection(valid);
-      if (pruned.length != _selectedFleetIds.length) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() {
-            _selectedFleetIds
-              ..clear()
-              ..addAll(pruned);
-          });
-        });
-      }
-    }
-  }
-
-  void _openSplitDialog(_FleetRow row) {
-    final id = _selectionFleetId(row);
-    Fleet? fleet;
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == id) {
-        fleet = f;
-        break;
-      }
-    }
-    if (fleet == null) return;
-
-    final original = fleet;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => SplitFleetDialog(
-        originalFleet: original,
-        game: widget.game,
-        humanPlayerId: widget.humanPlayerId,
-        isHomeFleet: row.isHomeFleet,
-        bus: widget.bus,
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
     final flat = _flattenTree(tree);

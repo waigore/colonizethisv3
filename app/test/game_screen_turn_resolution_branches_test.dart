@@ -74,10 +74,30 @@ void main() {
   suppressLogsForTests();
 
   late Box<dynamic> box;
+  late GameSaveAdapter adapter;
+
+  void saveRequiredMapDataForGame(String gameId) {
+    final tileMap = TileMapResult(
+      width: 1,
+      height: 1,
+      grid: [
+        ['oldWorld|M1'],
+      ],
+    );
+    const topo = MapTopology(nodes: [], edges: []);
+    adapter.saveMapData(
+      box,
+      gameId,
+      tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+      topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+      combinedTopology: topo,
+    );
+  }
 
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_game_screen_turn_branches');
     box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    adapter = GameSaveAdapter();
   });
 
   testWidgets(
@@ -100,7 +120,9 @@ void main() {
         ],
       );
 
-      final service = _PendingTurnGameService(box, GameSaveAdapter());
+      adapter.save(box, game);
+      saveRequiredMapDataForGame(game.id);
+      final service = _PendingTurnGameService(box, adapter);
 
       await tester.pumpWidget(
         ProviderScope(
@@ -161,7 +183,9 @@ void main() {
         ],
       );
 
-      final service = _PendingInterventionGameService(box, GameSaveAdapter());
+      adapter.save(box, game);
+      saveRequiredMapDataForGame(game.id);
+      final service = _PendingInterventionGameService(box, adapter);
 
       await tester.pumpWidget(
         ProviderScope(

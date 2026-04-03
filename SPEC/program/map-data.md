@@ -107,9 +107,9 @@ The loading API (file layout, error handling) will be defined in a future spec u
 
 ## Tile map format
 
-**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. For MVP, produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from init_game; optional map data in saves is per [save-load.md](save-load.md). Loading from static tile-map files is deferred.
+**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. For MVP, produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from init_game; required save payload map data is specified in [save-load.md](save-load.md). Loading from static tile-map files is deferred.
 
-**Persistence (MVP):** The tile map is **not** part of the mandatory game save payload; only world state (e.g. province ownership) is required to load a game. When a save is created by **ctdev** or **init_game** with map output, tile maps may be stored as **optional map data** per [save-load.md](save-load.md) (keys `_tileMapByRegion`, etc.). That serialization uses the same TileMapResult JSON format and is for **ctdev/init tooling** (e.g. Load Savegame map view); the main game does not require map data to load. Format and semantics of the tile map are defined in this spec; the save/load contract for optional map data is in save-load.md.
+**Persistence (MVP):** The tile map is part of the required playable save payload together with topology and combined topology per [save-load.md](save-load.md) (keys `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`). Saves missing required map data are invalid for gameplay load. Format and semantics of the tile map are defined in this spec; the save/load contract is in save-load.md.
 
 ---
 

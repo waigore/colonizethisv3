@@ -201,9 +201,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       _workTargetSelection = (unit: unit, workTarget: workTarget);
       _computeValidTileKeysForSelection();
     });
-    if (closePanel) {
-      Navigator.of(context).maybePop();
-    }
   }
 
   void _onTileSelectedForWork(String tileKey) {

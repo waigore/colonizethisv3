@@ -55,31 +55,5 @@ void main() {
       expect(capturedAiOrders, isNotNull);
       expect(capturedAiOrders, equals(expectedAiOrders));
     });
-
-    test('passes null aiOrders when map data is unavailable', () {
-      final game = Game(
-        id: 'g-next-turn-no-map',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
-      );
-
-      Orders? capturedAiOrders;
-      final result = resolveNextTurnForGameScreen(
-        game: game,
-        orders: const Orders(),
-        topologyForAi: null,
-        runTurnResolution: ({required Orders orders, Orders? aiOrders}) {
-          capturedAiOrders = aiOrders;
-          return TurnResolutionComplete(game);
-        },
-      );
-
-      expect(result, isA<TurnResolutionComplete>());
-      expect(capturedAiOrders, isNull);
-    });
   });
 }

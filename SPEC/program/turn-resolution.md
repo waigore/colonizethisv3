@@ -48,20 +48,14 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 
 ## Loaded Game Behavior
 
-When a game is **loaded from save**, the map data (`tileMapByRegion`, `topologyByRegion`) may be absent (not serialized with the game). In this case, the resolver operates with empty or null map topology:
-
-- **Extraction Phase:** When `tileMapByRegion` is empty or null, extraction leaves stockpiles unchanged. No resources are extracted because the tile map data required to calculate yields is unavailable. This is a graceful degradation: the turn advances without crashing, but no economic progress occurs until the map is restored.
-
-- **Movement Phase:** When `topologyByRegion` is empty or null, land movement applies no adjacency validation. Units may not be able to move to adjacent provinces because the topology data defining adjacency is missing. Sea movement similarly lacks topology for sea zone adjacency.
-
-- **Combat Phase:** Combat resolution proceeds with available world state data. Unit strengths and casualties are calculated normally, but terrain modifiers may be unavailable without tile map data.
+Map data required for resolution (`tileMapByRegion`, `topologyByRegion`, and combined topology used for AI) is mandatory for playable saves. Turn resolution call sites must not execute with missing topology data.
 
 **Acceptance Criteria:**
 
-- Given a game is loaded from save without serialized tileMapByRegion or topologyByRegion
-- When TurnResolver runs the next turn
-- Then the turn advances successfully (turn number increments, no crash)
-- And extraction leaves stockpiles unchanged (graceful degradation)
-- And movement is limited or blocked by missing topology
+- Given a game load attempt where required map data is missing or invalid
+- When the app/service prepares turn resolution or AI order generation
+- Then the app/service rejects the save with an explicit error and does not run turn resolution
 
-**App-Level Note:** The app may cache map data separately and re-provide it on load. If the app provides cached map data to the resolver, full extraction and movement are restored. This behavior is app-level (GameService) and not part of the core resolver contract.
+- Given a playable loaded game with required map data present
+- When TurnResolver runs the next turn
+- Then extraction, movement, combat, and AI order generation execute with map topology provided by the loaded map data
