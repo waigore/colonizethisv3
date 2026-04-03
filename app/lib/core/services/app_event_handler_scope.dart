@@ -15,6 +15,7 @@ import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -289,6 +290,20 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             result: result,
             attackerName: attackerName,
             defenderName: defenderName,
+          );
+        },
+        turnNewsDialogId: (ctx, params) {
+          final container = ProviderScope.containerOf(ctx);
+          final game = container.read(currentGameProvider);
+          final digest = params?['digest'] as TurnNewsDigest?;
+          final newTurnNumber = params?['newTurnNumber'] as int?;
+          if (game == null || digest == null || newTurnNumber == null) {
+            return const SizedBox.shrink();
+          }
+          return TurnNewsDialog(
+            game: game,
+            digest: digest,
+            newTurnNumber: newTurnNumber,
           );
         },
       },

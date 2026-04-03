@@ -60,6 +60,8 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 - **Fleets:** Each ship hull in `WorldState.fleets` has a **unique instance id** within the save; fleet rows store instances with catalog `typeId`. Counts by type in UI or formulas are aggregations. See [ships-and-naval.md](ships-and-naval.md) § Ship instances.
 - **Armies:** Each land military regiment unit id appears in **exactly one** army’s member list in `WorldState.armies` (or equivalent per-region storage per TDD). Each army has a stable **army id** for the life of the save. See [military-armies.md](military-armies.md).
 
+- **Province capture / handover:** When the game records a **change of control** of a province from one faction to another (e.g. combat capture per [combat.md](combat.md)), the new `Province.ownerId` is always a **non-empty** faction id (another Great Power, Minor Nation, or Tribe). Handovers do not clear ownership to null/empty as the outcome of capture. A null/empty `ownerId` is reserved for **uncolonized** frontier provinces (e.g. New World before first colonization), not as the “new owner” after losing control. `province_captured` events and turn-news capture lines require both previous and new owners to be non-empty; see [game-events.md](../program/game-events.md) and [turn-news-digest.md](../program/turn-news-digest.md).
+
 ---
 
 ## Acceptance Criteria
@@ -75,6 +77,10 @@ All entities support JSON (or equivalent) for persistence; save layer reads/writ
 - Given a WorldState with a Tile map for a region and at least one Province that owns tiles in that region  
   When the System computes effective extraction for that Province  
   Then the System uses the tiles assigned to that Province in the per-region 2D grid, applies terrain, resource, and improvement data from those tiles, and caps extraction for each tile at the owning Player’s tech cap as defined in the active ruleset.
+
+- Given a supported resolution step that applies a **faction-to-faction** province ownership change (previous and new owner each a non-empty faction id)  
+  When the System commits that change to `WorldState`  
+  Then the province’s `ownerId` equals the new faction id and is non-empty, and the System does not represent a successful capture by setting `ownerId` to null or empty.
 
 - Given a Game entity that has Players, Minor Nations, Tribes, and a WorldState with provinces and units  
   When the System serializes the Game to JSON and later reloads it by game id  

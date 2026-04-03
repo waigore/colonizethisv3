@@ -15,6 +15,7 @@
 import 'combat_mode.dart';
 import 'diplomacy.dart';
 import 'game.dart';
+import 'turn_news_digest.dart';
 import 'orders.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
@@ -413,9 +414,12 @@ class TurnResolutionCompleteEvent extends GameToUIEvent {
   const TurnResolutionCompleteEvent({
     required this.gameId,
     required this.turnNumber,
+    this.turnNewsDigest,
   });
   final String gameId;
   final int turnNumber;
+  /// Prior-turn digest for the news dialog; null when victory was set this resolution.
+  final TurnNewsDigest? turnNewsDigest;
 }
 
 /// Emitted when overture decisions are required; UI should show overture dialog.

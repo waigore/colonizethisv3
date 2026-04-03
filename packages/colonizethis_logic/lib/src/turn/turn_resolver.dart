@@ -27,6 +27,7 @@ import '../orders/orders_application.dart';
 import '../economy/resource_extractor.dart';
 import '../economy/sea_transport.dart';
 import 'research_resolver.dart';
+import 'turn_news_digest.dart';
 import '../world/naval.dart';
 import '../world/naval_resolution.dart';
 import '../dossier/evidence_rules.dart';
@@ -224,6 +225,7 @@ TurnResolutionResult resolveTurnForGame({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('turn $turn resolve start');
   Game state = ensureMilitaryArmiesForGame(game);
+  final gameAtResolutionStart = state;
   final landFeedingCoverageByPlayerId = <String, double>{};
   final navalFeedingCoverageByPlayerId = <String, double>{};
   final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
@@ -410,7 +412,14 @@ TurnResolutionResult resolveTurnForGame({
   }
 
   _log.i('turn $turn resolve end');
-  return TurnResolutionComplete(state);
+  final news = buildTurnNewsDigestForComplete(
+    start: gameAtResolutionStart,
+    end: state,
+  );
+  return TurnResolutionComplete(
+    news.game,
+    turnNewsDigest: news.digest,
+  );
 }
 
 /// Returns the game when [result] is [TurnResolutionComplete]; throws when pending.

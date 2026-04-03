@@ -23,6 +23,8 @@ class WorldState {
     this.nextShipInstanceSeq = 1,
     this.armies = const [],
     this.nextArmySeq = 1,
+    this.newsDigestProvinceRevealDoneIds = const [],
+    this.newsDigestSeaZoneFleetDoneIds = const [],
   });
 
   final TurnState turnState;
@@ -73,6 +75,13 @@ class WorldState {
   /// Monotonic counter for minting non-home army ids (e.g. split armies).
   final int nextArmySeq;
 
+  /// Prefixed province ids that already generated a news "province discovered" line.
+  /// SPEC/program/turn-news-digest.md.
+  final List<String> newsDigestProvinceRevealDoneIds;
+
+  /// Prefixed sea zone ids that already generated a news "first fleet" line.
+  final List<String> newsDigestSeaZoneFleetDoneIds;
+
   Map<String, dynamic> toJson() => {
     'turnState': turnState.toJson(),
     'oldWorld': oldWorld.toJson(),
@@ -103,6 +112,10 @@ class WorldState {
     'nextShipInstanceSeq': nextShipInstanceSeq,
     if (armies.isNotEmpty) 'armies': armies.map((e) => e.toJson()).toList(),
     if (nextArmySeq != 1) 'nextArmySeq': nextArmySeq,
+    if (newsDigestProvinceRevealDoneIds.isNotEmpty)
+      'newsDigestProvinceRevealDoneIds': newsDigestProvinceRevealDoneIds,
+    if (newsDigestSeaZoneFleetDoneIds.isNotEmpty)
+      'newsDigestSeaZoneFleetDoneIds': newsDigestSeaZoneFleetDoneIds,
   };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -164,6 +177,16 @@ class WorldState {
 
     final storedArmySeq = json['nextArmySeq'];
     final nextArmySeq = storedArmySeq is int ? storedArmySeq : 1;
+
+    final newsProvRaw = json['newsDigestProvinceRevealDoneIds'] as List<dynamic>?;
+    final newsDigestProvinceRevealDoneIds = newsProvRaw == null
+        ? const <String>[]
+        : newsProvRaw.map((e) => e.toString()).toList();
+
+    final newsSeaRaw = json['newsDigestSeaZoneFleetDoneIds'] as List<dynamic>?;
+    final newsDigestSeaZoneFleetDoneIds = newsSeaRaw == null
+        ? const <String>[]
+        : newsSeaRaw.map((e) => e.toString()).toList();
 
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];
     final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
@@ -240,6 +263,8 @@ class WorldState {
       seaZoneDisplayNameById: seaZoneDisplayNameById,
       armies: armies,
       nextArmySeq: nextArmySeq,
+      newsDigestProvinceRevealDoneIds: newsDigestProvinceRevealDoneIds,
+      newsDigestSeaZoneFleetDoneIds: newsDigestSeaZoneFleetDoneIds,
     );
   }
 
@@ -260,6 +285,8 @@ class WorldState {
     int? nextShipInstanceSeq,
     List<Army>? armies,
     int? nextArmySeq,
+    List<String>? newsDigestProvinceRevealDoneIds,
+    List<String>? newsDigestSeaZoneFleetDoneIds,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -285,6 +312,11 @@ class WorldState {
       nextShipInstanceSeq: nextShipInstanceSeq ?? this.nextShipInstanceSeq,
       armies: armies ?? this.armies,
       nextArmySeq: nextArmySeq ?? this.nextArmySeq,
+      newsDigestProvinceRevealDoneIds:
+          newsDigestProvinceRevealDoneIds ??
+          this.newsDigestProvinceRevealDoneIds,
+      newsDigestSeaZoneFleetDoneIds:
+          newsDigestSeaZoneFleetDoneIds ?? this.newsDigestSeaZoneFleetDoneIds,
     );
   }
 
@@ -317,7 +349,15 @@ class WorldState {
           _mapEquals(seaZoneDisplayNameById, other.seaZoneDisplayNameById) &&
           nextShipInstanceSeq == other.nextShipInstanceSeq &&
           _listEqualsArmy(armies, other.armies) &&
-          nextArmySeq == other.nextArmySeq;
+          nextArmySeq == other.nextArmySeq &&
+          _listEqualsString(
+            _sortedCopy(newsDigestProvinceRevealDoneIds),
+            _sortedCopy(other.newsDigestProvinceRevealDoneIds),
+          ) &&
+          _listEqualsString(
+            _sortedCopy(newsDigestSeaZoneFleetDoneIds),
+            _sortedCopy(other.newsDigestSeaZoneFleetDoneIds),
+          );
 
   @override
   int get hashCode => Object.hash(
@@ -360,7 +400,12 @@ class WorldState {
     nextShipInstanceSeq,
     Object.hashAll(armies),
     nextArmySeq,
+    Object.hashAll(_sortedCopy(newsDigestProvinceRevealDoneIds)),
+    Object.hashAll(_sortedCopy(newsDigestSeaZoneFleetDoneIds)),
   );
+
+  static List<String> _sortedCopy(List<String> xs) =>
+      List<String>.from(xs)..sort();
 
   static bool _tileKeysByRegionEquals(
     Map<String, Map<String, List<String>>> a,
