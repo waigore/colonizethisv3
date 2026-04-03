@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../turn/turn_resolver.dart';
+import 'economy_preview_stockpile_phase.dart';
 import 'economy_production.dart';
 
 /// Preview net stockpile change for one player after economy phases that feed
@@ -46,4 +47,31 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
     }
   }
   return out;
+}
+
+/// Per-phase stockpile commodity deltas for the production panel breakdown
+/// dialog. Same parameters and phase order as [previewStockpileNetDeltaByCommodityForPlayer].
+///
+/// Inner maps omit zero deltas. For every commodity id, the sum of deltas
+/// across [EconomyPreviewStockpilePhase.values] equals
+/// [previewStockpileNetDeltaByCommodityForPlayer] for that id (or zero if absent).
+Map<EconomyPreviewStockpilePhase, Map<String, int>>
+previewStockpilePhaseDeltasByCommodityForPlayer({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  return economyPreviewStockpilePhaseDeltasForPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    tileMapByRegion: tileMapByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+  );
 }

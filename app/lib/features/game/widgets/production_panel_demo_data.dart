@@ -57,7 +57,7 @@ Player fullAvailabilityProductionPlayer() {
   return base.copyWith(
     stockpile: _fullStockpile,
     workerPool: _fullWorkerPool,
-  );
+    );
 }
 
 /// Limited stockpile: only enough for a few runs of some recipes.
@@ -99,3 +99,12 @@ Player partialAvailabilityProductionPlayer() {
     workerPool: _partialWorkerPool,
   );
 }
+
+/// Stockpile/worker presets for fast widget tests (avoid `demoGameForOverlay` / debug init).
+Stockpile get productionPanelTestFullStockpile => _fullStockpile;
+
+WorkerPool get productionPanelTestFullWorkerPool => _fullWorkerPool;
+
+Stockpile get productionPanelTestPartialStockpile => _partialStockpile;
+
+WorkerPool get productionPanelTestPartialWorkerPool => _partialWorkerPool;

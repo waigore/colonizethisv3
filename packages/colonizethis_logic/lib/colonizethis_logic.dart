@@ -40,6 +40,7 @@ export 'src/economy/build_cost.dart';
 export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
+export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
 export 'src/economy/economy_stockpile_preview.dart';
 export 'src/economy/resource_extractor.dart';

@@ -17,6 +17,7 @@ class ProductionPanel extends StatelessWidget {
     required this.desiredOutputByRecipe,
     required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
+    this.onOpenCommodityBreakdown,
   });
 
   final Game game;
@@ -24,6 +25,9 @@ class ProductionPanel extends StatelessWidget {
   final Map<String, int> desiredOutputByRecipe;
   final Map<String, int> netDeltasByCommodity;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
+
+  /// When set, Available header shows a text button that opens the breakdown dialog.
+  final VoidCallback? onOpenCommodityBreakdown;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -67,6 +71,7 @@ class ProductionPanel extends StatelessWidget {
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
               netDeltasByCommodity: netDeltasByCommodity,
+              onOpenCommodityBreakdown: onOpenCommodityBreakdown,
             ),
             const SizedBox(height: 24),
             _AllocationSubpanel(
@@ -93,6 +98,7 @@ class ProductionPanel extends StatelessWidget {
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
               netDeltasByCommodity: netDeltasByCommodity,
+              onOpenCommodityBreakdown: onOpenCommodityBreakdown,
             ),
           ),
           const SizedBox(width: 24),
@@ -118,6 +124,7 @@ class _AvailableSubpanel extends StatelessWidget {
     required this.inputCommodityIds,
     required this.outputCommodityIds,
     required this.netDeltasByCommodity,
+    this.onOpenCommodityBreakdown,
   });
 
   final Player player;
@@ -125,6 +132,7 @@ class _AvailableSubpanel extends StatelessWidget {
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> netDeltasByCommodity;
+  final VoidCallback? onOpenCommodityBreakdown;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     return Row(
@@ -222,7 +230,19 @@ class _AvailableSubpanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Available', style: theme.textTheme.titleSmall),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text('Available', style: theme.textTheme.titleSmall),
+                ),
+                if (onOpenCommodityBreakdown != null)
+                  CtNinePatchButton(
+                    onPressed: onOpenCommodityBreakdown,
+                    child: const Text('Breakdown'),
+                  ),
+              ],
+            ),
             const SizedBox(height: 8),
             if (availableFood.isNotEmpty) ...[
               Text('Food', style: theme.textTheme.labelMedium),

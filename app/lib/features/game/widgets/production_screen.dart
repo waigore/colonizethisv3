@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import 'production_commodity_breakdown_dialog.dart';
 import 'production_panel.dart';
 
 class ProductionScreen extends ConsumerWidget {
@@ -83,6 +84,17 @@ class ProductionScreen extends ConsumerWidget {
           player: displayPlayer,
           desiredOutputByRecipe: desiredOutputByRecipe,
           netDeltasByCommodity: netDeltasByCommodity,
+          onOpenCommodityBreakdown: () {
+            showDialog<void>(
+              context: context,
+              builder: (_) => ProductionCommodityBreakdownDialog(
+                game: displayGame,
+                player: displayPlayer,
+                topology: panelTopology,
+                tileMapByRegion: panelTileMaps,
+              ),
+            );
+          },
           onDesiredOutputChanged: (next) {
             shellRef
                 .read(productionDesiredOutputProvider.notifier)

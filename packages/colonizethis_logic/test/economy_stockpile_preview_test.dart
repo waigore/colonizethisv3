@@ -8,6 +8,64 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   suppressLogsForTests();
 
+  void expectPhaseDeltasSumToNet({
+    required Game game,
+    required String playerId,
+    Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+    List<AssignedRecipe> defaultAssignments = const [],
+    Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  }) {
+    final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+      game: game,
+      topology: const MapTopology(),
+      playerId: playerId,
+      extractedByPlayerId: extractedByPlayerId,
+      defaultAssignments: defaultAssignments,
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    );
+    final net = previewStockpileNetDeltaByCommodityForPlayer(
+      game: game,
+      topology: const MapTopology(),
+      playerId: playerId,
+      extractedByPlayerId: extractedByPlayerId,
+      defaultAssignments: defaultAssignments,
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    );
+    final keys = <String>{};
+    for (final m in phases.values) {
+      keys.addAll(m.keys);
+    }
+    keys.addAll(net.keys);
+    for (final c in keys) {
+      var sum = 0;
+      for (final p in EconomyPreviewStockpilePhase.values) {
+        sum += phases[p]?[c] ?? 0;
+      }
+      expect(sum, net[c] ?? 0, reason: 'commodity $c phase sum vs net');
+    }
+  }
+
+  group('previewStockpilePhaseDeltasByCommodityForPlayer', () {
+    test('unknown player yields empty maps per phase', () {
+      final player = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: const Stockpile(),
+      );
+      final game = _singlePlayerGame(player);
+      final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'missing',
+      );
+      for (final m in phases.values) {
+        expect(m, isEmpty);
+      }
+    });
+
+  });
+
   group('previewStockpileNetDeltaByCommodityForPlayer', () {
     test('extraction only: delta matches injected extraction totals', () {
       final player = Player(
@@ -27,6 +85,13 @@ void main() {
       );
       expect(delta[CommodityCatalog.grain.id], 4);
       expect(delta.length, 1);
+      expectPhaseDeltasSumToNet(
+        game: game,
+        playerId: 'p1',
+        extractedByPlayerId: {
+          'p1': {CommodityCatalog.grain.id: 4},
+        },
+      );
     });
 
     test('riches only: riches commodities removed, no production assignments', () {
@@ -43,6 +108,17 @@ void main() {
         playerId: 'p1',
       );
       expect(delta[CommodityCatalog.gold.id], -2);
+      final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'p1',
+      );
+      expect(
+        phases[EconomyPreviewStockpilePhase.richesToTreasury]![
+            CommodityCatalog.gold.id],
+        -2,
+      );
+      expectPhaseDeltasSumToNet(game: game, playerId: 'p1');
     });
 
     test('consumption only: military food reduces grain', () {
@@ -76,6 +152,7 @@ void main() {
         playerId: 'p1',
       );
       expect(delta[CommodityCatalog.grain.id], -1);
+      expectPhaseDeltasSumToNet(game: game, playerId: 'p1');
     });
 
     test('production only: net reflects recipe IO after consumption', () {
@@ -108,6 +185,18 @@ void main() {
       expect(delta[CommodityCatalog.timber.id], -10);
       expect(delta[CommodityCatalog.lumber.id], 5);
       expect(delta[CommodityCatalog.grain.id] != 0, isTrue);
+      expectPhaseDeltasSumToNet(
+        game: game,
+        playerId: 'p1',
+        defaultAssignmentsByPlayerId: {
+          'p1': const [
+            AssignedRecipe(
+              recipeId: 'lumber_from_timber',
+              assignedLabour: 10,
+            ),
+          ],
+        },
+      );
     });
 
     test('combined: extraction + riches + consumption + production', () {
@@ -162,6 +251,21 @@ void main() {
       expect(delta[CommodityCatalog.timber.id], -2);
       expect(delta[CommodityCatalog.lumber.id], 1);
       expect(delta[CommodityCatalog.grain.id], 2);
+      expectPhaseDeltasSumToNet(
+        game: game,
+        playerId: 'p1',
+        extractedByPlayerId: {
+          'p1': {CommodityCatalog.grain.id: 5},
+        },
+        defaultAssignmentsByPlayerId: {
+          'p1': const [
+            AssignedRecipe(
+              recipeId: 'lumber_from_timber',
+              assignedLabour: 4,
+            ),
+          ],
+        },
+      );
     });
   });
 }

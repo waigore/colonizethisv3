@@ -10,20 +10,18 @@ import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
-import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+import 'widget_test_pumps.dart';
+import 'production_panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
-  late Game game;
   late Player fullPlayer;
   late Player partialPlayer;
 
   setUpAll(() {
-    game = demoGameForOverlay;
-    fullPlayer = fullAvailabilityProductionPlayer();
-    partialPlayer = partialAvailabilityProductionPlayer();
+    fullPlayer = productionPanelTestFullPlayer();
+    partialPlayer = productionPanelTestPartialPlayer();
   });
 
   Widget buildPanel({
@@ -31,10 +29,11 @@ void main() {
     Game? gameOverride,
     Map<String, int> desiredOutputByRecipe = const {},
     ValueChanged<Map<String, int>>? onDesiredOutputChanged,
+    VoidCallback? onOpenCommodityBreakdown,
     double width = 800,
     double height = 500,
   }) {
-    final displayGame = gameOverride ?? game;
+    final displayGame = gameOverride ?? productionPanelTestGameFor(player);
     final netDeltasByCommodity = <String, int>{};
     for (final entry in desiredOutputByRecipe.entries) {
       final recipe = ProductionRecipesCatalog.byId[entry.key];
@@ -59,6 +58,7 @@ void main() {
             desiredOutputByRecipe: desiredOutputByRecipe,
             netDeltasByCommodity: netDeltasByCommodity,
             onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
           ),
         ),
       ),
@@ -66,11 +66,29 @@ void main() {
   }
 
   group('ProductionPanel', () {
+    testWidgets('Available header has no Breakdown button without callback', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await pumpSettleCapped(tester);
+      expect(find.text('Breakdown'), findsNothing);
+    });
+
+    testWidgets('Available header shows Breakdown text button when callback set', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(player: fullPlayer, onOpenCommodityBreakdown: () {}),
+      );
+      await pumpSettleCapped(tester);
+      expect(find.text('Breakdown'), findsOneWidget);
+    });
+
     testWidgets('Available subpanel shows commodity groups', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.text('Available'), findsOneWidget);
       expect(find.text('Food'), findsOneWidget);
@@ -84,7 +102,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.textContaining('Timber:'), findsOneWidget);
       expect(find.textContaining('Iron:'), findsOneWidget);
@@ -95,7 +113,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.text('Allocation'), findsOneWidget);
       expect(
@@ -110,7 +128,7 @@ void main() {
       'Allocation rows show right-aligned affordance max · bottleneck',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildPanel(player: fullPlayer));
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         expect(
           find.textContaining('·'),
@@ -123,7 +141,7 @@ void main() {
       'Full availability: sliders enable comfort headroom at default allocation',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildPanel(player: fullPlayer));
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         final sliders = tester
             .widgetList<CtSlider>(find.byType(CtSlider))
@@ -144,11 +162,11 @@ void main() {
           onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.text('Reset'), findsOneWidget);
       await tester.tap(find.text('Reset'));
-      await tester.pumpAndSettle();
+      await pumpSyncFrames(tester);
 
       expect(lastOutput, isNotNull);
       expect(lastOutput!.isEmpty, isTrue);
@@ -164,12 +182,12 @@ void main() {
           onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       final sliders = find.byType(CtSlider);
       expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
       await tester.drag(sliders.first, const Offset(80, 0));
-      await tester.pumpAndSettle();
+      await pumpSyncFrames(tester);
 
       expect(lastOutput, isNotNull);
       expect(lastOutput!.values.any((v) => v > 0), isTrue);
@@ -181,7 +199,7 @@ void main() {
       await tester.pumpWidget(
         buildPanel(player: fullPlayer, width: 400, height: 600),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(SingleChildScrollView), findsAtLeastNWidgets(1));
       expect(find.text('Available'), findsOneWidget);
@@ -194,7 +212,7 @@ void main() {
       await tester.pumpWidget(
         buildPanel(player: fullPlayer, width: 800, height: 500),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(Row), findsWidgets);
       expect(find.text('Available'), findsOneWidget);
@@ -203,7 +221,7 @@ void main() {
 
     testWidgets('Total labour displayed', (WidgetTester tester) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.textContaining('Total labour:'), findsOneWidget);
     });
@@ -227,7 +245,7 @@ void main() {
           desiredOutputByRecipe: {'lumber_from_timber': 5},
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.textContaining('Timber:'), findsOneWidget);
       expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
@@ -239,7 +257,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildPanel(player: partialPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(
         find.byType(CtSlider),
@@ -261,7 +279,7 @@ void main() {
             },
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         // Summary line should turn into an error-coloured warning with explanatory text.
         expect(find.textContaining('Total labour:'), findsOneWidget);
@@ -286,7 +304,7 @@ void main() {
             },
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         expect(find.textContaining('Total labour:'), findsOneWidget);
         expect(
@@ -302,7 +320,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.textContaining('('), findsWidgets);
       expect(find.textContaining('Lumber'), findsWidgets);
@@ -327,7 +345,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(ResourceIcon), findsNWidgets(3));
     });
@@ -342,7 +360,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(ResourceIcon), findsOneWidget);
     });
@@ -357,7 +375,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(StrictAssetIcon), findsOneWidget);
       expect(find.text('grain'), findsOneWidget);
@@ -373,7 +391,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpSettleCapped(tester);
 
         expect(find.byType(StrictAssetIcon), findsNothing);
         expect(find.text('no_ui_icon_commodity'), findsOneWidget);
@@ -400,7 +418,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(WorkerIcon), findsNWidgets(4));
     });
@@ -413,7 +431,7 @@ void main() {
           home: Scaffold(body: WorkerIcon(workerType: 'unknown', size: 16)),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpSettleCapped(tester);
 
       expect(find.byType(WorkerIcon), findsOneWidget);
     });
