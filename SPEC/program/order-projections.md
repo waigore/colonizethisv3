@@ -50,6 +50,8 @@ Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects
 
 **Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which run Extraction → Riches-to-treasury → Consumption → Production on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
 
+**Phased breakdown (implemented):** `EconomyPreviewStockpilePhase` enum (`extraction`, `richesToTreasury`, `consumption`, `production`) and `previewStockpilePhaseDeltasByCommodityForPlayer` with the **same parameters** as `previewStockpileNetDeltaByCommodityForPlayer`. Returns a map from each phase to per-commodity deltas (zeros omitted). Implementation runs the same private preview steps as `applyEconomyPhasesForPreview` in `turn_resolver.dart` (`economyPreviewStockpilePhaseDeltasForPlayer`). **Invariant:** for every commodity id, the sum of the four phase deltas equals the net delta from `previewStockpileNetDeltaByCommodityForPlayer` for the same inputs.
+
 ---
 
 ## Per-player projection
@@ -84,3 +86,4 @@ Same inputs → same outputs. No RNG in the projection path unless the turn reso
 - Given a loaded game, topology, and `tileMapByRegion` (or an explicit `extractedByPlayerId` override), when `previewStockpileNetDeltaByCommodityForPlayer` runs for player `P`, then for every commodity id `c`, the returned delta equals `stockpileAfter[c] - stockpileBefore[c]` where `stockpileAfter` is from applying exactly `Extraction -> Riches-to-treasury -> Consumption -> Production` preview phases for `P`.
 - Given `desiredOutputByRecipe` for player `P`, when `assignedRecipesFromDesiredOutput` runs, then it returns only assignments with positive labour and known recipe ids, with `assignedLabour = desiredOutput * labourPerOutput` for each returned recipe.
 - Given a game with multiple players and only player `P` has desired output entries, when `previewStockpileNetDeltaByCommodityForPlayer` runs, then production assignments for every non-`P` player are treated as empty for this preview.
+- Given fixed `Game`, topology, tile maps (or `extractedByPlayerId`), and assignments for player `P`, when `previewStockpilePhaseDeltasByCommodityForPlayer` runs, then for every commodity id `c`, the sum of deltas over `EconomyPreviewStockpilePhase.values` equals the value returned by `previewStockpileNetDeltaByCommodityForPlayer` for `c`, or zero if that key is omitted from the net map.

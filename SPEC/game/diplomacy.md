@@ -68,6 +68,53 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 - **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
 - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
 
+### GP AI policy for war vs. relations (Full AI only)
+
+This policy applies only to **Phase 6 Full AI**. It does not apply to Phase 4 simple AI.
+
+- For every candidate target faction (GP, Minor, or Tribe), Full AI computes a **war desire score** per `(gpId, targetFactionId)` each turn.
+- Full AI computes an **improve-relations desire score** as `100 - warDesireScore`.
+- The diplomacy planner uses these scores to prioritize `Declare War`, `Offer Peace`, and `Establish Overture`.
+- Full AI keeps the existing relation gate for war declarations (high positive relations can block war declarations even if war desire is high).
+
+#### War desire score (0..100)
+
+`warDesireScore` is clamped to integer range `0..100`, starts at base `50`, then applies factors:
+
+- **Relative power score (primary factor):** uses the same power formula as Great Power power score (military + province + naval):
+  - `relativePower = attackerPowerScore / max(1, targetPowerScore)`
+  - `relativePower >= 1.35` => `+30`
+  - `0.85 <= relativePower < 1.35` => `+5`
+  - `relativePower < 0.85` => `-25`
+- **Relation pressure factor:**
+  - relation score `>= 70` => `-40`
+  - relation score `50..69` => `-20`
+  - relation score `<= 25` => `+10`
+
+For **Minor/Tribe targets**, add:
+
+- **Resource need bonus:** for each distinct target-owned resource that the GP currently has zero stockpile of, `+5`, capped at `+15`.
+- **Intervention-risk penalty:** for each *other GP* with embassy on that Minor/Tribe, `-8`, capped at `-24`.
+- **Invasion capacity adjustment:**
+  - if GP regiment count is too low to stage invasion (`ownRegiments < max(2, targetRegiments/2 floored)`), `-20`
+  - else if `ownRegiments > targetRegiments`, `+10`
+  - if target requires overseas invasion (target has provinces in regions where attacker has none) and attacker has no ships, `-25`
+  - if attacker is already in 2+ active wars, `-15`
+
+#### Cooldowns (per GP-target pair)
+
+- **War declaration cooldown:** after AI initiates `Declare War` on target, AI must wait `4` turns before re-scoring that pair for a new war declaration.
+- **Improve-relations cooldown:** after AI overture accept/reject outcome for target, AI must wait `2` turns before attempting another overture-driven improve-relations action for that same pair.
+
+#### War goals and in-war reassessment
+
+- Before selecting `Declare War`, Full AI derives a **desired territory objective**:
+  - `desiredTerritory = clamp(round(warDesireScore / 25), 1, targetProvinceCount)`
+- While at war, each turn Full AI recomputes `warDesireScore` for that pair:
+  - high war desire lowers `Offer Peace` preference (continue war),
+  - low war desire raises `Offer Peace` preference (de-escalate / adjust down goals).
+- MVP stores war goals as planner output (deterministic logs and action scoring), not as a separate persistent war-goal state object.
+
 ### Diplomatic Order Types
 
 - **Declare War** — target faction; valid if AT_PEACE.
@@ -132,6 +179,30 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When the system evaluates whether that AI Great Power will intervene against the aggressor  
   Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor/Tribe, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene (otherwise **Do Nothing**; AI does not choose **Protest** in MVP).
 
+- Given Full AI controls a Great Power and has legal diplomacy candidates against a target faction in turn `t`  
+  When the AI diplomacy planner scores candidates for that `(gpId, targetFactionId)` pair  
+  Then the system computes `warDesireScore` from the strength ratio and relation factors defined in `GP AI policy for war vs. relations` and computes improve-relations desire as `100 - warDesireScore`.
+
+- Given Full AI controls a Great Power and a Minor/Tribe target has at least one target-owned resource that the GP has zero stockpile of, while no additional constraints change  
+  When the AI computes `warDesireScore` for that target  
+  Then the system increases war desire by `+5` per missing distinct resource up to `+15`.
+
+- Given Full AI controls a Great Power and one or more other Great Powers have embassy overtures with a Minor/Tribe target  
+  When the AI computes `warDesireScore` for war against that target  
+  Then the system applies an intervention-risk penalty of `-8` per such GP up to `-24`.
+
+- Given Full AI controls a Great Power and a `(gpId, targetFactionId)` pair has a prior AI-initiated `Declare War` event at turn `t0`  
+  When the AI evaluates that same pair at turn `t` where `t - t0 < 4`  
+  Then the system treats war declaration for that pair as on cooldown and does not select `Declare War` for that pair in that evaluation.
+
+- Given Full AI controls a Great Power and a `(gpId, targetFactionId)` pair has an overture accept/reject event at turn `t0`  
+  When the AI evaluates improve-relations overture actions for that pair at turn `t` where `t - t0 < 2`  
+  Then the system treats overture-driven improve-relations for that pair as on cooldown and does not select those actions for that pair in that evaluation.
+
+- Given Full AI controls a Great Power and is evaluating a legal `Declare War` candidate against target faction `X` with `targetProvinceCount >= 1`  
+  When the AI computes `warDesireScore` for `X` in that turn  
+  Then the system computes `desiredTerritory = clamp(round(warDesireScore / 25), 1, targetProvinceCount)` and uses that objective to bias wartime continuation/de-escalation scoring in subsequent turns.
+
 - Given the same AI intervention context and the Bernoulli trial results in **intervene**  
   When the Diplomacy phase applies that outcome  
   Then the system changes the relation state between that AI Great Power and the declaring Great Power to `AT_WAR` with `sinceTurn = t`, updates `lastInteractionTurn = t`, and leaves Embassy and overture state between the AI Great Power and the Minor/Tribe unchanged.
@@ -192,6 +263,8 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
 | Call to arms refusal score penalty | 20 | Subtracted from ally–defender relation score; alliance ends (no longer Allied). |
 | Call to arms AI join threshold | 50 | AI ally joins the war if relation score with the defended ally is ≥ this value. |
+| Full AI war declaration cooldown (per GP-target pair) | 4 turns | Applies to AI-initiated `Declare War` re-attempts. |
+| Full AI improve-relations cooldown (per GP-target pair) | 2 turns | Applies to AI overture-driven relation improvement retries. |
 
 ### Player-facing relation display
 

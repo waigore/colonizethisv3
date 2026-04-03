@@ -140,6 +140,7 @@ class GameService {
         TurnResolutionCompleteEvent(
           gameId: complete.game.id,
           turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
         ),
       );
     } else if (result is TurnResolutionPendingOvertures) {
@@ -182,6 +183,7 @@ class GameService {
         TurnResolutionCompleteEvent(
           gameId: complete.game.id,
           turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
         ),
       );
     } else if (result is TurnResolutionPendingOvertures) {
@@ -228,6 +230,7 @@ class GameService {
         TurnResolutionCompleteEvent(
           gameId: complete.game.id,
           turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
         ),
       );
     } else if (result is TurnResolutionPendingOvertures) {
@@ -270,6 +273,7 @@ class GameService {
         TurnResolutionCompleteEvent(
           gameId: complete.game.id,
           turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
         ),
       );
     } else if (result is TurnResolutionPendingOvertures) {

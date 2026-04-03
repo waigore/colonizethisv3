@@ -1,13 +1,23 @@
 // Order script parser - converts OrderCommand to Orders objects.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'scenario.dart';
 
+T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
+  for (final item in items) {
+    if (test(item)) return item;
+  }
+  return null;
+}
+
 /// Parses a list of OrderCommand into the game's Orders object.
 Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
+  final gameWithArmies = ensureMilitaryArmiesForGame(game);
   final moveOrdersByPlayerId = <String, List<MoveOrder>>{};
+  final armyMoveOrdersByPlayerId = <String, List<ArmyMoveOrder>>{};
   final buildUnitOrdersByPlayerId = <String, List<BuildUnitOrder>>{};
   final workOrdersByPlayerId = <String, List<WorkOrder>>{};
   final diplomaticOrdersByPlayerId = <String, List<DiplomaticOrder>>{};
@@ -18,16 +28,48 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
   for (final cmd in commands) {
     switch (cmd.type) {
       case 'move':
-        final moveOrder = MoveOrder(
-          unitId: cmd.unit ?? '',
-          destinationProvinceId: cmd.to ?? '',
-        );
-        moveOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(moveOrder);
+        final unitId = cmd.unit ?? '';
+        final destination = cmd.to ?? '';
+        final allUnits = <Unit>[
+          ...gameWithArmies.worldState.oldWorld.units,
+          ...gameWithArmies.worldState.newWorld.units,
+        ];
+        final unit = _firstWhereOrNull(allUnits, (u) => u.id == unitId);
+        if (unit != null && isMilitaryUnit(unit.type)) {
+          final army = _firstWhereOrNull(
+            gameWithArmies.worldState.armies,
+            (a) =>
+                a.ownerId == cmd.player && a.regimentUnitIds.contains(unitId),
+          );
+          if (army != null) {
+            final list = armyMoveOrdersByPlayerId.putIfAbsent(
+              cmd.player,
+              () => [],
+            );
+            final alreadyQueued = list.any(
+              (o) =>
+                  o.armyId == army.id && o.destinationProvinceId == destination,
+            );
+            if (!alreadyQueued) {
+              list.add(
+                ArmyMoveOrder(
+                  armyId: army.id,
+                  destinationProvinceId: destination,
+                ),
+              );
+            }
+            break;
+          }
+        }
+        moveOrdersByPlayerId
+            .putIfAbsent(cmd.player, () => [])
+            .add(MoveOrder(unitId: unitId, destinationProvinceId: destination));
         break;
 
       case 'build':
         final unitType = cmd.unitType ?? 'infantry';
-        final isMilitary = buildUnitCategoryForUnitType(unitType) ==
+        final isMilitary =
+            buildUnitCategoryForUnitType(unitType) ==
             BuildUnitCategory.military;
         final buildOrder = BuildUnitOrder(
           unitType: unitType,
@@ -122,6 +164,7 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
 
   return Orders(
     moveOrdersByPlayerId: moveOrdersByPlayerId,
+    armyMoveOrdersByPlayerId: armyMoveOrdersByPlayerId,
     buildUnitOrdersByPlayerId: buildUnitOrdersByPlayerId,
     workOrdersByPlayerId: workOrdersByPlayerId,
     diplomaticOrdersByPlayerId: diplomaticOrdersByPlayerId,

@@ -446,5 +446,174 @@ void main() {
         );
       },
     );
+
+    test('sea-zone naming covers all topology sea zones', () {
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 's2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 's1'),
+          TopologyEdge(id1: 's1', id2: 's2'),
+        ],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'n1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'ns1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'ns2',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'n1', id2: 'ns1'),
+          TopologyEdge(id1: 'ns1', id2: 'ns2'),
+        ],
+      );
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 1,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+        seed: 7,
+      );
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: TileMapResult(
+          width: 2,
+          height: 2,
+          grid: [
+            ['p1', 'p1'],
+            ['s1', 's2'],
+          ],
+        ),
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: TileMapResult(
+          width: 2,
+          height: 2,
+          grid: [
+            ['n1', 'n1'],
+            ['ns1', 'ns2'],
+          ],
+        ),
+        topologyNewWorld: nwTopology,
+        gameId: 'sea-zone-names',
+        namingSeed: 7,
+      );
+      final names = result.game.worldState.seaZoneDisplayNameById;
+      expect(names['oldWorld|s1'], isNotNull);
+      expect(names['oldWorld|s2'], isNotNull);
+      expect(names['newWorld|ns1'], isNotNull);
+      expect(names['newWorld|ns2'], isNotNull);
+      for (final v in names.values) {
+        expect(v.isNotEmpty, isTrue);
+      }
+    });
+
+    test('sea-zone naming is deterministic for same seed/topology', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 's2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 's1'),
+          TopologyEdge(id1: 's1', id2: 's2'),
+        ],
+      );
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 1,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+        seed: 99,
+      );
+      Game run(String id) => createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: TileMapResult(
+          width: 2,
+          height: 2,
+          grid: [
+            ['p1', 'p1'],
+            ['s1', 's2'],
+          ],
+        ),
+        topologyOldWorld: topology,
+        tileMapNewWorld: TileMapResult(
+          width: 1,
+          height: 2,
+          grid: [
+            ['n1'],
+            ['ns1'],
+          ],
+        ),
+        topologyNewWorld: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'n1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'ns1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'n1', id2: 'ns1')],
+        ),
+        gameId: id,
+        namingSeed: 99,
+      ).game;
+      final first = run('det-1');
+      final second = run('det-2');
+      expect(
+        first.worldState.seaZoneDisplayNameById,
+        second.worldState.seaZoneDisplayNameById,
+      );
+    });
   });
 }

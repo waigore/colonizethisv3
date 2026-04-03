@@ -10,10 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy_order_helpers.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -290,6 +292,20 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             defenderName: defenderName,
           );
         },
+        turnNewsDialogId: (ctx, params) {
+          final container = ProviderScope.containerOf(ctx);
+          final game = container.read(currentGameProvider);
+          final digest = params?['digest'] as TurnNewsDigest?;
+          final newTurnNumber = params?['newTurnNumber'] as int?;
+          if (game == null || digest == null || newTurnNumber == null) {
+            return const SizedBox.shrink();
+          }
+          return TurnNewsDialog(
+            game: game,
+            digest: digest,
+            newTurnNumber: newTurnNumber,
+          );
+        },
       },
       onShowSnackBar: _showSnackBar,
     );
@@ -322,6 +338,46 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         );
         bus.emit(NavalFleetsUpdatedEvent(game: newGame));
       }),
+      bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = applyNavalMoveOrderForPlayer(
+          o,
+          e.humanPlayerId,
+          e.moveOrder,
+        );
+      }),
+      bus.on<LandArmiesUpdatedEvent>().listen((e) {
+        ref.read(currentGameProvider.notifier).setGame(e.game);
+      }),
+      bus.on<ArmyCombineRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final next = applyArmyCombine(
+          game: g,
+          playerId: e.humanPlayerId,
+          armyIds: e.armyIds,
+        );
+        bus.emit(LandArmiesUpdatedEvent(game: next));
+      }),
+      bus.on<ArmySplitRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final next = applyArmySplit(
+          game: g,
+          playerId: e.humanPlayerId,
+          sourceArmyId: e.sourceArmyId,
+          unitIdsToMove: e.unitIdsToMove,
+        );
+        bus.emit(LandArmiesUpdatedEvent(game: next));
+      }),
+      bus.on<ArmyMoveRequestedEvent>().listen((e) {
+        final o = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = applyArmyMoveOrderForPlayer(
+          o,
+          e.humanPlayerId,
+          e.moveOrder,
+        );
+      }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
         if (g == null) return;
@@ -349,6 +405,20 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
           humanPlayerId: pid,
           newFromDialog: e.orders,
         );
+      }),
+      bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = current
+            .appendDiplomaticOrderForPlayer(e.playerId, e.order);
+      }),
+      bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        ref.read(currentOrdersProvider.notifier).state = current
+            .removeDiplomaticOrderForPlayer(
+              e.playerId,
+              type: e.type,
+              targetFactionId: e.targetFactionId,
+            );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
         final g = ref.read(currentGameProvider);

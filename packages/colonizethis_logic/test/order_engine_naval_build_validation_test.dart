@@ -24,7 +24,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'musketeers',
+                type: 'Builder',
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),

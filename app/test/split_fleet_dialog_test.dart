@@ -14,13 +14,17 @@ Widget _openDialogButton(VoidCallback onOpen) {
 void main() {
   suppressLogsForTests();
 
-  Game _minimalGame({required List<Province> provinces}) {
+  Game _minimalGame({
+    required List<Province> provinces,
+    Map<String, String> seaZoneDisplayNameById = const {},
+  }) {
     return Game(
       id: 'g1',
       worldState: WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: RegionData(provinces: provinces),
         newWorld: const RegionData(),
+        seaZoneDisplayNameById: seaZoneDisplayNameById,
       ),
       players: const [
         Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
@@ -60,6 +64,31 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('at-sea location subtitle uses sea-zone display name', (
+    WidgetTester tester,
+  ) async {
+    final fleet = Fleet(
+      id: 'f_sea_label',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 's1',
+      shipTypeIds: const ['carrack'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: _minimalGame(
+        provinces: const [],
+        seaZoneDisplayNameById: const {'oldWorld|s1': 'Adriatic Display'},
+      ),
+      isHomeFleet: false,
+      bus: AppEventBus.create(),
+    );
+
+    expect(find.textContaining('Adriatic Display'), findsWidgets);
+  });
 
   bool buttonEnabled(WidgetTester tester, String label) {
     final button = tester.widget<CtNinePatchButton>(

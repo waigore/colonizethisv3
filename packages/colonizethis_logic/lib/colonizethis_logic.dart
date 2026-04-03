@@ -22,6 +22,7 @@ export 'src/setup/province_name_fallback.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
+export 'src/turn/turn_news_digest.dart';
 
 // Combat
 export 'src/combat/battle_general_assignment.dart';
@@ -40,6 +41,7 @@ export 'src/economy/build_cost.dart';
 export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
+export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
 export 'src/economy/economy_stockpile_preview.dart';
 export 'src/economy/resource_extractor.dart';
@@ -78,6 +80,10 @@ export 'src/ai/sim_game_ai.dart';
 export 'src/ai/simple_ai_heuristics.dart';
 
 // World
+export 'src/world/army_commands.dart';
+export 'src/world/army_ids.dart';
+export 'src/world/army_migration.dart';
+export 'src/world/army_movement.dart';
 export 'src/world/capital_reassignment_fatal.dart';
 export 'src/world/connectivity_resolver.dart';
 export 'src/world/unit_lookup.dart';

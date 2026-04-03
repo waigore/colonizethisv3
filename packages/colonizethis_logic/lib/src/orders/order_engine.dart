@@ -11,6 +11,7 @@ import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
 import 'validators/move_validator.dart';
+import 'validators/army_move_validator.dart';
 import 'validators/diplomatic_order_validator.dart';
 import 'validators/build_order_validator.dart';
 import 'validators/work_order_validator.dart';
@@ -88,6 +89,9 @@ class OrderEngine {
         moveOrdersByPlayerId: _copyMapOfOrderLists(
           initialOrders.moveOrdersByPlayerId,
         ),
+        armyMoveOrdersByPlayerId: _copyMapOfOrderLists(
+          initialOrders.armyMoveOrdersByPlayerId,
+        ),
         buildUnitOrdersByPlayerId: _copyMapOfOrderLists(
           initialOrders.buildUnitOrdersByPlayerId,
         ),
@@ -114,6 +118,8 @@ class OrderEngine {
 
   Orders _copyOrders(Orders o) => Orders(
     moveOrdersByPlayerId: _copyMapOfOrderLists(o.moveOrdersByPlayerId),
+    armyMoveOrdersByPlayerId:
+        _copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
     buildUnitOrdersByPlayerId: _copyMapOfOrderLists(
       o.buildUnitOrdersByPlayerId,
     ),
@@ -194,6 +200,14 @@ class OrderEngine {
   static Orders _withMoveOrders(Orders o, Map<String, List<MoveOrder>> m) =>
       o.copyWith(moveOrdersByPlayerId: m);
 
+  static Map<String, List<ArmyMoveOrder>> _armyMoveOrders(Orders o) =>
+      o.armyMoveOrdersByPlayerId;
+  static Orders _withArmyMoveOrders(
+    Orders o,
+    Map<String, List<ArmyMoveOrder>> m,
+  ) =>
+      o.copyWith(armyMoveOrdersByPlayerId: m);
+
   static Map<String, List<BuildUnitOrder>> _buildOrders(Orders o) =>
       o.buildUnitOrdersByPlayerId;
   static Orders _withBuildOrders(
@@ -233,6 +247,13 @@ class OrderEngine {
     getter: _moveOrders,
     updater: _withMoveOrders,
     label: 'move',
+  );
+
+  static const _OrderSlot<ArmyMoveOrder> _armyMoveSlot =
+      _OrderSlot<ArmyMoveOrder>(
+    getter: _armyMoveOrders,
+    updater: _withArmyMoveOrders,
+    label: 'army move',
   );
 
   static const _OrderSlot<BuildUnitOrder> _buildSlot =
@@ -305,6 +326,9 @@ class OrderEngine {
   OrderValidationResult addMoveOrder(String playerId, MoveOrder order) =>
       _addOrder(playerId, order, _moveSlot);
 
+  OrderValidationResult addArmyMoveOrder(String playerId, ArmyMoveOrder order) =>
+      _addOrder(playerId, order, _armyMoveSlot);
+
   OrderValidationResult addMoveOrderWithContext(
     Game game,
     MapTopology topology,
@@ -318,6 +342,22 @@ class OrderEngine {
         playerId,
         order,
         _moveSlot,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  OrderValidationResult addArmyMoveOrderWithContext(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    ArmyMoveOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      _addOrderWithContextSlot(
+        game,
+        topology,
+        playerId,
+        order,
+        _armyMoveSlot,
         tileMapByRegion: tileMapByRegion,
       );
 
@@ -425,6 +465,9 @@ class OrderEngine {
   void removeMoveOrder(String playerId, int index) =>
       _removeOrderAtSlot(playerId, index, _moveSlot);
 
+  void removeArmyMoveOrder(String playerId, int index) =>
+      _removeOrderAtSlot(playerId, index, _armyMoveSlot);
+
   void removeBuildOrder(String playerId, int index) =>
       _removeOrderAtSlot(playerId, index, _buildSlot);
 
@@ -445,6 +488,7 @@ class OrderEngine {
     final view = buildPlayerView(game, topology, playerId);
 
     final moves = _orders.moveOrdersByPlayerId[playerId] ?? [];
+    final armyMoves = _orders.armyMoveOrdersByPlayerId[playerId] ?? [];
     final builds = _orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final works = _orders.workOrdersByPlayerId[playerId] ?? [];
     final diplomatic = _orders.diplomaticOrdersByPlayerId[playerId] ?? [];
@@ -462,6 +506,7 @@ class OrderEngine {
     );
 
     const _moveValidator = MoveValidator();
+    const _armyMoveValidator = ArmyMoveValidator();
 
     OrderValidationResult validateMove(MoveOrder o) {
       return _moveValidator.validate(
@@ -475,11 +520,29 @@ class OrderEngine {
       );
     }
 
+    OrderValidationResult validateArmyMove(ArmyMoveOrder o) {
+      return _armyMoveValidator.validate(
+        o,
+        game,
+        playerId,
+        diplomatic,
+        view,
+        topology,
+      );
+    }
+
     rejected = _appendValidationResults(
       results,
       moves,
       rejected,
       (o, prev) => prev ? previousInvalidOrderResult : validateMove(o),
+    );
+
+    rejected = _appendValidationResults(
+      results,
+      armyMoves,
+      rejected,
+      (o, prev) => prev ? previousInvalidOrderResult : validateArmyMove(o),
     );
 
     var stockpile = player.stockpile;

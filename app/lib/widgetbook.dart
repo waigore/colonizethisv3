@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'config/themes.dart';
@@ -12,6 +13,7 @@ import 'features/game/widgets/diplomacy_panel.dart';
 import 'features/game/widgets/military_units_panel.dart';
 import 'features/game/logic/naval_fleet_split_apply.dart';
 import 'features/game/widgets/naval_units_panel.dart';
+import 'features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'features/game/widgets/production_panel.dart';
 import 'features/game/widgets/production_panel_demo_data.dart';
 import 'features/game/widgets/province_sea_zone_detail_overlay.dart';
@@ -19,6 +21,7 @@ import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'features/game/widgets/tech_tree_widget.dart';
 import 'features/game/widgets/technology_screen.dart';
 import 'features/game/widgets/train_civilians_dialog.dart';
+import 'providers/production_allocation_provider.dart';
 import 'features/game/widgets/train_military_dialog.dart';
 import 'widgets/debug_init_game.dart';
 import 'widgets/ct_choice_chip.dart';
@@ -469,7 +472,6 @@ List<WidgetbookNode> get productionPanelDirectories => [
               humanPlayerId: humanPlayerId,
               topology: result.combinedTopology,
               currentOrders: const Orders(),
-              onOrdersChanged: (_) {},
               bus: AppEventBus(),
             ),
           );
@@ -570,6 +572,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           );
         },
@@ -601,6 +604,7 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           );
         },
@@ -651,6 +655,40 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
             useFullAvailability: false,
           ),
         ),
+      ),
+      WidgetbookUseCase(
+        name: 'Commodity breakdown dialog (standalone)',
+        builder: (_) {
+          final game = demoGameForOverlay;
+          final player = fullAvailabilityProductionPlayer();
+          return ProviderScope(
+            child: MaterialApp(
+              theme: AppThemes.colonial,
+              home: Scaffold(
+                body: Builder(
+                  builder: (ctx) {
+                    return Center(
+                      child: TextButton(
+                        onPressed: () {
+                          showDialog<void>(
+                            context: ctx,
+                            builder: (_) => ProductionCommodityBreakdownDialog(
+                              game: game,
+                              player: player,
+                              topology: const MapTopology(),
+                              tileMapByRegion: null,
+                            ),
+                          );
+                        },
+                        child: const Text('Open breakdown dialog'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     ],
   ),
@@ -736,8 +774,9 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
   ),
 ];
 
-/// Production panel with local state for Widgetbook. SPEC/ui/production-panel.md.
-class _ProductionPanelStory extends StatefulWidget {
+/// Production panel for Widgetbook with Riverpod allocation state.
+/// SPEC/ui/production-panel.md.
+class _ProductionPanelStory extends StatelessWidget {
   const _ProductionPanelStory({
     this.playerOverride,
     this.useFullAvailability = true,
@@ -750,29 +789,64 @@ class _ProductionPanelStory extends StatefulWidget {
   final bool useFullAvailability;
 
   @override
-  State<_ProductionPanelStory> createState() => _ProductionPanelStoryState();
+  Widget build(BuildContext context) {
+    return ProviderScope(
+      child: _ProductionPanelStoryBody(
+        playerOverride: playerOverride,
+        useFullAvailability: useFullAvailability,
+      ),
+    );
+  }
 }
 
-class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
-  Map<String, int> _desiredOutputByRecipe = const {};
+class _ProductionPanelStoryBody extends ConsumerWidget {
+  const _ProductionPanelStoryBody({
+    required this.playerOverride,
+    required this.useFullAvailability,
+  });
+
+  final Player? playerOverride;
+  final bool useFullAvailability;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final game = demoGameForOverlay;
     final player =
-        widget.playerOverride ??
-        (widget.useFullAvailability
+        playerOverride ??
+        (useFullAvailability
             ? fullAvailabilityProductionPlayer()
             : partialAvailabilityProductionPlayer());
+    final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
+    final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
+      game: game,
+      topology: const MapTopology(),
+      playerId: player.id,
+      tileMapByRegion: null,
+      defaultAssignmentsByPlayerId: {
+        player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+      },
+    );
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
       child: ProductionPanel(
         game: game,
         player: player,
-        desiredOutputByRecipe: _desiredOutputByRecipe,
-        netDeltasByCommodity: const {},
-        onDesiredOutputChanged: (next) =>
-            setState(() => _desiredOutputByRecipe = next),
+        desiredOutputByRecipe: desiredOutputByRecipe,
+        netDeltasByCommodity: netDeltasByCommodity,
+        onDesiredOutputChanged: (next) {
+          ref.read(productionDesiredOutputProvider.notifier).replaceAll(next);
+        },
+        onOpenCommodityBreakdown: () {
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => ProductionCommodityBreakdownDialog(
+              game: game,
+              player: player,
+              topology: const MapTopology(),
+              tileMapByRegion: null,
+            ),
+          );
+        },
       ),
     );
   }
@@ -1206,6 +1280,7 @@ class _MilitaryPanelWithMapStoryState
               game: game,
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
+              topology: result.combinedTopology,
             ),
           ),
         ],
@@ -1282,6 +1357,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
   String? _centerOnTileKey;
   bool _showProvinceNames = true;
   late Game _game;
+  late MapTopology _combinedTopology;
   late AppEventBus _navalBus;
   StreamSubscription<NavalFleetsUpdatedEvent>? _navalSub;
   StreamSubscription<NavalSplitFleetRequestedEvent>? _navalSplitSub;
@@ -1291,6 +1367,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
     super.initState();
     final result = getDebugInitGameResult();
     _game = result.game;
+    _combinedTopology = result.combinedTopology;
     _navalBus = AppEventBus.create();
     _navalSub = _navalBus.on<NavalFleetsUpdatedEvent>().listen((e) {
       if (!mounted) return;
@@ -1399,6 +1476,7 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
               game: _game,
               humanPlayerId: humanPlayerId,
               bus: _navalBus,
+              topology: _combinedTopology,
             ),
           ),
         ],

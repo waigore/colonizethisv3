@@ -16,6 +16,7 @@ import 'init_town_roads.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
+import '../world/army_migration.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'province_assignment.dart';
@@ -416,6 +417,7 @@ GameSetupResult createGameFromGeneratedMaps({
     selectedGreatPowerIds: config.selectedGreatPowerIds,
     leaderVariantByGpId: config.leaderVariantByGpId,
     namingSeed: namingSeed ?? config.seed,
+    topologyByRegion: topologyByRegion,
   );
 
   // Compute 1-character political glyphs per faction for political map layer.
@@ -436,6 +438,7 @@ GameSetupResult createGameFromGeneratedMaps({
     config: config,
     topologyOldWorld: topologyOldWorld,
   );
+  game = ensureMilitaryArmiesForGame(game);
 
   // Map tint / UI swatches: runtime player ids (gp1..gpN) → GDD default RGB for
   // the semantic Great Power in each setup slot (see greatPowerDefaultColorRgb).
@@ -808,6 +811,7 @@ Game _applyNaming({
   required List<String> selectedGreatPowerIds,
   required Map<String, String> leaderVariantByGpId,
   required int namingSeed,
+  required Map<String, MapTopology> topologyByRegion,
 }) {
   final naming = defaultNamingConfig;
   final owProvinces = game.worldState.oldWorld.provinces;
@@ -1023,6 +1027,18 @@ Game _applyNaming({
       provinces: nwById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
       units: game.worldState.newWorld.units,
     ),
+    seaZoneDisplayNameById: {
+      ...buildSeaZoneDisplayNamesForRegion(
+        topology: topologyByRegion[kRegionOldWorld] ?? const MapTopology(),
+        regionId: kRegionOldWorld,
+        namingSeed: namingSeed,
+      ),
+      ...buildSeaZoneDisplayNamesForRegion(
+        topology: topologyByRegion[kRegionNewWorld] ?? const MapTopology(),
+        regionId: kRegionNewWorld,
+        namingSeed: namingSeed,
+      ),
+    },
   );
 
   _log.i(
@@ -1031,9 +1047,7 @@ Game _applyNaming({
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {
-    _log.d(
-      'naming procedural fallback used count=$proceduralFallbackCount',
-    );
+    _log.d('naming procedural fallback used count=$proceduralFallbackCount');
   }
 
   return game.copyWith(

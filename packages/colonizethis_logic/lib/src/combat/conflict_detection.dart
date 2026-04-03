@@ -8,6 +8,10 @@ class BattleContext {
     required this.regionId,
     required this.defenderFactionId,
     required this.defenderUnitIds,
+    this.defenderArmyIds = const [],
+    this.primaryDefenderArmyId,
+    this.defenderGeneralId,
+    this.defenderGeneralMedals = 0,
     required this.attackers,
     required this.fortLevel,
     required this.terrain,
@@ -17,33 +21,81 @@ class BattleContext {
   final String regionId;
   final String defenderFactionId;
   final List<String> defenderUnitIds;
+  final List<String> defenderArmyIds;
+  final String? primaryDefenderArmyId;
+  final String? defenderGeneralId;
+  final int defenderGeneralMedals;
   final List<AttackingSide> attackers;
   final int fortLevel;
   final String terrain;
 
   bool get isSiege => fortLevel >= 1;
+
+  BattleContext copyWith({
+    String? provinceId,
+    String? regionId,
+    String? defenderFactionId,
+    List<String>? defenderUnitIds,
+    List<String>? defenderArmyIds,
+    String? primaryDefenderArmyId,
+    bool clearPrimaryDefenderArmyId = false,
+    String? defenderGeneralId,
+    bool clearDefenderGeneralId = false,
+    int? defenderGeneralMedals,
+    List<AttackingSide>? attackers,
+    int? fortLevel,
+    String? terrain,
+  }) {
+    return BattleContext(
+      provinceId: provinceId ?? this.provinceId,
+      regionId: regionId ?? this.regionId,
+      defenderFactionId: defenderFactionId ?? this.defenderFactionId,
+      defenderUnitIds: defenderUnitIds ?? this.defenderUnitIds,
+      defenderArmyIds: defenderArmyIds ?? this.defenderArmyIds,
+      primaryDefenderArmyId: clearPrimaryDefenderArmyId
+          ? null
+          : (primaryDefenderArmyId ?? this.primaryDefenderArmyId),
+      defenderGeneralId: clearDefenderGeneralId
+          ? null
+          : (defenderGeneralId ?? this.defenderGeneralId),
+      defenderGeneralMedals:
+          defenderGeneralMedals ?? this.defenderGeneralMedals,
+      attackers: attackers ?? this.attackers,
+      fortLevel: fortLevel ?? this.fortLevel,
+      terrain: terrain ?? this.terrain,
+    );
+  }
 }
 
 /// One attacking army in a battle. SPEC/program/combat-resolution.md.
 class AttackingSide {
   const AttackingSide({
     required this.factionId,
+    this.armyId = '',
     required this.unitIds,
+    this.generalId,
     this.generalMedals = 0,
   });
 
   final String factionId;
+  final String armyId;
   final List<String> unitIds;
+  final String? generalId;
   final int generalMedals;
 
   AttackingSide copyWith({
     String? factionId,
+    String? armyId,
     List<String>? unitIds,
+    String? generalId,
+    bool clearGeneralId = false,
     int? generalMedals,
   }) {
     return AttackingSide(
       factionId: factionId ?? this.factionId,
+      armyId: armyId ?? this.armyId,
       unitIds: unitIds ?? this.unitIds,
+      generalId: clearGeneralId ? null : (generalId ?? this.generalId),
       generalMedals: generalMedals ?? this.generalMedals,
     );
   }
@@ -52,9 +104,14 @@ class AttackingSide {
 /// Conflict detection after movement. SPEC/program/combat-resolution.md.
 ///
 /// Returns BattleContexts for provinces with opposing factions.
-/// Attackers = GPs that moved in; defender = province owner or non-mover.
+/// Attackers are attacking armies (not faction-aggregated sides).
 List<BattleContext> detectConflicts(Game game, Orders orders) {
   final contexts = <BattleContext>[];
+  final armyById = {for (final a in game.worldState.armies) a.id: a};
+  final unitById = {
+    for (final u in game.worldState.oldWorld.units) u.id: u,
+    for (final u in game.worldState.newWorld.units) u.id: u,
+  };
 
   void processRegion(RegionData region) {
     if (region.units.isEmpty) return;
@@ -66,14 +123,38 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       unitsByProvince.putIfAbsent(u.locationProvinceId, () => []).add(u);
     }
 
+    final movedArmyIdsByProvince = <String, List<String>>{};
     final movedIntoByFaction = <String, Set<String>>{};
     for (final entry in orders.moveOrdersByPlayerId.entries) {
       final factionId = entry.key;
       if (!gpIds.contains(factionId)) continue;
       for (final order in entry.value) {
-        movedIntoByFaction
-            .putIfAbsent(order.destinationProvinceId, () => {})
-            .add(factionId);
+        final unit = unitById[order.unitId];
+        if (unit == null || !canUnitInitiateCombat(unit.type)) continue;
+        final currentRegion = ProvinceId.regionIdFrom(unit.locationProvinceId);
+        final dest = ProvinceId.isPrefixed(order.destinationProvinceId)
+            ? order.destinationProvinceId
+            : ProvinceId.full(currentRegion, order.destinationProvinceId);
+        movedIntoByFaction.putIfAbsent(dest, () => <String>{}).add(factionId);
+      }
+    }
+    for (final entry in orders.armyMoveOrdersByPlayerId.entries) {
+      final factionId = entry.key;
+      if (!gpIds.contains(factionId)) continue;
+      for (final order in entry.value) {
+        final army = armyById[order.armyId];
+        if (army == null || army.ownerId != factionId) continue;
+        if (army.isHomeArmy) continue;
+        final destFull = ProvinceId.isPrefixed(order.destinationProvinceId)
+            ? order.destinationProvinceId
+            : ProvinceId.full(
+                ProvinceId.regionIdFrom(army.stationedProvinceId),
+                order.destinationProvinceId,
+              );
+        movedArmyIdsByProvince
+            .putIfAbsent(destFull, () => <String>[])
+            .add(army.id);
+        movedIntoByFaction.putIfAbsent(destFull, () => {}).add(factionId);
       }
     }
 
@@ -84,8 +165,9 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final units = entry.value;
 
       // Only combat-capable units participate in conflict detection.
-      final combatUnits =
-          units.where((u) => canUnitInitiateCombat(u.type)).toList();
+      final combatUnits = units
+          .where((u) => canUnitInitiateCombat(u.type))
+          .toList();
 
       final factionsPresent = combatUnits.map((u) => u.ownerId).toSet();
       if (factionsPresent.length < 2) continue;
@@ -95,7 +177,9 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final ownerId = province.ownerId;
 
       String defenderFactionId;
-      if (ownerId != null && ownerId.isNotEmpty && factionsPresent.contains(ownerId)) {
+      if (ownerId != null &&
+          ownerId.isNotEmpty &&
+          factionsPresent.contains(ownerId)) {
         defenderFactionId = ownerId;
       } else {
         final movers = movedIntoByFaction[provinceId] ?? {};
@@ -117,36 +201,97 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       if (attackerFactionIds.isEmpty) continue;
 
-      final defenderUnits =
-          combatUnits.where((u) => u.ownerId == defenderFactionId).toList();
+      final defenderUnits = combatUnits
+          .where((u) => u.ownerId == defenderFactionId)
+          .toList();
       if (defenderUnits.isEmpty) continue;
 
       final attackers = <AttackingSide>[];
-      for (final fid in attackerFactionIds) {
-        final attackerUnits =
-            combatUnits.where((u) => u.ownerId == fid).toList();
+      final movedArmies =
+          movedArmyIdsByProvince[provinceId] ?? const <String>[];
+      for (final armyId in movedArmies) {
+        final army = armyById[armyId];
+        if (army == null) continue;
+        final fid = army.ownerId;
+        if (!attackerFactionIds.contains(fid)) continue;
+        final attackerUnits = <Unit>[];
+        for (final unitId in army.regimentUnitIds) {
+          final u = unitById[unitId];
+          if (u == null) continue;
+          if (u.ownerId != fid) continue;
+          if (u.locationProvinceId != provinceId) continue;
+          if (!canUnitInitiateCombat(u.type)) continue;
+          attackerUnits.add(u);
+        }
         if (attackerUnits.isEmpty) continue;
-        attackers.add(AttackingSide(
-          factionId: fid,
-          unitIds: attackerUnits.map((u) => u.id).toList(),
-        ));
+        attackers.add(
+          AttackingSide(
+            factionId: fid,
+            armyId: armyId,
+            unitIds: attackerUnits.map((u) => u.id).toList(),
+          ),
+        );
+      }
+      if (attackers.isEmpty) {
+        for (final fid in attackerFactionIds) {
+          final attackerUnits = combatUnits
+              .where((u) => u.ownerId == fid)
+              .toList();
+          if (attackerUnits.isEmpty) continue;
+          attackers.add(
+            AttackingSide(
+              factionId: fid,
+              armyId: 'adhoc|$fid|$provinceId',
+              unitIds: attackerUnits.map((u) => u.id).toList(growable: false),
+            ),
+          );
+        }
       }
 
       if (attackers.isEmpty) continue;
+
+      final defenderArmies =
+          game.worldState.armies
+              .where((a) => a.ownerId == defenderFactionId)
+              .where((a) => a.stationedProvinceId == provinceId)
+              .where(
+                (a) => a.regimentUnitIds.any(
+                  (id) => defenderUnits.any((u) => u.id == id),
+                ),
+              )
+              .toList()
+            ..sort((a, b) => a.id.compareTo(b.id));
+      String? primaryDefenderArmyId;
+      if (defenderArmies.isNotEmpty) {
+        defenderArmies.sort((a, b) {
+          final countCmp = b.regimentUnitIds.length.compareTo(
+            a.regimentUnitIds.length,
+          );
+          if (countCmp != 0) return countCmp;
+          return a.id.compareTo(b.id);
+        });
+        primaryDefenderArmyId = defenderArmies.first.id;
+      }
 
       final fortLevel = province.fortLevel;
       final terrain = province.terrain;
       final regionId = province.regionId;
 
-      contexts.add(BattleContext(
-        provinceId: provinceId,
-        regionId: regionId,
-        defenderFactionId: defenderFactionId,
-        defenderUnitIds: defenderUnits.map((u) => u.id).toList(),
-        attackers: attackers,
-        fortLevel: fortLevel,
-        terrain: terrain,
-      ));
+      contexts.add(
+        BattleContext(
+          provinceId: provinceId,
+          regionId: regionId,
+          defenderFactionId: defenderFactionId,
+          defenderUnitIds: defenderUnits.map((u) => u.id).toList(),
+          defenderArmyIds: defenderArmies
+              .map((a) => a.id)
+              .toList(growable: false),
+          primaryDefenderArmyId: primaryDefenderArmyId,
+          attackers: attackers,
+          fortLevel: fortLevel,
+          terrain: terrain,
+        ),
+      );
     }
   }
 

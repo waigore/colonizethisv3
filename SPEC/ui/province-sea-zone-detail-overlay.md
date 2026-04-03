@@ -73,7 +73,7 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 **Political / Economic / Naval:** Owner, **province resources** listed with **icon + id** per commodity label rule (see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)), prospects, improvements, fleets in port (see game specs). List hover → **`secondaryHighlightTileKey`** via callback (no overlay↔map import).
 
-**Sea zone:** Political + Naval (fleets in zone).
+**Sea zone:** Political + Naval (fleets in zone). **Player-view / fog parity:** if **every** sea tile in that zone in `RegionMapViewData` is `TileVisibility.unrevealed` for the human player, Political and Naval mirror fully unrevealed provinces (`???`); **do not** show canonical `seaZoneDisplayNameById` text until at least one water tile in the zone is not unrevealed (see [fog-and-exploration.md](../game/fog-and-exploration.md)). Otherwise, Political uses the sea-zone display name from world state (keyed by prefixed sea-zone id), not raw ids; if missing, fallback to id is allowed only as a defensive legacy path.
 
 ---
 
@@ -84,6 +84,8 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - Narrow full-width: max height ≤ `third` when parent does not already cap. Bottom slot height `third`: no overflow; tabs scroll. Narrow side rail: full rail height allowed. Desktop: side panel, scrollable.
 - Economic row hover updates `secondaryHighlightTileKey` and a non-orange map outline. Close sets `overlayOpen` false; tile tap may reopen.
 - Unrevealed / fully unrevealed province: `???` obfuscation per player view (unchanged).
+- Fully unrevealed sea zone (all sea tiles in zone unrevealed in map view data): Political and Naval `???`; no preset sea-zone display name until partial reveal.
+- When at least one sea tile in the zone is not unrevealed: sea-zone political header uses world-state display name for the selected prefixed sea-zone id (raw id only as defensive fallback for legacy/missing data).
 
 ### Widgetbook
 
@@ -97,3 +99,4 @@ Map stories use `onMapTileTappedForDetail` and passed-in keys from demo/override
 - **Provider:** `mapProvincePanelProvider` in app; see TDD for app state if split.
 - **PlayerView:** `GameMapArea` builds with `buildPlayerView` + combined topology and passes through `GameMapCanvasStack` → `GameMapProvinceDetailSidePanel` / `GameMapNarrowDetailOverlaySlot` into `ProvinceSeaZoneDetailOverlay`.
 - **Ships in port:** colonizethis_logic helpers as before.
+- **Other `seaZoneDisplayName` call sites (audit):** Naval/military panels and fleet dialogs label zones for **own-fleet / own-port** flows and topology-adjacent move targets; they do not receive `RegionMapViewData` today. Map **detail overlay** was the surface leaking preset names without any revealed water in the zone. If [fog-and-exploration.md](../game/fog-and-exploration.md) later requires name obfuscation for adjacent-move or unit-panel labels, extend those widgets with the same visibility predicate and SPEC updates.

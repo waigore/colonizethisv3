@@ -10,7 +10,6 @@ import '../features/game/widgets/production_screen.dart';
 import '../features/game/widgets/technology_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 
 class Routes {
   Routes._();
@@ -65,18 +64,10 @@ class Routes {
           builder: (_) => ProductionScreen(game: game, player: player),
         );
       case RoutePaths.diplomacy:
-        final topology = args['topology'] as MapTopology;
-        final currentOrders =
-            args['currentOrders'] as Orders? ?? const Orders();
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => DiplomacyScreen(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            topology: topology,
-            currentOrders: currentOrders,
-            onOrdersChanged: (newOrders) {},
-          ),
+          builder: (_) =>
+              DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
         );
       case RoutePaths.diplomacyDetail:
         return MaterialPageRoute<void>(

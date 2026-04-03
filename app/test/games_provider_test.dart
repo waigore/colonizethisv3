@@ -175,56 +175,5 @@ void main() {
     expect(s, isA<PendingDiplomacyIntervention>());
     expect((s! as PendingDiplomacyIntervention).prompts, hasLength(1));
   });
-
-  test('currentGameProvider setGame and clear update the state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(currentGameProvider.notifier);
-    expect(container.read(currentGameProvider), isNull);
-
-    notifier.setGame(demoGameForOverlay);
-    expect(container.read(currentGameProvider)?.id, demoGameForOverlay.id);
-
-    notifier.clear();
-    expect(container.read(currentGameProvider), isNull);
-  });
-
-  test('currentOrdersProvider replaceAll and clear update the state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(currentOrdersProvider.notifier);
-    expect(container.read(currentOrdersProvider), const Orders());
-
-    const next = Orders(
-      buildUnitOrdersByPlayerId: {
-        'p1': [
-          BuildUnitOrder(
-            unitType: 'builder',
-            isMilitary: false,
-            spawnProvinceId: 'oldWorld|p1',
-          ),
-        ],
-      },
-    );
-    notifier.replaceAll(next);
-    expect(container.read(currentOrdersProvider), next);
-
-    notifier.clear();
-    expect(container.read(currentOrdersProvider), const Orders());
-  });
-
-  test('pendingOverturesProvider clear resets pending overtures to null', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(pendingOverturesProvider.notifier);
-    notifier.setPending(const []);
-    expect(container.read(pendingOverturesProvider), isNotNull);
-
-    notifier.clear();
-    expect(container.read(pendingOverturesProvider), isNull);
-  });
 }
 

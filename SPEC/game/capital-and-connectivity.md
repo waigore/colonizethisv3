@@ -64,19 +64,6 @@ After § Town per province assignment (step **7d**), after the **Great Power sta
 
 ---
 
-## Init town roads (game start only)
-
-After § Town per province assignment (step **7d**) and **before** naming (7c) in the setup pipeline, The System may place **initial roads** so each faction’s land-reachable towns connect to its capital on **owned land only**.
-
-- **Graph:** 4-neighbor adjacency on tiles that lie in provinces **owned by that faction** in a given **region** (`oldWorld` / `newWorld`). No tiles are added in neutral or foreign-owned provinces.
-- **Path:** For each owned province with a `townTileKey`, when the town tile is reachable from the **capital tile** in that graph, The System raises **road level to at least 1** on every tile of one **globally shortest** path from that town to the capital (deterministic tie-break: same 4-neighbor expansion order as port→capital BFS in `capital_choice` setup).
-- **Regions:** Which regions run this step is configured by `GameSetupConfig.initTownRoadWiringRegionIds` (program). Default is **`oldWorld` only** so New World tribes are not wired at init unless the ruleset explicitly includes `newWorld`.
-- **Factions:** Great Powers, Minor Nations, and Tribes are all considered **when** their **capital tile’s region** is included in that set (so default config wires OW minors and GPs; NW capitals are skipped by default).
-- **Merge:** Road levels use **max** with any existing init roads (e.g. capital seaboard links) so nothing is downgraded.
-- **Scope:** **Init only** — not applied when the capital moves during turn resolution.
-
----
-
 ## Port connection to capital
 
 A **port** is connected to the player's capital iff: **(1)** the capital is on the seaboard (capital tile adjacent to sea), or **(2)** the capital is not on the seaboard but there exists a path of road/railroad tiles from the capital to that port (same rules as tile connectivity). This applies in both the capital region and overseas: for overseas, a tile is connected if it has a road path to a port in that province that is itself connected to the capital (by (1) or (2)).

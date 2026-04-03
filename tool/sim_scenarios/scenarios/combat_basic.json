@@ -1,6 +1,6 @@
 {
   "name": "combat_basic",
-  "description": "Combat (SPEC/game/combat.md): attacker strength > defender → attacker victory, province flips. Two adjacent OW provinces; gp1 defends p1 with 1 regiment, gp2 attacks from p2 with 2 regiments; move both attackers to p1; assert p1 owner gp2.",
+  "description": "Combat (SPEC/game/combat.md): attacker strength > defender → attacker victory, province flips. gp1 defends p1 with 1 regiment, gp2 attacks from adjacent non-capital p3 with 2 regiments; assert p1 owner gp2.",
   "init": {
     "type": "fromTopology",
     "config": {
@@ -13,19 +13,20 @@
       }
     },
     "oldWorld": {
-      "grid": [["p1", "sea1", "p2"], ["p1", "sea1", "p2"]],
+      "grid": [["p1", "sea1", "p2", "p3"], ["p1", "sea1", "p2", "p3"]],
       "nodes": [
         {"id": "p1", "regionId": "oldWorld", "type": "province"},
         {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "p3", "regionId": "oldWorld", "type": "province"},
         {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
       ],
-      "edges": [{"id1": "p1", "id2": "p2"}, {"id1": "p1", "id2": "sea1"}, {"id1": "p2", "id2": "sea1"}]
+      "edges": [{"id1": "p1", "id2": "p2"}, {"id1": "p1", "id2": "p3"}, {"id1": "p1", "id2": "sea1"}, {"id1": "p2", "id2": "sea1"}]
     }
   },
   "setup": {
     "units": [
       {"player": "gp1", "type": "peasant_levies", "province": "oldWorld|p1", "count": 1},
-      {"player": "gp2", "type": "peasant_levies", "province": "oldWorld|p2", "count": 2}
+      {"player": "gp2", "type": "peasant_levies", "province": "oldWorld|p3", "count": 2}
     ]
   },
   "turns": [

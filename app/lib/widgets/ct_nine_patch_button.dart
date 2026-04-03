@@ -53,61 +53,48 @@ class CtNinePatchButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onPressed : null,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double? width = constraints.maxWidth.isFinite
-                  ? constraints.maxWidth
-                  : null;
-              final double? height = constraints.maxHeight.isFinite &&
-                      constraints.maxHeight >= minHeight
-                  ? constraints.maxHeight
-                  : null;
-              return NineTileBoxWidget.asset(
-                path: _kAssetPath,
-                tileSize: _tileSize,
-                destTileSize: destTileSize,
-                width: width,
-                height: height,
-                padding: padding ??
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Center(
-                  child: DefaultTextStyle(
-                    style: (theme.textTheme.titleSmall ??
-                            theme.textTheme.bodyLarge ??
-                            const TextStyle())
-                        .copyWith(color: foregroundColor),
-                    child: IconTheme(
-                      data: IconThemeData(
-                        color: foregroundColor,
-                        size: 20,
-                      ),
-                      child: child,
-                    ),
+          child: NineTileBoxWidget.asset(
+            path: _kAssetPath,
+            tileSize: _tileSize,
+            destTileSize: destTileSize,
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Center(
+              child: DefaultTextStyle(
+                style: (theme.textTheme.titleSmall ??
+                        theme.textTheme.bodyLarge ??
+                        const TextStyle())
+                    .copyWith(color: foregroundColor),
+                child: IconTheme(
+                  data: IconThemeData(
+                    color: foregroundColor,
+                    size: 20,
                   ),
-                ),
-                loadingBuilder: (_) => _FallbackButton(
-                  color: fallbackColor,
-                  padding: padding ??
-                      const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
                   child: child,
                 ),
-                errorBuilder: (_) {
-                  appLogger('ui').w(
-                    'nine-patch button asset not found, using fallback',
-                  );
-                  return _FallbackButton(
-                    color: fallbackColor,
-                    padding: padding ??
-                        const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                    child: child,
-                  );
-                },
+              ),
+            ),
+            loadingBuilder: (_) => _FallbackButton(
+              color: fallbackColor,
+              padding: padding ??
+                  const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+              child: child,
+            ),
+            errorBuilder: (_) {
+              appLogger('ui').w(
+                'nine-patch button asset not found, using fallback',
+              );
+              return _FallbackButton(
+                color: fallbackColor,
+                padding: padding ??
+                    const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                child: child,
               );
             },
           ),

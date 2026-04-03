@@ -8,7 +8,11 @@ Centralized commodity storage and multi-phase production flow per player. Provin
 ### Stockpiles
 Each player holds one **stockpile** — a map of commodity → quantity. There is no per-province storage. All extraction, production, trade, and consumption flows through the player's central stockpile.
 
-Per Imperialism II: "commodities produced in these terrain tiles move to your warehouse" — the warehouse is the player's centralized stockpile.
+Per Imperialism II: "commodities produced in these terrain tiles move to your warehouse" — that line is **narrative consolidation** only: the game still uses a single central aggregate, not simulated warehouse buildings or depots.
+
+### Strategic abstraction (not warehouse logistics)
+
+The stockpile is an **in-game abstraction** of a nation’s **strategic resource pool** — what the economy can draw on for production, trade, consumption, and military upkeep. **Warehouse logistics** (storage buildings, per-site capacity, inland distribution of bulk goods, spoilage in silos, etc.) are **not modeled** and are intentionally out of scope. Unbounded quantities reflect this abstraction, not a claim about infinite physical sheds.
 
 ### Production Flow
 1. **Extraction:** Terrain tiles in owned provinces produce resources per improvement level. Resources are transported (auto-transport) to the player's stockpile.
@@ -19,7 +23,7 @@ Per Imperialism II: "commodities produced in these terrain tiles move to your wa
 For UI preview of upcoming stockpile changes in the production panel, the same four-phase order above is used by a dry-run projection API; preview must not use allocation-only recipe arithmetic.
 
 ### Capacity
-Capacity for all commodities is infinite; no limit on the amount of each commodity for the player.
+By design, the central stockpile is **permanently unbounded**: no per-commodity cap, no aggregate cap, and no ruleset-defined storage limits. Only per-turn **cargo** limits apply to **overseas delivery** (throughput), not to how much can be held once delivered ([auto-transport.md](../program/auto-transport.md)). This matches the strategic-abstraction model above: there is no warehouse simulation to cap the aggregate.
 
 ### Relations
 - **Player** → **Stockpile** (commodity quantities).
@@ -34,9 +38,9 @@ Capacity for all commodities is infinite; no limit on the amount of each commodi
   When the System runs the Extraction phase of turn resolution  
   Then the System sums the effective yields from all connected tiles for that player by commodity id and increases the player’s central stockpile quantities by exactly those sums without storing any additional per-province stockpile values.
 
-- Given a player has a non-negative integer quantity of each commodity in the central stockpile and the active ruleset does not define any stockpile capacity limits  
+- Given a player has a non-negative integer quantity of each commodity in the central stockpile and central stockpile storage is unbounded by design (no warehouse maximum)  
   When any phase (Extraction, Riches-to-treasury, Production, or Consumption) adjusts stockpile quantities during a turn  
-  Then the System allows stockpile quantities to grow without applying any hard caps, discards, or automatic market sales, and ensures all adjustments preserve non-negative integer quantities for each commodity.
+  Then the System allows stockpile quantities to grow without applying any storage caps, storage-related discards, or automatic market sales triggered by a full warehouse, and ensures all adjustments preserve non-negative integer quantities for each commodity within engine integer limits.
 
 - Given a player has enough input commodities and **idle labour** after Consumption to run one or more production recipes defined in [production-recipes.md](production-recipes.md)  
   When the System executes the Production phase for that player  
