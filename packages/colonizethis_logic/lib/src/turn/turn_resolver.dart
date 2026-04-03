@@ -14,6 +14,7 @@ import '../setup/capital_choice.dart';
 import '../world/connectivity_resolver.dart';
 import '../economy/economy_consumption.dart';
 import '../economy/economy_extraction.dart';
+import '../economy/economy_preview_stockpile_phase.dart';
 import '../economy/economy_production.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../diplomacy/diplomacy_resolver.dart';
@@ -868,6 +869,104 @@ Game _runRichesToTreasuryPhase(Game game) {
   }
 
   return game.copyWith(players: updatedPlayers);
+}
+
+Map<String, int> _stockpileCommodityDeltaMap(Stockpile before, Stockpile after) {
+  final keys = <String>{
+    ...before.quantities.keys,
+    ...after.quantities.keys,
+  };
+  final out = <String, int>{};
+  for (final k in keys) {
+    final d = after.quantityOf(k) - before.quantityOf(k);
+    if (d != 0) {
+      out[k] = d;
+    }
+  }
+  return out;
+}
+
+/// Per-phase stockpile commodity deltas for [playerId] when running the same
+/// preview pipeline as [applyEconomyPhasesForPreview]. Maps omit zero deltas.
+/// For each commodity id, the sum of the four phase maps equals that
+/// commodity’s net delta from the production-panel preview (same inputs).
+Map<EconomyPreviewStockpilePhase, Map<String, int>>
+economyPreviewStockpilePhaseDeltasForPlayer({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+}) {
+  final empty = {
+    for (final p in EconomyPreviewStockpilePhase.values) p: <String, int>{},
+  };
+  if (game.playerById(playerId) == null) {
+    return empty;
+  }
+
+  Stockpile stockpileForViewed(Game g) {
+    final p = g.playerById(playerId);
+    return p?.stockpile ?? const Stockpile();
+  }
+
+  var state = game;
+  final landFeedingCoverageByPlayerId = <String, double>{};
+  final navalFeedingCoverageByPlayerId = <String, double>{};
+  final idleLabourByPlayerId = <String, WorkerIdleCounts>{};
+
+  final beforeExtraction = stockpileForViewed(state);
+  state = _runExtractionPhase(
+    state,
+    topology,
+    tileMapByRegion,
+    extractedByPlayerId,
+  );
+  final extraction = _stockpileCommodityDeltaMap(
+    beforeExtraction,
+    stockpileForViewed(state),
+  );
+
+  final beforeRiches = stockpileForViewed(state);
+  state = _runRichesToTreasuryPhase(state);
+  final richesToTreasury = _stockpileCommodityDeltaMap(
+    beforeRiches,
+    stockpileForViewed(state),
+  );
+
+  final beforeConsumption = stockpileForViewed(state);
+  state = _runConsumptionPhase(
+    state,
+    landFeedingCoverageByPlayerId,
+    navalFeedingCoverageByPlayerId,
+    idleLabourByPlayerId,
+  );
+  final consumption = _stockpileCommodityDeltaMap(
+    beforeConsumption,
+    stockpileForViewed(state),
+  );
+
+  final beforeProduction = stockpileForViewed(state);
+  state = _runProductionPhase(
+    state,
+    defaultAssignments,
+    defaultAssignmentsByPlayerId,
+    idleLabourByPlayerId,
+    null,
+  );
+  final production = _stockpileCommodityDeltaMap(
+    beforeProduction,
+    stockpileForViewed(state),
+  );
+
+  return {
+    EconomyPreviewStockpilePhase.extraction: extraction,
+    EconomyPreviewStockpilePhase.richesToTreasury: richesToTreasury,
+    EconomyPreviewStockpilePhase.consumption: consumption,
+    EconomyPreviewStockpilePhase.production: production,
+  };
 }
 
 /// Runs Extraction → Riches-to-treasury → Consumption → Production only, in
