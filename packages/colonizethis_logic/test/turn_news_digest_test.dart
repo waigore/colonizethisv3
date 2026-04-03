@@ -136,7 +136,7 @@ void main() {
     );
 
     test(
-      'Given province ownership gp1 to null When build Then capture line matches ProvinceCapturedEvent rule',
+      'Given province ownership gp1 to null When build Then no province captured line',
       () {
         const regionId = 'oldWorld';
         const localPid = 'P1';
@@ -154,6 +154,7 @@ void main() {
           ),
           players: const [
             Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
           ],
         );
         final end = Game(
@@ -169,6 +170,51 @@ void main() {
           ),
           players: const [
             Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
+          ],
+        );
+        final r = buildTurnNewsDigestForComplete(start: start, end: end);
+        final caps = r.digest!.lines.whereType<TurnNewsProvinceCapturedLine>();
+        expect(caps, isEmpty);
+      },
+    );
+
+    test(
+      'Given province ownership gp1 to gp2 When build Then capture line',
+      () {
+        const regionId = 'oldWorld';
+        const localPid = 'P1';
+        final fullPid = ProvinceId.full(regionId, localPid);
+        final start = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: fullPid, regionId: regionId, ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
+          ],
+        );
+        final end = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: fullPid, regionId: regionId, ownerId: 'gp2'),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
+            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
           ],
         );
         final r = buildTurnNewsDigestForComplete(start: start, end: end);
@@ -176,7 +222,7 @@ void main() {
         expect(caps, hasLength(1));
         expect(caps.single.provinceId, fullPid);
         expect(caps.single.previousOwnerId, 'gp1');
-        expect(caps.single.newOwnerId, '');
+        expect(caps.single.newOwnerId, 'gp2');
       },
     );
 

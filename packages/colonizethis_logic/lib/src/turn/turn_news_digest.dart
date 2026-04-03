@@ -76,14 +76,18 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
       final pid = _fullProvinceId(prov);
       final before = _ownerForProvince(start, pid);
       final after = _ownerForProvince(end, pid);
-      // Same predicate as emitProvinceCapturedEvents (previousOwner != null &&
-      // previousOwner != prov.ownerId).
-      if (before != null && before != after) {
+      // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
+      // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
+      if (before != null &&
+          before.isNotEmpty &&
+          after != null &&
+          after.isNotEmpty &&
+          before != after) {
         out.add(
           TurnNewsProvinceCapturedLine(
             provinceId: pid,
             previousOwnerId: before,
-            newOwnerId: after ?? '',
+            newOwnerId: after,
           ),
         );
       }

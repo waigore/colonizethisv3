@@ -24,7 +24,7 @@ Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use
 |----------------------|----------------------------------|-------------------|
 | `combat_result`      | After Combat phase              | provinceId (prefixed), attackerId, defenderId, winnerId, casualties (or summary). |
 | `naval_combat_result` | After each resolved sea battle in Naval interception phase | seaZoneId (local, e.g. s3), side1OwnerId, side2OwnerId, outcomeName (`NavalBattleOutcome.name`), turnNumber, optional winnerOwnerId, retreat flags. |
-| `province_captured`  | When province owner changes     | provinceId (prefixed), previousOwnerId, newOwnerId, turnNumber. |
+| `province_captured`  | When province ownership transfers **from one non-empty faction to another** (combat capture or other supported handover) | provinceId (prefixed), previousOwnerId, newOwnerId (both non-empty faction ids), turnNumber. Not emitted when the new `ownerId` would be null/empty—uncolonized frontier is not a capture outcome; see [world-model.md](../game/world-model.md) § Invariants. |
 | `diplomacy_change`   | After Diplomacy phase           | actorId, targetId, changeType (e.g. war, peace, alliance), turnNumber. |
 | `research_complete`   | When a tech is researched      | playerId, techId, turnNumber. |
 | `victory_set`        | End-of-turn when victory set    | winnerPlayerId, victoryType, turnNumber. See [victory.md](../game/victory.md). |
@@ -59,6 +59,8 @@ The **caller** that owns the order list or invokes TurnResolver is responsible f
 - **Emission — order_rejected.** Given the order engine validates a player’s order list and the first rejection occurs at order N with reason R, when validation returns, then the system has emitted an `order_rejected` event for that order with a reasonCode consistent with R (or the validation layer exposes the same so that a consumer can emit the event).
 - **Determinism.** Given the same Game (and WorldState), same per-player order lists, same ruleset, and same seeds, when the system runs turn resolution and order validation, then the sequence of GameEvents emitted for that run is identical to any other run with the same inputs.
 - **Province identity.** Given any GameEvent that carries a province id, when the event is emitted, then that id is in prefixed form (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+
+- **Emission — province_captured.** Given combat or another resolver step would change a province from owner **A** to owner **B**, when **A** and **B** are each a non-empty faction id and **A ≠ B**, then the system may emit a `province_captured` event with `previousOwnerId == A`, `newOwnerId == B`, and prefixed `provinceId`. Given the post-resolution `ownerId` for that province is null or empty while the previous snapshot had a non-empty owner, when the emitter runs, then the system does **not** emit `province_captured` for that province (invalid capture state; see [world-model.md](../game/world-model.md) § Invariants).
 
 ---
 

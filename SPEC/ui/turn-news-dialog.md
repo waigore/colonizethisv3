@@ -15,4 +15,4 @@
 
 ## Copy
 
-Neutral diplomacy wording (no invented aggressor). Province ids in logic remain prefixed; UI may show `displayName` when present.
+Neutral diplomacy wording (no invented aggressor). Province ids in logic remain prefixed; UI may show `displayName` when present. **Province captured** bullets are only produced for **faction-to-faction** handovers (both previous and new owner non-empty); see [turn-news-digest.md](../program/turn-news-digest.md) and [world-model.md](../game/world-model.md) § Invariants.

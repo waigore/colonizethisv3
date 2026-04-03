@@ -97,6 +97,10 @@ void emitDiplomacyChangeEvents(
 }
 
 /// Emit province_captured for each province whose owner changed vs [previousOwnership].
+///
+/// Only when **both** previous and new owners are non-empty faction ids (handover to
+/// another faction). Null/empty `ownerId` is uncolonized frontier only, not a capture
+/// outcome. SPEC/game/world-model.md § Invariants.
 void emitProvinceCapturedEvents(
   Map<String, String?> previousOwnership,
   Game stateAfter,
@@ -111,11 +115,16 @@ void emitProvinceCapturedEvents(
   ]) {
     for (final prov in region.provinces) {
       final previousOwner = previousOwnership[prov.id];
-      if (previousOwner != null && previousOwner != prov.ownerId) {
+      final newOwner = prov.ownerId;
+      if (previousOwner != null &&
+          previousOwner.isNotEmpty &&
+          newOwner != null &&
+          newOwner.isNotEmpty &&
+          previousOwner != newOwner) {
         final event = ProvinceCapturedEvent(
           provinceId: prov.id,
           previousOwnerId: previousOwner,
-          newOwnerId: prov.ownerId ?? '',
+          newOwnerId: newOwner,
           turnNumber: turn,
         );
         deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);

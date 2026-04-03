@@ -21,7 +21,7 @@ Lists are kept sorted for deterministic JSON and equality.
 
 Categories and sort keys:
 
-1. **Province captured** — same predicate as `emitProvinceCapturedEvents`: `previousOwner != null` and `previousOwner != prov.ownerId` (new owner may be null/empty). Sort by `provinceId`.
+1. **Province captured** — same predicate as `emitProvinceCapturedEvents`: **both** `previousOwner` and `prov.ownerId` are non-empty faction ids and they differ (faction-to-faction handover). Null/empty `ownerId` is uncolonized frontier only, not a capture outcome. Sort by `provinceId`.
 2. **War / peace** — symmetric pair `RelationState` transitions only: to `atWar` or to `atPeace`. Neutral copy: faction ids sorted lexicographically (`A` and `B`). No aggressor/defender labels.
 3. **Overture advanced** — `OvertureState.stage` strictly increased vs start of turn for the same `(gpId, targetId)`; all faction pairs. Sort by `gpId`, `targetId`, then `stage.name`.
 4. **Province discovered** — any Great Power tile visibility in that province moves from all-`unknown` to any non-`unknown` (includes partial/coastal reveal). Emit only if province id ∉ `newsDigestProvinceRevealDoneIds` at start; then add id to tracking. Sort by `provinceId`.
@@ -32,3 +32,19 @@ Within the digest, emit lines in category order above; within a category, use th
 ## Determinism
 
 Same start/end games → same digest lines and order. Implementation uses sorted iteration over provinces, relations, overtures, and zones.
+
+## Acceptance criteria
+
+- Given a start/end pair where a province’s `ownerId` changes from a non-empty faction **A** to **null** or empty  
+  When the system builds the turn news digest for that resolution  
+  Then the digest contains **no** `TurnNewsProvinceCapturedLine` for that province.
+
+- Given a start/end pair where a province’s `ownerId` changes from non-empty faction **A** to non-empty faction **B** with **A ≠ B**  
+  When the system builds the turn news digest for that resolution  
+  Then the digest includes exactly one province-captured line for that province with `previousOwnerId == A` and `newOwnerId == B` (prefixed province id), consistent with `emitProvinceCapturedEvents` for the same transition.
+
+---
+
+## Integration
+
+Province ownership invariant for captures: [world-model.md](../game/world-model.md) § Invariants. Event contract: [game-events.md](game-events.md).
