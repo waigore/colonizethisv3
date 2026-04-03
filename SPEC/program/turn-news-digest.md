@@ -21,7 +21,7 @@ Lists are kept sorted for deterministic JSON and equality.
 
 Categories and sort keys:
 
-1. **Province captured** — same rule as `ProvinceCapturedEvent`: `previousOwner != null`, owner changed. Sort by `provinceId`.
+1. **Province captured** — same predicate as `emitProvinceCapturedEvents`: `previousOwner != null` and `previousOwner != prov.ownerId` (new owner may be null/empty). Sort by `provinceId`.
 2. **War / peace** — symmetric pair `RelationState` transitions only: to `atWar` or to `atPeace`. Neutral copy: faction ids sorted lexicographically (`A` and `B`). No aggressor/defender labels.
 3. **Overture advanced** — `OvertureState.stage` strictly increased vs start of turn for the same `(gpId, targetId)`; all faction pairs. Sort by `gpId`, `targetId`, then `stage.name`.
 4. **Province discovered** — any Great Power tile visibility in that province moves from all-`unknown` to any non-`unknown` (includes partial/coastal reveal). Emit only if province id ∉ `newsDigestProvinceRevealDoneIds` at start; then add id to tracking. Sort by `provinceId`.

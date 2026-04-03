@@ -41,12 +41,7 @@ void main() {
           newWorld: RegionData(),
         ),
         players: const [
-          Player(
-            id: 'p1',
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 0,
-          ),
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
         ],
       );
       final updated = game.copyWith(
@@ -81,7 +76,9 @@ void main() {
                 builder: (context, ref, _) {
                   final g = ref.watch(currentGameProvider);
                   return Scaffold(
-                    body: Text('turn:${g?.worldState.turnState.turnNumber ?? -1}'),
+                    body: Text(
+                      'turn:${g?.worldState.turnState.turnNumber ?? -1}',
+                    ),
                   );
                 },
               ),
@@ -115,12 +112,7 @@ void main() {
           newWorld: RegionData(),
         ),
         players: const [
-          Player(
-            id: 'p1',
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 0,
-          ),
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
         ],
       );
       final updated = game.copyWith(
@@ -175,6 +167,214 @@ void main() {
 
       expect(opens, hasLength(1));
       expect(opens.single.dialogId, 'turn_news');
+    },
+  );
+
+  testWidgets(
+    'Given turn complete at turn 0 with digest When processed Then does not emit OpenDialogEvent',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'g_news_turn0',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+      final updated = game.copyWith(
+        worldState: game.worldState.copyWith(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        ),
+      );
+
+      final adapter = GameSaveAdapter();
+      adapter.save(gamesBox, game);
+
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final opens = <OpenDialogEvent>[];
+      final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
+      addTearDown(openSub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith((ref) {
+              final svc = GameService(gamesBox, adapter);
+              svc.eventBus = bus;
+              return svc;
+            }),
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          ],
+          child: MaterialApp(
+            home: GameToUIBusListener(
+              gameId: game.id,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      adapter.save(gamesBox, updated);
+      bus.emit(
+        TurnResolutionCompleteEvent(
+          gameId: game.id,
+          turnNumber: 0,
+          turnNewsDigest: _emptyDigestForTurn(0),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(opens, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'Given reloaded game has victory When turn complete with digest Then does not emit OpenDialogEvent',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'g_news_victory',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+      final updated = game.copyWith(
+        worldState: game.worldState.copyWith(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+        ),
+        victory: const VictoryState(
+          winnerPlayerId: 'p1',
+          type: VictoryType.military,
+          turnNumber: 2,
+        ),
+      );
+
+      final adapter = GameSaveAdapter();
+      adapter.save(gamesBox, game);
+
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final opens = <OpenDialogEvent>[];
+      final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
+      addTearDown(openSub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith((ref) {
+              final svc = GameService(gamesBox, adapter);
+              svc.eventBus = bus;
+              return svc;
+            }),
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          ],
+          child: MaterialApp(
+            home: GameToUIBusListener(
+              gameId: game.id,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      adapter.save(gamesBox, updated);
+      bus.emit(
+        TurnResolutionCompleteEvent(
+          gameId: game.id,
+          turnNumber: 2,
+          turnNewsDigest: _emptyDigestForTurn(1),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(opens, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'Given turn complete without digest When victory null Then does not emit OpenDialogEvent',
+    (WidgetTester tester) async {
+      final game = Game(
+        id: 'g_news_no_digest',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+      final updated = game.copyWith(
+        worldState: game.worldState.copyWith(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+        ),
+      );
+
+      final adapter = GameSaveAdapter();
+      adapter.save(gamesBox, game);
+
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final opens = <OpenDialogEvent>[];
+      final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
+      addTearDown(openSub.cancel);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith((ref) {
+              final svc = GameService(gamesBox, adapter);
+              svc.eventBus = bus;
+              return svc;
+            }),
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          ],
+          child: MaterialApp(
+            home: GameToUIBusListener(
+              gameId: game.id,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      adapter.save(gamesBox, updated);
+      bus.emit(
+        const TurnResolutionCompleteEvent(
+          gameId: 'g_news_no_digest',
+          turnNumber: 2,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(opens, isEmpty);
     },
   );
 

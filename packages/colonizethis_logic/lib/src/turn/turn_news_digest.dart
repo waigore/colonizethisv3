@@ -20,14 +20,18 @@ import '../world/player_view.dart';
   final diplomacy = _diplomacyLines(start, end);
   final overtures = _overtureLines(start, end);
 
-  final provReadDone =
-      Set<String>.from(start.worldState.newsDigestProvinceRevealDoneIds);
-  final provWriteDone =
-      Set<String>.from(start.worldState.newsDigestProvinceRevealDoneIds);
-  final seaReadDone =
-      Set<String>.from(start.worldState.newsDigestSeaZoneFleetDoneIds);
-  final seaWriteDone =
-      Set<String>.from(start.worldState.newsDigestSeaZoneFleetDoneIds);
+  final provReadDone = Set<String>.from(
+    start.worldState.newsDigestProvinceRevealDoneIds,
+  );
+  final provWriteDone = Set<String>.from(
+    start.worldState.newsDigestProvinceRevealDoneIds,
+  );
+  final seaReadDone = Set<String>.from(
+    start.worldState.newsDigestSeaZoneFleetDoneIds,
+  );
+  final seaWriteDone = Set<String>.from(
+    start.worldState.newsDigestSeaZoneFleetDoneIds,
+  );
 
   final discoveries = _provinceDiscoveryLines(
     start: start,
@@ -72,10 +76,9 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
       final pid = _fullProvinceId(prov);
       final before = _ownerForProvince(start, pid);
       final after = _ownerForProvince(end, pid);
-      if (before != null &&
-          before.isNotEmpty &&
-          after != before &&
-          (after ?? '').isNotEmpty) {
+      // Same predicate as emitProvinceCapturedEvents (previousOwner != null &&
+      // previousOwner != prov.ownerId).
+      if (before != null && before != after) {
         out.add(
           TurnNewsProvinceCapturedLine(
             provinceId: pid,
@@ -112,8 +115,7 @@ Map<String, RelationState> _pairToState(Game g) {
   return m;
 }
 
-String _pairKey(String a, String b) =>
-    a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
+String _pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
 List<TurnNewsDiplomacyLine> _diplomacyLines(Game start, Game end) {
   final startMap = _pairToState(start);
