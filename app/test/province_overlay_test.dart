@@ -180,6 +180,178 @@ void main() {
       expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
     });
 
+    testWidgets(
+      'AC: sea zone hides canonical name when all sea tiles in zone are unrevealed',
+      (WidgetTester tester) async {
+        const tinyPngBase64 =
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=';
+        final tinyPng = Uint8List.fromList(base64Decode(tinyPngBase64));
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMessageHandler('flutter/assets', (message) async {
+              final key = const StringCodec().decodeMessage(message);
+              if (key == 'assets/images/ui_button_nine_patch.png') {
+                return ByteData.view(tinyPng.buffer);
+              }
+              return null;
+            });
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMessageHandler('flutter/assets', null);
+        });
+
+        final baseRegion = demoRegionForOverlay;
+        final cells = baseRegion.cells
+            .map(
+              (c) => CellViewData(
+                x: c.x,
+                y: c.y,
+                regionCellId: c.regionCellId,
+                isSea: c.isSea,
+                terrainTypeId: c.terrainTypeId,
+                terrainType: c.terrainType,
+                resourceId: c.resourceId,
+                ownerFactionId: c.ownerFactionId,
+                provinceDisplayName: c.provinceDisplayName,
+                improvementLevel: c.improvementLevel,
+                roadLevel: c.roadLevel,
+                visibility: TileVisibility.unrevealed,
+              ),
+            )
+            .toList();
+        final region = RegionMapViewData(
+          regionId: baseRegion.regionId,
+          width: baseRegion.width,
+          height: baseRegion.height,
+          cellSize: baseRegion.cellSize,
+          cells: cells,
+          capitalMarkers: baseRegion.capitalMarkers,
+          portMarkers: baseRegion.portMarkers,
+          factionColors: baseRegion.factionColors,
+          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
+          terrainColors: baseRegion.terrainColors,
+          unitMarkers: baseRegion.unitMarkers,
+        );
+
+        final game = demoGameForOverlay;
+        final named = game.copyWith(
+          worldState: game.worldState.copyWith(
+            seaZoneDisplayNameById: {
+              sampleSeaZoneIdForOverlay: 'Named Test Sea',
+            },
+          ),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: named,
+                region: region,
+                displayId: sampleSeaZoneIdForOverlay,
+                selectedTileKey: null,
+                humanPlayerId: named.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Named Test Sea'), findsNothing);
+        expect(find.textContaining('Sea zone:'), findsNothing);
+        expect(find.text('???'), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'AC: sea zone shows display name when at least one sea tile in zone is fogged',
+      (WidgetTester tester) async {
+        const tinyPngBase64 =
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=';
+        final tinyPng = Uint8List.fromList(base64Decode(tinyPngBase64));
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMessageHandler('flutter/assets', (message) async {
+              final key = const StringCodec().decodeMessage(message);
+              if (key == 'assets/images/ui_button_nine_patch.png') {
+                return ByteData.view(tinyPng.buffer);
+              }
+              return null;
+            });
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMessageHandler('flutter/assets', null);
+        });
+
+        final baseRegion = demoRegionForOverlay;
+        final seaPrefixed = sampleSeaZoneIdForOverlay;
+        final seaParts = seaPrefixed.split('|');
+        final localSea = seaParts.length >= 2
+            ? seaParts.sublist(1).join('|')
+            : seaPrefixed;
+        var revealOneSeaInZone = true;
+        final cells = baseRegion.cells.map((c) {
+          final inZone = c.isSea && c.regionCellId == localSea;
+          var visibility = TileVisibility.unrevealed;
+          if (inZone && revealOneSeaInZone) {
+            revealOneSeaInZone = false;
+            visibility = TileVisibility.fogged;
+          }
+          return CellViewData(
+            x: c.x,
+            y: c.y,
+            regionCellId: c.regionCellId,
+            isSea: c.isSea,
+            terrainTypeId: c.terrainTypeId,
+            terrainType: c.terrainType,
+            resourceId: c.resourceId,
+            ownerFactionId: c.ownerFactionId,
+            provinceDisplayName: c.provinceDisplayName,
+            improvementLevel: c.improvementLevel,
+            roadLevel: c.roadLevel,
+            visibility: visibility,
+          );
+        }).toList();
+        final region = RegionMapViewData(
+          regionId: baseRegion.regionId,
+          width: baseRegion.width,
+          height: baseRegion.height,
+          cellSize: baseRegion.cellSize,
+          cells: cells,
+          capitalMarkers: baseRegion.capitalMarkers,
+          portMarkers: baseRegion.portMarkers,
+          factionColors: baseRegion.factionColors,
+          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
+          terrainColors: baseRegion.terrainColors,
+          unitMarkers: baseRegion.unitMarkers,
+        );
+
+        final game = demoGameForOverlay;
+        final named = game.copyWith(
+          worldState: game.worldState.copyWith(
+            seaZoneDisplayNameById: {
+              sampleSeaZoneIdForOverlay: 'Named Test Sea',
+            },
+          ),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: named,
+                region: region,
+                displayId: sampleSeaZoneIdForOverlay,
+                selectedTileKey: null,
+                humanPlayerId: named.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
+      },
+    );
+
     testWidgets('AC: Close button invokes onClose', (
       WidgetTester tester,
     ) async {

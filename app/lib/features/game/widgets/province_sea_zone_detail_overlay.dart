@@ -550,6 +550,38 @@ _OverlayContent _seaZoneContent({
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)
       .toList();
 
+  final isSeaZoneFullyUnrevealed =
+      region.regionId == regionId &&
+      !region.cells.any(
+        (c) =>
+            c.isSea &&
+            c.regionCellId == localSeaZoneId &&
+            c.visibility != TileVisibility.unrevealed,
+      );
+  if (isSeaZoneFullyUnrevealed) {
+    const tabLabels = ['Political', 'Naval'];
+    final politicalObs = _buildSection('Political', const Text('???'));
+    final navalObs = _buildSection('Naval', const Text('???'));
+    const sections = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Political', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+        SizedBox(height: 12),
+        Text('Naval', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('???'),
+      ],
+    );
+    return _OverlayContent(
+      tabLabels: tabLabels,
+      tabViews: [politicalObs, navalObs],
+      sections: sections,
+    );
+  }
+
   final seaName = seaZoneDisplayName(
     game: game,
     regionId: regionId,
