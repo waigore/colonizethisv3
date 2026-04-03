@@ -15,7 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 class _FakeGameService extends GameService {
-  _FakeGameService(Box<dynamic> box, GameSaveAdapter adapter) : super(box, adapter);
+  _FakeGameService(Box<dynamic> box, GameSaveAdapter adapter)
+    : super(box, adapter);
 
   @override
   getMapData(String gameId) {
@@ -26,7 +27,7 @@ class _FakeGameService extends GameService {
 /// Minimal OW/NW tile maps + topology for [mapViewDataProvider] integration tests.
 class _GameServiceWithMinimalMap extends GameService {
   _GameServiceWithMinimalMap(Box<dynamic> box, GameSaveAdapter adapter)
-      : super(box, adapter);
+    : super(box, adapter);
 
   static final Map<String, MapTopology> _topologyByRegion = {
     'oldWorld': MapTopology(
@@ -147,7 +148,7 @@ void main() {
     expect(mapView, isNull);
   });
 
-  test('mapViewDataProvider returns null when GameService has no map data', () {
+  test('mapViewDataProvider throws when GameService has no map data', () {
     final game = Game(
       id: 'g1',
       worldState: const WorldState(
@@ -156,12 +157,7 @@ void main() {
         newWorld: RegionData(),
       ),
       players: const [
-        Player(
-          id: 'gp1',
-          displayName: 'Human',
-          isHuman: true,
-          treasury: 0,
-        ),
+        Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
       ],
     );
 
@@ -176,8 +172,15 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    final mapView = container.read(mapViewDataProvider);
-    expect(mapView, isNull);
+    expect(
+      () => container.read(mapViewDataProvider),
+      throwsA(
+        predicate(
+          (e) =>
+              e.toString().contains('Missing required map data for gameId=g1'),
+        ),
+      ),
+    );
   });
 
   test(
@@ -211,12 +214,7 @@ void main() {
           ),
         ),
         players: const [
-          Player(
-            id: 'gp1',
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 0,
-          ),
+          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
         ],
         minorNations: const [],
         tribes: const [],
@@ -243,4 +241,3 @@ void main() {
     },
   );
 }
-

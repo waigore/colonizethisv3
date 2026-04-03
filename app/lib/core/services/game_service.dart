@@ -24,7 +24,7 @@ class _GameMapCache {
 final _mapGenPassLog = mapLogger('tile_map');
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
-/// Phase 2: createNewGame uses full game-setup pipeline; nextTurn uses cached map data when available.
+/// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
 class GameService {
   GameService(this._box, this._adapter);
 
@@ -45,26 +45,42 @@ class GameService {
   /// Populated when creating a new game or when loading a game with persisted map data.
   final Map<String, _GameMapCache> _mapCache = {};
 
-  /// Loads game by id. Returns null if not found.
-  /// When map data exists in storage, populates _mapCache so map rendering works.
+  _GameMapCache _requireMapData(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached != null) return cached;
+    final mapData = _adapter.loadMapData(_box, gameId);
+    final loaded = _GameMapCache(
+      combinedTopology: mapData.combinedTopology,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topologyByRegion: mapData.topologyByRegion,
+      warpLinks: mapData.warpLinks,
+    );
+    _mapCache[gameId] = loaded;
+    return loaded;
+  }
+
+  /// Loads game by id. Returns null if not found or required map data is missing/invalid.
+  /// Populates _mapCache on successful load so map rendering and turn resolution work.
   Game? loadGame(String gameId) {
     final game = _adapter.load(_box, gameId);
     if (game == null) return null;
-    final cached = _mapCache[gameId];
-    if (cached != null) return game;
-    final mapData = _adapter.loadMapData(_box, gameId);
-    if (mapData != null) {
-      _mapCache[gameId] = _GameMapCache(
-        combinedTopology: mapData.combinedTopology,
-        tileMapByRegion: mapData.tileMapByRegion,
-        topologyByRegion: mapData.topologyByRegion,
-        warpLinks: mapData.warpLinks,
+    try {
+      _requireMapData(gameId);
+      return game;
+    } catch (e, st) {
+      saveLogger().e(
+        'required map data missing/invalid for gameId=$gameId',
+        error: e,
+        stackTrace: st,
       );
+      return null;
     }
-    return game;
   }
 
-  /// Returns map data for [gameId] from cache or storage. Null if not available (legacy save).
+  /// Returns map data for [gameId] from cache or storage.
+  ///
+  /// Returns null only when no game exists for [gameId]. For existing games, map data
+  /// is required and missing/invalid map data raises [StateError].
   ({
     MapTopology combinedTopology,
     Map<String, TileMapResult> tileMapByRegion,
@@ -72,28 +88,30 @@ class GameService {
     List<WarpLink>? warpLinks,
   })?
   getMapData(String gameId) {
-    final cached = _mapCache[gameId];
-    if (cached != null) {
-      return (
-        combinedTopology: cached.combinedTopology,
-        tileMapByRegion: cached.tileMapByRegion,
-        topologyByRegion: cached.topologyByRegion,
-        warpLinks: cached.warpLinks,
-      );
-    }
-    final mapData = _adapter.loadMapData(_box, gameId);
-    if (mapData == null) return null;
-    _mapCache[gameId] = _GameMapCache(
-      combinedTopology: mapData.combinedTopology,
-      tileMapByRegion: mapData.tileMapByRegion,
-      topologyByRegion: mapData.topologyByRegion,
-      warpLinks: mapData.warpLinks,
-    );
+    final gameExists = _adapter.load(_box, gameId) != null;
+    if (!gameExists) return null;
+    final cache = _requireMapData(gameId);
     return (
-      combinedTopology: mapData.combinedTopology,
-      tileMapByRegion: mapData.tileMapByRegion,
-      topologyByRegion: mapData.topologyByRegion,
-      warpLinks: mapData.warpLinks,
+      combinedTopology: cache.combinedTopology,
+      tileMapByRegion: cache.tileMapByRegion,
+      topologyByRegion: cache.topologyByRegion,
+      warpLinks: cache.warpLinks,
+    );
+  }
+
+  ({
+    MapTopology combinedTopology,
+    Map<String, TileMapResult> tileMapByRegion,
+    Map<String, MapTopology> topologyByRegion,
+    List<WarpLink>? warpLinks,
+  })
+  _requiredMapDataView(String gameId) {
+    final cache = _requireMapData(gameId);
+    return (
+      combinedTopology: cache.combinedTopology,
+      tileMapByRegion: cache.tileMapByRegion,
+      topologyByRegion: cache.topologyByRegion,
+      warpLinks: cache.warpLinks,
     );
   }
 
@@ -118,9 +136,9 @@ class GameService {
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
   }) {
-    final cache = _mapCache[current.id];
-    final topo = topology ?? cache?.combinedTopology ?? const MapTopology();
-    final tileMaps = tileMapByRegion ?? cache?.tileMapByRegion;
+    final mapData = _requiredMapDataView(current.id);
+    final topo = topology ?? mapData.combinedTopology;
+    final tileMaps = tileMapByRegion ?? mapData.tileMapByRegion;
     final humanOrders = orders ?? const Orders();
     final resolvedOrders = aiOrders != null
         ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
@@ -164,9 +182,9 @@ class GameService {
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) {
-    final cache = _mapCache[game.id];
-    final topo = cache?.combinedTopology ?? const MapTopology();
-    final tileMaps = cache?.tileMapByRegion;
+    final mapData = _requiredMapDataView(game.id);
+    final topo = mapData.combinedTopology;
+    final tileMaps = mapData.tileMapByRegion;
     final result = resumeTurnResolutionWithCallToArmsDecisions(
       game: game,
       decisions: decisions,
@@ -210,9 +228,9 @@ class GameService {
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) {
-    final cache = _mapCache[game.id];
-    final topo = cache?.combinedTopology ?? const MapTopology();
-    final tileMaps = cache?.tileMapByRegion;
+    final mapData = _requiredMapDataView(game.id);
+    final topo = mapData.combinedTopology;
+    final tileMaps = mapData.tileMapByRegion;
     final result = resumeTurnResolutionWithOvertureDecisions(
       game: game,
       pendingOvertures: pendingOvertures,
@@ -254,9 +272,9 @@ class GameService {
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) {
-    final cache = _mapCache[game.id];
-    final topo = cache?.combinedTopology ?? const MapTopology();
-    final tileMaps = cache?.tileMapByRegion;
+    final mapData = _requiredMapDataView(game.id);
+    final topo = mapData.combinedTopology;
+    final tileMaps = mapData.tileMapByRegion;
     final result = resumeTurnResolutionWithInterventionDecisions(
       game: game,
       decisions: decisions,

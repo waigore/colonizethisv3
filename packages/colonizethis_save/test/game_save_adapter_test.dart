@@ -29,7 +29,9 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 5),
           oldWorld: const RegionData(
-            provinces: [Province(id: 'p1', regionId: 'oldWorld', ownerId: 'player1')],
+            provinces: [
+              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'player1'),
+            ],
             units: [],
           ),
           newWorld: const RegionData(),
@@ -64,15 +66,31 @@ void main() {
       );
       adapter.save(box, game);
       adapter.save(box, game.copyWith(id: 'g2'));
-      final tileMap = TileMapResult(width: 2, height: 2, grid: [
-        ['p1', 'p1'],
-        ['p2', 's1'],
-      ]);
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 'p1'],
+          ['p2', 's1'],
+        ],
+      );
       final topo = MapTopology(
         nodes: [
-          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: [],
       );
@@ -87,62 +105,75 @@ void main() {
       expect(adapter.listGameIds(box).length, 2);
     });
 
-    test('listGameIds returns game id that ends with suffix when no matching map-data exists', () {
-      final game = Game(
-        id: 'mygame_tileMapByRegion',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-      );
-      adapter.save(box, game);
-      adapter.save(box, game.copyWith(id: 'normalGame'));
+    test(
+      'listGameIds returns game id that ends with suffix when no matching map-data exists',
+      () {
+        final game = Game(
+          id: 'mygame_tileMapByRegion',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [],
+        );
+        adapter.save(box, game);
+        adapter.save(box, game.copyWith(id: 'normalGame'));
 
-      final ids = adapter.listGameIds(box);
-      expect(ids, containsAll(['mygame_tileMapByRegion', 'normalGame']));
-      expect(ids.length, 2);
-    });
+        final ids = adapter.listGameIds(box);
+        expect(ids, containsAll(['mygame_tileMapByRegion', 'normalGame']));
+        expect(ids.length, 2);
+      },
+    );
 
-    test('listGameIds excludes map-data keys when corresponding game exists', () {
-      final game = Game(
-        id: 'gameWithMapData',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-      );
-      adapter.save(box, game);
+    test(
+      'listGameIds excludes map-data keys when corresponding game exists',
+      () {
+        final game = Game(
+          id: 'gameWithMapData',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [],
+        );
+        adapter.save(box, game);
 
-      final tileMap = TileMapResult(width: 2, height: 2, grid: [
-        ['p1', 'p1'],
-        ['p2', 's1'],
-      ]);
-      final topo = MapTopology(
-        nodes: [
-          TopologyNode(
-              id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
-      adapter.saveMapData(
-        box,
-        'gameWithMapData',
-        tileMapByRegion: {'oldWorld': tileMap},
-        topologyByRegion: {'oldWorld': topo},
-        combinedTopology: topo,
-      );
+        final tileMap = TileMapResult(
+          width: 2,
+          height: 2,
+          grid: [
+            ['p1', 'p1'],
+            ['p2', 's1'],
+          ],
+        );
+        final topo = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        );
+        adapter.saveMapData(
+          box,
+          'gameWithMapData',
+          tileMapByRegion: {'oldWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo},
+          combinedTopology: topo,
+        );
 
-      final ids = adapter.listGameIds(box);
-      expect(ids, contains('gameWithMapData'));
-      expect(ids.length, 1);
-      expect(ids, isNot(contains('gameWithMapData_tileMapByRegion')));
-      expect(ids, isNot(contains('gameWithMapData_topologyByRegion')));
-      expect(ids, isNot(contains('gameWithMapData_combinedTopology')));
-    });
+        final ids = adapter.listGameIds(box);
+        expect(ids, contains('gameWithMapData'));
+        expect(ids.length, 1);
+        expect(ids, isNot(contains('gameWithMapData_tileMapByRegion')));
+        expect(ids, isNot(contains('gameWithMapData_topologyByRegion')));
+        expect(ids, isNot(contains('gameWithMapData_combinedTopology')));
+      },
+    );
 
     test('saveMapData then loadMapData returns same data', () {
       final tileMap = TileMapResult(
@@ -163,9 +194,21 @@ void main() {
       );
       final topo = MapTopology(
         nodes: [
-          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
       );
@@ -181,14 +224,23 @@ void main() {
       expect(loaded!.tileMapByRegion['oldWorld']!.width, 2);
       expect(loaded.tileMapByRegion['oldWorld']!.height, 2);
       expect(loaded.tileMapByRegion['oldWorld']!.cell(0, 0), 'p1');
-      expect(loaded.tileMapByRegion['oldWorld']!.terrainAt(0, 0), TerrainType.plains);
-      expect(loaded.tileMapByRegion['oldWorld']!.resourceAt(0, 0), Resource.grain);
+      expect(
+        loaded.tileMapByRegion['oldWorld']!.terrainAt(0, 0),
+        TerrainType.plains,
+      );
+      expect(
+        loaded.tileMapByRegion['oldWorld']!.resourceAt(0, 0),
+        Resource.grain,
+      );
       expect(loaded.combinedTopology.nodes.length, 3);
       expect(loaded.combinedTopology.edges.length, 1);
     });
 
-    test('loadMapData returns null for legacy save without map data', () {
-      expect(adapter.loadMapData(box, 'noMapData'), isNull);
+    test('loadMapData throws when required map data is missing', () {
+      expect(
+        () => adapter.loadMapData(box, 'noMapData'),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('delete removes game', () {
@@ -215,9 +267,11 @@ void main() {
         id: 'withCapital',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
-          ]),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            ],
+          ),
           newWorld: const RegionData(),
           tileState: tileState,
           portsByProvinceSeaboard: {'p1|sea1': 'oldWorld|p1|0|0'},
@@ -240,9 +294,15 @@ void main() {
       adapter.save(box, game);
       final loaded = adapter.load(box, 'withCapital');
       expect(loaded, isNotNull);
-      expect(loaded!.worldState.tileState.improvementLevel('oldWorld|p1|0|0'), 2);
+      expect(
+        loaded!.worldState.tileState.improvementLevel('oldWorld|p1|0|0'),
+        2,
+      );
       expect(loaded.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 1);
-      expect(loaded.worldState.portsByProvinceSeaboard['p1|sea1'], 'oldWorld|p1|0|0');
+      expect(
+        loaded.worldState.portsByProvinceSeaboard['p1|sea1'],
+        'oldWorld|p1|0|0',
+      );
       expect(loaded.players.single.capitalProvinceId, 'p1');
       expect(loaded.players.single.capitalTile?.regionId, 'oldWorld');
       expect(loaded.players.single.capitalTile?.x, 0);
@@ -284,12 +344,8 @@ void main() {
             militaryLevel: 4,
           ),
         ],
-        minorNations: [
-          MinorNation(id: 'min1', effectiveMilitaryLevel: 4),
-        ],
-        tribes: [
-          Tribe(id: 'tribe1', effectiveMilitaryLevel: 1),
-        ],
+        minorNations: [MinorNation(id: 'min1', effectiveMilitaryLevel: 4)],
+        tribes: [Tribe(id: 'tribe1', effectiveMilitaryLevel: 1)],
       );
       adapter.save(box, game);
       final loaded = adapter.load(box, 'phase3');
@@ -310,9 +366,7 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true),
-        ],
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
         greatPowerColorOverride: {
           'gp1': [255, 0, 0],
           'gp2': [0, 255, 0],
@@ -334,9 +388,7 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true),
-        ],
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
         turnTimeMapping: const TurnTimeMapping(
           startYear: 1600,
           cutoffYear: 1750,
@@ -354,34 +406,39 @@ void main() {
       expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
     });
 
-    test('loadMapData returns null and logs for invalid map data JSON', () {
+    test('loadMapData throws for invalid map data JSON', () {
       // Manually insert invalid map data to simulate corrupted save
       box.put('invalidMap_tileMapByRegion', {'invalid': 'data'});
       box.put('invalidMap_topologyByRegion', {'nodes': 'not-a-list'});
       box.put('invalidMap_combinedTopology', 'also invalid');
-      final loaded = adapter.loadMapData(box, 'invalidMap');
-      expect(loaded, isNull);
+      expect(
+        () => adapter.loadMapData(box, 'invalidMap'),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('backward compatibility - greatPowerColorOverride missing yields null', () {
-      // Simulate legacy save where greatPowerColorOverride field is missing
-      final gameJson = {
-        'id': 'legacyGame',
-        'worldState': {
-          'turnState': {'phase': 'orders', 'turnNumber': 1},
-          'oldWorld': {'provinces': []},
-          'newWorld': {'provinces': []},
-        },
-        'players': [
-          {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
-        ],
-        // Note: greatPowerColorOverride is intentionally missing
-      };
-      box.put('legacyGame', gameJson);
-      final loaded = adapter.load(box, 'legacyGame');
-      expect(loaded, isNotNull);
-      expect(loaded!.greatPowerColorOverride, isNull);
-    });
+    test(
+      'backward compatibility - greatPowerColorOverride missing yields null',
+      () {
+        // Simulate legacy save where greatPowerColorOverride field is missing
+        final gameJson = {
+          'id': 'legacyGame',
+          'worldState': {
+            'turnState': {'phase': 'orders', 'turnNumber': 1},
+            'oldWorld': {'provinces': []},
+            'newWorld': {'provinces': []},
+          },
+          'players': [
+            {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
+          ],
+          // Note: greatPowerColorOverride is intentionally missing
+        };
+        box.put('legacyGame', gameJson);
+        final loaded = adapter.load(box, 'legacyGame');
+        expect(loaded, isNotNull);
+        expect(loaded!.greatPowerColorOverride, isNull);
+      },
+    );
 
     test('backward compatibility - turnTimeMapping missing yields null', () {
       // Simulate legacy save where turnTimeMapping field is missing
