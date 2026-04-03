@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/resource_icon.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
 class ProductionCommodityBreakdownDialog extends ConsumerWidget {
@@ -99,9 +100,25 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
     List<DataRow> rowsFor(List<Commodity> list) {
       return list.map((c) {
         final total = rowTotal(c.id);
+        final name = c.displayName ?? c.id;
         return DataRow(
           cells: [
-            DataCell(Text(c.displayName ?? c.id)),
+            DataCell(
+              Row(
+                children: [
+                  ResourceIcon(commodityId: c.id, size: 16),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             ...EconomyPreviewStockpilePhase.values.map(
               (p) =>
                   DataCell(Text(_formatDelta(phaseValue(c.id, p)), maxLines: 1)),
