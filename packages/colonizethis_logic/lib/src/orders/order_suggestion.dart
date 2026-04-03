@@ -170,7 +170,7 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   }
   for (final p in allProvinces(game.worldState)) {
     if (p.ownerId == playerId) {
-      out.add(p.id);
+      out.add(toFullProvinceId(p.regionId, p.id));
     }
   }
   out.remove(fromFull);
