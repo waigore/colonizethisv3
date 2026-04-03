@@ -163,8 +163,9 @@ void main() {
           );
           expect(
             farmTotals[p.id]!.land['grain'] ?? 0,
-            4,
-            reason: 'four bootstrap farms × effective 1 grain each seed=$seed',
+            9,
+            reason:
+                'four bootstrap farms × 1 grain + capital tile bonus 5 seed=$seed',
           );
         }
       });

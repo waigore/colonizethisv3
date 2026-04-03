@@ -17,5 +17,12 @@ void main() {
       expect(units['Builder'], 2);
       expect(units['Engineer'], 1);
     });
+
+    test('default military and navy bootstrap counts', () {
+      final c = StartingResourcesConfig.defaultConfig;
+      expect(c.initialMilitaryRegiments, 3);
+      expect(c.initialNavalShips, 1);
+      expect(c.capitalTileGrainBonusPerTurn, 5);
+    });
   });
 }

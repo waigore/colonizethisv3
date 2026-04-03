@@ -9,9 +9,7 @@ import 'turn_time_mapping.dart';
 import 'world_state.dart';
 
 /// Victory type. Phase 5: military only (31+ OW provinces). SPEC/game/victory.md.
-enum VictoryType {
-  military,
-}
+enum VictoryType { military }
 
 extension VictoryTypeJson on VictoryType {
   static VictoryType fromJson(String value) {
@@ -37,10 +35,10 @@ class VictoryState {
   final int turnNumber;
 
   Map<String, dynamic> toJson() => {
-        'winnerPlayerId': winnerPlayerId,
-        'type': type.toJson(),
-        'turnNumber': turnNumber,
-      };
+    'winnerPlayerId': winnerPlayerId,
+    'type': type.toJson(),
+    'turnNumber': turnNumber,
+  };
 
   static VictoryState fromJson(Map<String, dynamic> json) {
     return VictoryState(
@@ -87,6 +85,7 @@ class Game {
     this.greatPowerColorOverride,
     this.victory,
     this.richesCashMultiplier = 1.0,
+    this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
   });
 
@@ -145,51 +144,65 @@ class Game {
   /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
   final double richesCashMultiplier;
 
+  /// Land-region grain per turn from capital tile bonus (Great Powers). Copied
+  /// from setup starting-resources config at game creation. GDD extraction.
+  final int capitalTileGrainBonusPerTurn;
+
   /// 1-character political map glyph per faction id. Used by ctterm and other
   /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
   final Map<String, String> politicalGlyphByPlayerId;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'worldState': worldState.toJson(),
-        'players': players.map((e) => e.toJson()).toList(),
-        'minorNations': minorNations.map((e) => e.toJson()).toList(),
-        'tribes': tribes.map((e) => e.toJson()).toList(),
-        if (turnTimeMapping != null) 'turnTimeMapping': turnTimeMapping!.toJson(),
-        if (defaultCombatMode != null) 'defaultCombatMode': defaultCombatMode!.name,
-        if (combatModeByProvinceId.isNotEmpty)
-          'combatModeByProvinceId': combatModeByProvinceId.map(
-            (k, v) => MapEntry(k, v.name),
-          ),
-        if (diplomacyRelations.isNotEmpty)
-          'diplomacyRelations': diplomacyRelations.map((r) => r.toJson()).toList(),
-        if (overtureStates.isNotEmpty)
-          'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
-        if (subsidyStates.isNotEmpty)
-          'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
-        if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
-        if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
-        if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
-        if (dossierEvidenceEntries.isNotEmpty)
-          'dossierEvidenceEntries': dossierEvidenceEntries.map((e) => e.toJson()).toList(),
-        if (diplomaticHistoryEvents.isNotEmpty)
-          'diplomaticHistoryEvents':
-              diplomaticHistoryEvents.map((e) => e.toJson()).toList(),
-        if (globalGameSeed != null) 'globalGameSeed': globalGameSeed,
-        if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
-          'greatPowerColorOverride': greatPowerColorOverride!.map((k, v) => MapEntry(k, v)),
-        if (victory != null) 'victory': victory!.toJson(),
-        if (richesCashMultiplier != 1.0) 'richesCashMultiplier': richesCashMultiplier,
-        if (generals.isNotEmpty) 'generals': generals.map((e) => e.toJson()).toList(),
-        if (politicalGlyphByPlayerId.isNotEmpty)
-          'politicalGlyphByPlayerId': politicalGlyphByPlayerId,
-      };
+    'id': id,
+    'worldState': worldState.toJson(),
+    'players': players.map((e) => e.toJson()).toList(),
+    'minorNations': minorNations.map((e) => e.toJson()).toList(),
+    'tribes': tribes.map((e) => e.toJson()).toList(),
+    if (turnTimeMapping != null) 'turnTimeMapping': turnTimeMapping!.toJson(),
+    if (defaultCombatMode != null) 'defaultCombatMode': defaultCombatMode!.name,
+    if (combatModeByProvinceId.isNotEmpty)
+      'combatModeByProvinceId': combatModeByProvinceId.map(
+        (k, v) => MapEntry(k, v.name),
+      ),
+    if (diplomacyRelations.isNotEmpty)
+      'diplomacyRelations': diplomacyRelations.map((r) => r.toJson()).toList(),
+    if (overtureStates.isNotEmpty)
+      'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
+    if (subsidyStates.isNotEmpty)
+      'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
+    if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
+    if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
+    if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
+    if (dossierEvidenceEntries.isNotEmpty)
+      'dossierEvidenceEntries': dossierEvidenceEntries
+          .map((e) => e.toJson())
+          .toList(),
+    if (diplomaticHistoryEvents.isNotEmpty)
+      'diplomaticHistoryEvents': diplomaticHistoryEvents
+          .map((e) => e.toJson())
+          .toList(),
+    if (globalGameSeed != null) 'globalGameSeed': globalGameSeed,
+    if (greatPowerColorOverride != null && greatPowerColorOverride!.isNotEmpty)
+      'greatPowerColorOverride': greatPowerColorOverride!.map(
+        (k, v) => MapEntry(k, v),
+      ),
+    if (victory != null) 'victory': victory!.toJson(),
+    if (richesCashMultiplier != 1.0)
+      'richesCashMultiplier': richesCashMultiplier,
+    if (capitalTileGrainBonusPerTurn != 5)
+      'capitalTileGrainBonusPerTurn': capitalTileGrainBonusPerTurn,
+    if (generals.isNotEmpty)
+      'generals': generals.map((e) => e.toJson()).toList(),
+    if (politicalGlyphByPlayerId.isNotEmpty)
+      'politicalGlyphByPlayerId': politicalGlyphByPlayerId,
+  };
 
   static Game fromJson(Map<String, dynamic> json) {
     final playersList = json['players'] as List<dynamic>? ?? [];
     final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
     final tribesList = json['tribes'] as List<dynamic>? ?? [];
-    final turnTimeMappingJson = json['turnTimeMapping'] as Map<String, dynamic>?;
+    final turnTimeMappingJson =
+        json['turnTimeMapping'] as Map<String, dynamic>?;
     final defaultCombatModeRaw = json['defaultCombatMode'] as String?;
     final defaultCombatMode = defaultCombatModeRaw != null
         ? CombatMode.values.firstWhere(
@@ -199,7 +212,10 @@ class Game {
         : null;
     final relationsList = json['diplomacyRelations'] as List<dynamic>? ?? [];
     final diplomacyRelations = relationsList
-        .map((e) => DiplomacyRelation.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) =>
+              DiplomacyRelation.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
         .toList();
     final overtureList = json['overtureStates'] as List<dynamic>? ?? [];
     final overtureStates = overtureList
@@ -210,7 +226,8 @@ class Game {
         .map((e) => SubsidyState.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
 
-    final aiControlRaw = json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
+    final aiControlRaw =
+        json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
     final aiControlByGpId = aiControlRaw.map(
       (k, v) => MapEntry(k.toString(), v == true),
     );
@@ -218,20 +235,29 @@ class Game {
     final aiSeedByGpId = aiSeedRaw.map(
       (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
     );
-    final hiddenAgendaRaw = json['hiddenAgendaByGpId'] as Map<dynamic, dynamic>? ?? {};
+    final hiddenAgendaRaw =
+        json['hiddenAgendaByGpId'] as Map<dynamic, dynamic>? ?? {};
     final hiddenAgendaByGpId = hiddenAgendaRaw.map(
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
     final evidenceList = json['dossierEvidenceEntries'] as List<dynamic>? ?? [];
     final dossierEvidenceEntries = evidenceList
-        .map((e) => DossierEvidenceEntry.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => DossierEvidenceEntry.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
-    final diploHistoryList = json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
+    final diploHistoryList =
+        json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
     final diplomaticHistoryEvents = diploHistoryList
-        .map((e) => DiplomaticEvent.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => DiplomaticEvent.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
         .toList();
     final globalGameSeed = json['globalGameSeed'] as int?;
-    final greatPowerColorOverrideRaw = json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
+    final greatPowerColorOverrideRaw =
+        json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
     final greatPowerColorOverride = greatPowerColorOverrideRaw?.map(
       (k, v) => MapEntry(
         k.toString(),
@@ -239,7 +265,8 @@ class Game {
       ),
     );
 
-    final combatModeRaw = json['combatModeByProvinceId'] as Map<dynamic, dynamic>? ?? {};
+    final combatModeRaw =
+        json['combatModeByProvinceId'] as Map<dynamic, dynamic>? ?? {};
     final combatModeByProvinceId = combatModeRaw.map(
       (k, v) => MapEntry(
         k.toString(),
@@ -249,7 +276,10 @@ class Game {
         ),
       ),
     );
-    final richesCashMultiplier = (json['richesCashMultiplier'] as num?)?.toDouble() ?? 1.0;
+    final richesCashMultiplier =
+        (json['richesCashMultiplier'] as num?)?.toDouble() ?? 1.0;
+    final capitalTileGrainBonusPerTurn =
+        (json['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5;
     final generalsList = json['generals'] as List<dynamic>? ?? [];
     final generals = generalsList
         .map((e) => General.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -261,14 +291,22 @@ class Game {
     );
     return Game(
       id: json['id'] as String,
-      worldState: WorldState.fromJson(Map<String, dynamic>.from(json['worldState'] as Map)),
-      players: playersList.map((e) => Player.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
-      minorNations:
-          minorNationsList.map((e) => MinorNation.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
-      tribes: tribesList.map((e) => Tribe.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      worldState: WorldState.fromJson(
+        Map<String, dynamic>.from(json['worldState'] as Map),
+      ),
+      players: playersList
+          .map((e) => Player.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      minorNations: minorNationsList
+          .map((e) => MinorNation.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      tribes: tribesList
+          .map((e) => Tribe.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
       generals: generals,
-      turnTimeMapping:
-          turnTimeMappingJson != null ? TurnTimeMapping.fromJson(turnTimeMappingJson) : null,
+      turnTimeMapping: turnTimeMappingJson != null
+          ? TurnTimeMapping.fromJson(turnTimeMappingJson)
+          : null,
       defaultCombatMode: defaultCombatMode,
       combatModeByProvinceId: combatModeByProvinceId,
       diplomacyRelations: diplomacyRelations,
@@ -284,9 +322,12 @@ class Game {
       victory: json['victory'] is Map<String, dynamic>
           ? VictoryState.fromJson(json['victory'] as Map<String, dynamic>)
           : json['victory'] is Map
-              ? VictoryState.fromJson(Map<String, dynamic>.from(json['victory'] as Map))
-              : null,
+          ? VictoryState.fromJson(
+              Map<String, dynamic>.from(json['victory'] as Map),
+            )
+          : null,
       richesCashMultiplier: richesCashMultiplier,
+      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId: politicalGlyphByPlayerId,
     );
   }
@@ -313,6 +354,7 @@ class Game {
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
     double? richesCashMultiplier,
+    int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
   }) {
     return Game(
@@ -324,20 +366,25 @@ class Game {
       generals: generals ?? this.generals,
       turnTimeMapping: turnTimeMapping ?? this.turnTimeMapping,
       defaultCombatMode: defaultCombatMode ?? this.defaultCombatMode,
-      combatModeByProvinceId: combatModeByProvinceId ?? this.combatModeByProvinceId,
+      combatModeByProvinceId:
+          combatModeByProvinceId ?? this.combatModeByProvinceId,
       diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
       overtureStates: overtureStates ?? this.overtureStates,
       subsidyStates: subsidyStates ?? this.subsidyStates,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
-      dossierEvidenceEntries: dossierEvidenceEntries ?? this.dossierEvidenceEntries,
+      dossierEvidenceEntries:
+          dossierEvidenceEntries ?? this.dossierEvidenceEntries,
       diplomaticHistoryEvents:
           diplomaticHistoryEvents ?? this.diplomaticHistoryEvents,
       globalGameSeed: globalGameSeed ?? this.globalGameSeed,
-      greatPowerColorOverride: greatPowerColorOverride ?? this.greatPowerColorOverride,
+      greatPowerColorOverride:
+          greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
       richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
+      capitalTileGrainBonusPerTurn:
+          capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId:
           politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
     );
@@ -366,36 +413,52 @@ class Game {
           _listEquals(dossierEvidenceEntries, other.dossierEvidenceEntries) &&
           _listEquals(diplomaticHistoryEvents, other.diplomaticHistoryEvents) &&
           globalGameSeed == other.globalGameSeed &&
-          _mapListEquals(greatPowerColorOverride, other.greatPowerColorOverride) &&
+          _mapListEquals(
+            greatPowerColorOverride,
+            other.greatPowerColorOverride,
+          ) &&
           victory == other.victory &&
           richesCashMultiplier == other.richesCashMultiplier &&
+          capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
           _mapEquals(politicalGlyphByPlayerId, other.politicalGlyphByPlayerId);
 
   @override
   int get hashCode => Object.hash(
-        id,
-        worldState,
-        Object.hashAll(players),
-        Object.hashAll(minorNations),
-        Object.hashAll(tribes),
-        Object.hashAll(generals),
-        turnTimeMapping,
-        defaultCombatMode,
-        Object.hashAll(combatModeByProvinceId.entries),
-        Object.hashAll(diplomacyRelations),
-        Object.hashAll(overtureStates),
-        Object.hashAll(subsidyStates),
-        Object.hashAll(aiControlByGpId.entries),
-        Object.hashAll(aiSeedByGpId.entries),
-        Object.hashAll(hiddenAgendaByGpId.entries),
-        Object.hash(Object.hashAll(dossierEvidenceEntries), Object.hashAll(diplomaticHistoryEvents)),
-        globalGameSeed,
-        greatPowerColorOverride != null ? Object.hashAll(greatPowerColorOverride!.entries) : null,
-        victory,
-        Object.hash(richesCashMultiplier, Object.hashAll(politicalGlyphByPlayerId.entries)),
-      );
+    id,
+    worldState,
+    Object.hashAll(players),
+    Object.hashAll(minorNations),
+    Object.hashAll(tribes),
+    Object.hashAll(generals),
+    turnTimeMapping,
+    defaultCombatMode,
+    Object.hashAll(combatModeByProvinceId.entries),
+    Object.hashAll(diplomacyRelations),
+    Object.hashAll(overtureStates),
+    Object.hashAll(subsidyStates),
+    Object.hashAll(aiControlByGpId.entries),
+    Object.hashAll(aiSeedByGpId.entries),
+    Object.hashAll(hiddenAgendaByGpId.entries),
+    Object.hash(
+      Object.hashAll(dossierEvidenceEntries),
+      Object.hashAll(diplomaticHistoryEvents),
+    ),
+    globalGameSeed,
+    greatPowerColorOverride != null
+        ? Object.hashAll(greatPowerColorOverride!.entries)
+        : null,
+    victory,
+    Object.hash(
+      richesCashMultiplier,
+      capitalTileGrainBonusPerTurn,
+      Object.hashAll(politicalGlyphByPlayerId.entries),
+    ),
+  );
 
-  static bool _mapListEquals(Map<String, List<int>>? a, Map<String, List<int>>? b) {
+  static bool _mapListEquals(
+    Map<String, List<int>>? a,
+    Map<String, List<int>>? b,
+  ) {
     if (a == null && b == null) return true;
     if (a == null || b == null || a.length != b.length) return false;
     for (final e in a.entries) {

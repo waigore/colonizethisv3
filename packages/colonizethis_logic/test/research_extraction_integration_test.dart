@@ -21,13 +21,15 @@ void main() {
           );
 
           // Turn A: baseline extraction with pre-research cap.
-          final afterBaseline = requireTurnResolutionComplete(resolveTurnForGame(
-            game: baseGame,
-            topology: _topology,
-            orders: const Orders(),
-            tileMapByRegion: _tileMapByRegion,
-            defaultAssignments: const [],
-          ));
+          final afterBaseline = requireTurnResolutionComplete(
+            resolveTurnForGame(
+              game: baseGame,
+              topology: _topology,
+              orders: const Orders(),
+              tileMapByRegion: _tileMapByRegion,
+              defaultAssignments: const [],
+            ),
+          );
           final baselineDelta = _grainDelta(baseGame, afterBaseline);
           expect(
             baselineDelta,
@@ -37,21 +39,25 @@ void main() {
           );
 
           // Turn B: research resolves this turn; extraction still uses previous cap.
-          final withResearch = requireTurnResolutionComplete(resolveTurnForGame(
-            game: afterBaseline,
-            topology: _topology,
-            orders: Orders(researchOrdersByPlayerId: {
-              _playerId: [
-                ResearchOrder(
-                  slotIndex: 0,
-                  techId: testCase.techId,
-                  funding: ResearchFundingLevel.maximum,
-                ),
-              ],
-            }),
-            tileMapByRegion: _tileMapByRegion,
-            defaultAssignments: const [],
-          ));
+          final withResearch = requireTurnResolutionComplete(
+            resolveTurnForGame(
+              game: afterBaseline,
+              topology: _topology,
+              orders: Orders(
+                researchOrdersByPlayerId: {
+                  _playerId: [
+                    ResearchOrder(
+                      slotIndex: 0,
+                      techId: testCase.techId,
+                      funding: ResearchFundingLevel.maximum,
+                    ),
+                  ],
+                },
+              ),
+              tileMapByRegion: _tileMapByRegion,
+              defaultAssignments: const [],
+            ),
+          );
 
           final researchedPlayer = withResearch.playerById(_playerId)!;
           expect(
@@ -62,15 +68,19 @@ void main() {
           );
 
           // Turn C: extraction must now use the updated cap.
-          final afterUpgradeExtraction =
-              requireTurnResolutionComplete(resolveTurnForGame(
-            game: withResearch,
-            topology: _topology,
-            orders: const Orders(),
-            tileMapByRegion: _tileMapByRegion,
-            defaultAssignments: const [],
-          ));
-          final postUpgradeDelta = _grainDelta(withResearch, afterUpgradeExtraction);
+          final afterUpgradeExtraction = requireTurnResolutionComplete(
+            resolveTurnForGame(
+              game: withResearch,
+              topology: _topology,
+              orders: const Orders(),
+              tileMapByRegion: _tileMapByRegion,
+              defaultAssignments: const [],
+            ),
+          );
+          final postUpgradeDelta = _grainDelta(
+            withResearch,
+            afterUpgradeExtraction,
+          );
           expect(
             postUpgradeDelta,
             testCase.afterCap,
@@ -133,14 +143,9 @@ List<_CapIncreaseCase> _capIncreaseCases() {
   final out = <_CapIncreaseCase>[];
   for (final tech in techCatalog.values) {
     final prerequisites = tech.prerequisiteIds.toSet();
-    final unlockedBefore = {
-      for (final id in prerequisites) id: true,
-    };
+    final unlockedBefore = {for (final id in prerequisites) id: true};
     final before = extractionCapForUnlocked(unlockedBefore);
-    final after = extractionCapForUnlocked({
-      ...unlockedBefore,
-      tech.id: true,
-    });
+    final after = extractionCapForUnlocked({...unlockedBefore, tech.id: true});
     if (after > before) {
       out.add(
         _CapIncreaseCase(
@@ -148,10 +153,9 @@ List<_CapIncreaseCase> _capIncreaseCases() {
           prerequisites: prerequisites,
           beforeCap: before,
           afterCap: after,
-          discoveryResourceId:
-              tech.discoveryResourceIds?.isNotEmpty == true
-                  ? tech.discoveryResourceIds!.first
-                  : null,
+          discoveryResourceId: tech.discoveryResourceIds?.isNotEmpty == true
+              ? tech.discoveryResourceIds!.first
+              : null,
         ),
       );
     }
@@ -183,23 +187,27 @@ Game _buildBaseGame({
 
   return Game(
     id: 'g1',
+    capitalTileGrainBonusPerTurn: 0,
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(provinces: const [
-        Province(
-          id: _provinceId,
-          regionId: _regionId,
-          ownerId: _playerId,
-          townDevelopmentLevel: 4,
-        ),
-      ]),
+      oldWorld: RegionData(
+        provinces: const [
+          Province(
+            id: _provinceId,
+            regionId: _regionId,
+            ownerId: _playerId,
+            townDevelopmentLevel: 4,
+          ),
+        ],
+      ),
       newWorld: const RegionData(),
       tileState: TileMapState()
           .setImprovement(_grainTileKey, 4)
           .setRoadLevel(_grainTileKey, 4),
       playerVisibilityByTile: {_playerId: visibilityByTile},
-      playerProspectedTiles:
-          prospectedTiles.isEmpty ? const {} : {_playerId: prospectedTiles},
+      playerProspectedTiles: prospectedTiles.isEmpty
+          ? const {}
+          : {_playerId: prospectedTiles},
       resourceByTileKey: resourceByTileKey,
     ),
     players: [
@@ -222,9 +230,13 @@ Game _buildBaseGame({
 }
 
 int _grainDelta(Game before, Game after) {
-  final beforeQty =
-      before.playerById(_playerId)!.stockpile.quantityOf(CommodityCatalog.grain.id);
-  final afterQty =
-      after.playerById(_playerId)!.stockpile.quantityOf(CommodityCatalog.grain.id);
+  final beforeQty = before
+      .playerById(_playerId)!
+      .stockpile
+      .quantityOf(CommodityCatalog.grain.id);
+  final afterQty = after
+      .playerById(_playerId)!
+      .stockpile
+      .quantityOf(CommodityCatalog.grain.id);
   return afterQty - beforeQty;
 }
