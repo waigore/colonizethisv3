@@ -1,36 +1,11 @@
 // Move army dialog. SPEC/ui/military-units-panel.md, SPEC/program/app-ui-wiring.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'units/shared/units_panel_region_label.dart';
-
-/// Destination picks for one army move order.
-List<String> armyMoveDestinationFullProvinceIds({
-  required Game game,
-  required MapTopology topology,
-  required String humanPlayerId,
-  required Army army,
-}) {
-  final fromFull = army.stationedProvinceId;
-  final regionId = ProvinceId.regionIdFrom(fromFull);
-  final fromLocal = ProvinceId.localIdFrom(fromFull);
-  final out = <String>{};
-
-  for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
-    out.add(ProvinceId.full(regionId, n));
-  }
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == humanPlayerId) {
-      out.add(p.id);
-    }
-  }
-  out.remove(fromFull);
-  final sorted = out.toList()..sort();
-  return sorted;
-}
 
 class MoveArmyDialog extends StatefulWidget {
   const MoveArmyDialog({
@@ -57,10 +32,10 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
 
   List<({String regionId, String fullProvinceId, String label})>
   _destinationEntries() {
-    final destIds = armyMoveDestinationFullProvinceIds(
+    final destIds = armyMoveCandidateDestinationProvinceIds(
       game: widget.game,
       topology: widget.topology,
-      humanPlayerId: widget.humanPlayerId,
+      playerId: widget.humanPlayerId,
       army: widget.army,
     );
     final out = <({String regionId, String fullProvinceId, String label})>[];

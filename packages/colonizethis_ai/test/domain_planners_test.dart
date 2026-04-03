@@ -14,6 +14,7 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     required this.navalMove,
     required this.navalMission,
     this.diplomatic = const [],
+    this.armyMove = const [],
   });
 
   final List<WorkOrder> work;
@@ -23,6 +24,7 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
   final List<NavalMoveOrder> navalMove;
   final List<NavalMissionOrder> navalMission;
   final List<DiplomaticOrder> diplomatic;
+  final List<ArmyMoveOrder> armyMove;
 
   @override
   List<MoveOrder> suggestMoveOrders(
@@ -31,6 +33,14 @@ class _FakeOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) => move;
+
+  @override
+  List<ArmyMoveOrder> suggestArmyMoveOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) => armyMove;
 
   @override
   List<WorkOrder> suggestWorkOrders(
@@ -219,6 +229,205 @@ void main() {
       expect(orders, isNotNull);
       // Move planner may add moves when weight >= 20 and candidates exist.
       expect(orders.moveOrdersByPlayerId['gp1'] != null, isTrue);
+    });
+
+    test('DefaultOrderSuggestionAPI can add army move for non-home army', () {
+      const cap = 'oldWorld|cap';
+      const p1 = 'oldWorld|p1';
+      const nw = 'newWorld|col';
+      final game = Game(
+        id: 'g_army_dom',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: cap,
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+                townTileKey: 'oldWorld|cap|0|0',
+              ),
+              Province(id: p1, regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'gp1',
+                locationProvinceId: p1,
+                tileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: nw, regionId: 'newWorld', ownerId: 'gp1'),
+            ],
+          ),
+          armies: [
+            Army(
+              id: homeArmyIdFor('gp1'),
+              ownerId: 'gp1',
+              regionId: 'oldWorld',
+              stationedProvinceId: cap,
+              regimentUnitIds: const [],
+              isHomeArmy: true,
+            ),
+            Army(
+              id: 'field_a',
+              ownerId: 'gp1',
+              regionId: 'oldWorld',
+              stationedProvinceId: p1,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|cap|0|0': 'fullyVisible',
+              'oldWorld|p1|0|0': 'fullyVisible',
+              'newWorld|col|0|0': 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              cap: [cap],
+              p1: ['oldWorld|p1|0|0'],
+            },
+            'newWorld': {
+              nw: ['newWorld|col|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'GP',
+            isHuman: false,
+            leaderKey: 'victoria',
+            capitalProvinceId: cap,
+          ),
+        ],
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: cap,
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: p1,
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: nw,
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(77);
+      const api = DefaultOrderSuggestionAPI();
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: api,
+        economyPlan: economyPlan,
+      );
+
+      expect(orders.armyMoveOrdersByPlayerId['gp1'], isNotNull);
+      expect(orders.armyMoveOrdersByPlayerId['gp1']!, isNotEmpty);
+    });
+
+    test('_runArmyMovePlanner applies fake suggestion army move', () {
+      final fakeApi = _FakeOrderSuggestionAPI(
+        work: const [],
+        build: const [],
+        move: const [],
+        research: const [],
+        navalMove: const [],
+        navalMission: const [],
+        diplomatic: const [],
+        armyMove: const [
+          ArmyMoveOrder(
+            armyId: 'field_a',
+            destinationProvinceId: 'oldWorld|p2',
+          ),
+        ],
+      );
+      final game = Game(
+        id: 'g_army_fake',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [], units: []),
+          newWorld: RegionData(provinces: [], units: []),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'Leader',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = PlayerView(
+        playerId: 'gp1',
+        player: game.players.single,
+        ownUnitsById: const {},
+        provincesById: const {},
+        visibilityByTile: const {},
+        prospectedTiles: const {},
+        diplomacyByOtherId: const {},
+      );
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(1);
+      const economyPlan = EconomyPlan(
+        productionAssignments: [],
+        cargoPreference: CargoPreference.none,
+      );
+
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: 'gp1',
+        view: view,
+        snapshot: snapshot,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: seeds,
+        suggestionAPI: fakeApi,
+        economyPlan: economyPlan,
+      );
+
+      expect(orders.armyMoveOrdersByPlayerId['gp1']?.single.destinationProvinceId,
+          'oldWorld|p2');
     });
 
     test('uses economy and naval planners when candidates exist', () {

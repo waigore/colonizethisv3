@@ -328,6 +328,117 @@ void main() {
         reason: 'full-AI aggregation must include naval move orders',
       );
     });
+
+    test('generateOrdersForPlayerFullAI can emit cross-region army move', () {
+      const cap = 'oldWorld|cap';
+      const p1 = 'oldWorld|p1';
+      const nw = 'newWorld|col';
+      final game = Game(
+        id: 'g_full_ai_army',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: cap,
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+                townTileKey: 'oldWorld|cap|0|0',
+              ),
+              Province(id: p1, regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'gp1',
+                locationProvinceId: p1,
+                tileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: nw, regionId: 'newWorld', ownerId: 'gp1'),
+            ],
+          ),
+          armies: [
+            Army(
+              id: homeArmyIdFor('gp1'),
+              ownerId: 'gp1',
+              regionId: 'oldWorld',
+              stationedProvinceId: cap,
+              regimentUnitIds: const [],
+              isHomeArmy: true,
+            ),
+            Army(
+              id: 'field_a',
+              ownerId: 'gp1',
+              regionId: 'oldWorld',
+              stationedProvinceId: p1,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {
+              'oldWorld|cap|0|0': 'fullyVisible',
+              'oldWorld|p1|0|0': 'fullyVisible',
+              'newWorld|col|0|0': 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              cap: ['oldWorld|cap|0|0'],
+              p1: ['oldWorld|p1|0|0'],
+            },
+            'newWorld': {
+              nw: ['newWorld|col|0|0'],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'AI',
+            isHuman: false,
+            leaderKey: 'victoria',
+            capitalProvinceId: cap,
+          ),
+        ],
+        globalGameSeed: 3,
+        aiSeedByGpId: const {'gp1': 77},
+        hiddenAgendaByGpId: const {'gp1': 'warmonger'},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'oldWorld|cap',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'newWorld|col',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [],
+      );
+      final result = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+      final armyMoves =
+          result.orders.armyMoveOrdersByPlayerId['gp1'] ?? const [];
+      expect(
+        armyMoves.any((m) => m.destinationProvinceId == nw),
+        isTrue,
+        reason: 'full AI should issue army move onto owned province in other region',
+      );
+    });
   });
 }
 
