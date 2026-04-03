@@ -14,8 +14,8 @@ void main() {
       const capitalProvinceId = 'oldWorld|p1';
       const playerId = 'gp1';
 
-      // Default fromTopology gives initialNavalShips: 3. After building one more => >= 4.
-      const minFleetShipCountAfterBuild = 4;
+      // Default fromTopology gives initialNavalShips: 1. One build order => >= 2.
+      const minFleetShipCountAfterBuild = 2;
 
       final runner = ScenarioRunner();
       final failures = <String>[];

@@ -42,6 +42,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -102,6 +103,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -155,6 +157,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -220,6 +223,7 @@ void main() {
         );
         final game = Game(
           id: 'g1',
+          capitalTileGrainBonusPerTurn: 0,
           worldState: WorldState(
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
@@ -292,6 +296,7 @@ void main() {
       };
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -348,6 +353,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -401,6 +407,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -456,6 +463,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -520,6 +528,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -601,6 +610,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -678,6 +688,7 @@ void main() {
       );
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -790,6 +801,7 @@ void main() {
         };
         final game = Game(
           id: 'g1',
+          capitalTileGrainBonusPerTurn: 0,
           worldState: WorldState(
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
@@ -869,6 +881,7 @@ void main() {
           .setRoadLevel('oldWorld|p1|0|0', 3);
       final game = Game(
         id: 'g1',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
@@ -940,6 +953,7 @@ void main() {
         );
         final game = Game(
           id: 'g1',
+          capitalTileGrainBonusPerTurn: 0,
           worldState: WorldState(
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
@@ -961,5 +975,41 @@ void main() {
         expect(result['pl1']!.overseas, isEmpty);
       },
     );
+
+    test('capital tile grain bonus is unconditional on connectivity', () {
+      final player = Player(
+        id: 'pl1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|p1',
+        capitalTile: const CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'p1',
+          x: 0,
+          y: 0,
+        ),
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final result = computeExtraction(
+        game: game,
+        tileMapByRegion: const {},
+        connectivityResult: {'pl1': const ConnectivityResult(connected: {})},
+        techCapForPlayer: (_) => 4,
+      );
+      expect(result['pl1']!.land['grain'], 5);
+      expect(result['pl1']!.overseas, isEmpty);
+    });
   });
 }
