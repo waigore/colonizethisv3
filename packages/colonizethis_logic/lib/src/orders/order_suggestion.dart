@@ -8,6 +8,7 @@ import '../world/movement.dart';
 import '../world/naval.dart';
 import '../world/province_lookup.dart';
 import 'build_rail_work_rules.dart';
+import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
 import 'order_visibility.dart';
 import 'orders_application_helpers.dart';
@@ -150,6 +151,33 @@ List<MoveOrder> suggestMoveOrders(
   return suggestions;
 }
 
+/// Destination province ids for army moves (Military Units picker parity): adjacent
+/// land provinces in the army's region plus every province owned by [playerId]
+/// in any region; excludes the army's current province.
+List<String> armyMoveCandidateDestinationProvinceIds({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Army army,
+}) {
+  final fromFull = army.stationedProvinceId;
+  final regionId = ProvinceId.regionIdFrom(fromFull);
+  final fromLocal = ProvinceId.localIdFrom(fromFull);
+  final out = <String>{};
+
+  for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
+    out.add(ProvinceId.full(regionId, n));
+  }
+  for (final p in allProvinces(game.worldState)) {
+    if (p.ownerId == playerId) {
+      out.add(p.id);
+    }
+  }
+  out.remove(fromFull);
+  final sorted = out.toList()..sort();
+  return sorted;
+}
+
 /// Suggests candidate [ArmyMoveOrder]s for non-home armies owned by [view.playerId].
 List<ArmyMoveOrder> suggestArmyMoveOrders(
   PlayerView view,
@@ -174,28 +202,19 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
 
     final fromProvinceId = army.stationedProvinceId;
     final unitRegion = ProvinceId.regionIdFrom(fromProvinceId);
-    final fromLocalId = ProvinceId.localIdFrom(fromProvinceId);
 
     if (!moveSourceVisibilityOk(view, unitRegion, fromProvinceId)) continue;
 
-    for (final neighborLocalId in neighborProvinceIdsInRegion(
-      topology,
-      unitRegion,
-      fromLocalId,
-    )) {
-      final destinationProvinceId =
-          ProvinceId.full(unitRegion, neighborLocalId);
+    final destIds = armyMoveCandidateDestinationProvinceIds(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      army: army,
+    );
+
+    for (final destinationProvinceId in destIds) {
       final already = existingArmyMoves[army.id];
       if (already != null && already.contains(destinationProvinceId)) continue;
-
-      final hasVisibleTileInDest = view.visibilityByTile.entries.any((e) {
-        final parts = e.key.split('|');
-        if (parts.length != 4) return false;
-        return parts[0] == unitRegion &&
-            parts[1] == neighborLocalId &&
-            e.value != VisibilityLevel.unknown;
-      });
-      if (!hasVisibleTileInDest) continue;
 
       final candidate = ArmyMoveOrder(
         armyId: army.id,
@@ -701,14 +720,15 @@ bool _isArmyMoveOrderAccepted(
   Orders baseOrders,
   ArmyMoveOrder candidate,
 ) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addArmyMoveOrderWithContext(
+  final merged = applyArmyMoveOrderForPlayer(baseOrders, playerId, candidate);
+  final engine = OrderEngine(initialOrders: merged);
+  final results = engine.validatePlayerOrdersWithContext(
     game,
     topology,
     playerId,
-    candidate,
   );
-  return result.isAccepted;
+  if (results.isEmpty) return false;
+  return results.every((r) => r.isAccepted);
 }
 
 bool _isWorkOrderAccepted(
@@ -1835,6 +1855,12 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 /// colonizethis_ai calls this to get candidate orders; logic provides the implementation.
 abstract class OrderSuggestionAPI {
   List<MoveOrder> suggestMoveOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  );
+  List<ArmyMoveOrder> suggestArmyMoveOrders(
     PlayerView view,
     Game game,
     MapTopology topology,

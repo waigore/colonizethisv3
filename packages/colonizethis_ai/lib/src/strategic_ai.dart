@@ -65,11 +65,13 @@ StrategicOrderResult generateStrategicOrders({
     economyPlan: economyPlan,
   );
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
+  final armyMoveCount =
+      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
   _log.i(
-    'generated orders nationId=$nationId move=$moveCount build=$buildCount work=$workCount research=$researchCount',
+    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount build=$buildCount work=$workCount research=$researchCount',
   );
   _emitDialogueAndMood(
     config: config,

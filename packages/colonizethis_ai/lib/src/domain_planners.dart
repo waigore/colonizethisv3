@@ -115,6 +115,18 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
   );
 
+  orders = _runArmyMovePlanner(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+  );
+
   // Naval: suggest naval moves and missions; weight by military/expand.
   orders = _runNavalPlanner(
     nationId: nationId,
@@ -254,6 +266,78 @@ Orders _runMovePlanner({
     'unitId=${selected.first.unitId} destinationProvinceId=${selected.first.destinationProvinceId}',
   );
   return _appendMoveOrders(orders, nationId, selected);
+}
+
+Orders _runArmyMovePlanner({
+  required String nationId,
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+}) {
+  final armyMoveCandidates = suggestionAPI.suggestArmyMoveOrders(
+    view,
+    game,
+    topology,
+    orders,
+  );
+  if (armyMoveCandidates.isEmpty) {
+    _log.d('army move eval nationId=$nationId candidatesCount=0');
+    return orders;
+  }
+  final filtered = filterArmyMoveOrdersByDiplomacy(
+    game,
+    nationId,
+    armyMoveCandidates,
+  );
+  if (filtered.isEmpty) {
+    _log.d('army move filtered empty nationId=$nationId');
+    return orders;
+  }
+  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final weight =
+      primaryGoal == StrategicGoal.conquer ||
+          primaryGoal == StrategicGoal.defend
+      ? domainWeights.military
+      : primaryGoal == StrategicGoal.expand
+      ? domainWeights.economy
+      : 50;
+  if (weight < 20) {
+    _log.d('army move skipped nationId=$nationId weight=$weight < 20');
+    return orders;
+  }
+  _log.d(
+    'army move eval nationId=$nationId weight=$weight '
+    'filteredCount=${filtered.length} '
+    'candidates=${filtered.map((m) => "${m.armyId}->${m.destinationProvinceId}").toList()}',
+  );
+  final provinceOwner = getProvinceOwnerMap(game);
+  final scores = filtered.map((m) {
+    final destOwner = provinceOwner[m.destinationProvinceId];
+    if (destOwner == null || destOwner == nationId) return 1.0;
+    final rel = getRelation(game, nationId, destOwner);
+    final atWar = rel != null && rel.atWar;
+    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+  }).toList();
+  final total = scores.reduce((a, b) => a + b);
+  if (total <= 0) return orders;
+  final rng = math.Random(seeds.militarySeed + 2000);
+  var r = rng.nextDouble() * total;
+  var idx = 0;
+  for (; idx < filtered.length && r > scores[idx]; idx++) {
+    r -= scores[idx];
+  }
+  if (idx >= filtered.length) idx = filtered.length - 1;
+  final selected = filtered[idx];
+  _log.i(
+    'army move chosen nationId=$nationId '
+    'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',
+  );
+  return applyArmyMoveOrderForPlayer(orders, nationId, selected);
 }
 
 Orders _appendMoveOrders(Orders o, String playerId, List<MoveOrder> list) {

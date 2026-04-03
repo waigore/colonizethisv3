@@ -8,6 +8,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../orders/draft_orders_mutations.dart';
 import '../orders/order_suggestion.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
@@ -101,15 +102,7 @@ Orders generateOrdersWithSimpleHeuristics(
         if (moveSuggestions.isEmpty) {
           final idx = rng.nextInt(armyMoveSuggestions.length);
           final chosen = armyMoveSuggestions[idx];
-          final list = List<ArmyMoveOrder>.from(
-            current.armyMoveOrdersByPlayerId[player.id] ?? const [],
-          )..add(chosen);
-          current = current.copyWith(
-            armyMoveOrdersByPlayerId: {
-              ...current.armyMoveOrdersByPlayerId,
-              player.id: list,
-            },
-          );
+          current = applyArmyMoveOrderForPlayer(current, player.id, chosen);
         } else if (armyMoveSuggestions.isEmpty) {
           final idx = rng.nextInt(moveSuggestions.length);
           final chosen = moveSuggestions[idx];
@@ -138,15 +131,7 @@ Orders generateOrdersWithSimpleHeuristics(
           } else {
             final idx = rng.nextInt(armyMoveSuggestions.length);
             final chosen = armyMoveSuggestions[idx];
-            final list = List<ArmyMoveOrder>.from(
-              current.armyMoveOrdersByPlayerId[player.id] ?? const [],
-            )..add(chosen);
-            current = current.copyWith(
-              armyMoveOrdersByPlayerId: {
-                ...current.armyMoveOrdersByPlayerId,
-                player.id: list,
-              },
-            );
+            current = applyArmyMoveOrderForPlayer(current, player.id, chosen);
           }
         }
         break;

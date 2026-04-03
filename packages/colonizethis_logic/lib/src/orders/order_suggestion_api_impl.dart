@@ -25,6 +25,24 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
   }
 
   @override
+  List<ArmyMoveOrder> suggestArmyMoveOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) {
+    _log.i(
+      'order suggestion API suggestArmyMoveOrders player=${view.playerId}',
+    );
+    return suggestion.suggestArmyMoveOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
+  }
+
+  @override
   List<WorkOrder> suggestWorkOrders(
     PlayerView view,
     Game game,
