@@ -21,7 +21,8 @@ const String desertTerrainId = 'desert';
 /// Terrain layer for the layered rendering architecture.
 /// L0: Sea (Wang tilesets for coastline).
 /// L1: Plains and Desert (Wang tilesets for land transitions).
-/// L2+: Features (standalone overlay tiles).
+/// L2+: Features (standalone overlays; forest/mountain also use plains↔L2 Wang
+/// when configured).
 enum TerrainLayer { layer0Sea, layer1LandBase, layer2Features }
 
 /// Determines the rendering layer for a terrain type.
@@ -124,12 +125,15 @@ class StandaloneTile {
 }
 
 /// Cache for loaded tilesets.
-/// Loads L0/L1 Wang tilesets (sea_plains, sea_desert, plains_desert)
+/// Loads L0/L1 Wang tilesets (sea_plains, sea_desert, plains_desert),
+/// L1↔L2 plains Wang tilesets (plains_forest, plains_mountains),
 /// and L2+ standalone feature tiles (forest, hills, mountain, swamp).
 class TerrainTilesetCache {
   WangTileset? _seaPlainsTileset;
   WangTileset? _seaDesertTileset;
   WangTileset? _plainsDesertTileset;
+  WangTileset? _plainsForestTileset;
+  WangTileset? _plainsMountainsTileset;
   final Map<String, StandaloneTile> _standaloneTiles = {};
   bool _isLoading = false;
   bool _isLoaded = false;
@@ -161,6 +165,18 @@ class TerrainTilesetCache {
           plainsTerrainId,
           desertTerrainId,
           (tileset) => _plainsDesertTileset = tileset,
+        ),
+        _loadWangTileset(
+          'plains_forest',
+          plainsTerrainId,
+          TerrainType.forest.name,
+          (tileset) => _plainsForestTileset = tileset,
+        ),
+        _loadWangTileset(
+          'plains_mountains',
+          plainsTerrainId,
+          TerrainType.mountain.name,
+          (tileset) => _plainsMountainsTileset = tileset,
         ),
       ]);
 
@@ -314,6 +330,8 @@ class TerrainTilesetCache {
   WangTileset? getSeaPlainsTileset() => _seaPlainsTileset;
   WangTileset? getSeaDesertTileset() => _seaDesertTileset;
   WangTileset? getPlainsDesertTileset() => _plainsDesertTileset;
+  WangTileset? getPlainsForestTileset() => _plainsForestTileset;
+  WangTileset? getPlainsMountainsTileset() => _plainsMountainsTileset;
 
   // Legacy getter for backwards compatibility
   WangTileset? getSeaBeachTileset() => _seaPlainsTileset;

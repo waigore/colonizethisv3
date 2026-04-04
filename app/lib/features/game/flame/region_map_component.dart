@@ -72,12 +72,70 @@ bool shouldWrapProvinceLabelPresenceIcons({
 }
 
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
-/// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
+/// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone or
+/// plains↔L2 Wang for forest/mountain when tilesets load).
 bool _isFeatureTerrain(TerrainType terrain) {
   return terrain == TerrainType.forest ||
       terrain == TerrainType.hills ||
       terrain == TerrainType.mountain ||
       terrain == TerrainType.swamp;
+}
+
+bool _isPlainsL2WangTerrain(TerrainType terrain) {
+  return terrain == TerrainType.forest || terrain == TerrainType.mountain;
+}
+
+bool _hasAnyL2WangCorner(({bool nw, bool ne, bool sw, bool se}) c) {
+  return c.nw || c.ne || c.sw || c.se;
+}
+
+/// Wang corner rule: [upper] when [l2] appears in any of the three cells that
+/// touch that corner (same wedge pattern as sea coastline).
+({bool nw, bool ne, bool sw, bool se}) _l2WangCorners(
+  int x,
+  int y,
+  TerrainType l2,
+  CellViewData? Function(int, int) cellAt,
+) {
+  bool isL2(CellViewData? c) =>
+      c != null && !c.isSea && c.terrainType == l2;
+
+  final nw = isL2(cellAt(x - 1, y - 1)) ||
+      isL2(cellAt(x, y - 1)) ||
+      isL2(cellAt(x - 1, y));
+  final ne = isL2(cellAt(x + 1, y - 1)) ||
+      isL2(cellAt(x, y - 1)) ||
+      isL2(cellAt(x + 1, y));
+  final sw = isL2(cellAt(x - 1, y + 1)) ||
+      isL2(cellAt(x, y + 1)) ||
+      isL2(cellAt(x - 1, y));
+  final se = isL2(cellAt(x + 1, y + 1)) ||
+      isL2(cellAt(x, y + 1)) ||
+      isL2(cellAt(x + 1, y));
+  return (nw: nw, ne: ne, sw: sw, se: se);
+}
+
+/// When forest and mountain both touch a plains cell, pick the more common L2
+/// in the 8-neighborhood (tie → forest).
+TerrainType? _dominantL2InMooreNeighborhood(
+  int x,
+  int y,
+  CellViewData? Function(int, int) cellAt,
+) {
+  var forest = 0;
+  var mountain = 0;
+  for (final dy in [-1, 0, 1]) {
+    for (final dx in [-1, 0, 1]) {
+      if (dx == 0 && dy == 0) continue;
+      final c = cellAt(x + dx, y + dy);
+      if (c == null || c.isSea) continue;
+      if (c.terrainType == TerrainType.forest) forest++;
+      if (c.terrainType == TerrainType.mountain) mountain++;
+    }
+  }
+  if (forest == 0 && mountain == 0) return null;
+  if (forest >= mountain) return TerrainType.forest;
+  return TerrainType.mountain;
 }
 
 /// Get the dominant adjacent land base type for coastline tileset selection.
@@ -236,7 +294,9 @@ class CtRegionMapComponent extends PositionComponent {
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
-      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
+      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}, '
+      'plains_forest: ${terrainTilesetCache.getPlainsForestTileset() != null}, '
+      'plains_mountains: ${terrainTilesetCache.getPlainsMountainsTileset() != null}. '
       'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
       'TownIconCache loaded: ${townIconCache.isLoaded}. '
       'ProvinceLabelIconCache loaded: ${provinceLabelIconCache.isLoaded}',
@@ -748,11 +808,29 @@ class CtRegionMapComponent extends PositionComponent {
     _paintLandBaseTile(canvas, cell);
   }
 
+  /// Forest/mountain non-island cells paint a full plains↔L2 Wang tile in the
+  /// feature pass; skip the plains base here so we do not double-draw.
+  bool _shouldDeferLandBaseToPlainsL2Wang(CellViewData cell) {
+    final t = cell.terrainType;
+    if (t == null || !_isPlainsL2WangTerrain(t)) return false;
+    final ts = t == TerrainType.forest
+        ? terrainTilesetCache.getPlainsForestTileset()
+        : terrainTilesetCache.getPlainsMountainsTileset();
+    if (ts == null) return false;
+    final c = _l2WangCorners(cell.x, cell.y, t, _getCellAt);
+    if (!_hasAnyL2WangCorner(c)) return false;
+    return ts.findTile(nw: c.nw, ne: c.ne, sw: c.sw, se: c.se) != null;
+  }
+
   /// Paint a land base tile (plains or desert) with Wang transitions.
   void _paintLandBaseTile(Canvas canvas, CellViewData cell) {
     final left = cell.x * cellSize;
     final top = cell.y * cellSize;
     final terrain = cell.terrainType;
+
+    if (_shouldDeferLandBaseToPlainsL2Wang(cell)) {
+      return;
+    }
 
     // Determine if this cell is plains or desert
     final isPlains =
@@ -819,6 +897,35 @@ class CtRegionMapComponent extends PositionComponent {
       return;
     }
 
+    // Plains ↔ forest / mountains (L2): Wang tileset; lower = plains, upper = L2.
+    if (terrain == TerrainType.plains) {
+      final dom = _dominantL2InMooreNeighborhood(cell.x, cell.y, _getCellAt);
+      if (dom != null &&
+          (dom == TerrainType.forest || dom == TerrainType.mountain)) {
+        final l2 = dom;
+        final tileset = l2 == TerrainType.forest
+            ? terrainTilesetCache.getPlainsForestTileset()
+            : terrainTilesetCache.getPlainsMountainsTileset();
+        if (tileset != null) {
+          final corners = _l2WangCorners(cell.x, cell.y, l2, _getCellAt);
+          if (_hasAnyL2WangCorner(corners) &&
+              _drawTile(
+                canvas,
+                tileset,
+                left,
+                top,
+                nw: corners.nw,
+                ne: corners.ne,
+                sw: corners.sw,
+                se: corners.se,
+                cell: cell,
+              )) {
+            return;
+          }
+        }
+      }
+    }
+
     // Interior cell - use base tile from sea tileset (cleaner with transition_size=0.5)
     // Plains uses sea_plains tileset, Desert uses sea_desert tileset
     // Note: In sea tilesets, 'lower'=sea, 'upper'=land
@@ -866,10 +973,33 @@ class CtRegionMapComponent extends PositionComponent {
     final terrain = cell.terrainType;
     if (terrain == null || !_isFeatureTerrain(terrain)) return;
 
-    // All features use standalone tiles; plains base is already drawn in pass 1.
-    // If a standalone tile is missing (e.g. asset regression), skip drawing the
-    // overlay rather than failing the entire map render. Wang tilesets remain
-    // strict (they must exist), but L2+ overlays are best-effort.
+    if (_isPlainsL2WangTerrain(terrain)) {
+      final ts = terrain == TerrainType.forest
+          ? terrainTilesetCache.getPlainsForestTileset()
+          : terrainTilesetCache.getPlainsMountainsTileset();
+      if (ts != null) {
+        final corners = _l2WangCorners(cell.x, cell.y, terrain, _getCellAt);
+        if (_hasAnyL2WangCorner(corners)) {
+          final ok = _drawTile(
+            canvas,
+            ts,
+            left,
+            top,
+            nw: corners.nw,
+            ne: corners.ne,
+            sw: corners.sw,
+            se: corners.se,
+            cell: cell,
+          );
+          if (ok) return;
+        }
+      }
+    }
+
+    // Hills/swamp, L2 Wang lookup miss, or missing L2 tilesets: standalone overlay.
+    // Plains base is already drawn in pass 1 for island forest/mountain and for
+    // non–plains-L2 features. If a standalone tile is missing (e.g. asset
+    // regression), skip drawing the overlay rather than failing the map.
     final standaloneTile = terrainTilesetCache.getStandaloneTile(terrain);
     if (standaloneTile == null) {
       _log.w(

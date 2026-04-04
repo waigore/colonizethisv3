@@ -15,6 +15,16 @@
       "spec_json": "assets/images/terrain/tilesets/tileset_plains_desert.json",
       "atlas_png": "assets/images/terrain/tilesets/tileset_plains_desert.png",
       "tile_px": 32
+    },
+    "plains_forest": {
+      "spec_json": "assets/images/terrain/tilesets/tileset_plains_forest.json",
+      "atlas_png": "assets/images/terrain/tilesets/tileset_plains_forest.png",
+      "tile_px": 64
+    },
+    "plains_mountains": {
+      "spec_json": "assets/images/terrain/tilesets/tileset_plains_mountains.json",
+      "atlas_png": "assets/images/terrain/tilesets/tileset_plains_mountains.png",
+      "tile_px": 64
     }
   }
 }

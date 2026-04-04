@@ -55,7 +55,8 @@ class MapTerrainConfig {
   /// Logical map cell size in pixels (Flame [RegionMapViewData.cellSize] / [CtRegionMap.cellSizePx]).
   final int mapCellSizePx;
 
-  /// Keys: `sea_plains`, `sea_desert`, `plains_desert`.
+  /// Keys: `sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`,
+  /// `plains_mountains`.
   final Map<String, WangTilesetAssetConfig> wangTilesets;
 
   static MapTerrainConfig get instance {
@@ -99,7 +100,13 @@ class MapTerrainConfig {
       }
       wang[e.key] = WangTilesetAssetConfig.fromJson(v);
     }
-    for (final key in ['sea_plains', 'sea_desert', 'plains_desert']) {
+    for (final key in [
+      'sea_plains',
+      'sea_desert',
+      'plains_desert',
+      'plains_forest',
+      'plains_mountains',
+    ]) {
       if (!wang.containsKey(key)) {
         throw FormatException(
           'map_terrain_tilesets.json: missing wang_tilesets.$key',

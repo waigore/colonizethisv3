@@ -242,12 +242,16 @@ void main() {
           'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
           'assets/images/terrain/tilesets/tileset_sea_desert.png',
           'assets/images/terrain/tilesets/tileset_plains_desert.png',
+          'assets/images/terrain/tilesets/tileset_plains_forest.png',
+          'assets/images/terrain/tilesets/tileset_plains_mountains.png',
         ];
         const jsonPaths = [
           'assets/data/map_terrain_tilesets.json',
           'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.json',
           'assets/images/terrain/tilesets/tileset_sea_desert.json',
           'assets/images/terrain/tilesets/tileset_plains_desert.json',
+          'assets/images/terrain/tilesets/tileset_plains_forest.json',
+          'assets/images/terrain/tilesets/tileset_plains_mountains.json',
         ];
 
         for (final path in [...pngPaths, ...jsonPaths]) {
@@ -273,6 +277,8 @@ void main() {
         expect(terrainTilesetCache.getSeaPlainsTileset(), isNotNull);
         expect(terrainTilesetCache.getSeaDesertTileset(), isNotNull);
         expect(terrainTilesetCache.getPlainsDesertTileset(), isNotNull);
+        expect(terrainTilesetCache.getPlainsForestTileset(), isNotNull);
+        expect(terrainTilesetCache.getPlainsMountainsTileset(), isNotNull);
 
         final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(ctRegionMapTestHarness(region: region));
