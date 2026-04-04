@@ -1,7 +1,8 @@
 // Naval units panel. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,37 @@ import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
+
+String? navalDraftMoveLineForFleet({
+  required Game game,
+  required MapTopology topology,
+  required String humanPlayerId,
+  required String fleetRegionId,
+  required String fleetId,
+  required Orders draftOrders,
+}) {
+  final moves =
+      draftOrders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
+  for (final o in moves) {
+    if (o.fleetId != fleetId) continue;
+    if (o.isDock) {
+      final pid = o.destinationPortProvinceId!;
+      final p = tryGetProvince(game.worldState, pid);
+      final name = p?.displayName ?? p?.id ?? pid;
+      return 'Moving to: $name (dock)';
+    }
+    final z = o.destinationSeaZoneId!;
+    final zReg = regionIdForSeaZone(topology, z) ?? fleetRegionId;
+    final zoneKey = z.contains('|') ? z : '$zReg|$z';
+    final label = seaZoneDisplayName(
+      game: game,
+      regionId: zReg,
+      seaZoneId: zoneKey,
+    );
+    return 'Moving to: $label';
+  }
+  return null;
+}
 
 String _missionLabel(FleetMission m) {
   switch (m) {
@@ -49,6 +81,7 @@ class _FleetRow {
     required this.locationKey,
     this.inPortAtProvinceId,
     this.seaZoneId,
+    this.draftNavalMoveLine,
   });
 
   final String fleetId;
@@ -68,6 +101,7 @@ class _FleetRow {
   final String locationKey;
   final String? inPortAtProvinceId;
   final String? seaZoneId;
+  final String? draftNavalMoveLine;
 }
 
 abstract class _FleetLocationNode {
@@ -135,7 +169,12 @@ List<_FleetRow> _flattenTree(
 List<
   ({String regionId, _FleetRow? homeFleet, List<_FleetLocationNode> locations})
 >
-_buildNavalTree(Game game, String humanPlayerId) {
+_buildNavalTree(
+  Game game,
+  String humanPlayerId,
+  MapTopology topology,
+  Orders draftOrders,
+) {
   final player = game.players.firstWhere(
     (p) => p.id == humanPlayerId,
     orElse: () => game.players.first,
@@ -277,6 +316,14 @@ _buildNavalTree(Game game, String humanPlayerId) {
           isAtSea: true,
           locationKey: locationKey,
           seaZoneId: zoneKey,
+          draftNavalMoveLine: navalDraftMoveLineForFleet(
+            game: game,
+            topology: topology,
+            humanPlayerId: humanPlayerId,
+            fleetRegionId: regionId,
+            fleetId: fleet.id,
+            draftOrders: draftOrders,
+          ),
         );
         seas.putIfAbsent(zoneKey, () => []).add(row);
       } else if (inPortId != null) {
@@ -305,6 +352,16 @@ _buildNavalTree(Game game, String humanPlayerId) {
           isAtSea: false,
           locationKey: locationKey,
           inPortAtProvinceId: inPortId,
+          draftNavalMoveLine: isHomeFleet
+              ? null
+              : navalDraftMoveLineForFleet(
+                  game: game,
+                  topology: topology,
+                  humanPlayerId: humanPlayerId,
+                  fleetRegionId: regionId,
+                  fleetId: fleet.id,
+                  draftOrders: draftOrders,
+                ),
         );
         if (isHomeFleet) {
           homeFleetRow = row;
@@ -343,6 +400,7 @@ _buildNavalTree(Game game, String humanPlayerId) {
           isAtSea: false,
           locationKey: 'port:${province.regionId}|${province.id}',
           inPortAtProvinceId: '$capitalRegionId|$capitalProvinceLocalId',
+          draftNavalMoveLine: null,
         );
       }
     }
@@ -395,12 +453,14 @@ class NavalUnitsPanel extends StatefulWidget {
     required this.humanPlayerId,
     required this.bus,
     required this.topology,
+    this.draftOrders = const Orders(),
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
   final MapTopology topology;
+  final Orders draftOrders;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -559,9 +619,15 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.game != widget.game) {
+    if (oldWidget.game != widget.game ||
+        oldWidget.draftOrders != widget.draftOrders) {
       final flat = _flattenTree(
-        _buildNavalTree(widget.game, widget.humanPlayerId),
+        _buildNavalTree(
+          widget.game,
+          widget.humanPlayerId,
+          widget.topology,
+          widget.draftOrders,
+        ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
       final pruned = _selectedFleetIds.intersection(valid);
@@ -627,7 +693,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final tree = _buildNavalTree(widget.game, widget.humanPlayerId);
+    final tree = _buildNavalTree(
+      widget.game,
+      widget.humanPlayerId,
+      widget.topology,
+      widget.draftOrders,
+    );
     final flat = _flattenTree(tree);
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
@@ -777,7 +848,8 @@ class _FleetExpansionTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          '${row.locationLabel}\nMission: ${row.missionLabel} · ${_summary()}',
+          '${row.locationLabel}\nMission: ${row.missionLabel} · ${_summary()}'
+          '${row.draftNavalMoveLine != null ? '\n${row.draftNavalMoveLine}' : ''}',
         ),
         dense: true,
         children: [

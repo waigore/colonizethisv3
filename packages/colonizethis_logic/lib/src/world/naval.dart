@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'topology_helpers.dart';
+
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
 
 /// True when a dock order targeting [dockFullProvinceId] is the player's capital;
@@ -58,6 +60,126 @@ bool isAdjacentSeaZone(
   return false;
 }
 
+/// True when both ids are **sea-zone** topology nodes sharing an undirected edge (S–S only).
+/// At-sea fleet moves use this; undock uses [seaZonesAdjacentToProvince].
+bool isAdjacentSeaSeaZone(
+  MapTopology topology,
+  String seaZoneIdA,
+  String seaZoneIdB,
+) {
+  final seas = seaZoneNodeIds(topology);
+  if (!seas.contains(seaZoneIdA) || !seas.contains(seaZoneIdB)) return false;
+  if (seaZoneIdA == seaZoneIdB) return false;
+  for (final e in topology.edges) {
+    if ((e.id1 == seaZoneIdA && e.id2 == seaZoneIdB) ||
+        (e.id1 == seaZoneIdB && e.id2 == seaZoneIdA)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Topology node id for [provinceId] in [regionId] (matches [MapTopology] edge endpoints).
+/// [provinceId] is the same form as for [seaZoneIdForProvince] (local or prefixed).
+String? provinceTopologyNodeId(
+  MapTopology topology,
+  String provinceId,
+  String regionId,
+) {
+  final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
+  for (final n in topology.nodes) {
+    nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
+  }
+  final regionNodes = nodesByRegionAndId[regionId];
+  if (regionNodes == null) return null;
+  final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
+  var provinceNode = regionNodes[primaryProvinceKey];
+  if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
+    provinceNode = regionNodes[provinceId];
+  }
+  if (provinceNode == null || provinceNode.type != TopologyNodeType.province) {
+    return null;
+  }
+  return provinceNode.id;
+}
+
+/// Neighbors of [currentSeaZoneId] along **S–S** edges only, sorted.
+List<String> adjacentSeaZoneIdsSeaOnly(
+  MapTopology topology,
+  String currentSeaZoneId,
+) {
+  final seas = seaZoneNodeIds(topology);
+  if (!seas.contains(currentSeaZoneId)) return const [];
+  final out = <String>{};
+  for (final e in topology.edges) {
+    final a = e.id1;
+    final b = e.id2;
+    if (a == currentSeaZoneId && seas.contains(b)) out.add(b);
+    if (b == currentSeaZoneId && seas.contains(a)) out.add(a);
+  }
+  return out.toList()..sort();
+}
+
+/// One-hop naval **topology** destinations: S–S and S–P when at sea; P–S undock when in port.
+/// Province ids match topology endpoints (local or prefixed); resolve world [Province] in the UI.
+class NavalMoveTopologyPicks {
+  const NavalMoveTopologyPicks({
+    required this.adjacentSeaZoneIds,
+    required this.adjacentProvinceIdsForDock,
+  });
+
+  final List<String> adjacentSeaZoneIds;
+  final List<String> adjacentProvinceIdsForDock;
+
+  int get totalCount =>
+      adjacentSeaZoneIds.length + adjacentProvinceIdsForDock.length;
+}
+
+/// Legal adjacent nodes for the Move fleet dialog and validation (same graph rules).
+NavalMoveTopologyPicks navalMoveTopologyPicksForFleet({
+  required MapTopology topology,
+  required Fleet fleet,
+}) {
+  if (fleet.isAtSea && fleet.seaZoneId != null) {
+    final z = fleet.seaZoneId!;
+    final seaList = adjacentSeaZoneIdsSeaOnly(topology, z);
+    final rz = regionIdForSeaZone(topology, z) ?? fleet.regionId;
+    final dockSet = provinceIdsAdjacentToSeaZone(topology, z, regionId: rz);
+    final dockList = dockSet.toList()..sort();
+    return NavalMoveTopologyPicks(
+      adjacentSeaZoneIds: seaList,
+      adjacentProvinceIdsForDock: dockList,
+    );
+  }
+  final inPort = fleet.inPortAtProvinceId;
+  if (inPort != null) {
+    final rl = regionAndLocalProvinceForFleetInPort(inPort, fleet.regionId);
+    final provinceNodeId = provinceTopologyNodeId(
+      topology,
+      rl.localId,
+      rl.regionId,
+    );
+    if (provinceNodeId == null) {
+      return const NavalMoveTopologyPicks(
+        adjacentSeaZoneIds: [],
+        adjacentProvinceIdsForDock: [],
+      );
+    }
+    final undock = seaZonesAdjacentToProvince(topology, provinceNodeId).toList()
+      ..sort();
+    return NavalMoveTopologyPicks(
+      adjacentSeaZoneIds: undock,
+      adjacentProvinceIdsForDock: [],
+    );
+  }
+  return const NavalMoveTopologyPicks(
+    adjacentSeaZoneIds: [],
+    adjacentProvinceIdsForDock: [],
+  );
+}
+
 /// First sea zone id adjacent to [seaZoneId], or null if none. Used for naval retreat.
 String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
   for (final e in topology.edges) {
@@ -76,7 +198,11 @@ String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
 /// Supports both **per-region** topology (node/edge ids are local) and **combined** topology
 /// from [buildCombinedTopology] (prefixed node/edge ids). SPEC/program/map-data.md.
 /// When [regionId] is null, uses first matching node (single-region or legacy).
-String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? regionId}) {
+String? seaZoneIdForProvince(
+  MapTopology topology,
+  String provinceId, {
+  String? regionId,
+}) {
   if (regionId != null) {
     final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
     for (final n in topology.nodes) {
@@ -91,7 +217,8 @@ String? seaZoneIdForProvince(MapTopology topology, String provinceId, {String? r
     if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
       provinceNode = regionNodes[provinceId];
     }
-    if (provinceNode == null || provinceNode.type != TopologyNodeType.province) {
+    if (provinceNode == null ||
+        provinceNode.type != TopologyNodeType.province) {
       return null;
     }
     for (final e in topology.edges) {
@@ -141,10 +268,13 @@ Set<String> provinceIdsAdjacentToSeaZone(
   if (regionNodes == null) return {};
   final out = <String>{};
   for (final e in topology.edges) {
-    final otherId = e.id1 == seaZoneId ? e.id2 : (e.id2 == seaZoneId ? e.id1 : null);
+    final otherId = e.id1 == seaZoneId
+        ? e.id2
+        : (e.id2 == seaZoneId ? e.id1 : null);
     if (otherId != null) {
       final node = regionNodes[otherId];
-      if (node != null && node.type == TopologyNodeType.province) out.add(otherId);
+      if (node != null && node.type == TopologyNodeType.province)
+        out.add(otherId);
     }
   }
   return out;
@@ -168,13 +298,17 @@ Set<String> seaZoneIdsAdjacentToProvince(
   String localProvinceId = provinceId;
   if (provinceId.contains('|')) {
     final parts = provinceId.split('|');
-    localProvinceId = parts.length > 1 ? parts.sublist(1).join('|') : provinceId;
+    localProvinceId = parts.length > 1
+        ? parts.sublist(1).join('|')
+        : provinceId;
   }
   final nodeById = {for (final n in topology.nodes) n.id: n};
   final out = <String>{};
   for (final e in topology.edges) {
     final id1 = e.id1, id2 = e.id2;
-    final prov = (id1 == localProvinceId || id1 == provinceId) ? id1 : ((id2 == localProvinceId || id2 == provinceId) ? id2 : null);
+    final prov = (id1 == localProvinceId || id1 == provinceId)
+        ? id1
+        : ((id2 == localProvinceId || id2 == provinceId) ? id2 : null);
     if (prov == null) continue;
     final other = id1 == prov ? id2 : id1;
     final node = nodeById[other];
@@ -187,7 +321,9 @@ Set<String> seaZoneIdsAdjacentToProvince(
 /// fleet attached to that province ([inPortAtProvinceId] equals province id).
 /// [provinceId] must be prefixed (regionId|localId) when world is multi-region.
 List<Fleet> fleetsInPortAtProvince(WorldState worldState, String provinceId) {
-  final normalized = provinceId.contains('|') ? provinceId : 'oldWorld|$provinceId';
+  final normalized = provinceId.contains('|')
+      ? provinceId
+      : 'oldWorld|$provinceId';
   return worldState.fleets
       .where((f) => f.inPortAtProvinceId == normalized)
       .toList();

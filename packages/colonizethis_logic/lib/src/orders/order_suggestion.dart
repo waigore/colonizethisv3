@@ -7,6 +7,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/naval.dart';
 import '../world/province_lookup.dart';
+import '../world/topology_helpers.dart';
 import 'build_rail_work_rules.dart';
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
@@ -28,9 +29,7 @@ List<MoveOrder> suggestMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d(
-    'suggestMoveOrders player=${view.playerId}',
-  );
+  _log.d('suggestMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
 
@@ -138,16 +137,12 @@ List<MoveOrder> suggestMoveOrders(
     return a.destinationProvinceId.compareTo(b.destinationProvinceId);
   });
 
-  _log.d(
-    'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
-  );
+  _log.d('suggestMoveOrders player=$playerId candidates=${suggestions.length}');
   _log.d(
     'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
   );
   if (suggestions.isEmpty)
-    _log.w(
-      'suggestMoveOrders no candidates player=$playerId',
-    );
+    _log.w('suggestMoveOrders no candidates player=$playerId');
   return suggestions;
 }
 
@@ -255,9 +250,7 @@ List<WorkOrder> suggestWorkOrders(
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  _log.d(
-    'suggestWorkOrders player=${view.playerId}',
-  );
+  _log.d('suggestWorkOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <WorkOrder>[];
 
@@ -430,9 +423,7 @@ List<WorkOrder> suggestWorkOrders(
             }
           }
           if (accepted != null) {
-            _log.d(
-              'suggestWorkOrders candidate=$accepted',
-            );
+            _log.d('suggestWorkOrders candidate=$accepted');
             suggestions.add(accepted);
           } else {
             _log.d(
@@ -536,16 +527,12 @@ List<WorkOrder> suggestWorkOrders(
     return a.targetTileKey.compareTo(b.targetTileKey);
   });
 
-  _log.d(
-    'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
-  );
+  _log.d('suggestWorkOrders player=$playerId candidates=${suggestions.length}');
   _log.d(
     'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
   if (suggestions.isEmpty)
-    _log.w(
-      'suggestWorkOrders no candidates player=$playerId',
-    );
+    _log.w('suggestWorkOrders no candidates player=$playerId');
   return suggestions;
 }
 
@@ -556,18 +543,14 @@ List<BuildUnitOrder> suggestBuildOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d(
-    'suggestBuildOrders player=${view.playerId}',
-  );
+  _log.d('suggestBuildOrders player=${view.playerId}');
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
-    _log.w(
-      'suggestBuildOrders no capital player=$playerId',
-    );
+    _log.w('suggestBuildOrders no capital player=$playerId');
     return suggestions;
   }
 
@@ -621,9 +604,7 @@ List<BuildUnitOrder> suggestBuildOrders(
     'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}',
   );
   if (suggestions.isEmpty)
-    _log.w(
-      'suggestBuildOrders no candidates player=$playerId',
-    );
+    _log.w('suggestBuildOrders no candidates player=$playerId');
   return suggestions;
 }
 
@@ -636,9 +617,7 @@ List<ResearchOrder> suggestResearchOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d(
-    'suggestResearchOrders player=${view.playerId}',
-  );
+  _log.d('suggestResearchOrders player=${view.playerId}');
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <ResearchOrder>[];
@@ -834,9 +813,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     return {};
   }
   if (unit.currentWork != null) {
-    _log.d(
-      'getValidWorkOrderTileKeysWithVisibility unit has current work',
-    );
+    _log.d('getValidWorkOrderTileKeysWithVisibility unit has current work');
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) {
@@ -1328,9 +1305,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d(
-    'suggestNavalMoveOrders player=${view.playerId}',
-  );
+  _log.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
@@ -1347,56 +1322,45 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
-    final String? currentZone;
     if (fleet.isAtSea) {
-      currentZone = fleet.seaZoneId;
-    } else {
-      final inPortProvinceId = fleet.inPortAtProvinceId;
-      if (inPortProvinceId == null) continue;
-      final rl = regionAndLocalProvinceForFleetInPort(
-        inPortProvinceId,
-        fleet.regionId,
-      );
-      currentZone = seaZoneIdForProvince(
-        topology,
-        rl.localId,
-        regionId: rl.regionId,
-      );
-    }
-    if (currentZone == null) continue;
+      final cur = fleet.seaZoneId;
+      if (cur == null) continue;
 
-    // Suggest move to adjacent sea zones.
-    for (final node in topology.nodes) {
-      if (node.type != TopologyNodeType.seaZone) continue;
-      final destId = node.id;
-      if (!isAdjacentSeaZone(topology, currentZone, destId)) continue;
-      if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-      final candidate = NavalMoveOrder(
-        fleetId: fleet.id,
-        destinationSeaZoneId: destId,
-      );
-      if (_isNavalMoveOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
-        suggestions.add(candidate);
+      // Suggest S–S moves only (direct sea-zone edges).
+      for (final node in topology.nodes) {
+        if (node.type != TopologyNodeType.seaZone) continue;
+        final destId = node.id;
+        if (cur != destId && !isAdjacentSeaSeaZone(topology, cur, destId)) {
+          continue;
+        }
+        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+        final candidate = NavalMoveOrder(
+          fleetId: fleet.id,
+          destinationSeaZoneId: destId,
+        );
+        if (_isNavalMoveOrderAccepted(
+          game,
+          topology,
+          playerId,
+          currentOrders,
+          candidate,
+        )) {
+          suggestions.add(candidate);
+        }
       }
-    }
 
-    // Suggest dock at adjacent owned provinces (fleets at sea only). SPEC/game/ships-and-naval.md.
-    if (fleet.isAtSea) {
-      final zoneRegionId = regionIdForSeaZone(topology, currentZone);
+      // Suggest dock at adjacent owned provinces (S–P). SPEC/game/ships-and-naval.md.
+      final zoneRegionId = regionIdForSeaZone(topology, cur);
       if (zoneRegionId != null) {
         final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
           topology,
-          currentZone,
+          cur,
           regionId: zoneRegionId,
         );
         for (final localId in adjacentLocalIds) {
-          final fullProvinceId = ProvinceId.full(zoneRegionId, localId);
+          final fullProvinceId = ProvinceId.isPrefixed(localId)
+              ? localId
+              : ProvinceId.full(zoneRegionId, localId);
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
               false)
             continue;
@@ -1415,6 +1379,31 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
           )) {
             suggestions.add(candidate);
           }
+        }
+      }
+    } else {
+      final inPortProvinceId = fleet.inPortAtProvinceId;
+      if (inPortProvinceId == null) continue;
+      final rl = regionAndLocalProvinceForFleetInPort(
+        inPortProvinceId,
+        fleet.regionId,
+      );
+      final pNode = provinceTopologyNodeId(topology, rl.localId, rl.regionId);
+      if (pNode == null) continue;
+      for (final destId in seaZonesAdjacentToProvince(topology, pNode)) {
+        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+        final candidate = NavalMoveOrder(
+          fleetId: fleet.id,
+          destinationSeaZoneId: destId,
+        );
+        if (_isNavalMoveOrderAccepted(
+          game,
+          topology,
+          playerId,
+          currentOrders,
+          candidate,
+        )) {
+          suggestions.add(candidate);
         }
       }
     }
@@ -1447,9 +1436,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d(
-    'suggestNavalMissionOrders player=${view.playerId}',
-  );
+  _log.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
   final existingByFleet = <String>{};
@@ -1595,7 +1582,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final isGpTarget = game.players.any((p) => p.id == targetId);
   final isMinorOrTribe =
       game.minorNations.any((m) => m.id == targetId) ||
-          game.tribes.any((t) => t.id == targetId);
+      game.tribes.any((t) => t.id == targetId);
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -1722,9 +1709,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  _log.d(
-    'suggestDiplomaticOrders player=${view.playerId}',
-  );
+  _log.d('suggestDiplomaticOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
