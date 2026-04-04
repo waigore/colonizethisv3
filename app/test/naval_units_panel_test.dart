@@ -106,6 +106,7 @@ void main() {
     required String humanPlayerId,
     AppEventBus? bus,
     MapTopology topology = const MapTopology(),
+    Orders draftOrders = const Orders(),
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
@@ -115,6 +116,7 @@ void main() {
           humanPlayerId: humanPlayerId,
           bus: resolvedBus,
           topology: topology,
+          draftOrders: draftOrders,
         ),
       ),
     );
@@ -2885,5 +2887,84 @@ void main() {
         expect(updated, isNull);
       },
     );
+  });
+
+  group('Draft naval move subtitle', () {
+    testWidgets('shows Moving to line when draft order present', (
+      WidgetTester tester,
+    ) async {
+      const ow = 'oldWorld';
+      const humanId = 'gp_draft_line';
+      const capProvince = '$ow|capital';
+      final draftGame = Game(
+        id: 'g_draft_line',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: capProvince,
+                regionId: ow,
+                ownerId: humanId,
+                displayName: 'Capital',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: homeFleetIdFor(humanId),
+              ownerId: humanId,
+              regionId: ow,
+              inPortAtProvinceId: capProvince,
+              ships: const [],
+            ),
+            Fleet(
+              id: 'f_at_sea',
+              ownerId: humanId,
+              regionId: ow,
+              seaZoneId: 'sz0',
+              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+            ),
+          ],
+          seaZoneDisplayNameById: const {'oldWorld|sz1': 'Target Sea'},
+        ),
+        players: [
+          Player(
+            id: humanId,
+            displayName: 'P',
+            isHuman: true,
+            capitalProvinceId: capProvince,
+            capitalTile: CapitalTile(
+              regionId: ow,
+              provinceId: capProvince,
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      final orders = Orders(
+        navalMoveOrdersByPlayerId: {
+          humanId: [
+            const NavalMoveOrder(
+              fleetId: 'f_at_sea',
+              destinationSeaZoneId: 'sz1',
+            ),
+          ],
+        },
+      );
+
+      await tester.pumpWidget(
+        buildPanel(
+          game: draftGame,
+          humanPlayerId: humanId,
+          draftOrders: orders,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Moving to: Target Sea'), findsOneWidget);
+    });
   });
 }
