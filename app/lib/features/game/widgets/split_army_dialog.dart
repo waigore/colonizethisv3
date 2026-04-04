@@ -35,9 +35,13 @@ class SplitArmyDialog extends StatelessWidget {
   }
 
   Map<String, int> _initialLeftCounts() {
-    return {
-      for (final id in army.regimentUnitIds) id: 1,
-    };
+    final counts = <String, int>{};
+    for (final id in army.regimentUnitIds) {
+      final u = _unit(id);
+      final bucket = regimentTransferBucketKey(u, id);
+      counts[bucket] = (counts[bucket] ?? 0) + 1;
+    }
+    return counts;
   }
 
   String _locationLabel() {
@@ -50,10 +54,11 @@ class SplitArmyDialog extends StatelessWidget {
   }
 
   void _handleConfirm(Map<String, int> right, BuildContext context) {
-    final toMove = <String>[
-      for (final e in right.entries)
-        if (e.value > 0) e.key,
-    ];
+    final toMove = regimentUnitIdsForTransferCounts(
+      army.regimentUnitIds,
+      _unit,
+      right,
+    );
     bus.emit(
       ArmySplitRequestedEvent(
         humanPlayerId: humanPlayerId,
@@ -76,10 +81,7 @@ class SplitArmyDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Split Army',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('Split Army', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
               CtTransferList(
                 listHeight: 220,
@@ -88,19 +90,14 @@ class SplitArmyDialog extends StatelessWidget {
                 leftSubtitle: _locationLabel(),
                 rightSubtitle: _locationLabel(),
                 initialLeftCounts: _initialLeftCounts(),
-                itemLabelBuilder: (unitId) {
-                  final u = _unit(unitId);
-                  return u != null ? '${u.type} ($unitId)' : unitId;
-                },
+                itemLabelBuilder: (bucketKey) => bucketKey,
                 leftEmptyLabel: 'No regiments',
                 rightEmptyLabel: 'No regiments',
                 confirmLabel: 'Confirm Split',
                 totalLabelBuilder: (total) => 'Total: $total regiments',
                 canConfirm: (left, right) {
-                  final leftTotal =
-                      left.values.fold(0, (sum, c) => sum + c);
-                  final rightTotal =
-                      right.values.fold(0, (sum, c) => sum + c);
+                  final leftTotal = left.values.fold(0, (sum, c) => sum + c);
+                  final rightTotal = right.values.fold(0, (sum, c) => sum + c);
                   if (isHomeArmy) {
                     return rightTotal > 0;
                   }
