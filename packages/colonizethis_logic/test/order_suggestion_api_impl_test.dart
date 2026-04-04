@@ -315,7 +315,10 @@ void main() {
         ),
         players: [
           const Player(id: 'gp1', displayName: 'A', isHuman: false)
-              .copyWith(treasury: 600),
+              .copyWith(
+            treasury: 600,
+            techUnlocked: const {'diplomatic_expertise': true},
+          ),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),

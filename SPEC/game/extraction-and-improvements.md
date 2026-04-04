@@ -94,6 +94,16 @@ Tech only **allows** building — it does not upgrade existing tiles. Ports and 
 
 Connected tiles' effective yields are summed by commodity. **Same-region:** added to owning player's stockpile. **Overseas:** sea transport step (cargo limit + priority). No per-province storage. See [stockpiles-and-production.md](stockpiles-and-production.md).
 
+### Capital tile grain bonus (Great Powers)
+
+Each **Great Power** player with a non-null **`capitalTile`** receives a fixed quantity of **`grain`** added to **land** (same-region) extraction totals **every Extraction phase**. The default amount is **5** per turn (`capitalTileGrainBonusPerTurn` in program-level `StartingResourcesConfig`, copied onto `Game` at setup for saves). This bonus is **not** tied to terrain resources on the capital tile (capital tiles remain non-extractable per § Extraction Formula) and applies **unconditionally** — it does **not** require connectivity, blockade state, or overseas paths. Minor Nations and Tribes do not use this rule (they are not `Game.players`). Scenarios may set the bonus to **0** via starting-resources config.
+
+**Acceptance criteria**
+
+- Given a Great Power player with `capitalTile` set and `Game.capitalTileGrainBonusPerTurn` equal to a non-negative integer **B**  
+  When the System runs `computeExtraction` for that game state  
+  Then that player's **land** extraction totals include **B** additional units of commodity id `grain`, even when that player's connected tile set is empty.
+
 ### Improvement Build Eligibility (Builder)
 
 A Builder may build an improvement on a tile only if: (a) the tile has a **resource** (per terrain/ruleset; no improvement on empty tiles), (b) the tile's improvement level is below the **max improvement level** (4), and (c) the **next** improvement level (current + 1) does not exceed the player's **tech-allowed extraction cap** (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)). The order engine rejects build_improvement work orders when the tile has no resource or when the player lacks sufficient tech to build the next level.

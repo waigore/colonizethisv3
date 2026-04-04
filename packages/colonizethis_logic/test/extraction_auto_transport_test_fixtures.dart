@@ -110,6 +110,7 @@ extractionAutoTransportFixture({
   final game = Game(
     id: 'g1',
     globalGameSeed: globalGameSeed,
+    capitalTileGrainBonusPerTurn: 0,
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(

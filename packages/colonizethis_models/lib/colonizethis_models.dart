@@ -19,6 +19,7 @@ export 'src/tile_map_state.dart';
 export 'src/province.dart';
 export 'src/province_id.dart';
 export 'src/quick_battle.dart';
+export 'src/regiment_transfer.dart';
 export 'src/region.dart';
 export 'src/region_data.dart';
 export 'src/worker_pool.dart';

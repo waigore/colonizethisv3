@@ -122,6 +122,33 @@ class LocateMapTileEvent extends UIActionEvent {
   final String regionId;
 }
 
+/// In-game region minimap requests the Flame map camera center at world coordinates (after clamp).
+/// Consumed by the in-game region map host wired to the same [AppEventBus]. SPEC/ui/empire-overview.md.
+class RequestRegionMapCameraCenterWorldEvent extends UIActionEvent {
+  const RequestRegionMapCameraCenterWorldEvent({
+    required this.regionId,
+    required this.worldCenterX,
+    required this.worldCenterY,
+  });
+
+  final String regionId;
+  final double worldCenterX;
+  final double worldCenterY;
+}
+
+/// In-game region minimap requests a world-space pan of the Flame map camera center (after clamp).
+class RequestRegionMapCameraPanWorldDeltaEvent extends UIActionEvent {
+  const RequestRegionMapCameraPanWorldDeltaEvent({
+    required this.regionId,
+    required this.worldDx,
+    required this.worldDy,
+  });
+
+  final String regionId;
+  final double worldDx;
+  final double worldDy;
+}
+
 /// Request to start civilian target-selection mode from the units panel.
 /// Emit [ClosePanelEvent] first when the civilian units sheet should close.
 class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {

@@ -18,6 +18,8 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/map_view_provider.dart';
+import '../../../../providers/region_minimap_provider.dart';
+import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 
 import 'game_screen_shared.dart';
@@ -25,6 +27,7 @@ import 'game_side_menu.dart';
 import 'game_map_controls.dart';
 import 'game_map_corner_controls.dart';
 import 'game_map_canvas_stack.dart';
+import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
 import 'game_map_area_state_logic.dart';
 import 'next_turn_confirmation_dialog.dart';
@@ -42,6 +45,9 @@ class GameMapArea extends ConsumerStatefulWidget {
 
 class _GameMapAreaState extends ConsumerState<GameMapArea> {
   int _regionIndex = 0;
+  RegionMapViewportSnapshot? _regionViewportSnapshot;
+  RegionMapViewportSnapshot? _pendingRegionViewport;
+  bool _regionViewportFrameScheduled = false;
   String? _centerOnTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
@@ -255,7 +261,29 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game.id != widget.game.id) {
       ref.read(mapProvincePanelProvider.notifier).reset();
+      ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
+      setState(() {
+        _regionViewportSnapshot = null;
+        _pendingRegionViewport = null;
+        _regionViewportFrameScheduled = false;
+      });
     }
+  }
+
+  void _onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
+    _pendingRegionViewport = snapshot;
+    if (_regionViewportFrameScheduled) return;
+    _regionViewportFrameScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _regionViewportFrameScheduled = false;
+      if (!mounted) return;
+      final next = _pendingRegionViewport;
+      _pendingRegionViewport = null;
+      if (next == null) return;
+      final cur = _regionViewportSnapshot;
+      if (cur != null && cur.matches(next)) return;
+      setState(() => _regionViewportSnapshot = next);
+    });
   }
 
   @override
@@ -331,6 +359,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         })
                       : null,
                   bus: ref.read(appEventBusProvider),
+                  onRegionViewportSnapshot: _onRegionViewportSnapshot,
                 ),
                 Positioned(
                   left: 0,
@@ -447,6 +476,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     onClose: () => setState(() => _sideMenuOpen = false),
                   ),
                 ],
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: GameRegionMinimap(
+                    region: _currentRegion,
+                    viewportSnapshot: _regionViewportSnapshot,
+                    bus: ref.read(appEventBusProvider),
+                    cellSizePx: 24,
+                  ),
+                ),
               ],
             ),
           ),

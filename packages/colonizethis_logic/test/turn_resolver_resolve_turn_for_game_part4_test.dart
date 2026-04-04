@@ -525,8 +525,9 @@ void main() {
           ),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 2000),
+        players: [
+          const Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 2000)
+              .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),

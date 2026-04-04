@@ -8,6 +8,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 
 import 'app.dart';
 import 'config/constants.dart';
+import 'config/map_terrain_config.dart';
 import 'core/services/app_event_handler_scope.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
@@ -23,6 +24,7 @@ Future<void> _openHiveBoxSafely(String name) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SessionLogBuffer.init();
+  await MapTerrainConfig.ensureLoaded();
   await Hive.initFlutter();
   await _openHiveBoxSafely(HiveBoxNames.settings);
   await _openHiveBoxSafely(HiveBoxNames.games);

@@ -89,6 +89,8 @@ with fleet-specific labels and validation.
 - Optional cancel callback and customizable action labels
 - Customizable item label and empty-state labels
 
+**Ship type labels:** The dialog passes `itemLabelBuilder: shipTypeDisplayName` so each row shows the same human-readable ship name as the Naval Units panel composition table ([ships-and-naval.md](../game/ships-and-naval.md)), not raw `ship_type_id` strings.
+
 Naval-specific behavior remains outside the component:
 
 - Home-fleet split rule override
@@ -199,6 +201,8 @@ After any fleet operation (split or combine):
 ### Split
 
 - **Given** a non-Home Fleet with multiple ships, **when** the user clicks Split Fleet, **then** a modal dialog opens showing the fleet's ship composition with transfer controls.
+
+- **Given** the Split Fleet dialog is open and the fleet includes ships of type `carrack`, **when** the user reads a transfer-list row label, **then** the UI layer shows **Carrack** (via `shipTypeDisplayName`), not the raw id string `carrack`.
 
 - **Given** the Split Fleet dialog is open with a fleet containing ships, **when** the user moves ships to the new fleet panel and clicks Confirm, **then** a new fleet is created with the **moved ship instances** (same instance ids), the original fleet retains the remaining instances, and both fleets appear in the panel.
 

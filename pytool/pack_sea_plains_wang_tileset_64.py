@@ -156,6 +156,141 @@ def _average_center_rgba(
     return (r_acc // n, g_acc // n, b_acc // n, 255)
 
 
+def _corner_key_from_tile_json(t: dict) -> tuple[bool, bool, bool, bool]:
+    c = t.get("corners")
+    if not isinstance(c, dict):
+        raise ValueError(f"tile missing corners: {t!r}")
+    return (
+        c["NW"] == "upper",
+        c["NE"] == "upper",
+        c["SW"] == "upper",
+        c["SE"] == "upper",
+    )
+
+
+def _load_corner_to_bbox_from_tileset_json(
+    data: dict,
+) -> tuple[dict[tuple[bool, bool, bool, bool], dict[str, int]], int]:
+    """PixelLab-style JSON: each tile has corners + bounding_box; atlas may be non–row-major."""
+    tiles = data.get("tileset_data", {}).get("tiles")
+    if not isinstance(tiles, list):
+        raise ValueError("tileset JSON missing tileset_data.tiles list")
+    ts = data.get("tileset_data", {}).get("tile_size") or data.get("tile_size")
+    if not isinstance(ts, dict):
+        raise ValueError("tileset JSON missing tile_size")
+    tw = int(ts["width"])
+    th = int(ts["height"])
+    if tw != th:
+        raise ValueError(f"expected square tiles, got {tw}×{th}")
+    out: dict[tuple[bool, bool, bool, bool], dict[str, int]] = {}
+    for t in tiles:
+        if not isinstance(t, dict):
+            continue
+        bb = t.get("bounding_box")
+        if not isinstance(bb, dict):
+            continue
+        key = _corner_key_from_tile_json(t)
+        if key in out:
+            raise ValueError(f"duplicate corner key in tileset JSON: {key}")
+        out[key] = {
+            "x": int(bb["x"]),
+            "y": int(bb["y"]),
+            "width": int(bb["width"]),
+            "height": int(bb["height"]),
+        }
+    if len(out) != 16:
+        raise ValueError(f"expected 16 unique corner patterns, got {len(out)}")
+    return out, tw
+
+
+def cmd_preview_app_tileset(args: argparse.Namespace) -> None:
+    """Render map using PixelLab JSON bounding_box + atlas (e.g. 32×32 tiles on 128×128 PNG)."""
+    tm_path: Path = args.tile_map_json
+    atlas_path: Path = args.tileset_png
+    json_path: Path = args.tileset_json
+    out_path: Path = args.out_png
+
+    tm = json.loads(tm_path.read_text(encoding="utf-8"))
+    w = int(tm["width"])
+    h = int(tm["height"])
+    grid_raw = tm["grid"]
+    grid = [[str(row[c]) for c in range(len(row))] for row in grid_raw]
+
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    corner_to_bb, tile_w = _load_corner_to_bbox_from_tileset_json(data)
+
+    cell = args.cell_size if args.cell_size > 0 else tile_w
+
+    dim = data.get("tileset_image", {}).get("dimensions")
+    if isinstance(dim, dict):
+        exp_w, exp_h = int(dim["width"]), int(dim["height"])
+    else:
+        exp_w = exp_h = tile_w * 4
+
+    atlas = Image.open(atlas_path).convert("RGBA")
+    if atlas.size != (exp_w, exp_h):
+        print(
+            f"expected atlas {exp_w}×{exp_h} (from JSON), got {atlas.size}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    scale = cell // tile_w
+    if cell != tile_w * scale:
+        print(f"--cell-size must be a multiple of tile width {tile_w}, got {cell}", file=sys.stderr)
+        sys.exit(1)
+
+    def crop_corners(nw: bool, ne: bool, sw: bool, se: bool) -> Image.Image:
+        bb = corner_to_bb[(nw, ne, sw, se)]
+        x0, y0 = bb["x"], bb["y"]
+        x1, y1 = x0 + bb["width"], y0 + bb["height"]
+        return atlas.crop((x0, y0, x1, y1))
+
+    def avg_center_rgba(nw: bool, ne: bool, sw: bool, se: bool, half: int = 4) -> tuple[int, int, int, int]:
+        patch = crop_corners(nw, ne, sw, se)
+        px = patch.load()
+        pw, ph = patch.size
+        cx, cy = pw // 2, ph // 2
+        r_acc = g_acc = b_acc = n = 0
+        for dy in range(-half, half):
+            for dx in range(-half, half):
+                r, g, b, _a = px[cx + dx, cy + dy]
+                r_acc += r
+                g_acc += g
+                b_acc += b
+                n += 1
+        return (r_acc // n, g_acc // n, b_acc // n, 255)
+
+    sea_fill = avg_center_rgba(False, False, False, False)
+    land_fill = avg_center_rgba(True, True, True, True)
+    out_w, out_h = w * cell, h * cell
+    out_img = Image.new("RGBA", (out_w, out_h), sea_fill)
+    sea_cell_bg = Image.new("RGBA", (cell, cell), sea_fill)
+    land_cell_bg = Image.new("RGBA", (cell, cell), land_fill)
+
+    for y in range(h):
+        for x in range(w):
+            cid = grid[y][x]
+            sea = is_sea_cell(cid)
+            if sea:
+                nw_c, ne_c, sw_c, se_c, same = coastline_corners_for_sea(grid, x, y, w, h)
+                if same:
+                    patch = crop_corners(False, False, False, False)
+                else:
+                    patch = crop_corners(nw_c, ne_c, sw_c, se_c)
+            else:
+                patch = crop_corners(True, True, True, True)
+            if scale != 1:
+                patch = patch.resize((cell, cell), Image.Resampling.NEAREST)
+            x0, y0 = x * cell, y * cell
+            out_img.paste(sea_cell_bg if sea else land_cell_bg, (x0, y0))
+            out_img.paste(patch, (x0, y0), patch)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_img.save(out_path)
+    print(f"wrote {out_path} ({out_w}×{out_h}) using {json_path.name} + {atlas_path.name}")
+
+
 def cmd_preview(args: argparse.Namespace) -> None:
     tm_path: Path = args.tile_map_json
     atlas_path: Path = args.tileset_png
@@ -244,6 +379,30 @@ def main() -> None:
         help=f"Output pixels per map cell (multiple of {TILE}; default 64)",
     )
     p_prev.set_defaults(func=cmd_preview)
+
+    p_app = sub.add_parser(
+        "preview-app",
+        help="Render map from TileMapResult + PixelLab tileset JSON bounding boxes (any square tile size)",
+    )
+    p_app.add_argument("--tile-map-json", type=Path, required=True)
+    p_app.add_argument(
+        "--tileset-json",
+        type=Path,
+        default=root / "app/assets/images/terrain/tilesets/tileset_sea_plains.json",
+    )
+    p_app.add_argument(
+        "--tileset-png",
+        type=Path,
+        default=root / "app/assets/images/terrain/tilesets/tileset_sea_plains.png",
+    )
+    p_app.add_argument("--out-png", type=Path, required=True)
+    p_app.add_argument(
+        "--cell-size",
+        type=int,
+        default=0,
+        help="Output pixels per map cell (multiple of JSON tile width; default = JSON tile width)",
+    )
+    p_app.set_defaults(func=cmd_preview_app_tileset)
 
     args = parser.parse_args()
     args.func(args)

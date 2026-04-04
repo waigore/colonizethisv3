@@ -146,6 +146,46 @@ void main() {
       expect(rel!.score, lessThan(60));
     });
 
+    test(
+      'applyInterventionChoice protest uses smaller penalty when attacker has Propaganda',
+      () {
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            const Player(id: 'gp1', displayName: 'Human', isHuman: true),
+            const Player(id: 'gp2', displayName: 'Attacker', isHuman: false)
+                .copyWith(techUnlocked: const {'propaganda': true}),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              score: 60,
+              level: RelationLevel.friendly,
+            ),
+          ],
+        );
+        final ctx = BattleContext(
+          provinceId: 'P1',
+          regionId: 'oldWorld',
+          defenderFactionId: 'minor1',
+          defenderUnitIds: const [],
+          attackers: const [AttackingSide(factionId: 'gp2', unitIds: [])],
+          fortLevel: 0,
+          terrain: 'plains',
+        );
+        final after =
+            applyInterventionChoice(game, ctx, 'gp1', InterventionChoice.protest);
+        final rel = getRelation(after, 'gp1', 'gp2');
+        expect(rel!.score, 55);
+      },
+    );
+
     test('needsInterventionChoice returns null when no GP has embassy for minor', () {
       final game = Game(
         id: 'g1',

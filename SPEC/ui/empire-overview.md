@@ -50,6 +50,17 @@
 - **Default behavior:** At the start of a game session (after init or load), **Show province overlay**, **Show province ownership**, and **Show province names** are all **ON** by default. When the user changes any toggle, the new values are remembered for the remainder of the session and are reflected every time the dialog is reopened.
 - **Effect on rendering:** When **Show province overlay** is ON, the map widget draws province and sea-zone boundary strokes per [map-widget.md](map-widget.md). When OFF, those strokes are not drawn. When **Show province ownership** is ON, the map draws the Great Power land tint per [map-widget.md](map-widget.md) § Province ownership (GP tint). When OFF, no GP tint is drawn. Hover selectors, hover province glows, capitals, ports, warp zone indicators, and (per the province-names toggle) labels remain according to their own toggles. When **Show province names** is ON, land province labels are drawn per [map-widget.md](map-widget.md) § Layer model (province names row). When OFF, no province name labels are drawn.
 
+### Region minimap (in-game map stack)
+
+- **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace top-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart).
+- **Widget:** [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) — full active region grid (flat terrain colors), visibility per `CellViewData.visibility` (unrevealed = black; fogged = same terrain hue at alpha **0.55**; visible = full opacity). Sea uses deep blue `#0D47A1`; land terrains: plains `#A5D6A7`, forest `#2E7D32`, hills `#B0BEC5`, mountain `#546E7A`, swamp `#6D4C41`, desert `#D7CCC8`.
+- **Viewport:** White stroke rectangle aligned with main map camera (world center, zoom, logical viewport size, `cellSizePx`); see [map-widget.md](map-widget.md) § Region minimap camera sync.
+- **Interaction:** Tap sets main map camera center to world position under tap (clamped). Drag applies world-space pan to camera center (clamped). Does not change tile/province selection.
+- **Toggle:** Icon-only `ui_icon_region_minimap.png` ([game-toolbar-icons.md](game-toolbar-icons.md)), same padding/hit target pattern as corner controls. **Default ON** when entering the shell; show/hide is **session-only** (Riverpod `regionMinimapVisibleProvider`).
+- **Coordination:** Minimap → map uses typed **`RequestRegionMapCameraCenterWorldEvent`** / **`RequestRegionMapCameraPanWorldDeltaEvent`** on `AppEventBus` ([app-event-bus.md](../program/app-event-bus.md)). Map → shell pushes `RegionMapViewportSnapshot` via `CtRegionMap.onViewportSnapshotChanged` (shell coalesces updates per frame; not cross-panel callbacks). Narrow layout: overlap with bottom detail is acceptable.
+
+**Acceptance (minimap):** Given the in-game shell map is visible, when the minimap toggle is on, then the UI shows the active region grid with visibility rules above and a white viewport indicator when the main map has published a matching snapshot. When the user taps the toggle, then the minimap hides or shows for the session only (default on at shell entry). When the user drags on the minimap or the bus emits a pan event for that region, then the main map host remains without exceptions. When the side menu is open, then the minimap stack order keeps it interactive above the scrim.
+
 ---
 
 ## Wireframe (conceptual)

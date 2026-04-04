@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_resolver.dart';
@@ -152,6 +153,12 @@ class DiplomaticOrderValidator {
           if (currentStage != OvertureStage.none) {
             return _reject('Trade Consulate requires no existing overture');
           }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+            );
+          }
           if (_treasury < overtureConsulateCost) {
             return _reject(
               'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
@@ -162,6 +169,12 @@ class DiplomaticOrderValidator {
           if (currentStage != OvertureStage.tradeConsulate) {
             return _reject(
               'Embassy requires existing Trade Consulate with that faction',
+            );
+          }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
             );
           }
           if (_treasury < overtureEmbassyCost) {
@@ -176,6 +189,12 @@ class DiplomaticOrderValidator {
               'Non-Aggression Pact requires existing Embassy with that faction',
             );
           }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+            );
+          }
         } else if (stage == OvertureStage.joinEmpire) {
           if (currentStage != OvertureStage.nap) {
             return _reject(
@@ -187,6 +206,27 @@ class DiplomaticOrderValidator {
             return _reject(
               'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
             );
+          }
+          if (isGreatPower(_game, targetId)) {
+            Player? submitter;
+            for (final p in _game.players) {
+              if (p.id == _playerId) {
+                submitter = p;
+                break;
+              }
+            }
+            if (submitter?.techUnlocked?[kTechIdEmpireBuilding] != true) {
+              return _reject(
+                'Empire Building tech required for Join Empire toward a Great Power',
+              );
+            }
+            if (!isGreatPowerNearlyDefeatedForJoinEmpire(_game, targetId)) {
+              return _reject(
+                'Join Empire toward Great Power requires target to be nearly defeated (at most 3 provinces and original capital not held by target)',
+              );
+            }
+          } else if (!isMinorOrTribe(_game, targetId)) {
+            return _reject('Join Empire target must be a Minor Nation, Tribe, or Great Power');
           }
           final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
           if (_treasury < cost) {
@@ -250,6 +290,25 @@ class DiplomaticOrderValidator {
         _treasury -= amount;
         return _acceptRecordingTarget(targetId, order.type);
     }
+  }
+
+  bool _minorTribeOvertureRequiresDiplomaticExpertise(
+    String targetId,
+    OvertureStage stage,
+  ) {
+    if (!isMinorOrTribe(_game, targetId)) return false;
+    return stage == OvertureStage.tradeConsulate ||
+        stage == OvertureStage.embassy ||
+        stage == OvertureStage.nap;
+  }
+
+  bool _playerHasDiplomaticExpertise() {
+    for (final p in _game.players) {
+      if (p.id == _playerId) {
+        return p.techUnlocked?[kTechIdDiplomaticExpertise] == true;
+      }
+    }
+    return false;
   }
 }
 

@@ -399,7 +399,7 @@ class _RegimentRow extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    econ.id,
+                    regimentTypeDisplayName(econ.id),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

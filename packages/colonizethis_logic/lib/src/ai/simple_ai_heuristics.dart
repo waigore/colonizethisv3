@@ -35,6 +35,24 @@ int turnSeedForPlayer(
 
 enum _SuggestionCategory { moves, work, build, research }
 
+/// Picks the next suggestion category. When both move and work have candidates,
+/// uses [rng] so work (e.g. `build_rail` with tile maps) is not always starved.
+/// SPEC/program/sim-game-default-ai.md, ai-planner.md.
+_SuggestionCategory _chooseSuggestionCategory(
+  List<_SuggestionCategory> categories,
+  math.Random rng,
+) {
+  categories.sort((a, b) => a.index.compareTo(b.index));
+  final hasMoves = categories.contains(_SuggestionCategory.moves);
+  final hasWork = categories.contains(_SuggestionCategory.work);
+  if (hasMoves && hasWork) {
+    return rng.nextBool()
+        ? _SuggestionCategory.moves
+        : _SuggestionCategory.work;
+  }
+  return categories.first;
+}
+
 /// Generates orders for a single player using the shared simple heuristics:
 /// PlayerView, order suggestion API, category order (move → work → build →
 /// research), seeded random choice within category, and diplomacy post-filter.
@@ -94,8 +112,10 @@ Orders generateOrdersWithSimpleHeuristics(
 
     if (categories.isEmpty) break;
 
-    categories.sort((a, b) => a.index.compareTo(b.index));
-    final chosenCategory = categories.first;
+    final chosenCategory = _chooseSuggestionCategory(
+      List<_SuggestionCategory>.from(categories),
+      rng,
+    );
 
     switch (chosenCategory) {
       case _SuggestionCategory.moves:

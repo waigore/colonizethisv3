@@ -135,6 +135,10 @@ void main() {
   ) async {
     await openDialog(tester, bus: AppEventBus.create());
 
+    expect(
+      find.textContaining('Move fleet — Fleet f_move (2 destinations)'),
+      findsOneWidget,
+    );
     expect(find.text('Sea zones'), findsOneWidget);
     expect(find.text('Adjacent OW Sea · Old World'), findsOneWidget);
     expect(
@@ -239,6 +243,7 @@ void main() {
         ],
         edges: [
           TopologyEdge(id1: fullCap, id2: '$ow|sea1'),
+          TopologyEdge(id1: fullCap, id2: '$ow|sea2'),
           TopologyEdge(id1: '$ow|sea1', id2: '$ow|sea2'),
         ],
       );
@@ -323,4 +328,119 @@ void main() {
       expect(find.text('Second Sea · Old World'), findsOneWidget);
     },
   );
+
+  testWidgets('sea zone section lists S–S neighbors only, not provinces', (
+    WidgetTester tester,
+  ) async {
+    const humanId = 'gp_mix';
+    const seaA = 'sea_a';
+    const seaB = 'sea_b';
+    const coastProv = 'coast_p';
+    final game = Game(
+      id: 'g_mix',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|inland_cap',
+              regionId: 'oldWorld',
+              ownerId: humanId,
+              displayName: 'Inland Capital',
+            ),
+            Province(
+              id: 'oldWorld|$coastProv',
+              regionId: 'oldWorld',
+              ownerId: humanId,
+              displayName: 'Coastal Province',
+            ),
+          ],
+        ),
+        newWorld: const RegionData(),
+        portsByProvinceSeaboard: const {},
+        seaZoneDisplayNameById: const {
+          'oldWorld|$seaA': 'Alpha Sea',
+          'oldWorld|$seaB': 'Beta Sea',
+        },
+      ),
+      players: const [
+        Player(
+          id: humanId,
+          displayName: 'T',
+          isHuman: true,
+          capitalProvinceId: 'oldWorld|inland_cap',
+          capitalTile: CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'oldWorld|inland_cap',
+            x: 0,
+            y: 0,
+          ),
+        ),
+      ],
+    );
+    const topology = MapTopology(
+      nodes: [
+        TopologyNode(
+          id: seaA,
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: seaB,
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: coastProv,
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: [
+        TopologyEdge(id1: seaA, id2: coastProv),
+        TopologyEdge(id1: seaA, id2: seaB),
+      ],
+    );
+    final fleet = Fleet(
+      id: 'f_mix',
+      ownerId: humanId,
+      regionId: 'oldWorld',
+      seaZoneId: seaA,
+      ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+    );
+    final bus = AppEventBus.create();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return TextButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (_) => MoveFleetDialog(
+                      game: game,
+                      topology: topology,
+                      humanPlayerId: humanId,
+                      fleet: fleet,
+                      bus: bus,
+                    ),
+                  );
+                },
+                child: const Text('open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sea zones'), findsOneWidget);
+    expect(find.text('Provinces (dock)'), findsOneWidget);
+    expect(find.text('Coastal Province'), findsOneWidget);
+    expect(find.textContaining('Beta Sea'), findsOneWidget);
+    expect(find.textContaining('Alpha Sea'), findsNothing);
+  });
 }

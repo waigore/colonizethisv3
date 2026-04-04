@@ -95,13 +95,18 @@ TurnResolutionResult resolveNextTurnForGameScreen({
   required Game game,
   required Orders orders,
   required MapTopology topologyForAi,
+  Map<String, TileMapResult>? tileMapByRegion,
   required TurnResolutionResult Function({
     required Orders orders,
     Orders? aiOrders,
   })
   runTurnResolution,
 }) {
-  final aiOrders = generateOrdersForGameFullAI(game, topologyForAi).orders;
+  final aiOrders = generateOrdersForGameFullAI(
+    game,
+    topologyForAi,
+    tileMapByRegion: tileMapByRegion,
+  ).orders;
   return runTurnResolution(orders: orders, aiOrders: aiOrders);
 }
 
@@ -152,6 +157,7 @@ class GameScreen extends ConsumerWidget {
                   game: game,
                   orders: orders,
                   topologyForAi: mapData.combinedTopology,
+                  tileMapByRegion: mapData.tileMapByRegion,
                   runTurnResolution:
                       ({required Orders orders, Orders? aiOrders}) =>
                           service.runTurnResolution(

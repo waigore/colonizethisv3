@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/naval.dart';
 import '../../world/province_lookup.dart';
+import '../../world/topology_helpers.dart';
 import '../order_validation_result.dart';
 
 /// Validates naval move and naval mission orders for a single player.
@@ -18,10 +19,10 @@ class NavalOrderValidator {
     required Game game,
     required MapTopology topology,
     required String playerId,
-  })  : _game = game,
-        _topology = topology,
-        _playerId = playerId,
-        _fleetById = {for (final f in game.worldState.fleets) f.id: f};
+  }) : _game = game,
+       _topology = topology,
+       _playerId = playerId,
+       _fleetById = {for (final f in game.worldState.fleets) f.id: f};
 
   /// Validates one [NavalMoveOrder]. Home fleet cannot move; move must be to adjacent sea zone (or undock from port).
   OrderValidationResult validateNavalMove(
@@ -33,7 +34,9 @@ class NavalOrderValidator {
       body: () {
         final fleet = _fleetById[o.fleetId];
         final homeFleetId = homeFleetIdFor(_playerId);
-        if (fleet == null || fleet.ownerId != _playerId || fleet.id == homeFleetId) {
+        if (fleet == null ||
+            fleet.ownerId != _playerId ||
+            fleet.id == homeFleetId) {
           return OrderValidationResult.rejected(
             fleet == null ? 'Fleet not found' : 'Invalid naval move',
           );
@@ -47,8 +50,10 @@ class NavalOrderValidator {
               'Dock only allowed when fleet is at sea',
             );
           }
-          final fullProvinceId =
-              toFullProvinceId(fleet.regionId, portProvinceId);
+          final fullProvinceId = toFullProvinceId(
+            fleet.regionId,
+            portProvinceId,
+          );
           final province = tryGetProvince(_game.worldState, fullProvinceId);
           if (province == null) {
             return OrderValidationResult.rejected('Port province not found');
@@ -58,37 +63,55 @@ class NavalOrderValidator {
               'Can only dock at own province',
             );
           }
-          final adjacentSeaZones = seaZoneIdsAdjacentToProvince(_topology, fullProvinceId);
+          final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+            _topology,
+            fullProvinceId,
+          );
           final valid = adjacentSeaZones.contains(fleet.seaZoneId);
           return valid
               ? OrderValidationResult.accepted()
               : OrderValidationResult.rejected('Invalid naval move');
         }
 
-        // Move to sea zone: destination must be adjacent.
-        final String? currentZone;
+        // Move to sea zone: S–S when at sea; P–S undock when in port; [destZone] must be a sea node.
+        final destZone = o.destinationSeaZoneId;
+        if (destZone == null || destZone.isEmpty) {
+          return OrderValidationResult.rejected('Invalid naval move');
+        }
+        if (!seaZoneNodeIds(_topology).contains(destZone)) {
+          return OrderValidationResult.rejected('Invalid naval move');
+        }
         if (fleet.isAtSea) {
-          currentZone = fleet.seaZoneId;
-        } else {
-          final inPortProvinceId = fleet.inPortAtProvinceId;
-          if (inPortProvinceId == null) {
+          final cur = fleet.seaZoneId;
+          if (cur == null) {
             return OrderValidationResult.rejected('Invalid naval move');
           }
-          final rl = regionAndLocalProvinceForFleetInPort(
-            inPortProvinceId,
-            fleet.regionId,
-          );
-          currentZone = seaZoneIdForProvince(
-            _topology,
-            rl.localId,
-            regionId: rl.regionId,
-          );
+          final valid =
+              cur == destZone || isAdjacentSeaSeaZone(_topology, cur, destZone);
+          return valid
+              ? OrderValidationResult.accepted()
+              : OrderValidationResult.rejected('Invalid naval move');
         }
-        final destZone = o.destinationSeaZoneId;
-        final valid = currentZone != null &&
-            destZone != null &&
-            destZone.isNotEmpty &&
-            (currentZone == destZone || isAdjacentSeaZone(_topology, currentZone, destZone));
+        final inPortProvinceId = fleet.inPortAtProvinceId;
+        if (inPortProvinceId == null) {
+          return OrderValidationResult.rejected('Invalid naval move');
+        }
+        final rl = regionAndLocalProvinceForFleetInPort(
+          inPortProvinceId,
+          fleet.regionId,
+        );
+        final provinceNodeId = provinceTopologyNodeId(
+          _topology,
+          rl.localId,
+          rl.regionId,
+        );
+        if (provinceNodeId == null) {
+          return OrderValidationResult.rejected('Invalid naval move');
+        }
+        final valid = seaZonesAdjacentToProvince(
+          _topology,
+          provinceNodeId,
+        ).contains(destZone);
         return valid
             ? OrderValidationResult.accepted()
             : OrderValidationResult.rejected('Invalid naval move');
@@ -106,7 +129,8 @@ class NavalOrderValidator {
       body: () {
         final fleet = _fleetById[o.fleetId];
         final homeFleetId = homeFleetIdFor(_playerId);
-        var valid = fleet != null &&
+        var valid =
+            fleet != null &&
             fleet.ownerId == _playerId &&
             (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
         String? rejectReason = valid
@@ -141,7 +165,9 @@ class NavalOrderValidator {
 
         return valid
             ? OrderValidationResult.accepted()
-            : OrderValidationResult.rejected(rejectReason ?? 'Invalid naval mission');
+            : OrderValidationResult.rejected(
+                rejectReason ?? 'Invalid naval mission',
+              );
       },
     );
   }

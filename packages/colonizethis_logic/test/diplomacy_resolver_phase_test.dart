@@ -12,8 +12,9 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000),
+        players: [
+          const Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000)
+              .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
@@ -893,5 +894,75 @@ void main() {
         );
       },
     );
+
+    test('join empire absorbs nearly defeated Great Power', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|BC', regionId: ow, ownerId: 'gp_a'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'gp_b'),
+              Province(id: '$ow|P3', regionId: ow, ownerId: 'gp_b'),
+            ],
+            units: const [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp_a',
+            displayName: 'A',
+            isHuman: true,
+            treasury: 20000,
+            techUnlocked: const {'empire_building': true},
+          ),
+          const Player(
+            id: 'gp_b',
+            displayName: 'B',
+            isHuman: false,
+            capitalProvinceId: '$ow|BC',
+          ),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp_a',
+            factionId2: 'gp_b',
+            score: 60,
+            level: RelationLevel.friendly,
+          ),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp_a',
+            targetId: 'gp_b',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp_a': const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp_b',
+              overtureStage: OvertureStage.joinEmpire,
+            ),
+          ],
+        },
+      );
+      final after = resolveDiplomacyPhase(game, orders).game;
+      expect(after.players.any((p) => p.id == 'gp_b'), isFalse);
+      expect(after.playerById('gp_a')!.treasury, 20000 - 9000);
+      expect(
+        after.worldState.oldWorld.provinces
+            .where((p) => p.id == '$ow|P2' || p.id == '$ow|P3')
+            .every((p) => p.ownerId == 'gp_a'),
+        isTrue,
+      );
+    });
   });
 }

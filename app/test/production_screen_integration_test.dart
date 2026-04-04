@@ -6,6 +6,7 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -151,6 +152,15 @@ void main() {
       );
       expect(
         find.descendant(of: tableFinder, matching: find.text('Total')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: tableFinder,
+          matching: find.byWidgetPredicate(
+            (w) => w is ResourceIcon && w.commodityId == 'grain',
+          ),
+        ),
         findsOneWidget,
       );
 

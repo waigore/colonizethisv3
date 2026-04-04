@@ -64,6 +64,8 @@ Stats are configurable per [ruleset-config.md](ruleset-config.md). Experience (m
 
 Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
 
+**UI display labels:** Player-facing regiment names mirror the first column of this table via `regimentTypeDisplayName` in `colonizethis_data/lib/src/regiment_type_display_name.dart`. When adding or renaming a regiment type, update `regimentCatalog`, `RegimentEconomyCatalog`, and that display map together (tests enforce catalog coverage).
+
 ---
 
 ## Training Costs
