@@ -27,15 +27,15 @@ All AI randomness flows from these seeds. Same save + seeds → same orders and 
 
 ### Phase 4 (Minimal)
 1. Build PlayerView for each AI GP.
-2. Query order suggestion API for candidate orders (move, build/work, research).
-3. Apply preferences and seeded randomness to select; see [ai-architecture.md](../ai/ai-architecture.md) for behavior rules.
+2. Query order suggestion API for candidate orders (move, build/work, research). Callers that hold region tile maps (sim_game, app next-turn flow) pass `tileMapByRegion` into `generateOrdersForPlayer` / `generateOrdersForGame` / `defaultSimGameAi` so `suggestWorkOrders` can suggest `build_rail` and terrain-aware `prospect` the same way as [order-suggestions.md](order-suggestions.md) describes for UI and turn resolution.
+3. Apply preferences and seeded randomness to select; see [ai-architecture.md](../ai/ai-architecture.md) for behavior rules. Shared simple heuristics use the same category rules as [sim-game-default-ai.md](sim-game-default-ai.md) (including seeded fair choice between move and work when both have candidates).
 4. Append to order list until no more suggestions or cap reached.
 5. For Quick Battle, provide tactical actions using `tacticalSeed`; see [ai-architecture.md](../ai/ai-architecture.md).
 
-Both AIPlanner and the sim-game default AI share the same simple heuristics core: PlayerView, order suggestion API, category order (move → work → build → research), seeded random choice, diplomacy post-filter. Entry points remain separate.
+Both AIPlanner and the sim-game default AI share the same simple heuristics core: PlayerView, order suggestion API, category selection per [sim-game-default-ai.md](sim-game-default-ai.md), seeded random choice within a category, diplomacy post-filter. Entry points remain separate.
 
 ### Phase 6 (Full AI)
-Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply.
+Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply. `generateOrdersForPlayerFullAI` / `generateStrategicOrders` accept optional `tileMapByRegion` and pass it to `suggestWorkOrders` in domain planners so full AI sees the same rail and terrain-aware prospect eligibility as Phase 4 when maps are available.
 
 **Hidden agenda assignment:** Games using full AI have hidden agendas assigned at setup or init, per [hidden-agendas.md](../ai/hidden-agendas.md). Before the first call to full AI order generation (`generateOrdersForPlayerFullAI`), the caller must invoke `assignHiddenAgendasForGame` (colonizethis_ai) so that `game.hiddenAgendaByGpId` is populated for all AI-controlled GPs. **Where invoked:** Main game path: `runInitGame` (colonizethis_logic init_game_orchestrator) calls `assignHiddenAgendasForGame` before returning InitGameResult, so the main app receives a game with agendas set. Sim path: ctdev `SimGameController` calls it when `useFullAI` is true (when starting a sim game). See [game-setup-pipeline.md](game-setup-pipeline.md) step 9.
 

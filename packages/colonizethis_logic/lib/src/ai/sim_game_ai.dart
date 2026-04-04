@@ -15,6 +15,7 @@ Orders defaultSimGameAi({
   required Player player,
   required MapTopology topology,
   required int baseSeed,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final turnNumber = game.worldState.turnState.turnNumber;
   final turnSeed = turnSeedForPlayer(
@@ -28,5 +29,6 @@ Orders defaultSimGameAi({
     topology,
     player.id,
     turnSeed,
+    tileMapByRegion: tileMapByRegion,
   );
 }

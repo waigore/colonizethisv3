@@ -14,7 +14,12 @@ import 'simple_ai_heuristics.dart';
 /// Generates orders for a single AI-controlled GP. Deterministic given game
 /// state and seeds. Respects diplomacy: no attacks against factions at peace.
 /// Uses the shared simple heuristics (PlayerView, suggestion API, diplomacy filter).
-Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId) {
+Orders generateOrdersForPlayer(
+  Game game,
+  MapTopology topology,
+  String playerId, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
     return const Orders();
@@ -27,6 +32,7 @@ Orders generateOrdersForPlayer(Game game, MapTopology topology, String playerId)
     topology,
     player.id,
     turnSeed,
+    tileMapByRegion: tileMapByRegion,
   );
 }
 
@@ -41,7 +47,11 @@ void _addOrdersIfNonEmpty<T>(
 
 /// Generates orders for all AI-controlled GPs. Deterministic given game state and seeds.
 /// Respects diplomacy: no attacks against factions at peace.
-Orders generateOrdersForGame(Game game, MapTopology topology) {
+Orders generateOrdersForGame(
+  Game game,
+  MapTopology topology, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final moveByPlayer = <String, List<MoveOrder>>{};
   final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
@@ -50,7 +60,12 @@ Orders generateOrdersForGame(Game game, MapTopology topology) {
 
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
-    final ordersForPlayer = generateOrdersForPlayer(game, topology, player.id);
+    final ordersForPlayer = generateOrdersForPlayer(
+      game,
+      topology,
+      player.id,
+      tileMapByRegion: tileMapByRegion,
+    );
     _addOrdersIfNonEmpty(moveByPlayer, player.id, ordersForPlayer.moveOrdersByPlayerId[player.id]);
     _addOrdersIfNonEmpty(
       armyMoveByPlayer,
@@ -80,6 +95,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   Game game,
   MapTopology topology,
   String playerId, {
+  Map<String, TileMapResult>? tileMapByRegion,
   OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
@@ -116,6 +132,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     config: config,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    tileMapByRegion: tileMapByRegion,
     onDialogue: onDialogue,
     onMood: onMood,
   );
@@ -136,6 +153,7 @@ class FullAIResult {
 FullAIResult generateOrdersForGameFullAI(
   Game game,
   MapTopology topology, {
+  Map<String, TileMapResult>? tileMapByRegion,
   OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
@@ -156,6 +174,7 @@ FullAIResult generateOrdersForGameFullAI(
       game,
       topology,
       player.id,
+      tileMapByRegion: tileMapByRegion,
       orderSuggestionApi: orderSuggestionApi,
       onDialogue: onDialogue,
       onMood: onMood,
