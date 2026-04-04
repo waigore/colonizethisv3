@@ -2,9 +2,12 @@ import 'dart:ui' show Offset, Size;
 
 import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('region_minimap_math', () {
     test('minimapLocalToWorldCenter maps corners to world extents', () {
       const mapSize = Size(100, 50);
