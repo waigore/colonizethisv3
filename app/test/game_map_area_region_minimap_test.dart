@@ -1,6 +1,11 @@
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+    show
+        kRegionMinimapCustomPaintKey,
+        kRegionMinimapGestureKey,
+        kRegionMinimapToggleKey,
+        kRegionMinimapZoomSliderKey;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -67,6 +72,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(kRegionMinimapGestureKey), findsOneWidget);
+    expect(find.byKey(kRegionMinimapZoomSliderKey), findsOneWidget);
 
     bus.dispose();
   });

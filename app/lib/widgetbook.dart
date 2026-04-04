@@ -336,6 +336,12 @@ class _RegionMinimapWidgetbookStoryState
     final region = result.mapViewData.oldWorld;
     final w = region.width * 24.0;
     final h = region.height * 24.0;
+    final zFit = computeRegionMapFitMapZoom(
+      viewportWidthLogical: 320,
+      viewportHeightLogical: 240,
+      mapWidthWorld: w,
+      mapHeightWorld: h,
+    );
     final viewport = RegionMapViewportSnapshot(
       regionId: region.regionId,
       cellSizePx: 24,
@@ -343,7 +349,8 @@ class _RegionMinimapWidgetbookStoryState
       mapHeightWorld: h,
       cameraCenterX: w / 2,
       cameraCenterY: h / 2,
-      zoom: 1.0,
+      zoom: zFit,
+      fitMapZoom: zFit,
       viewportWidthLogical: 320,
       viewportHeightLogical: 240,
     );

@@ -23,3 +23,6 @@ const Key kRegionMinimapGestureKey = Key('region_minimap_gesture');
 
 /// Key for the region minimap [CustomPaint]. SPEC/ui/empire-overview.md § Region minimap.
 const Key kRegionMinimapCustomPaintKey = Key('region_minimap_custom_paint');
+
+/// Key for the region minimap zoom slider. SPEC/ui/empire-overview.md § Region minimap.
+const Key kRegionMinimapZoomSliderKey = Key('region_minimap_zoom_slider');

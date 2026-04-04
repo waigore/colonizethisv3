@@ -54,6 +54,7 @@ void main() {
         cameraCenterX: 120,
         cameraCenterY: 120,
         zoom: 16.0,
+        fitMapZoom: 200 / 240,
         viewportWidthLogical: 200,
         viewportHeightLogical: 200,
       );
