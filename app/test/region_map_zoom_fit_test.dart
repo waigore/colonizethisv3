@@ -7,10 +7,70 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show CtMapVisibilityMode, CtRegionMap;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'ct_region_map_test_support.dart';
+
+/// Max wall time ~4.5s; stops early once the map reports a stable fit baseline (no [pumpAndSettle] — Flame never idles).
+const int _kCtRegionMapReadyMaxSteps = 120;
+const Duration _kCtRegionMapReadyStep = Duration(milliseconds: 38);
+
+bool _snapshotAtFitBaseline(RegionMapViewportSnapshot? s) {
+  if (s == null) return false;
+  if (!s.fitMapZoom.isFinite || s.fitMapZoom <= 0) return false;
+  if (!s.zoom.isFinite || s.zoom <= 0) return false;
+  return (s.zoomMultiplier - 1.0).abs() < 0.09;
+}
+
+Future<RegionMapViewportSnapshot> pumpUntilCtRegionMapFitBaseline(
+  WidgetTester tester,
+  RegionMapViewportSnapshot? Function() getSnap,
+) async {
+  await tester.pump();
+  for (var i = 0; i < _kCtRegionMapReadyMaxSteps; i++) {
+    await tester.pump(_kCtRegionMapReadyStep);
+    final s = getSnap();
+    if (_snapshotAtFitBaseline(s)) {
+      return s!;
+    }
+  }
+  fail(
+    'CtRegionMap did not reach fit baseline (m≈1) within '
+    '${_kCtRegionMapReadyMaxSteps * _kCtRegionMapReadyStep.inMilliseconds}ms; '
+    'last=${getSnap()}',
+  );
+}
+
+/// Stepped pinch-out so the scale recognizer sees continuous updates (more reliable than a single jump).
+Future<void> pinchZoomOutOnCenter(
+  WidgetTester tester,
+  Offset center, {
+  double startHalfWidth = 30,
+  double endHalfWidth = 105,
+  int steps = 10,
+}) async {
+  final g1 = await tester.startGesture(
+    center + Offset(-startHalfWidth, 0),
+    kind: PointerDeviceKind.touch,
+  );
+  final g2 = await tester.startGesture(
+    center + Offset(startHalfWidth, 0),
+    kind: PointerDeviceKind.touch,
+  );
+  await tester.pump();
+  for (var i = 1; i <= steps; i++) {
+    final t = i / steps;
+    final half = startHalfWidth + (endHalfWidth - startHalfWidth) * t;
+    await g1.moveTo(center + Offset(-half, 0));
+    await g2.moveTo(center + Offset(half, 0));
+    await tester.pump();
+  }
+  await g1.up();
+  await g2.up();
+  await tester.pump();
+}
 
 void main() {
   suppressLogsForTests();
@@ -84,15 +144,11 @@ void main() {
               ),
             ),
           ),
-      ),
-    );
-    await tester.pump();
-    // Flame/map may run continuous animations; avoid pumpAndSettle (never idles).
-    for (var i = 0; i < 40; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+        ),
+      );
 
-    expect(snap, isNotNull);
+      await pumpUntilCtRegionMapFitBaseline(tester, () => snap);
+
       final mw = region.width * region.cellSize.toDouble();
       final mh = region.height * region.cellSize.toDouble();
       final zFit = computeRegionMapFitMapZoom(
@@ -137,6 +193,82 @@ void main() {
 
       bus.dispose();
     },
-    timeout: const Timeout(Duration(seconds: 30)),
+    timeout: const Timeout(Duration(seconds: 20)),
+  );
+
+  testWidgets(
+    'CtRegionMap pinch zoom matches slider/bus absolute multiplier (same zoom)',
+    (WidgetTester tester) async {
+      final region = ctRegionMapTestOldWorldRegion();
+      final bus = AppEventBus.create();
+      RegionMapViewportSnapshot? snap;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 400,
+                height: 320,
+                child: CtRegionMap(
+                  region: region,
+                  cellSizePx: region.cellSize.toDouble(),
+                  visibilityMode: CtMapVisibilityMode.full,
+                  bus: bus,
+                  onViewportSnapshotChanged: (s) => snap = s,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await pumpUntilCtRegionMapFitBaseline(tester, () => snap);
+      final zFit = snap!.fitMapZoom;
+
+      final center = tester.getCenter(find.byType(CtRegionMap));
+
+      await pinchZoomOutOnCenter(tester, center);
+      await tester.pump(const Duration(milliseconds: 80));
+
+      if (snap!.zoomMultiplier <= 1.03) {
+        await pinchZoomOutOnCenter(tester, center);
+        await tester.pump(const Duration(milliseconds: 80));
+      }
+
+      expect(
+        snap!.zoomMultiplier,
+        greaterThan(1.03),
+        reason: 'pinch-out should increase fit-relative zoom like zoom-in slider drag',
+      );
+      expect(snap!.zoomMultiplier, lessThanOrEqualTo(kRegionMapZoomMultiplierMax));
+      final mAfterPinch = snap!.zoomMultiplier;
+      final zAfterPinch = snap!.zoom;
+
+      bus.emit(
+        RequestRegionMapSetZoomMultiplierEvent(
+          regionId: region.regionId,
+          zoomMultiplier: 1.0,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+      expect(snap!.zoomMultiplier, closeTo(1.0, 0.08));
+
+      bus.emit(
+        RequestRegionMapSetZoomMultiplierEvent(
+          regionId: region.regionId,
+          zoomMultiplier: mAfterPinch,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
+
+      expect(snap!.zoomMultiplier, closeTo(mAfterPinch, 0.08));
+      expect(snap!.zoom, closeTo(zAfterPinch, zFit * 0.04));
+
+      bus.dispose();
+    },
+    timeout: const Timeout(Duration(seconds: 20)),
   );
 }
