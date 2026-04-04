@@ -479,3 +479,6 @@ const int deploymentLimitWithNationalism = 12;
 
 /// Tech id that raises base deployment to [deploymentLimitWithNationalism]. SPEC/game/tech-tree-diplomacy-civilian.md.
 const String kTechIdNationalism = 'nationalism';
+
+/// Tech id required for Trade Consulate / Embassy / NAP overtures toward Minor Nations and Tribes. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
+const String kTechIdDiplomaticExpertise = 'diplomatic_expertise';

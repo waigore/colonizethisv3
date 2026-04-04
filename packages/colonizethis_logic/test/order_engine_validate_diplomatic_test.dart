@@ -13,6 +13,7 @@ void main() {
         int relationScore = 50,
         OvertureStage overtureStage = OvertureStage.none,
         int treasury = 5000,
+        Map<String, bool>? techUnlocked,
       }) {
         return Game(
           id: 'g1',
@@ -27,6 +28,7 @@ void main() {
               displayName: 'GP1',
               isHuman: true,
               treasury: treasury,
+              techUnlocked: techUnlocked ?? const {'diplomatic_expertise': true},
             ),
           ],
           minorNations: const [
@@ -103,6 +105,31 @@ void main() {
         expect(result.status, OrderValidationStatus.rejected);
         expect(result.reason, contains('at war'));
       });
+
+      test(
+        'establishOverture trade consulate rejected without diplomatic_expertise',
+        () {
+          final game = _gpMinorBaseGame(
+            relationState: RelationState.atPeace,
+            overtureStage: OvertureStage.none,
+            treasury: overtureConsulateCost + 100,
+            techUnlocked: const {},
+          );
+          final engine = OrderEngine();
+          final result = engine.addDiplomaticOrderWithContext(
+            game,
+            emptyTopology,
+            'gp1',
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'minor1',
+              overtureStage: OvertureStage.tradeConsulate,
+            ),
+          );
+          expect(result.status, OrderValidationStatus.rejected);
+          expect(result.reason, contains('Diplomatic Expertise'));
+        },
+      );
 
       test('establishOverture consulate rejected when treasury too low', () {
         final game = _gpMinorBaseGame(
