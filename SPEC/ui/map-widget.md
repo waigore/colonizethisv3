@@ -286,7 +286,7 @@ The map widget renders terrain using **Wang tilesets** for seamless terrain tran
 
 - **Source of truth:** `app/assets/data/map_terrain_tilesets.json` (bundled under `assets/data/` in `pubspec.yaml`). See [wang-tileset-and-assets.md](wang-tileset-and-assets.md) § App map runtime configuration for the full schema and validation rules.
 - **`map_cell_size_px`:** Logical size in pixels of each map cell in Flame (`RegionMapViewData.cellSize`, `CtRegionMap` / `RegionMapComponent` layout). Init-game map view data uses this value so the grid matches Wang draw destinations.
-- **`wang_tilesets`:** Per–terrain-pair entries `sea_plains`, `sea_desert`, `plains_desert`. Each supplies `spec_json` and `atlas_png` asset paths and `tile_px` (atlas tile edge length). `tile_px` must match `tile_size` in that JSON. Tilesets may use different atlas sizes and `tile_px` values; the renderer maps each tile’s `bounding_box` in atlas space into one `cellSize`×`cellSize` screen cell (so a 32×32 atlas tile scales up when `map_cell_size_px` is 64).
+- **`wang_tilesets`:** Per–terrain-pair entries. **Required** (validated at load): `sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`, `plains_mountains`. More `plains_<l2>` keys may be added later (same schema). Each entry supplies `spec_json` and `atlas_png` asset paths and `tile_px` (atlas tile edge length). `tile_px` must match `tile_size` in that JSON. Tilesets may use different atlas sizes and `tile_px` values; the renderer maps each tile’s `bounding_box` in atlas space into one `cellSize`×`cellSize` screen cell (so a 32×32 atlas tile scales up when `map_cell_size_px` is 64).
 - **Startup:** `MapTerrainConfig.ensureLoaded()` runs before map terrain load (app `main`; tests use `flutter_test_config.dart`). Swapping which PNG/JSON the app uses is a **config + asset** change only when paths and `tile_px` stay consistent with the files.
 
 ### Tileset Structure
@@ -295,46 +295,33 @@ The map widget renders terrain using **Wang tilesets** for seamless terrain tran
 - **Metadata:** JSON with corner mappings (NW, NE, SW, SE → "upper" or "lower" terrain), `tile_size`, and `bounding_box` per tile.
 - **Map grid vs atlas tile:** `map_cell_size_px` is the on-screen cell; `tile_px` is the source tile extent in the atlas for that tileset.
 
-### Terrain Priority (Layer Order)
+### Terrain layers (reference)
 
-Terrains are assigned priority values for corner determination:
+| Layer | Terrain types | Rendering |
+|-------|----------------|-----------|
+| L0 | Sea | `sea_plains` or `sea_desert` Wang (dominant adjacent land base) |
+| L1 | Plains, Desert | Interior from sea tileset “land” base tile; `plains_desert` at borders; **plains** also uses `plains_forest` / `plains_mountains` at L2 edges |
+| L2+ | Forest, Mountain, Hills, Swamp | Forest/mountain: **plains↔L2 Wang** when tileset + pattern match; else **standalone** on land base. Hills/swamp: **standalone** until a `plains_*` Wang ships. Desert is L1, not L2. |
 
-| Priority | Terrain Type | Notes |
-|----------|--------------|-------|
-| 0 | Sea | Base layer (ocean) |
-| 1 | Plains | Default land terrain |
-| 2 | Forest | Transitional layer |
-| 2 | Hills | Transitional layer |
-| 2 | Mountain | Transitional layer |
-| 2 | Swamp | Transitional layer |
-| 2 | Desert | New World only |
+### Wang tiling (as implemented)
 
-### Wang Tiling Algorithm
+**Corner wedge rule (sea and plains↔L2):** For each corner of cell `(x, y)`, “upper” is true if **any** of the **three** orthogonally/diagonally adjacent cells touching that corner satisfies the predicate (same geometry as sea coastline). Example **NW:** cells `(x-1,y-1)`, `(x,y-1)`, `(x-1,y)`. NE/SW/SE use the analogous triples.
 
-For each map cell (x, y):
+**Sea:** Choose `sea_plains` vs `sea_desert` from dominant adjacent **land base** (plains vs desert; feature cells count as plains for that choice). Interior sea: lower base tile; coastline: `findTile(nw,ne,sw,se)` with upper = land in each wedge.
 
-1. **Build terrain vertex grid:** Create (width+1)×(height+1) grid of terrain priorities
-2. **Sample 4 corners:** For cell (x, y), sample vertices at (x, y), (x+1, y), (x, y+1), (x+1, y+1)
-3. **Determine corner values:** Each corner = max terrain priority among 4adjacent cells
-4. **Select tileset:** Based on highest and second-highest terrain priorities in corners
-5. **Find matching tile:** Look up tile by corner configuration (16 possible combinations)
-6. **Draw tile:** Extract from tileset PNG using bounding box from metadata
+**Plains↔desert:** Uses the existing center-matching corner predicate (see code: `_getCornerValues`). Not wedge-based.
 
-### Tileset Chain
+**Plains↔L2 (forest, mountains):** Lower = plains, upper = that L2. **Plains cells:** If the 8-neighborhood contains forest or mountain, pick a **single dominant L2** for the whole cell by counting forest vs mountain in those eight cells (tie → forest). Compute four wedge booleans for **only that L2**; if any wedge is upper, draw `plains_forest` or `plains_mountains` accordingly. **Forest/mountain cells:** If at least one wedge shows that same L2 and `findTile` succeeds, the **land-base pass skips** the interior plains fill for that cell and the **feature pass** draws the full-cell Wang. If **no** wedge has that L2 (typical **L2 island**), keep interior land base + **standalone** overlay.
 
-Tilesets are chained for visual consistency. All land terrain tilesets use the same "plains" base tile:
+**Direct L2↔L2:** No dedicated Wang; visually separated by **plains** (or desert) cells and the rules above.
 
-1. **Sea → Beach:** Coastline transitions
-2. **Beach → Plains:** Coastal grass transitions
-3. **Plains → Forest:** Forest edges
-4. **Plains → Hills:** Hill transitions
-5. **Plains → Mountain:** Mountain edges
-6. **Plains → Swamp:** Swamp transitions
-7. **Plains → Desert:** Desert edges (New World only)
+### Tileset chain (visual consistency)
+
+L0/L1 Wang sets share chained base tiles per [wang-tileset-and-assets.md](wang-tileset-and-assets.md). Plains↔L2 atlases should align plains “lower” with existing plains art where practical. Additional pairs (plains↔hills, plains↔swamp) follow the same runtime contract when added to `map_terrain_tilesets.json`.
 
 ### Asset files (implemented Wang tilesets)
 
-The **three** L0/L1 Wang atlases used by the Flame map are whichever paths appear under `wang_tilesets` in `map_terrain_tilesets.json` (typically under `assets/images/terrain/tilesets/`). Additional transition tilesets (e.g. beach, plains↔forest) remain **pipeline / future** unless wired the same way; see [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
+Paths under `wang_tilesets` in `map_terrain_tilesets.json` (typically `assets/images/terrain/tilesets/`): at minimum **five** Wang atlases (`sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`, `plains_mountains`). See [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
 
 ### Visibility Integration
 
@@ -343,15 +330,15 @@ When rendering in **player-constrained visibility mode**:
 - **fogged tiles:** Apply a moderate black overlay to tile (e.g. 40% opacity) so fogged areas stay readable
 - **unrevealed tiles:** Render solid black (no tile)
 
-### Fallback Behavior
+### Failure behavior (required Wang tilesets)
 
-If a tileset fails to load, the widget falls back to solid color rendering using `RegionMapViewData.terrainColors` for backward compatibility.
+If any **required** Wang entry in `map_terrain_tilesets.json` fails to load or validate, terrain init **fails** (e.g. `TerrainTilesetCache` not loaded; map code may throw when drawing). There is **no** silent fallback to `terrainColors` for those transitions in the shipping path. **Standalone** L2 overlays remain best-effort (missing asset skips overlay only).
 
 ---
 
 ## Acceptance criteria
 
-- **Given** bundled `assets/data/map_terrain_tilesets.json` with valid `map_cell_size_px`, required `wang_tilesets` keys, and asset paths whose JSON `tile_size` matches each entry’s `tile_px`, **when** the init-game map builds view data and loads terrain, **then** `RegionMapViewData.cellSize` equals `map_cell_size_px` and all three Wang atlases load without falling back to `terrainColors` for those transitions.
+- **Given** bundled `assets/data/map_terrain_tilesets.json` with valid `map_cell_size_px`, required `wang_tilesets` keys (`sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`, `plains_mountains`), and asset paths whose JSON `tile_size` matches each entry’s `tile_px`, **when** the init-game map builds view data and loads terrain, **then** `RegionMapViewData.cellSize` equals `map_cell_size_px` and all required Wang atlases load successfully.
 - **Given** only a change to `map_terrain_tilesets.json` (paths, `tile_px`, and/or `map_cell_size_px`) plus matching atlas/JSON assets declared in `pubspec.yaml`, **when** the app runs, **then** the map uses the new files and cell size without Dart code edits (same loader contract).
 - **Given** a map widget with a region's data and visibility mode **full**, **when** the widget is laid out, **then** the viewport matches the widget size and shows terrain, optional resource icons and improvement/road labels (per base-layer mode), and markers (capitals, town/port icons, warp) at the current zoom level without fog gating.
 - **Given** visibility mode **player-constrained** and a **capital marker** whose coordinates fall on a cell with `CellViewData.visibility` `unrevealed`, **when** the map renders, **then** that capital marker is not drawn; **when** that cell’s visibility becomes `visible` or `fogged`, **then** the capital marker is drawn again.

@@ -1,12 +1,12 @@
 # Wang Tileset and Map Asset Pipeline
 
-**SPEC/ui** — Terrain tilesets and overlay assets for the Flame map viewer. Wang tilesets forL0/L1 transitions (sea, plains, desert); standalone overlay tiles forL2+ features. See [layered-terrain-rendering.md](layered-terrain-rendering.md) for rendering details.
+**SPEC/ui** — Terrain tilesets and overlay assets for the Flame map viewer. Wang tilesets for L0/L1 (sea, plains, desert) and for **plains ↔ L2** pairs (e.g. forest, mountains); standalone overlays for L2 where Wang does not apply (islands, hills, swamp until their atlases exist). See [layered-terrain-rendering.md](layered-terrain-rendering.md) for rendering details.
 
 ---
 
 ## Scope
 
-- **Tile size:** 64×64 pixels (canonical). Terrain from PixelLab may be generated at32×32 and upscaled in the pipeline.
+- **Tile size:** 64×64 pixels (canonical). Terrain from PixelLab may be generated at 32×32 and upscaled in the pipeline (**exact nearest-neighbor** upscale is acceptable until hand-tuned 64px art ships).
 - **Layered rendering:** Three-pass architecture (L0: Sea, L1: Plains/Desert, L2+: Features).
 - **Resources and improvements:** Overlay sprites only (one sprite per resource type; improvement sprites for road connectivity and other improvements).
 
@@ -20,16 +20,23 @@
 |-------|---------|-----------|
 | L0 | Sea (base layer) | Wang tilesets for coastline |
 | L1 | Plains, Desert (land base) | Wang tilesets for land transitions |
-| L2+ | Forest, Hills, Mountain, Swamp (features) | Standalone overlay tiles |
+| L2+ | Forest, Hills, Mountain, Swamp (features) | **Plains↔L2 Wang** where configured; else **standalone** overlay (see § L2 below) |
 
 ### Transition Strategy
 
-All L0/L1 tilesets use **Wang tilesets** with shared base tiles for visual consistency:
+**L0/L1** Wang tilesets (shared base tiles where chained):
 - `sea_plains` — Sea↔Plains coastline
 - `sea_desert` — Sea↔Desert coastline  
 - `plains_desert` — Plains↔Desert land border
 
-Base tiles are chained across tilesets to ensure consistent appearance.
+**Plains ↔ L2** Wang tilesets (lower = plains, upper = that L2). L2 meets **plains** first; plains mediates visual contact between different L2s (no direct L2↔L2 Wang in v1). Roll out per terrain:
+- `plains_forest` — Plains↔Forest (shipped)
+- `plains_mountains` — Plains↔Mountains (shipped)
+- Future: e.g. `plains_hills`, `plains_swamp`, same contract
+
+**L2 islands:** Wang sets omit fully isolated single-tile L2 patterns. For those cells, render **plains (or desert) land base** plus the **existing standalone** feature tile.
+
+Base tiles are chained across L0/L1 tilesets to ensure consistent appearance; plains↔L2 sets should reuse the same plains “lower” look as `sea_plains` / `plains_desert` where practical.
 
 ---
 
@@ -42,6 +49,13 @@ Base tiles are chained across tilesets to ensure consistent appearance.
 | `sea_plains` | Deep sea | Grassland plains | 0.5 (half-tile beach) | ✅ Generated |
 | `sea_desert` | Deep sea | Arid desert | 0.5 (half-tile coastal sand) | ✅ Generated |
 | `plains_desert` | Grassland plains | Arid desert | 1.0 (full-tile gradient) | ✅ Generated |
+
+### Plains ↔ L2: Wang Tilesets
+
+| Tileset ID | Lower Terrain | Upper Terrain | Notes |
+|------------|---------------|---------------|--------|
+| `plains_forest` | Plains | Forest | 64×64 atlas; may originate from 32×32 + NN upscale |
+| `plains_mountains` | Plains | Mountain | Same |
 
 ### Layer2+: Feature Overlay Tiles
 
@@ -192,8 +206,8 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 - **Input:** Asset directory with Wang tilesets and feature overlay tiles.
 - **Per cell (i, j):**
   1. **Sea (L0):** If sea, use Wang tileset for coastline transitions.
-  2. **Land Base (L1):** Draw plains or desert tile, using Wang tileset for plains↔desert borders.
-  3. **Feature (L2+):** If terrain has feature, draw standalone tile over land base.
+  2. **Land Base (L1):** Draw plains or desert (and plains↔desert Wang where applicable); for **plains** cells adjacent to an L2, draw **plains↔L2** Wang when configured (see [map-widget.md](map-widget.md) § Terrain tileset rendering).
+  3. **Feature (L2+):** If forest/mountain and non-island Wang applies, the feature pass draws **full-cell** plains↔L2 Wang; else draw **standalone** over the land base from pass 1. Hills/swamp: standalone until their plains↔L2 Wang exists.
 
 ---
 
@@ -211,7 +225,7 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 **Schema (informal):**
 
 - `map_cell_size_px` (int ≥ 1): logical pixels per map cell for Flame (`InitGameMapViewData` / `RegionMapViewData.cellSize`).
-- `wang_tilesets` (object): must contain exactly these keys: `sea_plains`, `sea_desert`, `plains_desert`.
+- `wang_tilesets` (object): must contain at least these keys (loader validates presence): `sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`, `plains_mountains`. Additional `plains_<l2>` keys may be added as more L2 pairs ship; each follows the same entry shape.
 - Each Wang entry: `spec_json` (String, asset path to PixelLab-style JSON), `atlas_png` (String), `tile_px` (int ≥ 1). Loader requires `tile_px` to equal both `tile_size.width` and `tile_size.height` in that JSON.
 - **PNG vs metadata:** Every tile’s `bounding_box` must lie within the decoded PNG. If `tileset_image.dimensions` disagrees with the PNG size, the app may log a warning but still load when bboxes are valid.
 
@@ -228,4 +242,6 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 - Given a map cell with sea adjacent to desert, when rendering, then the `sea_desert` Wang tileset is used.
 - Given a map cell with plains adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base is drawn first, then the feature overlay tile on top.
-- Given valid bundled `map_terrain_tilesets.json` and referenced atlases, when the Flutter map loads Wang tilesets, then `sea_plains`, `sea_desert`, and `plains_desert` all resolve from the configured paths and the map grid uses `map_cell_size_px`.
+- Given valid bundled `map_terrain_tilesets.json` and referenced atlases, when the Flutter map loads Wang tilesets, then `sea_plains`, `sea_desert`, `plains_desert`, `plains_forest`, and `plains_mountains` all resolve from the configured paths and the map grid uses `map_cell_size_px`.
+- Given a plains cell adjacent to forest (or mountain) with a valid corner pattern in the atlas, when rendering, then the corresponding `plains_forest` (or `plains_mountains`) Wang tile is used.
+- Given an isolated forest or mountain cell (no same-L2 in any coastline-style wedge), when rendering, then the land base uses interior plains (or desert flow) and the standalone feature tile is drawn on top.
