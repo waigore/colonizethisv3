@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_resolver.dart';
@@ -152,6 +153,12 @@ class DiplomaticOrderValidator {
           if (currentStage != OvertureStage.none) {
             return _reject('Trade Consulate requires no existing overture');
           }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+            );
+          }
           if (_treasury < overtureConsulateCost) {
             return _reject(
               'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
@@ -164,6 +171,12 @@ class DiplomaticOrderValidator {
               'Embassy requires existing Trade Consulate with that faction',
             );
           }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+            );
+          }
           if (_treasury < overtureEmbassyCost) {
             return _reject(
               'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
@@ -174,6 +187,12 @@ class DiplomaticOrderValidator {
           if (currentStage != OvertureStage.embassy) {
             return _reject(
               'Non-Aggression Pact requires existing Embassy with that faction',
+            );
+          }
+          if (_minorTribeOvertureRequiresDiplomaticExpertise(targetId, stage) &&
+              !_playerHasDiplomaticExpertise()) {
+            return _reject(
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
             );
           }
         } else if (stage == OvertureStage.joinEmpire) {
@@ -250,6 +269,25 @@ class DiplomaticOrderValidator {
         _treasury -= amount;
         return _acceptRecordingTarget(targetId, order.type);
     }
+  }
+
+  bool _minorTribeOvertureRequiresDiplomaticExpertise(
+    String targetId,
+    OvertureStage stage,
+  ) {
+    if (!isMinorOrTribe(_game, targetId)) return false;
+    return stage == OvertureStage.tradeConsulate ||
+        stage == OvertureStage.embassy ||
+        stage == OvertureStage.nap;
+  }
+
+  bool _playerHasDiplomaticExpertise() {
+    for (final p in _game.players) {
+      if (p.id == _playerId) {
+        return p.techUnlocked?[kTechIdDiplomaticExpertise] == true;
+      }
+    }
+    return false;
   }
 }
 

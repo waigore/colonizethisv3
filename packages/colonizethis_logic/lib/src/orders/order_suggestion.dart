@@ -1686,6 +1686,20 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
         : overtureEmbassyCost;
     if (treasury < cost) return null;
   }
+  if (next == OvertureStage.tradeConsulate ||
+      next == OvertureStage.embassy ||
+      next == OvertureStage.nap) {
+    Player? submitter;
+    for (final p in game.players) {
+      if (p.id == playerId) {
+        submitter = p;
+        break;
+      }
+    }
+    if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
+      return null;
+    }
+  }
   if (next == OvertureStage.joinEmpire) {
     final score = rel?.score ?? relationScoreNeutral;
     if (score < relationScoreMinFriendly) return null;

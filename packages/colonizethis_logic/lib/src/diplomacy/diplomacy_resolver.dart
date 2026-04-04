@@ -6,6 +6,7 @@
 
 import 'dart:math' show Random;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -258,6 +259,14 @@ _OverturePaymentsResult _processOverturePayments(
           (existing == null && prevStage == OvertureStage.none) ||
           (existing != null && existing.stage == prevStage);
       if (!atPrevStage) continue;
+
+      if (targetIsMinorOrTribe &&
+          (stage == OvertureStage.tradeConsulate ||
+              stage == OvertureStage.embassy ||
+              stage == OvertureStage.nap) &&
+          player.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
+        continue;
+      }
 
       int cost;
       if (stage == OvertureStage.tradeConsulate) {

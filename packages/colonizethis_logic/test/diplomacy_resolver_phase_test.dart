@@ -12,8 +12,9 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000),
+        players: [
+          const Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000)
+              .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
