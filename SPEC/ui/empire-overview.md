@@ -62,6 +62,8 @@
 
 **Acceptance (minimap):** Given the in-game shell map is visible, when the minimap toggle is on, then the UI shows the active region grid with visibility rules above and a white viewport indicator when the main map has published a matching snapshot. When the user taps the toggle, then the minimap hides or shows for the session only (default on at shell entry). When the user drags on the minimap or the bus emits a pan event for that region, then the main map host remains without exceptions. When the side menu is open, then the minimap stack order keeps it interactive above the scrim.
 
+**Acceptance (minimap ↔ main map):** Given the active region’s `RegionMapViewData.cellSize` matches the main `CtRegionMap` cell size, when the minimap is visible and a viewport snapshot exists for that region, then the white viewport rectangle matches the main map’s visible world area (center and span within tolerance for rounding). When the user taps a point on the minimap, then the main map camera centers on the corresponding world position (clamped). When the user drags on the minimap, then the camera pans in the same direction with world delta consistent with the snapshot’s world scale (same `cellSizePx` / map extents as [map-widget.md](map-widget.md) § Region minimap camera sync).
+
 ---
 
 ## Wireframe (conceptual)

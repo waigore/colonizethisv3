@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
+import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show
         kRegionMinimapCustomPaintKey,
@@ -40,6 +41,13 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
     expect(find.byKey(kRegionMinimapCustomPaintKey), findsOneWidget);
+
+    final minimap = tester.widget<GameRegionMinimap>(find.byType(GameRegionMinimap));
+    expect(
+      minimap.cellSizePx,
+      init.mapViewData.oldWorld.cellSize.toDouble(),
+      reason: 'minimap world scale must match CtRegionMap / RegionMapViewportSnapshot',
+    );
 
     await tester.tap(find.byKey(kRegionMinimapToggleKey));
     await tester.pumpAndSettle();

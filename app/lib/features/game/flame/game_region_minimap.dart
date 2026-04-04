@@ -32,6 +32,9 @@ const Color kRegionMinimapSeaColor = Color(0xFF0D47A1);
 const double kRegionMinimapFoggedAlpha = 0.55;
 
 /// Dismissible region minimap (Empire overview). SPEC/ui/empire-overview.md § Region minimap.
+///
+/// [cellSizePx] must match [RegionMapViewData.cellSize] used by the Flame-backed region map for this
+/// region so world↔minimap math matches [RegionMapViewportSnapshot] (see SPEC/ui/map-widget.md).
 class GameRegionMinimap extends ConsumerWidget {
   const GameRegionMinimap({
     required this.region,
