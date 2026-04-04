@@ -296,6 +296,73 @@ void main() {
     });
 
     testWidgets(
+      'AC: expanded composition lists ship display names not raw ids',
+      (WidgetTester tester) async {
+        const humanId = 'gp_ship_display';
+        const capProvince = 'oldWorld|cap1';
+        final homeId = homeFleetIdFor(humanId);
+        final shipLabelGame = Game(
+          id: 'g_ship_labels',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'h1', typeId: 'carrack')],
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                capProvince: ['oldWorld|cap1|0|0'],
+              },
+            },
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Ship Label Tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: shipLabelGame, humanPlayerId: humanId),
+        );
+        await tester.pumpAndSettle();
+
+        final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
+        expect(homeTile, findsOneWidget);
+        await tester.tap(homeTile);
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Carrack: 1'), findsOneWidget);
+        expect(find.textContaining('carrack:'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'sections render for fleets in both regions and locate button passes region id',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;

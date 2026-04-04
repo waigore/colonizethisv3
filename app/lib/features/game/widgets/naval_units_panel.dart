@@ -786,7 +786,9 @@ class _FleetExpansionTile extends StatelessWidget {
           else ...[
             for (final entry in row.shipCountsByType.entries)
               ListTile(
-                title: Text('${entry.key}: ${entry.value}'),
+                title: Text(
+                  '${shipTypeDisplayName(entry.key)}: ${entry.value}',
+                ),
                 dense: true,
               ),
           ],

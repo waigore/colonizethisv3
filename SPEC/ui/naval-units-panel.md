@@ -98,7 +98,7 @@ The entire collapsed row is clickable to select/locate the fleet and to toggle e
 When a row is **expanded**, additional details are shown **within the same panel**:
 
 - **Composition table:** One row per ship type in the fleet:
-  - Type name (human-readable ship type, e.g. “Frigate”, “Merchant Steamship”).
+  - Type name: **display label** from `shipTypeDisplayName` in `colonizethis_data` (aligned with [ships-and-naval.md](../game/ships-and-naval.md) roster, e.g. “Frigate”, “Merchant Steamship”, “Ship of the Line”), not raw `ship_type_id` (e.g. not `frigate`, `merchant_steamship`, `ship_of_the_line`). Unknown ids fall back to the raw id.
   - Count of ships of that type.
   - Role tag (e.g. “Warship” vs “Merchant”) per [ships-and-naval.md](../game/ships-and-naval.md).
 - **Capabilities:**
@@ -177,6 +177,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
 - **Given** the Naval Units panel is open and the human player’s Home Fleet exists in port at the capital province, **when** the user views the Home Fleet row in the capital region group, **then** the UI layer shows the fleet name “Home Fleet”, the location as the capital’s province name with the correct region label, the mission as “None”, and a ships summary that reflects the fleet’s current ship count (including `Total ships: 0` when it has no ships).
 
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
+
+- **Given** the Naval Units panel is open and the user expands a fleet that includes ships of type `carrack`, **when** the user reads the composition row for that type, **then** the UI layer shows **Carrack** (or the mapped `shipTypeDisplayName` label) with the count, and does **not** show the raw id string `carrack:` as the row title.
 
 - **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
 

@@ -17,6 +17,18 @@ import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
+String _armyStationedProvinceDisplayLabel(Game game, Army army) {
+  final pid = army.stationedProvinceId;
+  final full = ProvinceId.isPrefixed(pid)
+      ? pid
+      : ProvinceId.full(army.regionId, pid);
+  final p = tryGetProvince(game.worldState, full);
+  if (p != null) {
+    return p.displayName ?? p.id;
+  }
+  return full;
+}
+
 /// Fleet mission to display label.
 String _missionLabel(FleetMission m) {
   switch (m) {
@@ -489,6 +501,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
             for (final block in loc.armies)
               _ArmyExpansionTile(
                 block: block,
+                stationedProvinceDisplayLabel:
+                    _armyStationedProvinceDisplayLabel(widget.game, block.army),
                 isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
                 onCombineSelectionToggle: () =>
                     _toggleArmySelection(block.army.id),
@@ -549,6 +563,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
 class _ArmyExpansionTile extends StatelessWidget {
   const _ArmyExpansionTile({
     required this.block,
+    required this.stationedProvinceDisplayLabel,
     required this.isSelectedForCombine,
     required this.onCombineSelectionToggle,
     this.onLocate,
@@ -557,6 +572,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   });
 
   final _ArmyBlock block;
+  final String stationedProvinceDisplayLabel;
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onLocate;
@@ -599,7 +615,7 @@ class _ArmyExpansionTile extends StatelessWidget {
         ),
         subtitle: Text(
           '${block.army.regimentUnitIds.length} regiments · '
-          '${block.army.stationedProvinceId}',
+          '$stationedProvinceDisplayLabel',
         ),
         dense: true,
         children: [
@@ -655,7 +671,7 @@ class _RegimentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ListTile(
-        title: Text('${row.typeId}: ${row.count}'),
+        title: Text('${regimentTypeDisplayName(row.typeId)}: ${row.count}'),
         subtitle: Text(
           'Medals: ${row.medalsSummary} · Status: ${row.statusLabel}',
         ),
@@ -677,7 +693,7 @@ class _ShipRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ListTile(
-        title: Text('${row.typeId}: ${row.count}'),
+        title: Text('${shipTypeDisplayName(row.typeId)}: ${row.count}'),
         subtitle: Text('Status: ${row.statusLabel}'),
         dense: true,
         onTap: onTap,

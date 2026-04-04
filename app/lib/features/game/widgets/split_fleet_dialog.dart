@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -65,8 +66,10 @@ class SplitFleetDialog extends StatelessWidget {
   }
 
   void _handleConfirm(Map<String, int> newCounts, BuildContext context) {
-    final toMove =
-        shipInstancesForTransferCounts(originalFleet.ships, newCounts);
+    final toMove = shipInstancesForTransferCounts(
+      originalFleet.ships,
+      newCounts,
+    );
     bus.emit(
       NavalSplitFleetRequestedEvent(
         humanPlayerId: humanPlayerId,
@@ -96,6 +99,7 @@ class SplitFleetDialog extends StatelessWidget {
               const SizedBox(height: 16),
               CtTransferList(
                 listHeight: 220,
+                itemLabelBuilder: shipTypeDisplayName,
                 leftTitle: originalFleet.id == 'home_fleet'
                     ? 'Home Fleet'
                     : 'Fleet ${originalFleet.id}',

@@ -66,6 +66,8 @@ Tech unlocks per [tech-tree-naval.md](tech-tree-naval.md). Cargo holds determine
 
 Every `ship_type_id` that appears in any `shipUnlockIds` entry in the global tech catalog MUST have exactly one row in this table. `carrack` MUST NOT appear in `shipUnlockIds` (no unlocking tech).
 
+**UI display labels:** Player-facing ship type names for lists use `shipTypeDisplayName` in `colonizethis_data/lib/src/ship_type_display_name.dart`, aligned with this roster. New ship types must appear in `NavalStatsCatalog.byId` and that map (tests enforce coverage).
+
 ### Ship food upkeep (canonical)
 
 **Source of truth:** Per turn, each ship consumes **2 food units** (grain/meat, same stockpile abstraction as land military upkeep). Values are stored on `ShipEconomyEntry.foodUpkeep` in colonizethis_data (currently **2** for every row). Consumption phase order and invalid-id behavior: [workers-and-population.md](workers-and-population.md) § Consumption and Production.

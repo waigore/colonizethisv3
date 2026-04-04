@@ -116,13 +116,13 @@ void main() {
       bus: AppEventBus.create(),
     );
 
-    expect(find.text('carrack (3)'), findsOneWidget);
+    expect(find.text('Carrack (3)'), findsOneWidget);
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
 
-    expect(find.text('carrack (2)'), findsOneWidget);
-    expect(find.text('carrack (1)'), findsOneWidget);
-    expect(find.text('fluyte (1)'), findsOneWidget);
+    expect(find.text('Carrack (2)'), findsOneWidget);
+    expect(find.text('Carrack (1)'), findsOneWidget);
+    expect(find.text('Fluyte (1)'), findsOneWidget);
   });
 
   testWidgets(
@@ -146,13 +146,13 @@ void main() {
 
       await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
       await tester.pump();
-      expect(find.text('carrack (2)'), findsOneWidget);
-      expect(find.text('carrack (1)'), findsOneWidget);
+      expect(find.text('Carrack (2)'), findsOneWidget);
+      expect(find.text('Carrack (1)'), findsOneWidget);
 
       await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
       await tester.pump();
-      expect(find.text('carrack (3)'), findsOneWidget);
-      expect(find.text('fluyte (1)'), findsOneWidget);
+      expect(find.text('Carrack (3)'), findsOneWidget);
+      expect(find.text('Fluyte (1)'), findsOneWidget);
     },
   );
 
@@ -177,15 +177,15 @@ void main() {
 
       await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
       await tester.pump();
-      expect(find.text('carrack (3)'), findsOneWidget);
-      expect(find.text('fluyte (1)'), findsOneWidget);
+      expect(find.text('Carrack (3)'), findsOneWidget);
+      expect(find.text('Fluyte (1)'), findsOneWidget);
 
       await tester.tap(find.byKey(CtTransferListKeys.rightMoveAll('carrack')));
       await tester.pump();
-      expect(find.text('carrack (3)'), findsOneWidget);
-      expect(find.text('fluyte (1)'), findsOneWidget);
-      expect(find.text('carrack (2)'), findsNothing);
-      expect(find.text('carrack (1)'), findsNothing);
+      expect(find.text('Carrack (3)'), findsOneWidget);
+      expect(find.text('Fluyte (1)'), findsOneWidget);
+      expect(find.text('Carrack (2)'), findsNothing);
+      expect(find.text('Carrack (1)'), findsNothing);
     },
   );
 
@@ -245,19 +245,19 @@ void main() {
       bus: AppEventBus.create(),
     );
 
-    expect(find.text('carrack (2)'), findsOneWidget);
+    expect(find.text('Carrack (2)'), findsOneWidget);
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
-    expect(find.text('carrack (1)'), findsNWidgets(2));
+    expect(find.text('Carrack (1)'), findsNWidgets(2));
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('carrack')));
     await tester.pump();
-    expect(find.text('carrack (2)'), findsOneWidget);
-    expect(find.text('carrack (1)'), findsNothing);
+    expect(find.text('Carrack (2)'), findsOneWidget);
+    expect(find.text('Carrack (1)'), findsNothing);
 
     await tester.tap(find.byKey(CtTransferListKeys.rightMoveOne('carrack')));
     await tester.pump();
-    expect(find.text('carrack (1)'), findsNWidgets(2));
+    expect(find.text('Carrack (1)'), findsNWidgets(2));
   });
 
   testWidgets('arrow semantics: < is right-to-left and > is left-to-right', (
@@ -281,12 +281,12 @@ void main() {
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('fluyte')));
     await tester.pump();
-    expect(find.text('fluyte (1)'), findsNWidgets(2));
+    expect(find.text('Fluyte (1)'), findsNWidgets(2));
 
     await tester.tap(find.byKey(CtTransferListKeys.rightMoveOne('fluyte')));
     await tester.pump();
-    expect(find.text('fluyte (2)'), findsOneWidget);
-    expect(find.text('fluyte (1)'), findsNothing);
+    expect(find.text('Fluyte (2)'), findsOneWidget);
+    expect(find.text('Fluyte (1)'), findsNothing);
   });
 
   testWidgets('home fleet can split to zero original ships', (
