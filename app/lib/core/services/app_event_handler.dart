@@ -270,11 +270,13 @@ class AppEventHandler {
           final humanPlayerId = _humanPlayerId(game);
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+          final draftOrders = ref.watch(currentOrdersProvider);
           return MilitaryUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
             topology: mapData?.combinedTopology ?? const MapTopology(),
+            draftOrders: draftOrders,
           );
         },
       ),

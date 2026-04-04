@@ -326,14 +326,22 @@ class ArmySplitRequestedEvent extends SessionCommandEvent {
 }
 
 /// Move army dialog confirm: merges [moveOrder] into current-turn draft orders.
+///
+/// When [declareWarTargetFactionId] is set, the shell appends a same-turn
+/// `declareWar` on that faction before applying [moveOrder] (invasion path).
 class ArmyMoveRequestedEvent extends SessionCommandEvent {
   ArmyMoveRequestedEvent({
     required this.humanPlayerId,
     required this.moveOrder,
+    this.declareWarTargetFactionId,
   });
 
   final String humanPlayerId;
   final ArmyMoveOrder moveOrder;
+
+  /// Great Power / Minor / Tribe id to declare war on when the move required
+  /// the invasion confirmation flow. Null for normal moves and when already at war.
+  final String? declareWarTargetFactionId;
 }
 
 /// Train civilians dialog close: shell merges into current-turn orders draft.

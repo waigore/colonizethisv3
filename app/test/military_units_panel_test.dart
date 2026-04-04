@@ -67,6 +67,7 @@ class _ArmySplitTestHarnessState extends State<_ArmySplitTestHarness> {
       humanPlayerId: widget.humanPlayerId,
       bus: widget.bus,
       topology: const MapTopology(),
+      draftOrders: const Orders(),
     );
   }
 }
@@ -108,6 +109,7 @@ void main() {
     required String humanPlayerId,
     AppEventBus? bus,
     MapTopology? topology,
+    Orders draftOrders = const Orders(),
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -116,6 +118,7 @@ void main() {
           humanPlayerId: humanPlayerId,
           bus: bus ?? AppEventBus.create(),
           topology: topology ?? const MapTopology(),
+          draftOrders: draftOrders,
         ),
       ),
     );
@@ -1025,20 +1028,20 @@ void main() {
               },
             },
           ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'C',
-              isHuman: true,
-              capitalProvinceId: 'oldWorld|cap',
-            ),
-          ],
-        );
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'C',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|cap',
+          ),
+        ],
+      );
 
-        await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: playerId, bus: bus),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: playerId, bus: bus),
+      );
+      await tester.pumpAndSettle();
 
         final checks = find.byType(Checkbox);
         expect(checks, findsNWidgets(3));
@@ -1115,7 +1118,14 @@ void main() {
           ],
           tileKeysByRegionAndProvince: {
             'oldWorld': {
-              p: ['tk'],
+              p: ['oldWorld|p2|0|0'],
+              p3: ['oldWorld|p3|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {
+              'oldWorld|p2|0|0': 'fullyVisible',
+              'oldWorld|p3|0|0': 'fullyVisible',
             },
           },
         ),
@@ -1152,7 +1162,7 @@ void main() {
       expect(captured!.moveOrder.destinationProvinceId, p3);
     });
 
-    testWidgets('Move dialog groups dropdown by region and emits selection', (
+    testWidgets('Move dialog groups by owning faction and cross-region owned move', (
       WidgetTester tester,
     ) async {
       ArmyMoveRequestedEvent? captured;
@@ -1231,7 +1241,18 @@ void main() {
           ],
           tileKeysByRegionAndProvince: {
             'oldWorld': {
-              from: ['tk_from'],
+              from: ['oldWorld|p2|0|0'],
+              oldDest: ['oldWorld|p3|0|0'],
+            },
+            'newWorld': {
+              newDest: ['newWorld|n2|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {
+              'oldWorld|p2|0|0': 'fullyVisible',
+              'oldWorld|p3|0|0': 'fullyVisible',
+              'newWorld|n2|0|0': 'fullyVisible',
             },
           },
         ),
@@ -1264,8 +1285,7 @@ void main() {
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
 
-      expect(find.text('Old World').evaluate().isNotEmpty, isTrue);
-      expect(find.text('New World').evaluate().isNotEmpty, isTrue);
+      expect(find.text('Your provinces'), findsWidgets);
 
       await tester.tap(find.text('New Port').last);
       await tester.pumpAndSettle();
@@ -1275,6 +1295,201 @@ void main() {
       expect(captured, isNotNull);
       expect(captured!.moveOrder.armyId, 'amove');
       expect(captured!.moveOrder.destinationProvinceId, newDest);
+    });
+
+    testWidgets('Army row shows Moving to when draft has army move', (
+      WidgetTester tester,
+    ) async {
+      const playerId = 'gp_draft_mv';
+      const p = 'oldWorld|p2';
+      const dest = 'oldWorld|p3';
+      final game = Game(
+        id: 'g_draft',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: p,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                displayName: 'Here',
+              ),
+              Province(
+                id: dest,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+                displayName: 'There',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'ux',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: p,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'amove',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: p,
+              regimentUnitIds: const ['ux'],
+              isHomeArmy: false,
+            ),
+          ],
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'D',
+            isHuman: true,
+            capitalProvinceId: p,
+          ),
+        ],
+      );
+      final draft = Orders(
+        armyMoveOrdersByPlayerId: {
+          playerId: [
+            ArmyMoveOrder(armyId: 'amove', destinationProvinceId: dest),
+          ],
+        },
+      );
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: playerId, draftOrders: draft),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Moving to: There'), findsOneWidget);
+    });
+
+    testWidgets('Invasion move emits declareWarTargetFactionId after confirm', (
+      WidgetTester tester,
+    ) async {
+      ArmyMoveRequestedEvent? captured;
+      final bus = AppEventBus.create();
+      bus.on<ArmyMoveRequestedEvent>().listen((e) => captured = e);
+
+      const playerId = 'gp_inv';
+      const enemyId = 'gp_enemy';
+      const loc1 = 'oldWorld|p2';
+      const loc2 = 'oldWorld|p3';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
+      );
+      final game = Game(
+        id: 'g_inv',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: loc1,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+              ),
+              Province(
+                id: loc2,
+                regionId: 'oldWorld',
+                ownerId: enemyId,
+                displayName: 'Hostile',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'ui1',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: loc1,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'ainv',
+              ownerId: playerId,
+              regionId: 'oldWorld',
+              stationedProvinceId: loc1,
+              regimentUnitIds: const ['ui1'],
+              isHomeArmy: false,
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              loc1: ['oldWorld|p2|0|0'],
+              loc2: ['oldWorld|p3|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {
+              'oldWorld|p2|0|0': 'fullyVisible',
+              'oldWorld|p3|0|0': 'fullyVisible',
+            },
+          },
+        ),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'Inv',
+            isHuman: true,
+            capitalProvinceId: loc1,
+          ),
+          Player(
+            id: enemyId,
+            displayName: 'Enemy',
+            isHuman: true,
+            capitalProvinceId: loc2,
+          ),
+        ],
+        diplomacyRelations: const [],
+      );
+
+      await tester.pumpWidget(
+        buildPanel(
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Army ainv'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hostile').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Declare war and move'), findsOneWidget);
+      await tester.tap(find.text('Declare war and move'));
+      await tester.pumpAndSettle();
+
+      expect(captured, isNotNull);
+      expect(captured!.declareWarTargetFactionId, enemyId);
+      expect(captured!.moveOrder.destinationProvinceId, loc2);
     });
 
     testWidgets(
