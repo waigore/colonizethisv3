@@ -209,6 +209,7 @@ void main() {
                     humanPlayerId: humanPlayerId,
                     bus: ref.watch(appEventBusProvider),
                     topology: const MapTopology(),
+                    draftOrders: ref.watch(currentOrdersProvider),
                   );
                 },
               ),
