@@ -34,6 +34,7 @@ The top bar shows:
   - Keyboard interaction that would otherwise affect the map or in-game UI is **ignored by the map** while the menu is open.
   - **OS / platform-level gestures** (system back, platform edge-swipes) continue to work as normal; modality only applies to the app content layer.
 - **Scrim:** A dimmed background (scrim) is shown behind the side menu while it is open.
+- **Exception — region minimap:** The bottom-right **region minimap** (see [empire-overview.md](empire-overview.md) § Region minimap) stays **above** the scrim so it remains tappable; the main map under the scrim stays non-interactive. This is an intentional exception to “map under scrim” for minimap hit targets only.
 - **Dismissal:**
   - Pressing **Escape** (or the equivalent back key on desktop/web) closes the side menu.
   - Tapping or clicking **outside** the side menu, on the scrim, closes the side menu and **does not trigger any map interaction** for that tap/click.

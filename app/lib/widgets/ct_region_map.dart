@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -9,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../features/game/flame/region_map_component.dart';
+import '../features/game/flame/region_map_viewport_snapshot.dart';
 
 export '../features/game/flame/region_map_component.dart'
     show
@@ -40,6 +43,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required VoidCallback? onWorkTargetSelectionCancelled,
     required void Function(String provinceId)? onTownIconTapped,
     this.playerViewForResources,
+    this.onViewportSnapshotChanged,
   }) : region = region,
        cellSizePx = cellSizePx,
        showPoliticalOverlay = showPoliticalOverlay,
@@ -80,6 +84,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   VoidCallback? onWorkTargetSelectionCancelled;
   void Function(String provinceId)? onTownIconTapped;
   PlayerView? playerViewForResources;
+  void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -128,6 +133,45 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (size != Vector2.zero()) {
       _clampCameraToMap();
     }
+    _emitViewportSnapshot();
+  }
+
+  void _emitViewportSnapshot() {
+    final cb = onViewportSnapshotChanged;
+    if (cb == null) return;
+    if (!_mapLoaded || size == Vector2.zero()) return;
+    final mw = region.width * cellSizePx;
+    final mh = region.height * cellSizePx;
+    cb(
+      RegionMapViewportSnapshot(
+        regionId: region.regionId,
+        cellSizePx: cellSizePx,
+        mapWidthWorld: mw,
+        mapHeightWorld: mh,
+        cameraCenterX: camera.viewfinder.position.x,
+        cameraCenterY: camera.viewfinder.position.y,
+        zoom: _zoom,
+        viewportWidthLogical: size.x,
+        viewportHeightLogical: size.y,
+      ),
+    );
+  }
+
+  /// Sets the camera center in world space (used by the region minimap). Clamped to the map.
+  void setCameraCenterWorld(double x, double y) {
+    camera.viewfinder.position = Vector2(x, y);
+    _clampCameraToMap();
+    onRegionViewChanged?.call();
+    _emitViewportSnapshot();
+  }
+
+  /// Pans the camera center in world space (used by the region minimap). Clamped each step.
+  void panCameraWorld(double dx, double dy) {
+    if (dx == 0 && dy == 0) return;
+    camera.viewfinder.position += Vector2(dx, dy);
+    _clampCameraToMap();
+    onRegionViewChanged?.call();
+    _emitViewportSnapshot();
   }
 
   @override
@@ -156,6 +200,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
     required PlayerView? playerViewForResources,
+    void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   }) {
     if (region != null) {
       this.region = region;
@@ -197,6 +242,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
     this.playerViewForResources = playerViewForResources;
+    if (onViewportSnapshotChanged != null) {
+      this.onViewportSnapshotChanged = onViewportSnapshotChanged;
+    }
 
     assertCtMapPlayerViewRequired(
       visibilityMode: this.visibilityMode,
@@ -217,6 +265,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
         ..validTileKeys = this.validTileKeys
         ..playerViewForResources = this.playerViewForResources;
+      _emitViewportSnapshot();
     }
   }
 
@@ -233,6 +282,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     final worldY = y * cellSizePx + cellSizePx / 2;
     camera.moveTo(Vector2(worldX, worldY));
     onRegionViewChanged?.call();
+    _emitViewportSnapshot();
   }
 
   /// Pan the camera by a Flutter offset (in logical pixels).
@@ -241,6 +291,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     camera.viewfinder.position -= Vector2(delta.dx, delta.dy) / _zoom;
     _clampCameraToMap();
     onRegionViewChanged?.call();
+    _emitViewportSnapshot();
   }
 
   /// Zoom the camera by [factor] (>1 zooms in, <1 zooms out).
@@ -264,6 +315,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     // with visible black edges.
     if (previousSize == null || previousSize == Vector2.zero()) {
       _clampCameraToMap();
+      _emitViewportSnapshot();
       return;
     }
 
@@ -306,6 +358,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
 
     camera.viewfinder.position = center;
+    _emitViewportSnapshot();
   }
 
   /// Update hover state from a widget-local position.
@@ -329,6 +382,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     final world = camera.viewfinder.position + (widgetPos - halfView) / _zoom;
     _mapComponent.handleTapAtWorld(world);
     onRegionViewChanged?.call();
+    _emitViewportSnapshot();
   }
 
   void _applyZoom(double scaleDelta) {
@@ -338,6 +392,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     camera.viewfinder.zoom = _zoom;
     _clampCameraToMap();
     onRegionViewChanged?.call();
+    _emitViewportSnapshot();
   }
 
   /// Constrain camera center so the viewport stays over the map.
@@ -399,6 +454,7 @@ class CtRegionMap extends StatefulWidget {
     this.onWorkTargetSelectionCancelled,
     this.bus,
     this.playerViewForResources,
+    this.onViewportSnapshotChanged,
   });
 
   final RegionMapViewData region;
@@ -430,17 +486,52 @@ class CtRegionMap extends StatefulWidget {
   /// Required when [visibilityMode] is [CtMapVisibilityMode.playerConstrained].
   final PlayerView? playerViewForResources;
 
+  /// Optional: notified when the camera viewport changes (for region minimap sync).
+  final void Function(RegionMapViewportSnapshot viewport)?
+      onViewportSnapshotChanged;
+
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
 }
 
 class _CtRegionMapState extends State<CtRegionMap> {
   late _CtRegionMapGame _game;
+  StreamSubscription<RequestRegionMapCameraCenterWorldEvent>? _cameraCenterSub;
+  StreamSubscription<RequestRegionMapCameraPanWorldDeltaEvent>? _cameraPanSub;
 
   @override
   void initState() {
     super.initState();
     _game = _buildGame();
+    _attachMinimapCameraBusSubscriptions();
+  }
+
+  @override
+  void dispose() {
+    _cameraCenterSub?.cancel();
+    _cameraPanSub?.cancel();
+    super.dispose();
+  }
+
+  void _attachMinimapCameraBusSubscriptions() {
+    _cameraCenterSub?.cancel();
+    _cameraPanSub?.cancel();
+    _cameraCenterSub = null;
+    _cameraPanSub = null;
+    final b = widget.bus;
+    if (b == null) return;
+    _cameraCenterSub = b.on<RequestRegionMapCameraCenterWorldEvent>().listen((
+      e,
+    ) {
+      if (!mounted || e.regionId != widget.region.regionId) return;
+      _game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
+    });
+    _cameraPanSub = b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((
+      e,
+    ) {
+      if (!mounted || e.regionId != widget.region.regionId) return;
+      _game.panCameraWorld(e.worldDx, e.worldDy);
+    });
   }
 
   @override
@@ -460,7 +551,9 @@ class _CtRegionMapState extends State<CtRegionMap> {
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
-        widget.playerViewForResources != oldWidget.playerViewForResources) {
+        widget.playerViewForResources != oldWidget.playerViewForResources ||
+        widget.onViewportSnapshotChanged !=
+            oldWidget.onViewportSnapshotChanged) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -482,7 +575,11 @@ class _CtRegionMapState extends State<CtRegionMap> {
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         playerViewForResources: widget.playerViewForResources,
+        onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
       );
+    }
+    if (widget.bus != oldWidget.bus) {
+      _attachMinimapCameraBusSubscriptions();
     }
     if (widget.centerOnTileKey != null &&
         widget.centerOnTileKey != oldWidget.centerOnTileKey) {
@@ -520,6 +617,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
             }
           : null,
       playerViewForResources: widget.playerViewForResources,
+      onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
     );
   }
 
