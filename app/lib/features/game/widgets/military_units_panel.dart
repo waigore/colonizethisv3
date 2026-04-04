@@ -29,6 +29,25 @@ String _armyStationedProvinceDisplayLabel(Game game, Army army) {
   return full;
 }
 
+/// Pending army move line for Military Units (naval draft move parity).
+String? armyDraftMoveLineForArmy({
+  required Game game,
+  required String humanPlayerId,
+  required String armyId,
+  required Orders draftOrders,
+}) {
+  final moves =
+      draftOrders.armyMoveOrdersByPlayerId[humanPlayerId] ?? const [];
+  for (final o in moves) {
+    if (o.armyId != armyId) continue;
+    final full = resolveToFullProvinceId(game.worldState, o.destinationProvinceId);
+    final p = tryGetProvince(game.worldState, full);
+    final name = p?.displayName ?? p?.id ?? ProvinceId.localIdFrom(full);
+    return 'Moving to: $name';
+  }
+  return null;
+}
+
 /// Fleet mission to display label.
 String _missionLabel(FleetMission m) {
   switch (m) {
@@ -360,12 +379,14 @@ class MilitaryUnitsPanel extends StatefulWidget {
     required this.humanPlayerId,
     required this.bus,
     required this.topology,
+    required this.draftOrders,
   });
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
   final MapTopology topology;
+  final Orders draftOrders;
 
   @override
   State<MilitaryUnitsPanel> createState() => _MilitaryUnitsPanelState();
@@ -442,6 +463,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         humanPlayerId: widget.humanPlayerId,
         bus: widget.bus,
         topology: widget.topology,
+        draftOrders: widget.draftOrders,
       ),
     );
   }
@@ -503,6 +525,12 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
                 block: block,
                 stationedProvinceDisplayLabel:
                     _armyStationedProvinceDisplayLabel(widget.game, block.army),
+                draftArmyMoveLine: armyDraftMoveLineForArmy(
+                  game: widget.game,
+                  humanPlayerId: widget.humanPlayerId,
+                  armyId: block.army.id,
+                  draftOrders: widget.draftOrders,
+                ),
                 isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
                 onCombineSelectionToggle: () =>
                     _toggleArmySelection(block.army.id),
@@ -564,6 +592,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   const _ArmyExpansionTile({
     required this.block,
     required this.stationedProvinceDisplayLabel,
+    this.draftArmyMoveLine,
     required this.isSelectedForCombine,
     required this.onCombineSelectionToggle,
     this.onLocate,
@@ -573,6 +602,7 @@ class _ArmyExpansionTile extends StatelessWidget {
 
   final _ArmyBlock block;
   final String stationedProvinceDisplayLabel;
+  final String? draftArmyMoveLine;
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onLocate;
@@ -615,7 +645,8 @@ class _ArmyExpansionTile extends StatelessWidget {
         ),
         subtitle: Text(
           '${block.army.regimentUnitIds.length} regiments · '
-          '$stationedProvinceDisplayLabel',
+          '$stationedProvinceDisplayLabel'
+          '${draftArmyMoveLine != null ? '\n$draftArmyMoveLine' : ''}',
         ),
         dense: true,
         children: [

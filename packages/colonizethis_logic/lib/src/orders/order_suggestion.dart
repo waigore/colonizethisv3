@@ -173,6 +173,133 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   return sorted;
 }
 
+/// One destination row for the Move Army picker (Military Units).
+/// Only entries produced by [armyMovePickerDestinations] are selectable; each
+/// corresponds to a draft that passes [OrderEngine] validation.
+class ArmyMovePickerDestination {
+  const ArmyMovePickerDestination({
+    required this.fullProvinceId,
+    required this.provinceLabel,
+    required this.regionId,
+    required this.ownerFactionId,
+    required this.isPlayerOwned,
+    required this.requiresDeclareWarOnConfirm,
+  });
+
+  final String fullProvinceId;
+  final String provinceLabel;
+  final String regionId;
+
+  /// Province owner (same as [playerId] when [isPlayerOwned]).
+  final String ownerFactionId;
+  final bool isPlayerOwned;
+
+  /// When true, confirm must run invasion flow and the shell should set
+  /// [ArmyMoveRequestedEvent.declareWarTargetFactionId] to [ownerFactionId].
+  final bool requiresDeclareWarOnConfirm;
+}
+
+bool _armyMoveNeedsDeclareWarTrial(
+  Game game,
+  String playerId,
+  String? destOwnerId,
+  List<DiplomaticOrder> diplo,
+) {
+  if (destOwnerId == null ||
+      destOwnerId.isEmpty ||
+      destOwnerId == playerId) {
+    return false;
+  }
+  if (!isGreatPower(game, destOwnerId) &&
+      !isMinorOrTribe(game, destOwnerId)) {
+    return false;
+  }
+  return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
+}
+
+/// Valid, sorted destinations for the Move Army dialog: player-owned and
+/// invasion targets only if the merged draft (with optional same-turn declare
+/// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
+List<ArmyMovePickerDestination> armyMovePickerDestinations({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Army army,
+  required Orders currentOrders,
+}) {
+  final view = buildPlayerView(game, topology, playerId);
+  final diplo = currentOrders.diplomaticOrdersByPlayerId[playerId] ??
+      const <DiplomaticOrder>[];
+  final raw = armyMoveCandidateDestinationProvinceIds(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    army: army,
+  );
+  final out = <ArmyMovePickerDestination>[];
+  for (final fullId in raw) {
+    final province = tryGetProvince(game.worldState, fullId);
+    final ownerId = province?.ownerId ?? '';
+    final move = ArmyMoveOrder(
+      armyId: army.id,
+      destinationProvinceId: fullId,
+    );
+    final acceptedBase = _isArmyMoveOrderAccepted(
+      game,
+      topology,
+      playerId,
+      currentOrders,
+      move,
+    );
+    var requiresDeclare = false;
+    if (acceptedBase) {
+      requiresDeclare = false;
+    } else {
+      if (!_armyMoveNeedsDeclareWarTrial(game, playerId, ownerId, diplo)) {
+        continue;
+      }
+      final trial = ordersWithAppendedDiplomaticOrder(
+        currentOrders,
+        playerId,
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: ownerId,
+        ),
+      );
+      if (!_isArmyMoveOrderAccepted(game, topology, playerId, trial, move)) {
+        continue;
+      }
+      requiresDeclare = true;
+    }
+    final label = province?.displayName ?? ProvinceId.localIdFrom(fullId);
+    final isOwn = ownerId == playerId;
+    final ownerKey = ownerId.isEmpty ? '__unowned__' : ownerId;
+    out.add(
+      ArmyMovePickerDestination(
+        fullProvinceId: fullId,
+        provinceLabel: label,
+        regionId: ProvinceId.regionIdFrom(fullId),
+        ownerFactionId: ownerKey,
+        isPlayerOwned: isOwn,
+        requiresDeclareWarOnConfirm: requiresDeclare,
+      ),
+    );
+  }
+  out.sort((a, b) {
+    if (a.isPlayerOwned != b.isPlayerOwned) {
+      return a.isPlayerOwned ? -1 : 1;
+    }
+    final o = a.ownerFactionId.compareTo(b.ownerFactionId);
+    if (o != 0) return o;
+    final r = a.regionId.compareTo(b.regionId);
+    if (r != 0) return r;
+    final l = a.provinceLabel.compareTo(b.provinceLabel);
+    if (l != 0) return l;
+    return a.fullProvinceId.compareTo(b.fullProvinceId);
+  });
+  return out;
+}
+
 /// Suggests candidate [ArmyMoveOrder]s for non-home armies owned by [view.playerId].
 List<ArmyMoveOrder> suggestArmyMoveOrders(
   PlayerView view,
