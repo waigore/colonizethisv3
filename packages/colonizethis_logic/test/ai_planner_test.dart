@@ -218,6 +218,90 @@ void main() {
       expect(orders, equals(const Orders()));
     });
 
+    test('generateOrdersForPlayer emits build_rail when tile maps enable rail targets', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$provinceId|0|0';
+
+      TileMapResult railTileMap() => TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
+
+      Stockpile railStockpile() => Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 10)
+          .applyDelta(CommodityCatalog.steel.id, 10);
+
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      final game = Game(
+        id: 'g-rail-ai',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'rail1',
+                type: 'Rail Builder',
+                ownerId: 'gp1',
+                locationProvinceId: provinceId,
+                tileKey: tileKey,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileState: TileMapState().setRoadLevel(tileKey, 1),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [tileKey],
+            },
+          },
+          playerVisibilityByTile: const {
+            'gp1': {tileKey: 'fullyVisible'},
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'AI GP',
+            isHuman: false,
+            capitalProvinceId: provinceId,
+            stockpile: railStockpile(),
+            techUnlocked: const {'early_steam_engine': true},
+          ),
+        ],
+        globalGameSeed: 42,
+        aiSeedByGpId: const {'gp1': 7},
+      );
+
+      final orders = generateOrdersForPlayer(
+        game,
+        topology,
+        'gp1',
+        tileMapByRegion: {ow: railTileMap()},
+      );
+      final work = orders.workOrdersByPlayerId['gp1'] ?? const [];
+      expect(
+        work.any((w) => w.target == 'build_rail'),
+        isTrue,
+        reason: 'tile maps + road 1 + tech should allow build_rail in work suggestions',
+      );
+    });
+
     test('generateOrdersForGameFullAI aggregates orders including naval and diplo', () {
       final game = Game(
         id: 'g1',

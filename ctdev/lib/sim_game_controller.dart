@@ -158,14 +158,25 @@ class SimGameController {
           player: player,
           topology: _topology,
           baseSeed: _baseSeed,
+          tileMapByRegion: _tileMapByRegion,
         );
         _pendingOrdersByPlayerId[player.id] = orders;
       } else if (useFullAI) {
-        final result = generateOrdersForPlayerFullAI(_game, _topology, player.id);
+        final result = generateOrdersForPlayerFullAI(
+          _game,
+          _topology,
+          player.id,
+          tileMapByRegion: _tileMapByRegion,
+        );
         _pendingOrdersByPlayerId[player.id] = result.orders;
         _pendingEconomyPlansByPlayerId[player.id] = result.economyPlan;
       } else {
-        final orders = generateOrdersForPlayer(_game, _topology, player.id);
+        final orders = generateOrdersForPlayer(
+          _game,
+          _topology,
+          player.id,
+          tileMapByRegion: _tileMapByRegion,
+        );
         _pendingOrdersByPlayerId[player.id] = orders;
       }
       _ctdevSimLog.i(
@@ -205,13 +216,18 @@ class SimGameController {
             player: player,
             topology: _topology,
             baseSeed: _baseSeed,
+            tileMapByRegion: _tileMapByRegion,
           ),
       ];
       final combined = _combineOrders(ordersList);
       _pendingOrdersByPlayerId.clear();
       _advanceOneTurnFromOrders(combined);
     } else if (useFullAI) {
-      final result = generateOrdersForGameFullAI(_game, _topology);
+      final result = generateOrdersForGameFullAI(
+        _game,
+        _topology,
+        tileMapByRegion: _tileMapByRegion,
+      );
       final defaultAssignmentsByPlayerId = result.economyPlansByPlayerId.map(
         (pid, plan) => MapEntry(pid, plan.productionAssignments),
       );
@@ -221,7 +237,11 @@ class SimGameController {
         defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
       );
     } else {
-      final combined = generateOrdersForGame(_game, _topology);
+      final combined = generateOrdersForGame(
+        _game,
+        _topology,
+        tileMapByRegion: _tileMapByRegion,
+      );
       _pendingOrdersByPlayerId.clear();
       _advanceOneTurnFromOrders(combined);
     }

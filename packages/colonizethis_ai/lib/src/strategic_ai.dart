@@ -32,6 +32,7 @@ StrategicOrderResult generateStrategicOrders({
   required AIConfig config,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+  Map<String, TileMapResult>? tileMapByRegion,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
 }) {
@@ -63,6 +64,7 @@ StrategicOrderResult generateStrategicOrders({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
     economyPlan: economyPlan,
+    tileMapByRegion: tileMapByRegion,
   );
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final armyMoveCount =
