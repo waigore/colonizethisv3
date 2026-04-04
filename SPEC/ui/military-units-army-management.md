@@ -23,7 +23,7 @@ Players reorganize **regiments** between **armies** in the same province, analog
 ## Split army
 
 - **Trigger:** Expanded army row shows **Split Army** (including Home Army).
-- **UX:** Reuse the same **transfer-list** pattern as naval split ([naval-units-fleet-management.md](naval-units-fleet-management.md) § Reusable Transfer Component): per-type or per-regiment counts as specified in TDD; confirm creates a **new** army in the **same** province with the chosen regiments.
+- **UX:** Reuse the same **transfer-list** pattern as naval split ([naval-units-fleet-management.md](naval-units-fleet-management.md) § Reusable Transfer Component): **one row per regiment type** with counts (like ship types in Split Fleet); confirm resolves types to concrete regiment unit ids in army list order and creates a **new** army in the **same** province with the chosen regiments.
 
 ---
 
@@ -34,6 +34,8 @@ Players reorganize **regiments** between **armies** in the same province, analog
 - Given **Home Army** and another army in the **same** province are both checked, when the user taps **Combine**, then the merge target is **Home Army** and the other army is removed after its regiments are appended.
 
 - Given one army in province `P` with at least two regiments, when the user completes **Split Army** with a non-empty subset, then the UI layer shows two armies in `P` reflecting the split without requiring a manual refresh.
+
+- Given an army with multiple regiments of the **same** type, when the user opens **Split Army**, then the transfer dialog shows **one row per type** with an aggregate count (not one row per regiment id), consistent with Split Fleet.
 
 - Given the user checks armies in **different** provinces, when the user views **Combine**, then **Combine** is disabled.
 
