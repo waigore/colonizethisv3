@@ -371,12 +371,56 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         bus.emit(LandArmiesUpdatedEvent(game: next));
       }),
       bus.on<ArmyMoveRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final topo = ref.read(gameServiceProvider).getMapData(g.id)?.combinedTopology ??
+            const MapTopology();
         final o = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state = applyArmyMoveOrderForPlayer(
-          o,
+        var next = o;
+        final warTarget = e.declareWarTargetFactionId;
+        if (warTarget != null) {
+          final diploList =
+              next.diplomaticOrdersByPlayerId[e.humanPlayerId] ?? const [];
+          final hasDeclare = diploList.any(
+            (d) =>
+                d.type == DiplomaticOrderType.declareWar &&
+                d.targetFactionId == warTarget,
+          );
+          if (!hasDeclare) {
+            next = ordersWithAppendedDiplomaticOrder(
+              next,
+              e.humanPlayerId,
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: warTarget,
+              ),
+            );
+          }
+        }
+        next = applyArmyMoveOrderForPlayer(
+          next,
           e.humanPlayerId,
           e.moveOrder,
         );
+        final engine = OrderEngine(initialOrders: next);
+        final results =
+            engine.validatePlayerOrdersWithContext(g, topo, e.humanPlayerId);
+        if (!results.every((r) => r.isAccepted)) {
+          _logEvent.e(
+            'ui: army move rejected: merged draft failed order validation',
+          );
+          _showSnackBar(
+            const ShowSnackBarEvent(
+              message: 'Could not apply army move. Orders are invalid.',
+            ),
+          );
+          assert(
+            results.every((r) => r.isAccepted),
+            'ArmyMoveRequestedEvent produced an invalid draft',
+          );
+          return;
+        }
+        ref.read(currentOrdersProvider.notifier).state = next;
       }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
