@@ -213,7 +213,14 @@ void main() {
           ),
           newWorld: const RegionData(),
         ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            techUnlocked: const {kTechIdNationalBureaucracy: true},
+          ),
+        ],
       );
       final next = applyBuildAndWorkOrders(
         game,

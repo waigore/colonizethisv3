@@ -207,6 +207,27 @@ class DiplomaticOrderValidator {
               'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
             );
           }
+          if (isGreatPower(_game, targetId)) {
+            Player? submitter;
+            for (final p in _game.players) {
+              if (p.id == _playerId) {
+                submitter = p;
+                break;
+              }
+            }
+            if (submitter?.techUnlocked?[kTechIdEmpireBuilding] != true) {
+              return _reject(
+                'Empire Building tech required for Join Empire toward a Great Power',
+              );
+            }
+            if (!isGreatPowerNearlyDefeatedForJoinEmpire(_game, targetId)) {
+              return _reject(
+                'Join Empire toward Great Power requires target to be nearly defeated (at most 3 provinces and original capital not held by target)',
+              );
+            }
+          } else if (!isMinorOrTribe(_game, targetId)) {
+            return _reject('Join Empire target must be a Minor Nation, Tribe, or Great Power');
+          }
           final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
           if (_treasury < cost) {
             return _reject(
