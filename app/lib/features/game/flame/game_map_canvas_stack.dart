@@ -60,7 +60,7 @@ class GameMapCanvasStack extends ConsumerWidget {
               Expanded(
                 child: CtRegionMap(
                   region: region,
-                  cellSizePx: 24,
+                  cellSizePx: region.cellSize.toDouble(),
                   showProvinceOverlay: showProvinceOverlay,
                   showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNamesLayer,

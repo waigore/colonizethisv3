@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/map_terrain_config.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
@@ -88,7 +89,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     game: game,
     tileMapByRegion: mapData.tileMapByRegion,
     topologyByRegion: mapData.topologyByRegion,
-    cellSize: 24,
+    cellSize: MapTerrainConfig.instance.mapCellSizePx,
     greatPowerColorOverride: colorOverride,
     visibilityByTile: visibilityByTile,
     warpLinks: mapData.warpLinks,

@@ -88,7 +88,7 @@ pixel art high-detail top-down orthographic strategy map terrain seamlessly exte
 | `app/assets/.../tilesets/_tile_map_incremental_preview_seed100.json` | Golden **`TileMapResult`** (e.g. `generate_map --write-tile-map-json`) |
 | `app/assets/.../tilesets/map_preview_sea_plains_incremental_64_seed100.png` | **`pack … preview`** coastline raster |
 
-**Runtime today:** Flutter loads **`tileset_sea_plains.png`** / **`.json`** (separate atlas). **`tileset_sea_plains_incremental_64`** is the **parallel** incremental set until app integration lands.
+**Runtime (Flutter app):** Sea↔plains (and the other L0/L1 Wang pairs) load from paths in **`assets/data/map_terrain_tilesets.json`** — default `sea_plains` points at the upscaled **`tileset_sea_plains_v2_64`** atlas/JSON unless you change that config. **`tileset_sea_plains_incremental_64`** remains an alternate packed set for tooling/previews (`pack_sea_plains_wang_tileset_64.py`, `preview-app`), not a separate hardcoded app path.
 
 ---
 

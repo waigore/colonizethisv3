@@ -274,11 +274,18 @@ Hover, selection, and overlay behavior:
 
 The map widget renders terrain using **Wang tilesets** for seamless terrain transitions. Each tileset is a 4×4 grid (16 tiles) that covers all corner combinations for transitions between two terrain types.
 
+### Runtime configuration (Flutter app)
+
+- **Source of truth:** `app/assets/data/map_terrain_tilesets.json` (bundled under `assets/data/` in `pubspec.yaml`). See [wang-tileset-and-assets.md](wang-tileset-and-assets.md) § App map runtime configuration for the full schema and validation rules.
+- **`map_cell_size_px`:** Logical size in pixels of each map cell in Flame (`RegionMapViewData.cellSize`, `CtRegionMap` / `RegionMapComponent` layout). Init-game map view data uses this value so the grid matches Wang draw destinations.
+- **`wang_tilesets`:** Per–terrain-pair entries `sea_plains`, `sea_desert`, `plains_desert`. Each supplies `spec_json` and `atlas_png` asset paths and `tile_px` (atlas tile edge length). `tile_px` must match `tile_size` in that JSON. Tilesets may use different atlas sizes and `tile_px` values; the renderer maps each tile’s `bounding_box` in atlas space into one `cellSize`×`cellSize` screen cell (so a 32×32 atlas tile scales up when `map_cell_size_px` is 64).
+- **Startup:** `MapTerrainConfig.ensureLoaded()` runs before map terrain load (app `main`; tests use `flutter_test_config.dart`). Swapping which PNG/JSON the app uses is a **config + asset** change only when paths and `tile_px` stay consistent with the files.
+
 ### Tileset Structure
 
-- **Format:** Each tileset is a 128×128 PNG (4×4 grid of 32×32 tiles)
-- **Metadata:** JSON file with corner mappings (NW, NE, SW, SE → "upper" or "lower" terrain)
-- **Tile Size:** 32×32 pixels per tile (configurable via `cellSize` in view data)
+- **Atlas:** PNG sheet; layout is defined by per-tile `bounding_box` in the JSON (PixelLab-style), not assumed row-major.
+- **Metadata:** JSON with corner mappings (NW, NE, SW, SE → "upper" or "lower" terrain), `tile_size`, and `bounding_box` per tile.
+- **Map grid vs atlas tile:** `map_cell_size_px` is the on-screen cell; `tile_px` is the source tile extent in the atlas for that tileset.
 
 ### Terrain Priority (Layer Order)
 
@@ -317,16 +324,9 @@ Tilesets are chained for visual consistency. All land terrain tilesets use the s
 6. **Plains → Swamp:** Swamp transitions
 7. **Plains → Desert:** Desert edges (New World only)
 
-### Asset Files
+### Asset files (implemented Wang tilesets)
 
-Tilesets are stored in `assets/images/terrain/`:
-- `tileset_sea_beach.png` / `.json`
-- `tileset_beach_plains.png` / `.json`
-- `tileset_plains_forest.png` / `.json`
-- `tileset_plains_hills.png` / `.json`
-- `tileset_plains_mountain.png` / `.json`
-- `tileset_plains_swamp.png` / `.json`
-- `tileset_plains_desert.png` / `.json`
+The **three** L0/L1 Wang atlases used by the Flame map are whichever paths appear under `wang_tilesets` in `map_terrain_tilesets.json` (typically under `assets/images/terrain/tilesets/`). Additional transition tilesets (e.g. beach, plains↔forest) remain **pipeline / future** unless wired the same way; see [wang-tileset-and-assets.md](wang-tileset-and-assets.md).
 
 ### Visibility Integration
 
@@ -343,6 +343,8 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 
 ## Acceptance criteria
 
+- **Given** bundled `assets/data/map_terrain_tilesets.json` with valid `map_cell_size_px`, required `wang_tilesets` keys, and asset paths whose JSON `tile_size` matches each entry’s `tile_px`, **when** the init-game map builds view data and loads terrain, **then** `RegionMapViewData.cellSize` equals `map_cell_size_px` and all three Wang atlases load without falling back to `terrainColors` for those transitions.
+- **Given** only a change to `map_terrain_tilesets.json` (paths, `tile_px`, and/or `map_cell_size_px`) plus matching atlas/JSON assets declared in `pubspec.yaml`, **when** the app runs, **then** the map uses the new files and cell size without Dart code edits (same loader contract).
 - **Given** a map widget with a region's data and visibility mode **full**, **when** the widget is laid out, **then** the viewport matches the widget size and shows terrain, optional resource icons and improvement/road labels (per base-layer mode), and markers (capitals, town/port icons, warp) at the current zoom level without fog gating.
 - **Given** visibility mode **player-constrained** and a **capital marker** whose coordinates fall on a cell with `CellViewData.visibility` `unrevealed`, **when** the map renders, **then** that capital marker is not drawn; **when** that cell’s visibility becomes `visible` or `fogged`, **then** the capital marker is drawn again.
 - **Given** visibility mode **player-constrained** and a **town or port icon** on a cell that is `unrevealed`, **when** the map renders, **then** that icon is not drawn (unchanged rule; capital markers follow the same predicate).

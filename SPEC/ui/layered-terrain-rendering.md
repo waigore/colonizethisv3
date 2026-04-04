@@ -175,8 +175,15 @@ When tiles are not loaded, use solid colors:
 
 ---
 
+## Flutter app: Wang asset selection
+
+The **logic** (which tileset applies per corner pattern) is fixed by terrain type. The **files** and **map cell size** for the three Wang tilesets are selected via `assets/data/map_terrain_tilesets.json` — see [wang-tileset-and-assets.md](wang-tileset-and-assets.md) § App map runtime configuration and [map-widget.md](map-widget.md) § Terrain tileset rendering.
+
+---
+
 ## Acceptance Criteria
 
+- Given bundled `map_terrain_tilesets.json` with valid paths for `sea_plains`, `sea_desert`, and `plains_desert`, when the Flame map draws L0/L1, then those configured atlases are used (not hardcoded filenames in layer logic).
 - Given a sea cell with no land neighbors, when rendering, then solid sea color is drawn.
 - Given a sea cell adjacent to plains, when rendering, then the `sea_plains` Wang tileset is used.
 - Given a sea cell adjacent to desert, when rendering, then the `sea_desert` Wang tileset is used.
