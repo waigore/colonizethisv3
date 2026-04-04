@@ -1303,6 +1303,9 @@ void main() {
         );
         await tester.pumpAndSettle();
         await tester.tap(find.text('Confirm Split'));
+        // Broadcast bus delivers listeners asynchronously; flush like split_army_dialog_test.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await tester.pumpAndSettle();
 
         expect(find.text('0 regiments · oldWorld|cap'), findsOneWidget);
@@ -1411,6 +1414,8 @@ void main() {
         );
         await tester.pumpAndSettle();
         await tester.tap(find.text('Confirm Split'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         await tester.pumpAndSettle();
 
         expect(find.text('1 regiments · oldWorld|cap'), findsNWidgets(2));
