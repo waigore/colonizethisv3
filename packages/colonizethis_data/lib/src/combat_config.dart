@@ -482,3 +482,12 @@ const String kTechIdNationalism = 'nationalism';
 
 /// Tech id required for Trade Consulate / Embassy / NAP overtures toward Minor Nations and Tribes. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
 const String kTechIdDiplomaticExpertise = 'diplomatic_expertise';
+
+/// Tech id required for Builder `upgrade_town` work orders. SPEC/game/tech-tree-diplomacy-civilian.md.
+const String kTechIdNationalBureaucracy = 'national_bureaucracy';
+
+/// Tech id that reduces third-party relation penalties when the aggressor declares war (e.g. intervention). SPEC/game/tech-tree-diplomacy-civilian.md.
+const String kTechIdPropaganda = 'propaganda';
+
+/// Tech id required for Join Empire toward another Great Power. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
+const String kTechIdEmpireBuilding = 'empire_building';
