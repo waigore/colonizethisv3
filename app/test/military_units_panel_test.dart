@@ -240,6 +240,77 @@ void main() {
       },
     );
 
+    testWidgets(
+      'AC: Army subtitle uses province display name; regiment titles use roster names',
+      (WidgetTester tester) async {
+        const playerId = 'gp_display_names';
+        const provinceLocal = 'lisbon';
+        const fullProvince = 'oldWorld|$provinceLocal';
+        final miniGame = Game(
+          id: 'g_display_mil',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              units: [
+                Unit(
+                  id: 'levy1',
+                  type: 'peasant_levies',
+                  ownerId: playerId,
+                  locationProvinceId: provinceLocal,
+                  medals: 0,
+                  status: UnitStatus.idle,
+                ),
+              ],
+              provinces: [
+                Province(
+                  id: provinceLocal,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                  displayName: 'Lisbon Harbor',
+                  townTileKey: 'oldWorld|lisbon|0|0',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [],
+            armies: [
+              Army(
+                id: 'army_field',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: provinceLocal,
+                regimentUnitIds: const ['levy1'],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                fullProvince: ['oldWorld|lisbon|0|0'],
+              },
+            },
+          ),
+          players: const [
+            Player(
+              id: playerId,
+              displayName: 'Tester',
+              isHuman: true,
+              capitalProvinceId: fullProvince,
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: miniGame, humanPlayerId: playerId),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('regiments · Lisbon Harbor'), findsWidgets);
+        await expandFirstArmyExpansion(tester);
+        expect(find.textContaining('Peasant Levies: 1'), findsOneWidget);
+        expect(find.textContaining('peasant_levies:'), findsNothing);
+      },
+    );
+
     testWidgets('AC: Regiment rows show type, count, medals, status', (
       WidgetTester tester,
     ) async {
@@ -527,8 +598,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('atlantic — Old World'), findsOneWidget);
-      expect(find.textContaining('galleon: 1'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('carrack: 1'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Galleon: 1'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Carrack: 1'), findsAtLeastNWidgets(1));
       expect(find.textContaining('Status: Patrol'), findsAtLeastNWidgets(1));
     });
 
@@ -569,7 +640,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('galleon: 3'), findsOneWidget);
+      expect(find.textContaining('Galleon: 3'), findsOneWidget);
       expect(find.textContaining('Status: Blockade'), findsOneWidget);
     });
 

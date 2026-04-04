@@ -3,6 +3,8 @@
 library colonizethis_data;
 
 export 'src/combat_config.dart';
+export 'src/regiment_type_display_name.dart';
+export 'src/ship_type_display_name.dart';
 export 'src/quick_battle_config.dart';
 export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
