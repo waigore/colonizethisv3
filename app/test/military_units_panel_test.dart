@@ -1379,12 +1379,12 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pumpAndSettle();
 
-        expect(find.text('0 regiments · oldWorld|cap'), findsOneWidget);
-        expect(find.text('2 regiments · oldWorld|cap'), findsOneWidget);
+        expect(find.text('0 regiments · Capital'), findsOneWidget);
+        expect(find.text('2 regiments · Capital'), findsOneWidget);
 
         await tester.tap(find.text('Army army_1'));
         await tester.pumpAndSettle();
-        expect(find.text('musketeers: 2'), findsOneWidget);
+        expect(find.text('Musketeers: 2'), findsOneWidget);
       },
     );
 
@@ -1489,13 +1489,13 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pumpAndSettle();
 
-        expect(find.text('1 regiments · oldWorld|cap'), findsNWidgets(2));
+        expect(find.text('1 regiments · Capital'), findsNWidgets(2));
 
-        expect(find.text('musketeers: 1'), findsOneWidget);
+        expect(find.text('Musketeers: 1'), findsOneWidget);
 
         await tester.tap(find.text('Army army_7'));
         await tester.pumpAndSettle();
-        expect(find.text('musketeers: 1'), findsNWidgets(2));
+        expect(find.text('Musketeers: 1'), findsNWidgets(2));
       },
     );
   });
