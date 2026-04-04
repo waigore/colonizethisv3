@@ -16,6 +16,7 @@
 ### Region minimap camera sync
 
 - **`CtRegionMap`** may report viewport changes via **`onViewportSnapshotChanged`** (`RegionMapViewportSnapshot`: `regionId`, `cellSizePx`, map world size, camera center, `zoom`, logical viewport width/height). Emitted when the camera changes size, zoom, or center; math matches `_CtRegionMapGame._clampCameraToMap` (same viewport-in-world as hover/tap conversion).
+- **`GameRegionMinimap`** (in-game shell) must use the **same** logical cell size and world extent as **`CtRegionMap`** for that region: `mapWidthWorld` / `mapHeightWorld` = `region.width` × `cellSizePx` and `region.height` × `cellSizePx` with `cellSizePx == RegionMapViewData.cellSize`. If the minimap uses a different `cellSizePx` than the snapshot, the viewport indicator and tap/drag camera mapping will be wrong.
 - The in-game shell may request camera moves using **`RequestRegionMapCameraCenterWorldEvent`** and **`RequestRegionMapCameraPanWorldDeltaEvent`** on the shared **`AppEventBus`**; the map host applies them only when `event.regionId` matches the widget’s `RegionMapViewData.regionId`.
 
 ---
