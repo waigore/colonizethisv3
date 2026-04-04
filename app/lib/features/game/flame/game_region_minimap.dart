@@ -54,8 +54,9 @@ class GameRegionMinimap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visible = ref.watch(regionMinimapVisibleProvider);
-    final viewport =
-        viewportSnapshot?.regionId == region.regionId ? viewportSnapshot : null;
+    final viewport = viewportSnapshot?.regionId == region.regionId
+        ? viewportSnapshot
+        : null;
     final aspect = region.width / region.height;
     late final Size mapSize;
     if (aspect >= 1) {
@@ -80,28 +81,32 @@ class GameRegionMinimap extends ConsumerWidget {
           Material(
             color: Colors.black.withValues(alpha: 0.45),
             elevation: 2,
-            child: GestureDetector(
-              key: kRegionMinimapGestureKey,
+            child: Listener(
               behavior: HitTestBehavior.opaque,
-              onTapDown: (d) => _onTap(
-                local: d.localPosition,
-                mapSize: mapSize,
-              ),
-              onPanUpdate: (details) => _onPan(
-                delta: details.delta,
-                mapSize: mapSize,
-              ),
-              child: SizedBox(
-                width: mapSize.width,
-                height: mapSize.height,
-                child: CustomPaint(
-                  key: kRegionMinimapCustomPaintKey,
-                  painter: _RegionMinimapPainter(
-                    region: region,
-                    cellSizePx: cellSizePx,
-                    viewport: viewport?.regionId == region.regionId
-                        ? viewport
-                        : null,
+              onPointerMove: (event) {
+                if (!event.down || event.delta == Offset.zero) {
+                  return;
+                }
+                _onPan(delta: event.delta, mapSize: mapSize);
+              },
+              child: GestureDetector(
+                key: kRegionMinimapGestureKey,
+                behavior: HitTestBehavior.opaque,
+                // Tap-up avoids a center event at pointer-down (which interfered with drags).
+                onTapUp: (d) =>
+                    _onTap(local: d.localPosition, mapSize: mapSize),
+                child: SizedBox(
+                  width: mapSize.width,
+                  height: mapSize.height,
+                  child: CustomPaint(
+                    key: kRegionMinimapCustomPaintKey,
+                    painter: _RegionMinimapPainter(
+                      region: region,
+                      cellSizePx: cellSizePx,
+                      viewport: viewport?.regionId == region.regionId
+                          ? viewport
+                          : null,
+                    ),
                   ),
                 ),
               ),
@@ -251,7 +256,8 @@ class _RegionMinimapPainter extends CustomPainter {
         }
         final base = cell.isSea
             ? kRegionMinimapSeaColor
-            : kRegionMinimapTerrainColors[cell.terrainType ?? TerrainType.plains]!;
+            : kRegionMinimapTerrainColors[cell.terrainType ??
+                  TerrainType.plains]!;
         if (cell.visibility == TileVisibility.fogged) {
           paint.color = base.withValues(alpha: kRegionMinimapFoggedAlpha);
         } else {
