@@ -39,10 +39,12 @@ flutter:
   generate: true
   uses-material-design: true
   assets:
+    - assets/data/
     - assets/icons/
     - assets/images/
     - assets/images/terrain/
     - assets/images/terrain/base_64/
+    - assets/images/terrain/base_32/
     - assets/images/terrain/tilesets/
     - assets/dialogue/
 
