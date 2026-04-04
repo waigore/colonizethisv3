@@ -483,7 +483,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                     region: _currentRegion,
                     viewportSnapshot: _regionViewportSnapshot,
                     bus: ref.read(appEventBusProvider),
-                    cellSizePx: 24,
+                    cellSizePx: _currentRegion.cellSize.toDouble(),
                   ),
                 ),
               ],
