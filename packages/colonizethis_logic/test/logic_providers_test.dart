@@ -68,6 +68,73 @@ void main() {
       expect(fake.suggestArmyMoveCalls, greaterThan(0));
     });
 
+    test('generateOrdersForPlayerFullAI forwards tileMapByRegion to suggestWorkOrders', () {
+      final fake = _SpyOrderSuggestionAPI();
+      final container = ProviderContainer(
+        overrides: [
+          orderSuggestionApiProvider.overrideWith((ref) => fake),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                locationProvinceId: 'oldWorld|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 1,
+        aiSeedByGpId: const {'gp1': 1},
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+      final tileMap = {
+        'oldWorld': TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['P1'],
+          ],
+          terrainGrid: [
+            [TerrainType.plains],
+          ],
+        ),
+      };
+
+      generateOrdersForPlayerFullAI(
+        game,
+        topology,
+        'gp1',
+        tileMapByRegion: tileMap,
+        orderSuggestionApi: container.read(orderSuggestionApiProvider),
+      );
+
+      expect(fake.lastWorkTileMapByRegion, equals(tileMap));
+    });
+
     test('gameEventBusProvider returns GameEventBus instance', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -79,6 +146,7 @@ void main() {
 final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
   int suggestMoveCalls = 0;
   int suggestArmyMoveCalls = 0;
+  Map<String, TileMapResult>? lastWorkTileMapByRegion;
 
   @override
   List<BuildUnitOrder> suggestBuildOrders(
@@ -155,6 +223,8 @@ final class _SpyOrderSuggestionAPI implements OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      const [];
+  }) {
+    lastWorkTileMapByRegion = tileMapByRegion;
+    return const [];
+  }
 }

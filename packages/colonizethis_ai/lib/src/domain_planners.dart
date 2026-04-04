@@ -30,6 +30,7 @@ Orders runDomainPlanners({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
   required EconomyPlan economyPlan,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var orders = const Orders();
   final domainWeights = getDomainWeightsForLeader(config.leaderId);
@@ -40,6 +41,7 @@ Orders runDomainPlanners({
     game,
     topology,
     orders,
+    tileMapByRegion: tileMapByRegion,
   );
   final buildCandidates = suggestionAPI.suggestBuildOrders(
     view,

@@ -51,9 +51,9 @@ For every suggested order `o`, appending it to the current list and validating v
 
 ## Consumers
 
-- Minimal AIPlanner (see [ai-planner.md](ai-planner.md))
-- Sim-game default AI (see [sim-game-default-ai.md](sim-game-default-ai.md))
-- Full AI (see [ai-systems-impl.md](ai-systems-impl.md))
+- Minimal AIPlanner (see [ai-planner.md](ai-planner.md)) — passes `tileMapByRegion` when the caller provides it.
+- Sim-game default AI (see [sim-game-default-ai.md](sim-game-default-ai.md)) — sim controller passes the same maps used for order validation.
+- Full AI (see [ai-systems-impl.md](ai-systems-impl.md)) — domain planners pass `tileMapByRegion` through to `suggestWorkOrders` when provided.
 - **Flutter app (`colonizethis_app`):** Riverpod providers (e.g. `availableWorkTargetsProvider`, optional `devExclusiveReservedWorkTileKeysProvider`) **delegate** to `colonizethis_logic` only. They **must not** reimplement Builder/Engineer/Merchant per-tile exclusivity or reservation rules. Reservations combine in-map `currentWork` and pending dev-exclusive work orders per [orders.md](orders.md) § WorkOrder per-tile exclusivity.
 
 ### Dev-exclusive tile reservations (logic package)
