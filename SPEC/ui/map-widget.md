@@ -1,6 +1,6 @@
 # Map Widget (reusable)
 
-**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom with fixed zoom levels and smooth zooming. Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems (same as ctterm); this spec is for the app only.
+**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom on a **fit-map baseline** with a unified **0.5×–4×** multiplier band (see § Viewport, scale, pan, zoom). Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems (same as ctterm); this spec is for the app only.
 
 ---
 
@@ -10,13 +10,13 @@
 - **Viewport:** The visible area is the widget's layout size. Map extent is the full 2D tile grid; user pans and zooms to see it.
 - **Base layer:** Terrain plus optional **base overlays** (resource icons, improvement labels, road/rail labels) drawn in a fixed Z-order; towns, capitals, and warp markers per below.
 - **Overlays:** Province boundary strokes, Great Power **province ownership** tint, and political (faction-difference) borders as **separate layers** on top; the in-game shell exposes independent toggles for boundaries vs ownership tint vs province names ([empire-overview.md](empire-overview.md)).
-- **Interaction:** Pan; fixed zoom levels with smooth zooming; tap/click to select a province (callbacks; province details content TBD elsewhere). **Hover:** When the pointer is over a tile, a selector (e.g. a simple square) is shown on that tile with a subtle bouncing animation; the hovered tile's province (or sea zone) borders glow and use a subtle animation (e.g. pulse).
+- **Interaction:** Pan; continuous zoom within the unified fit-relative band (§ Viewport, scale, pan, zoom); tap/click to select a province (callbacks; province details content TBD elsewhere). **Hover:** When the pointer is over a tile, a selector (e.g. a simple square) is shown on that tile with a subtle bouncing animation; the hovered tile's province (or sea zone) borders glow and use a subtle animation (e.g. pulse).
 - **Animation:** Widget supports animation of individual tiles and other assets (e.g. highlights, build progress); Flame is the implementation fit.
 
 ### Region minimap camera sync
 
-- **`CtRegionMap`** may report viewport changes via **`onViewportSnapshotChanged`** (`RegionMapViewportSnapshot`: `regionId`, `cellSizePx`, map world size, camera center, `zoom`, logical viewport width/height). Emitted when the camera changes size, zoom, or center; math matches `_CtRegionMapGame._clampCameraToMap` (same viewport-in-world as hover/tap conversion).
-- The in-game shell may request camera moves using **`RequestRegionMapCameraCenterWorldEvent`** and **`RequestRegionMapCameraPanWorldDeltaEvent`** on the shared **`AppEventBus`**; the map host applies them only when `event.regionId` matches the widget’s `RegionMapViewData.regionId`.
+- **`CtRegionMap`** may report viewport changes via **`onViewportSnapshotChanged`** (`RegionMapViewportSnapshot`: `regionId`, `cellSizePx`, map world size, camera center, `zoom`, **`fitMapZoom`** (Flame viewfinder zoom at which the full map fits the current viewport), logical viewport width/height). Emitted when the camera changes size, zoom, or center; math matches `_CtRegionMapGame._clampCameraToMap` (same viewport-in-world as hover/tap conversion).
+- The in-game shell may request camera moves using **`RequestRegionMapCameraCenterWorldEvent`**, **`RequestRegionMapCameraPanWorldDeltaEvent`**, and **`RequestRegionMapSetZoomMultiplierEvent`** on the shared **`AppEventBus`**; the map host applies them only when `event.regionId` matches the widget’s `RegionMapViewData.regionId`.
 
 ---
 
@@ -166,9 +166,11 @@ The **in-game shell** (Empire overview) may overlay a cycle button that toggles 
 ## Viewport, scale, pan, zoom
 
 - **Viewport:** Exactly the size of the map widget in the layout. No intrinsic minimum; parent constrains the widget.
-- **Scale:** Fixed scale at any time (e.g. 1 tile = N logical pixels). **Fixed zoom levels:** Only discrete zoom levels are allowed; no free-form scale.
+- **Fit-map baseline (`z_fit`):** For the active region and current logical viewport size, `z_fit = min(viewportWidth / mapWidthWorld, viewportHeight / mapHeightWorld)` (same world units as the Flame map). At camera zoom `z_fit`, the entire region map is visible (tight fit on the limiting axis). When the map is smaller than the viewport in world space, `z_fit` is the zoom that fills the viewport with that map extent (centering applies per `_clampCameraToMap`).
+- **Fit-relative multiplier:** `m = zoom / z_fit` where `zoom` is the Flame viewfinder zoom. User-facing **percent = 100 × m** (display range **50%–400%** corresponds to **`m ∈ [0.5, 4]`**). **100% = fit the full map** in the current viewport.
+- **Unified clamp:** **Pinch**, **scroll wheel**, **keyboard zoom shortcuts**, and the **in-game minimap zoom slider** all use the **same** limits on **`m`**: **`[0.5, 4]`** (no separate clamps per input). Effective camera zoom is **`m × z_fit`** after clamping **`m`**.
 - **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in; **dragging** on the map surface pans the camera.
-- **Zoom:** Smooth zooming between fixed zoom levels (e.g. pinch or buttons or scroll wheel). Transition is smooth; final scale snaps to a zoom level. **Pinch gestures** (on touch devices) and **scroll wheel** input (on pointer devices) both change zoom level.
+- **Zoom:** **Continuous** zoom within the band above; scroll, pinch, keys, and shell slider update **`m`** smoothly. **`z_fit`** is recomputed when the widget resizes or the displayed region changes; **the implementation preserves `m` across viewport resize** so the on-screen zoom feel stays consistent; **when the `regionId` of the map instance changes**, **`m` resets to `1.0`** (100% fit) for that instance.
 - **Full map:** The component always has the full region map in memory/logic; viewport is a window over it.
 
 ---
@@ -382,7 +384,7 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** the political overlay is enabled while the province overlay is enabled and visibility mode is **full**, **when** two adjacent land tiles belong to different owning factions, **then** a thicker political border stroke is drawn between them regardless of `CellViewData.visibility`.
 - **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the province overlay setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
-- **When** the user zooms, **then** only fixed zoom levels are used and zooming is smooth between levels.
+- **When** the user zooms via scroll, pinch, keyboard, or shell slider, **then** the fit-relative multiplier `m` stays within **[0.5, 4]** and camera zoom equals **`m × z_fit`** after each update.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile that is not `unrevealed`, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation, and each glowing segment follows the same visibility predicate as province topology strokes in player-constrained mode; when hover leaves, the highlight is removed.

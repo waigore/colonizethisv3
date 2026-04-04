@@ -11,7 +11,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../features/game/flame/region_map_component.dart';
-import '../features/game/flame/region_map_viewport_snapshot.dart';
+import '../features/game/flame/region_map_viewport_snapshot.dart'
+    show
+        RegionMapViewportSnapshot,
+        computeRegionMapFitMapZoom,
+        kRegionMapZoomMultiplierMax,
+        kRegionMapZoomMultiplierMin;
 
 export '../features/game/flame/region_map_component.dart'
     show
@@ -88,9 +93,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
 
   late final CtRegionMapComponent _mapComponent;
 
-  double _zoom = 1.0;
+  /// `m` in [kRegionMapZoomMultiplierMin]–[kRegionMapZoomMultiplierMax]; camera zoom = `m × z_fit`.
+  double _zoomMultiplier = 1.0;
   bool _mapLoaded = false;
   Vector2? _lastCanvasSize;
+
+  double get zoomMultiplier => _zoomMultiplier;
 
   @override
   Future<void> onLoad() async {
@@ -131,8 +139,29 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
 
     // Initial camera clamp once size is available to avoid black bands on first paint.
     if (size != Vector2.zero()) {
-      _clampCameraToMap();
+      _syncCameraZoomFromMultiplier();
+    } else {
+      _emitViewportSnapshot();
     }
+  }
+
+  void _syncCameraZoomFromMultiplier() {
+    if (!_mapLoaded || size == Vector2.zero()) return;
+    _zoomMultiplier = _zoomMultiplier.clamp(
+      kRegionMapZoomMultiplierMin,
+      kRegionMapZoomMultiplierMax,
+    );
+    final mw = region.width * cellSizePx;
+    final mh = region.height * cellSizePx;
+    final zFit = computeRegionMapFitMapZoom(
+      viewportWidthLogical: size.x,
+      viewportHeightLogical: size.y,
+      mapWidthWorld: mw,
+      mapHeightWorld: mh,
+    );
+    camera.viewfinder.zoom = _zoomMultiplier * zFit;
+    _clampCameraToMap();
+    onRegionViewChanged?.call();
     _emitViewportSnapshot();
   }
 
@@ -142,6 +171,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (!_mapLoaded || size == Vector2.zero()) return;
     final mw = region.width * cellSizePx;
     final mh = region.height * cellSizePx;
+    final zFit = computeRegionMapFitMapZoom(
+      viewportWidthLogical: size.x,
+      viewportHeightLogical: size.y,
+      mapWidthWorld: mw,
+      mapHeightWorld: mh,
+    );
     cb(
       RegionMapViewportSnapshot(
         regionId: region.regionId,
@@ -150,7 +185,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         mapHeightWorld: mh,
         cameraCenterX: camera.viewfinder.position.x,
         cameraCenterY: camera.viewfinder.position.y,
-        zoom: _zoom,
+        zoom: camera.viewfinder.zoom,
+        fitMapZoom: zFit,
         viewportWidthLogical: size.x,
         viewportHeightLogical: size.y,
       ),
@@ -178,7 +214,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void update(double dt) {
     super.update(dt);
     if (_mapLoaded) {
-      _mapComponent.cameraZoom = camera.viewfinder.zoom;
+      final z = camera.viewfinder.zoom;
+      _mapComponent.cameraZoom = z.isFinite && z > 0 ? z : 1.0;
     }
   }
 
@@ -203,6 +240,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   }) {
     if (region != null) {
+      if (region.regionId != this.region.regionId) {
+        _zoomMultiplier = 1.0;
+      }
       this.region = region;
     }
     if (showPoliticalOverlay != null) {
@@ -281,6 +321,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     final worldX = x * cellSizePx + cellSizePx / 2;
     final worldY = y * cellSizePx + cellSizePx / 2;
     camera.moveTo(Vector2(worldX, worldY));
+    _clampCameraToMap();
     onRegionViewChanged?.call();
     _emitViewportSnapshot();
   }
@@ -288,15 +329,30 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   /// Pan the camera by a Flutter offset (in logical pixels).
   void panBy(Offset delta) {
     if (delta == Offset.zero) return;
-    camera.viewfinder.position -= Vector2(delta.dx, delta.dy) / _zoom;
+    final z = camera.viewfinder.zoom;
+    if (z <= 0 || !z.isFinite) return;
+    camera.viewfinder.position -= Vector2(delta.dx, delta.dy) / z;
     _clampCameraToMap();
     onRegionViewChanged?.call();
     _emitViewportSnapshot();
   }
 
-  /// Zoom the camera by [factor] (>1 zooms in, <1 zooms out).
+  /// Zoom the camera by [factor] (>1 zooms in, <1 zooms out) on [zoomMultiplier].
   void zoomBy(double factor) {
-    _applyZoom(factor);
+    _zoomMultiplier = (_zoomMultiplier * factor).clamp(
+      kRegionMapZoomMultiplierMin,
+      kRegionMapZoomMultiplierMax,
+    );
+    _syncCameraZoomFromMultiplier();
+  }
+
+  /// Absolute fit-relative multiplier from the shell (slider). SPEC/ui/map-widget.md.
+  void setZoomMultiplierAbsolute(double multiplier) {
+    _zoomMultiplier = multiplier.clamp(
+      kRegionMapZoomMultiplierMin,
+      kRegionMapZoomMultiplierMax,
+    );
+    _syncCameraZoomFromMultiplier();
   }
 
   @override
@@ -314,23 +370,41 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     // First resize with a valid size: clamp once so we don't start at (0, 0)
     // with visible black edges.
     if (previousSize == null || previousSize == Vector2.zero()) {
-      _clampCameraToMap();
-      _emitViewportSnapshot();
+      _syncCameraZoomFromMultiplier();
       return;
     }
 
-    final oldViewW = previousSize.x / _zoom;
-    final oldViewH = previousSize.y / _zoom;
-    final newViewW = size.x / _zoom;
-    final newViewH = size.y / _zoom;
+    final oldZoom = camera.viewfinder.zoom;
+    if (oldZoom <= 0 || !oldZoom.isFinite) {
+      _syncCameraZoomFromMultiplier();
+      return;
+    }
 
     final mapWidth = region.width * cellSizePx;
     final mapHeight = region.height * cellSizePx;
 
+    final newZFit = computeRegionMapFitMapZoom(
+      viewportWidthLogical: size.x,
+      viewportHeightLogical: size.y,
+      mapWidthWorld: mapWidth,
+      mapHeightWorld: mapHeight,
+    );
+    _zoomMultiplier = _zoomMultiplier.clamp(
+      kRegionMapZoomMultiplierMin,
+      kRegionMapZoomMultiplierMax,
+    );
+    final newZoom = _zoomMultiplier * newZFit;
+
+    final oldViewW = previousSize.x / oldZoom;
+    final oldViewH = previousSize.y / oldZoom;
+    final newViewW = size.x / newZoom;
+    final newViewH = size.y / newZoom;
+
     var center = camera.viewfinder.position.clone();
 
     // Horizontal adjustment: preserve left edge when widening; clamp when shrinking.
-    if (newViewW != oldViewW) {
+    // Skip when the map is narrower than the viewport in world space (minX > maxX).
+    if (newViewW != oldViewW && mapWidth > newViewW) {
       final halfNewW = newViewW / 2;
       final minX = halfNewW;
       final maxX = mapWidth - halfNewW;
@@ -345,7 +419,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
 
     // Vertical adjustment: same policy for top edge.
-    if (newViewH != oldViewH) {
+    if (newViewH != oldViewH && mapHeight > newViewH) {
       final halfNewH = newViewH / 2;
       final minY = halfNewH;
       final maxY = mapHeight - halfNewH;
@@ -358,6 +432,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     }
 
     camera.viewfinder.position = center;
+    camera.viewfinder.zoom = newZoom;
+    _clampCameraToMap();
+    onRegionViewChanged?.call();
     _emitViewportSnapshot();
   }
 
@@ -366,9 +443,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (!_mapLoaded || size == Vector2.zero()) return;
 
     // Convert from widget-local (top-left origin) to world coordinates.
+    final z = camera.viewfinder.zoom;
+    if (z <= 0 || !z.isFinite) return;
     final screen = Vector2(localPosition.dx, localPosition.dy);
     final halfView = size / 2;
-    final world = camera.viewfinder.position + (screen - halfView) / _zoom;
+    final world = camera.viewfinder.position + (screen - halfView) / z;
 
     _mapComponent.updateHoverFromWorld(world);
   }
@@ -377,20 +456,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void onTapUp(TapUpInfo info) {
     // Use same widget→world conversion as hover so tap works with camera zoom/pan
     // and on mobile (where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
+    final z = camera.viewfinder.zoom;
+    if (z <= 0 || !z.isFinite) return;
     final widgetPos = info.eventPosition.widget;
     final halfView = size / 2;
-    final world = camera.viewfinder.position + (widgetPos - halfView) / _zoom;
+    final world = camera.viewfinder.position + (widgetPos - halfView) / z;
     _mapComponent.handleTapAtWorld(world);
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
-
-  void _applyZoom(double scaleDelta) {
-    final newZoom = (_zoom * scaleDelta).clamp(0.25, 1.0);
-    if (newZoom == _zoom) return;
-    _zoom = newZoom;
-    camera.viewfinder.zoom = _zoom;
-    _clampCameraToMap();
     onRegionViewChanged?.call();
     _emitViewportSnapshot();
   }
@@ -400,32 +471,38 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     final mapWidth = region.width * cellSizePx;
     final mapHeight = region.height * cellSizePx;
 
-    // Viewport size in world units at current zoom.
-    final viewW = size.x / _zoom;
-    final viewH = size.y / _zoom;
+    final z = camera.viewfinder.zoom;
+    if (z <= 0 || !z.isFinite) return;
 
-    // If map is smaller than viewport, center the camera.
+    // Viewport size in world units at current zoom.
+    final viewW = size.x / z;
+    final viewH = size.y / z;
+
+    // If map is smaller than viewport on both axes, center the camera.
     if (mapWidth <= viewW && mapHeight <= viewH) {
       camera.viewfinder.position = Vector2(mapWidth / 2, mapHeight / 2);
       return;
     }
 
-    final halfW = viewW / 2;
-    final halfH = viewH / 2;
+    final pos = camera.viewfinder.position.clone();
+    if (mapWidth > viewW) {
+      final halfW = viewW / 2;
+      final minX = halfW;
+      final maxX = mapWidth - halfW;
+      pos.x = pos.x.clamp(minX, maxX).toDouble();
+    } else {
+      pos.x = mapWidth / 2;
+    }
+    if (mapHeight > viewH) {
+      final halfH = viewH / 2;
+      final minY = halfH;
+      final maxY = mapHeight - halfH;
+      pos.y = pos.y.clamp(minY, maxY).toDouble();
+    } else {
+      pos.y = mapHeight / 2;
+    }
 
-    final minX = halfW;
-    final maxX = mapWidth - halfW;
-    final minY = halfH;
-    final maxY = mapHeight - halfH;
-
-    final pos = camera.viewfinder.position;
-    final clampedX = pos.x.clamp(minX, maxX);
-    final clampedY = pos.y.clamp(minY, maxY);
-
-    camera.viewfinder.position = Vector2(
-      clampedX.toDouble(),
-      clampedY.toDouble(),
-    );
+    camera.viewfinder.position = pos;
   }
 }
 
@@ -498,6 +575,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
   late _CtRegionMapGame _game;
   StreamSubscription<RequestRegionMapCameraCenterWorldEvent>? _cameraCenterSub;
   StreamSubscription<RequestRegionMapCameraPanWorldDeltaEvent>? _cameraPanSub;
+  StreamSubscription<RequestRegionMapSetZoomMultiplierEvent>? _zoomMultiplierSub;
+  double _scaleGestureStartMultiplier = 1.0;
 
   @override
   void initState() {
@@ -510,14 +589,17 @@ class _CtRegionMapState extends State<CtRegionMap> {
   void dispose() {
     _cameraCenterSub?.cancel();
     _cameraPanSub?.cancel();
+    _zoomMultiplierSub?.cancel();
     super.dispose();
   }
 
   void _attachMinimapCameraBusSubscriptions() {
     _cameraCenterSub?.cancel();
     _cameraPanSub?.cancel();
+    _zoomMultiplierSub?.cancel();
     _cameraCenterSub = null;
     _cameraPanSub = null;
+    _zoomMultiplierSub = null;
     final b = widget.bus;
     if (b == null) return;
     _cameraCenterSub = b.on<RequestRegionMapCameraCenterWorldEvent>().listen((
@@ -531,6 +613,12 @@ class _CtRegionMapState extends State<CtRegionMap> {
     ) {
       if (!mounted || e.regionId != widget.region.regionId) return;
       _game.panCameraWorld(e.worldDx, e.worldDy);
+    });
+    _zoomMultiplierSub = b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((
+      e,
+    ) {
+      if (!mounted || e.regionId != widget.region.regionId) return;
+      _game.setZoomMultiplierAbsolute(e.zoomMultiplier);
     });
   }
 
@@ -661,9 +749,16 @@ class _CtRegionMapState extends State<CtRegionMap> {
             onExit: (_) => _game.updateHoverFromLocal(const Offset(-1, -1)),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              // Drag to pan the map.
-              onPanUpdate: (details) {
-                _game.panBy(details.delta);
+              onScaleStart: (_) {
+                _scaleGestureStartMultiplier = _game.zoomMultiplier;
+              },
+              onScaleUpdate: (details) {
+                if (details.pointerCount > 1) {
+                  _game.setZoomMultiplierAbsolute(
+                    _scaleGestureStartMultiplier * details.scale,
+                  );
+                }
+                _game.panBy(details.focalPointDelta);
               },
               child: ClipRect(child: GameWidget(game: _game)),
             ),

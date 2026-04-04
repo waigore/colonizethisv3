@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../providers/region_minimap_provider.dart';
-import 'region_map_viewport_snapshot.dart';
+import 'region_map_viewport_snapshot.dart'
+    show
+        RegionMapViewportSnapshot,
+        kRegionMapZoomMultiplierMax,
+        kRegionMapZoomMultiplierMin;
 import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 import 'region_minimap_math.dart';
@@ -57,6 +61,14 @@ class GameRegionMinimap extends ConsumerWidget {
       mapSize = Size(_maxExtent * aspect, _maxExtent);
     }
 
+    final zoomMultiplier = viewport == null
+        ? 1.0
+        : viewport.zoomMultiplier.clamp(
+            kRegionMapZoomMultiplierMin,
+            kRegionMapZoomMultiplierMax,
+          );
+    final zoomPercentLabel = (zoomMultiplier * 100).round();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -94,25 +106,77 @@ class GameRegionMinimap extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
         ],
-        Material(
-          key: kRegionMinimapToggleKey,
-          color: Colors.white.withValues(alpha: 0.9),
-          child: Tooltip(
-            message: visible ? 'Hide region minimap' : 'Show region minimap',
-            child: InkWell(
-              onTap: () => ref
-                  .read(regionMinimapVisibleProvider.notifier)
-                  .toggle(),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: StrictAssetIcon(
-                  assetPath:
-                      '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
-                  width: 20,
-                  height: 20,
+        SizedBox(
+          width: mapSize.width,
+          child: Text(
+            '$zoomPercentLabel%',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ),
+        const SizedBox(height: 2),
+        SizedBox(
+          width: mapSize.width,
+          height: 48,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Semantics(
+                  label: 'Map zoom',
+                  value: '$zoomPercentLabel percent',
+                  slider: true,
+                  child: Tooltip(
+                    message: 'Map zoom',
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 6,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 11,
+                        ),
+                      ),
+                      child: Slider(
+                        key: kRegionMinimapZoomSliderKey,
+                        value: zoomMultiplier,
+                        min: kRegionMapZoomMultiplierMin,
+                        max: kRegionMapZoomMultiplierMax,
+                        onChanged: (v) {
+                          bus.emit(
+                            RequestRegionMapSetZoomMultiplierEvent(
+                              regionId: region.regionId,
+                              zoomMultiplier: v,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Material(
+                key: kRegionMinimapToggleKey,
+                color: Colors.white.withValues(alpha: 0.9),
+                child: Tooltip(
+                  message: visible
+                      ? 'Hide region minimap'
+                      : 'Show region minimap',
+                  child: InkWell(
+                    onTap: () => ref
+                        .read(regionMinimapVisibleProvider.notifier)
+                        .toggle(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: StrictAssetIcon(
+                        assetPath:
+                            '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
+                        width: 20,
+                        height: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

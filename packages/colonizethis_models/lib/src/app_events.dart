@@ -149,6 +149,20 @@ class RequestRegionMapCameraPanWorldDeltaEvent extends UIActionEvent {
   final double worldDy;
 }
 
+/// In-game shell requests an absolute fit-relative zoom multiplier `m` (`zoom = m × z_fit`).
+/// The map clamps [zoomMultiplier] to **[0.5, 4.0]** before applying. SPEC/ui/map-widget.md.
+class RequestRegionMapSetZoomMultiplierEvent extends UIActionEvent {
+  const RequestRegionMapSetZoomMultiplierEvent({
+    required this.regionId,
+    required this.zoomMultiplier,
+  });
+
+  final String regionId;
+
+  /// Target `m` vs fit-map baseline; host clamps to [0.5, 4.0].
+  final double zoomMultiplier;
+}
+
 /// Request to start civilian target-selection mode from the units panel.
 /// Emit [ClosePanelEvent] first when the civilian units sheet should close.
 class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {
