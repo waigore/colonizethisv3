@@ -66,7 +66,11 @@ Game applyArmySplit({
   }
   final moveSet = unitIdsToMove.toSet();
   if (!moveSet.every(source.regimentUnitIds.contains)) return game;
-  if (moveSet.length >= source.regimentUnitIds.length) return game;
+  // Empty non-Home source armies are not created: reject moving every regiment.
+  // Home Army may be left with zero regiments per SPEC/game/military-armies.md.
+  if (moveSet.length >= source.regimentUnitIds.length && !source.isHomeArmy) {
+    return game;
+  }
 
   final remaining =
       source.regimentUnitIds.where((id) => !moveSet.contains(id)).toList();
