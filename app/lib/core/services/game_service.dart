@@ -151,27 +151,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionResultEvent(result);
     return result;
   }
 
@@ -194,27 +174,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionResultEvent(result);
     return result;
   }
 
@@ -241,27 +201,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionResultEvent(result);
     return result;
   }
 
@@ -284,27 +224,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionResultEvent(result);
     return result;
   }
 
@@ -497,5 +417,29 @@ class GameService {
     );
     saveGame(result.game);
     eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
+  }
+
+  void _emitTurnResolutionResultEvent(TurnResolutionResult result) {
+    if (result is TurnResolutionComplete) {
+      final complete = result;
+      saveGame(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
+        ),
+      );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
+      );
+    }
   }
 }
