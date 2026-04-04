@@ -15,3 +15,16 @@ bool regionMapDrawBoundaryBetweenAdjacentCells({
   return visibilityA != TileVisibility.unrevealed ||
       visibilityB != TileVisibility.unrevealed;
 }
+
+/// Whether to skip drawing a point marker (capital circle, town/port icon) on a cell.
+///
+/// In **player-constrained** visibility, markers that sit on a tile must not leak
+/// geographic detail for [TileVisibility.unrevealed] cells (same rule as towns/ports).
+/// SPEC/ui/map-widget.md § Visibility modes.
+bool regionMapSkipPointMarkerOnCell({
+  required bool playerConstrainedVisibility,
+  required TileVisibility cellVisibility,
+}) {
+  if (!playerConstrainedVisibility) return false;
+  return cellVisibility == TileVisibility.unrevealed;
+}
