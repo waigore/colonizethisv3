@@ -85,4 +85,47 @@ void main() {
       );
     });
   });
+
+  group('regionMapSkipPointMarkerOnCell', () {
+    test('full visibility never skips', () {
+      expect(
+        regionMapSkipPointMarkerOnCell(
+          playerConstrainedVisibility: false,
+          cellVisibility: TileVisibility.unrevealed,
+        ),
+        isFalse,
+      );
+      expect(
+        regionMapSkipPointMarkerOnCell(
+          playerConstrainedVisibility: false,
+          cellVisibility: TileVisibility.visible,
+        ),
+        isFalse,
+      );
+    });
+
+    test('player-constrained skips only unrevealed', () {
+      expect(
+        regionMapSkipPointMarkerOnCell(
+          playerConstrainedVisibility: true,
+          cellVisibility: TileVisibility.unrevealed,
+        ),
+        isTrue,
+      );
+      expect(
+        regionMapSkipPointMarkerOnCell(
+          playerConstrainedVisibility: true,
+          cellVisibility: TileVisibility.visible,
+        ),
+        isFalse,
+      );
+      expect(
+        regionMapSkipPointMarkerOnCell(
+          playerConstrainedVisibility: true,
+          cellVisibility: TileVisibility.fogged,
+        ),
+        isFalse,
+      );
+    });
+  });
 }

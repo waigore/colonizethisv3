@@ -1327,6 +1327,14 @@ class CtRegionMapComponent extends PositionComponent {
       ..strokeWidth = 1
       ..color = Colors.black;
     for (final cap in region.capitalMarkers) {
+      final cell = region.cellAt(cap.x, cap.y);
+      if (regionMapSkipPointMarkerOnCell(
+        playerConstrainedVisibility:
+            visibilityMode == CtMapVisibilityMode.playerConstrained,
+        cellVisibility: cell.visibility,
+      )) {
+        continue;
+      }
       final cx = cap.x * cellSize + cellSize / 2;
       final cy = cap.y * cellSize + cellSize / 2;
       fill.color = const Color(0xFFFFD700);
@@ -1341,10 +1349,12 @@ class CtRegionMapComponent extends PositionComponent {
     for (final town in region.townMarkers) {
       final cell = region.cellAt(town.x, town.y);
 
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
-        if (cell.visibility == TileVisibility.unrevealed) {
-          continue;
-        }
+      if (regionMapSkipPointMarkerOnCell(
+        playerConstrainedVisibility:
+            visibilityMode == CtMapVisibilityMode.playerConstrained,
+        cellVisibility: cell.visibility,
+      )) {
+        continue;
       }
 
       final String townIconId = town.touchesSea
@@ -1365,10 +1375,12 @@ class CtRegionMapComponent extends PositionComponent {
       final py = town.portIconY;
       if (px == null || py == null) continue;
       final portCell = region.cellAt(px, py);
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained) {
-        if (portCell.visibility == TileVisibility.unrevealed) {
-          continue;
-        }
+      if (regionMapSkipPointMarkerOnCell(
+        playerConstrainedVisibility:
+            visibilityMode == CtMapVisibilityMode.playerConstrained,
+        cellVisibility: portCell.visibility,
+      )) {
+        continue;
       }
       _paintTownIconAt(canvas, cell: portCell, cx: px, cy: py, icon: 'port');
     }
